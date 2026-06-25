@@ -21,7 +21,7 @@ def build_known_summary(prior_answers: list[tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def _context(stage: QueryStage, notebook_url: str, known_summary: str) -> str:
+def _context(notebook_url: str, known_summary: str) -> str:
     return _HEADER.format(notebook_url=notebook_url, known_summary=known_summary)
 
 
@@ -33,7 +33,7 @@ def build_question(
     known_summary: str,
     pending_fields: list[str] | None = None,
 ) -> str:
-    context = _context(stage, notebook_url, known_summary)
+    context = _context(notebook_url, known_summary)
 
     if kind is QueryKind.REVERSE:
         body = (
