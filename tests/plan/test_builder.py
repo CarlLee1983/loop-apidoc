@@ -1,0 +1,80 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
+from loop_apidoc.extraction.stages import QueryKind
+from loop_apidoc.manifest.models import (
+    LocalSource,
+    Manifest,
+    ProcessingStatus,
+    SourceFormat,
+)
+from loop_apidoc.plan.builder import build_normalization_plan
+from loop_apidoc.plan.models import PlanItemStatus
+
+
+def _manifest() -> Manifest:
+    now = datetime(2026, 6, 25, tzinfo=timezone.utc)
+    return Manifest(
+        sources_root="/src", generated_at=now,
+        local_sources=[
+            LocalSource(relative_path="api.pdf", mime_type="application/pdf",
+                        source_format=SourceFormat.PDF, size_bytes=1, sha256="x",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+        ],
+    )
+
+
+def _art(stage_id: str, kind: QueryKind, answer: str) -> AnswerArtifact:
+    qid = f"{stage_id}-{kind.value}"
+    return AnswerArtifact(query_id=qid, stage_id=stage_id, kind=kind, answer=answer,
+                          answer_path=f"answers/{qid}.txt", returncode=0)
+
+
+def _extraction() -> ExtractionResult:
+    return ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("01", QueryKind.INITIAL, "Two sources: api.pdf and a URL."),
+            _art("02", QueryKind.INITIAL, "It is a payments API."),
+            _art("05", QueryKind.INITIAL,
+                 '```json\n{"endpoints": ['
+                 '{"method": "GET", "path": "/u", "summary": "list", "source": "api.pdf"},'
+                 '{"method": "POST", "path": "/u", "summary": "create", "source": null}],'
+                 ' "missing": ["pagination"]}\n```'),
+            _art("10", QueryKind.INITIAL, "No conflicts found."),
+        ],
+    )
+
+
+def test_builds_notes():
+    plan = build_normalization_plan(_extraction(), _manifest())
+    assert plan.source_inventory_note.startswith("Two sources")
+    assert plan.overview_note == "It is a payments API."
+    assert plan.conflicts_note == "No conflicts found."
+    assert plan.notebook_url == "https://nb/x"
+
+
+def test_endpoints_classified():
+    plan = build_normalization_plan(_extraction(), _manifest())
+    assert len(plan.endpoints) == 2
+    supported = [e for e in plan.endpoints if e.status is PlanItemStatus.SUPPORTED]
+    unverified = [e for e in plan.endpoints if e.status is PlanItemStatus.UNVERIFIED]
+    assert supported[0].path == "/u" and supported[0].method == "GET"
+    assert supported[0].citations[0].manifest_source == "api.pdf"
+    assert len(unverified) == 1
+
+
+def test_missing_and_unverified_aggregated():
+    plan = build_normalization_plan(_extraction(), _manifest())
+    assert any(m.detail == "pagination" and m.area == "05" for m in plan.missing_items)
+    assert any(u.area == "05" for u in plan.unverified_items)
+
+
+def test_absent_structured_stage_records_missing():
+    plan = build_normalization_plan(_extraction(), _manifest())
+    # stages 03,04,06,07,08,09 had no artifacts -> each contributes a missing item
+    areas = {m.area for m in plan.missing_items}
+    assert {"03", "04", "06", "07", "08", "09"}.issubset(areas)
+    assert plan.environments == []
