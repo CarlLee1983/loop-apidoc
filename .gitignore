@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+output/
+
+# notebooklm-skill local state — never commit (spec §11)
+**/notebooklm-skill/data/
+**/notebooklm-skill/.venv/
+**/notebooklm-skill/**/browser_state*
