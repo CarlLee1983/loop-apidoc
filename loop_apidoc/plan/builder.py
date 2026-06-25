@@ -62,6 +62,7 @@ def _add_missing_and_conflicts(plan: NormalizationPlan, stage_id: str,
         plan.missing_items.append(
             MissingItem(area=stage_id, detail=str(miss), query_id=art.query_id)
         )
+    # forward-wiring: no current stage emits `conflicts`; populated by Plan 5 conflict detection
     for conflict in block.get("conflicts") or []:
         plan.source_conflicts.append(
             SourceConflict(area=stage_id, detail=str(conflict), query_id=art.query_id)
@@ -123,16 +124,19 @@ def _merge_endpoint_details(
             "responses": item.get("responses") or [],
             "examples": item.get("examples") or [],
         }
-        match = next(
-            (e for e in plan.endpoints
-             if e.method == item.get("method") and e.path == item.get("path")),
-            None,
-        )
-        if match is not None:
-            match.parameters = detail["parameters"]
-            match.request = detail["request"]
-            match.responses = detail["responses"]
-            match.examples = detail["examples"]
+        matched = False
+        for idx, existing in enumerate(plan.endpoints):
+            if existing.method == item.get("method") and existing.path == item.get("path"):
+                _, citation = classify_item(
+                    item.get("source"), query_id=art.query_id,
+                    answer_path=art.answer_path, manifest=manifest,
+                )
+                plan.endpoints[idx] = existing.model_copy(
+                    update={**detail, "citations": [*existing.citations, citation]}
+                )
+                matched = True
+                break
+        if matched:
             continue
         status, citation = classify_item(
             item.get("source"), query_id=art.query_id,
