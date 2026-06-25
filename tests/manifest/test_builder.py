@@ -42,3 +42,39 @@ def test_build_manifest_without_urls_needs_no_client(tmp_path: Path, fixed_now):
 
     assert manifest.url_sources == []
     assert len(manifest.local_sources) == 1
+
+
+def test_build_manifest_creates_and_closes_own_client(tmp_path, fixed_now, monkeypatch):
+    (tmp_path / "readme.md").write_text("guide", encoding="utf-8")
+
+    closed = {"value": False}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"doc")
+
+    # Create a mock client with tracking close
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler))
+    original_close = mock_client.close
+
+    def tracking_close():
+        closed["value"] = True
+        original_close()
+
+    mock_client.close = tracking_close
+
+    # Mock the Client constructor to return our tracked client
+    monkeypatch.setattr(
+        "loop_apidoc.manifest.builder.httpx.Client",
+        lambda *args, **kwargs: mock_client,
+    )
+
+    manifest = build_manifest(
+        sources_root=tmp_path,
+        urls=["https://example.com/api"],
+        generated_at=fixed_now,
+        client=None,
+    )
+
+    assert len(manifest.url_sources) == 1
+    assert manifest.url_sources[0].http_status == 200
+    assert closed["value"] is True
