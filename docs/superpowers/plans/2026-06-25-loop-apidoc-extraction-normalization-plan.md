@@ -1776,3 +1776,4 @@ git commit -m "test: add extraction-to-plan integration coverage"
 - **自動衝突偵測（延後）**：`source_conflicts` 目前僅在結構區塊含 `conflicts` 陣列時填入；跨來源一致性衝突由 Plan 5 §9.3 驗證 surfacing 後回填。
 - **系統與 API 分組（延後）**：`NormalizationPlan.system_groups` schema 欄位已備妥（供 Plan 4 消費），但本計畫無專屬分組擷取階段（stage 02 概覽為敘事文字），故保持空列表，不從敘事推測分組。若 Plan 4/5 需要結構化分組，再新增一個結構化階段填入。
 - **真實 smoke test（Plan 6 之外手動）**：以小型測試 Notebook 驗證 NotebookLM 是否確實依 `json_hint` 回傳乾淨 ```json 區塊；若實際輸出常夾雜散文，於 `extract_json_block` 增補容錯或於提示加強格式約束。
+- **§6 內容主題比對（延後，final review 指出）**：spec §6 要求「將回答與 manifest 做**名稱及內容主題**比對」，但本計畫 `match_manifest_source` 只做名稱／路徑子字串比對，未實作「內容主題」那一半。屬 §6 binding 要求的部分未覆蓋，於 Plan 4/5 補上內容主題比對（例如以 endpoint/schema 名稱、章節關鍵字對應 manifest 來源主題），在此之前無法名稱命中者一律維持 `unverified`（fail-closed，符合 §9.4）。
