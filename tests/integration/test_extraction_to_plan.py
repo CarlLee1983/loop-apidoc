@@ -44,12 +44,12 @@ class _Result:
         self.returncode = 0
 
 
-# Quoted JSON keys appear only in structured INITIAL questions (via json_hint);
-# REVERSE questions carry no json_hint, so they fall through to prose. All blocks are
-# complete (missing: []), so no follow-ups occur.
+# The current stage's json_hint contains `MUST be `<key>`` (backtick-wrapped); the
+# double-quote form `"<key>"` also appears in earlier answers embedded via
+# build_known_summary, so match on the backtick form which is unique to the active stage.
 _KEY_TO_STAGE = {
-    '"environments"': "03", '"security_schemes"': "04", '"endpoints"': "05",
-    '"endpoint_details"': "06", '"schemas"': "07", '"errors"': "08", '"operational"': "09",
+    "`environments`": "03", "`security_schemes`": "04", "`endpoints`": "05",
+    "`endpoint_details`": "06", "`schemas`": "07", "`errors`": "08", "`operational`": "09",
 }
 
 
