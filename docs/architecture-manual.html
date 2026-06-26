@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>架構手冊 · loop-apidoc</title>
+<meta name="description" content="loop-apidoc API文件自動化管線架構與模組設計手冊">
 <style>
   :root {
     --bg-base: #f8fafc;
@@ -88,7 +89,8 @@ h1 { font-size: 30px; margin: 0 0 8px; }
 h2 { font-size: 22px; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 h3 { font-size: 17px; margin: 26px 0 10px; }
 p, li { color: var(--fg); }
-a { color: var(--accent); }
+a { color: var(--accent); transition: color 0.15s ease; text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
 blockquote {
   margin: 16px 0; padding: 8px 16px; border-left: 3px solid var(--accent);
   background: var(--panel); border-radius: 0 8px 8px 0; color: var(--muted);
@@ -415,10 +417,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 </style>
 <body>
 <div class="layout">
-  <div class="top-bar">
+  <header class="top-bar">
     <h1>loop-apidoc 架構說明手冊</h1>
     <a href="operator-manual.html" class="back-link">← 操作者手冊</a>
-  </div>
+  </header>
 
   <div class="dashboard">
     <!-- Left Timeline Navigation -->
@@ -535,20 +537,20 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     <h2>套件邊界與模組架構</h2>
     <div class="mermaid">
       flowchart TD
-          cli[cli.py<br/>Typer 進入點]
+          cli["cli.py<br/>Typer 進入點"]
 
-          cli --> doctor[doctor/<br/>唯讀環境檢查]
-          cli --> manifest[manifest/<br/>掃描 + manifest]
-          cli --> run[run/<br/>pipeline 編排]
-          cli --> validate[validate/<br/>驗證 + 報告]
+          cli --> doctor["doctor/<br/>唯讀環境檢查"]
+          cli --> manifest["manifest/<br/>掃描 + manifest"]
+          cli --> run["run/<br/>pipeline 編排"]
+          cli --> validate["validate/<br/>驗證 + 報告"]
 
           run --> manifest
-          run --> extraction[extraction/<br/>多輪查詢 + 答案保存]
-          run --> plan[plan/<br/>規格化計畫 + 來源比對]
-          run --> generate[generate/<br/>OpenAPI/MD/provenance]
+          run --> extraction["extraction/<br/>多輪查詢 + 答案保存"]
+          run --> plan["plan/<br/>規格化計畫 + 來源比對"]
+          run --> generate["generate/<br/>OpenAPI/MD/provenance"]
           run --> validate
 
-          extraction --> notebooklm[notebooklm/<br/>skill adapter + retry]
+          extraction --> notebooklm["notebooklm/<br/>skill adapter + retry"]
           doctor --> notebooklm
           plan --> manifest
 
@@ -560,10 +562,92 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     </div>
   </div>
 
-  <div class="footer">
+  <footer class="footer">
     由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline
-  </div>
+  </footer>
 </div>
+
+<script>
+  const dataset = {
+    prep: {
+      num: "PREP",
+      title: "人工前置作業",
+      pillClass: "prep",
+      pillLabel: "Manual",
+      desc: "在啟動自動化 CLI 工具前，操作者必須進行的前置準備工作（不屬於 CLI 本身）。包含在 NotebookLM 中建立一個專屬 Notebook、上傳所有 API 文件來源並取得分享連結，同時在本機保留一份完全對應的原始檔案目錄。",
+      details: "<p>第一版支援的來源格式：PDF、Markdown、Word、OpenAPI JSON/YAML 及公開網頁 URL。</p><p>Notebook 必須可由本機瀏覽器登入的 Google 帳號存取；分享設定或帳號權限不足時，CLI 會在預檢階段失敗。</p>",
+      seam: "N/A (手動前置操作)",
+      inputs: "API 原始文件來源 (本機目錄)",
+      outputs: "NotebookLM 分享連結, 本機對應目錄"
+    },
+    scan: {
+      num: "STEP 01",
+      title: "來源掃描 (Scan)",
+      pillClass: "io",
+      pillLabel: "Local I/O",
+      desc: "透過 <code>loop-apidoc manifest</code> 掃描指定之本機來源目錄與公開 URL，詳細記錄各檔案的相對路徑、格式、大小、SHA-256 雜湊值與掃描時間。生成一份標準的來源清單檔案，作為後續所有 API 輸出項目追溯來源 (Provenance) 的依據。",
+      details: "<p>在此階段，系統會過濾出不受支援的格式，自動偵測重複檔案，若發現檔案不可讀即觸發警告。此過程為純本機磁碟讀取。</p>",
+      seam: "build_manifest(sources_root, urls, generated_at)",
+      inputs: "--sources <目錄路徑>, --url <URL清單>",
+      outputs: "manifest.json"
+    },
+    extract: {
+      num: "STEP 02",
+      title: "資料擷取 (Extraction)",
+      pillClass: "io",
+      pillLabel: "Network I/O",
+      desc: "以分段擷取策略，透過自動化瀏覽器向 NotebookLM 進行多輪對答查詢（避免單次傳輸量過大導致 NotebookLM 漏失欄位或發生幻覺）。每一輪查詢（包含 10 個核心分段主題）皆為獨立 Session，因此程式會帶上已收集到的已知摘要、待確認項目與目標格式契約。",
+      details: "<h4>10 大查詢分段主題</h4><ul><li>01 Notebook 與來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 rate limit / timeout / retry / idempotency / webhook</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>對答契約：盤點型階段（03-09）強迫要求 fenced JSON 區塊以利程式化解析；敘事型階段（01, 02, 10）則為純文字 Markdown。</p>",
+      seam: "run_extraction(adapter, notebook_url, store, *, max_attempts=3)",
+      inputs: "manifest.json, NotebookLM 筆記 URL",
+      outputs: "extraction/queries.jsonl, extraction/answers/ (原始歷程)"
+    },
+    plan: {
+      num: "STEP 03",
+      title: "規格化計畫 (Build Plan)",
+      pillClass: "pure",
+      pillLabel: "Pure Logic",
+      desc: "比對擷取到的 JSON/Markdown 資料與 sources 的 <code>manifest.json</code> 雜湊，交叉比對來源，將碎片化的資訊重構為單一結構的 <code>normalization-plan.json</code>。本階段屬於純函數轉譯邏輯，完全沒有檔案或網路 I/O，便於單元測試。",
+      details: "<p>規格化計畫中會詳細指出哪些 API 欄位來源充足，哪些必要欄位在來源中缺失（需以預設值占位）或來源衝突（列入重新查詢清單）。</p>",
+      seam: "build_normalization_plan(extraction, manifest)",
+      inputs: "queries.jsonl & manifest.json",
+      outputs: "plan/normalization-plan.json"
+    },
+    generate: {
+      num: "STEP 04",
+      title: "生成產物 (Generate)",
+      pillClass: "io",
+      pillLabel: "File Output",
+      desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
+      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      seam: "generate_outputs(plan, manifest, run_dir)",
+      inputs: "normalization-plan.json, manifest.json",
+      outputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json"
+    },
+    validate: {
+      num: "STEP 05",
+      title: "產物驗證 (Validate)",
+      pillClass: "pure",
+      pillLabel: "Pure Logic",
+      desc: "對生成的 OpenAPI/Markdown/Provenance 執行四類嚴格驗證檢查。特別是<b>「禁止推測」</b>：任何進入輸出的內容都必須對應到 <code>provenance.json</code> 的 target 上，交叉比對是否有來源依據，嚴格阻絕推測與幻覺。",
+      details: "<h4>四大驗證維度</h4><ul><li><b>結構驗證</b>：檢查 OpenAPI 規格合法性，端點必須包含 method、path 與至少一個 response</li><li><b>完整度驗證</b>：標記為 unverified 的來源、必要欄位缺失、不可讀來源皆會使驗證失敗</li><li><b>一致性驗證</b>：OpenAPI 與 Markdown / Provenance 的端點集合與 security 名稱必須完全一致</li><li><b>禁止推測驗證</b>：任何輸出項目必須對應 provenance 來源；無來源支持的內容視為違規</li></ul>",
+      seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
+      inputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
+      outputs: "validation/report.json, validation/report.md"
+    },
+    loop: {
+      num: "STEP 06",
+      title: "修正迴圈 (Correction Loop)",
+      pillClass: "pure",
+      pillLabel: "Controller",
+      desc: "工作流的自動校正引擎。如果驗證報告發現 ERROR，修正迴圈會依錯誤屬性將問題分類並重試。上限最多 3 輪。如果三輪後仍有錯誤，或遇到 unfixable 問題，會提早早停退出並以非零碼退出 (Fail-Closed)。",
+      details: "<h4>錯誤分類與修正策略</h4><ul><li><b>OPENAPI_INVALID / OUTPUT_MISMATCH</b>: 執行本地自動生成修正 (AUTO_FIX)</li><li><b>REQUIRED_INFO_MISSING</b>: 鎖定特定階段對 NotebookLM 發起重新擷取 (RE_QUERY)</li><li><b>SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</b>: 無法自動修正 (UNFIXABLE)，Pipeline 立即早停</li></ul>",
+      seam: "run_correction_loop(plan, result, *, regenerate, requery, validate, max_rounds=3)",
+      inputs: "validation/report.json",
+      outputs: "修正重製後的產物檔或早停錯誤日誌"
+    }
+  };
+</script>
 
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
