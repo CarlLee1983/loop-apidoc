@@ -1,5 +1,6 @@
 """Validation layer (spec §9)."""
 
+from loop_apidoc.validate.loader import validate_run_dir
 from loop_apidoc.validate.models import (
     Issue,
     IssueCode,
@@ -14,4 +15,5 @@ __all__ = [
     "Severity",
     "ValidationReport",
     "validate_outputs",
+    "validate_run_dir",
 ]
