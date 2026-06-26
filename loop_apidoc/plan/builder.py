@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Callable
 
+from pydantic import ValidationError
+
 from loop_apidoc.extraction.jsonblock import extract_json_block
 from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.manifest.models import Manifest
@@ -88,6 +90,26 @@ def _dict_items(
     return items
 
 
+def _build_entry(
+    plan: NormalizationPlan, stage_id: str, query_id: str | None,
+    json_key: str, entry_class: type, **kwargs,
+):
+    """Construct an entry, tolerating malformed nested fields.
+
+    `_dict_items` only guards the outer collection shape; a NotebookLM item can
+    still carry a wrong-typed nested field (e.g. a scalar where list[dict] is
+    expected) that fails pydantic validation. Catch that here, record a
+    MissingItem, and skip the item rather than crashing the whole plan build."""
+    try:
+        return entry_class(**kwargs)
+    except ValidationError:
+        plan.missing_items.append(
+            MissingItem(area=stage_id, detail=f"malformed item in {json_key}",
+                        query_id=query_id)
+        )
+        return None
+
+
 def _note(extraction: ExtractionResult, stage_id: str) -> str:
     art = extraction.initial(stage_id)
     return art.answer if art else ""
@@ -141,7 +163,11 @@ def build_normalization_plan(
                 item.get("source"), query_id=art.query_id,
                 answer_path=art.answer_path, manifest=manifest,
             )
-            target.append(entry_class(status=status, citations=[citation], **factory(item)))
+            entry = _build_entry(plan, stage_id, art.query_id, json_key, entry_class,
+                                 status=status, citations=[citation], **factory(item))
+            if entry is None:
+                continue
+            target.append(entry)
             if status is PlanItemStatus.UNVERIFIED:
                 label = item.get("path") or item.get("name") or item.get("code") or json_key
                 plan.unverified_items.append(
@@ -183,10 +209,18 @@ def _merge_endpoint_details(
                 # its own source; merging must not let it ride on the endpoint's
                 # existing SUPPORTED status. Take the strictest of the two.
                 merged_status = _stricter(existing.status, detail_status)
-                plan.endpoints[idx] = existing.model_copy(
-                    update={**detail, "status": merged_status,
-                            "citations": [*existing.citations, citation]}
+                # model_copy does not re-validate; build a fresh entry so a
+                # malformed nested detail is rejected instead of silently
+                # stored. On failure the existing endpoint is left intact.
+                merged = _build_entry(
+                    plan, "06", art.query_id, "endpoint_details", EndpointEntry,
+                    **{**existing.model_dump(), **detail, "status": merged_status,
+                       "citations": [*existing.citations, citation]},
                 )
+                matched = True
+                if merged is None:
+                    break
+                plan.endpoints[idx] = merged
                 if (merged_status is not existing.status
                         and merged_status in (PlanItemStatus.UNVERIFIED,
                                               PlanItemStatus.CONFLICTING)):
@@ -195,7 +229,6 @@ def _merge_endpoint_details(
                                        detail=str(item.get("path") or "endpoint"),
                                        query_id=art.query_id)
                     )
-                matched = True
                 break
         if matched:
             continue
@@ -203,10 +236,14 @@ def _merge_endpoint_details(
             item.get("source"), query_id=art.query_id,
             answer_path=art.answer_path, manifest=manifest,
         )
-        plan.endpoints.append(
-            EndpointEntry(method=item.get("method"), path=item.get("path"), summary=None,
-                          status=status, citations=[citation], **detail)
+        entry = _build_entry(
+            plan, "06", art.query_id, "endpoint_details", EndpointEntry,
+            method=item.get("method"), path=item.get("path"), summary=None,
+            status=status, citations=[citation], **detail,
         )
+        if entry is None:
+            continue
+        plan.endpoints.append(entry)
         if status is PlanItemStatus.UNVERIFIED:
             plan.unverified_items.append(
                 UnverifiedItem(area="06", detail=str(item.get("path") or "endpoint"),

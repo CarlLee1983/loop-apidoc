@@ -152,3 +152,62 @@ def test_malformed_endpoint_details_shape_does_not_raise():
     )
     assert plan.endpoints == []
     assert any(m.area == "06" for m in plan.missing_items)
+
+
+def test_nested_scalar_wrong_type_in_inventory_does_not_raise():
+    # `fields` must be a list[dict]; a bare string used to crash entry build.
+    block = '```json\n{"schemas": [{"name": "U", "fields": "bad"}]}\n```'
+    plan = build_normalization_plan(
+        ExtractionResult(notebook_url="https://nb/x",
+                         artifacts=[_art("07", QueryKind.INITIAL, block)]),
+        _manifest(),
+    )
+    assert plan.schemas == []
+    assert any(m.area == "07" for m in plan.missing_items)
+
+
+def test_nested_scalar_wrong_type_in_enums_does_not_raise():
+    block = '```json\n{"schemas": [{"name": "U", "enums": "bad"}]}\n```'
+    plan = build_normalization_plan(
+        ExtractionResult(notebook_url="https://nb/x",
+                         artifacts=[_art("07", QueryKind.INITIAL, block)]),
+        _manifest(),
+    )
+    assert plan.schemas == []
+    assert any(m.area == "07" for m in plan.missing_items)
+
+
+def test_nested_scalar_wrong_type_in_new_endpoint_does_not_raise():
+    # A stage-06 detail with no matching stage-05 endpoint becomes a new
+    # endpoint; a scalar `parameters` must not crash construction.
+    block = ('```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
+             ' "parameters": "bad"}]}\n```')
+    plan = build_normalization_plan(
+        ExtractionResult(notebook_url="https://nb/x",
+                         artifacts=[_art("06", QueryKind.INITIAL, block)]),
+        _manifest(),
+    )
+    assert plan.endpoints == []
+    assert any(m.area == "06" for m in plan.missing_items)
+
+
+def test_nested_scalar_wrong_type_in_merged_detail_does_not_raise():
+    # A scalar `responses` in a detail that merges into an existing endpoint
+    # must not crash; the existing endpoint is preserved unchanged.
+    extraction = ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("05", QueryKind.INITIAL,
+                 '```json\n{"endpoints": [{"method": "GET", "path": "/u",'
+                 ' "summary": "list", "source": "api.pdf"}]}\n```'),
+            _art("06", QueryKind.INITIAL,
+                 '```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
+                 ' "responses": "bad", "source": "api.pdf"}]}\n```'),
+        ],
+    )
+    plan = build_normalization_plan(extraction, _manifest())
+    assert len(plan.endpoints) == 1
+    ep = plan.endpoints[0]
+    assert ep.path == "/u"
+    assert ep.responses == []  # bad detail rejected, endpoint left intact
+    assert any(m.area == "06" for m in plan.missing_items)
