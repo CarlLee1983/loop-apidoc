@@ -3,7 +3,7 @@ from __future__ import annotations
 from loop_apidoc.run.correction import run_correction_loop
 from loop_apidoc.run.models import RunStatus
 from loop_apidoc.generate.models import GenerateResult, ProvenanceDocument
-from loop_apidoc.plan.models import EndpointEntry, NormalizationPlan, SourceCitation
+from loop_apidoc.plan.models import NormalizationPlan
 from loop_apidoc.validate.models import Issue, IssueCode, Severity, ValidationReport
 
 
