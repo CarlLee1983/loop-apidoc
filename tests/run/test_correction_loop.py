@@ -126,6 +126,51 @@ def test_auto_fix_only_does_not_requery() -> None:
         ]
     )
     requeries = {"n": 0}
+    regenerations = {"n": 0}
+
+    def requery(p, r):
+        requeries["n"] += 1
+        return p
+
+    def regenerate(p):
+        regenerations["n"] += 1
+        return _result()
+
+    outcome = run_correction_loop(
+        _plan(),
+        _result(),
+        regenerate=regenerate,
+        requery=requery,
+        validate=lambda p, r: auto_fix_report,
+    )
+    assert outcome.status is RunStatus.FAILED
+    assert outcome.rounds == 0  # short-circuits immediately, no wasted rounds
+    assert requeries["n"] == 0  # AUTO_FIX-only never triggers requery
+    assert regenerations["n"] == 0  # no futile regeneration
+
+
+def test_short_circuits_when_requery_leaves_only_auto_fix() -> None:
+    auto_fix_report = ValidationReport(
+        issues=[
+            Issue(
+                code=IssueCode.OPENAPI_INVALID,
+                severity=Severity.ERROR,
+                location="paths",
+                evidence="invalid schema",
+                suggested_fix="fix schema",
+            )
+        ]
+    )
+    # round 0 validate -> RE_QUERY (missing); after round 1 -> AUTO_FIX-only.
+    reports = [_missing_report(), auto_fix_report]
+    calls = {"n": 0}
+
+    def validate(p, r):
+        report = reports[calls["n"]]
+        calls["n"] += 1
+        return report
+
+    requeries = {"n": 0}
 
     def requery(p, r):
         requeries["n"] += 1
@@ -136,8 +181,8 @@ def test_auto_fix_only_does_not_requery() -> None:
         _result(),
         regenerate=lambda p: _result(),
         requery=requery,
-        validate=lambda p, r: auto_fix_report,
+        validate=validate,
     )
     assert outcome.status is RunStatus.FAILED
-    assert outcome.rounds == 3
-    assert requeries["n"] == 0  # AUTO_FIX-only never triggers requery
+    assert outcome.rounds == 1  # one RE_QUERY round, then short-circuit (not 3)
+    assert requeries["n"] == 1  # requery ran only for the RE_QUERY round
