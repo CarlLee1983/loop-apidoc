@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from loop_apidoc.extraction.orchestrator import run_extraction
+from loop_apidoc.extraction.orchestrator import rerun_stages, run_extraction
 from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.generate.writer import generate_outputs
 from loop_apidoc.manifest.builder import build_manifest
@@ -11,9 +11,32 @@ from loop_apidoc.notebooklm.adapter import NotebookLMAdapter
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.run.correction import annotate_fixability, run_correction_loop
 from loop_apidoc.run.models import RunResult, RunStatus
+from loop_apidoc.run.requery import stages_for_requery
 from loop_apidoc.validate.models import Issue, IssueCode, Severity, ValidationReport
 from loop_apidoc.validate.report import write_reports
 from loop_apidoc.validate.validator import validate_outputs
+
+
+def _make_requery(*, adapter, notebook_url, store, manifest, run_dir, state):
+    """Build the correction-loop requery closure.
+
+    Targets only the stages the report's actionable RE_QUERY issues map to;
+    falls back to a full re-extraction when none can be pinned. `state` holds
+    the current ExtractionResult and is updated in place so each round re-runs
+    against the latest extraction.
+    """
+    def requery(p, r):
+        stages = stages_for_requery(r)
+        if stages:
+            fresh = rerun_stages(adapter, notebook_url, store, state["extraction"], stages)
+        else:
+            fresh = run_extraction(adapter, notebook_url, store)
+        state["extraction"] = fresh
+        new_plan = build_normalization_plan(fresh, manifest)
+        _persist_plan(run_dir, new_plan)
+        return new_plan
+
+    return requery
 
 
 def _auth_blocked_report() -> ValidationReport:
@@ -66,6 +89,7 @@ def run_pipeline(
 
     store = ExtractionStore(run_dir / "extraction")
     extraction = run_extraction(adapter, notebook_url, store)
+    state = {"extraction": extraction}
     plan = build_normalization_plan(extraction, manifest)
     _persist_plan(run_dir, plan)
 
@@ -77,11 +101,10 @@ def run_pipeline(
     def validate(p, r):
         return validate_outputs(p, r, manifest)
 
-    def requery(p, r):
-        fresh = run_extraction(adapter, notebook_url, store)
-        new_plan = build_normalization_plan(fresh, manifest)
-        _persist_plan(run_dir, new_plan)
-        return new_plan
+    requery = _make_requery(
+        adapter=adapter, notebook_url=notebook_url, store=store,
+        manifest=manifest, run_dir=run_dir, state=state,
+    )
 
     outcome = run_correction_loop(
         plan,
