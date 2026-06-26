@@ -69,12 +69,89 @@ def _build_security_schemes(plan: NormalizationPlan) -> dict:
     return out
 
 
+_PARAMETER_LOCATIONS = {"query", "path", "header", "cookie"}
+
+
+def _build_parameter(raw: dict) -> dict | None:
+    name = raw.get("name")
+    if not name:
+        return None
+    location = raw.get("in") or raw.get("location") or "query"
+    if location not in _PARAMETER_LOCATIONS:
+        location = "query"
+    param: dict = {"name": name, "in": location}
+    if location == "path":
+        param["required"] = True
+    elif "required" in raw:
+        param["required"] = bool(raw["required"])
+    schema = _schema_from_type(raw.get("type") if "type" in raw else raw.get("schema"))
+    if schema:
+        param["schema"] = schema
+    if raw.get("description"):
+        param["description"] = raw["description"]
+    return param
+
+
+def _build_request_body(raw: dict) -> dict:
+    content_type = raw.get("content_type") or "application/json"
+    schema = _schema_from_type(raw.get("schema")) or {}
+    body: dict = {"content": {content_type: {"schema": schema}}}
+    if raw.get("required") is not None:
+        body["required"] = bool(raw["required"])
+    if raw.get("description"):
+        body["description"] = raw["description"]
+    return body
+
+
+def _build_responses(responses: list[dict]) -> dict:
+    out: dict = {}
+    for raw in responses:
+        status = str(raw.get("status") or "").strip()
+        if not status:
+            continue
+        resp: dict = {"description": raw.get("description") or ""}
+        schema = _schema_from_type(raw.get("schema"))
+        if schema:
+            content_type = raw.get("content_type") or "application/json"
+            resp["content"] = {content_type: {"schema": schema}}
+        out[status] = resp
+    if not out:
+        out["default"] = {
+            "description": "來源未提供回應定義",
+            X_LOOP_STATUS: MISSING_STATUS,
+        }
+    return out
+
+
+def _build_operation(endpoint) -> dict:
+    op: dict = {}
+    if endpoint.summary:
+        op["summary"] = endpoint.summary
+    params = [p for p in (_build_parameter(r) for r in endpoint.parameters) if p]
+    if params:
+        op["parameters"] = params
+    if endpoint.request:
+        op["requestBody"] = _build_request_body(endpoint.request)
+    op["responses"] = _build_responses(endpoint.responses)
+    return op
+
+
+def _build_paths(plan: NormalizationPlan) -> dict:
+    paths: dict = {}
+    for endpoint in plan.endpoints:
+        if not endpoint.path or not endpoint.method:
+            continue
+        method = endpoint.method.lower()
+        paths.setdefault(endpoint.path, {})[method] = _build_operation(endpoint)
+    return paths
+
+
 def build_openapi(plan: NormalizationPlan) -> dict:
     doc: dict = {"openapi": "3.1.0", "info": _build_info(plan)}
     servers = _build_servers(plan)
     if servers:
         doc["servers"] = servers
-    doc["paths"] = {}
+    doc["paths"] = _build_paths(plan)
     components: dict = {}
     security_schemes = _build_security_schemes(plan)
     if security_schemes:

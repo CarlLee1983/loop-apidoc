@@ -6,6 +6,7 @@ from loop_apidoc.generate.openapi import (
     build_openapi,
 )
 from loop_apidoc.plan.models import (
+    EndpointEntry,
     EnvironmentEntry,
     NormalizationPlan,
     PlanItemStatus,
@@ -91,3 +92,62 @@ def test_security_scheme_unknown_type_is_placeholder():
     assert scheme["type"] == "apiKey"
     assert scheme[X_LOOP_STATUS] == MISSING_STATUS
     assert scheme["description"] == "hmac-signature"
+
+
+def test_endpoint_becomes_path_operation():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/users",
+            summary="List users",
+            parameters=[{"name": "limit", "in": "query", "type": "integer"}],
+            responses=[{"status": "200", "description": "ok", "schema": {"type": "array"}}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/users"]["get"]
+    assert op["summary"] == "List users"
+    assert op["parameters"] == [
+        {"name": "limit", "in": "query", "schema": {"type": "integer"}}
+    ]
+    assert op["responses"]["200"]["description"] == "ok"
+    assert op["responses"]["200"]["content"]["application/json"]["schema"] == {"type": "array"}
+
+
+def test_path_parameter_forced_required():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="get", path="/users/{id}",
+            parameters=[{"name": "id", "in": "path", "type": "string"}],
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    param = build_openapi(plan)["paths"]["/users/{id}"]["get"]["parameters"][0]
+    assert param["required"] is True
+
+
+def test_request_body_mapped():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/users",
+            request={"schema": {"type": "object"}, "required": True},
+            responses=[{"status": "201", "description": "created"}],
+        )
+    ])
+    body = build_openapi(plan)["paths"]["/users"]["post"]["requestBody"]
+    assert body["required"] is True
+    assert body["content"]["application/json"]["schema"] == {"type": "object"}
+
+
+def test_missing_responses_get_default_placeholder():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="GET", path="/ping")
+    ])
+    responses = build_openapi(plan)["paths"]["/ping"]["get"]["responses"]
+    assert responses["default"][X_LOOP_STATUS] == MISSING_STATUS
+
+
+def test_endpoint_without_path_or_method_skipped():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.MISSING, method=None, path="/x"),
+        EndpointEntry(status=PlanItemStatus.MISSING, method="GET", path=None),
+    ])
+    assert build_openapi(plan)["paths"] == {}
