@@ -24,6 +24,26 @@ def test_broken_symlink_recorded_not_fatal(tmp_path: Path) -> None:
     assert by_path["dangling.md"].supported is False
 
 
+def test_symlink_escaping_root_is_unreadable(tmp_path: Path) -> None:
+    root = tmp_path / "src"
+    root.mkdir()
+    (root / "good.md").write_text("# ok", encoding="utf-8")
+
+    # A secret outside the source root, surfaced via a symlink inside the root.
+    secret = tmp_path / "secret.md"
+    secret.write_text("TOP SECRET", encoding="utf-8")
+    (root / "leak.md").symlink_to(secret)
+
+    sources = scan_sources(root, scanned_at=_now())
+    by_path = {s.relative_path: s for s in sources}
+
+    assert by_path["good.md"].status is ProcessingStatus.PENDING
+    leak = by_path["leak.md"]
+    assert leak.status is ProcessingStatus.UNREADABLE
+    assert leak.sha256 == ""
+    assert leak.supported is False
+
+
 def test_unreadable_file_recorded(tmp_path: Path, monkeypatch) -> None:
     target = tmp_path / "secret.md"
     target.write_text("data", encoding="utf-8")

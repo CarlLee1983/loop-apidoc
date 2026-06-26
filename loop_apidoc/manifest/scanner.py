@@ -28,9 +28,23 @@ def _is_regular_file(path: Path) -> bool:
         return False
 
 
+def _within_root(path: Path, root_resolved: Path) -> bool:
+    """True when `path` resolves to a location inside `root_resolved`.
+
+    Broken symlinks resolve (strict=False) to a still-inside-root target and
+    stay readable-then-unreadable as before; symlinks pointing outside the
+    source root resolve elsewhere and are rejected here so we never hash
+    content the operator did not place under --sources."""
+    try:
+        return path.resolve().is_relative_to(root_resolved)
+    except OSError:
+        return False
+
+
 def scan_sources(root: Path, scanned_at: datetime) -> list[LocalSource]:
     sources: list[LocalSource] = []
     seen_hashes: dict[str, str] = {}  # sha256 -> first relative_path
+    root_resolved = root.resolve()
 
     files = sorted(
         (p for p in root.rglob("*") if _is_regular_file(p)),
@@ -41,6 +55,22 @@ def scan_sources(root: Path, scanned_at: datetime) -> list[LocalSource]:
         relative_path = path.relative_to(root).as_posix()
         source_format = detect_format(path)
         supported = is_supported(source_format)
+
+        if not _within_root(path, root_resolved):
+            sources.append(
+                LocalSource(
+                    relative_path=relative_path,
+                    mime_type=guess_mime_type(path),
+                    source_format=source_format,
+                    size_bytes=0,
+                    sha256="",
+                    scanned_at=scanned_at,
+                    supported=False,
+                    status=ProcessingStatus.UNREADABLE,
+                    duplicate_of=None,
+                )
+            )
+            continue
 
         try:
             sha256 = hash_file(path)
