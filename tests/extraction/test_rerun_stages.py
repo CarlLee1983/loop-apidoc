@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loop_apidoc.extraction.models import ExtractionResult
 from loop_apidoc.extraction.orchestrator import rerun_stages, run_extraction
 from loop_apidoc.extraction.stages import STAGES
 from loop_apidoc.extraction.store import ExtractionStore
@@ -49,7 +48,7 @@ def test_rerun_only_queries_requested_stage(tmp_path: Path) -> None:
     prior = run_extraction(adapter, NB, store)
     adapter.questions.clear()
 
-    merged = rerun_stages(adapter, NB, store, prior, {"04"})
+    rerun_stages(adapter, NB, store, prior, {"04"})
 
     # Only stage 04 was queried: 2 questions (initial + reverse).
     assert len(adapter.questions) == 2

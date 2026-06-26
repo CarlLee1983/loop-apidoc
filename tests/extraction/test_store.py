@@ -46,7 +46,7 @@ def test_rerun_same_query_id_does_not_overwrite(tmp_path: Path):
 
     # The JSONL audit trail has two records pointing at the two distinct files.
     lines = (tmp_path / "queries.jsonl").read_text(encoding="utf-8").splitlines()
-    paths = [json.loads(l)["answer_path"] for l in lines]
+    paths = [json.loads(line)["answer_path"] for line in lines]
     assert paths == [first.answer_path, second.answer_path]
     assert len(set(paths)) == 2
 
@@ -58,7 +58,7 @@ def test_record_appends_in_order(tmp_path: Path):
     store.record(query_id="05-reverse", stage_id="05", kind=QueryKind.REVERSE,
                  question="q2", answer="a2", returncode=0)
     lines = (tmp_path / "queries.jsonl").read_text(encoding="utf-8").splitlines()
-    assert [json.loads(l)["query_id"] for l in lines] == ["05-initial", "05-reverse"]
+    assert [json.loads(line)["query_id"] for line in lines] == ["05-initial", "05-reverse"]
 
 
 def test_extraction_result_selectors():
