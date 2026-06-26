@@ -26,7 +26,7 @@ def _iter_refs(node):
             else:
                 yield from _iter_refs(value)
     elif isinstance(node, list):
-        for idx, value in enumerate(node):
+        for value in node:
             yield from _iter_refs(value)
 
 
