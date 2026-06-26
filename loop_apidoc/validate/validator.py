@@ -13,9 +13,12 @@ from loop_apidoc.validate.structure import check_structure
 def validate_outputs(
     plan: NormalizationPlan, result: GenerateResult, manifest: Manifest
 ) -> ValidationReport:
-    """Aggregate the four §9 validation categories. Pure; Plan 6 reuses this seam.
+    """Aggregate the four §9 validation categories. Pure; the correction loop
+    reuses this seam.
 
-    `manifest` is reserved for Plan 6's §6 manifest-coverage deepening.
+    `manifest` is accepted but not yet consumed: §6 manifest-coverage
+    validation (surfacing unreadable/unsupported sources as issues) is a
+    deferred enhancement, not part of the correction-loop/run work.
     """
     issues = []
     issues += check_structure(result.openapi, result.markdown)

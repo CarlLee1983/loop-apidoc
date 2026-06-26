@@ -12,6 +12,14 @@ from loop_apidoc.validate.models import (
     ValidationReport,
 )
 
+# NOTE on AUTO_FIX (v1 limitation): generation is deterministic from the plan,
+# and v1 ships no OpenAPI/output repair transform. So an AUTO_FIX issue with no
+# accompanying RE_QUERY issue cannot change between rounds — the loop will
+# regenerate the identical (still-invalid) output until max_rounds, then FAIL.
+# This consumes no NotebookLM quota (regenerate is local), only compute. In
+# practice OPENAPI_INVALID/OUTPUT_MISMATCH should not arise from a valid plan
+# (the generator is validated end-to-end). A real autofix transform — or an
+# identical-report short-circuit — is a deferred enhancement.
 _CATEGORY: dict[IssueCode, CorrectionCategory] = {
     IssueCode.OPENAPI_INVALID: CorrectionCategory.AUTO_FIX,
     IssueCode.OUTPUT_MISMATCH: CorrectionCategory.AUTO_FIX,
