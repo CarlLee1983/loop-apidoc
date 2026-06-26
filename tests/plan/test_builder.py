@@ -78,3 +78,39 @@ def test_absent_structured_stage_records_missing():
     areas = {m.area for m in plan.missing_items}
     assert {"03", "04", "06", "07", "08", "09"}.issubset(areas)
     assert plan.environments == []
+
+
+def _merge_extraction(detail_source: str | None) -> ExtractionResult:
+    src = "null" if detail_source is None else f'"{detail_source}"'
+    return ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("05", QueryKind.INITIAL,
+                 '```json\n{"endpoints": ['
+                 '{"method": "GET", "path": "/u", "summary": "list", "source": "api.pdf"}]}\n```'),
+            _art("06", QueryKind.INITIAL,
+                 '```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
+                 f' "responses": [{{"status": "200"}}], "source": {src}}}]}}\n```'),
+        ],
+    )
+
+
+def test_merge_unverified_detail_downgrades_endpoint_status():
+    # stage 05 endpoint is SUPPORTED (api.pdf); stage 06 detail source is unverified.
+    plan = build_normalization_plan(_merge_extraction(None), _manifest())
+    assert len(plan.endpoints) == 1
+    ep = plan.endpoints[0]
+    assert ep.responses == [{"status": "200"}]
+    # the merged endpoint must NOT stay SUPPORTED while carrying unverified detail
+    assert ep.status is PlanItemStatus.UNVERIFIED
+    # ... and the downgrade is surfaced as an unverified item
+    assert any(u.area == "06" for u in plan.unverified_items)
+    # both citations retained
+    assert len(ep.citations) == 2
+
+
+def test_merge_supported_detail_keeps_supported():
+    plan = build_normalization_plan(_merge_extraction("api.pdf"), _manifest())
+    ep = plan.endpoints[0]
+    assert ep.status is PlanItemStatus.SUPPORTED
+    assert ep.responses == [{"status": "200"}]

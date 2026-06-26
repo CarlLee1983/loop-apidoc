@@ -20,6 +20,20 @@ from loop_apidoc.plan.models import (
     UnverifiedItem,
 )
 
+# Status strictness for merging: a merged endpoint is only as trustworthy as
+# its least-grounded source, so merging picks the worst (highest rank).
+_STATUS_RANK = {
+    PlanItemStatus.SUPPORTED: 0,
+    PlanItemStatus.MISSING: 1,
+    PlanItemStatus.UNVERIFIED: 2,
+    PlanItemStatus.CONFLICTING: 3,
+}
+
+
+def _stricter(a: PlanItemStatus, b: PlanItemStatus) -> PlanItemStatus:
+    return a if _STATUS_RANK[a] >= _STATUS_RANK[b] else b
+
+
 # inventory stage_id -> (json_key, plan_field, entry_class, field factory). Stage 06
 # is handled separately (merged into endpoints), so it is intentionally absent here.
 _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
@@ -127,13 +141,26 @@ def _merge_endpoint_details(
         matched = False
         for idx, existing in enumerate(plan.endpoints):
             if existing.method == item.get("method") and existing.path == item.get("path"):
-                _, citation = classify_item(
+                detail_status, citation = classify_item(
                     item.get("source"), query_id=art.query_id,
                     answer_path=art.answer_path, manifest=manifest,
                 )
+                # The detail (parameters/responses/...) is only as grounded as
+                # its own source; merging must not let it ride on the endpoint's
+                # existing SUPPORTED status. Take the strictest of the two.
+                merged_status = _stricter(existing.status, detail_status)
                 plan.endpoints[idx] = existing.model_copy(
-                    update={**detail, "citations": [*existing.citations, citation]}
+                    update={**detail, "status": merged_status,
+                            "citations": [*existing.citations, citation]}
                 )
+                if (merged_status is not existing.status
+                        and merged_status in (PlanItemStatus.UNVERIFIED,
+                                              PlanItemStatus.CONFLICTING)):
+                    plan.unverified_items.append(
+                        UnverifiedItem(area="06",
+                                       detail=str(item.get("path") or "endpoint"),
+                                       query_id=art.query_id)
+                    )
                 matched = True
                 break
         if matched:
