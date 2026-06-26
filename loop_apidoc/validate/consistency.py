@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+import re
+
+from loop_apidoc.validate.models import Issue, IssueCode, Severity
+
+_HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+_ENDPOINT_RE = re.compile(r"^### `([A-Za-z]+)` `([^`]+)`")
+_SECURITY_RE = re.compile(r"^- \*\*(.+?)\*\*（type")
+
+
+def _mismatch(location: str, evidence: str) -> Issue:
+    return Issue(
+        code=IssueCode.OUTPUT_MISMATCH,
+        severity=Severity.ERROR,
+        location=location,
+        evidence=evidence,
+        suggested_fix="重新生成使 Markdown 與 OpenAPI inventory 一致",
+    )
+
+
+def _openapi_endpoints(openapi: dict) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for path, item in (openapi.get("paths") or {}).items():
+        if not isinstance(item, dict):
+            continue
+        for method in item:
+            if method.lower() in _HTTP_METHODS:
+                out.add((method.lower(), path))
+    return out
+
+
+def _markdown_endpoints(markdown: str) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for line in markdown.splitlines():
+        match = _ENDPOINT_RE.match(line)
+        if match:
+            out.add((match.group(1).lower(), match.group(2)))
+    return out
+
+
+def _openapi_security(openapi: dict) -> set[str]:
+    schemes = (openapi.get("components") or {}).get("securitySchemes") or {}
+    return set(schemes.keys())
+
+
+def _markdown_security(markdown: str) -> set[str]:
+    out: set[str] = set()
+    for line in markdown.splitlines():
+        match = _SECURITY_RE.match(line)
+        if match:
+            out.add(match.group(1))
+    return out
+
+
+def check_consistency(openapi: dict, markdown: str) -> list[Issue]:
+    issues: list[Issue] = []
+    api_eps = _openapi_endpoints(openapi)
+    md_eps = _markdown_endpoints(markdown)
+    for method, path in sorted(api_eps - md_eps):
+        issues.append(_mismatch(
+            f"paths.{path}.{method}",
+            f"OpenAPI 有 {method.upper()} {path} 但 Markdown 缺少"))
+    for method, path in sorted(md_eps - api_eps):
+        issues.append(_mismatch(
+            f"paths.{path}.{method}",
+            f"Markdown 有 {method.upper()} {path} 但 OpenAPI 缺少"))
+
+    api_sec = _openapi_security(openapi)
+    md_sec = _markdown_security(markdown)
+    for name in sorted(api_sec ^ md_sec):
+        issues.append(_mismatch(
+            f"components.securitySchemes.{name}",
+            f"security scheme {name} 在 Markdown 與 OpenAPI 不一致"))
+    return issues
