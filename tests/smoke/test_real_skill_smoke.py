@@ -19,9 +19,8 @@ _SKILL_ROOT = os.environ.get("LOOP_APIDOC_SKILL_ROOT", "notebooklm-skill")
 @pytest.mark.skipif(not _ENABLED, reason="set LOOP_APIDOC_SMOKE=1 to run real-skill smoke")
 def test_real_ask_returns_answer() -> None:
     assert _NOTEBOOK, "set LOOP_APIDOC_SMOKE_NOTEBOOK to a test notebook url"
-    adapter = NotebookLMAdapter(
-        SkillConfig(skill_root=Path(_SKILL_ROOT)), subprocess_runner
-    )
+    config = SkillConfig(skill_root=Path(_SKILL_ROOT))
+    adapter = NotebookLMAdapter(config, subprocess_runner(config))
     status = adapter.auth_status()
     assert status.authenticated, "skill must be authenticated for smoke test"
     result = adapter.ask("What endpoints exist?", _NOTEBOOK)
