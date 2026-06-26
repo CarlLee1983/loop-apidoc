@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>架構手冊 · loop-apidoc</title>
+<style>
+:root {
+  --bg: #0f1117; --panel: #171a23; --fg: #e6e8ee; --muted: #9aa3b2;
+  --accent: #6ea8fe; --border: #262b38; --code-bg: #11141c; --kbd: #222838;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f8fa; --panel: #ffffff; --fg: #1b1f27; --muted: #5b6472;
+    --accent: #2563eb; --border: #e4e7ee; --code-bg: #f1f3f7; --kbd: #eef1f6;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.75 -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.layout { display: grid; grid-template-columns: 280px 1fr; max-width: 1180px; margin: 0 auto; }
+nav {
+  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  padding: 28px 18px; border-right: 1px solid var(--border); background: var(--bg);
+}
+nav .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; margin-bottom: 4px; }
+nav .sub { color: var(--muted); font-size: 12px; margin-bottom: 18px; }
+nav a { display: block; color: var(--muted); text-decoration: none; padding: 3px 0; font-size: 13.5px; }
+nav a:hover { color: var(--accent); }
+nav a.lvl-3 { padding-left: 14px; font-size: 12.5px; }
+main { padding: 40px 48px 96px; min-width: 0; }
+.toplinks { margin-bottom: 24px; font-size: 13px; color: var(--muted); }
+.toplinks a { color: var(--accent); text-decoration: none; }
+h1, h2, h3 { line-height: 1.3; scroll-margin-top: 24px; }
+h1 { font-size: 30px; margin: 0 0 8px; }
+h2 { font-size: 22px; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 17px; margin: 26px 0 10px; }
+p, li { color: var(--fg); }
+a { color: var(--accent); }
+blockquote {
+  margin: 16px 0; padding: 8px 16px; border-left: 3px solid var(--accent);
+  background: var(--panel); border-radius: 0 8px 8px 0; color: var(--muted);
+}
+code { font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace; font-size: 13.5px; }
+:not(pre) > code { background: var(--kbd); padding: 2px 6px; border-radius: 5px; }
+pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; overflow-x: auto; line-height: 1.6;
+}
+pre code { background: none; padding: 0; }
+pre.mermaid { background: var(--panel); border: 1px solid var(--border); text-align: center; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14.5px; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--panel); }
+tr:nth-child(even) td { background: color-mix(in srgb, var(--panel) 50%, transparent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  main { padding: 24px 20px 64px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">loop-apidoc</div>
+  <div class="sub">架構手冊</div>
+  <a class="lvl-2" href="#_2">高層流程</a>
+  <a class="lvl-2" href="#_3">套件邊界</a>
+  <a class="lvl-2" href="#seam">資料流與關鍵 seam</a>
+  <a class="lvl-2" href="#_4">擷取查詢分段</a>
+  <a class="lvl-2" href="#_5">來源追溯與驗證對齊</a>
+</nav>
+<main>
+  <div class="toplinks"><a href="operator-manual.html">← 操作者手冊</a></div>
+  <h1 id="_1">架構</h1>
+<p>本文件說明 <code>loop-apidoc</code> 的整體流程、資料流與套件邊界。完整設計依據見 <a href="superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md"><code>docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md</code></a>。</p>
+<h2 id="_2">高層流程</h2>
+<pre class="mermaid">
+flowchart LR
+    subgraph 人工["人工前置作業（不屬 CLI）"]
+        H1[建立 NotebookLM Notebook]
+        H2[上傳來源 + 公開 URL]
+        H3[取得分享連結]
+        H4[保留本機來源目錄]
+    end
+
+    subgraph CLI["loop-apidoc run"]
+        M[manifest<br/>掃描本機來源] --> E[擷取<br/>NotebookLM 多輪查詢]
+        E --> P[規格化計畫<br/>normalization-plan.json]
+        P --> G[生成<br/>OpenAPI + Markdown + provenance]
+        G --> V[驗證<br/>結構/完整性/一致性/禁止推測]
+        V -->|有 ERROR| C{修正分類}
+        C -->|AUTO_FIX| G
+        C -->|RE_QUERY| E
+        C -->|UNFIXABLE| X[早停]
+        V -->|通過| OK[PASSED]
+    end
+
+    人工 -.分享連結 + 來源目錄.-> CLI
+
+</pre>
+<p>修正迴圈最多 3 輪;<code>UNFIXABLE</code>(來源無法確認／衝突／不支援斷言)會 fail-closed 提早結束。</p>
+<h2 id="_3">套件邊界</h2>
+<pre class="mermaid">
+flowchart TD
+    cli[cli.py<br/>Typer 進入點]
+
+    cli --> doctor[doctor/<br/>唯讀環境檢查]
+    cli --> manifest[manifest/<br/>掃描 + manifest]
+    cli --> run[run/<br/>pipeline 編排]
+    cli --> validate[validate/<br/>驗證 + 報告]
+
+    run --> manifest
+    run --> extraction[extraction/<br/>多輪查詢 + 答案保存]
+    run --> plan[plan/<br/>規格化計畫 + 來源比對]
+    run --> generate[generate/<br/>OpenAPI/MD/provenance]
+    run --> validate
+
+    extraction --> notebooklm[notebooklm/<br/>skill adapter + retry]
+    doctor --> notebooklm
+    plan --> manifest
+
+    classDef io fill:#fde,stroke:#c69
+    class generate,run io
+
+</pre>
+<p><strong>唯一檔案 I/O 出口</strong>:只有 <code>generate/</code>(<code>generate_outputs</code>)與 <code>run/</code>(<code>run_pipeline</code> 擁有 run-dir)寫檔;其餘模組皆為純函式,便於單元測試。</p>
+<h2 id="seam">資料流與關鍵 seam</h2>
+<table>
+<thead>
+<tr>
+<th>階段</th>
+<th>公開 seam</th>
+<th>產物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>掃描</td>
+<td><code>build_manifest(sources_root, urls, generated_at)</code></td>
+<td><code>manifest.json</code></td>
+</tr>
+<tr>
+<td>擷取</td>
+<td><code>run_extraction(adapter, notebook_url, store, *, max_attempts=3)</code></td>
+<td><code>extraction/queries.jsonl</code>、<code>extraction/answers/</code></td>
+</tr>
+<tr>
+<td>計畫</td>
+<td><code>build_normalization_plan(extraction, manifest)</code></td>
+<td><code>plan/normalization-plan.json</code></td>
+</tr>
+<tr>
+<td>生成</td>
+<td><code>generate_outputs(plan, manifest, run_dir)</code></td>
+<td><code>openapi.yaml</code>、<code>api-guide.zh-TW.md</code>、<code>provenance.json</code></td>
+</tr>
+<tr>
+<td>驗證</td>
+<td><code>validate_outputs(plan, result, manifest)</code>(純）／ <code>validate_run_dir(run_dir)</code>(讀檔)</td>
+<td><code>validation/report.{json,md}</code></td>
+</tr>
+<tr>
+<td>修正迴圈</td>
+<td><code>run_correction_loop(plan, result, *, regenerate, requery, validate, max_rounds=3)</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>完整流程</td>
+<td><code>run_pipeline(*, notebook_url, sources_root, output_root, adapter, run_id, generated_at, urls, max_rounds=3)</code></td>
+<td>整個 run-dir</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">擷取查詢分段</h2>
+<p>擷取採分段策略,避免單一回答承載全部內容(spec §7.1):</p>
+<pre><code>01 Notebook 與來源盤點        06 逐 endpoint 細節（method/path/參數/req/resp/範例）
+02 API 系統概覽與術語          07 共用 schema / enum / 資料限制
+03 環境 / base URL / 版本      08 錯誤碼與失敗行為
+04 驗證 / 授權 / 簽章          09 rate limit / timeout / retry / idempotency / webhook
+05 Endpoint 清單              10 來源衝突、缺漏、無法確認事項
+</code></pre>
+<p>混合回答契約:盤點型 stage(03–09)要求 fenced <code>json</code> 區塊;敘事型 stage(01/02/10)為純文字 artifact。每輪回答逐一保存,不覆蓋或丟棄,作為審計軌跡。</p>
+<h2 id="_5">來源追溯與驗證對齊</h2>
+<p><code>provenance.json</code> 的 <code>target</code> 字串與 OpenAPI 位置<strong>逐一對齊</strong>(如 <code>paths.{path}.{method}</code>、<code>components.schemas.{name}</code>、<code>components.securitySchemes.{name}</code>),驗證的禁止推測檢查即在這些 target 上做交叉比對:任何進入輸出的內容都必須能追溯回具來源依據的計畫項目,否則視為違規。</p>
+  <div class="footer">由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline</div>
+</main>
+</div>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "loose" });
+</script>
+</body>
+</html>
