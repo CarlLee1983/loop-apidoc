@@ -12,7 +12,6 @@ from loop_apidoc.notebooklm.adapter import NotebookLMAdapter
 from loop_apidoc.notebooklm.config import SkillConfig
 from loop_apidoc.notebooklm.errors import NotebookLMError
 from loop_apidoc.notebooklm.runner import subprocess_runner
-from loop_apidoc.run.models import RunStatus
 from loop_apidoc.run.pipeline import run_pipeline
 from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.validate import validate_run_dir, write_reports
