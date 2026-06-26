@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from openapi_spec_validator import validate as validate_openapi
 from openapi_spec_validator.validation.exceptions import OpenAPIValidationError
+from referencing.exceptions import PointerToNowhere
 
 from loop_apidoc.generate import REQUIRED_MARKDOWN_SECTIONS
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
@@ -17,16 +18,16 @@ def _error(code: IssueCode, location: str, evidence: str, fix: str) -> Issue:
     )
 
 
-def _iter_refs(node, path: str = ""):
+def _iter_refs(node):
     if isinstance(node, dict):
         for key, value in node.items():
             if key == "$ref" and isinstance(value, str):
                 yield value
             else:
-                yield from _iter_refs(value, f"{path}/{key}")
+                yield from _iter_refs(value)
     elif isinstance(node, list):
         for idx, value in enumerate(node):
-            yield from _iter_refs(value, f"{path}/{idx}")
+            yield from _iter_refs(value)
 
 
 def _resolves(ref: str, root: dict) -> bool:
@@ -46,13 +47,13 @@ def check_structure(openapi: dict, markdown: str) -> list[Issue]:
     issues: list[Issue] = []
     try:
         validate_openapi(openapi)
-    except (OpenAPIValidationError, Exception) as exc:
+    except (OpenAPIValidationError, PointerToNowhere) as exc:
         issues.append(_error(
             IssueCode.OPENAPI_INVALID, "openapi", str(exc)[:300],
             "修正 OpenAPI 文件使其符合 3.1 schema",
         ))
     for ref in _iter_refs(openapi):
-        if not _resolves(ref, openapi):
+        if ref.startswith("#/") and not _resolves(ref, openapi):
             issues.append(_error(
                 IssueCode.OPENAPI_INVALID, ref, f"$ref 無法解析：{ref}",
                 "補上被引用的 components 定義或移除 $ref",
