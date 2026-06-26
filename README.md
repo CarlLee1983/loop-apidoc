@@ -2,6 +2,8 @@
 
 > Loop Engineering 的**來源依據式（source-grounded）API 文件 pipeline**
 
+*English version: [README.en.md](README.en.md)*
+
 `loop-apidoc` 是一套可重複執行的 CLI，將格式與完整度不一的 API 串接文件，整理成一致、可追溯的標準化產物：
 
 - **OpenAPI 3.1 YAML**（`openapi.yaml`）
@@ -181,7 +183,7 @@ real NotebookLM skill 的 smoke 測試以 `smoke` marker 標記,僅在設定 `LO
 
 ## 設計文件
 
-完整設計與實作計畫位於 `docs/superpowers/`:
-
-- 系統設計:[`specs/2026-06-25-loop-api-documentation-pipeline-design.md`](docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)
+- 架構總覽與資料流(含流程圖):[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- 貢獻指南:[`CONTRIBUTING.md`](CONTRIBUTING.md)
+- 系統設計 spec:[`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)
 - 各階段實作計畫:`docs/superpowers/plans/`
