@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from loop_apidoc.generate.naming import security_scheme_key
 from loop_apidoc.plan.models import NormalizationPlan
 
 MISSING_STATUS = "missing-source"
@@ -64,8 +65,13 @@ def _build_security_scheme(scheme) -> dict:
 def _build_security_schemes(plan: NormalizationPlan) -> dict:
     out: dict = {}
     for idx, scheme in enumerate(plan.security_schemes):
-        name = scheme.name or f"scheme{idx}"
-        out[name] = _build_security_scheme(scheme)
+        key = security_scheme_key(scheme.name, idx)
+        built = _build_security_scheme(scheme)
+        # Preserve the original human name (which may be an illegal key) so it
+        # isn't lost when the key is sanitized.
+        if scheme.name and scheme.name != key and "description" not in built:
+            built["description"] = scheme.name
+        out[key] = built
     return out
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
+from loop_apidoc.generate.naming import security_scheme_key
 from loop_apidoc.plan.models import NormalizationPlan, PlanItemStatus
 
 
@@ -46,8 +47,8 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
         server_idx += 1
 
     for idx, scheme in enumerate(plan.security_schemes):
-        name = scheme.name or f"scheme{idx}"
-        entries.extend(_entries(f"components.securitySchemes.{name}", scheme))
+        key = security_scheme_key(scheme.name, idx)
+        entries.extend(_entries(f"components.securitySchemes.{key}", scheme))
 
     for endpoint in plan.endpoints:
         if not endpoint.path or not endpoint.method:

@@ -108,17 +108,77 @@ def test_classify_supported_when_matched():
     assert cite.query_id == "05-initial"
 
 
-def test_classify_unverified_when_unmatched_or_missing():
+def _multi_manifest() -> Manifest:
+    now = datetime(2026, 6, 25, tzinfo=timezone.utc)
+    return Manifest(
+        sources_root="/src", generated_at=now,
+        local_sources=[
+            LocalSource(relative_path="docs/api.pdf", mime_type="application/pdf",
+                        source_format=SourceFormat.PDF, size_bytes=1, sha256="x",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+            LocalSource(relative_path="docs/extra.pdf", mime_type="application/pdf",
+                        source_format=SourceFormat.PDF, size_bytes=1, sha256="y",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+        ],
+    )
+
+
+def test_classify_unverified_when_unmatched_or_missing_with_multiple_sources():
+    # With >1 source we cannot disambiguate, so an unmatched/absent locator stays
+    # UNVERIFIED (single-source attribution does not apply).
     status, cite = classify_item(
         "internal wiki", query_id="05-initial", answer_path="answers/05-initial.txt",
-        manifest=_manifest(),
+        manifest=_multi_manifest(),
     )
     assert status is PlanItemStatus.UNVERIFIED
     assert cite.manifest_source is None
 
     status2, cite2 = classify_item(
         None, query_id="05-initial", answer_path="answers/05-initial.txt",
-        manifest=_manifest(),
+        manifest=_multi_manifest(),
     )
     assert status2 is PlanItemStatus.UNVERIFIED
     assert cite2.locator is None
+
+
+def test_single_source_attributes_section_citation():
+    # NotebookLM cites a section, not the filename; with exactly one source the
+    # item is still SUPPORTED, attributed to that lone source.
+    status, cite = classify_item(
+        "section 4.2 MPG", query_id="06-initial",
+        answer_path="answers/06-initial.txt", manifest=_manifest(),
+    )
+    assert status is PlanItemStatus.SUPPORTED
+    assert cite.manifest_source == "docs/api.pdf"
+    assert cite.locator == "section 4.2 MPG"
+
+
+def test_single_source_attributes_missing_locator():
+    # Most structured items carry no `source` field; a single-source notebook
+    # still attributes them.
+    status, cite = classify_item(
+        None, query_id="05-initial", answer_path="answers/05-initial.txt",
+        manifest=_manifest(),
+    )
+    assert status is PlanItemStatus.SUPPORTED
+    assert cite.manifest_source == "docs/api.pdf"
+    assert cite.locator is None
+
+
+def test_single_source_ignores_unreadable_source():
+    now = datetime(2026, 6, 25, tzinfo=timezone.utc)
+    manifest = Manifest(
+        sources_root="/src", generated_at=now,
+        local_sources=[
+            LocalSource(relative_path="docs/api.pdf", mime_type="application/pdf",
+                        source_format=SourceFormat.PDF, size_bytes=1, sha256="x",
+                        scanned_at=now, supported=True,
+                        status=ProcessingStatus.UNREADABLE),
+        ],
+    )
+    status, cite = classify_item(
+        None, query_id="05-initial", answer_path="answers/05-initial.txt",
+        manifest=manifest,
+    )
+    assert status is PlanItemStatus.UNVERIFIED
+    assert cite.manifest_source is None
