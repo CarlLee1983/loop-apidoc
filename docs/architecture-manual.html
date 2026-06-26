@@ -5,23 +5,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>架構手冊 · loop-apidoc</title>
 <style>
-:root {
-  --bg: #0f1117; --panel: #171a23; --fg: #e6e8ee; --muted: #9aa3b2;
-  --accent: #6ea8fe; --border: #262b38; --code-bg: #11141c; --kbd: #222838;
-}
-@media (prefers-color-scheme: light) {
   :root {
-    --bg: #f7f8fa; --panel: #ffffff; --fg: #1b1f27; --muted: #5b6472;
-    --accent: #2563eb; --border: #e4e7ee; --code-bg: #f1f3f7; --kbd: #eef1f6;
+    --bg-base: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-inset: #f1f5f9;
+    --border-main: #e2e8f0;
+    --border-active: #6366f1;
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #e0e7ff;
+    
+    --color-manual: #d97706;
+    --color-io: #3b82f6;
+    --color-pure: #10b981;
+    
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "Fira Code", ui-monospace, SFMono-Regular, monospace;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+    /* Legacy mapping to keep existing elements styled before they are redesigned */
+    --bg: var(--bg-base);
+    --panel: var(--bg-card);
+    --fg: var(--text-primary);
+    --muted: var(--text-muted);
+    --border: var(--border-main);
+    --code-bg: var(--bg-inset);
+    --kbd: var(--bg-inset);
   }
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font: 16px/1.75 -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-base: #0b0f19;
+      --bg-card: #111827;
+      --bg-inset: #1f2937;
+      --border-main: #1f2937;
+      --border-active: #818cf8;
+      
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --text-muted: #6b7280;
+      
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-soft: rgba(99, 102, 241, 0.15);
+      
+      --color-manual: #fbbf24;
+      --color-io: #60a5fa;
+      --color-pure: #34d399;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
 .layout { display: grid; grid-template-columns: 280px 1fr; max-width: 1180px; margin: 0 auto; }
 nav {
   position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
