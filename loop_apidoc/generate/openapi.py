@@ -146,6 +146,42 @@ def _build_paths(plan: NormalizationPlan) -> dict:
     return paths
 
 
+def _build_object_schema(entry) -> dict:
+    properties: dict = {}
+    required: list[str] = []
+    for field in entry.fields:
+        name = field.get("name")
+        if not name:
+            continue
+        prop = _schema_from_type(field.get("type") if "type" in field else field.get("schema")) or {}
+        if field.get("description"):
+            prop["description"] = field["description"]
+        if field.get("enum"):
+            prop["enum"] = field["enum"]
+        properties[name] = prop
+        if field.get("required"):
+            required.append(name)
+    schema: dict = {"type": "object", "properties": properties}
+    if required:
+        schema["required"] = required
+    if entry.constraints:
+        schema["description"] = entry.constraints
+    return schema
+
+
+def _build_schemas(plan: NormalizationPlan) -> dict:
+    out: dict = {}
+    for entry in plan.schemas:
+        if entry.name:
+            out[entry.name] = _build_object_schema(entry)
+        for enum in entry.enums:
+            enum_name = enum.get("name")
+            values = enum.get("values")
+            if enum_name and values:
+                out[enum_name] = {"type": "string", "enum": values}
+    return out
+
+
 def build_openapi(plan: NormalizationPlan) -> dict:
     doc: dict = {"openapi": "3.1.0", "info": _build_info(plan)}
     servers = _build_servers(plan)
@@ -153,6 +189,9 @@ def build_openapi(plan: NormalizationPlan) -> dict:
         doc["servers"] = servers
     doc["paths"] = _build_paths(plan)
     components: dict = {}
+    schemas = _build_schemas(plan)
+    if schemas:
+        components["schemas"] = schemas
     security_schemes = _build_security_schemes(plan)
     if security_schemes:
         components["securitySchemes"] = security_schemes

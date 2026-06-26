@@ -10,6 +10,7 @@ from loop_apidoc.plan.models import (
     EnvironmentEntry,
     NormalizationPlan,
     PlanItemStatus,
+    SchemaEntry,
     SecuritySchemeEntry,
     SystemGroup,
 )
@@ -151,3 +152,41 @@ def test_endpoint_without_path_or_method_skipped():
         EndpointEntry(status=PlanItemStatus.MISSING, method="GET", path=None),
     ])
     assert build_openapi(plan)["paths"] == {}
+
+
+def test_schema_object_with_required_and_enum_field():
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="User",
+            fields=[
+                {"name": "id", "type": "string", "required": True},
+                {"name": "role", "type": "string", "enum": ["admin", "user"]},
+            ],
+            constraints="id 為 UUID v4",
+        )
+    ])
+    schemas = build_openapi(plan)["components"]["schemas"]
+    user = schemas["User"]
+    assert user["type"] == "object"
+    assert user["properties"]["id"] == {"type": "string"}
+    assert user["properties"]["role"]["enum"] == ["admin", "user"]
+    assert user["required"] == ["id"]
+    assert user["description"] == "id 為 UUID v4"
+
+
+def test_named_enum_becomes_component():
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="Order",
+            fields=[{"name": "status", "type": "string"}],
+            enums=[{"name": "OrderStatus", "values": ["new", "paid"]}],
+        )
+    ])
+    schemas = build_openapi(plan)["components"]["schemas"]
+    assert schemas["OrderStatus"] == {"type": "string", "enum": ["new", "paid"]}
+
+
+def test_schema_without_name_skipped():
+    plan = _plan(schemas=[SchemaEntry(status=PlanItemStatus.MISSING)])
+    doc = build_openapi(plan)
+    assert "schemas" not in doc.get("components", {})
