@@ -27,6 +27,30 @@ def test_record_writes_answer_and_jsonl(tmp_path: Path):
     assert rec["answer_path"] == "answers/05-initial.txt"
 
 
+def test_rerun_same_query_id_does_not_overwrite(tmp_path: Path):
+    store = ExtractionStore(tmp_path)
+    first = store.record(query_id="05-initial", stage_id="05", kind=QueryKind.INITIAL,
+                         question="q", answer="round-1 answer", returncode=0)
+    second = store.record(query_id="05-initial", stage_id="05", kind=QueryKind.INITIAL,
+                          question="q", answer="round-2 answer", returncode=0)
+
+    # First write keeps the canonical filename (backward compatible).
+    assert first.answer_path == "answers/05-initial.txt"
+    # Re-run must land on a distinct path so the prior artifact is preserved.
+    assert second.answer_path != first.answer_path
+
+    first_file = tmp_path / first.answer_path
+    second_file = tmp_path / second.answer_path
+    assert first_file.read_text(encoding="utf-8") == "round-1 answer"
+    assert second_file.read_text(encoding="utf-8") == "round-2 answer"
+
+    # The JSONL audit trail has two records pointing at the two distinct files.
+    lines = (tmp_path / "queries.jsonl").read_text(encoding="utf-8").splitlines()
+    paths = [json.loads(l)["answer_path"] for l in lines]
+    assert paths == [first.answer_path, second.answer_path]
+    assert len(set(paths)) == 2
+
+
 def test_record_appends_in_order(tmp_path: Path):
     store = ExtractionStore(tmp_path)
     store.record(query_id="05-initial", stage_id="05", kind=QueryKind.INITIAL,
