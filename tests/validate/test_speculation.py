@@ -49,7 +49,8 @@ def test_conflicting_provenance_flagged():
         _e("paths./users.get", PlanItemStatus.CONFLICTING),
     )
     issues = check_speculation(_OPENAPI, prov)
-    assert any(i.code is IssueCode.SOURCE_CONFLICT for i in issues)
+    assert any(i.code is IssueCode.SOURCE_CONFLICT
+               and i.location == "paths./users.get" for i in issues)
 
 
 def test_unverified_only_provenance_flagged():
@@ -59,7 +60,8 @@ def test_unverified_only_provenance_flagged():
         _e("paths./users.get", PlanItemStatus.UNVERIFIED),
     )
     issues = check_speculation(_OPENAPI, prov)
-    assert any(i.code is IssueCode.SOURCE_UNVERIFIED for i in issues)
+    assert any(i.code is IssueCode.SOURCE_UNVERIFIED
+               and i.location == "paths./users.get" for i in issues)
 
 
 def test_missing_source_placeholder_is_skipped():
