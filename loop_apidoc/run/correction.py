@@ -12,14 +12,13 @@ from loop_apidoc.validate.models import (
     ValidationReport,
 )
 
-# NOTE on AUTO_FIX (v1 limitation): generation is deterministic from the plan,
-# and v1 ships no OpenAPI/output repair transform. So an AUTO_FIX issue with no
-# accompanying RE_QUERY issue cannot change between rounds — the loop will
-# regenerate the identical (still-invalid) output until max_rounds, then FAIL.
-# This consumes no NotebookLM quota (regenerate is local), only compute. In
-# practice OPENAPI_INVALID/OUTPUT_MISMATCH should not arise from a valid plan
-# (the generator is validated end-to-end). A real autofix transform — or an
-# identical-report short-circuit — is a deferred enhancement.
+# NOTE on AUTO_FIX (v1): generation is deterministic from the plan, and v1
+# ships no OpenAPI/output repair transform. An AUTO_FIX issue with no
+# accompanying RE_QUERY issue therefore cannot change between rounds. The
+# correction loop detects this and short-circuits to FAILED immediately (see
+# the AUTO_FIX-only guard in run_correction_loop) rather than regenerating the
+# identical invalid output until max_rounds. A real autofix transform that
+# repairs OPENAPI_INVALID/OUTPUT_MISMATCH from a valid plan remains future work.
 _CATEGORY: dict[IssueCode, CorrectionCategory] = {
     IssueCode.OPENAPI_INVALID: CorrectionCategory.AUTO_FIX,
     IssueCode.OUTPUT_MISMATCH: CorrectionCategory.AUTO_FIX,
@@ -89,11 +88,24 @@ def run_correction_loop(
                 status=RunStatus.EARLY_STOPPED,
             )
 
-        rounds += 1
-        if any(
+        # AUTO_FIX-only: this round is provably a no-op. The plan only changes
+        # via requery (RE_QUERY-driven), and generation is deterministic from
+        # the plan, so regenerating would reproduce the identical invalid
+        # output and report. Short-circuit to FAILED instead of burning the
+        # remaining rounds. Consumes no NotebookLM quota.
+        if not any(
             classify_issue(issue) is CorrectionCategory.RE_QUERY for issue in actionable
         ):
-            plan = requery(plan, report)
+            return CorrectionOutcome(
+                plan=plan,
+                result=result,
+                report=annotate_fixability(report),
+                rounds=rounds,
+                status=RunStatus.FAILED,
+            )
+
+        rounds += 1
+        plan = requery(plan, report)
         result = regenerate(plan)
         report = validate(plan, result)
 
