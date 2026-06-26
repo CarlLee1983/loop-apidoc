@@ -21,7 +21,11 @@ def _issue(code: IssueCode, severity: Severity = Severity.ERROR) -> Issue:
 
 def test_classify_each_code() -> None:
     assert classify_issue(_issue(IssueCode.OPENAPI_INVALID)) is CorrectionCategory.AUTO_FIX
-    assert classify_issue(_issue(IssueCode.OUTPUT_MISMATCH)) is CorrectionCategory.AUTO_FIX
+    # OUTPUT_MISMATCH is a generator-invariant violation (markdown↔OpenAPI drift,
+    # missing required section) or a disk/IO error from validate_run_dir — never a
+    # plan-repairable defect. Regeneration is deterministic, so it would recur.
+    # Fail-closed as UNFIXABLE rather than burn correction rounds.
+    assert classify_issue(_issue(IssueCode.OUTPUT_MISMATCH)) is CorrectionCategory.UNFIXABLE
     assert classify_issue(_issue(IssueCode.REQUIRED_INFO_MISSING)) is CorrectionCategory.RE_QUERY
     assert classify_issue(_issue(IssueCode.SOURCE_UNVERIFIED)) is CorrectionCategory.UNFIXABLE
     assert classify_issue(_issue(IssueCode.SOURCE_CONFLICT)) is CorrectionCategory.UNFIXABLE
