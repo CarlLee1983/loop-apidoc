@@ -82,18 +82,7 @@
   margin: 0 auto;
   padding: 2rem 1.5rem 6rem;
 }
-nav {
-  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
-  padding: 28px 18px; border-right: 1px solid var(--border); background: var(--bg);
-}
-nav .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; margin-bottom: 4px; }
-nav .sub { color: var(--muted); font-size: 12px; margin-bottom: 18px; }
-nav a { display: block; color: var(--muted); text-decoration: none; padding: 3px 0; font-size: 13.5px; }
-nav a:hover { color: var(--accent); }
-nav a.lvl-3 { padding-left: 14px; font-size: 12.5px; }
-main { padding: 40px 48px 96px; min-width: 0; }
-.toplinks { margin-bottom: 24px; font-size: 13px; color: var(--muted); }
-.toplinks a { color: var(--accent); text-decoration: none; }
+
 h1, h2, h3 { line-height: 1.3; scroll-margin-top: 24px; }
 h1 { font-size: 30px; margin: 0 0 8px; }
 h2 { font-size: 22px; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -167,7 +156,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
 .timeline-line {
   position: absolute;
-  left: 2.35rem;
+  left: 3.625rem;
   top: 2rem;
   bottom: 2rem;
   width: 2px;
@@ -316,9 +305,21 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.pill.prep { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-.pill.io { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.pill.pure { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+.pill.prep {
+  background: color-mix(in srgb, var(--color-manual) 15%, transparent);
+  color: var(--color-manual);
+  border: 1px solid color-mix(in srgb, var(--color-manual) 30%, transparent);
+}
+.pill.io {
+  background: color-mix(in srgb, var(--color-io) 15%, transparent);
+  color: var(--color-io);
+  border: 1px solid color-mix(in srgb, var(--color-io) 30%, transparent);
+}
+.pill.pure {
+  background: color-mix(in srgb, var(--color-pure) 15%, transparent);
+  color: var(--color-pure);
+  border: 1px solid color-mix(in srgb, var(--color-pure) 30%, transparent);
+}
 
 .detail-desc {
   font-size: 0.92rem;
@@ -405,143 +406,169 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   text-align: center;
 }
 
-@media (max-width: 860px) {
-  nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-  main { padding: 24px 20px 64px; }
+@media (max-width: 600px) {
+  .specs-list {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }
 </style>
-</head>
 <body>
 <div class="layout">
-<nav>
-  <div class="brand">loop-apidoc</div>
-  <div class="sub">架構手冊</div>
-  <a class="lvl-2" href="#_2">高層流程</a>
-  <a class="lvl-2" href="#_3">套件邊界</a>
-  <a class="lvl-2" href="#seam">資料流與關鍵 seam</a>
-  <a class="lvl-2" href="#_4">擷取查詢分段</a>
-  <a class="lvl-2" href="#_5">來源追溯與驗證對齊</a>
-</nav>
-<main>
-  <div class="toplinks"><a href="operator-manual.html">← 操作者手冊</a></div>
-  <h1 id="_1">架構</h1>
-<p>本文件說明 <code>loop-apidoc</code> 的整體流程、資料流與套件邊界。完整設計依據見 <a href="superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md"><code>docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md</code></a>。</p>
-<h2 id="_2">高層流程</h2>
-<pre class="mermaid">
-flowchart LR
-    subgraph 人工["人工前置作業（不屬 CLI）"]
-        H1[建立 NotebookLM Notebook]
-        H2[上傳來源 + 公開 URL]
-        H3[取得分享連結]
-        H4[保留本機來源目錄]
-    end
+  <div class="top-bar">
+    <h1>loop-apidoc 架構說明手冊</h1>
+    <a href="operator-manual.html" class="back-link">← 操作者手冊</a>
+  </div>
 
-    subgraph CLI["loop-apidoc run"]
-        M[manifest<br/>掃描本機來源] --> E[擷取<br/>NotebookLM 多輪查詢]
-        E --> P[規格化計畫<br/>normalization-plan.json]
-        P --> G[生成<br/>OpenAPI + Markdown + provenance]
-        G --> V[驗證<br/>結構/完整性/一致性/禁止推測]
-        V -->|有 ERROR| C{修正分類}
-        C -->|AUTO_FIX| G
-        C -->|RE_QUERY| E
-        C -->|UNFIXABLE| X[早停]
-        V -->|通過| OK[PASSED]
-    end
+  <div class="dashboard">
+    <!-- Left Timeline Navigation -->
+    <div class="timeline-panel">
+      <div class="timeline-line"></div>
+      <div class="timeline-steps">
+        <!-- Prep -->
+        <div class="step-card" id="step-prep" onclick="selectStep('prep')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Prep</div>
+            <div class="step-card-title">人工前置作業</div>
+          </div>
+        </div>
 
-    人工 -.分享連結 + 來源目錄.-> CLI
+        <!-- Step 01 -->
+        <div class="step-card active" id="step-scan" onclick="selectStep('scan')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 01</div>
+            <div class="step-card-title">來源掃描 (Scan)</div>
+          </div>
+        </div>
 
-</pre>
-<p>修正迴圈最多 3 輪;<code>UNFIXABLE</code>(來源無法確認／衝突／不支援斷言)會 fail-closed 提早結束。</p>
-<h2 id="_3">套件邊界</h2>
-<pre class="mermaid">
-flowchart TD
-    cli[cli.py<br/>Typer 進入點]
+        <!-- Step 02 -->
+        <div class="step-card" id="step-extract" onclick="selectStep('extract')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 02</div>
+            <div class="step-card-title">資料擷取 (Extract)</div>
+          </div>
+        </div>
 
-    cli --> doctor[doctor/<br/>唯讀環境檢查]
-    cli --> manifest[manifest/<br/>掃描 + manifest]
-    cli --> run[run/<br/>pipeline 編排]
-    cli --> validate[validate/<br/>驗證 + 報告]
+        <!-- Step 03 -->
+        <div class="step-card" id="step-plan" onclick="selectStep('plan')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 03</div>
+            <div class="step-card-title">規格化計畫 (Plan)</div>
+          </div>
+        </div>
 
-    run --> manifest
-    run --> extraction[extraction/<br/>多輪查詢 + 答案保存]
-    run --> plan[plan/<br/>規格化計畫 + 來源比對]
-    run --> generate[generate/<br/>OpenAPI/MD/provenance]
-    run --> validate
+        <!-- Step 04 -->
+        <div class="step-card" id="step-generate" onclick="selectStep('generate')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 04</div>
+            <div class="step-card-title">生成產物 (Generate)</div>
+          </div>
+        </div>
 
-    extraction --> notebooklm[notebooklm/<br/>skill adapter + retry]
-    doctor --> notebooklm
-    plan --> manifest
+        <!-- Step 05 -->
+        <div class="step-card" id="step-validate" onclick="selectStep('validate')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 05</div>
+            <div class="step-card-title">產物驗證 (Validate)</div>
+          </div>
+        </div>
 
-    classDef io fill:#fde,stroke:#c69
-    class generate,run io
+        <!-- Step 06 -->
+        <div class="step-card" id="step-loop" onclick="selectStep('loop')">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 06</div>
+            <div class="step-card-title">修正迴圈 (Loop)</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-</pre>
-<p><strong>唯一檔案 I/O 出口</strong>:只有 <code>generate/</code>(<code>generate_outputs</code>)與 <code>run/</code>(<code>run_pipeline</code> 擁有 run-dir)寫檔;其餘模組皆為純函式,便於單元測試。</p>
-<h2 id="seam">資料流與關鍵 seam</h2>
-<table>
-<thead>
-<tr>
-<th>階段</th>
-<th>公開 seam</th>
-<th>產物</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>掃描</td>
-<td><code>build_manifest(sources_root, urls, generated_at)</code></td>
-<td><code>manifest.json</code></td>
-</tr>
-<tr>
-<td>擷取</td>
-<td><code>run_extraction(adapter, notebook_url, store, *, max_attempts=3)</code></td>
-<td><code>extraction/queries.jsonl</code>、<code>extraction/answers/</code></td>
-</tr>
-<tr>
-<td>計畫</td>
-<td><code>build_normalization_plan(extraction, manifest)</code></td>
-<td><code>plan/normalization-plan.json</code></td>
-</tr>
-<tr>
-<td>生成</td>
-<td><code>generate_outputs(plan, manifest, run_dir)</code></td>
-<td><code>openapi.yaml</code>、<code>api-guide.zh-TW.md</code>、<code>provenance.json</code></td>
-</tr>
-<tr>
-<td>驗證</td>
-<td><code>validate_outputs(plan, result, manifest)</code>(純）／ <code>validate_run_dir(run_dir)</code>(讀檔)</td>
-<td><code>validation/report.{json,md}</code></td>
-</tr>
-<tr>
-<td>修正迴圈</td>
-<td><code>run_correction_loop(plan, result, *, regenerate, requery, validate, max_rounds=3)</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>完整流程</td>
-<td><code>run_pipeline(*, notebook_url, sources_root, output_root, adapter, run_id, generated_at, urls, max_rounds=3)</code></td>
-<td>整個 run-dir</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_4">擷取查詢分段</h2>
-<p>擷取採分段策略,避免單一回答承載全部內容(spec §7.1):</p>
-<pre><code>01 Notebook 與來源盤點        06 逐 endpoint 細節（method/path/參數/req/resp/範例）
-02 API 系統概覽與術語          07 共用 schema / enum / 資料限制
-03 環境 / base URL / 版本      08 錯誤碼與失敗行為
-04 驗證 / 授權 / 簽章          09 rate limit / timeout / retry / idempotency / webhook
-05 Endpoint 清單              10 來源衝突、缺漏、無法確認事項
-</code></pre>
-<p>混合回答契約:盤點型 stage(03–09)要求 fenced <code>json</code> 區塊;敘事型 stage(01/02/10)為純文字 artifact。每輪回答逐一保存,不覆蓋或丟棄,作為審計軌跡。</p>
-<h2 id="_5">來源追溯與驗證對齊</h2>
-<p><code>provenance.json</code> 的 <code>target</code> 字串與 OpenAPI 位置<strong>逐一對齊</strong>(如 <code>paths.{path}.{method}</code>、<code>components.schemas.{name}</code>、<code>components.securitySchemes.{name}</code>),驗證的禁止推測檢查即在這些 target 上做交叉比對:任何進入輸出的內容都必須能追溯回具來源依據的計畫項目,否則視為違規。</p>
-  <div class="footer">由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline</div>
-</main>
+    <!-- Right Detail Panel -->
+    <div class="detail-panel">
+      <div class="tab-header">
+        <div class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">詳細說明</div>
+        <div class="tab-btn" id="tab-technical" onclick="switchTab('technical')">系統對照</div>
+      </div>
+      <div id="detail-content-area">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section: Package Boundaries -->
+  <div class="panel-bottom">
+    <h2>套件邊界與模組架構</h2>
+    <div class="mermaid">
+      flowchart TD
+          cli[cli.py<br/>Typer 進入點]
+
+          cli --> doctor[doctor/<br/>唯讀環境檢查]
+          cli --> manifest[manifest/<br/>掃描 + manifest]
+          cli --> run[run/<br/>pipeline 編排]
+          cli --> validate[validate/<br/>驗證 + 報告]
+
+          run --> manifest
+          run --> extraction[extraction/<br/>多輪查詢 + 答案保存]
+          run --> plan[plan/<br/>規格化計畫 + 來源比對]
+          run --> generate[generate/<br/>OpenAPI/MD/provenance]
+          run --> validate
+
+          extraction --> notebooklm[notebooklm/<br/>skill adapter + retry]
+          doctor --> notebooklm
+          plan --> manifest
+
+          classDef io fill:#e0e7ff,stroke:#6366f1,stroke-width:2px;
+          class generate,run io
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
+      <strong>唯一檔案 I/O 出口</strong>：只有 <code>generate/</code> (<code>generate_outputs</code>) 與 <code>run/</code> (<code>run_pipeline</code>) 擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
+    </div>
+  </div>
+
+  <div class="footer">
+    由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline
+  </div>
 </div>
+
 <script type="module">
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "loose" });
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "loose" });
 </script>
 </body>
 </html>
