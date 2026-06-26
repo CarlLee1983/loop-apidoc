@@ -647,6 +647,79 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       outputs: "修正重製後的產物檔或早停錯誤日誌"
     }
   };
+
+  let currentKey = 'scan';
+  let currentTab = 'overview';
+
+  function updateDisplay() {
+    const data = dataset[currentKey];
+    const container = document.getElementById('detail-content-area');
+    
+    if (currentTab === 'overview') {
+      // Note: dataset is static and fully controlled. Rendering via innerHTML is safe here.
+      container.innerHTML = `
+        <div class="detail-headline">
+          <h3>${data.title}</h3>
+          <span class="pill ${data.pillClass}">${data.pillLabel}</span>
+        </div>
+        <div class="detail-desc">${data.desc}</div>
+        
+        <div class="section-label">核心機制說明</div>
+        <div class="info-card">
+          ${data.details}
+        </div>
+      `;
+    } else {
+      // Note: dataset is static and fully controlled. Rendering via innerHTML is safe here.
+      container.innerHTML = `
+        <div class="detail-headline">
+          <h3>${data.title}</h3>
+          <span class="pill ${data.pillClass}">${data.pillLabel}</span>
+        </div>
+        
+        <div class="section-label">Pipeline 對照參數</div>
+        <div class="specs-list">
+          <div class="specs-label">公開 Seam 介面</div>
+          <div class="specs-value"><code>${data.seam}</code></div>
+          
+          <div class="specs-label">輸入參數 / 檔案</div>
+          <div class="specs-value"><code>${data.inputs}</code></div>
+          
+          <div class="specs-label">生成產物 / 輸出</div>
+          <div class="specs-value" style="font-weight: 600;"><code>${data.outputs}</code></div>
+        </div>
+      `;
+    }
+  }
+
+  window.selectStep = function(key) {
+    currentKey = key;
+    document.querySelectorAll('.step-card').forEach(card => {
+      card.classList.remove('active');
+    });
+    const activeCard = document.getElementById('step-' + key);
+    if (activeCard) {
+      activeCard.classList.add('active');
+    }
+    updateDisplay();
+  };
+
+  window.switchTab = function(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById('tab-' + tab);
+    if (activeBtn) {
+      activeBtn.classList.add('active');
+    }
+    updateDisplay();
+  };
+
+  // Initial invocation
+  document.addEventListener('DOMContentLoaded', () => {
+    updateDisplay();
+  });
 </script>
 
 <script type="module">
