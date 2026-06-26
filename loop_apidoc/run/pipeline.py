@@ -25,7 +25,9 @@ def _make_requery(*, adapter, notebook_url, store, manifest, run_dir, state):
     the current ExtractionResult and is updated in place so each round re-runs
     against the latest extraction.
     """
-    def requery(p, r):
+    def requery(_p, r):
+        # The prior plan is intentionally ignored: each requery rebuilds the
+        # plan from the freshly merged extraction rather than patching `_p`.
         stages = stages_for_requery(r)
         if stages:
             fresh = rerun_stages(adapter, notebook_url, store, state["extraction"], stages)

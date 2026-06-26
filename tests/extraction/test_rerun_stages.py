@@ -90,6 +90,31 @@ def test_rerun_context_includes_fresh_prior_stage(tmp_path: Path) -> None:
     assert "ANSWER-05-3" in six_initial
 
 
+def test_rerun_over_merged_result_stays_stable_across_rounds(tmp_path: Path) -> None:
+    # Risk #1: a second rerun consuming the first round's *merged* result must
+    # not accumulate or duplicate artifacts — the correction loop runs up to 3
+    # rounds, each feeding state["extraction"] (a prior merged result) back in.
+    store = ExtractionStore(tmp_path)
+    adapter = _MarkerAdapter()
+    prior = run_extraction(adapter, NB, store)
+
+    round1 = rerun_stages(adapter, NB, store, prior, {"05", "06"})
+    round2 = rerun_stages(adapter, NB, store, round1, {"05", "06"})
+
+    # Exactly one INITIAL per stage after two rounds — no stage duplicated.
+    assert {s.stage_id for s in STAGES} == {a.stage_id for a in round2.artifacts}
+    # Total artifact count is stable: no accumulation across rounds (each stage
+    # still contributes initial + reverse only).
+    assert len(round2.artifacts) == len(prior.artifacts)
+    # Re-run target keeps refreshing each round (run_extraction=2 calls,
+    # round1 initial=3, round2 initial=5).
+    assert round1.initial("05").answer == "ANSWER-05-3"
+    assert round2.initial("05").answer == "ANSWER-05-5"
+    # Retained stage 04, never targeted, is the original prior artifact through
+    # both rounds — not a stale copy that drifted.
+    assert round2.for_stage("04") == prior.for_stage("04")
+
+
 def test_rerun_far_fewer_queries_than_full(tmp_path: Path) -> None:
     store = ExtractionStore(tmp_path)
     adapter = _MarkerAdapter()
