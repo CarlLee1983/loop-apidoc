@@ -112,3 +112,24 @@ def test_endpoint_without_path_skipped_from_paths_target():
                                  citations=[_cite()])],
     )
     assert not any(t.startswith("paths.") for t in _targets(build_provenance(plan)))
+
+
+def test_named_enum_provenance_emitted_with_parent_schema_citation():
+    """Named enums in schema.enums must produce their own provenance target (Fix 3)."""
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        schemas=[
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                name="Order",
+                enums=[{"name": "OrderStatus", "values": ["new", "paid"]}],
+                citations=[_cite(manifest_source="schema.md", locator="p.5")],
+            )
+        ],
+    )
+    targets = _targets(build_provenance(plan))
+    assert "components.schemas.OrderStatus" in targets
+    entry = targets["components.schemas.OrderStatus"][0]
+    assert entry.status is PlanItemStatus.SUPPORTED
+    assert entry.manifest_source == "schema.md"
+    assert entry.query_id == "q1"

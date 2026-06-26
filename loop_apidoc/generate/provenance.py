@@ -57,6 +57,11 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
     for schema in plan.schemas:
         if schema.name:
             entries.extend(_entries(f"components.schemas.{schema.name}", schema))
+        for enum in schema.enums:
+            enum_name = enum.get("name")
+            values = enum.get("values")
+            if enum_name and values:
+                entries.extend(_entries(f"components.schemas.{enum_name}", schema))
 
     for error in plan.errors:
         if error.code:

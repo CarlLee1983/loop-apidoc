@@ -12,7 +12,7 @@ _APIKEY_LOCATIONS = {"header", "query", "cookie"}
 def _schema_from_type(value) -> dict | None:
     """Tolerant mapping of a free-form type hint to a JSON-Schema fragment."""
     if isinstance(value, dict):
-        return value
+        return dict(value)
     if isinstance(value, str) and value:
         return {"type": value}
     return None

@@ -190,3 +190,31 @@ def test_schema_without_name_skipped():
     plan = _plan(schemas=[SchemaEntry(status=PlanItemStatus.MISSING)])
     doc = build_openapi(plan)
     assert "schemas" not in doc.get("components", {})
+
+
+def test_build_openapi_does_not_mutate_plan_schema_dicts():
+    """build_openapi must not mutate the caller's schema field dicts (Fix 1+2)."""
+    import copy
+
+    id_schema = {"type": "string"}
+    role_field = {"name": "role", "schema": {"type": "string"}, "enum": ["admin", "user"]}
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED,
+            name="User",
+            fields=[
+                {"name": "id", "schema": id_schema, "description": "the id"},
+                role_field,
+            ],
+        )
+    ])
+    plan_before = plan.model_copy(deep=True)
+
+    result = build_openapi(plan)
+
+    # The plan must not have been mutated
+    assert plan == plan_before
+
+    # The returned schema fragment for the "id" field must be a distinct object
+    result_id_prop = result["components"]["schemas"]["User"]["properties"]["id"]
+    assert result_id_prop is not id_schema
