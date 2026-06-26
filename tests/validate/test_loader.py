@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -90,3 +91,27 @@ def test_invalid_provenance_json_is_output_mismatch(tmp_path):
     report = validate_run_dir(run_dir)
     assert report.ok is False
     assert any(i.code is IssueCode.OUTPUT_MISMATCH for i in report.issues)
+
+
+def test_unreadable_file_does_not_crash(tmp_path):
+    import pytest
+    run_dir = _write_run_dir(tmp_path)
+    openapi_file = run_dir / "openapi.yaml"
+
+    # Make the file unreadable by removing all permissions
+    openapi_file.chmod(0o000)
+
+    try:
+        # Check if we can actually make it unreadable (not effective as root)
+        if os.access(openapi_file, os.R_OK):
+            pytest.skip("cannot make file unreadable as current user")
+
+        # Call validate_run_dir; it must not raise OSError, must return ValidationReport
+        report = validate_run_dir(run_dir)
+
+        # Verify it returns a valid ValidationReport with an error
+        assert report.ok is False
+        assert any(i.code is IssueCode.OUTPUT_MISMATCH for i in report.issues)
+    finally:
+        # Restore permissions so pytest cleanup of tmp_path can remove it
+        openapi_file.chmod(0o644)

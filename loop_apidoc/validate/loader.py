@@ -31,25 +31,29 @@ def validate_run_dir(run_dir: Path) -> ValidationReport:
                            f"run directory 缺少 {required.name}", "重新執行生成步驟")
 
     try:
-        openapi = yaml.safe_load(openapi_path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        return _single(IssueCode.OPENAPI_INVALID, "openapi.yaml",
-                       f"openapi.yaml 無法解析：{str(exc)[:200]}", "修正 YAML 格式")
-    if not isinstance(openapi, dict):
-        return _single(IssueCode.OPENAPI_INVALID, "openapi.yaml",
-                       "openapi.yaml 不是物件", "重新生成 openapi.yaml")
+        try:
+            openapi = yaml.safe_load(openapi_path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            return _single(IssueCode.OPENAPI_INVALID, "openapi.yaml",
+                           f"openapi.yaml 無法解析：{str(exc)[:200]}", "修正 YAML 格式")
+        if not isinstance(openapi, dict):
+            return _single(IssueCode.OPENAPI_INVALID, "openapi.yaml",
+                           "openapi.yaml 不是物件", "重新生成 openapi.yaml")
 
-    try:
-        provenance = ProvenanceDocument.model_validate_json(
-            provenance_path.read_text(encoding="utf-8"))
-        plan = NormalizationPlan.model_validate_json(
-            plan_path.read_text(encoding="utf-8"))
-        manifest = Manifest.model_validate_json(
-            manifest_path.read_text(encoding="utf-8"))
-    except ValidationError as exc:
-        return _single(IssueCode.OUTPUT_MISMATCH, "json-artifact",
-                       f"JSON artifact schema 不符：{str(exc)[:200]}", "重新生成該 artifact")
+        try:
+            provenance = ProvenanceDocument.model_validate_json(
+                provenance_path.read_text(encoding="utf-8"))
+            plan = NormalizationPlan.model_validate_json(
+                plan_path.read_text(encoding="utf-8"))
+            manifest = Manifest.model_validate_json(
+                manifest_path.read_text(encoding="utf-8"))
+        except ValidationError as exc:
+            return _single(IssueCode.OUTPUT_MISMATCH, "json-artifact",
+                           f"JSON artifact schema 不符：{str(exc)[:200]}", "重新生成該 artifact")
 
-    markdown = markdown_path.read_text(encoding="utf-8")
-    result = GenerateResult(openapi=openapi, markdown=markdown, provenance=provenance)
-    return validate_outputs(plan, result, manifest)
+        markdown = markdown_path.read_text(encoding="utf-8")
+        result = GenerateResult(openapi=openapi, markdown=markdown, provenance=provenance)
+        return validate_outputs(plan, result, manifest)
+    except OSError as exc:
+        return _single(IssueCode.OUTPUT_MISMATCH, "run-dir",
+                       f"無法讀取 run 目錄檔案：{str(exc)[:200]}", "確認 run 目錄檔案可讀取")
