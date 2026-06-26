@@ -194,8 +194,6 @@ def test_schema_without_name_skipped():
 
 def test_build_openapi_does_not_mutate_plan_schema_dicts():
     """build_openapi must not mutate the caller's schema field dicts (Fix 1+2)."""
-    import copy
-
     id_schema = {"type": "string"}
     role_field = {"name": "role", "schema": {"type": "string"}, "enum": ["admin", "user"]}
     plan = _plan(schemas=[
