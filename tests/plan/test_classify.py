@@ -74,6 +74,24 @@ def test_spaced_filename_still_rejects_embedded_substring():
     assert match_manifest_source("the APIReference.pdf doc", m) is None
 
 
+def test_match_basename_inside_fuller_path():
+    # A citation that spells out an absolute/fuller path must still match by
+    # basename: the `/` before "api.pdf" is a path boundary, not a token char.
+    assert match_manifest_source("/src/docs/api.pdf", _manifest()) == "docs/api.pdf"
+    assert match_manifest_source("see /home/user/docs/api.pdf", _manifest()) == "docs/api.pdf"
+
+
+def test_match_relative_path_inside_fuller_path():
+    m = _manifest_with("docs/api.json")
+    assert match_manifest_source("/src/docs/api.json", m) == "docs/api.json"
+
+
+def test_no_false_positive_on_embedded_basename_after_slash_is_word_char():
+    # The `/` relaxation must not reopen the word-char false positive.
+    m = _manifest_with("v1.json")
+    assert match_manifest_source("dir/specv1.json", m) is None
+
+
 def test_match_none_when_absent():
     assert match_manifest_source("from the spec", _manifest()) is None
     assert match_manifest_source(None, _manifest()) is None

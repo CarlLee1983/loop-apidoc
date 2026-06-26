@@ -8,12 +8,15 @@ from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
 
 # A path/basename matches only when it appears bounded — not as a substring of
 # a larger filename token. Leading boundary: not preceded by a filename-
-# continuation char (word char, `.`, `/`, `-`). Trailing boundary: not followed
+# continuation char (word char, `.`, `-`). `/` is a path separator, not a token
+# char, so a basename or relative path that appears as a segment of a fuller
+# path (e.g. "/src/docs/api.pdf") still matches. Trailing boundary: not followed
 # by a continuation char, and not by `.<word>` (an extension continuation), so a
 # trailing sentence period still counts as a boundary while "api.pdf.bak" does
-# not match "api.pdf". Spaces are boundaries, so filenames with spaces (escaped
-# whole) match fine — fixing the regression of pure whitespace tokenization.
-_LEAD = r"(?<![\w./\-])"
+# not match "api.pdf". A trailing `/` stays a continuation char so a bare
+# directory name does not match a deeper file path. Spaces are boundaries, so
+# filenames with spaces (escaped whole) match fine.
+_LEAD = r"(?<![\w.\-])"
 _TRAIL = r"(?![\w/\-])(?!\.\w)"
 
 
