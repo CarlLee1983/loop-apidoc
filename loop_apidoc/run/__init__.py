@@ -6,6 +6,7 @@ from loop_apidoc.run.models import (
     RunResult,
     RunStatus,
 )
+from loop_apidoc.run.pipeline import run_pipeline
 from loop_apidoc.run.runid import make_run_id
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "RunResult",
     "RunStatus",
     "make_run_id",
+    "run_pipeline",
 ]
