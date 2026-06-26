@@ -114,3 +114,41 @@ def test_merge_supported_detail_keeps_supported():
     ep = plan.endpoints[0]
     assert ep.status is PlanItemStatus.SUPPORTED
     assert ep.responses == [{"status": "200"}]
+
+
+def _malformed_extraction(stage_block: str) -> ExtractionResult:
+    return ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[_art("05", QueryKind.INITIAL, stage_block)],
+    )
+
+
+def test_malformed_collection_shape_does_not_raise():
+    # NotebookLM returns valid JSON but `endpoints` is a dict, not a list.
+    plan = build_normalization_plan(
+        _malformed_extraction('```json\n{"endpoints": {"GET /u": {"x": 1}}}\n```'),
+        _manifest(),
+    )
+    assert plan.endpoints == []
+    assert any(m.area == "05" for m in plan.missing_items)
+
+
+def test_malformed_items_are_skipped_not_fatal():
+    # `endpoints` is a list but items are bare strings, not dicts.
+    plan = build_normalization_plan(
+        _malformed_extraction('```json\n{"endpoints": ["GET /u", "POST /u"]}\n```'),
+        _manifest(),
+    )
+    assert plan.endpoints == []
+    assert any(m.area == "05" for m in plan.missing_items)
+
+
+def test_malformed_endpoint_details_shape_does_not_raise():
+    block = '```json\n{"endpoint_details": "not-a-list"}\n```'
+    plan = build_normalization_plan(
+        ExtractionResult(notebook_url="https://nb/x",
+                         artifacts=[_art("06", QueryKind.INITIAL, block)]),
+        _manifest(),
+    )
+    assert plan.endpoints == []
+    assert any(m.area == "06" for m in plan.missing_items)

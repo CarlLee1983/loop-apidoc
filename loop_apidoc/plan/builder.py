@@ -57,6 +57,37 @@ _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
 }
 
 
+def _dict_items(
+    plan: NormalizationPlan, stage_id: str, query_id: str | None,
+    raw: object, json_key: str,
+) -> list[dict]:
+    """Coerce a structured collection into a list of dict items.
+
+    NotebookLM may return valid JSON whose shape is wrong (a dict where a list
+    is expected, or scalar items). Rather than crash at the extraction→plan
+    boundary, record the malformed shape as a MissingItem and skip the bad
+    parts so the rest of the plan still builds.
+    """
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        plan.missing_items.append(
+            MissingItem(area=stage_id, detail=f"malformed shape for {json_key}",
+                        query_id=query_id)
+        )
+        return []
+    items: list[dict] = []
+    for entry in raw:
+        if isinstance(entry, dict):
+            items.append(entry)
+        else:
+            plan.missing_items.append(
+                MissingItem(area=stage_id, detail=f"malformed item in {json_key}",
+                            query_id=query_id)
+            )
+    return items
+
+
 def _note(extraction: ExtractionResult, stage_id: str) -> str:
     art = extraction.initial(stage_id)
     return art.answer if art else ""
@@ -72,12 +103,14 @@ def _structured_block(
 
 def _add_missing_and_conflicts(plan: NormalizationPlan, stage_id: str,
                                art: AnswerArtifact, block: dict) -> None:
-    for miss in block.get("missing") or []:
+    raw_missing = block.get("missing")
+    for miss in raw_missing if isinstance(raw_missing, list) else []:
         plan.missing_items.append(
             MissingItem(area=stage_id, detail=str(miss), query_id=art.query_id)
         )
     # forward-wiring: no current stage emits `conflicts`; populated by Plan 5 conflict detection
-    for conflict in block.get("conflicts") or []:
+    raw_conflicts = block.get("conflicts")
+    for conflict in raw_conflicts if isinstance(raw_conflicts, list) else []:
         plan.source_conflicts.append(
             SourceConflict(area=stage_id, detail=str(conflict), query_id=art.query_id)
         )
@@ -103,7 +136,7 @@ def build_normalization_plan(
             continue
 
         target = getattr(plan, plan_field)
-        for item in block.get(json_key) or []:
+        for item in _dict_items(plan, stage_id, art.query_id, block.get(json_key), json_key):
             status, citation = classify_item(
                 item.get("source"), query_id=art.query_id,
                 answer_path=art.answer_path, manifest=manifest,
@@ -131,7 +164,8 @@ def _merge_endpoint_details(
         )
         return
 
-    for item in block.get("endpoint_details") or []:
+    for item in _dict_items(plan, "06", art.query_id,
+                            block.get("endpoint_details"), "endpoint_details"):
         detail = {
             "parameters": item.get("parameters") or [],
             "request": item.get("request"),
