@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loop_apidoc.validate.models import Issue, Severity, ValidationReport
+from loop_apidoc.validate.models import Issue, ValidationReport
 
 
 def _bullet(issue: Issue) -> str:
