@@ -35,11 +35,17 @@ def subprocess_runner(
                 timeout=timeout_seconds,
             )
         except subprocess.TimeoutExpired as exc:
+            extra = exc.stderr or ""
+            if isinstance(extra, bytes):
+                extra = extra.decode("utf-8", errors="replace")
+            message = "Timeout waiting for answer"
+            if extra:
+                message = f"{message}: {extra}"
             return CommandResult(
                 argv=argv,
                 returncode=124,
                 stdout=exc.stdout or "",
-                stderr="Timeout waiting for answer",
+                stderr=message,
             )
         return CommandResult(
             argv=argv,
