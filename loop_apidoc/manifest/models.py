@@ -19,6 +19,7 @@ class ProcessingStatus(str, Enum):
     PENDING = "pending"
     UNSUPPORTED = "unsupported"
     DUPLICATE = "duplicate"
+    UNREADABLE = "unreadable"
 
 
 class LocalSource(BaseModel):
@@ -52,3 +53,6 @@ class Manifest(BaseModel):
 
     def duplicates(self) -> list[LocalSource]:
         return [s for s in self.local_sources if s.status is ProcessingStatus.DUPLICATE]
+
+    def unreadable(self) -> list[LocalSource]:
+        return [s for s in self.local_sources if s.status is ProcessingStatus.UNREADABLE]

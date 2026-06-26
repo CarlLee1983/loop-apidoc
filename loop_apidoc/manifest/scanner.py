@@ -18,12 +18,22 @@ def hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _is_regular_file(path: Path) -> bool:
+    try:
+        if path.is_file():
+            return True
+        # Broken symlink: exists as an entry but target is gone.
+        return path.is_symlink()
+    except OSError:
+        return False
+
+
 def scan_sources(root: Path, scanned_at: datetime) -> list[LocalSource]:
     sources: list[LocalSource] = []
     seen_hashes: dict[str, str] = {}  # sha256 -> first relative_path
 
     files = sorted(
-        (p for p in root.rglob("*") if p.is_file()),
+        (p for p in root.rglob("*") if _is_regular_file(p)),
         key=lambda p: p.relative_to(root).as_posix(),
     )
 
@@ -31,7 +41,25 @@ def scan_sources(root: Path, scanned_at: datetime) -> list[LocalSource]:
         relative_path = path.relative_to(root).as_posix()
         source_format = detect_format(path)
         supported = is_supported(source_format)
-        sha256 = hash_file(path)
+
+        try:
+            sha256 = hash_file(path)
+            size_bytes = path.stat().st_size
+        except OSError:
+            sources.append(
+                LocalSource(
+                    relative_path=relative_path,
+                    mime_type=guess_mime_type(path),
+                    source_format=source_format,
+                    size_bytes=0,
+                    sha256="",
+                    scanned_at=scanned_at,
+                    supported=False,
+                    status=ProcessingStatus.UNREADABLE,
+                    duplicate_of=None,
+                )
+            )
+            continue
 
         if not supported:
             status = ProcessingStatus.UNSUPPORTED
@@ -49,7 +77,7 @@ def scan_sources(root: Path, scanned_at: datetime) -> list[LocalSource]:
                 relative_path=relative_path,
                 mime_type=guess_mime_type(path),
                 source_format=source_format,
-                size_bytes=path.stat().st_size,
+                size_bytes=size_bytes,
                 sha256=sha256,
                 scanned_at=scanned_at,
                 supported=supported,
