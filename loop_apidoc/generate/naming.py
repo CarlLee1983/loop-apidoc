@@ -5,6 +5,14 @@ import re
 _BAD = re.compile(r"[^A-Za-z0-9._-]+")
 
 
+def component_key(name: str | None, idx: int, *, prefix: str = "item") -> str:
+    """Sanitize any name into a valid OpenAPI component key (^[A-Za-z0-9._-]+$).
+    Used for securitySchemes and schemas, whose names from the sources may carry
+    spaces/parens/CJK that are illegal as component keys."""
+    key = _BAD.sub("_", (name or "").strip()).strip("_")
+    return key or f"{prefix}{idx}"
+
+
 def security_scheme_key(name: str | None, idx: int) -> str:
     """Sanitize a security-scheme name into a valid OpenAPI component key
     (must match ^[A-Za-z0-9._-]+$).
@@ -16,5 +24,4 @@ def security_scheme_key(name: str | None, idx: int) -> str:
     helper. The human-readable original name is preserved in descriptions, not
     discarded.
     """
-    key = _BAD.sub("_", (name or "").strip()).strip("_")
-    return key or f"scheme{idx}"
+    return component_key(name, idx, prefix="scheme")
