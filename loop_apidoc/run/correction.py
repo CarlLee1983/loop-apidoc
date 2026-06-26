@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from loop_apidoc.run.models import CorrectionCategory
+from collections.abc import Callable
+
+from loop_apidoc.generate.models import GenerateResult
+from loop_apidoc.plan.models import NormalizationPlan
+from loop_apidoc.run.models import CorrectionCategory, CorrectionOutcome, RunStatus
 from loop_apidoc.validate.models import (
     Issue,
     IssueCode,
@@ -47,3 +51,49 @@ def actionable_codes(report: ValidationReport) -> list[Issue]:
         and classify_issue(issue)
         in (CorrectionCategory.AUTO_FIX, CorrectionCategory.RE_QUERY)
     ]
+
+
+def run_correction_loop(
+    plan: NormalizationPlan,
+    result: GenerateResult,
+    *,
+    regenerate: Callable[[NormalizationPlan], GenerateResult],
+    requery: Callable[[NormalizationPlan, ValidationReport], NormalizationPlan],
+    validate: Callable[[NormalizationPlan, GenerateResult], ValidationReport],
+    max_rounds: int = 3,
+) -> CorrectionOutcome:
+    """Run the spec §10 correction loop over injected I/O closures.
+
+    Rounds count post-generation correction attempts (max 3). Stops early when
+    the only remaining errors are source-missing/conflict (no quota waste).
+    """
+    report = validate(plan, result)
+    rounds = 0
+
+    while not report.ok and rounds < max_rounds:
+        actionable = actionable_codes(report)
+        if not actionable:
+            return CorrectionOutcome(
+                plan=plan,
+                result=result,
+                report=annotate_fixability(report),
+                rounds=rounds,
+                status=RunStatus.EARLY_STOPPED,
+            )
+
+        rounds += 1
+        if any(
+            classify_issue(issue) is CorrectionCategory.RE_QUERY for issue in actionable
+        ):
+            plan = requery(plan, report)
+        result = regenerate(plan)
+        report = validate(plan, result)
+
+    status = RunStatus.PASSED if report.ok else RunStatus.FAILED
+    return CorrectionOutcome(
+        plan=plan,
+        result=result,
+        report=annotate_fixability(report),
+        rounds=rounds,
+        status=status,
+    )
