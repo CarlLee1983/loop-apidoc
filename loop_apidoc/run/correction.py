@@ -18,10 +18,18 @@ from loop_apidoc.validate.models import (
 # correction loop detects this and short-circuits to FAILED immediately (see
 # the AUTO_FIX-only guard in run_correction_loop) rather than regenerating the
 # identical invalid output until max_rounds. A real autofix transform that
-# repairs OPENAPI_INVALID/OUTPUT_MISMATCH from a valid plan remains future work.
+# repairs OPENAPI_INVALID from a valid plan remains future work.
+#
+# OUTPUT_MISMATCH is intentionally NOT AUTO_FIX: its sources are either
+# generator-invariant violations (markdown↔OpenAPI inventory drift in
+# consistency.py, missing REQUIRED_MARKDOWN_SECTIONS in structure.py) or
+# disk/IO errors raised only by validate_run_dir (the standalone `validate`
+# path, never the in-memory loop). Generation is deterministic, so a drift
+# would recur identically every round; the real fix belongs in generate/.
+# Fail-closed as UNFIXABLE so the loop early-stops and surfaces it to a human
+# instead of burning rounds (and NotebookLM quota) on a no-op.
 _CATEGORY: dict[IssueCode, CorrectionCategory] = {
     IssueCode.OPENAPI_INVALID: CorrectionCategory.AUTO_FIX,
-    IssueCode.OUTPUT_MISMATCH: CorrectionCategory.AUTO_FIX,
     IssueCode.REQUIRED_INFO_MISSING: CorrectionCategory.RE_QUERY,
     IssueCode.SOURCE_UNVERIFIED: CorrectionCategory.UNFIXABLE,
     IssueCode.SOURCE_CONFLICT: CorrectionCategory.UNFIXABLE,
