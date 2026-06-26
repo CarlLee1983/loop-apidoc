@@ -62,6 +62,18 @@ def test_no_false_positive_on_substring_prefix():
     assert match_manifest_source("myapi.pdf was used", m) is None
 
 
+def test_match_basename_with_spaces():
+    m = _manifest_with("docs/API Reference.pdf")
+    assert match_manifest_source("see API Reference.pdf page 2", m) == "docs/API Reference.pdf"
+    assert match_manifest_source("from docs/API Reference.pdf", m) == "docs/API Reference.pdf"
+
+
+def test_spaced_filename_still_rejects_embedded_substring():
+    m = _manifest_with("Reference.pdf")
+    # "Reference.pdf" must not match inside "APIReference.pdf"
+    assert match_manifest_source("the APIReference.pdf doc", m) is None
+
+
 def test_match_none_when_absent():
     assert match_manifest_source("from the spec", _manifest()) is None
     assert match_manifest_source(None, _manifest()) is None

@@ -6,47 +6,32 @@ from pathlib import Path
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
 
-# Split the locator into candidate tokens on whitespace and punctuation that
-# never appears inside a file path. Keep `.`, `/`, `_`, `-` so paths/filenames
-# stay intact ("docs/api.pdf" is one token, "v1.json" is one token).
-_TOKEN = re.compile(r"[A-Za-z0-9._/\-]+")
-# Punctuation that may cling to a token edge (e.g. "api.pdf." or "(api.pdf)").
-_EDGE = ".,;:!?()[]{}<>\"'`§"
+# A path/basename matches only when it appears bounded — not as a substring of
+# a larger filename token. Leading boundary: not preceded by a filename-
+# continuation char (word char, `.`, `/`, `-`). Trailing boundary: not followed
+# by a continuation char, and not by `.<word>` (an extension continuation), so a
+# trailing sentence period still counts as a boundary while "api.pdf.bak" does
+# not match "api.pdf". Spaces are boundaries, so filenames with spaces (escaped
+# whole) match fine — fixing the regression of pure whitespace tokenization.
+_LEAD = r"(?<![\w./\-])"
+_TRAIL = r"(?![\w/\-])(?!\.\w)"
 
 
-def _candidate_tokens(locator: str) -> set[str]:
-    tokens: set[str] = set()
-    for raw in _TOKEN.findall(locator.lower()):
-        tokens.add(raw)
-        tokens.add(raw.strip(_EDGE))
-    tokens.discard("")
-    return tokens
-
-
-def _path_matches(rel: str, tokens: set[str]) -> bool:
-    """True when relative path `rel` appears as a whole token.
-
-    Matches the full path token or its basename token, or a longer path token
-    whose final segment equals the basename — never a substring of a larger
-    filename token (so "v1.json" does not match a "specv1.json" token)."""
-    rel = rel.lower()
-    base = Path(rel).name
-    for token in tokens:
-        if token == rel or token == base or token.endswith("/" + base):
-            return True
-    return False
+def _bounded_match(target: str, low_locator: str) -> bool:
+    pattern = _LEAD + re.escape(target.lower()) + _TRAIL
+    return re.search(pattern, low_locator) is not None
 
 
 def match_manifest_source(locator: str | None, manifest: Manifest) -> str | None:
     if not locator:
         return None
     low = locator.lower()
-    tokens = _candidate_tokens(locator)
     for source in manifest.local_sources:
-        if _path_matches(source.relative_path, tokens):
+        rel = source.relative_path
+        if _bounded_match(rel, low) or _bounded_match(Path(rel).name, low):
             return source.relative_path
     # URLs are long and specific; a full-string match keeps them safe from the
-    # short-basename false positives that motivated token matching for paths.
+    # short-basename false positives that motivated bounded matching for paths.
     for url_source in manifest.url_sources:
         if url_source.url.lower() in low:
             return url_source.url
