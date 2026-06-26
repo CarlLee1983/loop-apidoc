@@ -111,3 +111,33 @@ def test_early_stop_on_unfixable_only() -> None:
     assert outcome.status is RunStatus.EARLY_STOPPED
     assert outcome.rounds == 0
     assert requeries["n"] == 0  # no NotebookLM quota wasted
+
+
+def test_auto_fix_only_does_not_requery() -> None:
+    auto_fix_report = ValidationReport(
+        issues=[
+            Issue(
+                code=IssueCode.OPENAPI_INVALID,
+                severity=Severity.ERROR,
+                location="paths",
+                evidence="invalid schema",
+                suggested_fix="fix schema",
+            )
+        ]
+    )
+    requeries = {"n": 0}
+
+    def requery(p, r):
+        requeries["n"] += 1
+        return p
+
+    outcome = run_correction_loop(
+        _plan(),
+        _result(),
+        regenerate=lambda p: _result(),
+        requery=requery,
+        validate=lambda p, r: auto_fix_report,
+    )
+    assert outcome.status is RunStatus.FAILED
+    assert outcome.rounds == 3
+    assert requeries["n"] == 0  # AUTO_FIX-only never triggers requery
