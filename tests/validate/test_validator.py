@@ -68,3 +68,30 @@ def test_missing_method_makes_report_not_ok():
     plan.endpoints[0].method = None
     report = validate_outputs(plan, build_result(plan, _manifest()), _manifest())
     assert report.ok is False
+
+
+def test_unreadable_source_makes_report_not_ok():
+    plan = _good_plan()
+    manifest = Manifest(
+        sources_root="./sources", generated_at=_NOW,
+        local_sources=[LocalSource(
+            relative_path="broken.pdf", mime_type=None,
+            source_format=SourceFormat.PDF, size_bytes=10, sha256="abc",
+            scanned_at=_NOW, supported=False, status=ProcessingStatus.UNREADABLE)])
+    report = validate_outputs(plan, build_result(plan, _manifest()), manifest)
+    assert report.ok is False
+    unverified = [i for i in report.errors() if i.location == "broken.pdf"]
+    assert len(unverified) == 1
+
+
+def test_unsupported_source_warns_but_report_stays_ok():
+    plan = _good_plan()
+    manifest = Manifest(
+        sources_root="./sources", generated_at=_NOW,
+        local_sources=[LocalSource(
+            relative_path="logo.png", mime_type=None,
+            source_format=SourceFormat.UNKNOWN, size_bytes=10, sha256="abc",
+            scanned_at=_NOW, supported=False, status=ProcessingStatus.UNSUPPORTED)])
+    report = validate_outputs(plan, build_result(plan, _manifest()), manifest)
+    assert report.ok is True
+    assert any(i.location == "logo.png" for i in report.warnings())
