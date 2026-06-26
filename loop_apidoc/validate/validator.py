@@ -5,6 +5,7 @@ from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 from loop_apidoc.validate.completeness import check_completeness
 from loop_apidoc.validate.consistency import check_consistency
+from loop_apidoc.validate.coverage import check_manifest_coverage
 from loop_apidoc.validate.models import ValidationReport
 from loop_apidoc.validate.speculation import check_speculation
 from loop_apidoc.validate.structure import check_structure
@@ -13,16 +14,17 @@ from loop_apidoc.validate.structure import check_structure
 def validate_outputs(
     plan: NormalizationPlan, result: GenerateResult, manifest: Manifest
 ) -> ValidationReport:
-    """Aggregate the four §9 validation categories. Pure; the correction loop
-    reuses this seam.
+    """Aggregate the §9 validation categories plus §6 manifest coverage.
+    Pure; the correction loop reuses this seam.
 
-    `manifest` is accepted but not yet consumed: §6 manifest-coverage
-    validation (surfacing unreadable/unsupported sources as issues) is a
-    deferred enhancement, not part of the correction-loop/run work.
+    Manifest coverage surfaces local sources that could not be incorporated
+    into normalization: UNREADABLE sources as errors, UNSUPPORTED sources as
+    warnings (see check_manifest_coverage).
     """
     issues = []
     issues += check_structure(result.openapi, result.markdown)
     issues += check_completeness(plan)
     issues += check_consistency(result.openapi, result.markdown)
     issues += check_speculation(result.openapi, result.provenance)
+    issues += check_manifest_coverage(manifest)
     return ValidationReport(issues=issues)

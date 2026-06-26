@@ -87,3 +87,21 @@ def test_validate_command_fails_on_missing_method(tmp_path):
     result = runner.invoke(app, ["validate", "--output", str(run_dir)])
     assert result.exit_code == 1
     assert (run_dir / "validation" / "report.json").exists()
+
+
+def test_validate_command_fails_on_unreadable_source(tmp_path):
+    run_dir = _setup_run_dir(tmp_path, _good_plan())
+    # Overwrite the written manifest with one carrying an unreadable source,
+    # exercising the disk path: manifest.json -> validate_run_dir -> coverage check.
+    dirty = Manifest(
+        sources_root="./sources", generated_at=_NOW,
+        local_sources=[LocalSource(
+            relative_path="broken.pdf", mime_type=None,
+            source_format=SourceFormat.PDF, size_bytes=10, sha256="abc",
+            scanned_at=_NOW, supported=False, status=ProcessingStatus.UNREADABLE)])
+    (run_dir / "manifest.json").write_text(
+        dirty.model_dump_json(indent=2), encoding="utf-8")
+    result = runner.invoke(app, ["validate", "--output", str(run_dir)])
+    assert result.exit_code == 1, result.output
+    report = (run_dir / "validation" / "report.json").read_text(encoding="utf-8")
+    assert "broken.pdf" in report
