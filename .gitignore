@@ -11,3 +11,10 @@ output/
 **/notebooklm-skill/data/
 **/notebooklm-skill/.venv/
 **/notebooklm-skill/**/browser_state*
+
+# 來源文件(操作者本機提供,不入庫;spec:sources 為人工前置)
+sources/
+# stray / 衍生檔
+extract_pdf_tmp.py
+pdf_text.txt
+.superpowers/

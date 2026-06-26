@@ -2,64 +2,78 @@ from __future__ import annotations
 
 from loop_apidoc.extraction.stages import QueryKind, QueryStage, StageMode
 
-_HEADER = (
-    "You are answering one independent question about a NotebookLM notebook. There is "
-    "no conversation history, so this message carries all the context you need.\n"
-    "Notebook: {notebook_url}\n"
-    "Known so far (from earlier questions, for context only — re-verify against the "
-    "sources):\n{known_summary}\n"
+# We deliberately send SHORT, self-contained questions with no preamble and no
+# embedded prior-answer context. A heavy preamble or an abridged "known so far"
+# block made NotebookLM treat the prompt as a truncated/pasted message and reply
+# with confused non-answers (and never emit the requested JSON). The notebook
+# chat is cleared before each query on the skill side, so every question already
+# stands alone. A prompt experiment confirmed `goal + json_hint` reliably yields
+# parseable JSON, while the old context-carrying prompts did not.
+_LEAD = "Using only the sources in this notebook, "
+
+# For complex structured stages NotebookLM tends to drift into prose unless told
+# forcefully to emit nothing but JSON. The bare-object parser then recovers it
+# whether or not it adds ```fences.
+_JSON_ONLY = (
+    "Reply with NOTHING but a single JSON object — no introduction, no "
+    "explanation, no prose before or after it. "
+)
+
+_PROSE_RULE = (
+    " Answer in prose, strictly from the sources, and state explicitly anything "
+    "the sources do not cover."
+)
+
+# Per-endpoint detail extraction (stage 06). NotebookLM reliably details ONE
+# endpoint per focused query but collapses "every endpoint at once" to a single
+# entry, so the orchestrator fans this out across the stage-05 endpoint list.
+# The shape maps directly onto EndpointEntry's detail fields.
+_ENDPOINT_DETAIL_SHAPE = (
+    'Use this exact JSON shape: {"method": str, "path": str, "parameters": '
+    '[{"name": str, "in": "query"|"header"|"path"|"body"|null, "type": str|null, '
+    '"required": bool|null, "description": str|null}], "request": {"content_type": '
+    'str|null, "schema": str|null, "required": bool|null, "description": str|null}'
+    '|null, "responses": [{"status": str, "description": str|null, "schema": '
+    'str|null}], "examples": [obj], "missing": [str]}. For anything the sources do '
+    "not state use null/empty and add a label to `missing`. Do not invent values."
 )
 
 
-def build_known_summary(prior_answers: list[tuple[str, str]]) -> str:
-    if not prior_answers:
-        return "(none yet)"
-    lines = []
-    for title, answer in prior_answers:
-        flat = " ".join(answer.split())[:280]
-        lines.append(f"- {title}: {flat}")
-    return "\n".join(lines)
-
-
-def _context(notebook_url: str, known_summary: str) -> str:
-    return _HEADER.format(notebook_url=notebook_url, known_summary=known_summary)
+def build_endpoint_detail_question(
+    method: str, path: str, name: str | None = None
+) -> str:
+    label = f"{method} {path}" + (f" ({name})" if name else "")
+    return (
+        f"{_JSON_ONLY}{_LEAD}give the full integration details for the {label} "
+        "endpoint in this API: every request parameter, the request body, every "
+        "response (each with its status code or label), and any examples. "
+        f"{_ENDPOINT_DETAIL_SHAPE}"
+    )
 
 
 def build_question(
     stage: QueryStage,
     kind: QueryKind,
     *,
-    notebook_url: str,
-    known_summary: str,
     pending_fields: list[str] | None = None,
 ) -> str:
-    context = _context(notebook_url, known_summary)
-
     if kind is QueryKind.REVERSE:
-        body = (
-            f"Topic: {stage.title}. Review the earlier answers on this topic and list "
-            "anything they may have missed, anything where the sources conflict, and any "
-            "claim that is not supported by the sources. If the sources are silent on "
-            "something, say so plainly — do not guess."
+        # Keep "Topic: <title>" as a stable anchor for the stage.
+        return (
+            f"Topic: {stage.title}. {_LEAD}list anything important about this topic "
+            "that is easy to miss, anywhere the sources conflict, and anything the "
+            "sources do not cover. Answer strictly from the sources — do not guess."
         )
-        return context + body
 
     if kind is QueryKind.FOLLOWUP:
         fields = ", ".join(pending_fields or [])
-        body = (
-            f"Topic: {stage.title}. The following items are still unfilled: {fields}. "
-            "For each, state only what the sources provide. Then re-output the FULL JSON "
-            "block for this topic; keep any item the sources still do not provide in the "
-            f"`missing` array. {stage.json_hint}"
+        return (
+            f"{_JSON_ONLY}{_LEAD}{stage.goal} The following items are still unfilled: "
+            f"{fields}. Re-output the FULL JSON object; keep anything the sources do "
+            f"not state in the `missing` array. {stage.json_hint}"
         )
-        return context + body
 
     # INITIAL
     if stage.mode is StageMode.STRUCTURED:
-        body = f"Task: {stage.goal}\n{stage.json_hint}"
-    else:
-        body = (
-            f"Task: {stage.goal} Answer in prose, strictly from the sources, and state "
-            "explicitly anything the sources do not cover."
-        )
-    return context + body
+        return f"{_JSON_ONLY}{_LEAD}{stage.goal}\n{stage.json_hint}"
+    return f"{_LEAD}{stage.goal}{_PROSE_RULE}"

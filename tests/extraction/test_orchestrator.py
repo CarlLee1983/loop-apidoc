@@ -67,9 +67,10 @@ def test_followup_only_when_gaps(tmp_path: Path):
     assert result.latest_structured("05").kind is QueryKind.INITIAL
 
 
-def test_questions_carry_notebook_and_context(tmp_path: Path):
+def test_questions_are_short_and_self_contained(tmp_path: Path):
     adapter = _FakeAdapter()
     run_extraction(adapter, NB, ExtractionStore(tmp_path))
-    assert all(NB in q for q in adapter.questions)
-    # later stages should include accumulated known-summary context
-    assert any("Known so far" in q for q in adapter.questions)
+    # No preamble or embedded cross-stage context (the NotebookLM confusion cause).
+    assert all(NB not in q for q in adapter.questions)
+    assert all("Known so far" not in q for q in adapter.questions)
+    assert adapter.questions
