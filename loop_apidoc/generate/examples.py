@@ -133,16 +133,34 @@ def _ts_value(kind: str, value: object) -> str:
 def _ts_signature(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
+
+    # Determine if we need the import (at least one explicit scheme)
+    has_explicit = any(_signature_explicit(s) for s in schemes)
+
+    # Determine if we need unique function names (multiple schemes)
+    need_unique_names = len(schemes) > 1
+
+    parts = []
+
+    # Emit import exactly once at the top if needed
+    if has_explicit:
+        parts.append("import { createCipheriv, createHash } from 'node:crypto'\n")
+
     blocks = []
-    for s in schemes:
+    for idx, s in enumerate(schemes):
+        # Generate unique function name when needed
+        if need_unique_names:
+            func_name = f"sign_{_snake(s.name or str(idx))}"
+        else:
+            func_name = "sign"
+
         if _signature_explicit(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
-            algo = (s.algorithm or "aes-256-cbc").lower()
+            algo = s.algorithm.lower()
             blocks.append(
-                "import { createCipheriv, createHash } from 'node:crypto'\n\n"
                 f"// 簽章 {s.name or ''}：{s.algorithm}\n"
-                "function sign(payload: string): string {\n"
+                f"function {func_name}(payload: string): string {{\n"
                 f"  const key = process.env.{_snake(key).upper()} ?? '{key}'\n"
                 f"  const iv = process.env.{_snake(iv).upper()} ?? '{iv}'\n"
                 f"  const cipher = createCipheriv('{algo}', key, iv)\n"
@@ -154,11 +172,13 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
             blocks.append(
                 f"// gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
-                "function sign(payload: string): string {\n"
+                f"function {func_name}(payload: string): string {{\n"
                 "  throw new Error('來源未提供完整簽章演算法，請依文件補完')\n"
                 "}\n"
             )
-    return "\n".join(blocks)
+
+    parts.append("\n".join(blocks))
+    return "".join(parts)
 
 
 def _render_ts(shape: dict, schemes: list[CryptoScheme]) -> str:

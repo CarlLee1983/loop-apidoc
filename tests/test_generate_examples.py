@@ -205,3 +205,49 @@ def test_render_ts_skeleton_with_gap_when_not_explicit():
     out = _render_ts(shape, [partial])
     assert "createCipheriv" not in out
     assert "// gap:" in out
+
+
+def test_render_ts_multiple_explicit_schemes_valid():
+    """Test that multiple explicit schemes produce valid TypeScript (no duplicate imports/declarations)."""
+    from loop_apidoc.generate.examples import _render_ts, _ts_signature
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    # Two explicit schemes (both with algorithm + payload_assembly)
+    scheme1 = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    scheme2 = CryptoScheme(
+        status="supported", name="SecondSig", algorithm="SHA256", mode="HMAC",
+        key_source=KeySource(key="SecondKey", iv="SecondIV"),
+        payload_assembly=[{"step": 1, "desc": "加密"}],
+    )
+
+    # Get just the signature block first
+    sig_out = _ts_signature([scheme1, scheme2])
+
+    # Assert exactly one import line
+    import_count = sig_out.count("import { createCipheriv")
+    assert import_count == 1, f"Expected 1 import, got {import_count}"
+
+    # Assert no duplicate function declarations
+    assert sig_out.count("function sign(payload: string)") == 0, "function sign() should not appear (non-unique)"
+
+    # Assert two distinct function names (should use sign_checkvalue, sign_second_sig or similar)
+    assert "function sign_" in sig_out, "Expected unique function names like sign_checkvalue"
+    lines = sig_out.split("\n")
+    func_decls = [line for line in lines if line.startswith("function sign_")]
+    assert len(func_decls) == 2, f"Expected 2 unique function declarations, got {len(func_decls)}: {func_decls}"
+
+    # Full render should also be valid TypeScript
+    out = _render_ts(shape, [scheme1, scheme2])
+    assert out.count("import { createCipheriv") == 1, "Full render should have exactly 1 import"
+    assert out.startswith("// Derived from openapi.yaml")
+    assert "function sign_" in out
