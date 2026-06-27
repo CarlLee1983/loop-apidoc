@@ -37,6 +37,86 @@ def _stricter(a: PlanItemStatus, b: PlanItemStatus) -> PlanItemStatus:
     return a if _STATUS_RANK[a] >= _STATUS_RANK[b] else b
 
 
+def _param_key(p: dict) -> tuple:
+    return (p.get("name"), p.get("in") or p.get("location"))
+
+
+def _union_list(base: list, extra, key) -> list:
+    """Append `extra`'s items to `base`, skipping duplicates by `key`. Malformed
+    input (a non-list `extra`, or a non-dict item) is passed through verbatim so
+    the downstream EndpointEntry validation rejects it — preserving the existing
+    "malformed detail is skipped, endpoint left intact" behaviour."""
+    if not isinstance(extra, list):
+        return extra
+    out = list(base)
+    seen = {key(x) for x in out if isinstance(x, dict)}
+    for item in extra:
+        if not isinstance(item, dict):
+            out.append(item)  # let pydantic reject downstream
+            continue
+        k = key(item)
+        if k not in seen:
+            seen.add(k)
+            out.append(item)
+    return out
+
+
+def _union_endpoint_fields(existing: EndpointEntry, detail: dict) -> dict:
+    """Union a detail's parameters/responses/examples into an endpoint's, instead
+    of replacing them. For the usual single-detail-per-endpoint case the endpoint
+    starts empty so the union equals the detail; when several details legitimately
+    target one endpoint (multiple products on a shared method+path) their fields
+    accumulate rather than the last one overwriting the rest."""
+    examples = detail.get("examples")
+    return {
+        "parameters": _union_list(existing.parameters, detail.get("parameters"),
+                                  _param_key),
+        "responses": _union_list(existing.responses, detail.get("responses"),
+                                 lambda r: r.get("status")),
+        "examples": [*existing.examples, *examples] if isinstance(examples, list)
+        else examples,
+        "request": existing.request if existing.request is not None
+        else detail.get("request"),
+    }
+
+
+def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
+    """Collapse two endpoints sharing method+path into one canonical entry."""
+    fields = _union_endpoint_fields(a, {
+        "parameters": list(b.parameters), "responses": list(b.responses),
+        "examples": list(b.examples), "request": b.request,
+    })
+    summaries = [s for s in (a.summary, b.summary) if s]
+    citations = list(a.citations)
+    for c in b.citations:
+        if c not in citations:
+            citations.append(c)
+    return EndpointEntry(
+        status=_stricter(a.status, b.status), method=a.method, path=a.path,
+        summary="；".join(dict.fromkeys(summaries)) or None,
+        citations=citations, **fields,
+    )
+
+
+def _dedupe_endpoints(plan: NormalizationPlan) -> None:
+    """OpenAPI allows one operation per method+path and the validator checks
+    plan.endpoints, so several source endpoints sharing one method+path (e.g.
+    multiple payment products posting to one gateway URL) must collapse into a
+    single canonical endpoint. Endpoints missing method/path are left untouched."""
+    out: list[EndpointEntry] = []
+    index: dict[tuple, int] = {}
+    for ep in plan.endpoints:
+        key = (ep.method, ep.path) if ep.method and ep.path else None
+        if key is not None and key in index:
+            i = index[key]
+            out[i] = _combine_endpoints(out[i], ep)
+        else:
+            if key is not None:
+                index[key] = len(out)
+            out.append(ep)
+    plan.endpoints = out
+
+
 # inventory stage_id -> (json_key, plan_field, entry_class, field factory). Stage 06
 # is handled separately (merged into endpoints), so it is intentionally absent here.
 _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
@@ -177,6 +257,7 @@ def build_normalization_plan(
         _add_missing_and_conflicts(plan, stage_id, art, block)
 
     _merge_endpoint_details(plan, extraction, manifest)
+    _dedupe_endpoints(plan)
     return plan
 
 
@@ -214,7 +295,9 @@ def _merge_one_detail(
             merged_status = _stricter(existing.status, status)
             merged = _build_entry(
                 plan, "06", art.query_id, "endpoint_details", EndpointEntry,
-                **{**existing.model_dump(), **detail, "status": merged_status,
+                **{**existing.model_dump(),
+                   **_union_endpoint_fields(existing, detail),
+                   "status": merged_status,
                    "citations": [*existing.citations, citation]},
             )
             if merged is None:

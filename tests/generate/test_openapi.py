@@ -204,6 +204,36 @@ def test_named_enum_becomes_component():
     assert schemas["OrderStatus"] == {"type": "string", "enum": ["new", "paid"]}
 
 
+def test_duplicate_path_method_operations_are_merged():
+    # Two source endpoints can share one method+path (e.g. ECPay's 全方位金流
+    # and ATM both POST /Cashier/AioCheckOut/V5, distinguished by a parameter).
+    # OpenAPI allows only one operation per path+method, so they must be MERGED
+    # (params/responses unioned) rather than the second silently overwriting the
+    # first and wiping its content.
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/checkout",
+            summary="all-in-one",
+            parameters=[{"name": "A", "in": "query"}],
+            responses=[],  # this product documents no synchronous response
+        ),
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/checkout",
+            summary="atm",
+            parameters=[{"name": "B", "in": "query"}],
+            responses=[{"status": "200", "description": "ok"}],
+        ),
+    ])
+    ops = build_openapi(plan)["paths"]["/checkout"]
+    assert set(ops.keys()) == {"post"}
+    op = ops["post"]
+    assert {p["name"] for p in op["parameters"]} == {"A", "B"}
+    # the real response from the second endpoint must survive the merge
+    assert "200" in op["responses"]
+    # both summaries preserved
+    assert "all-in-one" in op["summary"] and "atm" in op["summary"]
+
+
 def test_non_ascii_schema_name_preserved_as_title():
     # A purely CJK name can't form a valid OpenAPI component key, so the key
     # falls back to schema<idx>; the human-readable name must survive in `title`

@@ -188,37 +188,59 @@ def _build_responses(responses: list[dict]) -> dict:
     return out
 
 
-def _build_operation(endpoint) -> dict:
+def _build_operation(endpoints: list) -> dict:
+    """Build one OpenAPI operation from one or more source endpoints that share
+    the same method+path. OpenAPI permits only a single operation per path+method,
+    so when a source lists the same URL more than once (e.g. several payment
+    products posting to one gateway endpoint, selected by a parameter) their
+    parameters and responses are unioned rather than one overwriting the other."""
     op: dict = {}
-    if endpoint.summary:
-        op["summary"] = endpoint.summary
+    summaries: list[str] = []
+    for endpoint in endpoints:
+        if endpoint.summary and endpoint.summary not in summaries:
+            summaries.append(endpoint.summary)
+    if summaries:
+        op["summary"] = "；".join(summaries)
     # OpenAPI requires unique (name, in) per operation; keep the first occurrence.
     params = []
     seen: set[tuple[str, str]] = set()
-    for raw in endpoint.parameters:
-        built = _build_parameter(raw)
-        if not built:
-            continue
-        key = (built["name"], built["in"])
-        if key in seen:
-            continue
-        seen.add(key)
-        params.append(built)
+    for endpoint in endpoints:
+        for raw in endpoint.parameters:
+            built = _build_parameter(raw)
+            if not built:
+                continue
+            key = (built["name"], built["in"])
+            if key in seen:
+                continue
+            seen.add(key)
+            params.append(built)
     if params:
         op["parameters"] = params
-    if endpoint.request:
-        op["requestBody"] = _build_request_body(endpoint.request)
-    op["responses"] = _build_responses(endpoint.responses)
+    for endpoint in endpoints:
+        if endpoint.request:
+            op["requestBody"] = _build_request_body(endpoint.request)
+            break
+    responses: list[dict] = []
+    for endpoint in endpoints:
+        responses.extend(endpoint.responses)
+    op["responses"] = _build_responses(responses)
     return op
 
 
 def _build_paths(plan: NormalizationPlan) -> dict:
-    paths: dict = {}
+    # Group endpoints by (path, method) preserving first-seen order, so several
+    # source endpoints sharing one method+path collapse into a single merged
+    # operation instead of the last one overwriting the rest.
+    grouped: dict[tuple[str, str], list] = {}
     for endpoint in plan.endpoints:
         if not endpoint.path or not endpoint.method:
             continue
-        method = endpoint.method.lower()
-        paths.setdefault(endpoint.path, {})[method] = _build_operation(endpoint)
+        grouped.setdefault((endpoint.path, endpoint.method.lower()), []).append(
+            endpoint
+        )
+    paths: dict = {}
+    for (path, method), endpoints in grouped.items():
+        paths.setdefault(path, {})[method] = _build_operation(endpoints)
     return paths
 
 

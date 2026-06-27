@@ -161,6 +161,37 @@ def test_malformed_endpoint_details_shape_does_not_raise():
     assert any(m.area == "06" for m in plan.missing_items)
 
 
+def test_duplicate_method_path_endpoints_merged_with_unioned_details():
+    # Two source endpoints share POST /c (e.g. distinct products on one gateway
+    # URL). They must collapse into ONE plan endpoint, and the per-endpoint
+    # details for both must union (not overwrite) — so no detail's params or
+    # responses are lost and the validator sees a single complete endpoint.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"POST","path":"/c","summary":"all","source":"api.pdf"},'
+        '{"method":"POST","path":"/c","summary":"atm","source":"api.pdf"}]}\n```'
+    )
+    ep0 = ('```json\n{"method":"POST","path":"/c",'
+           '"parameters":[{"name":"A","in":"body"}],"responses":[],'
+           '"source":"api.pdf"}\n```')
+    ep1 = ('```json\n{"method":"POST","path":"/c",'
+           '"parameters":[{"name":"B","in":"body"}],'
+           '"responses":[{"status":"200"}],"source":"api.pdf"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+        AnswerArtifact(query_id="06-ep0", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep0, answer_path="answers/06-ep0.txt", returncode=0),
+        AnswerArtifact(query_id="06-ep1", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep1, answer_path="answers/06-ep1.txt", returncode=0),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    eps = [e for e in plan.endpoints if e.path == "/c"]
+    assert len(eps) == 1
+    ep = eps[0]
+    assert {p.get("name") for p in ep.parameters} == {"A", "B"}
+    assert any(r.get("status") == "200" for r in ep.responses)
+
+
 def test_nested_scalar_wrong_type_in_inventory_does_not_raise():
     # `fields` must be a list[dict]; a bare string used to crash entry build.
     block = '```json\n{"schemas": [{"name": "U", "fields": "bad"}]}\n```'
