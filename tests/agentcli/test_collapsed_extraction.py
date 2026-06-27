@@ -62,6 +62,16 @@ def test_inventory_split_maps_each_stage():
     assert "webhooks" in answers["10"]  # gaps surfaced
 
 
+def test_global_missing_not_duplicated_into_every_inventory_stage():
+    # The global inventory.missing must live in exactly one place (the stage-10
+    # gaps note), not be copied into every inventory stage block — otherwise the
+    # plan records each gap once per stage and the guide repeats it N times.
+    answers = inventory_to_stage_answers(_INVENTORY)
+    for sid in ("03", "04", "05", "07", "08", "09"):
+        assert "missing" not in extract_json_block(answers[sid])
+    assert "webhooks" in answers["10"]
+
+
 def test_run_agent_extraction_fans_out_and_persists(tmp_path: Path):
     store = ExtractionStore(tmp_path)
     adapter = _FakeAdapter()

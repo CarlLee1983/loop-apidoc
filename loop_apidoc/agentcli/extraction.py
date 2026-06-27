@@ -43,9 +43,11 @@ _INVENTORY_STAGES: tuple[tuple[str, str], ...] = (
 
 
 def _block(key: str, inventory: dict) -> str:
+    # The global `missing` list is surfaced once via stage 10; copying it into
+    # every inventory stage block here would make the plan record each gap once
+    # per stage and the guide repeat it N times.
     value = inventory.get(key)
-    payload = {key: value if isinstance(value, list) else [],
-               "missing": inventory.get("missing") or []}
+    payload = {key: value if isinstance(value, list) else []}
     return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
 
 

@@ -142,17 +142,31 @@ def _operational(plan: NormalizationPlan) -> list[str]:
     return [f"- **{o.topic or '-'}**：{o.detail or '-'}" for o in plan.operational]
 
 
+def _dedup_by_detail(items) -> list:
+    """Collapse items that repeat the same detail text (keeping the first), so a
+    gap that the source states once isn't listed many times."""
+    seen: set[str] = set()
+    out = []
+    for it in items:
+        if it.detail in seen:
+            continue
+        seen.add(it.detail)
+        out.append(it)
+    return out
+
+
 def _gaps(plan: NormalizationPlan) -> list[str]:
     out: list[str] = []
-    if plan.missing_items:
+    missing = _dedup_by_detail(plan.missing_items)
+    if missing:
         out.append("**已知缺漏：**")
-        out += [f"- [{m.area}] {m.detail}" for m in plan.missing_items]
+        out += [f"- [{m.area}] {m.detail}" for m in missing]
     if plan.source_conflicts:
         out.append("**來源衝突：**")
-        out += [f"- [{c.area}] {c.detail}" for c in plan.source_conflicts]
+        out += [f"- [{c.area}] {c.detail}" for c in _dedup_by_detail(plan.source_conflicts)]
     if plan.unverified_items:
         out.append("**無法確認：**")
-        out += [f"- [{u.area}] {u.detail}" for u in plan.unverified_items]
+        out += [f"- [{u.area}] {u.detail}" for u in _dedup_by_detail(plan.unverified_items)]
     if plan.conflicts_note:
         out += ["", plan.conflicts_note]
     return out or [_EMPTY]

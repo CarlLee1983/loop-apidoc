@@ -89,6 +89,19 @@ def test_missing_item_surfaced():
     assert "未提供 rate limit" in md
 
 
+def test_duplicate_missing_items_deduped_in_gaps():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        missing_items=[
+            MissingItem(area="03", detail="無完整錯誤碼"),
+            MissingItem(area="04", detail="無完整錯誤碼"),
+            MissingItem(area="05", detail="無完整錯誤碼"),
+        ],
+    )
+    md = build_markdown(plan, _manifest())
+    assert md.count("無完整錯誤碼") == 1
+
+
 def test_webhook_endpoint_rendered_as_webhook_not_path():
     plan = NormalizationPlan(
         notebook_url="https://nb/x",
