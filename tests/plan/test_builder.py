@@ -260,6 +260,16 @@ def test_blank_title_leaves_system_groups_empty():
     assert plan.system_groups == []
 
 
+def test_stage00_json_carries_title_and_version():
+    answer = ('```json\n{"title": "藍新金流手冊", "version": "NDNF-1.2.2"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("00", QueryKind.INITIAL, answer),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    assert plan.system_groups[0].name == "藍新金流手冊"
+    assert plan.system_groups[0].version == "NDNF-1.2.2"
+
+
 def test_string_enums_in_schema_are_kept_not_dropped():
     # The SKILL contract documents schemas[].enums as ["str"]. Such a schema
     # must survive the plan build (it used to be silently dropped because the

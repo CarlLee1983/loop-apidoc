@@ -72,6 +72,23 @@ def test_missing_title_yields_blank_stage_00():
     assert answers["00"] == ""
 
 
+def test_version_encoded_with_title_in_stage_00():
+    answers = inventory_to_stage_answers(
+        {**_INVENTORY, "title": "Acme Pay API", "version": "NDNF-1.2.2"})
+    block = extract_json_block(answers["00"])
+    assert block == {"title": "Acme Pay API", "version": "NDNF-1.2.2"}
+
+
+def test_version_without_title_still_carried_in_stage_00():
+    answers = inventory_to_stage_answers({**_INVENTORY, "version": "v3"})
+    block = extract_json_block(answers["00"])
+    assert block == {"title": None, "version": "v3"}
+
+
+def test_inventory_prompt_requests_version():
+    assert '"version": str|null' in INVENTORY_PROMPT
+
+
 def test_global_missing_not_duplicated_into_every_inventory_stage():
     # The global inventory.missing must live in exactly one place (the stage-10
     # gaps note), not be copied into every inventory stage block — otherwise the

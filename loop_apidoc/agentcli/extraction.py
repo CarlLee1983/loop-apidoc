@@ -17,6 +17,7 @@ INVENTORY_PROMPT = (
     "Read the markdown manual provided to you and output ONE JSON object (and "
     "nothing else) with this exact schema, filled STRICTLY from the sources:\n"
     '{"title": str|null, '
+    '"version": str|null, '
     '"overview": str, '
     '"environments": [{"name": str, "base_url": str, "version": str|null, "source": str}], '
     '"security_schemes": [{"name": str, "type": str|null, "location": str|null, '
@@ -52,10 +53,24 @@ def _block(key: str, inventory: dict) -> str:
     return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
 
 
+def _stage00(inventory: dict) -> str:
+    """Encode the source title (and optional document version) for stage 00.
+
+    Title-only stays plain text (the long-standing contract); when a source
+    version is present we emit a small JSON object so the version survives the
+    text-artifact seam into the plan and OpenAPI `info.version`."""
+    title = str(inventory.get("title") or "").strip()
+    version = str(inventory.get("version") or "").strip()
+    if version:
+        payload = {"title": title or None, "version": version}
+        return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    return title
+
+
 def inventory_to_stage_answers(inventory: dict) -> dict[str, str]:
     """Split one inventory JSON into per-stage answer texts (pure)."""
     answers: dict[str, str] = {
-        "00": str(inventory.get("title") or "").strip(),
+        "00": _stage00(inventory),
         "01": "Source inventory: a single source manual was provided and read.",
         "02": str(inventory.get("overview") or "").strip()
         or "(no overview stated)",

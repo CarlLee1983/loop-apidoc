@@ -70,8 +70,8 @@ def _schema_from_type(value) -> dict | None:
 
 
 def _build_info(plan: NormalizationPlan) -> dict:
-    title = plan.system_groups[0].name if plan.system_groups else None
-    version = next((e.version for e in plan.environments if e.version), None)
+    title = plan.resolved_title
+    version = plan.resolved_version
     info: dict = {"title": title or "Untitled API", "version": version or "0.0.0"}
     if not title or not version:
         info[X_LOOP_STATUS] = MISSING_STATUS

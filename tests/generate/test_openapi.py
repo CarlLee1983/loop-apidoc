@@ -39,6 +39,19 @@ def test_info_uses_system_group_title_and_env_version():
     assert X_LOOP_STATUS not in info
 
 
+def test_info_uses_document_version_over_env_version():
+    plan = _plan(
+        system_groups=[SystemGroup(name="藍新金流手冊", version="NDNF-1.2.2")],
+        environments=[
+            EnvironmentEntry(status=PlanItemStatus.SUPPORTED, version="2.3")
+        ],
+    )
+    info = build_openapi(plan)["info"]
+    assert info["title"] == "藍新金流手冊"
+    assert info["version"] == "NDNF-1.2.2"
+    assert X_LOOP_STATUS not in info
+
+
 def test_info_marks_missing_when_no_source():
     info = build_openapi(_plan())["info"]
     assert info["title"] == "Untitled API"

@@ -72,6 +72,8 @@ class OperationalEntry(_Cited):
 class SystemGroup(BaseModel):
     name: str
     description: str | None = None
+    # Source-stated document/API version (e.g. "NDNF-1.2.2"); feeds info.version.
+    version: str | None = None
 
 
 class MissingItem(BaseModel):
@@ -107,3 +109,18 @@ class NormalizationPlan(BaseModel):
     missing_items: list[MissingItem] = Field(default_factory=list)
     source_conflicts: list[SourceConflict] = Field(default_factory=list)
     unverified_items: list[UnverifiedItem] = Field(default_factory=list)
+
+    @property
+    def resolved_title(self) -> str | None:
+        """Source-stated document/API title for OpenAPI `info.title`."""
+        return self.system_groups[0].name if self.system_groups else None
+
+    @property
+    def resolved_version(self) -> str | None:
+        """Version for OpenAPI `info.version`: the source document version takes
+        precedence over a stated environment/API version. Generators and
+        provenance MUST agree, so both read this single resolution."""
+        group = self.system_groups[0] if self.system_groups else None
+        doc_version = group.version if group else None
+        env_version = next((e.version for e in self.environments if e.version), None)
+        return doc_version or env_version

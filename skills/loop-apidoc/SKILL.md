@@ -25,6 +25,7 @@ After reading every source, output **one** JSON object (filled strictly from the
 
 ```json
 {"title": "str|null",
+ "version": "str|null",
  "overview": "str",
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
@@ -34,7 +35,7 @@ After reading every source, output **one** JSON object (filled strictly from the
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
 ```
-`title` is the source document/product title (verbatim from the source heading, e.g. "綠界全方位金流 API 技術文件"); `null` if the source has no explicit title (it becomes OpenAPI `info.title`). Include **every** endpoint and **every** error code. Each `source` cites the source section/page.
+`title` is the source document/product title (verbatim from the source heading, e.g. "綠界全方位金流 API 技術文件"); `null` if the source has no explicit title (it becomes OpenAPI `info.title`). `version` is the source-stated document/API version (verbatim, e.g. "NDNF-1.2.2"); `null` if none is stated (it becomes OpenAPI `info.version`). Include **every** endpoint and **every** error code. Each `source` cites the source section/page.
 
 ### 3. Extract each endpoint's detail → write `<WORK>/endpoints/<NN>.json`
 For **every** endpoint in inventory.endpoints, output one JSON file (`ep0.json`, `ep1.json`, …), schema:

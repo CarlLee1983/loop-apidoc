@@ -230,11 +230,21 @@ def build_normalization_plan(
         conflicts_note=_note(extraction, "10"),
     )
 
-    # Stage 00 carries the source-stated API/document title (if any), which the
-    # OpenAPI `info.title` and the guide heading read via system_groups.
-    title = _note(extraction, "00").strip()
-    if title:
-        plan.system_groups = [SystemGroup(name=title)]
+    # Stage 00 carries the source-stated API/document title (and, when present,
+    # the document version), feeding OpenAPI `info.title`/`info.version` and the
+    # guide heading via system_groups. Plain text = title only (back-compat);
+    # a JSON object = {"title", "version"}.
+    raw = _note(extraction, "00").strip()
+    title: str | None = None
+    version: str | None = None
+    block = extract_json_block(raw) if raw else None
+    if isinstance(block, dict):
+        title = str(block.get("title")).strip() if block.get("title") else None
+        version = str(block.get("version")).strip() if block.get("version") else None
+    elif raw:
+        title = raw
+    if title or version:
+        plan.system_groups = [SystemGroup(name=title or "", version=version)]
 
     for stage_id, (json_key, plan_field, entry_class, factory) in _INVENTORY.items():
         art, block = _structured_block(extraction, stage_id)

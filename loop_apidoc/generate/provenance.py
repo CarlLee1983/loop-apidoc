@@ -26,8 +26,10 @@ def _entries(target: str, cited) -> list[ProvenanceEntry]:
 
 
 def _info_entries(plan: NormalizationPlan) -> list[ProvenanceEntry]:
-    title = plan.system_groups[0].name if plan.system_groups else None
-    version = next((e.version for e in plan.environments if e.version), None)
+    # Same resolution as OpenAPI info.{title,version} so provenance status and
+    # the emitted spec never disagree (a mismatch trips SOURCE_UNVERIFIED).
+    title = plan.resolved_title
+    version = plan.resolved_version
     return [
         ProvenanceEntry(
             target="info.title",
