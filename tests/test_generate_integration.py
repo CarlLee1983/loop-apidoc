@@ -50,3 +50,14 @@ def test_provenance_targets_for_contract():
     assert "integration.callbacks.NotifyURL" in targets
     # error_codes must NOT get an integration.* target
     assert not any(t.startswith("integration.error") for t in targets)
+
+
+def test_unnamed_crypto_target_does_not_contain_none():
+    """An unnamed (name=None) crypto entry must use its index, not the literal 'None'."""
+    contract = IntegrationContract(
+        crypto=[CryptoScheme(status=PlanItemStatus.SUPPORTED, name=None,
+                             citations=[SourceCitation(query_id="i", answer_path="i")])]
+    )
+    targets = [e.target for e in integration_provenance_entries(contract)]
+    assert all(".None" not in t for t in targets), f"Found .None in targets: {targets}"
+    assert any("integration.crypto." in t for t in targets)

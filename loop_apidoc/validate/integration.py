@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import GenerateResult
-from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan
+from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan, PlanItemStatus
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
 
 _SIGNAL_WORDS = ("加密", "簽章", "AES", "HashKey", "HashIV", "SHA256")
@@ -28,14 +28,33 @@ def _uncited(contract: IntegrationContract) -> list[Issue]:
     )
     for section, entries in groups:
         for idx, entry in enumerate(entries):
+            label = getattr(entry, "name", None) or str(idx)
+            location = f"integration.{section}.{label}"
             if not entry.citations:
-                label = getattr(entry, "name", None) or str(idx)
                 issues.append(
                     _issue(
                         IssueCode.UNSUPPORTED_ASSERTION,
-                        f"integration.{section}.{label}",
+                        location,
                         "契約條目無任何來源引用",
                         "為此條目補上來源引用,或在無來源時移除",
+                    )
+                )
+            elif entry.status is PlanItemStatus.CONFLICTING:
+                issues.append(
+                    _issue(
+                        IssueCode.SOURCE_CONFLICT,
+                        location,
+                        "契約條目的來源彼此衝突",
+                        "揭露衝突並由來源澄清",
+                    )
+                )
+            elif entry.status is PlanItemStatus.UNVERIFIED:
+                issues.append(
+                    _issue(
+                        IssueCode.SOURCE_UNVERIFIED,
+                        location,
+                        "契約條目僅有 unverified 來源,缺 supported 依據",
+                        "確認來源以取得 supported 引用",
                     )
                 )
     return issues
@@ -68,7 +87,7 @@ def _refs(contract: IntegrationContract, openapi: dict) -> list[Issue]:
                         IssueCode.OUTPUT_MISMATCH,
                         f"integration.test_cases.{case.name}",
                         f"operation_ref 指向不存在的 operation:{ref}",
-                        "更正 operation_ref 至既有 paths.{{path}}.{{method}}",
+                        "更正 operation_ref 至既有 paths.{path}.{method}",
                         fixable=True,
                     )
                 )

@@ -48,12 +48,12 @@ def integration_provenance_entries(
 ) -> list[ProvenanceEntry]:
     """One provenance group per contract leaf (error_codes excluded — reused)."""
     out: list[ProvenanceEntry] = []
-    for scheme in contract.crypto:
-        out += _entries(f"integration.crypto.{scheme.name}", scheme)
-    for cb in contract.callbacks:
-        out += _entries(f"integration.callbacks.{cb.name}", cb)
+    for idx, scheme in enumerate(contract.crypto):
+        out += _entries(f"integration.crypto.{scheme.name or idx}", scheme)
+    for idx, cb in enumerate(contract.callbacks):
+        out += _entries(f"integration.callbacks.{cb.name or idx}", cb)
     for idx, cond in enumerate(contract.field_conditions):
         out += _entries(f"integration.field_conditions.{idx}", cond)
-    for case in contract.test_cases:
-        out += _entries(f"integration.test_cases.{case.name}", case)
+    for idx, case in enumerate(contract.test_cases):
+        out += _entries(f"integration.test_cases.{case.name or idx}", case)
     return out

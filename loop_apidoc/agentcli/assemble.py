@@ -56,10 +56,10 @@ def load_extraction_inputs(
             integration = json.loads(integration_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise AssembleInputError(
-                f"integration.json is not valid JSON: {exc}"
+                f"integration.json 不是合法 JSON:{exc}"
             ) from exc
         if not isinstance(integration, dict):
-            raise AssembleInputError("integration.json must be a JSON object")
+            raise AssembleInputError("integration.json 必須是 JSON 物件")
 
     return inventory, endpoint_texts, integration
 
