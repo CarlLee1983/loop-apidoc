@@ -89,3 +89,31 @@ def test_request_signing_schemes_filters_callback_only():
     )
     names = [s.name for s in _request_signing_schemes(plan)]
     assert names == ["req", "any"]
+
+
+def test_render_curl_has_header_note_url_and_signature_comment():
+    from loop_apidoc.generate.examples import _render_curl
+    from loop_apidoc.plan.models import CryptoScheme
+
+    shape = {
+        "method": "POST",
+        "url": "https://api.example.com/pay",
+        "query": [],
+        "header": [],
+        "path": [],
+        "body": [("MerchantID", "placeholder", "<merchant_id>"), ("Version", "source", "2.0")],
+        "content_type": "application/x-www-form-urlencoded",
+        "security": [],
+    }
+    scheme = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC",
+        payload_assembly=[{"step": 1, "desc": "排序欄位後組字串"}],
+    )
+    out = _render_curl(shape, [scheme])
+    assert out.startswith("# Derived from openapi.yaml")
+    assert "https://api.example.com/pay" in out
+    assert "MerchantID=<merchant_id>" in out
+    assert "Version=2.0" in out
+    # curl 簽章一律註解步驟，且指向 script
+    assert "# 簽章步驟" in out
+    assert "request.py" in out

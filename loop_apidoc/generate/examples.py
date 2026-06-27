@@ -84,3 +84,37 @@ def _request_signing_schemes(plan: NormalizationPlan) -> list[CryptoScheme]:
     if contract is None:
         return []
     return [s for s in contract.crypto if s.purpose in (None, "request", "signature")]
+
+
+def _comment(text: str, prefix: str = "# ") -> str:
+    return "\n".join(f"{prefix}{line}" for line in text.split("\n"))
+
+
+def _signature_comment_steps(schemes: list[CryptoScheme]) -> str:
+    if not schemes:
+        return ""
+    lines = ["# 簽章步驟（shell 無法內嵌加密，請先跑 request.py / request.ts 取得簽章值）"]
+    for s in schemes:
+        algo = s.algorithm or "<來源未指明演算法>"
+        lines.append(f"#   {s.name or 'signature'}：{algo}")
+        for step in s.payload_assembly:
+            lines.append(f"#     {step.step or '-'}. {step.desc or '<來源未說明>'}")
+    return "\n".join(lines)
+
+
+def _render_curl(shape: dict, schemes: list[CryptoScheme]) -> str:
+    parts = [_comment(HEADER_NOTE), ""]
+    sig = _signature_comment_steps(schemes)
+    if sig:
+        parts += [sig, ""]
+    data_fields = shape["body"] or shape["query"]
+    lines = [f"curl -X {shape['method']} '{shape['url']}' \\"]
+    if shape["content_type"]:
+        lines.append(f"  -H 'Content-Type: {shape['content_type']}' \\")
+    for name, _kind, value in shape["header"]:
+        lines.append(f"  -H '{name}: {value}' \\")
+    for i, (name, _kind, value) in enumerate(data_fields):
+        tail = "" if i == len(data_fields) - 1 else " \\"
+        lines.append(f"  --data-urlencode '{name}={value}'{tail}")
+    parts.append("\n".join(lines))
+    return "\n".join(parts) + "\n"
