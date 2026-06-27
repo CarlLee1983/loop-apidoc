@@ -31,6 +31,20 @@ When validation fails, the pipeline classifies issues from the report, attempts 
 
 ---
 
+## Run as a Claude Code plugin (agent-native)
+
+Besides the CLI, this project is also a Claude Code plugin: invoke the
+`loop-apidoc` skill inside a Claude session, give it one or more sources (local
+files or public URLs), and the agent extracts them itself, calls
+`loop-apidoc assemble` to assemble and validate, and re-fills missing fields
+automatically when validation fails (up to 3 rounds).
+
+This mode uses neither NotebookLM nor a nested `claude -p`; the current agent is
+the extraction engine. The bundled CLI is invoked via
+`uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble`.
+
+---
+
 ## Install
 
 Requires Python `>=3.11` and [`uv`](https://docs.astral.sh/uv/).
