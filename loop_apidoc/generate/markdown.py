@@ -10,6 +10,7 @@ REQUIRED_MARKDOWN_SECTIONS: tuple[str, ...] = (
     "## 環境與 base URL",
     "## 驗證／授權",
     "## 共用規則",
+    "## 整合機制",
     "## Endpoint",
     "## Request／Response 範例",
     "## 錯誤碼",
@@ -88,6 +89,35 @@ def _field_line(name: str, field: dict, location: str | None = None) -> str:
     if desc:
         line += f" — {desc}"
     return line
+
+
+def _integration(plan: NormalizationPlan) -> list[str]:
+    contract = plan.integration
+    if contract is None or not (
+        contract.crypto or contract.callbacks or contract.field_conditions or contract.test_cases
+    ):
+        return ["（來源未提供整合機制資訊)"]
+    lines: list[str] = []
+    for c in contract.crypto:
+        lines.append(f"### 加解密／簽章：{c.name or '(未命名)'}")
+        if c.algorithm:
+            lines.append(f"- 演算法：{c.algorithm}{f'/{c.mode}' if c.mode else ''}")
+        if c.key_source and (c.key_source.key or c.key_source.iv):
+            lines.append(f"- 金鑰來源：key={c.key_source.key}, iv={c.key_source.iv}")
+        for s in c.payload_assembly:
+            lines.append(f"  {s.step}. {s.desc or ''}")
+        if c.verify and c.verify.field:
+            lines.append(f"- 驗章：{c.verify.field}（{c.verify.method or ''}）")
+    for cb in contract.callbacks:
+        lines.append(f"### 回呼：{cb.name or '(未命名)'}")
+        if cb.expected_response:
+            lines.append(f"- 需回應：{cb.expected_response}")
+        if cb.verification:
+            lines.append(f"- 驗證：{cb.verification}")
+    for fc in contract.field_conditions:
+        if fc.rule:
+            lines.append(f"- 條件：{fc.rule}")
+    return lines
 
 
 def _schemas(plan: NormalizationPlan) -> list[str]:
@@ -227,6 +257,7 @@ def build_markdown(plan: NormalizationPlan, manifest: Manifest) -> str:
         _environments(plan),
         _security(plan),
         _schemas(plan),
+        _integration(plan),   # NEW — aligns with "## 整合機制"
         _endpoints(plan),
         _examples(plan),
         _errors(plan),

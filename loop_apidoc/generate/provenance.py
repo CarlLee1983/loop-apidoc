@@ -99,4 +99,9 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
             target=f"unverified.{item.area}", status=PlanItemStatus.UNVERIFIED,
             query_id=item.query_id))
 
+    if plan.integration is not None:
+        from loop_apidoc.generate.integration import integration_provenance_entries
+
+        entries += integration_provenance_entries(plan.integration)
+
     return ProvenanceDocument(notebook_url=plan.notebook_url, entries=entries)

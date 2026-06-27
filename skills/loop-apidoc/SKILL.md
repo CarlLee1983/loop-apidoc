@@ -7,28 +7,44 @@ description: Produce standardized OpenAPI 3.1 + Traditional-Chinese Markdown int
 
 You turn the user's API documentation sources into standardized, traceable artifacts. **The source is the only ground truth**: anything a source does not state is `null` and recorded in `missing`. **Never speculate; never apply REST/OAuth conventions.**
 
-The CLI runs from this plugin's bundled package. Always invoke:
+## CLI invocation (`<APIDOC>`)
+
+This skill runs on both the Claude Code plugin and the Codex CLI. Every command
+below writes the CLI as `<APIDOC>`; resolve it once per shell call:
+
+- **`$CLAUDE_PLUGIN_ROOT` is set** (Claude Code plugin) → the CLI lives in the
+  bundled package: `uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc`.
+- **otherwise** (Codex / standalone) → call the globally installed command
+  `loop-apidoc` directly (`uv tool install`; see README).
+
+For a deterministic, shell-portable (bash *and* zsh) prefix, prepend this to any
+CLI line — it builds an argv array that is safe with spaces:
 
 ```bash
-uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
+RUN=(loop-apidoc); [ -n "$CLAUDE_PLUGIN_ROOT" ] && RUN=(uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc)
+"${RUN[@]}" <command> ...
 ```
+
+(Do **not** use `${CLAUDE_PLUGIN_ROOT:+uv run --project "$CLAUDE_PLUGIN_ROOT"}`
+inline: bash word-splits it but zsh does not, so it breaks under zsh.)
 
 ## Flow
 
 ### 1. Collect sources
 - Local files: record the source directory as `<SOURCES>`.
-  - MD/HTML/small PDF: subagents read the file directly with Read.
+  - MD/HTML/small PDF: subagents read the file directly.
   - **Table-heavy or large PDF**: first flatten to high-fidelity markdown —
-    `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`
+    `<APIDOC> preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`
     (pymupdf4llm preserves tables/headings; raw PDF reads distort tables).
     Point extraction subagents at `<WORK>/sources_md`.
-- Public URLs: fetch as text with WebFetch or defuddle; pass URLs via `--url`.
+- Public URLs: fetch each URL as text (built-in web fetch, or a reader like
+  defuddle); pass URLs via `--url`.
 
 ## Subagent contract (extraction)
 
 You orchestrate; **read-only subagents extract**. For every extraction below,
-dispatch a subagent restricted to read-only tools (Read/Grep/Glob — **no web, no
-write**). Give it: the source location (`<SOURCES>` or `<WORK>/sources_md`), the
+dispatch a read-only subagent (file read + search only — **no web, no write**).
+Give it: the source location (`<SOURCES>` or `<WORK>/sources_md`), the
 exact JSON schema to fill, and the grounding rule. The subagent **returns the
 JSON only** (no prose, no file writes). **You (the orchestrator) are the only
 writer** — you write the returned JSON to disk. Grounding rule to include in every
@@ -79,23 +95,82 @@ Top-level `source` is required: cite the source section/page/URL where this endp
 
 **Async notifications / callbacks / webhooks** (server POSTs to a caller-supplied URL, e.g. payment-result notifications): keep `method`, set `path` to `null`. These become OpenAPI 3.1 top-level `webhooks` (named by summary), no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`). **Multiple callbacks sharing the same (method, null) are distinguished only by their `source`** — give every callback detail the correct `source`.
 
-### 4. Assemble + validate
+### 4. Extract integration mechanics → write `<WORK>/integration.json`
+
+Dispatch one read-only subagent to read the sections describing encryption,
+signing, callbacks, and cross-field conditions. It returns **only** this JSON
+object (no prose, no file writes); you write it to `<WORK>/integration.json` beside
+`inventory.json`. Anything the sources do not state → `null` and add a label to
+`missing`. Never infer crypto/callback details from REST/payment conventions.
+
+```json
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "str",
+      "purpose": "request|response|callback|signature|null",
+      "algorithm": "str|null",
+      "mode": "str|null",
+      "padding": "str|null",
+      "encoding": "str|null",
+      "key_source": {"key": "str|null", "iv": "str|null", "note": "str|null"},
+      "payload_assembly": [{"step": 1, "desc": "str", "fields": ["str"]}],
+      "verify": {"field": "str|null", "method": "str|null", "desc": "str|null"},
+      "source": "str"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "str",
+      "trigger": "str|null",
+      "transport": "str|null",
+      "payload_ref": "schemas.{name}|null",
+      "verification": "str|null",
+      "expected_response": "str|null",
+      "source": "str"
+    }
+  ],
+  "field_conditions": [
+    {"scope": "str|null", "rule": "str", "when": "str|null", "then_required": ["str"], "source": "str"}
+  ],
+  "test_cases": [
+    {"name": "str", "operation_ref": "paths.{path}.{method}|null", "request": {}, "response": {}, "source": "str"}
+  ],
+  "missing": [{"area": "str", "detail": "str"}]
+}
+```
+
+- `payload_assembly`: the ordered steps for building the string to encrypt/sign
+  (the signature chain). Only include what the source states.
+- `payload_ref` / `operation_ref`: point to an existing `inventory.schemas` name
+  or `paths.{path}.{method}`; `null` if no match.
+- `source`: required per entry — cites the source section/page/URL.
+- If the sources describe **no** integration mechanics, omit `integration.json`
+  entirely (do not write an empty file).
+
+### 5. Assemble + validate
 ```bash
-uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble \
+<APIDOC> assemble \
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" --json
 ```
 Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 
-### 5. Correction loop (max 3 rounds)
+### 6. Correction loop (max 3 rounds)
 - `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
 - `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
   `suggested_fix`); from `location` identify the inventory field or the endpoint
   at fault, **dispatch a targeted read-only subagent to re-read only the relevant
   source** and return the corrected JSON, then **you** overwrite `inventory.json`
-  or the matching `endpoints/<NN>.json` and return to step 4.
+  or the matching `endpoints/<NN>.json` and return to step 5.
+- On `REQUIRED_INFO_MISSING` at `integration.crypto`: the source mentions
+  encryption/signing but no crypto detail was extracted — re-read the relevant
+  section and overwrite `integration.json`, then re-run assemble.
+- On `OUTPUT_MISMATCH` at `integration.*`: a `payload_ref`/`operation_ref` does
+  not resolve — fix the reference to an existing schema/operation.
 - Still FAIL after 3 consecutive rounds → present the remaining gaps/conflicts to the user. **Do not hard-code fill-ins.**
 
 ## Important
 - Use a dedicated working dir for `<WORK>` (may live in a scratch area outside `<OUT>`).
-- Each round overwrites the same `inventory.json` / `endpoints/*.json`, then re-runs assemble.
+- Each round overwrites the same `inventory.json` / `endpoints/*.json` / `integration.json`, then re-runs assemble.
 - Exit codes: 0=PASS, 1=validation FAIL, 2=extraction input file error (fix the JSON you wrote).

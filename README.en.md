@@ -17,31 +17,37 @@ Core principle: **source documents are the only source of truth**. Anything the 
 
 ## How it works
 
-Extraction queries NotebookLM through the [PleasePrompto/notebooklm-skill](https://github.com/PleasePrompto/notebooklm-skill). That skill drives NotebookLM via local browser automation; each question is an independent session with no conversational context, so every query carries full context (notebook identity, known summary, open items, expected output format).
-
-The pipeline does **not** create the notebook, upload sources, or log into private sites — those are manual prerequisites (below).
+The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows the `loop-apidoc` skill to read sources via a **read-only subagent fan-out**, writes the results to `inventory.json` + `endpoints/*.json`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
 
 ### Full flow
 
 ```
-manifest → extraction (multi-round NotebookLM) → normalization plan → generate (OpenAPI + Markdown) → validate → correction (max 3 rounds)
+preprocess (optional) → extraction (agent read-only subagent fan-out) → manifest → normalization plan → generate (OpenAPI + Markdown) → validate
 ```
 
-When validation fails, the pipeline classifies issues from the report, attempts fixes, and re-validates — up to 3 rounds. After 3 rounds it emits a gap/conflict report and exits non-zero.
+Validation emits a classified issue report. Correction is **agent-driven**: `assemble` reports results via `--json`, the agent re-reads the affected sources, overwrites the extraction JSON, and re-runs `assemble` — until it passes or an issue is deemed an unfixable gap/conflict.
 
 ---
 
 ## Run as a Claude Code plugin (agent-native)
 
-Besides the CLI, this project is also a Claude Code plugin: invoke the
-`loop-apidoc` skill inside a Claude session, give it one or more sources (local
-files or public URLs), and the agent extracts them itself, calls
-`loop-apidoc assemble` to assemble and validate, and re-fills missing fields
-automatically when validation fails (up to 3 rounds).
+Besides the CLI, this project is also a Claude Code plugin: invoke the `loop-apidoc` skill inside a Claude session, give it one or more sources (local files or public URLs), and the agent extracts them itself, calls `loop-apidoc assemble` to assemble and validate, and re-fills missing fields automatically when validation fails (up to 3 rounds).
 
-This mode uses neither NotebookLM nor a nested `claude -p`; the current agent is
-the extraction engine. The bundled CLI is invoked via
-`uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble`.
+The current agent is the extraction engine (the only extraction path). After installing the plugin it is available in Claude Code; the bundled CLI is invoked via `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble`.
+
+### Use it in the OpenAI Codex CLI
+
+The same skill also runs under Codex. Codex does not set `${CLAUDE_PLUGIN_ROOT}`, so install the CLI globally and mount the skill into Codex's skills directory:
+
+```bash
+# 1. Install the CLI as a global loop-apidoc command (replaces the plugin's bundled uv run --project)
+uv tool install --from /path/to/loop-apidoc loop-apidoc
+
+# 2. Mount the skill into Codex (a symlink is enough; edits sync automatically)
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
+```
+
+`SKILL.md` resolves the environment via the `<APIDOC>` placeholder: with `$CLAUDE_PLUGIN_ROOT` it uses the bundled CLI, otherwise it falls back to the global `loop-apidoc`. The rest of the flow (extract → `assemble` → validate → correct) is identical on both.
 
 ---
 
@@ -50,26 +56,16 @@ the extraction engine. The bundled CLI is invoked via
 Requires Python `>=3.11` and [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
+# install dependencies
 uv sync
+
+# confirm the CLI runs
 uv run loop-apidoc --help
 ```
 
-Extraction also needs a local checkout of the NotebookLM skill (default dir `notebooklm-skill`; override with `--skill-root` or `LOOP_APIDOC_SKILL_ROOT`). Run `doctor` first to check readiness.
-
 ---
 
-## Manual prerequisites
-
-These steps are **not** part of the CLI:
-
-1. Create a NotebookLM notebook.
-2. Add all source documents and public URLs to the notebook.
-3. Get the notebook's share link.
-4. Keep a local source directory mirroring the notebook contents.
-
-The notebook must be reachable by the Google account logged into the local browser; insufficient sharing or permissions cause the CLI to fail at the NotebookLM preflight.
-
-### Supported source formats (v1)
+## Supported source formats
 
 PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.
 
@@ -77,34 +73,13 @@ PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.
 
 ## Usage
 
-### `run` — full pipeline
+### `preprocess` — convert PDFs to high-fidelity markdown (optional)
 
 ```bash
-uv run loop-apidoc run \
-  --notebook-url "https://notebooklm.google.com/notebook/..." \
-  --sources ./sources \
-  --output ./output
+uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-| Option | Description |
-| --- | --- |
-| `--notebook-url` | NotebookLM share link (required) |
-| `--sources` | Local source directory (required) |
-| `--output` | Output root; a `<run-id>` subdir is created under it (required) |
-| `--url` | Public source URL, repeatable |
-| `--skill-root` | notebooklm-skill checkout dir (default `notebooklm-skill`) |
-
-Defaults: output language `zh-TW`, OpenAPI 3.1, max 3 correction rounds, no-speculation enabled.
-
-Exit code: `0` only when validation passes (`PASSED`); other statuses (`failed` / `early-stopped` / `blocked`) exit non-zero.
-
-### `doctor` — environment check
-
-```bash
-uv run loop-apidoc doctor
-```
-
-Checks Python, the NotebookLM skill, skill dependencies, Chrome, browser auth status, and required validation tools. **Read-only** — never modifies the notebook or outputs. Exits `0` when ready, `1` otherwise.
+Uses pymupdf4llm to convert every PDF under `--sources` into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
 
 ### `manifest` — build source manifest
 
@@ -122,18 +97,7 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 Runs structure / completeness / consistency / no-speculation validation over the run directory and writes reports to `<run-dir>/validation/`. Exits `0` on pass, `1` when there are ERROR-level issues.
 
-### `run-agent` — use a coding-agent CLI instead of NotebookLM
-
-```bash
-uv run loop-apidoc run-agent \
-  --sources ./sources \
-  --output ./output \
-  [--executable claude] [--model <model>] [--url <URL> ...]
-```
-
-Replaces NotebookLM with a collapsed extraction flow driven by a coding-agent CLI (default `claude -p`): manifest → PDF→markdown → one inventory pass + per-endpoint extraction → plan → generate → validate. `--executable` can point at another agent CLI (e.g. `codex`). Exits `0` on pass, `1` otherwise.
-
-### `assemble` — assemble from agent-produced extraction JSON (for the agent-native plugin)
+### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
 ```bash
 uv run loop-apidoc assemble \
@@ -156,8 +120,8 @@ output/
 └── <run-id>/                    # run-id format: %Y%m%dT%H%M%SZ
     ├── manifest.json            # source manifest
     ├── extraction/
-    │   ├── queries.jsonl        # per-round query log
-    │   └── answers/             # raw extraction artifacts (kept per round, never overwritten)
+    │   ├── inventory.json       # API inventory (agent-produced)
+    │   └── endpoints/           # per-endpoint extraction JSON
     ├── plan/
     │   └── normalization-plan.json   # machine-readable normalization plan
     ├── openapi.yaml             # OpenAPI 3.1
@@ -181,33 +145,34 @@ Only content that is both present in the plan and source-grounded reaches the Op
 | **Consistency** | The endpoint set and security names must agree across OpenAPI, Markdown, and provenance |
 | **No speculation** | Every output item must map to a provenance source; unsupported content is a violation |
 
-The correction loop classifies issues: `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → auto-fix; `REQUIRED_INFO_MISSING` → re-query (only the relevant stages); `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → not auto-fixable (fail-closed, loop stops early).
+Validation classifies issues: `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → fixable by regeneration; `REQUIRED_INFO_MISSING` → the agent re-reads the relevant sources to fill the gap; `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → not fixable (fail-closed, reported as gaps/conflicts). Correction is driven by the agent from the `assemble --json` report (re-reading sources and overwriting the extraction JSON, then re-running), not by an in-CLI loop.
 
 ---
 
 ## Development
 
 ```bash
-uv run pytest                    # full suite (296 passed + 1 skipped)
-uv run pytest --cov=loop_apidoc  # with coverage
-uv run ruff check .              # lint
-```
+# run tests
+uv run pytest
 
-Real-NotebookLM smoke tests are marked `smoke` and run only with `LOOP_APIDOC_SMOKE=1`.
+# with coverage
+uv run pytest --cov=loop_apidoc
+
+# lint
+uv run ruff check .
+```
 
 ### Package layout
 
 | Package | Responsibility |
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
-| `loop_apidoc/notebooklm/` | NotebookLM skill adapter (wraps only `auth_status` + `ask`), retry, error classification |
-| `loop_apidoc/agentcli/` | Coding-agent CLI extraction backend (`run-agent`) and the `assemble` flow, plus PDF→markdown preprocessing |
-| `loop_apidoc/doctor/` | Read-only environment checks |
-| `loop_apidoc/extraction/` | Multi-round querying, answer persistence, JSON-block parsing |
+| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation (sole file-I/O exit) |
 | `loop_apidoc/validate/` | Structure / completeness / consistency / no-speculation validation and reports |
-| `loop_apidoc/run/` | run-id, correction loop, full pipeline orchestration |
+| `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 

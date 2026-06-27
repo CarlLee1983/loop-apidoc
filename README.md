@@ -17,19 +17,12 @@
 
 ## 運作方式
 
-pipeline 有**兩種執行模式**,差別只在**誰擔任擷取引擎**;擷取後段(規格化計畫 → 生成 → 驗證)為兩種模式共用的同一套確定性管線:
-
-| 模式 | 入口指令 | 擷取引擎 |
-| --- | --- | --- |
-| coding-agent CLI | `run-agent` | 子行程 `claude -p`(或以 `--executable` 指定其他 agent CLI) |
-| agent-native plugin | `assemble`(由 skill 呼叫) | 當前 Claude agent 自己讀來源 |
-
-兩種模式都把擷取結果收斂成 `inventory.json` + `endpoints/*.json`,再交給共用的 plan → generate → validate。
+擷取引擎是**當前的 coding agent 自己**:在 Claude Code plugin 或 OpenAI Codex CLI 的 session 裡,agent 依 `loop-apidoc` skill 讀來源、以**唯讀 subagent fan-out** 擷取,主 agent 把結果寫成 `inventory.json` + `endpoints/*.json`,再呼叫確定性 CLI `assemble` 跑後段 plan → generate → validate。
 
 ### 完整流程
 
 ```
-manifest → 擷取(agent 讀來源) → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證
+preprocess(可選) → 擷取(agent 唯讀 subagent fan-out) → manifest → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證
 ```
 
 驗證會輸出分類後的問題報告。修正由 agent 自行驅動:`assemble` 以 `--json` 回報結果,agent 依報告回頭重讀來源、覆寫擷取 JSON,再重新執行 `assemble`,直到通過或判定為無法修正的缺漏／衝突。
@@ -40,7 +33,21 @@ manifest → 擷取(agent 讀來源) → 規格化計畫 → 生成(OpenAPI + Ma
 
 除了 CLI,本專案也是一個 Claude Code plugin:在 Claude session 裡呼叫 `loop-apidoc` skill,給它一或多個來源(本機檔案或公開 URL),由 agent 自己擷取、呼叫 `loop-apidoc assemble` 組裝與驗證,並在驗證失敗時自行回頭補齊缺漏。
 
-此模式由當前 agent 直接擔任擷取引擎,不另行 spawn `claude -p`。安裝 plugin 後即可在 Claude Code 中使用;CLI 由 plugin 內含,透過 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble` 呼叫。
+此模式由當前 agent 直接擔任擷取引擎(唯一擷取路徑)。安裝 plugin 後即可在 Claude Code 中使用;CLI 由 plugin 內含,透過 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble` 呼叫。
+
+### 在 OpenAI Codex CLI 使用
+
+同一份 skill 也能在 Codex 執行。Codex 不會設 `${CLAUDE_PLUGIN_ROOT}`,因此把 CLI 裝成全域指令,並把 skill 掛進 Codex 的 skills 目錄:
+
+```bash
+# 1. 把 CLI 裝成全域 loop-apidoc 指令(取代 plugin 內含的 uv run --project)
+uv tool install --from /path/to/loop-apidoc loop-apidoc
+
+# 2. 把 skill 掛進 Codex(symlink 即可,改檔自動同步)
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
+```
+
+SKILL.md 以 `<APIDOC>` 佔位符自動辨識環境:有 `$CLAUDE_PLUGIN_ROOT` 走 plugin 內含 CLI,否則退到全域 `loop-apidoc`。其餘流程(擷取 → `assemble` → 驗證 → 修正)兩邊一致。
 
 ---
 
@@ -82,26 +89,15 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 `<run-dir>/validation/`。通過回傳 `0`,有 ERROR 級問題回傳 `1`。
 
-### `run-agent` — 以 coding-agent CLI 擷取
+### `preprocess` — PDF 轉高保真 markdown(可選)
 
 ```bash
-uv run loop-apidoc run-agent \
-  --sources ./sources \
-  --output ./output \
-  [--executable claude] [--model <model>] [--url <URL> ...]
+uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-以 coding-agent CLI(預設 `claude -p`)擔任擷取引擎:manifest → PDF 轉 markdown(pymupdf4llm,保留表格與結構)→ 一次 inventory + 逐 endpoint 擷取 → 規劃 → 生成 → 驗證。`--executable` 可換成其他 agent CLI(如 `codex`)。退出碼:驗證通過 `0`,否則 `1`。
+以 pymupdf4llm 把 `--sources` 下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 `--out` 目錄。
 
-| 參數 | 說明 |
-| --- | --- |
-| `--sources` | 本機來源目錄(必填) |
-| `--output` | 輸出根目錄;會在其下建立 `<run-id>` 子目錄(必填) |
-| `--executable` | agent CLI 執行檔(預設 `claude`) |
-| `--model` | 指定 agent 使用的模型(可選) |
-| `--url` | 公開來源 URL,可重複指定 |
-
-### `assemble` — 從 agent 產出的擷取 JSON 組裝(供 agent-native plugin)
+### `assemble` — 從 agent 產出的擷取 JSON 組裝(由 skill 呼叫)
 
 ```bash
 uv run loop-apidoc assemble \
@@ -171,8 +167,8 @@ uv run ruff check .
 | 套件 | 職責 |
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
-| `loop_apidoc/agentcli/` | coding-agent CLI 擷取後端(`run-agent`)與 `assemble` 組裝流程、子行程 runner／錯誤型別／`AskResult`／答案品質偵測、PDF→md 前處理(pymupdf4llm) |
-| `loop_apidoc/extraction/` | agent 擷取模式共用的 models 與工具(models、stages、questions、store、jsonblock) |
+| `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
+| `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口) |
 | `loop_apidoc/validate/` | 結構／完整性／一致性／禁止推測驗證與報告 |

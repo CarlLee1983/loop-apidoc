@@ -2,46 +2,46 @@
 
 本文件說明 `loop-apidoc` 的整體流程、資料流與套件邊界。完整設計依據見 [`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)。
 
-## 兩種執行模式
+## 執行模式:agent-native
 
-擷取後段(規劃→生成→驗證)在兩種模式下共用同一套確定性管線,差別只在**誰擔任擷取引擎**:
+`loop-apidoc` 的擷取引擎是**當前的 coding agent 自己**。在 Claude Code plugin 或 OpenAI Codex CLI 的 session 內,agent 依 [`skills/loop-apidoc/SKILL.md`](../skills/loop-apidoc/SKILL.md) 讀來源、以**唯讀 subagent fan-out** 擷取(每個 subagent 只讀檔與搜尋、回傳 JSON,**不寫檔**),主 agent 把回傳的 JSON 寫成 `inventory.json` + `endpoints/*.json`,再呼叫確定性 CLI `assemble` 跑後段 plan→generate→validate,並以 `--json` 回報結果供 agent 自行驅動修正。
 
-| 模式 | 入口 | 擷取引擎 | 適用 |
-| --- | --- | --- | --- |
-| coding-agent CLI | `run-agent` | 子行程 `claude -p`(或以 `--executable` 指定其他 agent CLI) | 由 CLI 自行 spawn agent 擷取 |
-| agent-native plugin | `assemble`(由 skill 呼叫) | 當前 Claude agent 自己讀來源 | 在 Claude session 內,agent 擷取後呼叫 CLI 組裝 |
+擷取(agent)與後段(CLI 純函式管線)以 `inventory.json` + `endpoints/*.json` 為唯一交界:agent 負責「從來源讀出結構化 JSON」,CLI 負責「把 JSON 確定性地組裝、生成、驗證」,兩邊各自可獨立測試。
 
-`run-agent` 與 `assemble` 由 `loop_apidoc/agentcli/` 提供;兩者都把擷取結果收斂成 `inventory.json` + `endpoints/*.json`,再交給共用的 plan→generate→validate。`assemble` 不負責擷取,只組裝 agent 已寫出的 JSON,並以 `--json` 回報結果供 agent 自行驅動修正(重讀來源、覆寫擷取 JSON 後重跑)。
+> 早期曾有以子行程 `claude -p` 擷取的 `run-agent` CLI 模式,已於 2026-06 退役(連同 NotebookLM 擷取後端一併移除);現在**唯一**擷取路徑是 agent-native。
 
-## 高層流程(agent 擷取)
+### Skill 可攜性(Claude Code + Codex 雙棲)
 
-兩種模式共用同一條後段管線,差別只在擷取引擎與修正由誰驅動:
+`skills/loop-apidoc/SKILL.md` 是**單一可攜檔**,同一份同時供 Claude Code plugin 與 OpenAI Codex CLI 載入,不分叉。可攜性靠兩個抽象:
+
+- **CLI 佔位符 `<APIDOC>`**:SKILL 頂部定義一次解析規則 —— 環境有 `$CLAUDE_PLUGIN_ROOT`(Claude plugin 安裝時自動帶入)走 plugin 內含 CLI(`uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc`),否則退到全域 `loop-apidoc`(Codex / 獨立,`uv tool install`)。前綴用陣列寫法(`RUN=(...)`;`"${RUN[@]}"`)以兼顧 bash/zsh 與含空白路徑;**不**用 `${VAR:+…}` inline 展開(zsh 不切詞會壞)。
+- **工具名中性化**:描述 agent 行為時用動作(讀檔、搜尋、抓取 URL)而非單一 runtime 的工具名,擷取的唯讀 subagent fan-out 語意兩邊一致。
+
+設計依據見 [`docs/superpowers/specs/2026-06-27-portable-skill-codex-design.md`](superpowers/specs/2026-06-27-portable-skill-codex-design.md),安裝路徑見 [`README.md`](../README.md)。
+
+## 高層流程
 
 ```mermaid
 flowchart LR
-    subgraph RA["run-agent（CLI spawn agent）"]
-        RA_M[manifest<br/>掃描本機來源] --> RA_E[擷取<br/>子行程 claude -p]
-        RA_E --> RA_X[(inventory.json<br/>+ endpoints/*.json)]
+    PRE["preprocess（可選）<br/>PDF→markdown"] --> EX
+
+    subgraph AGENT["agent 擷取（Claude Code / Codex）"]
+        EX["唯讀 subagent fan-out<br/>讀來源 → 回傳 JSON"] --> WR["主 agent 寫檔<br/>inventory.json + endpoints/*.json"]
     end
 
-    subgraph AS["assemble（agent-native plugin）"]
-        AS_AG[當前 Claude agent<br/>自己讀來源] --> AS_X[(inventory.json<br/>+ endpoints/*.json)]
+    subgraph CLI["assemble（確定性 CLI 後段）"]
+        M["manifest<br/>掃描來源"] --> P["規格化計畫<br/>normalization-plan.json"]
+        P --> G["生成<br/>OpenAPI + Markdown + provenance"]
+        G --> V["驗證<br/>結構/完整性/一致性/禁止推測"]
+        V -->|通過| OK["PASS（exit 0）"]
+        V -->|分類問題| R[("--json report")]
     end
 
-    subgraph SHARED["共用後段"]
-        P[規格化計畫<br/>normalization-plan.json]
-        P --> G[生成<br/>OpenAPI + Markdown + provenance]
-        G --> V[驗證<br/>結構/完整性/一致性/禁止推測]
-        V -->|通過| OK[PASSED]
-        V -->|分類問題| R[(report.json)]
-    end
-
-    RA_X --> P
-    AS_X --> P
-    R -.agent 重讀來源、覆寫 JSON 後重跑.-> AS_AG
+    WR --> M
+    R -.agent 重讀來源、覆寫 JSON 後重跑 assemble.-> EX
 ```
 
-修正不再由 CLI 內建迴圈驅動:`assemble` 以 `--json` 回報分類後的結果,agent 依報告回頭重讀來源、覆寫擷取 JSON 再重跑;`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
+`assemble` 不擷取,只組裝 agent 已寫出的 JSON:`manifest → plan → generate → validate`,再以 `--json` 回報 `ok`/`run_dir`/`report`。修正由 **agent 自行驅動**(無 CLI 內建迴圈):agent 依報告回頭重讀相關來源、覆寫對應的 `inventory.json` 或 `endpoints/<NN>.json`,再重跑 `assemble`,最多 3 輪。`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
 
 ## 套件邊界
 
@@ -50,7 +50,7 @@ flowchart TD
     cli[cli.py<br/>Typer 進入點]
 
     cli --> manifest[manifest/<br/>掃描 + manifest]
-    cli --> agentcli[agentcli/<br/>run-agent + assemble]
+    cli --> agentcli[agentcli/<br/>assemble + 前處理]
     cli --> validate[validate/<br/>驗證 + 報告]
 
     agentcli --> manifest
@@ -66,31 +66,28 @@ flowchart TD
     class generate,run io
 ```
 
+`cli.py`(Typer)只暴露四個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證)、`validate`(驗證既有 run-dir)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。
+
 **唯一檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)與 `run/`(`persist.py` 將計畫寫入 run-dir)寫檔;其餘模組皆為純函式,便於單元測試。
 
 ## 資料流與關鍵 seam
 
-共用的後段 seam(plan→generate→validate):
-
 | 階段 | 公開 seam | 產物 |
 | --- | --- | --- |
+| 前處理(可選) | `prepare_markdown(sources_dir, dest_dir)` / `pdf_to_markdown(pdf_path)` | `<WORK>/sources_md/`(高保真 markdown) |
+| 擷取(agent 寫出) | —(agent 依 SKILL 寫檔) | `inventory.json` + `endpoints/*.json` |
+| 組裝入口 | `run_assemble_pipeline(*, sources_root, extraction_dir, output_root, run_id, generated_at, urls)` | 整個 run-dir;`--json` 回報 `ok`/`run_dir`/`report` |
 | 掃描 | `build_manifest(sources_root, urls, generated_at)` | `manifest.json` |
+| inventory→plan 答案 | `inventory_to_stage_answers(inventory)` | plan 各 stage 的初始結構化答案 |
 | 計畫 | `build_normalization_plan(extraction, manifest)` | `plan/normalization-plan.json` |
 | 生成 | `generate_outputs(plan, manifest, run_dir)` | `openapi.yaml`、`api-guide.zh-TW.md`、`provenance.json` |
 | 驗證 | `validate_outputs(plan, result, manifest)`(純）／ `validate_run_dir(run_dir)`(讀檔) | `validation/report.{json,md}` |
 
-兩種 agent 模式各有一個入口 seam(共用上方的 plan→generate→validate):
-
-| 階段 | 公開 seam | 產物 |
-| --- | --- | --- |
-| agent CLI 擷取 | `run_agent_pipeline(*, sources_root, output_root, run_id, generated_at, executable, model, urls)` | 整個 run-dir(內含 `inventory.json` + `endpoints/*.json`) |
-| 組裝(不擷取) | `run_assemble_pipeline(*, sources_root, extraction_dir, output_root, run_id, generated_at, urls)` | 整個 run-dir;`--json` 回報 `ok`/`run_dir`/`report` |
-
-`run_assemble_pipeline` 會先驗證擷取輸入(`inventory.json` + `endpoints/*.json`)再建 run 目錄;輸入有誤時拋 `AssembleInputError`,CLI 以退出碼 `2` 結束、不留下孤兒目錄。
+`run_assemble_pipeline` 會先驗證擷取輸入(`inventory.json` + `endpoints/*.json`)再建 run 目錄;輸入有誤時拋 `AssembleInputError`,CLI 以退出碼 `2` 結束、不留下孤兒目錄。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。
 
 ## 擷取分段
 
-擷取採分段策略,避免單一回答承載全部內容(spec §7.1)。`loop_apidoc/extraction/` 提供兩種 agent 模式共用的 stage 與 question 模型:
+擷取採分段策略,避免單一回答承載全部內容(spec §7.1)。`loop_apidoc/extraction/` 提供 stage 與 question 模型,agent 依此分段擷取、`extraction.py` 再把 `inventory.json` 對映回各 stage 餵給 plan:
 
 ```
 01 來源盤點                   06 逐 endpoint 細節（method/path/參數/req/resp/範例）
