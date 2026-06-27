@@ -50,7 +50,11 @@ class EndpointEntry(_Cited):
 class SchemaEntry(_Cited):
     name: str | None = None
     fields: list[dict] = Field(default_factory=list)
-    enums: list[dict] = Field(default_factory=list)
+    # The SKILL contract documents enums as a list of freeform strings
+    # (e.g. "ItemType: 1=一般商品"); structured form [{"name", "values"}] is
+    # also accepted. Keep the element type open so neither shape is dropped —
+    # a non-list (e.g. "bad") is still rejected, which is the intended guard.
+    enums: list = Field(default_factory=list)
     constraints: str | None = None
 
 

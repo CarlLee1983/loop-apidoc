@@ -174,6 +174,24 @@ def test_schema_object_with_required_and_enum_field():
     assert user["description"] == "id 為 UUID v4"
 
 
+def test_string_enums_emitted_as_x_enum_values_on_parent():
+    # Per the SKILL contract, schemas[].enums may be a list of freeform strings
+    # ("Field: value=meaning"). These are not cleanly machine-parseable, so they
+    # are preserved faithfully on the parent object schema as x-enum-values
+    # rather than invented into structured enum components.
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="PaymentType",
+            fields=[],
+            enums=["CREDIT=信用卡", "VACC=ATM 轉帳"],
+        )
+    ])
+    schemas = build_openapi(plan)["components"]["schemas"]
+    pt = schemas["PaymentType"]
+    assert pt["type"] == "object"
+    assert pt["x-enum-values"] == ["CREDIT=信用卡", "VACC=ATM 轉帳"]
+
+
 def test_named_enum_becomes_component():
     plan = _plan(schemas=[
         SchemaEntry(

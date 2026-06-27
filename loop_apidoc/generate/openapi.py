@@ -242,6 +242,12 @@ def _build_object_schema(entry) -> dict:
         schema["required"] = required
     if entry.constraints:
         schema["description"] = entry.constraints
+    # Freeform string enums (the documented contract shape) are not cleanly
+    # parseable into per-property `enum` arrays, so preserve them verbatim on
+    # the object as a vendor extension rather than inventing structure.
+    string_enums = [e for e in entry.enums if isinstance(e, str)]
+    if string_enums:
+        schema["x-enum-values"] = string_enums
     return schema
 
 
@@ -253,6 +259,8 @@ def _build_schemas(plan: NormalizationPlan) -> dict:
                 _build_object_schema(entry)
             )
         for enum_idx, enum in enumerate(entry.enums):
+            if not isinstance(enum, dict):
+                continue  # string enums are folded into the parent schema
             enum_name = enum.get("name")
             values = enum.get("values")
             if enum_name and values:

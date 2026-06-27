@@ -60,6 +60,8 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
             key = component_key(schema.name, idx, prefix="schema")
             entries.extend(_entries(f"components.schemas.{key}", schema))
         for enum_idx, enum in enumerate(schema.enums):
+            if not isinstance(enum, dict):
+                continue  # string enums carry no separate provenance target
             enum_name = enum.get("name")
             values = enum.get("values")
             if enum_name and values:

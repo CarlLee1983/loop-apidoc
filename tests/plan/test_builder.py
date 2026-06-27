@@ -184,6 +184,27 @@ def test_nested_scalar_wrong_type_in_enums_does_not_raise():
     assert any(m.area == "07" for m in plan.missing_items)
 
 
+def test_string_enums_in_schema_are_kept_not_dropped():
+    # The SKILL contract documents schemas[].enums as ["str"]. Such a schema
+    # must survive the plan build (it used to be silently dropped because the
+    # SchemaEntry model required list[dict]).
+    block = (
+        '```json\n{"schemas": [{"name": "PaymentType", "fields": [], '
+        '"enums": ["CREDIT=信用卡", "VACC=ATM"], "source": "api.pdf"}]}\n```'
+    )
+    plan = build_normalization_plan(
+        ExtractionResult(notebook_url="https://nb/x",
+                         artifacts=[_art("07", QueryKind.INITIAL, block)]),
+        _manifest(),
+    )
+    assert len(plan.schemas) == 1
+    assert plan.schemas[0].name == "PaymentType"
+    assert plan.schemas[0].enums == ["CREDIT=信用卡", "VACC=ATM"]
+    assert not any(
+        m.area == "07" and "malformed" in m.detail for m in plan.missing_items
+    )
+
+
 def test_nested_scalar_wrong_type_in_new_endpoint_does_not_raise():
     # A stage-06 detail with no matching stage-05 endpoint becomes a new
     # endpoint; a scalar `parameters` must not crash construction.
