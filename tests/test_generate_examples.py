@@ -168,7 +168,8 @@ def test_render_curl_no_signature_block_when_no_schemes():
     # But the curl command and data should still render
     assert "curl -X POST" in out
     assert "https://api.example.com/pay" in out
-    assert "Amount=<amount>" in out
+    # content_type 為 JSON → body 以 JSON 編碼(與 TS/Py 一致),而非表單 k=v
+    assert '"Amount": "<amount>"' in out
 
 
 def test_render_ts_runnable_signature_when_explicit():
@@ -501,6 +502,138 @@ def test_render_py_non_cbc_mode_falls_to_gap():
     assert "NotImplementedError" in out, "Gap should raise NotImplementedError"
     assert "AES.new(" not in out, "Should not emit AES.new() for non-CBC mode"
     assert "AES.MODE_CBC" not in out, "Should not emit MODE_CBC for non-CBC mode"
+
+
+def _shape(**over):
+    base = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [], "content_type": None, "security": [],
+    }
+    base.update(over)
+    return base
+
+
+# --- #1 三語 body 編碼一致 ---
+
+def test_encoding_consistent_json_across_languages():
+    from loop_apidoc.generate.examples import _render_curl, _render_py, _render_ts
+
+    shape = _shape(
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/json",
+    )
+    sh = _render_curl(shape, [])
+    ts = _render_ts(shape, [])
+    py = _render_py(shape, [])
+    # curl 用 --data 帶 JSON,而非 --data-urlencode 表單
+    assert "--data '" in sh
+    assert '"Amount": "<amount>"' in sh
+    assert "--data-urlencode" not in sh
+    # TS 用 JSON.stringify
+    assert "JSON.stringify(body)" in ts
+    # Py 用 json=payload
+    assert "json=payload" in py
+
+
+def test_encoding_consistent_form_across_languages():
+    from loop_apidoc.generate.examples import _render_curl, _render_py, _render_ts
+
+    shape = _shape(
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/x-www-form-urlencoded",
+    )
+    sh = _render_curl(shape, [])
+    ts = _render_ts(shape, [])
+    py = _render_py(shape, [])
+    assert "--data-urlencode 'Amount=<amount>'" in sh
+    assert "new URLSearchParams(body)" in ts
+    assert "JSON.stringify" not in ts
+    assert "data=payload" in py
+    assert "json=payload" not in py
+
+
+# --- #3 header / path 參數不再被三語丟掉 ---
+
+def test_header_params_rendered_in_all_languages():
+    from loop_apidoc.generate.examples import _render_curl, _render_py, _render_ts
+
+    shape = _shape(
+        header=[("X-Api-Key", "placeholder", "<x_api_key>")],
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/json",
+    )
+    sh = _render_curl(shape, [])
+    ts = _render_ts(shape, [])
+    py = _render_py(shape, [])
+    assert "-H 'X-Api-Key: <x_api_key>'" in sh
+    assert "X-Api-Key" in ts and "headers" in ts
+    assert "X-Api-Key" in py and "headers=headers" in py
+
+
+def test_path_params_interpolated_no_literal_braces():
+    from loop_apidoc.generate.examples import _render_curl, _render_py, _render_ts
+
+    shape = _shape(
+        url="https://api.example.com/orders/{orderId}",
+        path=[("orderId", "placeholder", "<order_id>")],
+    )
+    for out in (
+        _render_curl(shape, []),
+        _render_ts(shape, []),
+        _render_py(shape, []),
+    ):
+        assert "{orderId}" not in out
+        assert "<order_id>" in out
+
+
+def test_query_params_go_to_url_not_body():
+    from loop_apidoc.generate.examples import _render_curl, _render_py, _render_ts
+
+    shape = _shape(query=[("Page", "placeholder", "<page>")])
+    sh = _render_curl(shape, [])
+    ts = _render_ts(shape, [])
+    py = _render_py(shape, [])
+    # query 進 URL / params,不再被塞進 body
+    assert "?Page=<page>" in sh
+    assert "--data" not in sh
+    assert "URLSearchParams" in ts
+    assert "params=params" in py
+
+
+# --- minor 修正 ---
+
+def test_ts_body_preserves_original_field_name():
+    from loop_apidoc.generate.examples import _render_ts
+
+    shape = _shape(
+        body=[("MerchantID", "placeholder", "<merchant_id>")],
+        content_type="application/json",
+    )
+    out = _render_ts(shape, [])
+    # 必須保留原欄位名(送上線的 key),不可 snake 化成 merchant_id
+    assert '"MerchantID":' in out
+    assert "merchant_id:" not in out
+
+
+def test_resolve_value_reads_schema_level_example():
+    node = {"schema": {"type": "string", "example": "ABC"}}
+    assert _resolve_value("Code", node) == ("source", "ABC")
+
+
+def test_py_signature_gcm_only_omits_pycryptodome_import():
+    from loop_apidoc.generate.examples import _py_signature
+    from loop_apidoc.plan.models import CryptoScheme
+
+    gcm = CryptoScheme(
+        status="supported", name="Sig", algorithm="AES-256-GCM", mode="GCM",
+        payload_assembly=[{"step": 1, "desc": "encrypt with GCM"}],
+    )
+    sig = _py_signature([gcm])
+    # GCM-only → gap,不該 emit 用不到的 pycryptodome / hashlib import
+    assert "from Crypto.Cipher import AES" not in sig
+    assert "import hashlib" not in sig
+    assert "NotImplementedError" in sig
 
 
 def test_render_py_cbc_via_algorithm_string_is_runnable():

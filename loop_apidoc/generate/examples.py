@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 
 from loop_apidoc.plan.models import CryptoScheme, NormalizationPlan
@@ -31,6 +32,8 @@ def _resolve_value(name: str, node: dict) -> tuple[str, object]:
     if "example" in node:
         return ("source", node["example"])
     schema = node.get("schema") if isinstance(node.get("schema"), dict) else node
+    if isinstance(schema, dict) and "example" in schema:
+        return ("source", schema["example"])
     enum = schema.get("enum") if isinstance(schema, dict) else None
     if isinstance(enum, list) and len(enum) == 1:
         return ("source", enum[0])
@@ -75,6 +78,32 @@ def _request_shape(
         "content_type": content_type,
         "security": security,
     }
+
+
+def _is_json(content_type: str | None) -> bool:
+    """True only when the declared content type is JSON.
+
+    Drives a *consistent* body-encoding choice across all three renderers
+    (curl / TS / Python): JSON → JSON body everywhere; otherwise form-urlencoded.
+    Unknown/absent content type fails to form (the common default for these
+    integrations) rather than fabricating a JSON content type.
+    """
+    if not content_type:
+        return False
+    return content_type.split(";")[0].strip().lower().endswith("json")
+
+
+def _interpolate_path(url: str, path_params: list) -> str:
+    """Replace `{name}` path placeholders in the URL with their resolved value."""
+    for name, _kind, value in path_params:
+        url = url.replace("{" + str(name) + "}", str(value))
+    return url
+
+
+def _query_suffix(query: list) -> str:
+    if not query:
+        return ""
+    return "?" + "&".join(f"{name}={value}" for name, _kind, value in query)
 
 
 def _signature_explicit(scheme: CryptoScheme) -> bool:
@@ -126,25 +155,26 @@ def _render_curl(shape: dict, schemes: list[CryptoScheme]) -> str:
     sig = _signature_comment_steps(schemes)
     if sig:
         parts += [sig, ""]
-    data_fields = shape["body"] or shape["query"]
-    lines = [f"curl -X {shape['method']} '{shape['url']}' \\"]
+    url = _interpolate_path(shape["url"], shape["path"]) + _query_suffix(shape["query"])
+    # Build line-continuation segments without trailing backslashes, then join —
+    # this structurally avoids any dangling ` \` on the final line.
+    segments = [f"curl -X {shape['method']} '{url}'"]
     if shape["content_type"]:
-        lines.append(f"  -H 'Content-Type: {shape['content_type']}' \\")
+        segments.append(f"-H 'Content-Type: {shape['content_type']}'")
     for name, _kind, value in shape["header"]:
-        lines.append(f"  -H '{name}: {value}' \\")
-    for i, (name, _kind, value) in enumerate(data_fields):
-        tail = "" if i == len(data_fields) - 1 else " \\"
-        lines.append(f"  --data-urlencode '{name}={value}'{tail}")
-    # Remove trailing backslash from final line if no data fields
-    if lines:
-        lines[-1] = lines[-1].rstrip(" \\")
-    parts.append("\n".join(lines))
+        segments.append(f"-H '{name}: {value}'")
+    if shape["body"]:
+        if _is_json(shape["content_type"]):
+            body_obj = {name: value for name, _kind, value in shape["body"]}
+            segments.append(f"--data '{json.dumps(body_obj, ensure_ascii=False)}'")
+        else:
+            for name, _kind, value in shape["body"]:
+                segments.append(f"--data-urlencode '{name}={value}'")
+    parts.append(" \\\n  ".join(segments))
     return "\n".join(parts) + "\n"
 
 
 def _ts_value(kind: str, value: object) -> str:
-    import json
-
     return json.dumps(value, ensure_ascii=False)
 
 
@@ -175,7 +205,7 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
         if _signature_explicit(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
-            algo = s.algorithm.lower()
+            algo = (s.algorithm or "").lower()
             blocks.append(
                 f"// 簽章 {s.name or ''}：{s.algorithm}\n"
                 f"function {func_name}(payload: string): string {{\n"
@@ -204,20 +234,45 @@ def _render_ts(shape: dict, schemes: list[CryptoScheme]) -> str:
     sig = _ts_signature(schemes)
     if sig:
         parts += [sig, ""]
-    fields = shape["body"] or shape["query"]
-    body_lines = "\n".join(
-        f"  {_snake(name)}: {_ts_value(kind, value)}," for name, kind, value in fields
+    url = _interpolate_path(shape["url"], shape["path"])
+    lines = [f"const url = {_ts_value('source', url)}"]
+
+    if shape["query"]:
+        entries = ", ".join(
+            f"{_ts_value('s', name)}: {_ts_value(kind, value)}"
+            for name, kind, value in shape["query"]
+        )
+        lines.append("const params = new URLSearchParams({ " + entries + " })")
+
+    header_entries = []
+    if shape["content_type"]:
+        header_entries.append(f"'Content-Type': {_ts_value('s', shape['content_type'])}")
+    for name, kind, value in shape["header"]:
+        header_entries.append(f"{_ts_value('s', name)}: {_ts_value(kind, value)}")
+    if header_entries:
+        lines.append("const headers = { " + ", ".join(header_entries) + " }")
+
+    if shape["body"]:
+        # Quote the *original* field name (e.g. "MerchantID") — snake-casing it
+        # would put a wrong, API-unrecognised key on the wire.
+        body_lines = "\n".join(
+            f"  {_ts_value('s', name)}: {_ts_value(kind, value)},"
+            for name, kind, value in shape["body"]
+        )
+        lines.append("const body = {\n" + body_lines + "\n}")
+
+    target = "url + '?' + params" if shape["query"] else "url"
+    opts = [f"  method: '{shape['method']}',"]
+    if header_entries:
+        opts.append("  headers,")
+    if shape["body"]:
+        encoded = "JSON.stringify(body)" if _is_json(shape["content_type"]) else "new URLSearchParams(body)"
+        opts.append(f"  body: {encoded},")
+    lines.append(
+        f"const res = await fetch({target}, {{\n" + "\n".join(opts) + "\n})"
     )
-    parts.append(
-        f"const url = {_ts_value('source', shape['url'])}\n"
-        "const body = {\n" + body_lines + "\n}\n\n"
-        f"const res = await fetch(url, {{\n"
-        f"  method: '{shape['method']}',\n"
-        f"  headers: {{ 'Content-Type': '{shape['content_type'] or 'application/json'}' }},\n"
-        "  body: JSON.stringify(body),\n"
-        "})\n"
-        "console.log(await res.text())\n"
-    )
+    lines.append("console.log(await res.text())")
+    parts.append("\n".join(lines) + "\n")
     return "\n".join(parts) + "\n"
 
 
@@ -225,8 +280,10 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
 
-    # Determine if we need the import (at least one explicit scheme)
-    has_explicit = any(_signature_explicit(s) for s in schemes)
+    # Import is only needed when at least one scheme renders runnable CBC code.
+    # An explicit-but-non-CBC scheme (e.g. GCM) becomes a gap and uses none of
+    # these imports, so it must NOT trigger them.
+    has_runnable = any(_signature_explicit(s) and _is_cbc(s) for s in schemes)
 
     # Determine if we need unique function names (multiple schemes)
     need_unique_names = len(schemes) > 1
@@ -234,7 +291,7 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
     parts = []
 
     # Emit imports exactly once at the top if needed
-    if has_explicit:
+    if has_runnable:
         parts.append(
             "import hashlib\nimport os\n"
             "from Crypto.Cipher import AES  # pip install pycryptodome\n"
@@ -278,31 +335,42 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
                     "    raise NotImplementedError('來源未提供完整簽章演算法，請依文件補完')\n"
                 )
 
-    if has_explicit:
+    if has_runnable:
         parts.append("\n")
     parts.append("\n".join(blocks))
     return "".join(parts)
 
 
-def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
-    import json
+def _py_dict(var: str, fields: list) -> str:
+    body = "\n".join(
+        f"    {json.dumps(name, ensure_ascii=False)}: {json.dumps(value, ensure_ascii=False)},"
+        for name, _kind, value in fields
+    )
+    return f"{var} = {{\n{body}\n}}"
 
+
+def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
     parts = [_comment(HEADER_NOTE), "", "import httpx", ""]
     sig = _py_signature(schemes)
     if sig:
         parts += [sig, ""]
-    fields = shape["body"] or shape["query"]
-    body_lines = "\n".join(
-        f"    {json.dumps(name, ensure_ascii=False)}: {json.dumps(value, ensure_ascii=False)},"
-        for name, _kind, value in fields
+    url = _interpolate_path(shape["url"], shape["path"])
+    lines = [f"url = {json.dumps(url, ensure_ascii=False)}"]
+    call_args = ["url"]
+    if shape["query"]:
+        lines.append(_py_dict("params", shape["query"]))
+        call_args.append("params=params")
+    if shape["header"]:
+        lines.append(_py_dict("headers", shape["header"]))
+        call_args.append("headers=headers")
+    if shape["body"]:
+        lines.append(_py_dict("payload", shape["body"]))
+        call_args.append("json=payload" if _is_json(shape["content_type"]) else "data=payload")
+    lines.append(
+        f"resp = httpx.request({json.dumps(shape['method'])}, " + ", ".join(call_args) + ")"
     )
-    parts.append(
-        f"url = {json.dumps(shape['url'], ensure_ascii=False)}\n"
-        "payload = {\n" + body_lines + "\n}\n\n"
-        f"resp = httpx.request({json.dumps(shape['method'])}, url, "
-        + ("json=payload)" if (shape["content_type"] or "").endswith("json") else "data=payload)")
-        + "\nprint(resp.text)\n"
-    )
+    lines.append("print(resp.text)")
+    parts.append("\n".join(lines))
     return "\n".join(parts) + "\n"
 
 
