@@ -81,6 +81,10 @@ def run_assemble_pipeline(
 
     註:tail 與 agentcli.pipeline.run_agent_pipeline 刻意維持小幅重複,
     以免改動既有 `run-agent` 後端(向後相容優先於 DRY)。"""
+    # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
+    # 不留下孤兒 run 目錄。
+    inventory, endpoint_texts = load_extraction_inputs(extraction_dir)
+
     run_dir = output_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -89,7 +93,6 @@ def run_assemble_pipeline(
     (run_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2), encoding="utf-8")
 
-    inventory, endpoint_texts = load_extraction_inputs(extraction_dir)
     store = ExtractionStore(run_dir / "extraction")
     extraction = build_extraction_from_files(inventory, endpoint_texts, store)
 
