@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import fitz  # pymupdf
+import pymupdf4llm
 
 # Source formats we can flatten to markdown text for the agent to read. Other
 # formats (already-text) are copied as-is.
@@ -10,14 +10,19 @@ _TEXT_SUFFIXES = {".md", ".markdown", ".txt"}
 
 
 def pdf_to_markdown(pdf_path: Path) -> str:
-    """Flatten a PDF to plain markdown-ish text, one page at a time, with page
-    markers so the agent can cite pages. Reading this (~tens of K tokens) is far
-    cheaper per query than re-parsing the PDF every time."""
+    """Convert a PDF to GitHub-flavoured markdown, one page at a time, with page
+    markers so the agent can cite pages. Unlike raw text extraction this
+    preserves tables (as markdown tables) and heading structure — critical for
+    faithfully recovering parameter tables into schemas. Reading this (~tens of K
+    tokens) is far cheaper per query than re-parsing the PDF every time."""
+    chunks = pymupdf4llm.to_markdown(
+        str(pdf_path), page_chunks=True, show_progress=False
+    )
     parts: list[str] = []
-    with fitz.open(pdf_path) as doc:
-        for i, page in enumerate(doc):
-            parts.append(f"\n\n<!-- page {i + 1} -->\n")
-            parts.append(page.get_text())
+    for chunk in chunks:
+        page_no = chunk["metadata"]["page_number"]
+        parts.append(f"\n\n<!-- page {page_no} -->\n")
+        parts.append(chunk["text"])
     return "".join(parts)
 
 
