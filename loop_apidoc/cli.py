@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -187,6 +188,62 @@ def run_agent(
         f"狀態 {result.status.value}：error {len(result.report.errors())}，"
         f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}"
     )
+    raise typer.Exit(code=0 if result.ok else 1)
+
+
+@app.command()
+def assemble(
+    sources: Path = typer.Option(
+        ..., "--sources", help="本機來源目錄",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    extraction: Path = typer.Option(
+        ..., "--extraction",
+        help="agent 產出的擷取目錄(inventory.json + endpoints/*.json)",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    output: Path = typer.Option(
+        ..., "--output", help="輸出根目錄(將建立 <run-id> 子目錄)"
+    ),
+    url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
+    json_out: bool = typer.Option(
+        False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
+    ),
+) -> None:
+    """從 agent 產出的擷取 JSON 組裝:manifest→plan→generate→validate(不擷取)。"""
+    from loop_apidoc.agentcli.assemble import (
+        AssembleInputError,
+        run_assemble_pipeline,
+    )
+
+    now = datetime.now(timezone.utc)
+    try:
+        result = run_assemble_pipeline(
+            sources_root=sources,
+            extraction_dir=extraction,
+            output_root=output,
+            run_id=make_run_id(now),
+            generated_at=now,
+            urls=list(url),
+        )
+    except AssembleInputError as exc:
+        typer.echo(f"擷取輸入錯誤:{exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    if json_out:
+        payload = {
+            "run_id": result.run_id,
+            "run_dir": result.run_dir,
+            "ok": result.ok,
+            "status": result.status.value,
+            "report": result.report.model_dump(mode="json"),
+        }
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(
+            f"狀態 {result.status.value}:error {len(result.report.errors())}，"
+            f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}"
+        )
     raise typer.Exit(code=0 if result.ok else 1)
 
 
