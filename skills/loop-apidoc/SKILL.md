@@ -95,23 +95,82 @@ Top-level `source` is required: cite the source section/page/URL where this endp
 
 **Async notifications / callbacks / webhooks** (server POSTs to a caller-supplied URL, e.g. payment-result notifications): keep `method`, set `path` to `null`. These become OpenAPI 3.1 top-level `webhooks` (named by summary), no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`). **Multiple callbacks sharing the same (method, null) are distinguished only by their `source`** — give every callback detail the correct `source`.
 
-### 4. Assemble + validate
+### 4. Extract integration mechanics → write `<WORK>/integration.json`
+
+Dispatch one read-only subagent to read the sections describing encryption,
+signing, callbacks, and cross-field conditions. It returns **only** this JSON
+object (no prose, no file writes); you write it to `<WORK>/integration.json` beside
+`inventory.json`. Anything the sources do not state → `null` and add a label to
+`missing`. Never infer crypto/callback details from REST/payment conventions.
+
+```json
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "str",
+      "purpose": "request|response|callback|signature|null",
+      "algorithm": "str|null",
+      "mode": "str|null",
+      "padding": "str|null",
+      "encoding": "str|null",
+      "key_source": {"key": "str|null", "iv": "str|null", "note": "str|null"},
+      "payload_assembly": [{"step": 1, "desc": "str", "fields": ["str"]}],
+      "verify": {"field": "str|null", "method": "str|null", "desc": "str|null"},
+      "source": "str"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "str",
+      "trigger": "str|null",
+      "transport": "str|null",
+      "payload_ref": "schemas.{name}|null",
+      "verification": "str|null",
+      "expected_response": "str|null",
+      "source": "str"
+    }
+  ],
+  "field_conditions": [
+    {"scope": "str|null", "rule": "str", "when": "str|null", "then_required": ["str"], "source": "str"}
+  ],
+  "test_cases": [
+    {"name": "str", "operation_ref": "paths.{path}.{method}|null", "request": {}, "response": {}, "source": "str"}
+  ],
+  "missing": [{"area": "str", "detail": "str"}]
+}
+```
+
+- `payload_assembly`: the ordered steps for building the string to encrypt/sign
+  (the signature chain). Only include what the source states.
+- `payload_ref` / `operation_ref`: point to an existing `inventory.schemas` name
+  or `paths.{path}.{method}`; `null` if no match.
+- `source`: required per entry — cites the source section/page/URL.
+- If the sources describe **no** integration mechanics, omit `integration.json`
+  entirely (do not write an empty file).
+
+### 5. Assemble + validate
 ```bash
 <APIDOC> assemble \
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" --json
 ```
 Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 
-### 5. Correction loop (max 3 rounds)
+### 6. Correction loop (max 3 rounds)
 - `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
 - `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
   `suggested_fix`); from `location` identify the inventory field or the endpoint
   at fault, **dispatch a targeted read-only subagent to re-read only the relevant
   source** and return the corrected JSON, then **you** overwrite `inventory.json`
-  or the matching `endpoints/<NN>.json` and return to step 4.
+  or the matching `endpoints/<NN>.json` and return to step 5.
+- On `REQUIRED_INFO_MISSING` at `integration.crypto`: the source mentions
+  encryption/signing but no crypto detail was extracted — re-read the relevant
+  section and overwrite `integration.json`, then re-run assemble.
+- On `OUTPUT_MISMATCH` at `integration.*`: a `payload_ref`/`operation_ref` does
+  not resolve — fix the reference to an existing schema/operation.
 - Still FAIL after 3 consecutive rounds → present the remaining gaps/conflicts to the user. **Do not hard-code fill-ins.**
 
 ## Important
 - Use a dedicated working dir for `<WORK>` (may live in a scratch area outside `<OUT>`).
-- Each round overwrites the same `inventory.json` / `endpoints/*.json`, then re-runs assemble.
+- Each round overwrites the same `inventory.json` / `endpoints/*.json` / `integration.json`, then re-runs assemble.
 - Exit codes: 0=PASS, 1=validation FAIL, 2=extraction input file error (fix the JSON you wrote).
