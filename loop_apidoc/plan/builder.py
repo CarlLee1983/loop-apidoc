@@ -62,6 +62,18 @@ def _union_list(base: list, extra, key) -> list:
     return out
 
 
+def _union_str(base: list, extra) -> list:
+    """Union two string lists, preserving order and dropping duplicates. A
+    non-list `extra` is passed through verbatim so validation rejects it."""
+    if not isinstance(extra, list):
+        return extra
+    out = list(base)
+    for item in extra:
+        if item not in out:
+            out.append(item)
+    return out
+
+
 def _union_endpoint_fields(existing: EndpointEntry, detail: dict) -> dict:
     """Union a detail's parameters/responses/examples into an endpoint's, instead
     of replacing them. For the usual single-detail-per-endpoint case the endpoint
@@ -78,6 +90,8 @@ def _union_endpoint_fields(existing: EndpointEntry, detail: dict) -> dict:
         else examples,
         "request": existing.request if existing.request is not None
         else detail.get("request"),
+        "tags": _union_str(existing.tags, detail.get("tags")),
+        "security": _union_str(existing.security, detail.get("security")),
     }
 
 
@@ -86,6 +100,7 @@ def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
     fields = _union_endpoint_fields(a, {
         "parameters": list(b.parameters), "responses": list(b.responses),
         "examples": list(b.examples), "request": b.request,
+        "tags": list(b.tags), "security": list(b.security),
     })
     summaries = [s for s in (a.summary, b.summary) if s]
     citations = list(a.citations)
@@ -314,6 +329,8 @@ def _merge_one_detail(
         "request": item.get("request"),
         "responses": item.get("responses") or [],
         "examples": item.get("examples") or [],
+        "tags": item.get("tags") or [],
+        "security": item.get("security") or [],
     }
     status, citation = classify_item(
         item.get("source"), query_id=art.query_id,

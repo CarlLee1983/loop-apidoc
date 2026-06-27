@@ -123,6 +123,26 @@ def test_merge_supported_detail_keeps_supported():
     assert ep.responses == [{"status": "200"}]
 
 
+def test_endpoint_detail_tags_and_security_flow_into_plan():
+    extraction = ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("05", QueryKind.INITIAL,
+                 '```json\n{"endpoints": ['
+                 '{"method": "POST", "path": "/pay", "summary": "pay", "source": "api.pdf"}]}\n```'),
+            _art("06", QueryKind.INITIAL,
+                 '```json\n{"method": "POST", "path": "/pay",'
+                 ' "responses": [{"status": "200"}],'
+                 ' "tags": ["Payment"], "security": ["SigScheme"],'
+                 ' "source": "api.pdf"}\n```'),
+        ],
+    )
+    plan = build_normalization_plan(extraction, _manifest())
+    ep = plan.endpoints[0]
+    assert ep.tags == ["Payment"]
+    assert ep.security == ["SigScheme"]
+
+
 def _malformed_extraction(stage_block: str) -> ExtractionResult:
     return ExtractionResult(
         notebook_url="https://nb/x",
