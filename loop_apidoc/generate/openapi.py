@@ -255,9 +255,14 @@ def _build_schemas(plan: NormalizationPlan) -> dict:
     out: dict = {}
     for idx, entry in enumerate(plan.schemas):
         if entry.name:
-            out[component_key(entry.name, idx, prefix="schema")] = (
-                _build_object_schema(entry)
-            )
+            key = component_key(entry.name, idx, prefix="schema")
+            obj = _build_object_schema(entry)
+            # When the source name can't be a valid component key (CJK, slashes,
+            # spaces) the key is sanitized/falls back to schema<idx>; keep the
+            # original human-readable name in `title` so it isn't lost.
+            if key != entry.name:
+                obj["title"] = entry.name
+            out[key] = obj
         for enum_idx, enum in enumerate(entry.enums):
             if not isinstance(enum, dict):
                 continue  # string enums are folded into the parent schema

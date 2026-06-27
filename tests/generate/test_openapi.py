@@ -204,6 +204,45 @@ def test_named_enum_becomes_component():
     assert schemas["OrderStatus"] == {"type": "string", "enum": ["new", "paid"]}
 
 
+def test_non_ascii_schema_name_preserved_as_title():
+    # A purely CJK name can't form a valid OpenAPI component key, so the key
+    # falls back to schema<idx>; the human-readable name must survive in `title`
+    # rather than vanishing from the spec.
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="旅遊地區代號對照表",
+            fields=[], enums=["001=台北市"],
+        )
+    ])
+    schemas = build_openapi(plan)["components"]["schemas"]
+    assert "schema0" in schemas
+    assert schemas["schema0"]["title"] == "旅遊地區代號對照表"
+
+
+def test_sanitized_schema_name_preserved_as_title():
+    # Slashes/spaces get rewritten in the key; keep the original via title.
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED,
+            name="TradeStatus / CloseStatus",
+            fields=[{"name": "x", "type": "string"}],
+        )
+    ])
+    schemas = build_openapi(plan)["components"]["schemas"]
+    assert schemas["TradeStatus_CloseStatus"]["title"] == "TradeStatus / CloseStatus"
+
+
+def test_ascii_schema_name_has_no_redundant_title():
+    plan = _plan(schemas=[
+        SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="User",
+            fields=[{"name": "id", "type": "string"}],
+        )
+    ])
+    user = build_openapi(plan)["components"]["schemas"]["User"]
+    assert "title" not in user
+
+
 def test_schema_without_name_skipped():
     plan = _plan(schemas=[SchemaEntry(status=PlanItemStatus.MISSING)])
     doc = build_openapi(plan)
