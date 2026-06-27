@@ -77,10 +77,8 @@ def run_assemble_pipeline(
     urls: list[str] | None = None,
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
-    → generate → validate。不做擷取、不 spawn 任何 agent。
-
-    註:tail 與 agentcli.pipeline.run_agent_pipeline 刻意維持小幅重複,
-    以免改動既有 `run-agent` 後端(向後相容優先於 DRY)。"""
+    → generate → validate。不做擷取、不 spawn 任何 agent;
+    為自成一體的擷取後 pipeline tail(plan→generate→validate)。"""
     # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
     # 不留下孤兒 run 目錄。
     inventory, endpoint_texts = load_extraction_inputs(extraction_dir)

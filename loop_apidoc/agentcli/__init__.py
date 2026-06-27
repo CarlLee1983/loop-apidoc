@@ -1,7 +1,7 @@
-"""Agent-CLI extraction backend (claude -p / codex exec).
+"""Agent-native extraction support.
 
-Drives a headless coding-agent CLI that reads the local source documents
-directly. Each invocation is stateless, so there is no accumulated chat state to
-corrupt extraction. Exposes a simple ask() contract consumed by the collapsed
-extraction pipeline.
+The interactive agent (driven by skills/loop-apidoc/SKILL.md) extracts sources
+itself and writes inventory.json + endpoints/*.json; this package only assembles
+that agent-written JSON (assemble.py), converts inventory.json into plan stage
+answers (extraction.py), and preprocesses PDFs to markdown (preprocess.py).
 """

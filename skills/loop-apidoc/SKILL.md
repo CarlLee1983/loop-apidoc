@@ -16,12 +16,30 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
 ## Flow
 
 ### 1. Collect sources
-- Local files (PDF/MD/HTML): read directly with Read.
-- Public URLs: fetch as text with WebFetch or defuddle.
-- Record the local source directory as `<SOURCES>` (for manifest/provenance); pass URLs via `--url`.
+- Local files: record the source directory as `<SOURCES>`.
+  - MD/HTML/small PDF: subagents read the file directly with Read.
+  - **Table-heavy or large PDF**: first flatten to high-fidelity markdown —
+    `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`
+    (pymupdf4llm preserves tables/headings; raw PDF reads distort tables).
+    Point extraction subagents at `<WORK>/sources_md`.
+- Public URLs: fetch as text with WebFetch or defuddle; pass URLs via `--url`.
+
+## Subagent contract (extraction)
+
+You orchestrate; **read-only subagents extract**. For every extraction below,
+dispatch a subagent restricted to read-only tools (Read/Grep/Glob — **no web, no
+write**). Give it: the source location (`<SOURCES>` or `<WORK>/sources_md`), the
+exact JSON schema to fill, and the grounding rule. The subagent **returns the
+JSON only** (no prose, no file writes). **You (the orchestrator) are the only
+writer** — you write the returned JSON to disk. Grounding rule to include in every
+subagent prompt: *"Fill strictly from the sources. Anything the sources do not
+state → null and add a short label to `missing`. Never infer; never apply
+REST/OAuth conventions. Return only the JSON object."*
 
 ### 2. Extract inventory → write `<WORK>/inventory.json`
-After reading every source, output **one** JSON object (filled strictly from the sources), schema:
+Dispatch **one** read-only subagent (per the Subagent contract) to read every
+source and **return one** JSON object with this schema. Then **you** write the
+returned object to `<WORK>/inventory.json`.
 
 ```json
 {"title": "str|null",
@@ -38,7 +56,11 @@ After reading every source, output **one** JSON object (filled strictly from the
 `title` is the source document/product title (verbatim from the source heading, e.g. "綠界全方位金流 API 技術文件"); `null` if the source has no explicit title (it becomes OpenAPI `info.title`). `version` is the source-stated document/API version (verbatim, e.g. "NDNF-1.2.2"); `null` if none is stated (it becomes OpenAPI `info.version`). Include **every** endpoint and **every** error code. Each `source` cites the source section/page.
 
 ### 3. Extract each endpoint's detail → write `<WORK>/endpoints/<NN>.json`
-For **every** endpoint in inventory.endpoints, output one JSON file (`ep0.json`, `ep1.json`, …), schema:
+For **every** endpoint in `inventory.endpoints`, dispatch a read-only subagent
+**in parallel** (one per endpoint; batch if there are many) that returns one JSON
+object with the schema below. Pass each subagent its endpoint identity
+(`method`/`path`/`summary`/`source`) and the source location. **You** write each
+returned object to `<WORK>/endpoints/ep<N>.json` (`ep0.json`, `ep1.json`, …).
 
 ```json
 {"method":"str","path":"str","source":"str",
@@ -66,7 +88,11 @@ Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 
 ### 5. Correction loop (max 3 rounds)
 - `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
-- `ok == false` → read `report.issues` (each has `code`/`severity`/`location`/`evidence`/`suggested_fix`); use `location` and `evidence` to identify which field is missing or wrong, **re-read only the relevant source for those fields**, overwrite `inventory.json` or the matching `endpoints/<NN>.json`, then return to step 4.
+- `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
+  `suggested_fix`); from `location` identify the inventory field or the endpoint
+  at fault, **dispatch a targeted read-only subagent to re-read only the relevant
+  source** and return the corrected JSON, then **you** overwrite `inventory.json`
+  or the matching `endpoints/<NN>.json` and return to step 4.
 - Still FAIL after 3 consecutive rounds → present the remaining gaps/conflicts to the user. **Do not hard-code fill-ins.**
 
 ## Important
