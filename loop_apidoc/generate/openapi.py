@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import re
 
-from loop_apidoc.generate.naming import component_key, security_scheme_key
+from loop_apidoc.generate.naming import (
+    component_key,
+    security_scheme_key,
+    webhook_items,
+)
 from loop_apidoc.plan.models import NormalizationPlan
 
 MISSING_STATUS = "missing-source"
@@ -244,6 +248,15 @@ def _build_paths(plan: NormalizationPlan) -> dict:
     return paths
 
 
+def _build_webhooks(plan: NormalizationPlan) -> dict:
+    """OpenAPI 3.1 top-level `webhooks`: endpoints with a method but no path are
+    async callbacks (delivered to a caller-defined URL), not server paths."""
+    out: dict = {}
+    for name, endpoint in webhook_items(plan):
+        out[name] = {endpoint.method.lower(): _build_operation([endpoint])}
+    return out
+
+
 def _build_object_schema(entry) -> dict:
     properties: dict = {}
     required: list[str] = []
@@ -302,6 +315,9 @@ def build_openapi(plan: NormalizationPlan) -> dict:
     if servers:
         doc["servers"] = servers
     doc["paths"] = _build_paths(plan)
+    webhooks = _build_webhooks(plan)
+    if webhooks:
+        doc["webhooks"] = webhooks
     components: dict = {}
     schemas = _build_schemas(plan)
     if schemas:

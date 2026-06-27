@@ -6,6 +6,7 @@ from loop_apidoc.validate.models import Issue, IssueCode, Severity
 
 _HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 _ENDPOINT_RE = re.compile(r"^### `([A-Za-z]+)` `([^`]+)`")
+_WEBHOOK_RE = re.compile(r"^### Webhook `([^`]+)`（method `([A-Za-z]+)`）")
 _SECURITY_RE = re.compile(r"^- \*\*(.+?)\*\*（type")
 
 
@@ -39,6 +40,26 @@ def _markdown_endpoints(markdown: str) -> set[tuple[str, str]]:
     return out
 
 
+def _openapi_webhooks(openapi: dict) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for name, item in (openapi.get("webhooks") or {}).items():
+        if not isinstance(item, dict):
+            continue
+        for method in item:
+            if method.lower() in _HTTP_METHODS:
+                out.add((method.lower(), name))
+    return out
+
+
+def _markdown_webhooks(markdown: str) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for line in markdown.splitlines():
+        match = _WEBHOOK_RE.match(line)
+        if match:
+            out.add((match.group(2).lower(), match.group(1)))
+    return out
+
+
 def _openapi_security(openapi: dict) -> set[str]:
     schemes = (openapi.get("components") or {}).get("securitySchemes") or {}
     return set(schemes.keys())
@@ -65,6 +86,17 @@ def check_consistency(openapi: dict, markdown: str) -> list[Issue]:
         issues.append(_mismatch(
             f"paths.{path}.{method}",
             f"Markdown 有 {method.upper()} {path} 但 OpenAPI 缺少"))
+
+    api_hooks = _openapi_webhooks(openapi)
+    md_hooks = _markdown_webhooks(markdown)
+    for method, name in sorted(api_hooks - md_hooks):
+        issues.append(_mismatch(
+            f"webhooks.{name}.{method}",
+            f"OpenAPI 有 webhook {method.upper()} {name} 但 Markdown 缺少"))
+    for method, name in sorted(md_hooks - api_hooks):
+        issues.append(_mismatch(
+            f"webhooks.{name}.{method}",
+            f"Markdown 有 webhook {method.upper()} {name} 但 OpenAPI 缺少"))
 
     api_sec = _openapi_security(openapi)
     md_sec = _markdown_security(markdown)

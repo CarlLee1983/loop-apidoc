@@ -192,6 +192,35 @@ def test_duplicate_method_path_endpoints_merged_with_unioned_details():
     assert any(r.get("status") == "200" for r in ep.responses)
 
 
+def test_webhook_details_merge_by_source_not_collapsed():
+    # Two webhooks share (POST, no path); their details must pair to the right
+    # endpoint via the source they cite, so neither loses its responses.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"POST","path":null,"summary":"notify A","source":"api.pdf"},'
+        '{"method":"POST","path":null,"summary":"notify B","source":"extra.pdf"}]}\n```'
+    )
+    ep_a = ('```json\n{"method":"POST","path":null,'
+            '"responses":[{"status":"200","description":"A ack"}],'
+            '"source":"api.pdf"}\n```')
+    ep_b = ('```json\n{"method":"POST","path":null,'
+            '"responses":[{"status":"201","description":"B ack"}],'
+            '"source":"extra.pdf"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+        AnswerArtifact(query_id="06-a", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep_a, answer_path="answers/06-a.txt", returncode=0),
+        AnswerArtifact(query_id="06-b", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep_b, answer_path="answers/06-b.txt", returncode=0),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    hooks = [e for e in plan.endpoints if e.path is None]
+    assert len(hooks) == 2
+    by_summary = {e.summary: e for e in hooks}
+    assert by_summary["notify A"].responses == [{"status": "200", "description": "A ack"}]
+    assert by_summary["notify B"].responses == [{"status": "201", "description": "B ack"}]
+
+
 def test_nested_scalar_wrong_type_in_inventory_does_not_raise():
     # `fields` must be a list[dict]; a bare string used to crash entry build.
     block = '```json\n{"schemas": [{"name": "U", "fields": "bad"}]}\n```'

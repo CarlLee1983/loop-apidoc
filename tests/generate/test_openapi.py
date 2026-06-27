@@ -204,6 +204,37 @@ def test_named_enum_becomes_component():
     assert schemas["OrderStatus"] == {"type": "string", "enum": ["new", "paid"]}
 
 
+def test_method_only_endpoint_becomes_webhook_not_path():
+    # An endpoint with a method but no path is an async callback → OpenAPI 3.1
+    # top-level `webhooks`, keyed by the summary's leading label, never `paths`.
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path=None,
+            summary="付款結果通知（綠界 POST 至商店 ReturnURL）",
+            parameters=[{"name": "RtnCode", "in": "query"}],
+            responses=[{"status": "200", "description": "1|OK"}],
+        ),
+    ])
+    doc = build_openapi(plan)
+    assert doc["paths"] == {}
+    assert "付款結果通知" in doc["webhooks"]
+    op = doc["webhooks"]["付款結果通知"]["post"]
+    assert {p["name"] for p in op["parameters"]} == {"RtnCode"}
+    assert "200" in op["responses"]
+
+
+def test_paths_and_webhooks_coexist():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/q",
+                      summary="query", responses=[{"status": "200"}]),
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path=None,
+                      summary="notify", responses=[{"status": "200"}]),
+    ])
+    doc = build_openapi(plan)
+    assert "/q" in doc["paths"]
+    assert "notify" in doc.get("webhooks", {})
+
+
 def test_duplicate_path_method_operations_are_merged():
     # Two source endpoints can share one method+path (e.g. ECPay's 全方位金流
     # and ATM both POST /Cashier/AioCheckOut/V5, distinguished by a parameter).

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loop_apidoc.generate.naming import security_scheme_key
+from loop_apidoc.generate.naming import security_scheme_key, webhook_items
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 
@@ -78,24 +78,37 @@ def _schemas(plan: NormalizationPlan) -> list[str]:
     return out
 
 
+def _endpoint_detail_lines(e) -> list[str]:
+    out: list[str] = []
+    if e.summary:
+        out.append(e.summary)
+    for p in e.parameters:
+        name = p.get("name")
+        if name:
+            out.append(f"- 參數 `{name}`（位置 `{p.get('in') or p.get('location') or '-'}`，"
+                       f"型別 `{p.get('type') or '-'}`）")
+    for r in e.responses:
+        status = r.get("status")
+        if status:
+            out.append(f"- 回應 `{status}`：{r.get('description') or '-'}")
+    return out
+
+
 def _endpoints(plan: NormalizationPlan) -> list[str]:
-    rows = [e for e in plan.endpoints if e.path or e.method]
-    if not rows:
+    # Path-bearing endpoints render as `### `METHOD` `path``. Webhooks (a method
+    # but no server path — async callbacks) render in a distinct `### Webhook`
+    # form so they map to OpenAPI 3.1 `webhooks`, not `paths`.
+    rows = [e for e in plan.endpoints if e.path]
+    hooks = webhook_items(plan)
+    if not rows and not hooks:
         return [_EMPTY]
-    out = []
+    out: list[str] = []
     for e in rows:
         out.append(f"### `{e.method or '-'}` `{e.path or '-'}`")
-        if e.summary:
-            out.append(e.summary)
-        for p in e.parameters:
-            name = p.get("name")
-            if name:
-                out.append(f"- 參數 `{name}`（位置 `{p.get('in') or p.get('location') or '-'}`，"
-                           f"型別 `{p.get('type') or '-'}`）")
-        for r in e.responses:
-            status = r.get("status")
-            if status:
-                out.append(f"- 回應 `{status}`：{r.get('description') or '-'}")
+        out.extend(_endpoint_detail_lines(e))
+    for name, e in hooks:
+        out.append(f"### Webhook `{name}`（method `{(e.method or '-').upper()}`）")
+        out.extend(_endpoint_detail_lines(e))
     return out
 
 

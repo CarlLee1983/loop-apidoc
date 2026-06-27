@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
-from loop_apidoc.generate.naming import component_key, security_scheme_key
+from loop_apidoc.generate.naming import (
+    component_key,
+    security_scheme_key,
+    webhook_items,
+)
 from loop_apidoc.plan.models import NormalizationPlan, PlanItemStatus
 
 
@@ -54,6 +58,9 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
         if not endpoint.path or not endpoint.method:
             continue
         entries.extend(_entries(f"paths.{endpoint.path}.{endpoint.method.lower()}", endpoint))
+
+    for name, endpoint in webhook_items(plan):
+        entries.extend(_entries(f"webhooks.{name}.{endpoint.method.lower()}", endpoint))
 
     for idx, schema in enumerate(plan.schemas):
         if schema.name:

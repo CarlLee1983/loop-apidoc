@@ -28,7 +28,10 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
     issues: list[Issue] = []
     for index, endpoint in enumerate(plan.endpoints):
         location = _endpoint_location(endpoint, index)
-        if not endpoint.method or not endpoint.path:
+        # An endpoint with a method but no path is a valid OpenAPI 3.1 webhook
+        # (an async callback delivered to a caller-defined URL), so only a
+        # missing method — or a path with no method — is incomplete.
+        if not endpoint.method:
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, Severity.ERROR, location,
                 "endpoint 缺少 HTTP method 或 path", "由來源補上 method 與 path"))

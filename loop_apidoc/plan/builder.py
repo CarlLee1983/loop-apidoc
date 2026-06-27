@@ -273,6 +273,20 @@ def _detail_path(item: dict) -> str | None:
     return url if isinstance(url, str) else None
 
 
+def _detail_matches(existing, method, path, detail_source) -> bool:
+    """Pair a stage-06 detail with its stage-05 endpoint. Path-bearing endpoints
+    join on (method, path). Webhooks have no path and several can share
+    (method, None), so they disambiguate on the manifest source they cite —
+    each callback page is a distinct source."""
+    if existing.method != method:
+        return False
+    if path is not None:
+        return existing.path == path
+    if existing.path is not None or detail_source is None:
+        return False
+    return any(c.manifest_source == detail_source for c in existing.citations)
+
+
 def _merge_one_detail(
     plan: NormalizationPlan, art, item: dict, manifest: Manifest
 ) -> None:
@@ -289,7 +303,7 @@ def _merge_one_detail(
         answer_path=art.answer_path, manifest=manifest,
     )
     for idx, existing in enumerate(plan.endpoints):
-        if existing.method == method and existing.path == path:
+        if _detail_matches(existing, method, path, citation.manifest_source):
             # The detail is only as grounded as its own source; take the
             # strictest of the endpoint's and the detail's status.
             merged_status = _stricter(existing.status, status)
@@ -342,7 +356,9 @@ def _merge_endpoint_details(
                 MissingItem(area="06", detail="malformed endpoint detail",
                             query_id=art.query_id))
             continue
-        if not (block.get("method") and _detail_path(block)):
+        # A method with no path is a valid webhook detail; only a missing method
+        # makes the detail unmergeable.
+        if not block.get("method"):
             plan.missing_items.append(
                 MissingItem(area="06", detail="endpoint detail missing method/path",
                             query_id=art.query_id))

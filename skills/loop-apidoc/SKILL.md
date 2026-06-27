@@ -48,6 +48,8 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
 `request` 無內容時為 `null`。來源沒寫的填 null/空陣列並加進 `missing`。
 頂層 `source` 必填,引用此 endpoint 細節所在的來源章節/頁碼/URL(與 inventory.endpoints 的對應 `source` 一致)。**多來源時這是把細節歸屬到正確來源的唯一依據**:漏填會被判 `SOURCE_UNVERIFIED`。
 
+**非同步通知 / callback / webhook**(伺服器主動 POST 到呼叫方自訂的 URL,如付款結果通知):`method` 照填、`path` 填 `null`,會被輸出成 OpenAPI 3.1 top-level `webhooks`(以 summary 命名),不需固定 URL。`responses` 填接收方須回應的內容(如 `1|OK`)。**同 (method, null) 的多個 callback 靠各自的 `source` 區分**,務必每個 callback 細節都填正確的 `source`。
+
 ### 4. 組裝 + 驗證
 ```bash
 uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble \

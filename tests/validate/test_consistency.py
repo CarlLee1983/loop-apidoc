@@ -35,6 +35,33 @@ def test_markdown_endpoint_absent_from_openapi_flagged():
                for i in issues)
 
 
+def test_matching_webhooks_have_no_issues():
+    openapi = {
+        "openapi": "3.1.0", "info": {"title": "X", "version": "1.0"},
+        "paths": {},
+        "webhooks": {"付款結果通知": {"post": {"responses": {"200": {"description": "ok"}}}}},
+        "components": {"securitySchemes": {}},
+    }
+    md = (
+        "## Endpoint\n"
+        "### Webhook `付款結果通知`（method `POST`）\n"
+        "## 驗證／授權\n"
+    )
+    assert check_consistency(openapi, md) == []
+
+
+def test_openapi_webhook_absent_from_markdown_flagged():
+    openapi = {
+        "openapi": "3.1.0", "info": {"title": "X", "version": "1.0"},
+        "paths": {},
+        "webhooks": {"付款結果通知": {"post": {"responses": {"200": {"description": "ok"}}}}},
+        "components": {"securitySchemes": {}},
+    }
+    issues = check_consistency(openapi, "## Endpoint\n## 驗證／授權\n")
+    assert any(i.code is IssueCode.OUTPUT_MISMATCH and "webhooks.付款結果通知" in i.location
+               for i in issues)
+
+
 def test_security_name_mismatch_flagged():
     md = (
         "## Endpoint\n### `GET` `/users`\n"

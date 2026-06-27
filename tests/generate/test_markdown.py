@@ -89,6 +89,20 @@ def test_missing_item_surfaced():
     assert "未提供 rate limit" in md
 
 
+def test_webhook_endpoint_rendered_as_webhook_not_path():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path=None,
+            summary="付款結果通知（callback）",
+            responses=[{"status": "200", "description": "1|OK"}])],
+    )
+    md = build_markdown(plan, _manifest())
+    assert "### Webhook `付款結果通知`（method `POST`）" in md
+    # must NOT emit a phantom path endpoint for the null path
+    assert "### `POST` `-`" not in md
+
+
 def test_empty_plan_still_has_all_sections():
     md = build_markdown(NormalizationPlan(notebook_url="https://nb/x"), _manifest())
     for section in REQUIRED_MARKDOWN_SECTIONS:

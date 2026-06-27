@@ -47,6 +47,20 @@ def test_missing_method_is_error():
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.ERROR)
 
 
+def test_webhook_endpoint_method_without_path_is_not_missing_path_error():
+    # A method-only endpoint is a valid OpenAPI 3.1 webhook (async callback),
+    # so it must not be flagged for a missing path.
+    issues = check_completeness(_plan(endpoints=[
+        _endpoint(method="POST", path=None, summary="付款結果通知"),
+    ]))
+    assert _codes(issues, Severity.ERROR) == []
+
+
+def test_path_without_method_is_still_error():
+    issues = check_completeness(_plan(endpoints=[_endpoint(method=None, path="/u")]))
+    assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.ERROR)
+
+
 def test_no_responses_is_error():
     issues = check_completeness(_plan(endpoints=[_endpoint(responses=[])]))
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.ERROR)
