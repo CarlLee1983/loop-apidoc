@@ -24,8 +24,12 @@ def test_skill_has_frontmatter_and_assemble_call():
     text = (ROOT / "skills" / "loop-apidoc" / "SKILL.md").read_text("utf-8")
     assert text.startswith("---")
     assert "name: loop-apidoc" in text
-    assert "loop-apidoc assemble" in text
+    # 可攜形式:CLI 以 <APIDOC> 佔位符呼叫(Claude plugin / Codex 雙棲)
+    assert "<APIDOC> assemble" in text
+    # 仍須說明 plugin 端的 $CLAUDE_PLUGIN_ROOT 解析規則
     assert "CLAUDE_PLUGIN_ROOT" in text
+    # 全域指令 fallback(Codex 端)必須在 CLI invocation 規則中出現
+    assert "loop-apidoc" in text
 
 
 def test_skill_references_real_issue_fields():

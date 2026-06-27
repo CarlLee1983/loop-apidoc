@@ -7,28 +7,44 @@ description: Produce standardized OpenAPI 3.1 + Traditional-Chinese Markdown int
 
 You turn the user's API documentation sources into standardized, traceable artifacts. **The source is the only ground truth**: anything a source does not state is `null` and recorded in `missing`. **Never speculate; never apply REST/OAuth conventions.**
 
-The CLI runs from this plugin's bundled package. Always invoke:
+## CLI invocation (`<APIDOC>`)
+
+This skill runs on both the Claude Code plugin and the Codex CLI. Every command
+below writes the CLI as `<APIDOC>`; resolve it once per shell call:
+
+- **`$CLAUDE_PLUGIN_ROOT` is set** (Claude Code plugin) → the CLI lives in the
+  bundled package: `uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc`.
+- **otherwise** (Codex / standalone) → call the globally installed command
+  `loop-apidoc` directly (`uv tool install`; see README).
+
+For a deterministic, shell-portable (bash *and* zsh) prefix, prepend this to any
+CLI line — it builds an argv array that is safe with spaces:
 
 ```bash
-uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
+RUN=(loop-apidoc); [ -n "$CLAUDE_PLUGIN_ROOT" ] && RUN=(uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc)
+"${RUN[@]}" <command> ...
 ```
+
+(Do **not** use `${CLAUDE_PLUGIN_ROOT:+uv run --project "$CLAUDE_PLUGIN_ROOT"}`
+inline: bash word-splits it but zsh does not, so it breaks under zsh.)
 
 ## Flow
 
 ### 1. Collect sources
 - Local files: record the source directory as `<SOURCES>`.
-  - MD/HTML/small PDF: subagents read the file directly with Read.
+  - MD/HTML/small PDF: subagents read the file directly.
   - **Table-heavy or large PDF**: first flatten to high-fidelity markdown —
-    `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`
+    `<APIDOC> preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`
     (pymupdf4llm preserves tables/headings; raw PDF reads distort tables).
     Point extraction subagents at `<WORK>/sources_md`.
-- Public URLs: fetch as text with WebFetch or defuddle; pass URLs via `--url`.
+- Public URLs: fetch each URL as text (built-in web fetch, or a reader like
+  defuddle); pass URLs via `--url`.
 
 ## Subagent contract (extraction)
 
 You orchestrate; **read-only subagents extract**. For every extraction below,
-dispatch a subagent restricted to read-only tools (Read/Grep/Glob — **no web, no
-write**). Give it: the source location (`<SOURCES>` or `<WORK>/sources_md`), the
+dispatch a read-only subagent (file read + search only — **no web, no write**).
+Give it: the source location (`<SOURCES>` or `<WORK>/sources_md`), the
 exact JSON schema to fill, and the grounding rule. The subagent **returns the
 JSON only** (no prose, no file writes). **You (the orchestrator) are the only
 writer** — you write the returned JSON to disk. Grounding rule to include in every
@@ -81,7 +97,7 @@ Top-level `source` is required: cite the source section/page/URL where this endp
 
 ### 4. Assemble + validate
 ```bash
-uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble \
+<APIDOC> assemble \
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" --json
 ```
 Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.

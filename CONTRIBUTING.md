@@ -13,6 +13,16 @@ uv run loop-apidoc --help    # 確認 CLI 可執行
 
 擷取由 agent 擔任引擎(`run-agent` 以子行程 `claude -p`,或 agent-native plugin 由當前 agent 直接讀來源);`run-agent` 需本機可執行的 agent CLI(預設 `claude`,可用 `--executable` 替換)。
 
+### 跨 agent runtime 的 skill
+
+`skills/loop-apidoc/SKILL.md` 設計為**單一可攜檔**,同時供 Claude Code plugin 與 OpenAI Codex CLI 載入。維護時請守住可攜性:
+
+- CLI 一律以佔位符 `<APIDOC>` 表示,規則定義在 SKILL 頂部「CLI invocation」一節 —— 有 `$CLAUDE_PLUGIN_ROOT` 走 `uv run --project`,否則退到全域 `loop-apidoc`。**勿**寫死 `uv run --project "${CLAUDE_PLUGIN_ROOT}" …`。
+- 環境前綴用陣列寫法(`RUN=(...)`;`"${RUN[@]}"`),bash/zsh 行為一致且空白安全。**勿**用 `${VAR:+…}` inline 展開(zsh 不切詞會壞)。
+- 描述 agent 行為時用**動作**(讀檔、搜尋、抓取 URL)而非單一 runtime 的工具名(Read/Grep/Glob/WebFetch)。
+
+Codex 端安裝步驟見 [`README.md`](README.md#在-openai-codex-cli-使用)。
+
 ## 核心原則
 
 任何變更都必須維持專案的根本契約:

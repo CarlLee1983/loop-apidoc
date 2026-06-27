@@ -42,6 +42,20 @@ manifest → 擷取(agent 讀來源) → 規格化計畫 → 生成(OpenAPI + Ma
 
 此模式由當前 agent 直接擔任擷取引擎,不另行 spawn `claude -p`。安裝 plugin 後即可在 Claude Code 中使用;CLI 由 plugin 內含,透過 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble` 呼叫。
 
+### 在 OpenAI Codex CLI 使用
+
+同一份 skill 也能在 Codex 執行。Codex 不會設 `${CLAUDE_PLUGIN_ROOT}`,因此把 CLI 裝成全域指令,並把 skill 掛進 Codex 的 skills 目錄:
+
+```bash
+# 1. 把 CLI 裝成全域 loop-apidoc 指令(取代 plugin 內含的 uv run --project)
+uv tool install --from /path/to/loop-apidoc loop-apidoc
+
+# 2. 把 skill 掛進 Codex(symlink 即可,改檔自動同步)
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
+```
+
+SKILL.md 以 `<APIDOC>` 佔位符自動辨識環境:有 `$CLAUDE_PLUGIN_ROOT` 走 plugin 內含 CLI,否則退到全域 `loop-apidoc`。其餘流程(擷取 → `assemble` → 驗證 → 修正)兩邊一致。
+
 ---
 
 ## 安裝
