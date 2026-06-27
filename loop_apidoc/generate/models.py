@@ -23,3 +23,4 @@ class GenerateResult(BaseModel):
     openapi: dict
     markdown: str
     provenance: ProvenanceDocument
+    integration: dict | None = None

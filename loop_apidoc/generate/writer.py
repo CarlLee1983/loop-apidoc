@@ -4,6 +4,7 @@ from pathlib import Path
 
 import yaml
 
+from loop_apidoc.generate.integration import build_integration_document
 from loop_apidoc.generate.markdown import build_markdown
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.generate.openapi import build_openapi
@@ -17,6 +18,7 @@ def build_result(plan: NormalizationPlan, manifest: Manifest) -> GenerateResult:
         openapi=build_openapi(plan),
         markdown=build_markdown(plan, manifest),
         provenance=build_provenance(plan),
+        integration=build_integration_document(plan),
     )
 
 
@@ -33,4 +35,11 @@ def generate_outputs(
     (run_dir / "provenance.json").write_text(
         result.provenance.model_dump_json(indent=2), encoding="utf-8"
     )
+    if result.integration is not None:
+        import json
+
+        (run_dir / "integration-contract.json").write_text(
+            json.dumps(result.integration, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
     return result
