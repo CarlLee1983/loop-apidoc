@@ -81,6 +81,22 @@ def _signature_explicit(scheme: CryptoScheme) -> bool:
     return bool(scheme.algorithm) and bool(scheme.payload_assembly)
 
 
+def _is_cbc(scheme: CryptoScheme) -> bool:
+    """Check if the scheme's mode is confirmed to be CBC.
+
+    Returns True only if:
+    - mode field is explicitly "CBC" (case-insensitive), OR
+    - mode is None/unset but algorithm string contains "CBC"
+
+    Otherwise returns False (fail-closed: unknown/non-CBC modes are not rendered as runnable code).
+    """
+    mode = (scheme.mode or "").upper()
+    algo = (scheme.algorithm or "").upper()
+    if mode:
+        return mode == "CBC"
+    return "CBC" in algo
+
+
 def _request_signing_schemes(plan: NormalizationPlan) -> list[CryptoScheme]:
     contract = plan.integration
     if contract is None:
@@ -233,7 +249,7 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
         else:
             func_name = "sign"
 
-        if _signature_explicit(s):
+        if _signature_explicit(s) and _is_cbc(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
             blocks.append(
@@ -247,11 +263,20 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
             )
         else:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
-            blocks.append(
-                f"# gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
-                f"def {func_name}(payload: str) -> str:\n"
-                "    raise NotImplementedError('來源未提供完整簽章演算法，請依文件補完')\n"
-            )
+            # If explicit but not CBC, replace "mode" in missing with a note about the crypto mode
+            if _signature_explicit(s) and not _is_cbc(s):
+                mode = (s.mode or "").upper() or "unspecified"
+                blocks.append(
+                    f"# gap: 簽章 {s.name or ''} 聲明為 {mode} 模式，但本範例僅支援 CBC；無法生成可跑函式\n"
+                    f"def {func_name}(payload: str) -> str:\n"
+                    "    raise NotImplementedError('來源聲明的加密模式不支援，請參考 integration-contract.json 手動實作')\n"
+                )
+            else:
+                blocks.append(
+                    f"# gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
+                    f"def {func_name}(payload: str) -> str:\n"
+                    "    raise NotImplementedError('來源未提供完整簽章演算法，請依文件補完')\n"
+                )
 
     if has_explicit:
         parts.append("\n")

@@ -471,3 +471,62 @@ def test_build_examples_readme_lists_signing_schemes():
     assert "## 通用簽章機制" in readme
     # Verify scheme name is listed
     assert "CheckValue" in readme
+
+
+def test_render_py_non_cbc_mode_falls_to_gap():
+    """Test that explicit scheme with non-CBC mode (e.g., GCM) emits gap, not runnable code.
+
+    This enforces the no-fabrication invariant: we must NOT emit AES.MODE_CBC
+    when the source states a different mode.
+    """
+    from loop_apidoc.generate.examples import _render_py
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    # Explicit scheme: has algorithm and payload_assembly, but mode is NOT CBC
+    explicit_non_cbc = CryptoScheme(
+        status="supported", name="Sig", algorithm="AES-256-GCM", mode="GCM",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "encrypt with GCM"}],
+    )
+    out = _render_py(shape, [explicit_non_cbc])
+
+    # Should emit gap, not runnable code
+    assert "# gap:" in out, "Non-CBC explicit scheme should emit gap comment"
+    assert "NotImplementedError" in out, "Gap should raise NotImplementedError"
+    assert "AES.new(" not in out, "Should not emit AES.new() for non-CBC mode"
+    assert "AES.MODE_CBC" not in out, "Should not emit MODE_CBC for non-CBC mode"
+
+
+def test_render_py_cbc_via_algorithm_string_is_runnable():
+    """Test that scheme with algorithm='AES-256-CBC' (no explicit mode field) is runnable.
+
+    If algorithm string contains CBC, it should render as runnable code.
+    """
+    from loop_apidoc.generate.examples import _render_py
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    # Explicit scheme: algorithm contains CBC, but mode field is None/unset
+    explicit_cbc_via_algo = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode=None,
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    out = _render_py(shape, [explicit_cbc_via_algo])
+
+    # Should render runnable code, not gap
+    assert "def sign" in out, "Should emit function definition"
+    assert "# gap:" not in out, "Should NOT be a gap when algorithm contains CBC"
+    assert "AES.new(" in out, "Should emit AES.new() for CBC"
+    assert "AES.MODE_CBC" in out, "Should emit MODE_CBC for CBC"
