@@ -429,3 +429,45 @@ def test_build_examples_webhook_uses_receiver_placeholder():
     openapi = {"webhooks": {"Notify": {"post": {"operationId": "Notify"}}}}
     out = build_examples(openapi, NormalizationPlan(notebook_url="x"))
     assert "<your_receiver_url>" in out["examples/Notify/request.sh"]
+
+
+def test_build_examples_readme_lists_signing_schemes():
+    from loop_apidoc.generate.examples import build_examples, HEADER_NOTE
+    from loop_apidoc.plan.models import (
+        CryptoScheme, IntegrationContract, NormalizationPlan
+    )
+
+    openapi = {
+        "servers": [{"url": "https://api.example.com"}],
+        "paths": {
+            "/pay": {
+                "post": {
+                    "operationId": "PayOrder",
+                    "requestBody": {
+                        "content": {"application/json": {"schema": {"type": "object",
+                            "properties": {"Amount": {"type": "integer"}}}}}
+                    },
+                }
+            }
+        },
+    }
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(
+            crypto=[
+                CryptoScheme(
+                    status="supported", name="CheckValue", algorithm="AES-256-CBC",
+                    purpose="request"
+                ),
+            ]
+        ),
+    )
+    out = build_examples(openapi, plan)
+    readme = out["examples/README.md"]
+
+    # Verify HEADER_NOTE marker is present
+    assert HEADER_NOTE in readme
+    # Verify section heading for signing schemes
+    assert "## 通用簽章機制" in readme
+    # Verify scheme name is listed
+    assert "CheckValue" in readme

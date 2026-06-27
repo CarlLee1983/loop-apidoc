@@ -281,8 +281,7 @@ def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
     return "\n".join(parts) + "\n"
 
 
-def _render_readme(operation_ids: list[str], plan: NormalizationPlan) -> str:
-    schemes = _request_signing_schemes(plan)
+def _render_readme(operation_ids: list[str], schemes: list[CryptoScheme]) -> str:
     lines = [
         "# 請求範例（examples/）",
         "",
@@ -328,5 +327,5 @@ def build_examples(openapi: dict, plan: NormalizationPlan) -> dict[str, str]:
         out[f"{base}/request.py"] = _render_py(shape, schemes)
     if not out:
         return {}
-    out["examples/README.md"] = _render_readme(operation_ids, plan)
+    out["examples/README.md"] = _render_readme(operation_ids, schemes)
     return out
