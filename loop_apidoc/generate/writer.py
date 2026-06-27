@@ -4,6 +4,7 @@ from pathlib import Path
 
 import yaml
 
+from loop_apidoc.generate.examples import build_examples
 from loop_apidoc.generate.integration import build_integration_document
 from loop_apidoc.generate.markdown import build_markdown
 from loop_apidoc.generate.models import GenerateResult
@@ -14,11 +15,13 @@ from loop_apidoc.plan.models import NormalizationPlan
 
 
 def build_result(plan: NormalizationPlan, manifest: Manifest) -> GenerateResult:
+    openapi = build_openapi(plan)
     return GenerateResult(
-        openapi=build_openapi(plan),
+        openapi=openapi,
         markdown=build_markdown(plan, manifest),
         provenance=build_provenance(plan),
         integration=build_integration_document(plan),
+        examples=build_examples(openapi, plan),
     )
 
 
@@ -42,4 +45,8 @@ def generate_outputs(
             json.dumps(result.integration, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+    for relpath, content in result.examples.items():
+        target = run_dir / relpath
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
     return result
