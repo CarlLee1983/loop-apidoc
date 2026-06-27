@@ -244,6 +244,22 @@ def test_nested_scalar_wrong_type_in_enums_does_not_raise():
     assert any(m.area == "07" for m in plan.missing_items)
 
 
+def test_title_from_stage00_populates_system_groups():
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("00", QueryKind.INITIAL, "綠界全方位金流 API 技術文件"),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    assert plan.system_groups[0].name == "綠界全方位金流 API 技術文件"
+
+
+def test_blank_title_leaves_system_groups_empty():
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("00", QueryKind.INITIAL, "  "),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    assert plan.system_groups == []
+
+
 def test_string_enums_in_schema_are_kept_not_dropped():
     # The SKILL contract documents schemas[].enums as ["str"]. Such a schema
     # must survive the plan build (it used to be silently dropped because the

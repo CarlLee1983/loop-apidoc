@@ -16,7 +16,8 @@ from loop_apidoc.extraction.store import ExtractionStore
 INVENTORY_PROMPT = (
     "Read the markdown manual provided to you and output ONE JSON object (and "
     "nothing else) with this exact schema, filled STRICTLY from the sources:\n"
-    '{"overview": str, '
+    '{"title": str|null, '
+    '"overview": str, '
     '"environments": [{"name": str, "base_url": str, "version": str|null, "source": str}], '
     '"security_schemes": [{"name": str, "type": str|null, "location": str|null, '
     '"details": str|null, "source": str}], '
@@ -54,6 +55,7 @@ def _block(key: str, inventory: dict) -> str:
 def inventory_to_stage_answers(inventory: dict) -> dict[str, str]:
     """Split one inventory JSON into per-stage answer texts (pure)."""
     answers: dict[str, str] = {
+        "00": str(inventory.get("title") or "").strip(),
         "01": "Source inventory: a single source manual was provided and read.",
         "02": str(inventory.get("overview") or "").strip()
         or "(no overview stated)",

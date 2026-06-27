@@ -62,6 +62,16 @@ def test_inventory_split_maps_each_stage():
     assert "webhooks" in answers["10"]  # gaps surfaced
 
 
+def test_title_surfaced_in_stage_00():
+    answers = inventory_to_stage_answers({**_INVENTORY, "title": "Acme Pay API"})
+    assert answers["00"] == "Acme Pay API"
+
+
+def test_missing_title_yields_blank_stage_00():
+    answers = inventory_to_stage_answers(_INVENTORY)  # no title key
+    assert answers["00"] == ""
+
+
 def test_global_missing_not_duplicated_into_every_inventory_stage():
     # The global inventory.missing must live in exactly one place (the stage-10
     # gaps note), not be copied into every inventory stage block — otherwise the

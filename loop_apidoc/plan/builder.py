@@ -20,6 +20,7 @@ from loop_apidoc.plan.models import (
     SchemaEntry,
     SecuritySchemeEntry,
     SourceConflict,
+    SystemGroup,
     UnverifiedItem,
 )
 
@@ -228,6 +229,12 @@ def build_normalization_plan(
         overview_note=_note(extraction, "02"),
         conflicts_note=_note(extraction, "10"),
     )
+
+    # Stage 00 carries the source-stated API/document title (if any), which the
+    # OpenAPI `info.title` and the guide heading read via system_groups.
+    title = _note(extraction, "00").strip()
+    if title:
+        plan.system_groups = [SystemGroup(name=title)]
 
     for stage_id, (json_key, plan_field, entry_class, factory) in _INVENTORY.items():
         art, block = _structured_block(extraction, stage_id)

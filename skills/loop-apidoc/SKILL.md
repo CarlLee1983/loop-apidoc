@@ -24,7 +24,8 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
 讀完所有來源後,輸出**一個** JSON 物件(嚴格依來源填寫),schema:
 
 ```json
-{"overview": "str",
+{"title": "str|null",
+ "overview": "str",
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
  "endpoints": [{"method":"str","path":"str","summary":"str","source":"str"}],
@@ -33,7 +34,7 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
 ```
-包含**每一個** endpoint 與**每一個** error code。每個 `source` 引用來源章節/頁碼。
+`title` 填來源文件/產品的標題(逐字取自來源標題,如「綠界全方位金流 API 技術文件」),來源無明確標題就填 `null`(會成為 OpenAPI `info.title`)。包含**每一個** endpoint 與**每一個** error code。每個 `source` 引用來源章節/頁碼。
 
 ### 3. 擷取每個 endpoint 細節 → 寫 `<WORK>/endpoints/<NN>.json`
 對 inventory.endpoints 的**每一個** endpoint,各輸出一個 JSON 檔(`ep0.json`, `ep1.json`, …),schema:
