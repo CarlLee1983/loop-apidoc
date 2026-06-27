@@ -1,27 +1,27 @@
 ---
 name: loop-apidoc
-description: 從一或多個 API 文檔來源(本機 PDF/MD/HTML 或公開 URL)產出標準化的 OpenAPI 3.1 + 繁中 Markdown 串接文件。由 agent 擷取、呼叫確定性 CLI 組裝與驗證,驗證失敗時自動回頭補齊缺漏。當使用者要把雜亂的 API 串接文件整理成一致、可追溯的規格時使用。
+description: Produce standardized OpenAPI 3.1 + Traditional-Chinese Markdown integration docs from one or more API documentation sources (local PDF/MD/HTML or public URLs). The agent extracts, calls a deterministic CLI to assemble and validate, and on validation failure loops back to fill gaps. Use when the user wants to turn messy API integration docs into a consistent, traceable spec.
 ---
 
-# loop-apidoc:來源依據式 API 文件產生
+# loop-apidoc: source-grounded API doc generation
 
-你要把使用者提供的 API 文檔來源,整理成標準化、可追溯的產物。**唯一事實依據是來源**:來源沒寫的一律 `null` 並記入 `missing`,**絕不臆測、絕不套用 REST/OAuth 慣例**。
+You turn the user's API documentation sources into standardized, traceable artifacts. **The source is the only ground truth**: anything a source does not state is `null` and recorded in `missing`. **Never speculate; never apply REST/OAuth conventions.**
 
-CLI 以本 plugin 內含的套件執行,一律用:
+The CLI runs from this plugin's bundled package. Always invoke:
 
 ```bash
 uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
 ```
 
-## 流程
+## Flow
 
-### 1. 蒐集來源
-- 本機檔案(PDF/MD/HTML):用 Read 直接讀。
-- 公開 URL:用 WebFetch 或 defuddle 抓成文字。
-- 把本機來源目錄記為 `<SOURCES>`(供 manifest/provenance 用);URL 用 `--url` 傳入。
+### 1. Collect sources
+- Local files (PDF/MD/HTML): read directly with Read.
+- Public URLs: fetch as text with WebFetch or defuddle.
+- Record the local source directory as `<SOURCES>` (for manifest/provenance); pass URLs via `--url`.
 
-### 2. 擷取 inventory → 寫 `<WORK>/inventory.json`
-讀完所有來源後,輸出**一個** JSON 物件(嚴格依來源填寫),schema:
+### 2. Extract inventory → write `<WORK>/inventory.json`
+After reading every source, output **one** JSON object (filled strictly from the sources), schema:
 
 ```json
 {"title": "str|null",
@@ -34,10 +34,10 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
 ```
-`title` 填來源文件/產品的標題(逐字取自來源標題,如「綠界全方位金流 API 技術文件」),來源無明確標題就填 `null`(會成為 OpenAPI `info.title`)。包含**每一個** endpoint 與**每一個** error code。每個 `source` 引用來源章節/頁碼。
+`title` is the source document/product title (verbatim from the source heading, e.g. "綠界全方位金流 API 技術文件"); `null` if the source has no explicit title (it becomes OpenAPI `info.title`). Include **every** endpoint and **every** error code. Each `source` cites the source section/page.
 
-### 3. 擷取每個 endpoint 細節 → 寫 `<WORK>/endpoints/<NN>.json`
-對 inventory.endpoints 的**每一個** endpoint,各輸出一個 JSON 檔(`ep0.json`, `ep1.json`, …),schema:
+### 3. Extract each endpoint's detail → write `<WORK>/endpoints/<NN>.json`
+For **every** endpoint in inventory.endpoints, output one JSON file (`ep0.json`, `ep1.json`, …), schema:
 
 ```json
 {"method":"str","path":"str","source":"str",
@@ -46,24 +46,24 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
  "responses":[{"status":"str","description":"str|null","schema":"str|null"}],
  "examples":[{}],"missing":["str"]}
 ```
-`request` 無內容時為 `null`。來源沒寫的填 null/空陣列並加進 `missing`。
-頂層 `source` 必填,引用此 endpoint 細節所在的來源章節/頁碼/URL(與 inventory.endpoints 的對應 `source` 一致)。**多來源時這是把細節歸屬到正確來源的唯一依據**:漏填會被判 `SOURCE_UNVERIFIED`。
+`request` is `null` when there is no body. Fields the source omits → null/empty array, and add them to `missing`.
+Top-level `source` is required: cite the source section/page/URL where this endpoint's detail lives (consistent with the matching `source` in inventory.endpoints). **With multiple sources this is the only thing attributing detail to the correct source** — omitting it triggers `SOURCE_UNVERIFIED`.
 
-**非同步通知 / callback / webhook**(伺服器主動 POST 到呼叫方自訂的 URL,如付款結果通知):`method` 照填、`path` 填 `null`,會被輸出成 OpenAPI 3.1 top-level `webhooks`(以 summary 命名),不需固定 URL。`responses` 填接收方須回應的內容(如 `1|OK`)。**同 (method, null) 的多個 callback 靠各自的 `source` 區分**,務必每個 callback 細節都填正確的 `source`。
+**Async notifications / callbacks / webhooks** (server POSTs to a caller-supplied URL, e.g. payment-result notifications): keep `method`, set `path` to `null`. These become OpenAPI 3.1 top-level `webhooks` (named by summary), no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`). **Multiple callbacks sharing the same (method, null) are distinguished only by their `source`** — give every callback detail the correct `source`.
 
-### 4. 組裝 + 驗證
+### 4. Assemble + validate
 ```bash
 uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble \
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" --json
 ```
-解析 stdout 的 JSON:`ok`、`run_dir`、`report.issues`。
+Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 
-### 5. 修正迴圈(最多 3 輪)
-- `ok == true` → 回報 `run_dir` 內的 `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md`,結束。
-- `ok == false` → 看 `report.issues`(每筆有 `code`/`severity`/`location`/`evidence`/`suggested_fix`),依 `location` 與 `evidence` 判斷哪個欄位缺漏或有問題,**只針對那些欄位回頭重讀對應來源**,覆寫 `inventory.json` 或對應的 `endpoints/<NN>.json`,然後回到步驟 4。
-- 連續 3 輪仍 FAIL → 把剩餘的缺漏/衝突清單呈現給使用者,**不要硬編補寫**。
+### 5. Correction loop (max 3 rounds)
+- `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
+- `ok == false` → read `report.issues` (each has `code`/`severity`/`location`/`evidence`/`suggested_fix`); use `location` and `evidence` to identify which field is missing or wrong, **re-read only the relevant source for those fields**, overwrite `inventory.json` or the matching `endpoints/<NN>.json`, then return to step 4.
+- Still FAIL after 3 consecutive rounds → present the remaining gaps/conflicts to the user. **Do not hard-code fill-ins.**
 
-## 重要
-- `<WORK>` 用一個工作目錄(可放在 `<OUT>` 之外的暫存區)。
-- 每輪覆寫同一份 `inventory.json` / `endpoints/*.json` 再重跑 assemble。
-- 退出碼:0=PASS、1=驗證 FAIL、2=擷取輸入檔錯誤(修正你寫出的 JSON)。
+## Important
+- Use a dedicated working dir for `<WORK>` (may live in a scratch area outside `<OUT>`).
+- Each round overwrites the same `inventory.json` / `endpoints/*.json`, then re-runs assemble.
+- Exit codes: 0=PASS, 1=validation FAIL, 2=extraction input file error (fix the JSON you wrote).

@@ -1,12 +1,12 @@
 {
   "name": "loop-apidoc-marketplace",
   "owner": { "name": "carl" },
-  "description": "Loop 來源依據式 API 文件 pipeline 的 marketplace:agent 驅動擷取→組裝→驗證→修正,產出 OpenAPI 3.1 / 繁中 Markdown / provenance。",
+  "description": "Marketplace for Loop's source-grounded API documentation pipeline: agent-driven extract → assemble → validate → correct, producing OpenAPI 3.1 / Traditional-Chinese Markdown / provenance.",
   "plugins": [
     {
       "name": "loop-apidoc",
       "source": "./",
-      "description": "來源依據式 API 文件 pipeline(agent-native)。"
+      "description": "Source-grounded API documentation pipeline (agent-native)."
     }
   ]
 }
