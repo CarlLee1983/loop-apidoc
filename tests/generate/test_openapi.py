@@ -370,6 +370,100 @@ def test_responses_keep_valid_codes_and_fold_business_status():
     assert "200" in out          # business status folded under 200
 
 
+def test_body_params_become_request_body_not_parameters():
+    # OpenAPI 3.x abolished `in: body`. Source fields tagged `in: "body"` are
+    # form/JSON body fields and MUST populate requestBody's object schema —
+    # never be emitted as (and silently coerced to) query parameters.
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            parameters=[
+                {"name": "MerchantID", "in": "body", "type": "String(15)",
+                 "required": True, "description": "商店代號"},
+                {"name": "Amt", "in": "body", "type": "Int(10)", "required": True},
+                {"name": "LangType", "in": "body", "type": "String(5)"},
+            ],
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/pay"]["post"]
+    assert "parameters" not in op  # nothing leaks into query params
+    body = op["requestBody"]
+    assert body["required"] is True  # a body with required fields is required
+    schema = body["content"]["application/json"]["schema"]
+    assert schema["type"] == "object"
+    # field description wins over the raw type hint (mirrors _build_object_schema)
+    assert schema["properties"]["MerchantID"] == {"type": "string", "description": "商店代號"}
+    # no field description -> raw type kept as description
+    assert schema["properties"]["Amt"] == {"type": "integer", "description": "Int(10)"}
+    assert schema["properties"]["LangType"] == {"type": "string", "description": "String(5)"}
+    assert schema["required"] == ["MerchantID", "Amt"]
+
+
+def test_mixed_body_and_path_query_params_split_correctly():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/users/{id}/pay",
+            parameters=[
+                {"name": "id", "in": "path", "type": "string"},
+                {"name": "token", "in": "query", "type": "string"},
+                {"name": "Amt", "in": "body", "type": "integer", "required": True},
+            ],
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/users/{id}/pay"]["post"]
+    assert {p["name"] for p in op["parameters"]} == {"id", "token"}
+    props = op["requestBody"]["content"]["application/json"]["schema"]["properties"]
+    assert set(props) == {"Amt"}
+
+
+def test_body_params_with_request_prose_preserved():
+    # When both `in:body` fields AND a prose `request` blob exist, the structured
+    # fields drive properties; the prose schema/description text is preserved
+    # (non-speculative) rather than discarded.
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            parameters=[{"name": "Foo", "in": "body", "type": "string"}],
+            request={
+                "content_type": "application/x-www-form-urlencoded",
+                "schema": "以 HTML Form Post 提交",
+                "required": True,
+                "description": "submit form",
+            },
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    body = build_openapi(plan)["paths"]["/pay"]["post"]["requestBody"]
+    assert body["required"] is True
+    assert body["description"] == "submit form"
+    schema = body["content"]["application/x-www-form-urlencoded"]["schema"]
+    assert "Foo" in schema["properties"]
+    assert schema["description"] == "以 HTML Form Post 提交"
+
+
+def test_body_params_unioned_across_merged_operations():
+    # Two source endpoints sharing one method+path: their body fields union into
+    # one requestBody (first occurrence wins on name collision), mirroring how
+    # query parameters are merged.
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/checkout",
+            parameters=[{"name": "A", "in": "body", "type": "string"}],
+            responses=[],
+        ),
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/checkout",
+            parameters=[{"name": "B", "in": "body", "type": "string"}],
+            responses=[{"status": "200", "description": "ok"}],
+        ),
+    ])
+    op = build_openapi(plan)["paths"]["/checkout"]["post"]
+    props = op["requestBody"]["content"]["application/json"]["schema"]["properties"]
+    assert set(props) == {"A", "B"}
+
+
 def test_parameter_type_normalized_to_valid_schema():
     from loop_apidoc.generate.openapi import _build_parameter
     p = _build_parameter({"name": "TradeInfo", "in": "query", "required": True,

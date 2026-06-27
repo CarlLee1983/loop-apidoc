@@ -150,14 +150,55 @@ def _build_parameter(raw: dict) -> dict | None:
     return param
 
 
-def _build_request_body(raw: dict) -> dict:
-    content_type = raw.get("content_type") or "application/json"
-    schema = _schema_from_type(raw.get("schema")) or {}
+def _property_schema(field: dict) -> dict:
+    """One object property fragment from a source field/param dict.
+    Field `description` wins over the raw type hint; `enum` is preserved."""
+    prop = _schema_from_type(
+        field.get("type") if "type" in field else field.get("schema")
+    ) or {}
+    if field.get("description"):
+        prop["description"] = field["description"]
+    if field.get("enum"):
+        prop["enum"] = field["enum"]
+    return prop
+
+
+def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
+    """Assemble requestBody from the prose `request` blob and/or `in:body` fields.
+
+    OpenAPI 3.x has no `in: body` parameter — body fields belong here as an
+    object schema. When body fields exist they drive `properties`/`required`;
+    any prose `request.schema`/`description` text is preserved (non-speculative)
+    rather than dropped. With no body fields the legacy single-schema mapping is
+    kept intact."""
+    request = request or {}
+    content_type = request.get("content_type") or "application/json"
+    if body_params:
+        properties: dict = {}
+        required: list[str] = []
+        for raw in body_params:
+            name = raw.get("name")
+            if not name:
+                continue
+            properties[name] = _property_schema(raw)
+            if raw.get("required"):
+                required.append(name)
+        schema: dict = {"type": "object", "properties": properties}
+        if required:
+            schema["required"] = required
+        prose = request.get("schema")
+        if isinstance(prose, str) and prose.strip():
+            schema["description"] = prose.strip()
+    else:
+        schema = _schema_from_type(request.get("schema")) or {}
     body: dict = {"content": {content_type: {"schema": schema}}}
-    if raw.get("required") is not None:
-        body["required"] = bool(raw["required"])
-    if raw.get("description"):
-        body["description"] = raw["description"]
+    if request.get("required") is not None:
+        body["required"] = bool(request["required"])
+    elif body_params:
+        # A body carrying source-stated fields is required absent a contrary signal.
+        body["required"] = True
+    if request.get("description"):
+        body["description"] = request["description"]
     return body
 
 
@@ -206,10 +247,21 @@ def _build_operation(endpoints: list) -> dict:
     if summaries:
         op["summary"] = "；".join(summaries)
     # OpenAPI requires unique (name, in) per operation; keep the first occurrence.
+    # `in: body` fields are NOT parameters in OpenAPI 3.x — they are partitioned
+    # out here and unioned into requestBody (first occurrence wins on name).
     params = []
     seen: set[tuple[str, str]] = set()
+    body_params: list[dict] = []
+    body_seen: set[str] = set()
     for endpoint in endpoints:
         for raw in endpoint.parameters:
+            if (raw.get("in") or raw.get("location")) == "body":
+                name = raw.get("name")
+                if not name or name in body_seen:
+                    continue
+                body_seen.add(name)
+                body_params.append(raw)
+                continue
             built = _build_parameter(raw)
             if not built:
                 continue
@@ -220,10 +272,9 @@ def _build_operation(endpoints: list) -> dict:
             params.append(built)
     if params:
         op["parameters"] = params
-    for endpoint in endpoints:
-        if endpoint.request:
-            op["requestBody"] = _build_request_body(endpoint.request)
-            break
+    request = next((e.request for e in endpoints if e.request), None)
+    if request or body_params:
+        op["requestBody"] = _build_request_body(request, body_params)
     responses: list[dict] = []
     for endpoint in endpoints:
         responses.extend(endpoint.responses)
@@ -264,12 +315,7 @@ def _build_object_schema(entry) -> dict:
         name = field.get("name")
         if not name:
             continue
-        prop = _schema_from_type(field.get("type") if "type" in field else field.get("schema")) or {}
-        if field.get("description"):
-            prop["description"] = field["description"]
-        if field.get("enum"):
-            prop["enum"] = field["enum"]
-        properties[name] = prop
+        properties[name] = _property_schema(field)
         if field.get("required"):
             required.append(name)
     schema: dict = {"type": "object", "properties": properties}
