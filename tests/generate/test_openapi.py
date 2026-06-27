@@ -464,6 +464,102 @@ def test_body_params_unioned_across_merged_operations():
     assert set(props) == {"A", "B"}
 
 
+def test_response_schema_ref_resolves_to_component_ref():
+    # The structured response body lives in components.schemas; a response that
+    # names it (schema_ref) must link via $ref rather than restating prose.
+    plan = _plan(
+        schemas=[SchemaEntry(status=PlanItemStatus.SUPPORTED, name="PayResult",
+                             fields=[{"name": "Status", "type": "string"}])],
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            responses=[{"status": "200", "description": "ok", "schema_ref": "PayResult"}],
+        )],
+    )
+    resp = build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+    assert resp["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/PayResult"
+    }
+
+
+def test_business_status_response_ref_folds_into_200_with_content():
+    # Business-status responses fold under 200 — but their $ref content must
+    # survive the fold (previously the schema was dropped entirely).
+    plan = _plan(
+        schemas=[SchemaEntry(status=PlanItemStatus.SUPPORTED, name="PayResult",
+                             fields=[{"name": "Status", "type": "string"}])],
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            responses=[{"status": "SUCCESS", "description": "paid", "schema_ref": "PayResult"}],
+        )],
+    )
+    resp = build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+    assert "SUCCESS" in resp["description"]
+    assert resp["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/PayResult"
+    }
+
+
+def test_two_business_responses_fold_into_oneof():
+    plan = _plan(
+        schemas=[
+            SchemaEntry(status=PlanItemStatus.SUPPORTED, name="PayDone",
+                        fields=[{"name": "a", "type": "string"}]),
+            SchemaEntry(status=PlanItemStatus.SUPPORTED, name="NumDone",
+                        fields=[{"name": "b", "type": "string"}]),
+        ],
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            responses=[
+                {"status": "支付完成", "description": "d1", "schema_ref": "PayDone"},
+                {"status": "取號完成", "description": "d2", "schema_ref": "NumDone"},
+            ],
+        )],
+    )
+    schema = (build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+              ["content"]["application/json"]["schema"])
+    assert {x["$ref"] for x in schema["oneOf"]} == {
+        "#/components/schemas/PayDone", "#/components/schemas/NumDone"
+    }
+
+
+def test_unresolvable_schema_ref_is_ignored_not_fabricated():
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+        responses=[{"status": "200", "description": "ok", "schema_ref": "NopeMissing"}],
+    )])
+    resp = build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+    assert "content" not in resp  # never invent a dangling $ref
+    assert resp["description"] == "ok"
+
+
+def test_colliding_schema_names_get_distinct_keys_and_refs_resolve():
+    # Two CJK names both sanitize to "Result"; without dedup one overwrites the
+    # other (and breaks provenance alignment). Distinct keys must be kept, and a
+    # schema_ref must resolve to the RIGHT one.
+    plan = _plan(
+        schemas=[
+            SchemaEntry(status=PlanItemStatus.SUPPORTED,
+                        name="取消授權回應參數（Result）",
+                        fields=[{"name": "a", "type": "string"}]),
+            SchemaEntry(status=PlanItemStatus.SUPPORTED,
+                        name="請退款回應參數（Result）",
+                        fields=[{"name": "b", "type": "string"}]),
+        ],
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/r",
+            responses=[{"status": "200", "description": "ok",
+                        "schema_ref": "請退款回應參數（Result）"}],
+        )],
+    )
+    doc = build_openapi(plan)
+    assert len(doc["components"]["schemas"]) == 2  # no silent overwrite
+    ref = (doc["paths"]["/r"]["post"]["responses"]["200"]
+           ["content"]["application/json"]["schema"]["$ref"])
+    target = ref.rsplit("/", 1)[-1]
+    # must point at the 2nd schema (請退款), whose field is "b"
+    assert "b" in doc["components"]["schemas"][target]["properties"]
+
+
 def test_normalize_media_type_strips_annotation_suffix():
     from loop_apidoc.generate.openapi import _normalize_media_type
     # The source often appends a human note in parentheses; the media-type key

@@ -4,6 +4,7 @@ import re
 
 from loop_apidoc.generate.naming import (
     component_key,
+    schema_key_map,
     security_scheme_key,
     webhook_items,
 )
@@ -217,29 +218,57 @@ def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
     return body
 
 
-def _build_responses(responses: list[dict]) -> dict:
+def _response_schema(raw: dict, name_to_key: dict[str, str]) -> dict | None:
+    """The response body schema: a `$ref` to a named component when the response
+    references one (schema_ref), otherwise the inline/prose schema. An
+    unresolvable schema_ref yields nothing — a dangling $ref is never invented."""
+    ref = raw.get("schema_ref")
+    if isinstance(ref, str) and ref.strip():
+        key = name_to_key.get(ref.strip())
+        return {"$ref": f"#/components/schemas/{key}"} if key else None
+    return _schema_from_type(raw.get("schema"))
+
+
+def _build_responses(
+    responses: list[dict], name_to_key: dict[str, str] | None = None
+) -> dict:
+    name_to_key = name_to_key or {}
     out: dict = {}
-    folded: list[str] = []  # business-status responses with no HTTP code
+    folded: list[str] = []  # business-status descriptions with no HTTP code
+    folded_schemas: list[tuple[str, dict]] = []  # (content_type, schema) for the fold
     for raw in responses:
         status = str(raw.get("status") or "").strip()
         if not status:
             continue
         key = _status_key(status)
+        schema = _response_schema(raw, name_to_key)
+        content_type = _normalize_media_type(raw.get("content_type"))
         if key is None:
             # e.g. "SUCCESS" or a Chinese label: keep it in the description so
             # the information survives, and fold under a single 200 below.
             desc = raw.get("description") or ""
             folded.append(f"{status}：{desc}".rstrip("：") if desc else status)
+            if schema:
+                folded_schemas.append((content_type, schema))
             continue
         resp: dict = {"description": raw.get("description") or ""}
-        schema = _schema_from_type(raw.get("schema"))
         if schema:
-            content_type = _normalize_media_type(raw.get("content_type"))
             resp["content"] = {content_type: {"schema": schema}}
         out[key] = resp
-    if folded:
+    if folded or folded_schemas:
         key = "200" if "200" not in out else "default"
-        out.setdefault(key, {"description": "；".join(d for d in folded if d) or "回應"})
+        resp = out.get(key) or {
+            "description": "；".join(d for d in folded if d) or "回應"
+        }
+        if folded_schemas and "content" not in resp:
+            if len(folded_schemas) == 1:
+                ct, schema = folded_schemas[0]
+            else:
+                # several distinct outcome shapes fold under one 200 → oneOf
+                ct = "application/json"
+                schema = {"oneOf": [s for _, s in folded_schemas]}
+            resp["content"] = {ct: {"schema": schema}}
+        out[key] = resp
     if not out:
         out["default"] = {
             "description": "來源未提供回應定義",
@@ -248,7 +277,7 @@ def _build_responses(responses: list[dict]) -> dict:
     return out
 
 
-def _build_operation(endpoints: list) -> dict:
+def _build_operation(endpoints: list, name_to_key: dict[str, str] | None = None) -> dict:
     """Build one OpenAPI operation from one or more source endpoints that share
     the same method+path. OpenAPI permits only a single operation per path+method,
     so when a source lists the same URL more than once (e.g. several payment
@@ -293,11 +322,11 @@ def _build_operation(endpoints: list) -> dict:
     responses: list[dict] = []
     for endpoint in endpoints:
         responses.extend(endpoint.responses)
-    op["responses"] = _build_responses(responses)
+    op["responses"] = _build_responses(responses, name_to_key)
     return op
 
 
-def _build_paths(plan: NormalizationPlan) -> dict:
+def _build_paths(plan: NormalizationPlan, name_to_key: dict[str, str]) -> dict:
     # Group endpoints by (path, method) preserving first-seen order, so several
     # source endpoints sharing one method+path collapse into a single merged
     # operation instead of the last one overwriting the rest.
@@ -310,16 +339,16 @@ def _build_paths(plan: NormalizationPlan) -> dict:
         )
     paths: dict = {}
     for (path, method), endpoints in grouped.items():
-        paths.setdefault(path, {})[method] = _build_operation(endpoints)
+        paths.setdefault(path, {})[method] = _build_operation(endpoints, name_to_key)
     return paths
 
 
-def _build_webhooks(plan: NormalizationPlan) -> dict:
+def _build_webhooks(plan: NormalizationPlan, name_to_key: dict[str, str]) -> dict:
     """OpenAPI 3.1 top-level `webhooks`: endpoints with a method but no path are
     async callbacks (delivered to a caller-defined URL), not server paths."""
     out: dict = {}
     for name, endpoint in webhook_items(plan):
-        out[name] = {endpoint.method.lower(): _build_operation([endpoint])}
+        out[name] = {endpoint.method.lower(): _build_operation([endpoint], name_to_key)}
     return out
 
 
@@ -347,11 +376,11 @@ def _build_object_schema(entry) -> dict:
     return schema
 
 
-def _build_schemas(plan: NormalizationPlan) -> dict:
+def _build_schemas(plan: NormalizationPlan, key_map: dict[int, str]) -> dict:
     out: dict = {}
     for idx, entry in enumerate(plan.schemas):
         if entry.name:
-            key = component_key(entry.name, idx, prefix="schema")
+            key = key_map[idx]
             obj = _build_object_schema(entry)
             # When the source name can't be a valid component key (CJK, slashes,
             # spaces) the key is sanitized/falls back to schema<idx>; keep the
@@ -371,16 +400,24 @@ def _build_schemas(plan: NormalizationPlan) -> dict:
 
 
 def build_openapi(plan: NormalizationPlan) -> dict:
+    # One shared schema-key assignment so paths ($ref), components and provenance
+    # all agree on the same component identifier per schema.
+    key_map = schema_key_map(plan.schemas)
+    name_to_key = {
+        entry.name: key_map[idx]
+        for idx, entry in enumerate(plan.schemas)
+        if entry.name
+    }
     doc: dict = {"openapi": "3.1.0", "info": _build_info(plan)}
     servers = _build_servers(plan)
     if servers:
         doc["servers"] = servers
-    doc["paths"] = _build_paths(plan)
-    webhooks = _build_webhooks(plan)
+    doc["paths"] = _build_paths(plan, name_to_key)
+    webhooks = _build_webhooks(plan, name_to_key)
     if webhooks:
         doc["webhooks"] = webhooks
     components: dict = {}
-    schemas = _build_schemas(plan)
+    schemas = _build_schemas(plan, key_map)
     if schemas:
         components["schemas"] = schemas
     security_schemes = _build_security_schemes(plan)

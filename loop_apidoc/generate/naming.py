@@ -13,6 +13,29 @@ def component_key(name: str | None, idx: int, *, prefix: str = "item") -> str:
     return key or f"{prefix}{idx}"
 
 
+def schema_key_map(schemas) -> dict[int, str]:
+    """Map each plan.schemas index to a UNIQUE OpenAPI component key.
+
+    Two different source names can sanitize to the same key (e.g. both
+    '取消授權回應參數（Result）' and '請退款回應參數（Result）' → 'Result'); without
+    dedup one schema silently overwrites the other in components.schemas and
+    loses its provenance alignment. The OpenAPI builder, the provenance map and
+    `$ref` resolution all read this single helper so they agree on one identifier
+    per schema."""
+    used: set[str] = set()
+    out: dict[int, str] = {}
+    for idx, entry in enumerate(schemas):
+        base = component_key(entry.name, idx, prefix="schema")
+        key = base
+        suffix = 2
+        while key in used:
+            key = f"{base}_{suffix}"
+            suffix += 1
+        used.add(key)
+        out[idx] = key
+    return out
+
+
 def webhook_name(summary: str | None, idx: int) -> str:
     """Derive a webhook key from an endpoint summary, taking the leading label
     before any parenthetical qualifier (e.g. '付款結果通知（綠界 POST…）' →

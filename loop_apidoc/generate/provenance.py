@@ -3,6 +3,7 @@ from __future__ import annotations
 from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
 from loop_apidoc.generate.naming import (
     component_key,
+    schema_key_map,
     security_scheme_key,
     webhook_items,
 )
@@ -64,10 +65,10 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
     for name, endpoint in webhook_items(plan):
         entries.extend(_entries(f"webhooks.{name}.{endpoint.method.lower()}", endpoint))
 
+    key_map = schema_key_map(plan.schemas)
     for idx, schema in enumerate(plan.schemas):
         if schema.name:
-            key = component_key(schema.name, idx, prefix="schema")
-            entries.extend(_entries(f"components.schemas.{key}", schema))
+            entries.extend(_entries(f"components.schemas.{key_map[idx]}", schema))
         for enum_idx, enum in enumerate(schema.enums):
             if not isinstance(enum, dict):
                 continue  # string enums carry no separate provenance target

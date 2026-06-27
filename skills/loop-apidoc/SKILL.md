@@ -44,10 +44,11 @@ For **every** endpoint in inventory.endpoints, output one JSON file (`ep0.json`,
 {"method":"str","path":"str","source":"str",
  "parameters":[{"name":"str","in":"query|header|path|body|null","type":"str|null","required":"bool|null","description":"str|null"}],
  "request":{"content_type":"str|null","schema":"str|null","required":"bool|null","description":"str|null"} ,
- "responses":[{"status":"str","description":"str|null","schema":"str|null"}],
+ "responses":[{"status":"str","description":"str|null","schema":"str|null","schema_ref":"str|null"}],
  "examples":[{}],"missing":["str"]}
 ```
 `request` is `null` when there is no body. Fields the source omits → null/empty array, and add them to `missing`.
+**`schema_ref`**: when a response body is the structured shape you also captured as a named entry in `inventory.schemas` (e.g. the response of `取消授權` ↔ schema `取消授權回應參數（Result）`), set `schema_ref` to that schema's **exact `name`**. The OpenAPI then links the response via `$ref: #/components/schemas/...` instead of restating the field list as prose. Use `null` when no such named schema exists; never invent a name that isn't in `inventory.schemas`.
 Top-level `source` is required: cite the source section/page/URL where this endpoint's detail lives (consistent with the matching `source` in inventory.endpoints). **With multiple sources this is the only thing attributing detail to the correct source** — omitting it triggers `SOURCE_UNVERIFIED`.
 
 **Async notifications / callbacks / webhooks** (server POSTs to a caller-supplied URL, e.g. payment-result notifications): keep `method`, set `path` to `null`. These become OpenAPI 3.1 top-level `webhooks` (named by summary), no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`). **Multiple callbacks sharing the same (method, null) are distinguished only by their `source`** — give every callback detail the correct `source`.
