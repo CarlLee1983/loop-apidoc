@@ -39,13 +39,14 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command> ...
 對 inventory.endpoints 的**每一個** endpoint,各輸出一個 JSON 檔(`ep0.json`, `ep1.json`, …),schema:
 
 ```json
-{"method":"str","path":"str",
+{"method":"str","path":"str","source":"str",
  "parameters":[{"name":"str","in":"query|header|path|body|null","type":"str|null","required":"bool|null","description":"str|null"}],
  "request":{"content_type":"str|null","schema":"str|null","required":"bool|null","description":"str|null"} ,
  "responses":[{"status":"str","description":"str|null","schema":"str|null"}],
  "examples":[{}],"missing":["str"]}
 ```
 `request` 無內容時為 `null`。來源沒寫的填 null/空陣列並加進 `missing`。
+頂層 `source` 必填,引用此 endpoint 細節所在的來源章節/頁碼/URL(與 inventory.endpoints 的對應 `source` 一致)。**多來源時這是把細節歸屬到正確來源的唯一依據**:漏填會被判 `SOURCE_UNVERIFIED`。
 
 ### 4. 組裝 + 驗證
 ```bash
