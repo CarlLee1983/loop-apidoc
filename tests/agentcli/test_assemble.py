@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -9,8 +10,10 @@ from loop_apidoc.agentcli.assemble import (
     AssembleInputError,
     build_extraction_from_files,
     load_extraction_inputs,
+    run_assemble_pipeline,
 )
 from loop_apidoc.extraction.store import ExtractionStore
+from loop_apidoc.run.models import RunStatus
 
 _INVENTORY = {
     "overview": "Demo API",
@@ -80,10 +83,6 @@ def test_build_extraction_from_files_produces_stage_and_endpoint_artifacts(tmp_p
 
 from datetime import datetime, timezone  # noqa: E402
 
-from loop_apidoc.agentcli.assemble import run_assemble_pipeline
-from loop_apidoc.run.models import RunStatus
-
-
 def test_run_assemble_pipeline_writes_outputs(tmp_path):
     _write_extraction(tmp_path / "extraction")
     sources = tmp_path / "sources"
@@ -109,3 +108,24 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     assert (run_dir / "validation" / "report.json").is_file()
     assert result.status in (RunStatus.PASSED, RunStatus.FAILED)
     assert result.run_dir == str(run_dir)
+
+
+def test_run_assemble_pipeline_bad_input_leaves_no_run_dir(tmp_path):
+    # 擷取輸入錯誤(缺 inventory.json)應在寫入任何輸出前就失敗,
+    # 不留下孤兒 run 目錄。
+    (tmp_path / "extraction").mkdir()  # 空目錄,無 inventory.json
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    out = tmp_path / "out"
+
+    with pytest.raises(AssembleInputError):
+        run_assemble_pipeline(
+            sources_root=sources,
+            extraction_dir=tmp_path / "extraction",
+            output_root=out,
+            run_id="run-test",
+            generated_at=datetime(2026, 6, 27, tzinfo=timezone.utc),
+            urls=[],
+        )
+
+    assert not (out / "run-test").exists()
