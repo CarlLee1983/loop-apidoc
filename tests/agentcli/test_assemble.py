@@ -81,7 +81,6 @@ def test_build_extraction_from_files_produces_stage_and_endpoint_artifacts(tmp_p
 
 # ── Task 2: run_assemble_pipeline ───────────────────────────────────────────
 
-from datetime import datetime, timezone  # noqa: E402
 
 def test_run_assemble_pipeline_writes_outputs(tmp_path):
     _write_extraction(tmp_path / "extraction")
