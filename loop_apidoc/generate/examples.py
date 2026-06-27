@@ -122,3 +122,62 @@ def _render_curl(shape: dict, schemes: list[CryptoScheme]) -> str:
         lines[-1] = lines[-1].rstrip(" \\")
     parts.append("\n".join(lines))
     return "\n".join(parts) + "\n"
+
+
+def _ts_value(kind: str, value: object) -> str:
+    import json
+
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _ts_signature(schemes: list[CryptoScheme]) -> str:
+    if not schemes:
+        return ""
+    blocks = []
+    for s in schemes:
+        if _signature_explicit(s):
+            key = (s.key_source.key if s.key_source else None) or "<hash_key>"
+            iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
+            algo = (s.algorithm or "aes-256-cbc").lower()
+            blocks.append(
+                "import { createCipheriv, createHash } from 'node:crypto'\n\n"
+                f"// 簽章 {s.name or ''}：{s.algorithm}\n"
+                "function sign(payload: string): string {\n"
+                f"  const key = process.env.{_snake(key).upper()} ?? '{key}'\n"
+                f"  const iv = process.env.{_snake(iv).upper()} ?? '{iv}'\n"
+                f"  const cipher = createCipheriv('{algo}', key, iv)\n"
+                "  const enc = cipher.update(payload, 'utf8', 'hex') + cipher.final('hex')\n"
+                "  return createHash('sha256').update(enc).digest('hex').toUpperCase()\n"
+                "}\n"
+            )
+        else:
+            missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
+            blocks.append(
+                f"// gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
+                "function sign(payload: string): string {\n"
+                "  throw new Error('來源未提供完整簽章演算法，請依文件補完')\n"
+                "}\n"
+            )
+    return "\n".join(blocks)
+
+
+def _render_ts(shape: dict, schemes: list[CryptoScheme]) -> str:
+    parts = [_comment(HEADER_NOTE, prefix="// "), ""]
+    sig = _ts_signature(schemes)
+    if sig:
+        parts += [sig, ""]
+    fields = shape["body"] or shape["query"]
+    body_lines = "\n".join(
+        f"  {_snake(name)}: {_ts_value(kind, value)}," for name, kind, value in fields
+    )
+    parts.append(
+        f"const url = {_ts_value('source', shape['url'])}\n"
+        "const body = {\n" + body_lines + "\n}\n\n"
+        f"const res = await fetch(url, {{\n"
+        f"  method: '{shape['method']}',\n"
+        f"  headers: {{ 'Content-Type': '{shape['content_type'] or 'application/json'}' }},\n"
+        "  body: JSON.stringify(body),\n"
+        "})\n"
+        "console.log(await res.text())\n"
+    )
+    return "\n".join(parts) + "\n"

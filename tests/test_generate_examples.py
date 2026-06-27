@@ -169,3 +169,39 @@ def test_render_curl_no_signature_block_when_no_schemes():
     assert "curl -X POST" in out
     assert "https://api.example.com/pay" in out
     assert "Amount=<amount>" in out
+
+
+def test_render_ts_runnable_signature_when_explicit():
+    from loop_apidoc.generate.examples import _render_ts
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    explicit = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    out = _render_ts(shape, [explicit])
+    assert out.startswith("// Derived from openapi.yaml")
+    assert "createCipheriv" in out  # 可跑簽章函式
+    assert "amount" in out  # body 佔位變數
+
+
+def test_render_ts_skeleton_with_gap_when_not_explicit():
+    from loop_apidoc.generate.examples import _render_ts
+    from loop_apidoc.plan.models import CryptoScheme
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [], "body": [],
+        "content_type": "application/json", "security": [],
+    }
+    partial = CryptoScheme(status="supported", name="Sig", algorithm="AES-256-CBC")
+    out = _render_ts(shape, [partial])
+    assert "createCipheriv" not in out
+    assert "// gap:" in out
