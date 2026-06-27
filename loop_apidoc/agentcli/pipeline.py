@@ -13,7 +13,7 @@ from loop_apidoc.generate.writer import generate_outputs
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.run.models import RunResult, RunStatus
-from loop_apidoc.run.pipeline import _persist_plan
+from loop_apidoc.run.persist import persist_plan
 from loop_apidoc.validate.report import write_reports
 from loop_apidoc.validate.validator import validate_outputs
 
@@ -28,7 +28,7 @@ def run_agent_pipeline(
     model: str | None = None,
     urls: list[str] | None = None,
 ) -> RunResult:
-    """Collapsed pipeline using a coding-agent CLI backend instead of NotebookLM.
+    """Collapsed pipeline using a coding-agent CLI extraction backend.
 
     manifest (from the original sources) -> PDF->markdown preprocess ->
     collapsed extraction (1 inventory + per-endpoint) -> plan -> generate ->
@@ -56,7 +56,7 @@ def run_agent_pipeline(
     extraction = run_agent_extraction(adapter, store)
 
     plan = build_normalization_plan(extraction, manifest)
-    _persist_plan(run_dir, plan)
+    persist_plan(run_dir, plan)
     result = generate_outputs(plan, manifest, run_dir)
     report = validate_outputs(plan, result, manifest)
     write_reports(report, run_dir / "validation")

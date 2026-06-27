@@ -6,14 +6,7 @@ from pathlib import Path
 
 import typer
 
-from loop_apidoc.doctor.checks import run_checks
-from loop_apidoc.doctor.report import build_report, render_report
 from loop_apidoc.manifest.builder import build_manifest
-from loop_apidoc.notebooklm.adapter import NotebookLMAdapter
-from loop_apidoc.notebooklm.config import SkillConfig
-from loop_apidoc.notebooklm.errors import NotebookLMError
-from loop_apidoc.notebooklm.runner import subprocess_runner
-from loop_apidoc.run.pipeline import run_pipeline
 from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.validate import validate_run_dir, write_reports
 
@@ -66,22 +59,6 @@ def manifest(
 
 
 @app.command()
-def doctor(
-    skill_root: Path = typer.Option(
-        Path("notebooklm-skill"),
-        "--skill-root",
-        envvar="LOOP_APIDOC_SKILL_ROOT",
-        help="notebooklm-skill checkout 目錄",
-    ),
-) -> None:
-    """檢查執行環境：Python、NotebookLM skill、依賴、Chrome、驗證狀態與驗證工具。"""
-    config = SkillConfig(skill_root=skill_root)
-    report = build_report(run_checks(config))
-    typer.echo(render_report(report))
-    raise typer.Exit(code=0 if report.ok else 1)
-
-
-@app.command()
 def validate(
     output: Path = typer.Option(
         ...,
@@ -104,57 +81,6 @@ def validate(
     raise typer.Exit(code=0 if report.ok else 1)
 
 
-@app.command()
-def run(
-    notebook_url: str = typer.Option(
-        ..., "--notebook-url", help="NotebookLM 分享連結"
-    ),
-    sources: Path = typer.Option(
-        ...,
-        "--sources",
-        help="本機來源目錄",
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        readable=True,
-    ),
-    output: Path = typer.Option(
-        ..., "--output", help="輸出根目錄（將建立 <run-id> 子目錄）"
-    ),
-    url: list[str] = typer.Option([], "--url", help="公開來源 URL，可重複指定"),
-    skill_root: Path = typer.Option(
-        Path("notebooklm-skill"),
-        "--skill-root",
-        envvar="LOOP_APIDOC_SKILL_ROOT",
-        help="notebooklm-skill checkout 目錄",
-    ),
-) -> None:
-    """執行完整流程：manifest → 擷取 → 規劃 → 生成 → 驗證 → 修正（最多三輪）。"""
-    now = datetime.now(timezone.utc)
-    config = SkillConfig(skill_root=skill_root)
-    adapter = NotebookLMAdapter(config, subprocess_runner(config))
-    try:
-        result = run_pipeline(
-            notebook_url=notebook_url,
-            sources_root=sources,
-            output_root=output,
-            adapter=adapter,
-            run_id=make_run_id(now),
-            generated_at=now,
-            urls=list(url),
-        )
-    except NotebookLMError as exc:
-        typer.echo(f"執行中止：{exc}", err=True)
-        raise typer.Exit(code=1) from exc
-
-    typer.echo(
-        f"狀態 {result.status.value}：修正 {result.rounds} 輪，"
-        f"error {len(result.report.errors())}，warning {len(result.report.warnings())}；"
-        f"輸出於 {result.run_dir}"
-    )
-    raise typer.Exit(code=0 if result.ok else 1)
-
-
 @app.command(name="run-agent")
 def run_agent(
     sources: Path = typer.Option(
@@ -170,7 +96,7 @@ def run_agent(
     model: str | None = typer.Option(None, "--model", help="模型覆寫（可選）"),
     url: list[str] = typer.Option([], "--url", help="公開來源 URL，可重複指定"),
 ) -> None:
-    """以 coding-agent CLI（claude -p）取代 NotebookLM 的 collapsed 流程：
+    """以 coding-agent CLI（claude -p）作為擷取後端的 collapsed 流程：
     manifest → PDF→md → 一次 inventory + per-endpoint → 規劃 → 生成 → 驗證。"""
     from loop_apidoc.agentcli.pipeline import run_agent_pipeline
 

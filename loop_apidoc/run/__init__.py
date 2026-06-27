@@ -1,4 +1,4 @@
-"""Full-run orchestration and correction loop (spec §3.2, §8, §10)."""
+"""Run-dir orchestration helpers shared by the agent extraction modes (spec §3.2, §8, §10)."""
 
 from loop_apidoc.run.models import (
     CorrectionCategory,
@@ -6,7 +6,6 @@ from loop_apidoc.run.models import (
     RunResult,
     RunStatus,
 )
-from loop_apidoc.run.pipeline import run_pipeline
 from loop_apidoc.run.runid import make_run_id
 
 __all__ = [
@@ -15,5 +14,4 @@ __all__ = [
     "RunResult",
     "RunStatus",
     "make_run_id",
-    "run_pipeline",
 ]

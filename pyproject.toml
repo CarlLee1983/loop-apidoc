@@ -33,6 +33,3 @@ packages = ["loop_apidoc"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-markers = [
-    "smoke: real NotebookLM skill smoke tests; run only with LOOP_APIDOC_SMOKE=1",
-]

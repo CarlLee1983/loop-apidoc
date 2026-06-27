@@ -9,8 +9,8 @@ from loop_apidoc.agentcli.adapter import ClaudeCodeAdapter
 from loop_apidoc.agentcli.commands import GROUNDING_SYSTEM_PROMPT, build_ask_argv
 from loop_apidoc.agentcli.config import AgentConfig
 from loop_apidoc.agentcli.parsing import parse_agent_result
-from loop_apidoc.notebooklm.errors import MalformedOutput, TransientError
-from loop_apidoc.notebooklm.runner import CommandResult
+from loop_apidoc.agentcli.errors import MalformedOutput, TransientError
+from loop_apidoc.agentcli.runner import CommandResult
 
 
 def _config() -> AgentConfig:

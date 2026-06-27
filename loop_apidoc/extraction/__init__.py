@@ -1,1 +1,1 @@
-"""NotebookLM extraction and normalization-plan layers (spec §7)."""
+"""Extraction models and utilities shared by the agent extraction modes (spec §7)."""

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from loop_apidoc.notebooklm.errors import MalformedOutput, TransientError
+from loop_apidoc.agentcli.errors import MalformedOutput, TransientError
 
 
 def parse_agent_result(stdout: str) -> str:

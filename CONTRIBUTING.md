@@ -11,7 +11,7 @@ uv sync                      # 安裝相依(含 dev group)
 uv run loop-apidoc --help    # 確認 CLI 可執行
 ```
 
-擷取相關功能另需 [notebooklm-skill](https://github.com/PleasePrompto/notebooklm-skill) 的本機 checkout;先用 `uv run loop-apidoc doctor` 確認環境就緒。
+擷取由 agent 擔任引擎(`run-agent` 以子行程 `claude -p`,或 agent-native plugin 由當前 agent 直接讀來源);`run-agent` 需本機可執行的 agent CLI(預設 `claude`,可用 `--executable` 替換)。
 
 ## 核心原則
 
@@ -20,7 +20,7 @@ uv run loop-apidoc --help    # 確認 CLI 可執行
 1. **以來源為唯一事實依據** —— 不得讓 pipeline 推測或以慣例補寫來源不存在的內容。缺漏必須顯性標記(`x-loop-status: missing-source` + provenance),而非靜默填補。
 2. **驗證 fail-closed** —— 無法確認的來源、缺漏的必要欄位、來源衝突一律使驗證失敗,不可放行。
 3. **生成層是唯一檔案 I/O 出口** —— `loop_apidoc/generate/` 與 `loop_apidoc/run/` 之外的模組應為純函式,便於測試。新增邏輯時優先設計成可注入 seam 的純函式。
-4. **NotebookLM 透過 adapter 呼叫** —— 不得在核心流程直接耦合瀏覽器自動化;所有 skill script 一律經 `scripts/run.py` wrapper。
+4. **擷取與後段解耦** —— 兩種 agent 擷取模式都收斂成 `inventory.json` + `endpoints/*.json`,再交給共用的 plan→generate→validate;外部行程(`run-agent` 的子行程 CLI)一律經 `agentcli/` 的 runner 呼叫,不在核心流程直接耦合。
 
 ## 程式風格
 
@@ -46,9 +46,8 @@ uv run pytest --cov=loop_apidoc    # 含覆蓋率
 uv run pytest tests/plan/          # 單一套件
 ```
 
-- 純函式以單元測試覆蓋;file-I/O 的 seam(`generate_outputs` / `run_pipeline`)以整合測試覆蓋。
-- 修正迴圈以注入 closure 的方式測試,不需真實 NotebookLM。
-- real NotebookLM 的 smoke 測試以 `smoke` marker 標記,僅在 `LOOP_APIDOC_SMOKE=1` 時執行,平時不跑。
+- 純函式以單元測試覆蓋;file-I/O 的 seam(`generate_outputs` / `run_assemble_pipeline`)以整合測試覆蓋。
+- 兩種 agent 擷取模式(`run-agent` / `assemble`)以注入 fake runner 或預先寫好的擷取 JSON 測試,不需真實 agent CLI。
 
 > **已知**:`tests/plan/test_classify.py` 的兩個 path-boundary 測試曾出現一次無法重現的偶發失敗;目前判定為一次性 heisenbug(非順序、非 hash-seed 相依)。若你穩定重現了它,請附上環境與 seed 開 issue。
 

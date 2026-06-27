@@ -22,48 +22,41 @@ uv run pytest -k assemble                  # single test by name
 uv run ruff check .                        # lint
 ```
 
-Real-NotebookLM smoke tests are gated behind the `smoke` marker and only run with `LOOP_APIDOC_SMOKE=1`.
-
 When invoked from inside the installed plugin, the CLI is called as
 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command>`.
 
-## Three execution modes (key architecture)
+## Two execution modes (key architecture)
 
-The back half of the pipeline (**plan → generate → validate → correct**) is one shared deterministic pipeline. The modes differ *only* in **who acts as the extraction engine**:
+The back half of the pipeline (**plan → generate → validate**) is one shared deterministic pipeline. The modes differ *only* in **who acts as the extraction engine**:
 
 | Mode | Entry command | Extraction engine | Code |
 | --- | --- | --- | --- |
-| NotebookLM | `run` | NotebookLM multi-round queries (local browser automation) | `run/`, `extraction/`, `notebooklm/` |
-| coding-agent CLI | `run-agent` | subprocess `claude -p` (or other agent CLI) | `agentcli/` |
+| coding-agent CLI | `run-agent` | subprocess `claude -p` (or other agent CLI via `--executable`) | `agentcli/` |
 | agent-native plugin | `assemble` (called by the skill) | the current Claude agent reads sources itself | `agentcli/`, `skills/` |
 
-Both agent modes converge extraction into `inventory.json` + `endpoints/*.json`, then hand off to the shared plan→generate→validate. `assemble` does **not** extract — it only assembles agent-written JSON and reports results via `--json` so the agent can drive the correction loop.
+Both modes converge extraction into `inventory.json` + `endpoints/*.json`, then hand off to the shared plan→generate→validate. `assemble` does **not** extract — it only assembles agent-written JSON and reports results via `--json` so the agent can drive the correction loop itself (re-reading sources and overwriting the JSON).
 
 ## Package boundaries
 
 | Package | Responsibility |
 | --- | --- |
 | `loop_apidoc/manifest/` | scan local sources + build `manifest.json` |
-| `loop_apidoc/notebooklm/` | NotebookLM skill adapter (wraps `auth_status` + `ask`), retry, error classification |
-| `loop_apidoc/agentcli/` | coding-agent CLI extraction (`run-agent`) + `assemble`, PDF→markdown preprocessing |
-| `loop_apidoc/doctor/` | read-only environment checks |
-| `loop_apidoc/extraction/` | multi-round queries, answer persistence, JSON-block parsing |
+| `loop_apidoc/agentcli/` | coding-agent CLI extraction (`run-agent`) + `assemble`, subprocess runner / error types / `AskResult` / answer-quality detection, PDF→markdown preprocessing (pymupdf4llm) |
+| `loop_apidoc/extraction/` | shared models + utilities (models, stages, questions, store, jsonblock) used by the agent extraction modes |
 | `loop_apidoc/plan/` | normalization plan + source-match classification |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation |
 | `loop_apidoc/validate/` | structure / completeness / consistency / no-speculation checks + report |
-| `loop_apidoc/run/` | run-id, correction loop, full pipeline orchestration |
+| `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
 
 **Single file-I/O exit:** only `generate/` (`generate_outputs`) and `run/` (which owns the run-dir) write files. Every other module is pure functions — keep it that way; it's what makes them unit-testable.
 
-## Correction loop & fail-closed classification
+## Correction & fail-closed classification
 
-Validation issues are classified, not blindly retried (max 3 rounds):
+Validation issues are classified, not blindly retried. In the agent modes there is **no deterministic in-code correction loop** — `assemble` reports the classified results via `--json` and the agent drives correction itself (re-reading sources and overwriting the extraction JSON), then re-running `assemble`.
 
-- `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → auto-fix (regenerate)
-- `REQUIRED_INFO_MISSING` → re-query (only the affected stage)
-- `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → **unfixable, fail-closed** — the loop stops early and reports remaining gaps/conflicts rather than fabricating content.
-
-After 3 rounds still failing, the pipeline exits non-zero with the gap/conflict report.
+- `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → fixable (regenerate after the agent corrects the JSON)
+- `REQUIRED_INFO_MISSING` → the agent re-reads the affected sources and fills the gap
+- `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → **unfixable, fail-closed** — reported as remaining gaps/conflicts rather than fabricating content.
 
 ## Provenance ↔ validation alignment
 

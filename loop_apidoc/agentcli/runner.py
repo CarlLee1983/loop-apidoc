@@ -1,9 +1,22 @@
 from __future__ import annotations
 
 import subprocess
+from typing import Protocol
+
+from pydantic import BaseModel
 
 from loop_apidoc.agentcli.config import AgentConfig
-from loop_apidoc.notebooklm.runner import CommandResult, ProcessRunner
+
+
+class CommandResult(BaseModel):
+    argv: list[str]
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+class ProcessRunner(Protocol):
+    def __call__(self, argv: list[str]) -> CommandResult: ...
 
 
 def subprocess_runner(config: AgentConfig) -> ProcessRunner:

@@ -3,18 +3,17 @@ from __future__ import annotations
 from loop_apidoc.agentcli.commands import build_ask_argv
 from loop_apidoc.agentcli.config import AgentConfig
 from loop_apidoc.agentcli.parsing import parse_agent_result
-from loop_apidoc.notebooklm.answer_quality import detect_unreliable_answer
-from loop_apidoc.notebooklm.errors import SkillError, TransientError
-from loop_apidoc.notebooklm.models import AskResult
-from loop_apidoc.notebooklm.runner import ProcessRunner
+from loop_apidoc.agentcli.answer_quality import detect_unreliable_answer
+from loop_apidoc.agentcli.errors import SkillError, TransientError
+from loop_apidoc.agentcli.models import AskResult
+from loop_apidoc.agentcli.runner import ProcessRunner
 
 
 class ClaudeCodeAdapter:
-    """Drop-in for NotebookLMAdapter backed by a headless coding-agent CLI
-    (`claude -p`). Each ask() is an independent, stateless invocation that reads
-    the local sources directly — same ask(question, notebook_url) contract so the
-    extraction orchestrator is unchanged. `notebook_url` is accepted for
-    interface parity but unused (the source is on disk)."""
+    """Extraction adapter backed by a headless coding-agent CLI (`claude -p`).
+    Each ask() is an independent, stateless invocation that reads the local
+    sources directly. `notebook_url` is accepted for interface parity but unused
+    (the source is on disk)."""
 
     def __init__(self, config: AgentConfig, runner: ProcessRunner) -> None:
         self._config = config

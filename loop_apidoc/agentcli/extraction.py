@@ -88,8 +88,8 @@ def run_agent_extraction(
 ) -> ExtractionResult:
     """Collapsed extraction: one inventory query + one query per endpoint.
 
-    Produces the same on-disk artifacts and ExtractionResult shape as the
-    NotebookLM orchestrator, so plan/generate/validate run unchanged."""
+    Produces the on-disk artifacts and ExtractionResult shape that
+    plan/generate/validate consume unchanged."""
     artifacts: list[AnswerArtifact] = []
 
     inv_answer = adapter.ask(INVENTORY_PROMPT).answer
