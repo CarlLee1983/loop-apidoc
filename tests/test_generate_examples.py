@@ -117,3 +117,55 @@ def test_render_curl_has_header_note_url_and_signature_comment():
     # curl 簽章一律註解步驟，且指向 script
     assert "# 簽章步驟" in out
     assert "request.py" in out
+
+
+def test_render_curl_no_dangling_backslash_when_no_data():
+    from loop_apidoc.generate.examples import _render_curl
+
+    # GET request with no body and no query params
+    shape = {
+        "method": "GET",
+        "url": "https://api.example.com/status",
+        "query": [],
+        "header": [("Authorization", "source", "Bearer token123")],
+        "path": [],
+        "body": [],
+        "content_type": None,
+        "security": [],
+    }
+    out = _render_curl(shape, [])
+    curl_lines = out.split("\n")
+    # Find non-empty lines in the curl command block
+    curl_block = []
+    for line in curl_lines:
+        if line.startswith("curl") or line.startswith("  "):
+            curl_block.append(line)
+        elif line and not line.startswith("#"):
+            break
+    # The last line of curl block should NOT end with backslash
+    if curl_block:
+        last_line = curl_block[-1].rstrip()
+        assert not last_line.endswith("\\"), f"Last curl line has dangling backslash: {last_line}"
+
+
+def test_render_curl_no_signature_block_when_no_schemes():
+    from loop_apidoc.generate.examples import _render_curl
+
+    shape = {
+        "method": "POST",
+        "url": "https://api.example.com/pay",
+        "query": [],
+        "header": [],
+        "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json",
+        "security": [],
+    }
+    # Empty schemes list
+    out = _render_curl(shape, [])
+    # Signature comment should NOT appear
+    assert "# 簽章步驟" not in out
+    # But the curl command and data should still render
+    assert "curl -X POST" in out
+    assert "https://api.example.com/pay" in out
+    assert "Amount=<amount>" in out

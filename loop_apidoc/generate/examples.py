@@ -98,7 +98,8 @@ def _signature_comment_steps(schemes: list[CryptoScheme]) -> str:
         algo = s.algorithm or "<來源未指明演算法>"
         lines.append(f"#   {s.name or 'signature'}：{algo}")
         for step in s.payload_assembly:
-            lines.append(f"#     {step.step or '-'}. {step.desc or '<來源未說明>'}")
+            step_num = "-" if step.step is None else step.step
+            lines.append(f"#     {step_num}. {step.desc or '<來源未說明>'}")
     return "\n".join(lines)
 
 
@@ -116,5 +117,8 @@ def _render_curl(shape: dict, schemes: list[CryptoScheme]) -> str:
     for i, (name, _kind, value) in enumerate(data_fields):
         tail = "" if i == len(data_fields) - 1 else " \\"
         lines.append(f"  --data-urlencode '{name}={value}'{tail}")
+    # Remove trailing backslash from final line if no data fields
+    if lines:
+        lines[-1] = lines[-1].rstrip(" \\")
     parts.append("\n".join(lines))
     return "\n".join(parts) + "\n"
