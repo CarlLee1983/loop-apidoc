@@ -105,7 +105,37 @@ def test_security_scheme_unknown_type_is_placeholder():
     scheme = build_openapi(plan)["components"]["securitySchemes"]["WeirdAuth"]
     assert scheme["type"] == "apiKey"
     assert scheme[X_LOOP_STATUS] == MISSING_STATUS
-    assert scheme["description"] == "hmac-signature"
+    # the procedure text/details are NOT fabricated into the apiKey `name`
+    assert scheme["name"] == "unknown"
+    # identity, kind and details are all preserved in the description
+    assert "WeirdAuth" in scheme["description"]
+    assert "hmac-signature" in scheme["description"]
+    assert "X-Sig" in scheme["description"]
+
+
+def test_signing_scheme_keeps_algorithm_in_description_not_name():
+    # NewebPay's "schemes" are request-signing/body-encryption procedures, not
+    # apiKey auth. The algorithm must live in `description`, never in `name`, and
+    # the body-param location (illegal for apiKey) must not be asserted as real.
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED,
+            name="SHA256 檢查碼（TradeSha / HashData_）",
+            type="雜湊", location="請求/回應 body 參數",
+            details="於 AES 加密字串前加 HashKey=...，整串 SHA256 後轉大寫",
+        )
+    ])
+    schemes = build_openapi(plan)["components"]["securitySchemes"]
+    scheme = next(iter(schemes.values()))
+    assert scheme["type"] == "apiKey"
+    assert scheme[X_LOOP_STATUS] == MISSING_STATUS
+    assert scheme["name"] == "unknown"
+    assert "SHA256 後轉大寫" not in scheme["name"]
+    assert "於 AES 加密字串前加" in scheme["description"]
+    assert "SHA256 檢查碼" in scheme["description"]
+    assert "雜湊" in scheme["description"]
+    # "body 參數" is not a legal apiKey location → placeholder header, flagged missing
+    assert scheme["in"] == "header"
 
 
 def test_endpoint_becomes_path_operation():

@@ -100,16 +100,26 @@ def _build_security_scheme(scheme) -> dict:
             out["in"] = location
             out["name"] = scheme.details or "Authorization"
         return out
-    # Unmapped source type: minimal legal apiKey placeholder, never a guess.
+    # Unmapped source type: this is not a standard OpenAPI auth scheme (e.g. a
+    # request-signing / body-encryption procedure). Emit a minimal legal apiKey
+    # PLACEHOLDER flagged missing-source. The real header/param name is not
+    # source-stated, so `name` stays a neutral placeholder and the procedure text
+    # (identity + kind + algorithm) is preserved in `description` — never stuffed
+    # into `name` (which must be a param name, not a paragraph).
     location = scheme.location if scheme.location in _APIKEY_LOCATIONS else "header"
     out = {
         "type": "apiKey",
         "in": location,
-        "name": scheme.details or "Authorization",
+        "name": "unknown",
         X_LOOP_STATUS: MISSING_STATUS,
     }
+    description = scheme.name or ""
     if raw:
-        out["description"] = raw
+        description = f"{description}（{raw}）" if description else f"（{raw}）"
+    if scheme.details:
+        description = f"{description}：{scheme.details}" if description else scheme.details
+    if description:
+        out["description"] = description
     return out
 
 
