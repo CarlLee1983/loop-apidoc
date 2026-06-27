@@ -9,6 +9,8 @@ HEADER_NOTE = (
     "Values shown as <placeholder> are not provided by the source; fill them in."
 )
 
+_HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options", "trace"}
+
 
 def _snake(name: str) -> str:
     s = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name.strip())
@@ -277,3 +279,54 @@ def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
         + "\nprint(resp.text)\n"
     )
     return "\n".join(parts) + "\n"
+
+
+def _render_readme(operation_ids: list[str], plan: NormalizationPlan) -> str:
+    schemes = _request_signing_schemes(plan)
+    lines = [
+        "# 請求範例（examples/）",
+        "",
+        HEADER_NOTE,
+        "",
+        "每個端點一資料夾，含 curl / TypeScript / Python 三語版本。",
+        "`<...>` 為來源未提供的值，請自行填入。簽章值請先跑 request.py / request.ts 取得。",
+        "",
+        "## 端點",
+    ]
+    lines += [f"- `{oid}/`" for oid in operation_ids]
+    if schemes:
+        lines += ["", "## 通用簽章機制"]
+        for s in schemes:
+            lines.append(f"- {s.name or 'signature'}：{s.algorithm or '<來源未指明演算法>'}")
+    return "\n".join(lines) + "\n"
+
+
+def _iter_operations(openapi: dict):
+    for path, item in (openapi.get("paths") or {}).items():
+        for method, op in item.items():
+            if method.lower() in _HTTP_METHODS and isinstance(op, dict):
+                yield op.get("operationId"), method.upper(), path, op
+    for _name, item in (openapi.get("webhooks") or {}).items():
+        for method, op in item.items():
+            if method.lower() in _HTTP_METHODS and isinstance(op, dict):
+                yield op.get("operationId"), method.upper(), None, op
+
+
+def build_examples(openapi: dict, plan: NormalizationPlan) -> dict[str, str]:
+    servers = openapi.get("servers") or []
+    schemes = _request_signing_schemes(plan)
+    out: dict[str, str] = {}
+    operation_ids: list[str] = []
+    for operation_id, method, path, op in _iter_operations(openapi):
+        if not operation_id:
+            continue
+        operation_ids.append(operation_id)
+        shape = _request_shape(op, servers, path, method)
+        base = f"examples/{operation_id}"
+        out[f"{base}/request.sh"] = _render_curl(shape, schemes)
+        out[f"{base}/request.ts"] = _render_ts(shape, schemes)
+        out[f"{base}/request.py"] = _render_py(shape, schemes)
+    if not out:
+        return {}
+    out["examples/README.md"] = _render_readme(operation_ids, plan)
+    return out

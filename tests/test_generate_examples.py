@@ -387,3 +387,45 @@ def test_render_py_explicit_scheme_without_key_source_valid_env_names():
     for var_name in sig_env_var_matches:
         assert not var_name.startswith("<"), f"Env-var name should not start with '<': {var_name}"
         assert not var_name.endswith(">"), f"Env-var name should not end with '>': {var_name}"
+
+
+def test_build_examples_emits_three_files_per_operation_and_readme():
+    from loop_apidoc.generate.examples import build_examples
+    from loop_apidoc.plan.models import NormalizationPlan
+
+    openapi = {
+        "servers": [{"url": "https://api.example.com"}],
+        "paths": {
+            "/pay": {
+                "post": {
+                    "operationId": "PayOrder",
+                    "requestBody": {
+                        "content": {"application/json": {"schema": {"type": "object",
+                            "properties": {"Amount": {"type": "integer"}}}}}
+                    },
+                }
+            }
+        },
+    }
+    out = build_examples(openapi, NormalizationPlan(notebook_url="x"))
+    assert "examples/README.md" in out
+    assert "examples/PayOrder/request.sh" in out
+    assert "examples/PayOrder/request.ts" in out
+    assert "examples/PayOrder/request.py" in out
+    assert "POST" in out["examples/PayOrder/request.sh"]
+
+
+def test_build_examples_empty_when_no_operations():
+    from loop_apidoc.generate.examples import build_examples
+    from loop_apidoc.plan.models import NormalizationPlan
+
+    assert build_examples({"paths": {}}, NormalizationPlan(notebook_url="x")) == {}
+
+
+def test_build_examples_webhook_uses_receiver_placeholder():
+    from loop_apidoc.generate.examples import build_examples
+    from loop_apidoc.plan.models import NormalizationPlan
+
+    openapi = {"webhooks": {"Notify": {"post": {"operationId": "Notify"}}}}
+    out = build_examples(openapi, NormalizationPlan(notebook_url="x"))
+    assert "<your_receiver_url>" in out["examples/Notify/request.sh"]
