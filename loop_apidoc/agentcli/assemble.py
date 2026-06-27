@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
 from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.extraction.stages import QueryKind
 from loop_apidoc.extraction.store import ExtractionStore
+from loop_apidoc.generate.writer import generate_outputs
+from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.plan.builder import build_normalization_plan
+from loop_apidoc.run.models import RunResult, RunStatus
+from loop_apidoc.run.pipeline import _persist_plan
+from loop_apidoc.validate.report import write_reports
+from loop_apidoc.validate.validator import validate_outputs
 
 
 class AssembleInputError(ValueError):
@@ -57,3 +65,44 @@ def build_extraction_from_files(
             question="(agent endpoint detail)", answer=text, returncode=0,
         ))
     return ExtractionResult(notebook_url="", artifacts=artifacts)
+
+
+def run_assemble_pipeline(
+    *,
+    sources_root: Path,
+    extraction_dir: Path,
+    output_root: Path,
+    run_id: str,
+    generated_at: datetime,
+    urls: list[str] | None = None,
+) -> RunResult:
+    """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
+    → generate → validate。不做擷取、不 spawn 任何 agent。
+
+    註:tail 與 agentcli.pipeline.run_agent_pipeline 刻意維持小幅重複,
+    以免改動既有 `run-agent` 後端(向後相容優先於 DRY)。"""
+    run_dir = output_root / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest = build_manifest(
+        sources_root=sources_root, urls=urls or [], generated_at=generated_at)
+    (run_dir / "manifest.json").write_text(
+        manifest.model_dump_json(indent=2), encoding="utf-8")
+
+    inventory, endpoint_texts = load_extraction_inputs(extraction_dir)
+    store = ExtractionStore(run_dir / "extraction")
+    extraction = build_extraction_from_files(inventory, endpoint_texts, store)
+
+    plan = build_normalization_plan(extraction, manifest)
+    _persist_plan(run_dir, plan)
+    result = generate_outputs(plan, manifest, run_dir)
+    report = validate_outputs(plan, result, manifest)
+    write_reports(report, run_dir / "validation")
+
+    return RunResult(
+        run_id=run_id,
+        run_dir=str(run_dir),
+        report=report,
+        rounds=0,
+        status=RunStatus.PASSED if report.ok else RunStatus.FAILED,
+    )

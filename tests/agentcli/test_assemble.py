@@ -74,3 +74,38 @@ def test_build_extraction_from_files_produces_stage_and_endpoint_artifacts(tmp_p
     ep06 = [a for a in extraction.artifacts if a.stage_id == "06"]
     assert len(ep06) == 1
     assert json.loads(ep06[0].answer)["path"] == "/ping"
+
+
+# ── Task 2: run_assemble_pipeline ───────────────────────────────────────────
+
+from datetime import datetime, timezone  # noqa: E402
+
+from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.run.models import RunStatus
+
+
+def test_run_assemble_pipeline_writes_outputs(tmp_path):
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    out = tmp_path / "out"
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=out,
+        run_id="run-test",
+        generated_at=datetime(2026, 6, 27, tzinfo=timezone.utc),
+        urls=[],
+    )
+
+    run_dir = out / "run-test"
+    assert (run_dir / "manifest.json").is_file()
+    assert (run_dir / "openapi.yaml").is_file()
+    assert (run_dir / "api-guide.zh-TW.md").is_file()
+    assert (run_dir / "provenance.json").is_file()
+    assert (run_dir / "plan" / "normalization-plan.json").is_file()
+    assert (run_dir / "validation" / "report.json").is_file()
+    assert result.status in (RunStatus.PASSED, RunStatus.FAILED)
+    assert result.run_dir == str(run_dir)
