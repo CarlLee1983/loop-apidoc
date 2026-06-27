@@ -26,3 +26,11 @@ def test_skill_has_frontmatter_and_assemble_call():
     assert "name: loop-apidoc" in text
     assert "loop-apidoc assemble" in text
     assert "CLAUDE_PLUGIN_ROOT" in text
+
+
+def test_skill_references_real_issue_fields():
+    text = (ROOT / "skills" / "loop-apidoc" / "SKILL.md").read_text("utf-8")
+    assert "report.issues" in text
+    assert "location" in text and "suggested_fix" in text
+    # 不得引用不存在的 Issue 欄位(避免誤導修正迴圈)
+    assert "`area`/`detail`" not in text

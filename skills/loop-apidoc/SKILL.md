@@ -56,7 +56,7 @@ uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble \
 
 ### 5. 修正迴圈(最多 3 輪)
 - `ok == true` → 回報 `run_dir` 內的 `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md`,結束。
-- `ok == false` → 看 `report.issues`(每筆有 `severity`/`code`/`area`/`detail`),**只針對缺漏的欄位回頭重讀對應來源**,覆寫 `inventory.json` 或對應的 `endpoints/<NN>.json`,然後回到步驟 4。
+- `ok == false` → 看 `report.issues`(每筆有 `code`/`severity`/`location`/`evidence`/`suggested_fix`),依 `location` 與 `evidence` 判斷哪個欄位缺漏或有問題,**只針對那些欄位回頭重讀對應來源**,覆寫 `inventory.json` 或對應的 `endpoints/<NN>.json`,然後回到步驟 4。
 - 連續 3 輪仍 FAIL → 把剩餘的缺漏/衝突清單呈現給使用者,**不要硬編補寫**。
 
 ## 重要
