@@ -16,6 +16,7 @@ from loop_apidoc.plan.models import (
     MissingItem,
     NormalizationPlan,
     PlanItemStatus,
+    SchemaEntry,
     SecuritySchemeEntry,
     SystemGroup,
 )
@@ -114,6 +115,74 @@ def test_webhook_endpoint_rendered_as_webhook_not_path():
     assert "### Webhook `付款結果通知`（method `POST`）" in md
     # must NOT emit a phantom path endpoint for the null path
     assert "### `POST` `-`" not in md
+
+
+def test_endpoint_body_params_show_description_required_and_nesting():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            summary="pay [NPA-F01]",
+            tags=["信用卡"], security=["AES256 簽章"],
+            parameters=[
+                {"name": "MerchantID", "in": "body", "type": "String(15)",
+                 "required": True, "description": "商店代號"},
+                {"name": "OrderDetail", "in": "body", "type": "array",
+                 "description": "訂單細項"},
+                {"name": "OrderDetail[].ItemName", "in": "body", "type": "String(20)",
+                 "required": True, "description": "品名"},
+            ],
+            responses=[{"status": "SUCCESS", "description": "成功",
+                        "schema_ref": "PayResult"}],
+        )],
+    )
+    md = build_markdown(plan, _manifest())
+    # field descriptions are no longer dropped
+    assert "商店代號" in md
+    assert "品名" in md
+    assert "必填" in md
+    # tags + security surfaced per endpoint
+    assert "信用卡" in md
+    assert "AES256 簽章" in md
+    # the array child renders indented with its short label, not the bracket name
+    assert "  - `ItemName`" in md
+    assert "OrderDetail[].ItemName" not in md
+    # the response's linked component is shown
+    assert "PayResult" in md
+
+
+def test_query_param_shows_description():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/u/{id}",
+            parameters=[{"name": "id", "in": "path", "type": "string",
+                         "required": True, "description": "使用者 id"}],
+            responses=[{"status": "200", "description": "ok"}],
+        )],
+    )
+    md = build_markdown(plan, _manifest())
+    assert "使用者 id" in md
+    assert "`id`" in md
+
+
+def test_schema_fields_show_description_and_nesting():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        schemas=[SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="Order",
+            fields=[
+                {"name": "Status", "type": "string", "description": "狀態"},
+                {"name": "Items[].Sku", "type": "string", "required": True,
+                 "description": "貨號"},
+            ],
+        )],
+    )
+    md = build_markdown(plan, _manifest())
+    assert "狀態" in md
+    assert "貨號" in md
+    assert "  - `Sku`" in md
+    assert "Items[].Sku" not in md
 
 
 def test_empty_plan_still_has_all_sections():

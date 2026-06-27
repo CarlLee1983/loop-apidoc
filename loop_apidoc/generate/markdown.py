@@ -59,6 +59,37 @@ def _security(plan: NormalizationPlan) -> list[str]:
     return out
 
 
+def _nesting(name: str) -> tuple[int, str]:
+    """(indent depth, short leaf label) for a dotted field name, so
+    `OrderDetail[].ItemName` renders as `ItemName` indented under its parent
+    rather than as a flat bracketed sibling."""
+    parts = name.split(".")
+    last = parts[-1]
+    label = last[:-2] if last.endswith("[]") else last
+    return len(parts) - 1, label
+
+
+def _field_line(name: str, field: dict, location: str | None = None) -> str:
+    """One indented bullet for a parameter or schema field, carrying location
+    (for non-body params), type, required flag, enum and the source description
+    (previously dropped)."""
+    depth, label = _nesting(name)
+    bits: list[str] = []
+    if location:
+        bits.append(f"位置 `{location}`")
+    bits.append(f"型別 `{field.get('type') or '-'}`")
+    if field.get("required"):
+        bits.append("必填")
+    enum = field.get("enum")
+    if enum:
+        bits.append(f"enum：{enum}")
+    line = f"{'  ' * depth}- `{label}`（{'，'.join(bits)}）"
+    desc = field.get("description")
+    if desc:
+        line += f" — {desc}"
+    return line
+
+
 def _schemas(plan: NormalizationPlan) -> list[str]:
     if not plan.schemas:
         return [_EMPTY]
@@ -69,12 +100,8 @@ def _schemas(plan: NormalizationPlan) -> list[str]:
             out.append(s.constraints)
         for f in s.fields:
             name = f.get("name")
-            if not name:
-                continue
-            enum = f.get("enum")
-            enum_text = f"，enum：{enum}" if enum else ""
-            out.append(f"- `{name}`：型別 `{f.get('type') or '-'}`"
-                       f"{'（必填）' if f.get('required') else ''}{enum_text}")
+            if name:
+                out.append(_field_line(name, f))
     return out
 
 
@@ -82,15 +109,36 @@ def _endpoint_detail_lines(e) -> list[str]:
     out: list[str] = []
     if e.summary:
         out.append(e.summary)
-    for p in e.parameters:
-        name = p.get("name")
-        if name:
-            out.append(f"- 參數 `{name}`（位置 `{p.get('in') or p.get('location') or '-'}`，"
-                       f"型別 `{p.get('type') or '-'}`）")
-    for r in e.responses:
-        status = r.get("status")
-        if status:
-            out.append(f"- 回應 `{status}`：{r.get('description') or '-'}")
+    meta: list[str] = []
+    if e.tags:
+        meta.append("分類：" + "、".join(f"`{t}`" for t in e.tags))
+    if e.security:
+        meta.append("簽章／認證：" + "、".join(f"`{s}`" for s in e.security))
+    if meta:
+        out.append("　｜　".join(meta))
+    body = [p for p in e.parameters
+            if (p.get("in") or p.get("location")) == "body" and p.get("name")]
+    other = [p for p in e.parameters
+             if (p.get("in") or p.get("location")) != "body" and p.get("name")]
+    if other:
+        out.append("**參數**")
+        for p in other:
+            out.append(_field_line(p["name"], p, p.get("in") or p.get("location") or "-"))
+    if body:
+        out.append("**請求 Body**")
+        for p in body:
+            out.append(_field_line(p["name"], p))
+    if e.responses:
+        out.append("**回應**")
+        for r in e.responses:
+            status = r.get("status")
+            if not status:
+                continue
+            line = f"- `{status}`：{r.get('description') or '-'}"
+            ref = r.get("schema_ref")
+            if ref:
+                line += f"（資料結構：`{ref}`）"
+            out.append(line)
     return out
 
 
