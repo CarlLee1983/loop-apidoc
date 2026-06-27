@@ -81,47 +81,6 @@ def validate(
     raise typer.Exit(code=0 if report.ok else 1)
 
 
-@app.command(name="run-agent")
-def run_agent(
-    sources: Path = typer.Option(
-        ..., "--sources", help="本機來源目錄（PDF 會轉成 markdown 供 agent 讀取）",
-        exists=True, file_okay=False, dir_okay=True, readable=True,
-    ),
-    output: Path = typer.Option(
-        ..., "--output", help="輸出根目錄（將建立 <run-id> 子目錄）"
-    ),
-    executable: str = typer.Option(
-        "claude", "--executable", help="agent CLI 執行檔（claude / codex …）"
-    ),
-    model: str | None = typer.Option(None, "--model", help="模型覆寫（可選）"),
-    url: list[str] = typer.Option([], "--url", help="公開來源 URL，可重複指定"),
-    timeout: float = typer.Option(
-        300.0, "--timeout",
-        help="每次 agent CLI 呼叫的逾時秒數（大型文件 inventory 常超過預設 300s）",
-    ),
-) -> None:
-    """以 coding-agent CLI（claude -p）作為擷取後端的 collapsed 流程：
-    manifest → PDF→md → 一次 inventory + per-endpoint → 規劃 → 生成 → 驗證。"""
-    from loop_apidoc.agentcli.pipeline import run_agent_pipeline
-
-    now = datetime.now(timezone.utc)
-    result = run_agent_pipeline(
-        sources_root=sources,
-        output_root=output,
-        run_id=make_run_id(now),
-        generated_at=now,
-        executable=executable,
-        model=model,
-        urls=list(url),
-        timeout_seconds=timeout,
-    )
-    typer.echo(
-        f"狀態 {result.status.value}：error {len(result.report.errors())}，"
-        f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}"
-    )
-    raise typer.Exit(code=0 if result.ok else 1)
-
-
 @app.command()
 def assemble(
     sources: Path = typer.Option(
