@@ -119,6 +119,29 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 `<run-dir>/validation/`。通過回傳 `0`,有 ERROR 級問題回傳 `1`。
 
+### `run-agent` — 以 coding-agent CLI 取代 NotebookLM
+
+```bash
+uv run loop-apidoc run-agent \
+  --sources ./sources \
+  --output ./output \
+  [--executable claude] [--model <model>] [--url <URL> ...]
+```
+
+以 coding-agent CLI(預設 `claude -p`)取代 NotebookLM 的 collapsed 擷取流程:manifest → PDF 轉 markdown → 一次 inventory + 逐 endpoint 擷取 → 規劃 → 生成 → 驗證。`--executable` 可換成其他 agent CLI(如 `codex`)。退出碼:驗證通過 `0`,否則 `1`。
+
+### `assemble` — 從 agent 產出的擷取 JSON 組裝(供 agent-native plugin)
+
+```bash
+uv run loop-apidoc assemble \
+  --sources ./sources \
+  --extraction ./work \
+  --output ./output \
+  [--url <URL> ...] [--json]
+```
+
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
+
 ---
 
 ## 輸出結構
@@ -162,7 +185,7 @@ output/
 ## 開發
 
 ```bash
-# 執行測試(248 passed + 1 skipped)
+# 執行測試(296 passed + 1 skipped)
 uv run pytest
 
 # 含覆蓋率
@@ -180,6 +203,7 @@ real NotebookLM skill 的 smoke 測試以 `smoke` marker 標記,僅在設定 `LO
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
 | `loop_apidoc/notebooklm/` | NotebookLM skill adapter(僅包裝 `auth_status` + `ask`)、retry、錯誤分類 |
+| `loop_apidoc/agentcli/` | coding-agent CLI 擷取後端(`run-agent`)與 `assemble` 組裝流程、PDF→md 前處理 |
 | `loop_apidoc/doctor/` | 唯讀環境檢查 |
 | `loop_apidoc/extraction/` | 多輪查詢、答案保存、JSON 區塊解析 |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |

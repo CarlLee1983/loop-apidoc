@@ -2,7 +2,19 @@
 
 本文件說明 `loop-apidoc` 的整體流程、資料流與套件邊界。完整設計依據見 [`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)。
 
-## 高層流程
+## 三種執行模式
+
+擷取後段(規劃→生成→驗證→修正)在三種模式下共用同一套確定性管線,差別只在**誰擔任擷取引擎**:
+
+| 模式 | 入口 | 擷取引擎 | 適用 |
+| --- | --- | --- | --- |
+| NotebookLM | `run` | NotebookLM 多輪查詢(本機瀏覽器自動化) | 已建好 Notebook 的標準流程 |
+| coding-agent CLI | `run-agent` | 子行程 `claude -p`(或其他 agent CLI) | 不想經 NotebookLM、由 CLI 自行 spawn agent |
+| agent-native plugin | `assemble`(由 skill 呼叫) | 當前 Claude agent 自己讀來源 | 在 Claude session 內,agent 擷取後呼叫 CLI 組裝 |
+
+`run-agent` 與 `assemble` 由 `loop_apidoc/agentcli/` 提供;兩者都把擷取結果收斂成 `inventory.json` + `endpoints/*.json`,再交給共用的 plan→generate→validate。`assemble` 不負責擷取,只組裝 agent 已寫出的 JSON,並以 `--json` 回報結果供 agent 驅動修正迴圈。
+
+## 高層流程(NotebookLM `run`)
 
 ```mermaid
 flowchart LR
@@ -39,6 +51,7 @@ flowchart TD
     cli --> doctor[doctor/<br/>唯讀環境檢查]
     cli --> manifest[manifest/<br/>掃描 + manifest]
     cli --> run[run/<br/>pipeline 編排]
+    cli --> agentcli[agentcli/<br/>run-agent + assemble]
     cli --> validate[validate/<br/>驗證 + 報告]
 
     run --> manifest
@@ -46,6 +59,11 @@ flowchart TD
     run --> plan[plan/<br/>規格化計畫 + 來源比對]
     run --> generate[generate/<br/>OpenAPI/MD/provenance]
     run --> validate
+
+    agentcli --> manifest
+    agentcli --> plan
+    agentcli --> generate
+    agentcli --> validate
 
     extraction --> notebooklm[notebooklm/<br/>skill adapter + retry]
     doctor --> notebooklm
@@ -68,6 +86,15 @@ flowchart TD
 | 驗證 | `validate_outputs(plan, result, manifest)`(純）／ `validate_run_dir(run_dir)`(讀檔) | `validation/report.{json,md}` |
 | 修正迴圈 | `run_correction_loop(plan, result, *, regenerate, requery, validate, max_rounds=3)` | — |
 | 完整流程 | `run_pipeline(*, notebook_url, sources_root, output_root, adapter, run_id, generated_at, urls, max_rounds=3)` | 整個 run-dir |
+
+agentcli 模式另有兩個公開 seam(共用上方的 plan→generate→validate):
+
+| 階段 | 公開 seam | 產物 |
+| --- | --- | --- |
+| agent CLI 擷取 | `run_agent_pipeline(*, sources_root, output_root, run_id, generated_at, executable, model, urls)` | 整個 run-dir(內含 `inventory.json` + `endpoints/*.json`) |
+| 組裝(不擷取) | `run_assemble_pipeline(*, sources_root, extraction_dir, output_root, run_id, generated_at, urls)` | 整個 run-dir;`--json` 回報 `ok`/`run_dir`/`report` |
+
+`run_assemble_pipeline` 會先驗證擷取輸入(`inventory.json` + `endpoints/*.json`)再建 run 目錄;輸入有誤時拋 `AssembleInputError`,CLI 以退出碼 `2` 結束、不留下孤兒目錄。
 
 ## 擷取查詢分段
 

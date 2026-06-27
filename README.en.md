@@ -122,6 +122,29 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 Runs structure / completeness / consistency / no-speculation validation over the run directory and writes reports to `<run-dir>/validation/`. Exits `0` on pass, `1` when there are ERROR-level issues.
 
+### `run-agent` — use a coding-agent CLI instead of NotebookLM
+
+```bash
+uv run loop-apidoc run-agent \
+  --sources ./sources \
+  --output ./output \
+  [--executable claude] [--model <model>] [--url <URL> ...]
+```
+
+Replaces NotebookLM with a collapsed extraction flow driven by a coding-agent CLI (default `claude -p`): manifest → PDF→markdown → one inventory pass + per-endpoint extraction → plan → generate → validate. `--executable` can point at another agent CLI (e.g. `codex`). Exits `0` on pass, `1` otherwise.
+
+### `assemble` — assemble from agent-produced extraction JSON (for the agent-native plugin)
+
+```bash
+uv run loop-apidoc assemble \
+  --sources ./sources \
+  --extraction ./work \
+  --output ./output \
+  [--url <URL> ...] [--json]
+```
+
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
+
 ---
 
 ## Output layout
@@ -165,7 +188,7 @@ The correction loop classifies issues: `OPENAPI_INVALID` / `OUTPUT_MISMATCH` →
 ## Development
 
 ```bash
-uv run pytest                    # full suite (248 passed + 1 skipped)
+uv run pytest                    # full suite (296 passed + 1 skipped)
 uv run pytest --cov=loop_apidoc  # with coverage
 uv run ruff check .              # lint
 ```
@@ -178,6 +201,7 @@ Real-NotebookLM smoke tests are marked `smoke` and run only with `LOOP_APIDOC_SM
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
 | `loop_apidoc/notebooklm/` | NotebookLM skill adapter (wraps only `auth_status` + `ask`), retry, error classification |
+| `loop_apidoc/agentcli/` | Coding-agent CLI extraction backend (`run-agent`) and the `assemble` flow, plus PDF→markdown preprocessing |
 | `loop_apidoc/doctor/` | Read-only environment checks |
 | `loop_apidoc/extraction/` | Multi-round querying, answer persistence, JSON-block parsing |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
