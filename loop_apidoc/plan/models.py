@@ -73,6 +73,73 @@ class OperationalEntry(_Cited):
     detail: str | None = None
 
 
+class CryptoStep(BaseModel):
+    step: int | None = None
+    desc: str | None = None
+    fields: list[str] = Field(default_factory=list)
+
+
+class KeySource(BaseModel):
+    key: str | None = None
+    iv: str | None = None
+    note: str | None = None
+
+
+class CryptoVerify(BaseModel):
+    field: str | None = None
+    method: str | None = None
+    desc: str | None = None
+
+
+class CryptoScheme(_Cited):
+    name: str | None = None
+    purpose: str | None = None  # request | response | callback | signature
+    algorithm: str | None = None
+    mode: str | None = None
+    padding: str | None = None
+    encoding: str | None = None
+    key_source: KeySource | None = None
+    payload_assembly: list[CryptoStep] = Field(default_factory=list)
+    verify: CryptoVerify | None = None
+
+
+class Callback(_Cited):
+    name: str | None = None
+    trigger: str | None = None
+    transport: str | None = None
+    payload_ref: str | None = None
+    verification: str | None = None
+    expected_response: str | None = None
+
+
+class FieldCondition(_Cited):
+    scope: str | None = None
+    rule: str | None = None
+    when: str | None = None
+    then_required: list[str] = Field(default_factory=list)
+
+
+class ContractTestCase(_Cited):
+    name: str | None = None
+    operation_ref: str | None = None
+    request: dict | None = None
+    response: dict | None = None
+
+
+class ContractMissing(BaseModel):
+    area: str
+    detail: str
+
+
+class IntegrationContract(BaseModel):
+    version: str = "1.0"
+    crypto: list[CryptoScheme] = Field(default_factory=list)
+    callbacks: list[Callback] = Field(default_factory=list)
+    field_conditions: list[FieldCondition] = Field(default_factory=list)
+    test_cases: list[ContractTestCase] = Field(default_factory=list)
+    missing: list[ContractMissing] = Field(default_factory=list)
+
+
 class SystemGroup(BaseModel):
     name: str
     description: str | None = None
@@ -113,6 +180,7 @@ class NormalizationPlan(BaseModel):
     missing_items: list[MissingItem] = Field(default_factory=list)
     source_conflicts: list[SourceConflict] = Field(default_factory=list)
     unverified_items: list[UnverifiedItem] = Field(default_factory=list)
+    integration: IntegrationContract | None = None
 
     @property
     def resolved_title(self) -> str | None:
