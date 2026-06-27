@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from urllib.parse import urlparse
 
 from pydantic import ValidationError
 
@@ -179,74 +180,89 @@ def build_normalization_plan(
     return plan
 
 
+def _detail_path(item: dict) -> str | None:
+    """Stage-06 answers carry the endpoint as `path` or as a full `url`; derive
+    the path component so it can match a stage-05 endpoint."""
+    path = item.get("path")
+    if path:
+        return path
+    url = item.get("url")
+    if isinstance(url, str) and "://" in url:
+        return urlparse(url).path or None
+    return url if isinstance(url, str) else None
+
+
+def _merge_one_detail(
+    plan: NormalizationPlan, art, item: dict, manifest: Manifest
+) -> None:
+    method = item.get("method")
+    path = _detail_path(item)
+    detail = {
+        "parameters": item.get("parameters") or [],
+        "request": item.get("request"),
+        "responses": item.get("responses") or [],
+        "examples": item.get("examples") or [],
+    }
+    status, citation = classify_item(
+        item.get("source"), query_id=art.query_id,
+        answer_path=art.answer_path, manifest=manifest,
+    )
+    for idx, existing in enumerate(plan.endpoints):
+        if existing.method == method and existing.path == path:
+            # The detail is only as grounded as its own source; take the
+            # strictest of the endpoint's and the detail's status.
+            merged_status = _stricter(existing.status, status)
+            merged = _build_entry(
+                plan, "06", art.query_id, "endpoint_details", EndpointEntry,
+                **{**existing.model_dump(), **detail, "status": merged_status,
+                   "citations": [*existing.citations, citation]},
+            )
+            if merged is None:
+                return
+            plan.endpoints[idx] = merged
+            if (merged_status is not existing.status
+                    and merged_status in (PlanItemStatus.UNVERIFIED,
+                                          PlanItemStatus.CONFLICTING)):
+                plan.unverified_items.append(
+                    UnverifiedItem(area="06", detail=str(path or "endpoint"),
+                                   query_id=art.query_id))
+            return
+    # No stage-05 endpoint matched: add the detailed endpoint on its own.
+    entry = _build_entry(
+        plan, "06", art.query_id, "endpoint_details", EndpointEntry,
+        method=method, path=path, summary=None,
+        status=status, citations=[citation], **detail,
+    )
+    if entry is None:
+        return
+    plan.endpoints.append(entry)
+    if status is PlanItemStatus.UNVERIFIED:
+        plan.unverified_items.append(
+            UnverifiedItem(area="06", detail=str(path or "endpoint"),
+                           query_id=art.query_id))
+
+
 def _merge_endpoint_details(
     plan: NormalizationPlan, extraction: ExtractionResult, manifest: Manifest
 ) -> None:
-    art, block = _structured_block(extraction, "06")
-    if block is None:
+    """Stage 06 is fanned out per endpoint, so there are N artifacts, each a
+    single endpoint-detail object. Merge each into its stage-05 endpoint."""
+    arts = extraction.for_stage("06")
+    if not arts:
         plan.missing_items.append(
-            MissingItem(area="06", detail="no structured answer",
-                        query_id=art.query_id if art else None)
-        )
+            MissingItem(area="06", detail="no structured answer", query_id=None))
         return
-
-    for item in _dict_items(plan, "06", art.query_id,
-                            block.get("endpoint_details"), "endpoint_details"):
-        detail = {
-            "parameters": item.get("parameters") or [],
-            "request": item.get("request"),
-            "responses": item.get("responses") or [],
-            "examples": item.get("examples") or [],
-        }
-        matched = False
-        for idx, existing in enumerate(plan.endpoints):
-            if existing.method == item.get("method") and existing.path == item.get("path"):
-                detail_status, citation = classify_item(
-                    item.get("source"), query_id=art.query_id,
-                    answer_path=art.answer_path, manifest=manifest,
-                )
-                # The detail (parameters/responses/...) is only as grounded as
-                # its own source; merging must not let it ride on the endpoint's
-                # existing SUPPORTED status. Take the strictest of the two.
-                merged_status = _stricter(existing.status, detail_status)
-                # model_copy does not re-validate; build a fresh entry so a
-                # malformed nested detail is rejected instead of silently
-                # stored. On failure the existing endpoint is left intact.
-                merged = _build_entry(
-                    plan, "06", art.query_id, "endpoint_details", EndpointEntry,
-                    **{**existing.model_dump(), **detail, "status": merged_status,
-                       "citations": [*existing.citations, citation]},
-                )
-                matched = True
-                if merged is None:
-                    break
-                plan.endpoints[idx] = merged
-                if (merged_status is not existing.status
-                        and merged_status in (PlanItemStatus.UNVERIFIED,
-                                              PlanItemStatus.CONFLICTING)):
-                    plan.unverified_items.append(
-                        UnverifiedItem(area="06",
-                                       detail=str(item.get("path") or "endpoint"),
-                                       query_id=art.query_id)
-                    )
-                break
-        if matched:
+    for art in arts:
+        block = extract_json_block(art.answer)
+        if not isinstance(block, dict):
+            plan.missing_items.append(
+                MissingItem(area="06", detail="malformed endpoint detail",
+                            query_id=art.query_id))
             continue
-        status, citation = classify_item(
-            item.get("source"), query_id=art.query_id,
-            answer_path=art.answer_path, manifest=manifest,
-        )
-        entry = _build_entry(
-            plan, "06", art.query_id, "endpoint_details", EndpointEntry,
-            method=item.get("method"), path=item.get("path"), summary=None,
-            status=status, citations=[citation], **detail,
-        )
-        if entry is None:
+        if not (block.get("method") and _detail_path(block)):
+            plan.missing_items.append(
+                MissingItem(area="06", detail="endpoint detail missing method/path",
+                            query_id=art.query_id))
             continue
-        plan.endpoints.append(entry)
-        if status is PlanItemStatus.UNVERIFIED:
-            plan.unverified_items.append(
-                UnverifiedItem(area="06", detail=str(item.get("path") or "endpoint"),
-                               query_id=art.query_id)
-            )
-    _add_missing_and_conflicts(plan, "06", art, block)
+        _merge_one_detail(plan, art, block, manifest)
+        _add_missing_and_conflicts(plan, "06", art, block)

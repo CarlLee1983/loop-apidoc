@@ -3,8 +3,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from loop_apidoc.manifest.models import Manifest
+from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
+
+_UNUSABLE = (
+    ProcessingStatus.UNREADABLE,
+    ProcessingStatus.UNSUPPORTED,
+    ProcessingStatus.DUPLICATE,
+)
 
 # A path/basename matches only when it appears bounded — not as a substring of
 # a larger filename token. Leading boundary: not preceded by a filename-
@@ -41,6 +47,25 @@ def match_manifest_source(locator: str | None, manifest: Manifest) -> str | None
     return None
 
 
+def sole_source(manifest: Manifest) -> str | None:
+    """Return the lone usable source's identifier if the manifest has exactly one
+    (a single readable/supported local file, or a single URL), else None.
+
+    When a notebook contains exactly one source document, every grounded answer
+    necessarily comes from it — NotebookLM cannot cite anything else. So an item
+    whose citation names a section (not the filename), or carries no locator at
+    all, is still attributable to that one source rather than left UNVERIFIED.
+    With multiple sources we cannot disambiguate and fall back to strict matching.
+    """
+    usable = [
+        s.relative_path
+        for s in manifest.local_sources
+        if s.supported and s.status not in _UNUSABLE
+    ]
+    usable += [u.url for u in manifest.url_sources]
+    return usable[0] if len(usable) == 1 else None
+
+
 def classify_item(
     locator: str | None,
     *,
@@ -49,9 +74,11 @@ def classify_item(
     manifest: Manifest,
 ) -> tuple[PlanItemStatus, SourceCitation]:
     manifest_source = match_manifest_source(locator, manifest)
+    if manifest_source is None:
+        manifest_source = sole_source(manifest)
     status = (
         PlanItemStatus.SUPPORTED
-        if locator and manifest_source
+        if manifest_source
         else PlanItemStatus.UNVERIFIED
     )
     citation = SourceCitation(

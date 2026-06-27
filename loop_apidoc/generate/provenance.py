@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
+from loop_apidoc.generate.naming import component_key, security_scheme_key
 from loop_apidoc.plan.models import NormalizationPlan, PlanItemStatus
 
 
@@ -46,22 +47,24 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
         server_idx += 1
 
     for idx, scheme in enumerate(plan.security_schemes):
-        name = scheme.name or f"scheme{idx}"
-        entries.extend(_entries(f"components.securitySchemes.{name}", scheme))
+        key = security_scheme_key(scheme.name, idx)
+        entries.extend(_entries(f"components.securitySchemes.{key}", scheme))
 
     for endpoint in plan.endpoints:
         if not endpoint.path or not endpoint.method:
             continue
         entries.extend(_entries(f"paths.{endpoint.path}.{endpoint.method.lower()}", endpoint))
 
-    for schema in plan.schemas:
+    for idx, schema in enumerate(plan.schemas):
         if schema.name:
-            entries.extend(_entries(f"components.schemas.{schema.name}", schema))
-        for enum in schema.enums:
+            key = component_key(schema.name, idx, prefix="schema")
+            entries.extend(_entries(f"components.schemas.{key}", schema))
+        for enum_idx, enum in enumerate(schema.enums):
             enum_name = enum.get("name")
             values = enum.get("values")
             if enum_name and values:
-                entries.extend(_entries(f"components.schemas.{enum_name}", schema))
+                key = component_key(enum_name, enum_idx, prefix="enum")
+                entries.extend(_entries(f"components.schemas.{key}", schema))
 
     for error in plan.errors:
         if error.code:

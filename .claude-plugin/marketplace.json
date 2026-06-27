@@ -1,0 +1,11 @@
+{
+  "name": "loop-apidoc-marketplace",
+  "owner": { "name": "carl" },
+  "plugins": [
+    {
+      "name": "loop-apidoc",
+      "source": "./",
+      "description": "來源依據式 API 文件 pipeline(agent-native)。"
+    }
+  ]
+}

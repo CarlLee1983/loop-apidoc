@@ -31,6 +31,14 @@ manifest → 擷取(NotebookLM 多輪查詢) → 規格化計畫 → 生成(Open
 
 ---
 
+## 以 Claude Code plugin 執行(agent-native)
+
+除了 CLI,本專案也是一個 Claude Code plugin:在 Claude session 裡呼叫 `loop-apidoc` skill,給它一或多個來源(本機檔案或公開 URL),由 agent 自己擷取、呼叫 `loop-apidoc assemble` 組裝與驗證,並在驗證失敗時自動回頭補齊缺漏(最多 3 輪)。
+
+此模式**不**透過 NotebookLM、也**不** spawn `claude -p`,而是由當前 agent 直接擔任擷取引擎。安裝 plugin 後即可在 Claude Code 中使用;CLI 由 plugin 內含,透過 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble` 呼叫。
+
+---
+
 ## 安裝
 
 需求:Python `>=3.11`,並使用 [`uv`](https://docs.astral.sh/uv/) 管理環境。

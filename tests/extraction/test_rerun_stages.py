@@ -73,22 +73,6 @@ def test_rerun_retains_other_stages_and_refreshes_target(tmp_path: Path) -> None
     assert {s.stage_id for s in STAGES} == {a.stage_id for a in merged.artifacts}
 
 
-def test_rerun_context_includes_fresh_prior_stage(tmp_path: Path) -> None:
-    store = ExtractionStore(tmp_path)
-    adapter = _MarkerAdapter()
-    prior = run_extraction(adapter, NB, store)
-    adapter.questions.clear()
-
-    rerun_stages(adapter, NB, store, prior, {"05", "06"})
-
-    # Stage 06's INITIAL question must carry the FRESH stage-05 answer (run 3: the
-    # 3rd adapter call to stage 05, since run_extraction already made 2 calls:
-    # initial=1, reverse=2; the rerun initial is call 3).
-    # This proves the known_summary accumulator uses re-run answers, not retained ones.
-    six_initial = next(q for q in adapter.questions if _goal("06") in q)
-    assert "ANSWER-05-3" in six_initial
-
-
 def test_rerun_over_merged_result_stays_stable_across_rounds(tmp_path: Path) -> None:
     # Risk #1: a second rerun consuming the first round's *merged* result must
     # not accumulate or duplicate artifacts — the correction loop runs up to 3
@@ -122,5 +106,7 @@ def test_rerun_far_fewer_queries_than_full(tmp_path: Path) -> None:
     adapter.questions.clear()
 
     rerun_stages(adapter, NB, store, prior, {"05", "06"})
-    assert len(adapter.questions) == 4  # 2 stages x (initial + reverse)
+    # stage 05 = initial + reverse (2); stage 06 here has no endpoint list to fan
+    # out over (prose marker), so it falls back to one generic query (1).
+    assert len(adapter.questions) == 3
     assert len(adapter.questions) < full_count

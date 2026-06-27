@@ -1,20 +1,67 @@
 from __future__ import annotations
 
+import re
+
+from loop_apidoc.generate.naming import component_key, security_scheme_key
 from loop_apidoc.plan.models import NormalizationPlan
 
 MISSING_STATUS = "missing-source"
 X_LOOP_STATUS = "x-loop-status"
 
+# Valid OpenAPI response keys are HTTP status codes (or ranges like 4XX) or
+# "default". APIs that always return 200 and signal outcome via a body field give
+# descriptive "statuses" instead — those get folded into a 200 response.
+_HTTP_STATUS_RE = re.compile(r"^([1-5][0-9]{2}|[1-5]XX)$")
+
+
+def _status_key(status: str) -> str | None:
+    s = status.strip()
+    if s.lower() == "default":
+        return "default"
+    upper = s.upper()
+    return upper if _HTTP_STATUS_RE.match(upper) else None
+
 _OPENAPI_SECURITY_TYPES = {"apiKey", "http", "oauth2", "openIdConnect", "mutualTLS"}
 _APIKEY_LOCATIONS = {"header", "query", "cookie"}
+
+
+_JSON_SCHEMA_TYPES = {
+    "string", "integer", "number", "boolean", "object", "array", "null",
+}
+_TYPE_ALIASES = {
+    "str": "string", "text": "string", "varchar": "string", "char": "string",
+    "int": "integer", "long": "integer",
+    "float": "number", "double": "number", "decimal": "number", "numeric": "number",
+    "bool": "boolean", "obj": "object", "list": "array",
+}
+
+
+def _normalize_type(raw: str) -> dict:
+    """Map a free-form source type ("String(15)") to a VALID JSON-Schema fragment.
+    An invalid `type` value fails OpenAPI validation, so unknown hints keep the
+    raw text only as a description (non-speculative)."""
+    token = re.match(r"[A-Za-z]+", raw.strip())
+    base = token.group(0).lower() if token else ""
+    mapped = base if base in _JSON_SCHEMA_TYPES else _TYPE_ALIASES.get(base)
+    schema: dict = {}
+    if mapped:
+        schema["type"] = mapped
+    if raw.strip() and raw.strip().lower() != mapped:
+        schema["description"] = raw.strip()
+    return schema
 
 
 def _schema_from_type(value) -> dict | None:
     """Tolerant mapping of a free-form type hint to a JSON-Schema fragment."""
     if isinstance(value, dict):
-        return dict(value)
-    if isinstance(value, str) and value:
-        return {"type": value}
+        out = dict(value)
+        t = out.get("type")
+        if isinstance(t, str) and t.lower() not in _JSON_SCHEMA_TYPES:
+            out.pop("type", None)
+            out.update(_normalize_type(t))
+        return out
+    if isinstance(value, str) and value.strip():
+        return _normalize_type(value)
     return None
 
 
@@ -64,8 +111,13 @@ def _build_security_scheme(scheme) -> dict:
 def _build_security_schemes(plan: NormalizationPlan) -> dict:
     out: dict = {}
     for idx, scheme in enumerate(plan.security_schemes):
-        name = scheme.name or f"scheme{idx}"
-        out[name] = _build_security_scheme(scheme)
+        key = security_scheme_key(scheme.name, idx)
+        built = _build_security_scheme(scheme)
+        # Preserve the original human name (which may be an illegal key) so it
+        # isn't lost when the key is sanitized.
+        if scheme.name and scheme.name != key and "description" not in built:
+            built["description"] = scheme.name
+        out[key] = built
     return out
 
 
@@ -84,9 +136,11 @@ def _build_parameter(raw: dict) -> dict | None:
         param["required"] = True
     elif "required" in raw:
         param["required"] = bool(raw["required"])
+    # A parameter object is invalid without `schema` (or content). When the
+    # source type can't be mapped (e.g. "String(15)"), use an empty schema —
+    # valid and non-speculative — rather than omitting it.
     schema = _schema_from_type(raw.get("type") if "type" in raw else raw.get("schema"))
-    if schema:
-        param["schema"] = schema
+    param["schema"] = schema or {}
     if raw.get("description"):
         param["description"] = raw["description"]
     return param
@@ -105,16 +159,27 @@ def _build_request_body(raw: dict) -> dict:
 
 def _build_responses(responses: list[dict]) -> dict:
     out: dict = {}
+    folded: list[str] = []  # business-status responses with no HTTP code
     for raw in responses:
         status = str(raw.get("status") or "").strip()
         if not status:
+            continue
+        key = _status_key(status)
+        if key is None:
+            # e.g. "SUCCESS" or a Chinese label: keep it in the description so
+            # the information survives, and fold under a single 200 below.
+            desc = raw.get("description") or ""
+            folded.append(f"{status}：{desc}".rstrip("：") if desc else status)
             continue
         resp: dict = {"description": raw.get("description") or ""}
         schema = _schema_from_type(raw.get("schema"))
         if schema:
             content_type = raw.get("content_type") or "application/json"
             resp["content"] = {content_type: {"schema": schema}}
-        out[status] = resp
+        out[key] = resp
+    if folded:
+        key = "200" if "200" not in out else "default"
+        out.setdefault(key, {"description": "；".join(d for d in folded if d) or "回應"})
     if not out:
         out["default"] = {
             "description": "來源未提供回應定義",
@@ -127,7 +192,18 @@ def _build_operation(endpoint) -> dict:
     op: dict = {}
     if endpoint.summary:
         op["summary"] = endpoint.summary
-    params = [p for p in (_build_parameter(r) for r in endpoint.parameters) if p]
+    # OpenAPI requires unique (name, in) per operation; keep the first occurrence.
+    params = []
+    seen: set[tuple[str, str]] = set()
+    for raw in endpoint.parameters:
+        built = _build_parameter(raw)
+        if not built:
+            continue
+        key = (built["name"], built["in"])
+        if key in seen:
+            continue
+        seen.add(key)
+        params.append(built)
     if params:
         op["parameters"] = params
     if endpoint.request:
@@ -171,14 +247,17 @@ def _build_object_schema(entry) -> dict:
 
 def _build_schemas(plan: NormalizationPlan) -> dict:
     out: dict = {}
-    for entry in plan.schemas:
+    for idx, entry in enumerate(plan.schemas):
         if entry.name:
-            out[entry.name] = _build_object_schema(entry)
-        for enum in entry.enums:
+            out[component_key(entry.name, idx, prefix="schema")] = (
+                _build_object_schema(entry)
+            )
+        for enum_idx, enum in enumerate(entry.enums):
             enum_name = enum.get("name")
             values = enum.get("values")
             if enum_name and values:
-                out[enum_name] = {"type": "string", "enum": values}
+                key = component_key(enum_name, enum_idx, prefix="enum")
+                out[key] = {"type": "string", "enum": values}
     return out
 
 

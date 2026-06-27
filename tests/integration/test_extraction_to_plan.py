@@ -26,9 +26,10 @@ _ANSWERS = {
           '"missing": []}\n```',
     "05": '```json\n{"endpoints": [{"method": "GET", "path": "/u", "summary": "list", '
           '"source": "api.pdf"}], "missing": []}\n```',
-    "06": '```json\n{"endpoint_details": [{"method": "GET", "path": "/u", '
+    # Stage 06 is fanned out per endpoint: one single-endpoint detail object.
+    "06": '```json\n{"method": "GET", "path": "/u", '
           '"parameters": [{"name": "page"}], "request": null, "responses": '
-          '[{"status": "200"}], "examples": [], "source": "api.pdf"}], "missing": []}\n```',
+          '[{"status": "200"}], "examples": [], "source": "api.pdf"}\n```',
     "07": '```json\n{"schemas": [{"name": "User", "fields": [{"name": "id"}], '
           '"enums": [], "constraints": null, "source": "api.pdf"}], "missing": []}\n```',
     "08": '```json\n{"errors": [{"code": "E1", "meaning": "bad", "http_status": "400", '
@@ -55,6 +56,9 @@ _KEY_TO_STAGE = {
 
 class _Adapter:
     def ask(self, question: str, notebook_url: str) -> _Result:
+        # Per-endpoint detail queries (stage 06 fan-out) carry this phrase.
+        if "integration details for the" in question:
+            return _Result(_ANSWERS["06"])
         for token, stage_id in _KEY_TO_STAGE.items():
             if token in question:
                 return _Result(_ANSWERS[stage_id])

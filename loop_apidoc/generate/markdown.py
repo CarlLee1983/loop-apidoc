@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from loop_apidoc.generate.naming import security_scheme_key
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 
@@ -48,9 +49,13 @@ def _security(plan: NormalizationPlan) -> list[str]:
     if not plan.security_schemes:
         return [_EMPTY]
     out = []
-    for s in plan.security_schemes:
-        out.append(f"- **{s.name or '-'}**（type：`{s.type or '-'}`，位置：`{s.location or '-'}`，"
-                   f"名稱：`{s.details or '-'}`）")
+    for idx, s in enumerate(plan.security_schemes):
+        # The bolded token is the sanitized component key (so it matches the
+        # OpenAPI securitySchemes key for the consistency check); the original
+        # name is shown as 原名 for readability.
+        key = security_scheme_key(s.name, idx)
+        out.append(f"- **{key}**（type：`{s.type or '-'}`，位置：`{s.location or '-'}`，"
+                   f"名稱：`{s.details or '-'}`，原名：{s.name or '-'}）")
     return out
 
 

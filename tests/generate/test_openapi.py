@@ -216,3 +216,40 @@ def test_build_openapi_does_not_mutate_plan_schema_dicts():
     # The returned schema fragment for the "id" field must be a distinct object
     result_id_prop = result["components"]["schemas"]["User"]["properties"]["id"]
     assert result_id_prop is not id_schema
+
+
+def test_responses_fold_business_status_into_single_200():
+    from loop_apidoc.generate.openapi import _build_responses
+    out = _build_responses([
+        {"status": "SUCCESS", "description": "ok"},
+        {"status": "錯誤代碼 (參考 5.)", "description": "fail"},
+    ])
+    assert set(out) == {"200"}
+    assert "SUCCESS" in out["200"]["description"]
+    assert "錯誤代碼" in out["200"]["description"]
+
+
+def test_responses_keep_valid_codes_and_fold_business_status():
+    from loop_apidoc.generate.openapi import _build_responses
+    out = _build_responses([
+        {"status": "201", "description": "created"},
+        {"status": "SUCCESS", "description": "ok"},
+    ])
+    assert "201" in out          # valid HTTP code kept
+    assert "200" in out          # business status folded under 200
+
+
+def test_parameter_type_normalized_to_valid_schema():
+    from loop_apidoc.generate.openapi import _build_parameter
+    p = _build_parameter({"name": "TradeInfo", "in": "query", "required": True,
+                          "type": "String(15)", "description": "AES"})
+    # "String(15)" -> valid type "string", raw kept as schema description
+    assert p["schema"]["type"] == "string"
+    assert p["schema"]["description"] == "String(15)"
+    assert p["name"] == "TradeInfo" and p["in"] == "query"
+
+
+def test_unknown_param_type_keeps_raw_as_description_only():
+    from loop_apidoc.generate.openapi import _schema_from_type
+    assert _schema_from_type("WeirdType") == {"description": "WeirdType"}
+    assert "type" not in _schema_from_type("WeirdType")

@@ -15,12 +15,19 @@ from loop_apidoc.plan.models import PlanItemStatus
 
 
 def _manifest() -> Manifest:
+    # Two sources on purpose: these tests exercise the SUPPORTED vs UNVERIFIED
+    # plumbing, so an item citing "api.pdf" must match while a null/unmatched
+    # source stays UNVERIFIED. (Single-source attribution — where one lone source
+    # makes every item SUPPORTED — is covered in tests/plan/test_classify.py.)
     now = datetime(2026, 6, 25, tzinfo=timezone.utc)
     return Manifest(
         sources_root="/src", generated_at=now,
         local_sources=[
             LocalSource(relative_path="api.pdf", mime_type="application/pdf",
                         source_format=SourceFormat.PDF, size_bytes=1, sha256="x",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+            LocalSource(relative_path="extra.pdf", mime_type="application/pdf",
+                        source_format=SourceFormat.PDF, size_bytes=1, sha256="y",
                         scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
         ],
     )
@@ -89,8 +96,8 @@ def _merge_extraction(detail_source: str | None) -> ExtractionResult:
                  '```json\n{"endpoints": ['
                  '{"method": "GET", "path": "/u", "summary": "list", "source": "api.pdf"}]}\n```'),
             _art("06", QueryKind.INITIAL,
-                 '```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
-                 f' "responses": [{{"status": "200"}}], "source": {src}}}]}}\n```'),
+                 '```json\n{"method": "GET", "path": "/u",'
+                 f' "responses": [{{"status": "200"}}], "source": {src}}}\n```'),
         ],
     )
 
@@ -180,8 +187,7 @@ def test_nested_scalar_wrong_type_in_enums_does_not_raise():
 def test_nested_scalar_wrong_type_in_new_endpoint_does_not_raise():
     # A stage-06 detail with no matching stage-05 endpoint becomes a new
     # endpoint; a scalar `parameters` must not crash construction.
-    block = ('```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
-             ' "parameters": "bad"}]}\n```')
+    block = ('```json\n{"method": "GET", "path": "/u", "parameters": "bad"}\n```')
     plan = build_normalization_plan(
         ExtractionResult(notebook_url="https://nb/x",
                          artifacts=[_art("06", QueryKind.INITIAL, block)]),
@@ -201,8 +207,8 @@ def test_nested_scalar_wrong_type_in_merged_detail_does_not_raise():
                  '```json\n{"endpoints": [{"method": "GET", "path": "/u",'
                  ' "summary": "list", "source": "api.pdf"}]}\n```'),
             _art("06", QueryKind.INITIAL,
-                 '```json\n{"endpoint_details": [{"method": "GET", "path": "/u",'
-                 ' "responses": "bad", "source": "api.pdf"}]}\n```'),
+                 '```json\n{"method": "GET", "path": "/u",'
+                 ' "responses": "bad", "source": "api.pdf"}\n```'),
         ],
     )
     plan = build_normalization_plan(extraction, _manifest())

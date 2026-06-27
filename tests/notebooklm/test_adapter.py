@@ -67,3 +67,37 @@ def test_ask_raises_malformed_on_unparsable_success():
     adapter = NotebookLMAdapter(_config(), _runner(_ok("garbage with no markers")))
     with pytest.raises(MalformedOutput):
         adapter.ask("q", "https://nb/x")
+
+
+def _ok_answer(answer: str) -> CommandResult:
+    stdout = (
+        f"{SEP}\nQuestion: q\n{SEP}\n\n"
+        f"{answer}\n\n"
+        "EXTREMELY IMPORTANT: Is that ALL you need to know?\n\n"
+        f"{SEP}\n"
+    )
+    return _ok(stdout)
+
+
+def test_ask_raises_transient_on_confused_answer():
+    # NotebookLM context bleed: returncode 0 but the answer references a prior
+    # turn instead of answering. Must be retried, not silently accepted.
+    confused = (
+        "It looks like your message was cut off and contains a partial quote "
+        "from our previous conversation."
+    )
+    adapter = NotebookLMAdapter(_config(), _runner(_ok_answer(confused)))
+    with pytest.raises(TransientError):
+        adapter.ask("q", "https://nb/x")
+
+
+def test_ask_raises_transient_on_refusal_answer():
+    adapter = NotebookLMAdapter(_config(), _runner(_ok_answer("我目前無法回覆。")))
+    with pytest.raises(TransientError):
+        adapter.ask("q", "https://nb/x")
+
+
+def test_ask_accepts_clean_answer():
+    adapter = NotebookLMAdapter(_config(), _runner(_ok_answer("POST /mpg_gateway")))
+    result = adapter.ask("q", "https://nb/x")
+    assert result.answer == "POST /mpg_gateway"
