@@ -73,13 +73,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <div class="sub">操作者手冊</div>
   <a class="lvl-2" href="#_1">運作方式</a>
   <a class="lvl-3" href="#_2">完整流程</a>
+  <a class="lvl-3" href="#_codex">在 Codex 使用</a>
   <a class="lvl-2" href="#_3">安裝</a>
-  <a class="lvl-2" href="#_4">人工前置作業</a>
-  <a class="lvl-3" href="#_5">第一版支援的來源格式</a>
+  <a class="lvl-2" href="#_4">提供來源</a>
+  <a class="lvl-3" href="#_5">支援的來源格式</a>
   <a class="lvl-2" href="#_6">使用方式</a>
-  <a class="lvl-3" href="#run">run — 執行完整流程</a>
-  <a class="lvl-3" href="#doctor">doctor — 環境檢查</a>
+  <a class="lvl-3" href="#preprocess">preprocess — PDF 轉 markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
+  <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
@@ -93,7 +94,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <blockquote>
 <p>Loop Engineering 的<strong>來源依據式（source-grounded）API 文件 pipeline</strong></p>
 </blockquote>
-<p><em>English version: <a href="README.en.md">README.en.md</a></em></p>
+<p><em>English version: <a href="../README.en.md">README.en.md</a></em></p>
 <p><code>loop-apidoc</code> 是一套可重複執行的 CLI，將格式與完整度不一的 API 串接文件，整理成一致、可追溯的標準化產物：</p>
 <ul>
 <li><strong>OpenAPI 3.1 YAML</strong>（<code>openapi.yaml</code>）</li>
@@ -104,12 +105,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <p>核心原則:<strong>以來源文件為唯一事實依據</strong>。來源未提供的資訊一律不推測;必要資訊缺漏時,驗證會失敗並明確列出缺項,而非以慣例補寫。</p>
 <hr />
 <h2 id="_1">運作方式</h2>
-<p>擷取階段透過 <a href="https://github.com/PleasePrompto/notebooklm-skill">PleasePrompto/notebooklm-skill</a> 查詢 NotebookLM。該 skill 以本機瀏覽器自動化操作 NotebookLM,每次問題都是獨立 session、沒有對話上下文,因此 pipeline 的每一輪查詢都會帶上完整上下文(Notebook 身分、已知摘要、待確認項目、預期輸出格式)。</p>
-<p>pipeline 不負責建立 Notebook、上傳來源或自動登入私有網站 —— 這些屬於人工前置作業(見下)。</p>
+<p>擷取引擎是<strong>當前的 coding agent 自己</strong>。在 Claude Code plugin 或 OpenAI Codex CLI 的 session 裡,agent 依 <code>skills/loop-apidoc/SKILL.md</code> 讀來源、以<strong>唯讀 subagent fan-out</strong> 擷取(每個 subagent 只讀檔與搜尋、回傳 JSON,不寫檔),主 agent 把結果寫成 <code>inventory.json</code> + <code>endpoints/*.json</code>,再呼叫確定性 CLI <code>assemble</code> 跑後段 plan → generate → validate。</p>
+<p>CLI 本身<strong>不</strong>負責建立 session、登入私有網站或驅動瀏覽器 —— 它只在 agent 寫好擷取 JSON 後做組裝與驗證。</p>
+<blockquote>
+<p>早期曾有以子行程 <code>claude -p</code> 擷取的 <code>run-agent</code> CLI 模式,已於 2026-06 退役(連同 NotebookLM 擷取後端一併移除);現在唯一擷取路徑是 agent-native。</p>
+</blockquote>
 <h3 id="_2">完整流程</h3>
-<pre><code>manifest → 擷取(NotebookLM 多輪查詢) → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證 → 修正(最多 3 輪)
+<pre><code>preprocess（可選） → 擷取（agent 唯讀 subagent fan-out） → manifest → 規格化計畫 → 生成（OpenAPI + Markdown） → 驗證 → 修正（agent 驅動，最多 3 輪）
 </code></pre>
-<p>驗證失敗時,pipeline 依驗證報告分類問題並嘗試修正後重新驗證,最多 3 輪;三輪後仍失敗則輸出缺漏／衝突報告並以非零狀態結束。</p>
+<p>驗證失敗時,<code>assemble</code> 以 <code>--json</code> 回報分類後的問題;<strong>修正由 agent 自行驅動</strong>:依報告回頭重讀相關來源、覆寫對應的擷取 JSON,再重跑 <code>assemble</code>,最多 3 輪。三輪後仍失敗或遇到無法修正的缺漏／衝突,則以缺漏／衝突回報而不補寫。</p>
+<h3 id="_codex">在 OpenAI Codex CLI 使用</h3>
+<p>同一份 skill 也能在 Codex 執行。Codex 不會設 <code>${CLAUDE_PLUGIN_ROOT}</code>,因此把 CLI 裝成全域指令,並把 skill 掛進 Codex 的 skills 目錄:</p>
+<pre><code class="language-bash"># 1. 把 CLI 裝成全域 loop-apidoc 指令
+uv tool install --from /path/to/loop-apidoc loop-apidoc
+
+# 2. 把 skill 掛進 Codex（symlink 即可，改檔自動同步）
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
+</code></pre>
+<p>SKILL.md 以 <code>&lt;APIDOC&gt;</code> 佔位符自動辨識環境:有 <code>$CLAUDE_PLUGIN_ROOT</code> 走 plugin 內含 CLI,否則退到全域 <code>loop-apidoc</code>。其餘流程(擷取 → <code>assemble</code> → 驗證 → 修正)兩邊一致。</p>
 <hr />
 <h2 id="_3">安裝</h2>
 <p>需求:Python <code>&gt;=3.11</code>,並使用 <a href="https://docs.astral.sh/uv/"><code>uv</code></a> 管理環境。</p>
@@ -119,67 +132,37 @@ uv sync
 # 確認 CLI 可執行
 uv run loop-apidoc --help
 </code></pre>
-<p>擷取功能另需 NotebookLM skill 的本機 checkout(預設目錄 <code>notebooklm-skill</code>,可用 <code>--skill-root</code> 或環境變數 <code>LOOP_APIDOC_SKILL_ROOT</code> 指定)。先用 <code>doctor</code> 檢查環境是否就緒。</p>
+<p>作為 Claude Code plugin 安裝後即可在 Claude session 內使用,CLI 由 plugin 內含;Codex 端見上方「在 OpenAI Codex CLI 使用」。</p>
 <hr />
-<h2 id="_4">人工前置作業</h2>
-<p>以下步驟<strong>不屬於 CLI</strong>,需人工完成:</p>
+<h2 id="_4">提供來源</h2>
+<p>agent 擷取前,操作者只需把來源備妥:</p>
 <ol>
-<li>建立 NotebookLM Notebook。</li>
-<li>將所有來源文件與公開 URL 手動加入 Notebook。</li>
-<li>取得該 Notebook 的分享連結。</li>
-<li>在本機保留一份與 Notebook 內容對應的來源目錄。</li>
+<li>把本機來源檔案放進一個來源目錄(記為 <code>&lt;SOURCES&gt;</code>)。</li>
+<li>公開 URL 直接以 <code>--url</code> 傳入,由 agent 以文字抓取。</li>
+<li>表格密集或大型 PDF,建議先用 <code>preprocess</code> 轉成高保真 markdown(見下),再把擷取指向轉出目錄。</li>
 </ol>
-<p>Notebook 必須可由本機瀏覽器登入的 Google 帳號存取;分享設定或帳號權限不足時,CLI 會在 NotebookLM 預檢階段失敗。</p>
-<h3 id="_5">第一版支援的來源格式</h3>
+<p>不需建立任何外部 Notebook、不需瀏覽器登入 —— 來源讀取由當前 agent 在 session 內完成。</p>
+<h3 id="_5">支援的來源格式</h3>
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<h3 id="run"><code>run</code> — 執行完整流程</h3>
-<pre><code class="language-bash">uv run loop-apidoc run \
-  --notebook-url &quot;https://notebooklm.google.com/notebook/...&quot; \
-  --sources ./sources \
-  --output ./output
+<p>CLI 暴露四個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code> 與 <code>validate</code> 可獨立使用。</p>
+<h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
+<pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<table>
-<thead>
-<tr>
-<th>參數</th>
-<th>說明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--notebook-url</code></td>
-<td>NotebookLM 分享連結(必填)</td>
-</tr>
-<tr>
-<td><code>--sources</code></td>
-<td>本機來源目錄(必填)</td>
-</tr>
-<tr>
-<td><code>--output</code></td>
-<td>輸出根目錄;會在其下建立 <code>&lt;run-id&gt;</code> 子目錄(必填)</td>
-</tr>
-<tr>
-<td><code>--url</code></td>
-<td>公開來源 URL,可重複指定</td>
-</tr>
-<tr>
-<td><code>--skill-root</code></td>
-<td>notebooklm-skill checkout 目錄(預設 <code>notebooklm-skill</code>)</td>
-</tr>
-</tbody>
-</table>
-<p>預設值:輸出語言 <code>zh-TW</code>、規格 OpenAPI 3.1、最大修正輪數 3、禁止推測啟用。</p>
-<p>退出碼:驗證通過(<code>PASSED</code>)回傳 <code>0</code>,其餘狀態(<code>failed</code> / <code>early-stopped</code> / <code>blocked</code>)回傳非零。</p>
-<h3 id="doctor"><code>doctor</code> — 環境檢查</h3>
-<pre><code class="language-bash">uv run loop-apidoc doctor
-</code></pre>
-<p>檢查 Python、NotebookLM skill、skill 依賴、Chrome、瀏覽器驗證狀態與必要驗證工具。<strong>唯讀</strong>,不修改 Notebook 或輸出文件。就緒回傳 <code>0</code>,否則回傳 <code>1</code>。</p>
+<p>以 pymupdf4llm 把 <code>--sources</code> 下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 <code>--out</code> 目錄。</p>
 <h3 id="manifest-manifest"><code>manifest</code> — 建立來源 manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources [--url &lt;URL&gt; ...] [--output manifest.json]
 </code></pre>
 <p>掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 <code>--output</code> 時輸出至 stdout。</p>
+<h3 id="assemble"><code>assemble</code> — 從 agent 產出的擷取 JSON 組裝 + 驗證</h3>
+<pre><code class="language-bash">uv run loop-apidoc assemble \
+  --sources ./sources \
+  --extraction ./work \
+  --output ./output \
+  [--url &lt;URL&gt; ...] [--json]
+</code></pre>
+<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>)組裝成輸出:manifest → plan → generate → validate。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。</p>
 <h3 id="validate-run"><code>validate</code> — 驗證既有 run 目錄</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
@@ -191,8 +174,8 @@ uv run loop-apidoc --help
 └── &lt;run-id&gt;/                    # run-id 格式:%Y%m%dT%H%M%SZ
     ├── manifest.json            # 來源 manifest
     ├── extraction/
-    │   ├── queries.jsonl        # 每輪查詢紀錄
-    │   └── answers/             # 原始擷取 artifact(逐輪保存,不覆蓋)
+    │   ├── inventory.json       # API 盤點（agent 擷取產出）
+    │   └── endpoints/           # 逐 endpoint 擷取 JSON
     ├── plan/
     │   └── normalization-plan.json   # 機器可讀規格化計畫
     ├── openapi.yaml             # OpenAPI 3.1
@@ -231,10 +214,10 @@ uv run loop-apidoc --help
 </tr>
 </tbody>
 </table>
-<p>修正迴圈會將問題分類:<code>OPENAPI_INVALID</code> / <code>OUTPUT_MISMATCH</code> → 自動修正;<code>REQUIRED_INFO_MISSING</code> → 重新查詢(僅針對相關 stage);<code>SOURCE_UNVERIFIED</code> / <code>SOURCE_CONFLICT</code> / <code>UNSUPPORTED_ASSERTION</code> → 無法自動修正(fail-closed,迴圈提早結束)。</p>
+<p>驗證會將問題分類:<code>OPENAPI_INVALID</code> / <code>OUTPUT_MISMATCH</code> → 可由重新生成修正;<code>REQUIRED_INFO_MISSING</code> → agent 重讀相關來源補齊;<code>SOURCE_UNVERIFIED</code> / <code>SOURCE_CONFLICT</code> / <code>UNSUPPORTED_ASSERTION</code> → 無法修正(fail-closed,回報為缺漏／衝突)。修正由 agent 依 <code>assemble --json</code> 回報自行驅動(重讀來源、覆寫擷取 JSON 後重跑),而非由 CLI 內建迴圈。</p>
 <hr />
 <h2 id="_9">開發</h2>
-<pre><code class="language-bash"># 執行測試(248 passed + 1 skipped)
+<pre><code class="language-bash"># 執行測試
 uv run pytest
 
 # 含覆蓋率
@@ -243,7 +226,6 @@ uv run pytest --cov=loop_apidoc
 # Lint
 uv run ruff check .
 </code></pre>
-<p>real NotebookLM skill 的 smoke 測試以 <code>smoke</code> marker 標記,僅在設定 <code>LOOP_APIDOC_SMOKE=1</code> 時執行。</p>
 <h3 id="_10">套件結構</h3>
 <table>
 <thead>
@@ -258,16 +240,12 @@ uv run ruff check .
 <td>來源掃描與 manifest 建立</td>
 </tr>
 <tr>
-<td><code>loop_apidoc/notebooklm/</code></td>
-<td>NotebookLM skill adapter(僅包裝 <code>auth_status</code> + <code>ask</code>)、retry、錯誤分類</td>
-</tr>
-<tr>
-<td><code>loop_apidoc/doctor/</code></td>
-<td>唯讀環境檢查</td>
+<td><code>loop_apidoc/agentcli/</code></td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
-<td>多輪查詢、答案保存、JSON 區塊解析</td>
+<td>agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/plan/</code></td>
@@ -283,19 +261,19 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/run/</code></td>
-<td>run-id、修正迴圈、完整 pipeline 編排</td>
+<td>run-id 產生、結果／狀態 models、將計畫寫入 run 目錄</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="_11">設計文件</h2>
 <ul>
-<li>架構總覽與資料流(含流程圖):<a href="docs/ARCHITECTURE.md"><code>docs/ARCHITECTURE.md</code></a></li>
-<li>貢獻指南:<a href="CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a></li>
-<li>系統設計 spec:<a href="docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md"><code>docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md</code></a></li>
+<li>架構總覽與資料流(含流程圖):<a href="ARCHITECTURE.md"><code>docs/ARCHITECTURE.md</code></a></li>
+<li>貢獻指南:<a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a></li>
+<li>系統設計 spec:<a href="superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md"><code>docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md</code></a></li>
 <li>各階段實作計畫:<code>docs/superpowers/plans/</code></li>
 </ul>
-  <div class="footer">由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline</div>
+  <div class="footer">由專案文件產生 · loop-apidoc · 來源依據式 API 文件 pipeline</div>
 </main>
 </div>
 

@@ -12,22 +12,23 @@
     --bg-inset: #f1f5f9;
     --border-main: #e2e8f0;
     --border-active: #6366f1;
-    
+
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
-    
+
     --accent: #4f46e5;
     --accent-hover: #4338ca;
     --accent-soft: #e0e7ff;
-    
+
     --color-manual: #d97706;
     --color-io: #3b82f6;
     --color-pure: #10b981;
-    
+    --color-agent: #8b5cf6;
+
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     --font-mono: "Fira Code", ui-monospace, SFMono-Regular, monospace;
-    
+
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
@@ -49,19 +50,20 @@
       --bg-inset: #1f2937;
       --border-main: #1f2937;
       --border-active: #818cf8;
-      
+
       --text-primary: #f9fafb;
       --text-secondary: #d1d5db;
       --text-muted: #6b7280;
-      
+
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --accent-soft: rgba(99, 102, 241, 0.15);
-      
+
       --color-manual: #fbbf24;
       --color-io: #60a5fa;
       --color-pure: #34d399;
-      
+      --color-agent: #a78bfa;
+
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
@@ -322,6 +324,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   color: var(--color-pure);
   border: 1px solid color-mix(in srgb, var(--color-pure) 30%, transparent);
 }
+.pill.agent {
+  background: color-mix(in srgb, var(--color-agent) 15%, transparent);
+  color: var(--color-agent);
+  border: 1px solid color-mix(in srgb, var(--color-agent) 30%, transparent);
+}
 
 .detail-desc {
   font-size: 0.92rem;
@@ -436,33 +443,33 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Prep</div>
-            <div class="step-card-title">人工前置作業</div>
+            <div class="step-card-title">提供來源與前處理</div>
           </div>
         </div>
 
         <!-- Step 01 -->
-        <div class="step-card active" id="step-scan">
-          <div class="step-icon">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <div class="step-card-content">
-            <div class="step-card-num">Step 01</div>
-            <div class="step-card-title">來源掃描 (Scan)</div>
-          </div>
-        </div>
-
-        <!-- Step 02 -->
-        <div class="step-card" id="step-extract">
+        <div class="step-card active" id="step-extract">
           <div class="step-icon">
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
             </svg>
           </div>
           <div class="step-card-content">
-            <div class="step-card-num">Step 02</div>
+            <div class="step-card-num">Step 01</div>
             <div class="step-card-title">資料擷取 (Extract)</div>
+          </div>
+        </div>
+
+        <!-- Step 02 -->
+        <div class="step-card" id="step-scan">
+          <div class="step-icon">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <div class="step-card-content">
+            <div class="step-card-num">Step 02</div>
+            <div class="step-card-title">來源掃描 (Manifest)</div>
           </div>
         </div>
 
@@ -539,31 +546,30 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       flowchart TD
           cli["cli.py<br/>Typer 進入點"]
 
-          cli --> doctor["doctor/<br/>唯讀環境檢查"]
           cli --> manifest["manifest/<br/>掃描 + manifest"]
-          cli --> run["run/<br/>pipeline 編排"]
+          cli --> agentcli["agentcli/<br/>assemble + 前處理"]
           cli --> validate["validate/<br/>驗證 + 報告"]
 
-          run --> manifest
-          run --> extraction["extraction/<br/>多輪查詢 + 答案保存"]
-          run --> plan["plan/<br/>規格化計畫 + 來源比對"]
-          run --> generate["generate/<br/>OpenAPI/MD/provenance"]
-          run --> validate
+          agentcli --> manifest
+          agentcli --> extraction["extraction/<br/>共用 models + 工具"]
+          agentcli --> plan["plan/<br/>規格化計畫 + 來源比對"]
+          agentcli --> generate["generate/<br/>OpenAPI/MD/provenance"]
+          agentcli --> validate
+          agentcli --> run["run/<br/>run-id + 寫入 run-dir"]
 
-          extraction --> notebooklm["notebooklm/<br/>skill adapter + retry"]
-          doctor --> notebooklm
           plan --> manifest
 
           classDef io stroke:#6366f1,stroke-width:3px;
           class generate,run io
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <strong>唯一檔案 I/O 出口</strong>：只有 <code>generate/</code> (<code>generate_outputs</code>) 與 <code>run/</code> (<code>run_pipeline</code>) 擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
+      <code>cli.py</code> 只暴露四個指令：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）。
+      <strong>唯一檔案 I/O 出口</strong>：只有 <code>generate/</code>（<code>generate_outputs</code>）與 <code>run/</code>（<code>persist.py</code> 將計畫寫入 run-dir）擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
     </div>
   </div>
 
   <footer class="footer">
-    由專案 Markdown 產生 · loop-apidoc · 來源依據式 API 文件 pipeline
+    由專案文件產生 · loop-apidoc · 來源依據式 API 文件 pipeline
   </footer>
 </div>
 
@@ -571,46 +577,46 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   const dataset = {
     prep: {
       num: "PREP",
-      title: "人工前置作業",
+      title: "提供來源與前處理",
       pillClass: "prep",
-      pillLabel: "Manual",
-      desc: "在啟動自動化 CLI 工具前，操作者必須進行的前置準備工作（不屬於 CLI 本身）。包含在 NotebookLM 中建立一個專屬 Notebook、上傳所有 API 文件來源並取得分享連結，同時在本機保留一份完全對應的原始檔案目錄。",
-      details: "<p>第一版支援的來源格式：PDF、Markdown、Word、OpenAPI JSON/YAML 及公開網頁 URL。</p><p>Notebook 必須可由本機瀏覽器登入的 Google 帳號存取；分享設定或帳號權限不足時，CLI 會在預檢階段失敗。</p>",
-      seam: "N/A (手動前置操作)",
-      inputs: "API 原始文件來源 (本機目錄)",
-      outputs: "NotebookLM 分享連結, 本機對應目錄"
+      pillLabel: "Manual / Optional",
+      desc: "啟動擷取前，操作者把來源備妥：本機檔案放進一個來源目錄（<code>&lt;SOURCES&gt;</code>），公開 URL 以 <code>--url</code> 傳入。表格密集或大型 PDF 建議先用 <code>preprocess</code> 轉成高保真 markdown（pymupdf4llm 保留表格與標題結構），避免原始 PDF 讀取扭曲表格。無需建立任何外部 Notebook 或瀏覽器登入。",
+      details: "<p>第一版支援的來源格式：PDF、Markdown、Word、OpenAPI JSON/YAML 及公開網頁 URL。</p><p><code>preprocess</code> 是<b>可選</b>的本機 I/O 步驟；非 PDF 文字來源會原樣複製到輸出目錄，之後把擷取 subagent 指向轉出的 <code>sources_md</code> 目錄即可。</p>",
+      seam: "prepare_markdown(sources_dir, dest_dir) / pdf_to_markdown(pdf_path)",
+      inputs: "API 原始文件來源 (本機目錄), 公開 URL",
+      outputs: "&lt;SOURCES&gt;, &lt;WORK&gt;/sources_md (可選)"
+    },
+    extract: {
+      num: "STEP 01",
+      title: "資料擷取 (Extraction)",
+      pillClass: "agent",
+      pillLabel: "Agent",
+      desc: "擷取引擎是<b>當前的 coding agent 自己</b>（Claude Code plugin 或 OpenAI Codex CLI）。agent 依 <code>skills/loop-apidoc/SKILL.md</code>，以<b>唯讀 subagent fan-out</b> 分段擷取：每個 subagent 只讀檔與搜尋、回傳 JSON（不寫檔、不連網），由主 agent 把回傳結果寫成 <code>inventory.json</code> 與逐 endpoint 的 <code>endpoints/*.json</code>。",
+      details: "<h4>10 大擷取分段主題</h4><ul><li>01 來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 rate limit / timeout / retry / idempotency / webhook</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>分段避免單一回答承載全部內容而漏失欄位；唯一 grounding 規則：來源未述者一律 null 並記入 <code>missing</code>，不推測、不套 REST/OAuth 慣例。</p>",
+      seam: "skills/loop-apidoc/SKILL.md（agent 寫出 inventory.json + endpoints/*.json）",
+      inputs: "&lt;SOURCES&gt; 或 &lt;WORK&gt;/sources_md, 目標 JSON schema",
+      outputs: "inventory.json, endpoints/*.json"
     },
     scan: {
-      num: "STEP 01",
-      title: "來源掃描 (Scan)",
+      num: "STEP 02",
+      title: "來源掃描 (Manifest)",
       pillClass: "io",
       pillLabel: "Local I/O",
-      desc: "透過 <code>loop-apidoc manifest</code> 掃描指定之本機來源目錄與公開 URL，詳細記錄各檔案的相對路徑、格式、大小、SHA-256 雜湊值與掃描時間。生成一份標準的來源清單檔案，作為後續所有 API 輸出項目追溯來源 (Provenance) 的依據。",
-      details: "<p>在此階段，系統會過濾出不受支援的格式，自動偵測重複檔案，若發現檔案不可讀即觸發警告。此過程為純本機磁碟讀取。</p>",
+      desc: "<code>assemble</code> 內第一步：掃描指定之本機來源目錄與公開 URL，詳細記錄各檔案的相對路徑、格式、大小、SHA-256 雜湊值與掃描時間。生成一份標準的來源清單檔案，作為後續所有 API 輸出項目追溯來源 (Provenance) 的依據。",
+      details: "<p>在此階段，系統會過濾出不受支援的格式，自動偵測重複檔案，若發現檔案不可讀即觸發警告。此過程為純本機磁碟讀取。亦可用 <code>loop-apidoc manifest</code> 獨立執行。</p>",
       seam: "build_manifest(sources_root, urls, generated_at)",
       inputs: "--sources <目錄路徑>, --url <URL清單>",
       outputs: "manifest.json"
-    },
-    extract: {
-      num: "STEP 02",
-      title: "資料擷取 (Extraction)",
-      pillClass: "io",
-      pillLabel: "Network I/O",
-      desc: "以分段擷取策略，透過自動化瀏覽器向 NotebookLM 進行多輪對答查詢（避免單次傳輸量過大導致 NotebookLM 漏失欄位或發生幻覺）。每一輪查詢（包含 10 個核心分段主題）皆為獨立 Session，因此程式會帶上已收集到的已知摘要、待確認項目與目標格式契約。",
-      details: "<h4>10 大查詢分段主題</h4><ul><li>01 Notebook 與來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 rate limit / timeout / retry / idempotency / webhook</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>對答契約：盤點型階段（03-09）強迫要求 fenced JSON 區塊以利程式化解析；敘事型階段（01, 02, 10）則為純文字 Markdown。</p>",
-      seam: "run_extraction(adapter, notebook_url, store, *, max_attempts=3)",
-      inputs: "manifest.json, NotebookLM 筆記 URL",
-      outputs: "extraction/queries.jsonl, extraction/answers/ (原始歷程)"
     },
     plan: {
       num: "STEP 03",
       title: "規格化計畫 (Build Plan)",
       pillClass: "pure",
       pillLabel: "Pure Logic",
-      desc: "比對擷取到的 JSON/Markdown 資料與 sources 的 <code>manifest.json</code> 雜湊，交叉比對來源，將碎片化的資訊重構為單一結構的 <code>normalization-plan.json</code>。本階段屬於純函數轉譯邏輯，完全沒有檔案或網路 I/O，便於單元測試。",
-      details: "<p>規格化計畫中會詳細指出哪些 API 欄位來源充足，哪些必要欄位在來源中缺失（需以預設值占位）或來源衝突（列入重新查詢清單）。</p>",
-      seam: "build_normalization_plan(extraction, manifest)",
-      inputs: "queries.jsonl & manifest.json",
+      desc: "先以 <code>inventory_to_stage_answers</code> 把 <code>inventory.json</code> 對映回各擷取 stage 的初始答案，再與 sources 的 <code>manifest.json</code> 雜湊交叉比對來源，將碎片化的資訊重構為單一結構的 <code>normalization-plan.json</code>。本階段屬於純函數轉譯邏輯，完全沒有檔案或網路 I/O，便於單元測試。",
+      details: "<p>規格化計畫中會詳細指出哪些 API 欄位來源充足，哪些必要欄位在來源中缺失（需以預設值占位）或來源衝突（列入需重新擷取的清單）。</p>",
+      seam: "inventory_to_stage_answers(inventory) → build_normalization_plan(extraction, manifest)",
+      inputs: "inventory.json & endpoints/*.json & manifest.json",
       outputs: "plan/normalization-plan.json"
     },
     generate: {
@@ -619,7 +625,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "io",
       pillLabel: "File Output",
       desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
-      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
       outputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json"
@@ -638,24 +644,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     loop: {
       num: "STEP 06",
       title: "修正迴圈 (Correction Loop)",
-      pillClass: "pure",
-      pillLabel: "Controller",
-      desc: "工作流的自動校正引擎。如果驗證報告發現 ERROR，修正迴圈會依錯誤屬性將問題分類並重試。上限最多 3 輪。如果三輪後仍有錯誤，或遇到 unfixable 問題，會提早早停退出並以非零碼退出 (Fail-Closed)。",
-      details: "<h4>錯誤分類與修正策略</h4><ul><li><b>OPENAPI_INVALID / OUTPUT_MISMATCH</b>: 執行本地自動生成修正 (AUTO_FIX)</li><li><b>REQUIRED_INFO_MISSING</b>: 鎖定特定階段對 NotebookLM 發起重新擷取 (RE_QUERY)</li><li><b>SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</b>: 無法自動修正 (UNFIXABLE)，Pipeline 立即早停</li></ul>",
-      seam: "run_correction_loop(plan, result, *, regenerate, requery, validate, max_rounds=3)",
-      inputs: "validation/report.json",
-      outputs: "修正重製後的產物檔或早停錯誤日誌"
+      pillClass: "agent",
+      pillLabel: "Agent-driven",
+      desc: "修正<b>由 agent 自行驅動</b>，CLI 內<b>沒有</b>確定性修正迴圈。<code>assemble</code> 以 <code>--json</code> 回報分類後的問題；agent 依報告回頭重讀相關來源、覆寫對應的 <code>inventory.json</code> 或 <code>endpoints/&lt;NN&gt;.json</code>，再重跑 <code>assemble</code>，最多 3 輪。",
+      details: "<h4>錯誤分類與修正策略</h4><ul><li><b>OPENAPI_INVALID / OUTPUT_MISMATCH</b>: 可由重新生成修正（agent 修好 JSON 後重跑）</li><li><b>REQUIRED_INFO_MISSING</b>: agent 鎖定受影響來源重讀並補齊</li><li><b>SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</b>: 無法修正 (UNFIXABLE, fail-closed)，以缺漏／衝突回報而不補寫</li></ul>",
+      seam: "run_assemble_pipeline(...) → --json report；agent 重讀來源、覆寫 JSON 後重跑",
+      inputs: "assemble 的 --json report (report.issues)",
+      outputs: "修正後重跑的產物，或最終缺漏／衝突報告"
     }
   };
 
-  let currentKey = 'scan';
+  let currentKey = 'extract';
   let currentTab = 'overview';
 
   function updateDisplay() {
     const data = dataset[currentKey];
     if (!data) return;
     const container = document.getElementById('detail-content-area');
-    
+
     if (currentTab === 'overview') {
       // Note: dataset is static and fully controlled. Rendering via innerHTML is safe here.
       container.innerHTML = `
@@ -664,7 +670,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <span class="pill ${data.pillClass}">${data.pillLabel}</span>
         </div>
         <div class="detail-desc">${data.desc}</div>
-        
+
         <div class="section-label">核心機制說明</div>
         <div class="info-card">
           ${data.details}
@@ -677,15 +683,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <h3>${data.title}</h3>
           <span class="pill ${data.pillClass}">${data.pillLabel}</span>
         </div>
-        
+
         <div class="section-label">Pipeline 對照參數</div>
         <div class="specs-list">
           <div class="specs-label">公開 Seam 介面</div>
           <div class="specs-value"><code>${data.seam}</code></div>
-          
+
           <div class="specs-label">輸入參數 / 檔案</div>
           <div class="specs-value"><code>${data.inputs}</code></div>
-          
+
           <div class="specs-label">生成產物 / 輸出</div>
           <div class="specs-value" style="font-weight: 600;"><code>${data.outputs}</code></div>
         </div>
