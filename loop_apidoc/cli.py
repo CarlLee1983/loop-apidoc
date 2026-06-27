@@ -95,6 +95,10 @@ def run_agent(
     ),
     model: str | None = typer.Option(None, "--model", help="模型覆寫（可選）"),
     url: list[str] = typer.Option([], "--url", help="公開來源 URL，可重複指定"),
+    timeout: float = typer.Option(
+        300.0, "--timeout",
+        help="每次 agent CLI 呼叫的逾時秒數（大型文件 inventory 常超過預設 300s）",
+    ),
 ) -> None:
     """以 coding-agent CLI（claude -p）作為擷取後端的 collapsed 流程：
     manifest → PDF→md → 一次 inventory + per-endpoint → 規劃 → 生成 → 驗證。"""
@@ -109,6 +113,7 @@ def run_agent(
         executable=executable,
         model=model,
         urls=list(url),
+        timeout_seconds=timeout,
     )
     typer.echo(
         f"狀態 {result.status.value}：error {len(result.report.errors())}，"
@@ -171,6 +176,25 @@ def assemble(
             f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}"
         )
     raise typer.Exit(code=0 if result.ok else 1)
+
+
+@app.command()
+def preprocess(
+    sources: Path = typer.Option(
+        ..., "--sources", help="本機來源目錄",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    out: Path = typer.Option(
+        ..., "--out", help="markdown 輸出目錄（衍生位置，勿放 sources/ 內）"
+    ),
+) -> None:
+    """把 sources 下每個 PDF 轉成 markdown（pymupdf4llm，保留表格／標題結構），
+    非 PDF 文字檔原樣複製。供 agent-native 擷取時 subagent 讀取高保真 markdown。"""
+    from loop_apidoc.agentcli.preprocess import prepare_markdown
+
+    dest = prepare_markdown(sources, out)
+    count = sum(1 for p in dest.glob("*") if p.is_file())
+    typer.echo(f"已前處理 {count} 個檔案於 {dest}")
 
 
 def main() -> None:
