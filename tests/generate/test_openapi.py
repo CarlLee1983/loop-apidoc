@@ -464,6 +464,69 @@ def test_body_params_unioned_across_merged_operations():
     assert set(props) == {"A", "B"}
 
 
+def test_bracket_named_body_fields_nest_into_array_items():
+    # The source documents OrderDetail as a JSON array of objects; the extraction
+    # encodes that via the `Parent[].Child` naming convention. The generator must
+    # reconstruct array `items` rather than emit flat bracket-named properties.
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+        parameters=[
+            {"name": "MerchantID", "in": "body", "type": "string", "required": True},
+            {"name": "OrderDetail", "in": "body", "type": "array", "description": "訂單細項"},
+            {"name": "OrderDetail[].ItemName", "in": "body", "type": "String(20)",
+             "required": True, "description": "品名"},
+            {"name": "OrderDetail[].ItemAmt", "in": "body", "type": "Int(10)", "required": True},
+        ],
+        responses=[{"status": "200", "description": "ok"}],
+    )])
+    schema = (build_openapi(plan)["paths"]["/pay"]["post"]["requestBody"]
+              ["content"]["application/json"]["schema"])
+    assert "OrderDetail[].ItemName" not in schema["properties"]  # no flat leak
+    od = schema["properties"]["OrderDetail"]
+    assert od["type"] == "array"
+    assert od["description"] == "訂單細項"
+    items = od["items"]
+    assert items["type"] == "object"
+    assert items["properties"]["ItemName"]["type"] == "string"
+    assert items["properties"]["ItemAmt"]["type"] == "integer"
+    assert items["required"] == ["ItemName", "ItemAmt"]
+    # the array itself is optional at top level (its standalone field set no required)
+    assert schema["required"] == ["MerchantID"]
+
+
+def test_dotted_body_fields_nest_into_object():
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="POST", path="/x",
+        parameters=[
+            {"name": "Payer.Name", "in": "body", "type": "string", "required": True},
+            {"name": "Payer.Email", "in": "body", "type": "string"},
+        ],
+        responses=[{"status": "200", "description": "ok"}],
+    )])
+    schema = (build_openapi(plan)["paths"]["/x"]["post"]["requestBody"]
+              ["content"]["application/json"]["schema"])
+    payer = schema["properties"]["Payer"]
+    assert payer["type"] == "object"
+    assert set(payer["properties"]) == {"Name", "Email"}
+    assert payer["required"] == ["Name"]
+
+
+def test_object_schema_fields_nest_too():
+    plan = _plan(schemas=[SchemaEntry(
+        status=PlanItemStatus.SUPPORTED, name="Order",
+        fields=[
+            {"name": "Items[].Sku", "type": "string", "required": True},
+            {"name": "Items[].Qty", "type": "integer"},
+        ],
+    )])
+    order = build_openapi(plan)["components"]["schemas"]["Order"]
+    assert "Items[].Sku" not in order["properties"]
+    items = order["properties"]["Items"]
+    assert items["type"] == "array"
+    assert items["items"]["properties"]["Sku"]["type"] == "string"
+    assert items["items"]["required"] == ["Sku"]
+
+
 def test_operation_id_from_summary_code():
     # The doc's own operation code ("[NPA-F01]") is a source-stated identifier —
     # use it as operationId so codegen produces meaningful method names.

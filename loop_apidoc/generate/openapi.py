@@ -179,6 +179,61 @@ def _property_schema(field: dict) -> dict:
     return prop
 
 
+def _nest_properties(fields: list[dict]) -> tuple[dict, list[str]]:
+    """Reconstruct nested object/array schemas from the flat dotted-name
+    convention the extraction emits: `Parent[].Child` is a field of the object
+    elements of array `Parent`; `Parent.Child` is a field of nested object
+    `Parent`. A standalone `Parent` field contributes its description/required to
+    the container. Returns (properties, required) for the top level."""
+    tree: dict = {"children": {}, "order": [], "array": False, "leaf": None}
+    for field in fields:
+        name = field.get("name")
+        if not name:
+            continue
+        node = tree
+        parts = name.split(".")
+        for i, part in enumerate(parts):
+            is_array = part.endswith("[]")
+            key = part[:-2] if is_array else part
+            if not key:
+                continue
+            child = node["children"].get(key)
+            if child is None:
+                child = {"children": {}, "order": [], "array": False, "leaf": None}
+                node["children"][key] = child
+                node["order"].append(key)
+            if is_array:
+                child["array"] = True
+            if i == len(parts) - 1:
+                child["leaf"] = field
+            node = child
+    return _materialize_node(tree)
+
+
+def _materialize_node(node: dict) -> tuple[dict, list[str]]:
+    properties: dict = {}
+    required: list[str] = []
+    for key in node["order"]:
+        child = node["children"][key]
+        properties[key] = _node_schema(child)
+        if child["leaf"] and child["leaf"].get("required"):
+            required.append(key)
+    return properties, required
+
+
+def _node_schema(node: dict) -> dict:
+    if not node["children"]:
+        return _property_schema(node["leaf"]) if node["leaf"] else {}
+    child_props, child_required = _materialize_node(node)
+    obj: dict = {"type": "object", "properties": child_props}
+    if child_required:
+        obj["required"] = child_required
+    schema = {"type": "array", "items": obj} if node["array"] else obj
+    if node["leaf"] and node["leaf"].get("description"):
+        schema["description"] = node["leaf"]["description"]
+    return schema
+
+
 def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
     """Assemble requestBody from the prose `request` blob and/or `in:body` fields.
 
@@ -190,15 +245,7 @@ def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
     request = request or {}
     content_type = _normalize_media_type(request.get("content_type"))
     if body_params:
-        properties: dict = {}
-        required: list[str] = []
-        for raw in body_params:
-            name = raw.get("name")
-            if not name:
-                continue
-            properties[name] = _property_schema(raw)
-            if raw.get("required"):
-                required.append(name)
+        properties, required = _nest_properties(body_params)
         schema: dict = {"type": "object", "properties": properties}
         if required:
             schema["required"] = required
@@ -441,15 +488,7 @@ def _root_tags(plan: NormalizationPlan) -> list[dict]:
 
 
 def _build_object_schema(entry) -> dict:
-    properties: dict = {}
-    required: list[str] = []
-    for field in entry.fields:
-        name = field.get("name")
-        if not name:
-            continue
-        properties[name] = _property_schema(field)
-        if field.get("required"):
-            required.append(name)
+    properties, required = _nest_properties(entry.fields)
     schema: dict = {"type": "object", "properties": properties}
     if required:
         schema["required"] = required
