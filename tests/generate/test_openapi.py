@@ -464,6 +464,50 @@ def test_body_params_unioned_across_merged_operations():
     assert set(props) == {"A", "B"}
 
 
+def test_normalize_media_type_strips_annotation_suffix():
+    from loop_apidoc.generate.openapi import _normalize_media_type
+    # The source often appends a human note in parentheses; the media-type key
+    # must stay valid `type/subtype` (codegen tools reject the noisy form).
+    assert (_normalize_media_type("application/x-www-form-urlencoded (HTML Form Post)")
+            == "application/x-www-form-urlencoded")
+    assert _normalize_media_type("application/json") == "application/json"
+    assert _normalize_media_type("multipart/form-data; boundary=x") == "multipart/form-data"
+
+
+def test_normalize_media_type_falls_back_to_json_when_unparseable():
+    from loop_apidoc.generate.openapi import _normalize_media_type
+    assert _normalize_media_type("form post") == "application/json"
+    assert _normalize_media_type(None) == "application/json"
+    assert _normalize_media_type("") == "application/json"
+
+
+def test_request_body_content_key_is_valid_media_type():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            parameters=[{"name": "Foo", "in": "body", "type": "string"}],
+            request={"content_type": "application/x-www-form-urlencoded (HTML Form Post)"},
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    content = build_openapi(plan)["paths"]["/pay"]["post"]["requestBody"]["content"]
+    assert "application/x-www-form-urlencoded" in content
+    assert "application/x-www-form-urlencoded (HTML Form Post)" not in content
+
+
+def test_response_content_key_is_valid_media_type():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/x",
+            responses=[{"status": "200", "description": "ok",
+                        "content_type": "application/json (UTF-8)",
+                        "schema": {"type": "object"}}],
+        )
+    ])
+    resp = build_openapi(plan)["paths"]["/x"]["get"]["responses"]["200"]
+    assert list(resp["content"]) == ["application/json"]
+
+
 def test_parameter_type_normalized_to_valid_schema():
     from loop_apidoc.generate.openapi import _build_parameter
     p = _build_parameter({"name": "TradeInfo", "in": "query", "required": True,

@@ -150,6 +150,21 @@ def _build_parameter(raw: dict) -> dict | None:
     return param
 
 
+# A media-type key must be a valid `type/subtype`; sources often append a human
+# note ("application/json (UTF-8)") or carry parameters ("…; charset=utf-8").
+# Keep only the leading `type/subtype` token; the note already survives elsewhere
+# (e.g. requestBody prose), so nothing source-stated is lost.
+_MEDIA_TYPE_RE = re.compile(r"[\w.+-]+/[\w.+-]+")
+
+
+def _normalize_media_type(raw: str | None) -> str:
+    if raw:
+        match = _MEDIA_TYPE_RE.match(raw.strip())
+        if match:
+            return match.group(0)
+    return "application/json"
+
+
 def _property_schema(field: dict) -> dict:
     """One object property fragment from a source field/param dict.
     Field `description` wins over the raw type hint; `enum` is preserved."""
@@ -172,7 +187,7 @@ def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
     rather than dropped. With no body fields the legacy single-schema mapping is
     kept intact."""
     request = request or {}
-    content_type = request.get("content_type") or "application/json"
+    content_type = _normalize_media_type(request.get("content_type"))
     if body_params:
         properties: dict = {}
         required: list[str] = []
@@ -219,7 +234,7 @@ def _build_responses(responses: list[dict]) -> dict:
         resp: dict = {"description": raw.get("description") or ""}
         schema = _schema_from_type(raw.get("schema"))
         if schema:
-            content_type = raw.get("content_type") or "application/json"
+            content_type = _normalize_media_type(raw.get("content_type"))
             resp["content"] = {content_type: {"schema": schema}}
         out[key] = resp
     if folded:
