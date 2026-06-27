@@ -47,7 +47,7 @@ def _write_extraction(extraction_dir: Path) -> None:
 
 def test_load_extraction_inputs_reads_inventory_and_endpoints(tmp_path):
     _write_extraction(tmp_path / "extraction")
-    inventory, endpoint_texts = load_extraction_inputs(tmp_path / "extraction")
+    inventory, endpoint_texts, integration = load_extraction_inputs(tmp_path / "extraction")
     assert inventory["overview"] == "Demo API"
     assert len(endpoint_texts) == 1
     assert json.loads(endpoint_texts[0])["path"] == "/ping"

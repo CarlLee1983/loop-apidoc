@@ -11,6 +11,7 @@ from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.generate.writer import generate_outputs
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
+from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.run.models import RunResult, RunStatus
 from loop_apidoc.run.persist import persist_plan
 from loop_apidoc.validate.report import write_reports
@@ -21,8 +22,11 @@ class AssembleInputError(ValueError):
     """agent 產出的擷取檔缺漏或格式錯誤時拋出(fail loudly)。"""
 
 
-def load_extraction_inputs(extraction_dir: Path) -> tuple[dict, list[str]]:
-    """讀 inventory.json(物件)與 endpoints/*.json(原始文字,依檔名排序)。"""
+def load_extraction_inputs(
+    extraction_dir: Path,
+) -> tuple[dict, list[str], dict | None]:
+    """讀 inventory.json(物件)與 endpoints/*.json(原始文字,依檔名排序),
+    以及選填的 integration.json(absent → None)。"""
     inv_path = extraction_dir / "inventory.json"
     if not inv_path.is_file():
         raise AssembleInputError(f"找不到 inventory.json:{inv_path}")
@@ -44,7 +48,20 @@ def load_extraction_inputs(extraction_dir: Path) -> tuple[dict, list[str]]:
                 raise AssembleInputError(
                     f"{path.name} 不是合法 JSON:{exc}") from exc
             endpoint_texts.append(text)
-    return inventory, endpoint_texts
+
+    integration: dict | None = None
+    integration_path = extraction_dir / "integration.json"
+    if integration_path.exists():
+        try:
+            integration = json.loads(integration_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise AssembleInputError(
+                f"integration.json is not valid JSON: {exc}"
+            ) from exc
+        if not isinstance(integration, dict):
+            raise AssembleInputError("integration.json must be a JSON object")
+
+    return inventory, endpoint_texts, integration
 
 
 def build_extraction_from_files(
@@ -81,7 +98,7 @@ def run_assemble_pipeline(
     為自成一體的擷取後 pipeline tail(plan→generate→validate)。"""
     # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
     # 不留下孤兒 run 目錄。
-    inventory, endpoint_texts = load_extraction_inputs(extraction_dir)
+    inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
 
     run_dir = output_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -95,6 +112,8 @@ def run_assemble_pipeline(
     extraction = build_extraction_from_files(inventory, endpoint_texts, store)
 
     plan = build_normalization_plan(extraction, manifest)
+    contract = build_integration_contract(integration, plan, manifest)
+    plan = plan.model_copy(update={"integration": contract})
     persist_plan(run_dir, plan)
     result = generate_outputs(plan, manifest, run_dir)
     report = validate_outputs(plan, result, manifest)
