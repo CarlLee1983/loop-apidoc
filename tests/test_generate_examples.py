@@ -286,6 +286,7 @@ def test_render_py_skeleton_with_gap_when_not_explicit():
     out = _render_py(shape, [CryptoScheme(status="supported", name="Sig")])
     assert "# gap:" in out
     assert "def sign" in out
+    assert "NotImplementedError" in out
 
 
 def test_render_py_multiple_explicit_schemes_unique_functions():
@@ -332,3 +333,57 @@ def test_render_py_multiple_explicit_schemes_unique_functions():
     assert out.count("from Crypto.Cipher import AES") == 1, "Full render should have exactly 1 pycryptodome import"
     assert out.startswith("# Derived from openapi.yaml")
     assert "def sign_" in out
+
+
+def test_render_py_explicit_scheme_without_key_source_valid_env_names():
+    """Test explicit CryptoScheme (algorithm + payload_assembly present) but key_source=None.
+
+    Verify that env-var names are valid (uppercase, no angle brackets).
+    The _snake function should strip angle brackets from <hash_key>/<hash_iv> fallbacks,
+    producing HASH_KEY/HASH_IV for os.environ.get() env-var names.
+    """
+    from loop_apidoc.generate.examples import _render_py, _py_signature
+    from loop_apidoc.plan.models import CryptoScheme
+    import re
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    # Explicit scheme (algorithm + payload_assembly present) but no key_source
+    explicit_no_key_source = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode="CBC",
+        key_source=None,
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    out = _render_py(shape, [explicit_no_key_source])
+
+    # Should render a runnable signature (not a gap)
+    assert "def sign" in out
+    assert "# gap:" not in out, "Should not be a gap when algorithm + payload_assembly are present"
+    assert "AES" in out
+
+    # Env-var names should be valid uppercase: HASH_KEY, HASH_IV
+    assert "HASH_KEY" in out, "Expected HASH_KEY in generated code"
+    assert "HASH_IV" in out, "Expected HASH_IV in generated code"
+
+    # The env-var names should NOT contain angle brackets or invalid chars.
+    # Extract env-var names from os.environ.get() calls.
+    # Pattern: os.environ.get('<env_var_name>', ...)
+    env_var_matches = re.findall(r"os\.environ\.get\('([^']+)'", out)
+    assert len(env_var_matches) >= 2, f"Expected at least 2 os.environ.get() calls, got {len(env_var_matches)}"
+    for var_name in env_var_matches:
+        assert not var_name.startswith("<"), f"Env-var name should not start with '<': {var_name}"
+        assert not var_name.endswith(">"), f"Env-var name should not end with '>': {var_name}"
+        assert var_name.isupper() or "_" in var_name, f"Env-var name should be uppercase/snake: {var_name}"
+
+    # Also test _py_signature directly to isolate the signature block
+    sig_out = _py_signature([explicit_no_key_source])
+    assert "HASH_KEY" in sig_out
+    assert "HASH_IV" in sig_out
+    sig_env_var_matches = re.findall(r"os\.environ\.get\('([^']+)'", sig_out)
+    for var_name in sig_env_var_matches:
+        assert not var_name.startswith("<"), f"Env-var name should not start with '<': {var_name}"
+        assert not var_name.endswith(">"), f"Env-var name should not end with '>': {var_name}"
