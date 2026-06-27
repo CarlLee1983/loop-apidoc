@@ -24,3 +24,4 @@ class GenerateResult(BaseModel):
     markdown: str
     provenance: ProvenanceDocument
     integration: dict | None = None
+    examples: dict[str, str] = Field(default_factory=dict)
