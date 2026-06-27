@@ -201,3 +201,79 @@ def _render_ts(shape: dict, schemes: list[CryptoScheme]) -> str:
         "console.log(await res.text())\n"
     )
     return "\n".join(parts) + "\n"
+
+
+def _py_signature(schemes: list[CryptoScheme]) -> str:
+    if not schemes:
+        return ""
+
+    # Determine if we need the import (at least one explicit scheme)
+    has_explicit = any(_signature_explicit(s) for s in schemes)
+
+    # Determine if we need unique function names (multiple schemes)
+    need_unique_names = len(schemes) > 1
+
+    parts = []
+
+    # Emit imports exactly once at the top if needed
+    if has_explicit:
+        parts.append(
+            "import hashlib\nimport os\n"
+            "from Crypto.Cipher import AES  # pip install pycryptodome\n"
+            "from Crypto.Util.Padding import pad\n"
+        )
+
+    blocks = []
+    for idx, s in enumerate(schemes):
+        # Generate unique function name when needed
+        if need_unique_names:
+            func_name = f"sign_{_snake(s.name or str(idx))}"
+        else:
+            func_name = "sign"
+
+        if _signature_explicit(s):
+            key = (s.key_source.key if s.key_source else None) or "<hash_key>"
+            iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
+            blocks.append(
+                f"# 簽章 {s.name or ''}：{s.algorithm}\n"
+                f"def {func_name}(payload: str) -> str:\n"
+                f"    key = os.environ.get('{_snake(key).upper()}', '{key}').encode()\n"
+                f"    iv = os.environ.get('{_snake(iv).upper()}', '{iv}').encode()\n"
+                "    cipher = AES.new(key, AES.MODE_CBC, iv)\n"
+                "    enc = cipher.encrypt(pad(payload.encode(), 16)).hex()\n"
+                "    return hashlib.sha256(enc.encode()).hexdigest().upper()\n"
+            )
+        else:
+            missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
+            blocks.append(
+                f"# gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
+                f"def {func_name}(payload: str) -> str:\n"
+                "    raise NotImplementedError('來源未提供完整簽章演算法，請依文件補完')\n"
+            )
+
+    if has_explicit:
+        parts.append("\n")
+    parts.append("\n".join(blocks))
+    return "".join(parts)
+
+
+def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
+    import json
+
+    parts = [_comment(HEADER_NOTE), "", "import httpx", ""]
+    sig = _py_signature(schemes)
+    if sig:
+        parts += [sig, ""]
+    fields = shape["body"] or shape["query"]
+    body_lines = "\n".join(
+        f"    {json.dumps(name, ensure_ascii=False)}: {json.dumps(value, ensure_ascii=False)},"
+        for name, _kind, value in fields
+    )
+    parts.append(
+        f"url = {json.dumps(shape['url'], ensure_ascii=False)}\n"
+        "payload = {\n" + body_lines + "\n}\n\n"
+        f"resp = httpx.request({json.dumps(shape['method'])}, url, "
+        + ("json=payload)" if (shape["content_type"] or "").endswith("json") else "data=payload)")
+        + "\nprint(resp.text)\n"
+    )
+    return "\n".join(parts) + "\n"

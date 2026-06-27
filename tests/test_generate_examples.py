@@ -251,3 +251,84 @@ def test_render_ts_multiple_explicit_schemes_valid():
     assert out.count("import { createCipheriv") == 1, "Full render should have exactly 1 import"
     assert out.startswith("// Derived from openapi.yaml")
     assert "function sign_" in out
+
+
+def test_render_py_runnable_signature_when_explicit():
+    from loop_apidoc.generate.examples import _render_py
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    explicit = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    out = _render_py(shape, [explicit])
+    assert out.startswith("# Derived from openapi.yaml")
+    assert "import httpx" in out
+    assert "AES" in out and "def sign" in out
+
+
+def test_render_py_skeleton_with_gap_when_not_explicit():
+    from loop_apidoc.generate.examples import _render_py
+    from loop_apidoc.plan.models import CryptoScheme
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [], "body": [],
+        "content_type": "application/json", "security": [],
+    }
+    out = _render_py(shape, [CryptoScheme(status="supported", name="Sig")])
+    assert "# gap:" in out
+    assert "def sign" in out
+
+
+def test_render_py_multiple_explicit_schemes_unique_functions():
+    """Test that multiple explicit schemes produce unique function names and avoid duplicate imports."""
+    from loop_apidoc.generate.examples import _render_py, _py_signature
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    # Two explicit schemes
+    scheme1 = CryptoScheme(
+        status="supported", name="CheckValue", algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串"}],
+    )
+    scheme2 = CryptoScheme(
+        status="supported", name="SecondSig", algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="SecondKey", iv="SecondIV"),
+        payload_assembly=[{"step": 1, "desc": "加密"}],
+    )
+
+    # Get just the signature block
+    sig_out = _py_signature([scheme1, scheme2])
+
+    # Assert exactly one import line for pycryptodome
+    import_count = sig_out.count("from Crypto.Cipher import AES")
+    assert import_count == 1, f"Expected 1 pycryptodome import, got {import_count}"
+
+    # Assert no duplicate 'def sign(' (should use def sign_* instead)
+    assert sig_out.count("def sign(") == 0, "def sign() should not appear when multiple schemes (non-unique)"
+
+    # Assert two distinct function names
+    assert "def sign_" in sig_out
+    lines = sig_out.split("\n")
+    func_decls = [line for line in lines if line.startswith("def sign_")]
+    assert len(func_decls) == 2, f"Expected 2 unique function declarations, got {len(func_decls)}: {func_decls}"
+
+    # Full render should also have exactly 1 import
+    out = _render_py(shape, [scheme1, scheme2])
+    assert out.count("from Crypto.Cipher import AES") == 1, "Full render should have exactly 1 pycryptodome import"
+    assert out.startswith("# Derived from openapi.yaml")
+    assert "def sign_" in out
