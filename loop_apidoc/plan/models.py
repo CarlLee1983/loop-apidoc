@@ -45,6 +45,10 @@ class EndpointEntry(_Cited):
     request: dict | None = None
     responses: list[dict] = Field(default_factory=list)
     examples: list[dict] = Field(default_factory=list)
+    # Source-stated grouping labels and the names of security_schemes this
+    # endpoint requires; both feed the OpenAPI operation (tags / security).
+    tags: list[str] = Field(default_factory=list)
+    security: list[str] = Field(default_factory=list)
 
 
 class SchemaEntry(_Cited):

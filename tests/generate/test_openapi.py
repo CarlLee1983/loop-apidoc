@@ -464,6 +464,84 @@ def test_body_params_unioned_across_merged_operations():
     assert set(props) == {"A", "B"}
 
 
+def test_operation_id_from_summary_code():
+    # The doc's own operation code ("[NPA-F01]") is a source-stated identifier —
+    # use it as operationId so codegen produces meaningful method names.
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="POST", path="/MPG/mpg_gateway",
+        summary="MPG 交易 [NPA-F01]：商店向藍新金流發動交易",
+        responses=[{"status": "200", "description": "ok"}],
+    )])
+    op = build_openapi(plan)["paths"]["/MPG/mpg_gateway"]["post"]
+    assert op["operationId"] == "NPA_F01"
+
+
+def test_operation_id_fallback_from_method_path():
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="GET", path="/users/{id}",
+        responses=[{"status": "200", "description": "ok"}],
+    )])
+    op = build_openapi(plan)["paths"]["/users/{id}"]["get"]
+    assert op["operationId"] == "get_users_id"
+
+
+def test_operation_ids_are_unique():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/a",
+                      summary="x [DUP]", responses=[{"status": "200"}]),
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/b",
+                      summary="y [DUP]", responses=[{"status": "200"}]),
+    ])
+    doc = build_openapi(plan)
+    ids = {doc["paths"]["/a"]["post"]["operationId"],
+           doc["paths"]["/b"]["post"]["operationId"]}
+    assert ids == {"DUP", "DUP_2"}
+
+
+def test_endpoint_tags_rendered_and_collected_at_root():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+                      tags=["Payment"], responses=[{"status": "200"}]),
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/refund",
+                      tags=["Payment", "Refund"], responses=[{"status": "200"}]),
+    ])
+    doc = build_openapi(plan)
+    assert doc["paths"]["/pay"]["post"]["tags"] == ["Payment"]
+    # root tag declarations are unique and source-ordered
+    assert [t["name"] for t in doc["tags"]] == ["Payment", "Refund"]
+
+
+def test_merged_operation_unions_tags():
+    plan = _plan(endpoints=[
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/c",
+                      tags=["A"], responses=[]),
+        EndpointEntry(status=PlanItemStatus.SUPPORTED, method="POST", path="/c",
+                      tags=["A", "B"], responses=[{"status": "200"}]),
+    ])
+    assert build_openapi(plan)["paths"]["/c"]["post"]["tags"] == ["A", "B"]
+
+
+def test_endpoint_security_references_scheme_by_name():
+    plan = _plan(
+        security_schemes=[SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="AES256 (TradeInfo)",
+            type="apiKey", location="header", details="X")],
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+            security=["AES256 (TradeInfo)"], responses=[{"status": "200"}])],
+    )
+    doc = build_openapi(plan)
+    key = next(iter(doc["components"]["securitySchemes"]))  # sanitized key
+    assert doc["paths"]["/pay"]["post"]["security"] == [{key: []}]
+
+
+def test_unresolvable_security_name_is_dropped():
+    plan = _plan(endpoints=[EndpointEntry(
+        status=PlanItemStatus.SUPPORTED, method="POST", path="/pay",
+        security=["NopeScheme"], responses=[{"status": "200"}])])
+    assert "security" not in build_openapi(plan)["paths"]["/pay"]["post"]
+
+
 def test_response_schema_ref_resolves_to_component_ref():
     # The structured response body lives in components.schemas; a response that
     # names it (schema_ref) must link via $ref rather than restating prose.

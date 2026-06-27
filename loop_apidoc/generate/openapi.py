@@ -277,12 +277,56 @@ def _build_responses(
     return out
 
 
-def _build_operation(endpoints: list, name_to_key: dict[str, str] | None = None) -> dict:
+_HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+_ID_BAD = re.compile(r"[^A-Za-z0-9_]+")
+
+
+def _operation_id(summary: str | None, method: str, locator: str, used: set[str]) -> str:
+    """A unique, identifier-safe operationId. Prefer the doc's own operation code
+    in the summary ("[NPA-F01]"); else derive mechanically from method+path. Both
+    are source-grounded restatements, not invented facts. Deduped with a suffix."""
+    code = None
+    if summary:
+        match = re.search(r"\[([^\]]+)\]", summary)
+        if match:
+            code = match.group(1)
+    base = _ID_BAD.sub("_", code or f"{method}_{locator}")
+    base = re.sub(r"_+", "_", base).strip("_") or method
+    oid = base
+    suffix = 2
+    while oid in used:
+        oid = f"{base}_{suffix}"
+        suffix += 1
+    used.add(oid)
+    return oid
+
+
+def _assign_operation_ids(doc: dict) -> None:
+    """Assign a unique operationId to every operation across paths and webhooks."""
+    used: set[str] = set()
+    for locator, item in list(doc.get("paths", {}).items()) + list(
+        doc.get("webhooks", {}).items()
+    ):
+        if not isinstance(item, dict):
+            continue
+        for method, op in item.items():
+            if method.lower() in _HTTP_METHODS and isinstance(op, dict):
+                op["operationId"] = _operation_id(
+                    op.get("summary"), method, locator, used
+                )
+
+
+def _build_operation(
+    endpoints: list,
+    name_to_key: dict[str, str] | None = None,
+    scheme_keys: dict[str, str] | None = None,
+) -> dict:
     """Build one OpenAPI operation from one or more source endpoints that share
     the same method+path. OpenAPI permits only a single operation per path+method,
     so when a source lists the same URL more than once (e.g. several payment
     products posting to one gateway endpoint, selected by a parameter) their
     parameters and responses are unioned rather than one overwriting the other."""
+    scheme_keys = scheme_keys or {}
     op: dict = {}
     summaries: list[str] = []
     for endpoint in endpoints:
@@ -290,6 +334,14 @@ def _build_operation(endpoints: list, name_to_key: dict[str, str] | None = None)
             summaries.append(endpoint.summary)
     if summaries:
         op["summary"] = "；".join(summaries)
+    # Source-stated grouping labels, unioned across merged endpoints (first-seen).
+    tags: list[str] = []
+    for endpoint in endpoints:
+        for tag in endpoint.tags:
+            if tag and tag not in tags:
+                tags.append(tag)
+    if tags:
+        op["tags"] = tags
     # OpenAPI requires unique (name, in) per operation; keep the first occurrence.
     # `in: body` fields are NOT parameters in OpenAPI 3.x — they are partitioned
     # out here and unioned into requestBody (first occurrence wins on name).
@@ -319,6 +371,18 @@ def _build_operation(endpoints: list, name_to_key: dict[str, str] | None = None)
     request = next((e.request for e in endpoints if e.request), None)
     if request or body_params:
         op["requestBody"] = _build_request_body(request, body_params)
+    # Security schemes this operation requires, resolved from scheme names to the
+    # sanitized component keys; unresolvable names are dropped (never invented).
+    requirements: list[dict] = []
+    seen_schemes: set[str] = set()
+    for endpoint in endpoints:
+        for name in endpoint.security:
+            key = scheme_keys.get(name)
+            if key and key not in seen_schemes:
+                seen_schemes.add(key)
+                requirements.append({key: []})
+    if requirements:
+        op["security"] = requirements
     responses: list[dict] = []
     for endpoint in endpoints:
         responses.extend(endpoint.responses)
@@ -326,7 +390,11 @@ def _build_operation(endpoints: list, name_to_key: dict[str, str] | None = None)
     return op
 
 
-def _build_paths(plan: NormalizationPlan, name_to_key: dict[str, str]) -> dict:
+def _build_paths(
+    plan: NormalizationPlan,
+    name_to_key: dict[str, str],
+    scheme_keys: dict[str, str],
+) -> dict:
     # Group endpoints by (path, method) preserving first-seen order, so several
     # source endpoints sharing one method+path collapse into a single merged
     # operation instead of the last one overwriting the rest.
@@ -339,17 +407,37 @@ def _build_paths(plan: NormalizationPlan, name_to_key: dict[str, str]) -> dict:
         )
     paths: dict = {}
     for (path, method), endpoints in grouped.items():
-        paths.setdefault(path, {})[method] = _build_operation(endpoints, name_to_key)
+        paths.setdefault(path, {})[method] = _build_operation(
+            endpoints, name_to_key, scheme_keys
+        )
     return paths
 
 
-def _build_webhooks(plan: NormalizationPlan, name_to_key: dict[str, str]) -> dict:
+def _build_webhooks(
+    plan: NormalizationPlan,
+    name_to_key: dict[str, str],
+    scheme_keys: dict[str, str],
+) -> dict:
     """OpenAPI 3.1 top-level `webhooks`: endpoints with a method but no path are
     async callbacks (delivered to a caller-defined URL), not server paths."""
     out: dict = {}
     for name, endpoint in webhook_items(plan):
-        out[name] = {endpoint.method.lower(): _build_operation([endpoint], name_to_key)}
+        out[name] = {
+            endpoint.method.lower(): _build_operation(
+                [endpoint], name_to_key, scheme_keys
+            )
+        }
     return out
+
+
+def _root_tags(plan: NormalizationPlan) -> list[dict]:
+    """Unique tag declarations in source order, from every endpoint's tags."""
+    names: list[str] = []
+    for endpoint in plan.endpoints:
+        for tag in endpoint.tags:
+            if tag and tag not in names:
+                names.append(tag)
+    return [{"name": name} for name in names]
 
 
 def _build_object_schema(entry) -> dict:
@@ -408,14 +496,23 @@ def build_openapi(plan: NormalizationPlan) -> dict:
         for idx, entry in enumerate(plan.schemas)
         if entry.name
     }
+    scheme_keys = {
+        scheme.name: security_scheme_key(scheme.name, idx)
+        for idx, scheme in enumerate(plan.security_schemes)
+        if scheme.name
+    }
     doc: dict = {"openapi": "3.1.0", "info": _build_info(plan)}
     servers = _build_servers(plan)
     if servers:
         doc["servers"] = servers
-    doc["paths"] = _build_paths(plan, name_to_key)
-    webhooks = _build_webhooks(plan, name_to_key)
+    root_tags = _root_tags(plan)
+    if root_tags:
+        doc["tags"] = root_tags
+    doc["paths"] = _build_paths(plan, name_to_key, scheme_keys)
+    webhooks = _build_webhooks(plan, name_to_key, scheme_keys)
     if webhooks:
         doc["webhooks"] = webhooks
+    _assign_operation_ids(doc)
     components: dict = {}
     schemas = _build_schemas(plan, key_map)
     if schemas:

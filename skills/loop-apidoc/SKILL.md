@@ -45,9 +45,12 @@ For **every** endpoint in inventory.endpoints, output one JSON file (`ep0.json`,
  "parameters":[{"name":"str","in":"query|header|path|body|null","type":"str|null","required":"bool|null","description":"str|null"}],
  "request":{"content_type":"str|null","schema":"str|null","required":"bool|null","description":"str|null"} ,
  "responses":[{"status":"str","description":"str|null","schema":"str|null","schema_ref":"str|null"}],
+ "tags":["str"],"security":["str"],
  "examples":[{}],"missing":["str"]}
 ```
 `request` is `null` when there is no body. Fields the source omits → null/empty array, and add them to `missing`.
+**`tags`**: source-stated grouping labels for this endpoint (e.g. a section/category title the source uses — "信用卡", "電子錢包"); they become the operation's OpenAPI `tags` and are declared at the document root. Empty when the source groups nothing.
+**`security`**: the **exact `name`s** of the `inventory.security_schemes` entries this endpoint requires (e.g. `["AES256 (TradeInfo)"]`); they become the operation's `security` requirement. Empty when the source states no auth/signing for this endpoint; never list a scheme name that isn't in `inventory.security_schemes`.
 **`schema_ref`**: when a response body is the structured shape you also captured as a named entry in `inventory.schemas` (e.g. the response of `取消授權` ↔ schema `取消授權回應參數（Result）`), set `schema_ref` to that schema's **exact `name`**. The OpenAPI then links the response via `$ref: #/components/schemas/...` instead of restating the field list as prose. Use `null` when no such named schema exists; never invent a name that isn't in `inventory.schemas`.
 Top-level `source` is required: cite the source section/page/URL where this endpoint's detail lives (consistent with the matching `source` in inventory.endpoints). **With multiple sources this is the only thing attributing detail to the correct source** — omitting it triggers `SOURCE_UNVERIFIED`.
 
