@@ -1,0 +1,26 @@
+{
+  "_note": "大型企業 REST(CyberSource Payments 子集:核心付款生命週期 5 操作)。複雜巢狀 schema 壓測;達成值保守下限。auth 為 JWT(建議)/HTTP Signature(棄用),wire 格式未在來源 → fail-closed missing,故 securityScheme 以 missing-source placeholder 呈現。",
+  "must_have": {
+    "base_urls": 2,
+    "endpoints_min": 5,
+    "webhooks_min": 0,
+    "schemas_min": 15,
+    "error_codes_min": 0,
+    "security_schemes_min": 2,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": false,
+    "field_conditions_min": 3,
+    "test_cases_min": 1
+  },
+  "critical_operations": [
+    "paths./pts/v2/payments.post",
+    "paths./pts/v2/payments/{id}/captures.post",
+    "paths./pts/v2/payments/{id}/refunds.post"
+  ],
+  "critical_security_schemes": ["JWT", "HTTP_Signature"]
+}

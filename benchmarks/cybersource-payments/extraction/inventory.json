@@ -1,0 +1,2062 @@
+{
+  "title": "CyberSource Payments REST API",
+  "version": null,
+  "overview": "The CyberSource Payments REST API enables merchants to process the core payment lifecycle: authorization (create_payment), capture, refund, void, and authorization reversal. All endpoints require authentication via JWT with Shared Secret (recommended) or HTTP Signature (deprecated) and use content-type application/json;charset=utf-8 with accept application/hal+json;charset=utf-8. The API is available in sandbox (https://apitest.cybersource.com) and production (https://api.cybersource.com) environments.",
+  "environments": [
+    {
+      "name": "Sandbox",
+      "base_url": "https://apitest.cybersource.com",
+      "version": null,
+      "source": "README.md > Switching between the sandbox environment and the production environment: 'For TESTING use self.run_environment = \"apitest.cybersource.com\"'"
+    },
+    {
+      "name": "Production",
+      "base_url": "https://api.cybersource.com",
+      "version": null,
+      "source": "README.md > Switching between the sandbox environment and the production environment: 'For PRODUCTION use self.run_environment = \"api.cybersource.com\"'"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "JWT",
+      "type": "jwt",
+      "location": "header",
+      "details": "README.md Authentication section states: 'JWT with Shared Secret is the recommended migration path — it uses the same merchant_keyid and merchant_secretkey credentials, requires only two property changes, and enables MLE (Message Level Encryption) support that HTTP Signature does not provide.' Uses jwt_key_type: SHARED_SECRET, merchantid, merchant_keyid, and merchant_secretkey. The exact HTTP header name and construction is NOT stated in this source.",
+      "source": "README.md > Authentication > For JWT authentication with Shared Secret (Recommended migration from HTTP Signature)"
+    },
+    {
+      "name": "HTTP Signature",
+      "type": "httpSignature",
+      "location": "header",
+      "details": "README.md Authentication section states: 'HTTP Signature authentication is being deprecated' and requires authentication_type: HTTP_Signature, merchantid, merchant_keyid, and merchant_secretkey. The exact Signature header construction and signed headers list is NOT stated in this source.",
+      "source": "README.md > Authentication > For HTTP Signature authentication (Deprecated — migrate to JWT with Shared Secret)"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/pts/v2/payments",
+      "summary": "A payment authorizes the amount for the transaction. There are a number of supported payment features, such as E-commerce and Card Present - Credit Card/Debit Card, Echeck, e-Wallets, Level II/III Data, etc. A payment response includes the status of the request. It also includes processor-specific information when the request is successful and errors if unsuccessful. Authorization can be requested with Capture, Decision Manager, Payer Authentication(3ds), and Token Creation.",
+      "source": "PaymentsApi.md > create_payment"
+    },
+    {
+      "method": "POST",
+      "path": "/pts/v2/payments/{id}/captures",
+      "summary": "Include the payment ID in the POST request to capture the payment amount.",
+      "source": "CaptureApi.md > capture_payment"
+    },
+    {
+      "method": "POST",
+      "path": "/pts/v2/payments/{id}/refunds",
+      "summary": "Refund a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to refund the payment amount.",
+      "source": "RefundApi.md > refund_payment"
+    },
+    {
+      "method": "POST",
+      "path": "/pts/v2/payments/{id}/voids",
+      "summary": "Void a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to cancel the payment.",
+      "source": "VoidApi.md > void_payment"
+    },
+    {
+      "method": "POST",
+      "path": "/pts/v2/payments/{id}/reversals",
+      "summary": "Include the payment ID in the POST request to reverse the payment amount.",
+      "source": "ReversalApi.md > auth_reversal"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "CreatePaymentRequest",
+      "fields": [
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "issuer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "buyer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "sender_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "recipient_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "device_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "aggregator_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "consumer_authentication_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_defined_information",
+          "type": "array",
+          "required": false,
+          "description": "The object containing the custom data that the merchant defines."
+        },
+        {
+          "name": "merchant_defined_secure_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "installment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "travel_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "health_care_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotion_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "token_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "invoice_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "agreement_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "risk_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "acquirer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "recurring_payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "unscheduled_payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "hosted_payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "watchlist_screening_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/CreatePaymentRequest.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsClientReferenceInformation",
+      "fields": [
+        {
+          "name": "code",
+          "type": "string",
+          "required": false,
+          "description": "Merchant-generated order reference or tracking number. It is recommended that you send a unique value for each transaction so that you can perform meaningful searches for the transaction. Used by Authorization Required field. PIN Debit Requests for PIN debit reversals need to use the same merchant reference number that was used in the transaction that is being reversed. Required field for all PIN Debit requests (purchase, credit, and reversal). FDC Nashville Global Certain circumstances can cause the processor to truncate this value to 15 or 17 characters for Level II and Level III processing, which can cause a discrepancy between the value you submit and the value included in some processor reports."
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number for the transaction. Depending on how your Cybersource account is configured, this value could either be provided in the API request or generated by CyberSource. The actual value used in the request to the processor is provided back to you by Cybersource in the response."
+        },
+        {
+          "name": "paused_request_id",
+          "type": "string",
+          "required": false,
+          "description": "Used to resume a transaction that was paused for an order modification rule to allow for payer authentication to complete. To resume and continue with the authorization/decision service flow, call the services and include the request id from the prior decision call."
+        },
+        {
+          "name": "transaction_id",
+          "type": "string",
+          "required": false,
+          "description": "Identifier that you assign to the transaction. Normally generated by a client server to identify a unique API request. Note Use this field only if you want to support merchant-initiated reversal and void operations. Used by Authorization, Authorization Reversal, Capture, Credit, and Void Optional field. PIN Debit For a PIN debit reversal, your request must include a request ID or a merchant transaction identifier. Optional field for PIN debit purchase or credit requests."
+        },
+        {
+          "name": "comments",
+          "type": "string",
+          "required": false,
+          "description": "Brief description of the order or any comment you wish to add to the order."
+        },
+        {
+          "name": "partner",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "application_name",
+          "type": "string",
+          "required": false,
+          "description": "The name of the Connection Method client (such as Virtual Terminal or SOAP Toolkit API) that the merchant uses to send a transaction request to CyberSource."
+        },
+        {
+          "name": "application_version",
+          "type": "string",
+          "required": false,
+          "description": "Version of the CyberSource application or integration used for a transaction."
+        },
+        {
+          "name": "application_user",
+          "type": "string",
+          "required": false,
+          "description": "The entity that is responsible for running the transaction and submitting the processing request to CyberSource. This could be a person, a system, or a connection method."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsClientReferenceInformation.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsProcessingInformation",
+      "fields": [
+        {
+          "name": "action_list",
+          "type": "array",
+          "required": false,
+          "description": "Array of actions (one or more) to be included in the payment to invoke bundled services along with payment. Possible values are one or more of follows: DECISION_SKIP: Use this when you want to skip Decision Manager service(s). TOKEN_CREATE: Use this when you want to create a token from the card/bank data in your payment request. CONSUMER_AUTHENTICATION: Use this when you want to check if a card is enrolled in Payer Authentication along with your payment request. VALIDATE_CONSUMER_AUTHENTICATION: Use this after you acquire a Payer Authentication result that needs to be included for your payment request. AP_INITIATE: Use this when Alternative Payment Initiate service is requested. WATCHLIST_SCREENING: Use this when you want to call Watchlist Screening service. AP_SALE: Use this when Alternative Payment Sale service is requested. AP_AUTH: Use this when Alternative Payment Authorize service is requested. AP_REAUTH: Use this when Alternative Payment Reauthorize service is requested."
+        },
+        {
+          "name": "enable_escrow_option",
+          "type": "boolean",
+          "required": false,
+          "description": "Indicates whether to use the customer's escrow agreement. Possible values: true: yes, use the customer's escrow agreement. false: no, do not use the customer's escrow agreement."
+        },
+        {
+          "name": "action_token_types",
+          "type": "array",
+          "required": false,
+          "description": "CyberSource tokens types you are performing a create on. If not supplied the default token type for the merchants token vault will be used. Valid values: customer paymentInstrument instrumentIdentifier shippingAddress"
+        },
+        {
+          "name": "bin_source",
+          "type": "string",
+          "required": false,
+          "description": "Bin Source File Identifier. Possible values: itmx rupay"
+        },
+        {
+          "name": "capture",
+          "type": "boolean",
+          "required": false,
+          "description": "Indicates whether to also include a capture in the submitted authorization request or not. Possible values: true: Include a capture with an authorization request. false: (default) Do not include a capture with an authorization request. Used by Authorization and Capture Optional field."
+        },
+        {
+          "name": "processor_id",
+          "type": "string",
+          "required": false,
+          "description": "Value that identifies the processor/acquirer to use for the transaction. This value is supported only for CyberSource through VisaNet. Contact CyberSource Customer Support to get the value for this field."
+        },
+        {
+          "name": "business_application_id",
+          "type": "string",
+          "required": false,
+          "description": "Required for AFT and OCT transactions. Given below is a list of all the BAI values available. However, the processors may support only few specific BAI values. AA: Account-to-account BB: Supplier Payments BI: Bank-Initiated P2P Money Transfer BP: Non-Card Bill Pay/Bill Pay CD: Cash Deposit CP: Credit card Bill Payment FD: Funds disbursement FT: Funds transfer GD: Government Disbursement GP: Gambling payout (non-online gambling) LO: Loyalty credits and rebates MD: Merchant Settlement OG: Online Gambling Payout PD: Payroll and pension disbursement PP: Person-to-Person or Peer-to-Peer TU: Top up, prepaid load WT: Digital wallet"
+        },
+        {
+          "name": "commerce_indicator",
+          "type": "string",
+          "required": false,
+          "description": "Type of transaction. Some payment card companies use this information when determining discount rates. Used by Authorization Required payer authentication transactions; otherwise, optional. Credit Required for standalone credits on Chase Paymentech solutions; otherwise, optional. The list of valid values in this field depends on your processor. Ingenico ePayments When you omit this field for Ingenico ePayments, the processor uses the default transaction type they have on file for you instead of the default value Card Present You must set this field to retail. This field is required for a card-present transaction. Note that this should ONLY be used when the cardholder and card are present at the time of the transaction. For all keyed transactions originated from a POS terminal where the cardholder and card are not present, commerceIndicator should be submitted as moto"
+        },
+        {
+          "name": "commerce_indicator_label",
+          "type": "string",
+          "required": false,
+          "description": "Type of transaction. Some payment card companies use this information when determining discount rates. Used by Authorization Required payer authentication transactions; otherwise, optional. Credit Required for standalone credits on Chase Paymentech solutions; otherwise, optional. The list of valid values in this field depends on your processor. Ingenico ePayments When you omit this field for Ingenico ePayments, the processor uses the default transaction type they have on file for you instead of the default value Card Present You must set this field to retail. This field is required for a card-present transaction. Note that this should ONLY be used when the cardholder and card are present at the time of the transaction. For all keyed transactions originated from a POS terminal where the cardholder and card are not present, commerceIndicator should be submitted as moto"
+        },
+        {
+          "name": "payment_solution",
+          "type": "string",
+          "required": false,
+          "description": "Type of digital payment solution for the transaction. Possible Values: visacheckout: Visa Checkout. This value is required for Visa Checkout transactions. For details, see payment_solution field description in Visa Checkout Using the REST API. 001: Apple Pay. 004: Cybersource In-App Solution. 005: Masterpass. This value is required for Masterpass transactions on OmniPay Direct. 006: Android Pay. 007: Chase Pay. 008: Samsung Pay. 012: Google Pay. 013: Cybersource P2PE Decryption 014: Mastercard credential on file (COF) payment network token. Returned in authorizations that use a payment network token associated with a TMS token. 015: Visa credential on file (COF) payment network token. Returned in authorizations that use a payment network token associated with a TMS token. 027: Click to Pay."
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Please check with Cybersource customer support to see if your merchant account is configured correctly so you can include this field in your request. * For Payouts: max length for FDCCompass is String (22)."
+        },
+        {
+          "name": "link_id",
+          "type": "string",
+          "required": false,
+          "description": "Value that links the current authorization request to the original authorization request. Set this value to the ID that was returned in the reply message from the original authorization request. This value is used for: Partial authorizations Split shipments"
+        },
+        {
+          "name": "purchase_level",
+          "type": "string",
+          "required": false,
+          "description": "Set this field to 3 to indicate that the request includes Level III data."
+        },
+        {
+          "name": "transaction_timeout",
+          "type": "integer",
+          "required": false,
+          "description": "The time-out limit in seconds for the transaction. The time-out limit starts when the customer is directed to the merchant URL that is included in the sale service response. The maximum value is 99999 (about 27 hours). When the transaction times out, the payment system changes the status to abandoned."
+        },
+        {
+          "name": "intents_id",
+          "type": "string",
+          "required": false,
+          "description": "Set to the value of the requestID field returned in the order service response."
+        },
+        {
+          "name": "report_group",
+          "type": "string",
+          "required": false,
+          "description": "Attribute that lets you define custom grouping for your processor reports. This field is supported only for Worldpay VAP."
+        },
+        {
+          "name": "visa_checkout_id",
+          "type": "string",
+          "required": false,
+          "description": "Identifier for the Visa Checkout order. Visa Checkout provides a unique order ID for every transaction in the Visa Checkout callID field."
+        },
+        {
+          "name": "industry_data_type",
+          "type": "string",
+          "required": false,
+          "description": "Indicates that the transaction includes industry-specific data. Possible Values: airline restaurant lodging auto_rental transit healthcare_medical healthcare_transit transit Card Present, Airlines and Auto Rental You must set this field to airline in order for airline data to be sent to the processor. For example, if this field is not set to airline or is not included in the request, no airline data is sent to the processor. You must set this field to restaurant in order for restaurant data to be sent to the processor. When this field is not set to restaurant or is not included in the request, no restaurant data is sent to the processor. You must set this field to auto_rental in order for auto rental data to be sent to the processor. For example, if this field is not set to auto_rental or is not included in the request, no auto rental data is sent to the processor. Restaurant data is supported only on CyberSource through VisaNet."
+        },
+        {
+          "name": "authorization_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "capture_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "recurring_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "bank_transfer_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "purchase_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "electronic_benefits_transfer",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "loan_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "wallet_type",
+          "type": "string",
+          "required": false,
+          "description": "This field carries the wallet type in authorization requests and credit requests. Possible value are: 101: Masterpass remote payment. The customer created the wallet by manually interacting with a customer-controlled device such as a computer, tablet, or phone. This value is supported only for Masterpass transactions on Chase Paymentech Solutions and CyberSource through VisaNet. 102: Masterpass remote near field communication (NFC) payment. The customer created the wallet by tapping a PayPass card or customer-controlled device at a contactless card reader. This value is supported only for card-present Masterpass transactions on CyberSource through VisaNet. 103: Masterpass Apple Pay payment. The payment was made with a combination of Masterpass and Apple Pay. This value is supported only for Masterpass Apple Pay transactions on CyberSource through VisaNet. 216: Masterpass Google Pay payment. The payment was made with a combination of Masterpass and Google Pay. This value is supported only for Masterpass Google Pay transactions on CyberSource through VisaNet. 217: Masterpass Samsung Pay payment. The payment was made with a combination of Masterpass and Samsung Pay. This value is supported only for Masterpass Samsung Pay transactions on CyberSource through VisaNet. SDW: Staged digital wallet. An issuer or operator created the wallet. This value is supported only for Masterpass transactions on Chase Paymentech Solutions. VCIND: Visa Checkout payment. This value is supported only on CyberSource through VisaNet, FDC Compass, FDC Nashville Global, FDI Australia, and TSYS Acquiring Solutions. See Getting Started with Visa Checkout. For Visa Checkout transactions, the way CyberSource processes the value for this field depends on the processor. See the Visa Checkout section below. For all other values, this field is a passthrough; therefore, CyberSource does not verify the value or modify it in any way before sending it to the processor. Masterpass (101, 102, 103, 216, and 217): The Masterpass platform generates the wallet type value and passes it to you along with the customer's checkout information. Visa Checkout: This field is optional for Visa Checkout authorizations on FDI Australia. For all other processors, this field is required for Visa Checkout authorizations. For Visa Checkout transactions on the following processors, CyberSource sends the value that the processor expects for this field:FDC Compass,FDC Nashville Global,FDI Australia,TSYS Acquiring Solutions For all other processors, this field is a passthrough; therefore, CyberSource does not verify the value or modify it in any way before sending it to the processor. For incremental authorizations, this field is supported only for Mastercard and the supported values are 101 and 102. Payment card companies can introduce new values without notice. Your order management system should be able to process new values without problems. CyberSource through VisaNet When the value for this field is 101, 102, 103, 216, or 217, it corresponds to the following data in the TC 33 capture file5: Record: CP01 TCR6, Position: 88-90, Field: Mastercard Wallet Identifier. When the value for this field is VCIND, it corresponds to the following data in the TC 33 capture file5: Record: CP01 TCR8, Position: 72-76, Field: Agent Unique ID."
+        },
+        {
+          "name": "national_net_domestic_data",
+          "type": "string",
+          "required": false,
+          "description": "Supplementary domestic transaction information provided by the acquirer for National Net Settlement Service (NNSS) transactions. NNSS is a settlement service that Visa provides. For transactions on CyberSource through VisaNet in countries that subscribe to NNSS: VisaNet clears transactions; VisaNet transfers funds to the acquirer after deducting processing fees and interchange fees. VisaNet settles transactions in the local pricing currency through a local financial institution. This field is supported only on CyberSource through VisaNet for domestic data in Colombia"
+        },
+        {
+          "name": "merchant_verification_value",
+          "type": "string",
+          "required": false,
+          "description": "The override value of the Merchant Verification Value (MVV) received by various card brands. MVV refers to the value assigned by the card brand/network to identify participation in select merchant programs. Sample value for Visa: 101010"
+        },
+        {
+          "name": "japan_payment_options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "mobile_remote_payment_type",
+          "type": "string",
+          "required": false,
+          "description": "Type of payment initiated from a cardholder's mobile device. Possible values: 1: Consumer-initiated remote purchase, face-to-face 2: Consumer-initiated remote purchase, e-commerce 3: Consumer-initiated remote purchase, mail order / telephone order 4: Consumer-initiated bill pay 5: Consumer-initiated top up 6: Consumer-initiated cash out 7: ATM triggered or agent-initiated cash out 8: Merchant-initiated remote purchase, face-to-face 9: Merchant-initiated remote purchase, e-commerce This field is supported only for Mastercard transactions on CyberSource through VisaNet. Optional field. Note On CyberSource through VisaNet, the value for this field corresponds to the following data in the TC 33 capture file: Record: CP01 TCR6 Position: 94 Field: Mastercard Mobile Remote Payment Program Indicator The TC 33 Capture file contains information about the purchases and refunds that a merchant submits to CyberSource. CyberSource through VisaNet creates the TC 33 Capture file at the end of the day and sends it to the merchant's acquirer, who uses this information to facilitate end-of-day clearing processing with payment networks."
+        },
+        {
+          "name": "extended_credit_total_count",
+          "type": "string",
+          "required": false,
+          "description": "A private national-use field submitted by acquirers and issuers in South Africa for South Africa-domestic (intra-country) authorizations and financial requests. Values for this field are 00 through 99."
+        },
+        {
+          "name": "network_routing_order",
+          "type": "string",
+          "required": false,
+          "description": "On PIN Debit Gateways: This U.S.-only field is optionally used by participants (merchants and acquirers) to specify the network access priority. VisaNet checks to determine if there are issuer routing preferences for any of the networks specified by the sharing group code. If an issuer preference exists for one of the specified debit networks, VisaNet makes a routing selection based on the issuer's preference. If an issuer preference exists for more than one of the specified debit networks, or if no issuer preference exists, VisaNet makes a selection based on the acquirer's routing priorities. PIN debit Priority order of the networks through which he transaction will be routed. Set this value to a series of one-character network codes in your preferred order. This is a list of the network codes: Network Code Accel E AFFN U Alaska Option 3 CU24 C Interlink G Maestro 8 NETS P NYCE F Pulse H Shazam 7 Star M Visa V For example, if the Star network is your first preference and Pulse is your second preference, set this field to a value of MH. When you do not include this value in your PIN debit request, the list of network codes from your account is used. Note This field is supported only for businesses located in the U.S. Optional field for PIN debit credit or PIN debit purchase."
+        },
+        {
+          "name": "pay_by_points_indicator",
+          "type": "boolean",
+          "required": false,
+          "description": "Flag that indicates if the transaction is pay by points transaction true: Transaction uses loyalty points false: Transaction does not use loyalty points Default: false"
+        },
+        {
+          "name": "timeout",
+          "type": "integer",
+          "required": false,
+          "description": "Minutes until a pending MyBank transaction will be timed out. Value must be between 5 and 30. Default is 5."
+        },
+        {
+          "name": "is_return_auth_record_enabled",
+          "type": "boolean",
+          "required": false,
+          "description": "Flag that indicates the functionality we are having for merchants for which auth is done through Cybersource but settlement is done by themselves. true: functionality is supported. Processor should send raw processor auth response to Merchant. false: functionality is not supported. Default: false"
+        },
+        {
+          "name": "network_partner_id",
+          "type": "string",
+          "required": false,
+          "description": "Merchant payment gateway ID that is assigned by Mastercard and is provided by the acquirer when a registered merchant payment gateway service provider is involved in the transaction. This field is supported for Visa Platform Connect, Chase Paymentech Salem."
+        },
+        {
+          "name": "payment_type",
+          "type": "string",
+          "required": false,
+          "description": "Identifier for the payment type."
+        },
+        {
+          "name": "enabler_id",
+          "type": "string",
+          "required": false,
+          "description": "Enablers are payment processing entities that are not acquiring members and are often the primary relationship owner with merchants and originators. Enablers own technical solutions through which the merchant or originator will access acceptance. The Enabler ID is a five-character hexadecimal identifier that will be used by Visa to identify enablers. Enabler ID assignment will be determined by Visa. Visa will communicate Enablers assignments to enablers."
+        },
+        {
+          "name": "processing_instruction",
+          "type": "string",
+          "required": false,
+          "description": "The instruction to process an order. default value: 'NO_INSTRUCTION' 'ORDER_SAVED_EXPLICITLY'"
+        },
+        {
+          "name": "transaction_type_indicator",
+          "type": "string",
+          "required": false,
+          "description": "This field is used identify the type of payment transaction taking place. This field is applicable for MasterCard transactions only. Possible values: 201- Mastercard Rebate 202- rePower Load Value 203- Gaming Re-pay 204- General Person-to-Person 205- General Transfer to Own Account 206- Agent Cash Out 207- Payment of Own Credit Card Bill 208- Business Disbursement 209- Government/Non-Profit Disbursement 210- Rapid Merchant Settlement 211- Cash in at ATM (Usage limited to specific countries) 212- Cash in at Point of Sale (Usage limited to specific countries) 213- General Business to Business Transfer 214- Mastercard Merchant Presented QR 215- Mastercard Merchant Presented QR Refund Payment 216- Utility Payments (for Brazil domestic use only) 217- Government Services (for Brazil domestic use only) 218- Mobile phone top-ups (for Brazil domestic use only) 219- Coupon booklet payments (for Brazil domestic use only) 220- General Person-to-Person Transfer 221- Person-to-Person Transfer to Card Account 222- General Transfer to Own Account 223- Agent Cash Out 224- Payment of Own Credit Card Bill 225- Business Disbursement 226- Transfer to Own Staged Digital Wallet Account 227- Transfer to Own Debit or Prepaid Account 228- General Business-to-Business Transfer 229- Installment-based repayment 230- Mastercard ATM Cash Pick-UP Transaction 231- Cryptocurrency 232- High-risk Securities"
+        },
+        {
+          "name": "purpose_of_payment",
+          "type": "string",
+          "required": false,
+          "description": "This field is applicable for AFT and OCT transactions. For list of supported values, please refer to Developer Guide."
+        },
+        {
+          "name": "language_code",
+          "type": "string",
+          "required": false,
+          "description": "Contains the ISO 639-2 defined language Code"
+        },
+        {
+          "name": "original_payment_id",
+          "type": "string",
+          "required": false,
+          "description": "This value is used for linking Authorization extension transaction to the original Authorization transaction and for linking MIT (Merchant initiated transaction) with the respective CIT (Customer initiated transaction)."
+        },
+        {
+          "name": "amex_indirect_model_type",
+          "type": "string",
+          "required": false,
+          "description": "Effective with the April 2025 release, American Express is introducing the following new Indirect Acceptor models: Digital Wallet Operator Staged back to back transaction Peer to peer (P2P) transaction Stored value transaction Marketplace Each model must have a separate American Express Merchant Account number and will be assigned a unique Indirect Model Type value. Valid/Sample Values: 1: Bill payment provider 2: Installment payment transaction 3: Marketplace 4: Peer to peer transaction 5: Staged back to back transaction 6: Stored value transaction"
+        },
+        {
+          "name": "wallet_transaction_intent",
+          "type": "number",
+          "required": false,
+          "description": "Identifies the type of operation being performed by the staged digital wallet operator. The value distinguishes between a Cash-in transaction (coded as \"02\"), where funds are loaded into the digital wallet from a registered payment card, and a Purchase transaction (coded as \"01\"), where the wallet is used to make a payment to a merchant or transfer funds between wallets. This distinction is essential for transaction processing, reporting, and ensuring compliance with the specific rules and requirements associated with each card brand and transaction type."
+        },
+        {
+          "name": "destination_type",
+          "type": "number",
+          "required": false,
+          "description": "Identifies the destination/purpose of the cash-in: • 04: M2M (Same ownership, same portfolio/arrangement) • 05: P2P (For another holder, same wallet/arrangement) • 06: Transfer to another arrangement (same ownership) • 07: Transfer to another arrangement (other ownership) • 08: Transfer to stored value digital wallet."
+        },
+        {
+          "name": "program_indicators",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "inquiry_type",
+          "type": "string",
+          "required": false,
+          "description": "Type of inquiry for Zero dollar transactions. Mastercard is introducing Mastercard One Credential, a single, digitally connected credential that offers cardholders the ability to access multiple payment methods. This field is used for Product Status Inquiry (PSI), Account Status Inquiry with Product Status Inquiry (ASI with PSI), and Account Status Inquiry with Product Status Inquiry and Probability Indicator. This field is supported for Zero dollar transactions only. Possible values: 01: Product status inquiry 02: Account status inquiry with product status inquiry 03: Account status Inquiry with Product Status Inquiry and Probability Indicator Used by Authorization (Zero dollar transactions) Optional field."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsProcessingInformation.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsOrderInformation",
+      "fields": [
+        {
+          "name": "extension_days",
+          "type": "string",
+          "required": false,
+          "description": "Request field for merchant to increase the AUTH expiry days for Klarna Advantage Plus. Applicable for Re-Authorization (AP_REAUTH) service."
+        },
+        {
+          "name": "amount_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "bill_to",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "ship_to",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "line_items",
+          "type": "array",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "invoice_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "shipping_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "digital_currency",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "returns_accepted",
+          "type": "boolean",
+          "required": false,
+          "description": "This is only needed when you are requesting both payment and DM service at same time. Boolean that indicates whether returns are accepted for this order. This field can contain one of the following values: true: Returns are accepted for this order. false: Returns are not accepted for this order."
+        },
+        {
+          "name": "is_cryptocurrency_purchase",
+          "type": "string",
+          "required": false,
+          "description": "Visa Platform Connect: This API will contain the Flag that specifies whether the payment is for the purchase of cryptocurrency. Additional values to add: This API will contain the Flag that specifies whether the payment is for the purchase of cryptocurrency. valid values are Y/y, true N/n, false"
+        },
+        {
+          "name": "cutoff_date_time",
+          "type": "string",
+          "required": false,
+          "description": "Starting date and time for an event or a journey that is independent of which transportation mechanism, in UTC. The cutoffDateTime will supersede travelInformation.transit.airline.legs[].departureDate and travelInformation.transit.airline.legs[].departureTime if these fields are supplied in the request. Format: YYYY-MM-DDThh:mm:ssZ. Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC."
+        },
+        {
+          "name": "pre_order",
+          "type": "string",
+          "required": false,
+          "description": "Indicates whether cardholder is placing an order with a future availability or release date. This field can contain one of these values: MERCHANDISE_AVAILABLE: Merchandise available FUTURE_AVAILABILITY: Future availability"
+        },
+        {
+          "name": "pre_order_date",
+          "type": "string",
+          "required": false,
+          "description": "Expected date that a pre-ordered purchase will be available. Format: YYYYMMDD"
+        },
+        {
+          "name": "reordered",
+          "type": "boolean",
+          "required": false,
+          "description": "Indicates whether the cardholder is reordering previously purchased merchandise. This field can contain one of these values: false: First time ordered true: Reordered"
+        },
+        {
+          "name": "total_offers_count",
+          "type": "string",
+          "required": false,
+          "description": "Total number of articles/items in the order as a numeric decimal count. Possible values: 00 - 99"
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsOrderInformation.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsOrderInformationAmountDetails",
+      "fields": [
+        {
+          "name": "refund_balance",
+          "type": "string",
+          "required": false,
+          "description": "The remaining amount which can be refunded."
+        },
+        {
+          "name": "gift_wrap_amount",
+          "type": "string",
+          "required": false,
+          "description": "Amount being charged as gift wrap fee."
+        },
+        {
+          "name": "invoice_amount",
+          "type": "string",
+          "required": false,
+          "description": "Invoice amount. The invoice amount issued by the Merchant to the Cardholder, which includes VAT (excluding items such as TIPS or CASHBACK). For transactions that do not have applicable Benefit Laws, the field may be entered as zeros. This field is only applicable for Uruguay market. Example: 100.00 Uruguay The value for this field corresponds to the following data in the TC 33 capture file: Record: CP01 TCR9 Position: 7-18 Field: Invoice Amount"
+        },
+        {
+          "name": "total_amount",
+          "type": "string",
+          "required": false,
+          "description": "Grand total for the order. This value cannot be negative. You can include a decimal point (.), but no other special characters. CyberSource truncates the amount to the correct number of decimal places. Note For CTV, FDCCompass, Paymentech processors, the maximum length for this field is 12. Important Some processors have specific requirements and limitations, such as maximum amounts and maximum field lengths. If your processor supports zero amount authorizations, you can set this field to 0 for the authorization to check if the card is lost or stolen. Card Present Required to include either this field or orderInformation.lineItems[].unitPrice for the order. Invoicing / Pay By Link Required for creating a new invoice or payment link. PIN Debit Amount you requested for the PIN debit purchase. This value is returned for partial authorizations. The issuing bank can approve a partial amount if the balance on the debit card is less than the requested transaction amount. Required field for PIN Debit purchase and PIN Debit credit requests. Optional field for PIN Debit reversal requests. GPX This field is optional for reversing an authorization or credit; however, for all other processors, these fields are required. DCC with a Third-Party Provider Set this field to the converted amount that was returned by the DCC provider. You must include either this field or the 1st line item in the order and the specific line-order amount in your request. DCC for First Data Not used."
+        },
+        {
+          "name": "sub_total_amount",
+          "type": "string",
+          "required": false,
+          "description": "Subtotal amount of all the items.This amount (which is the value of all items in the cart, not including the additional amounts such as tax, shipping, etc.) cannot change after a sessions request. When there is a change to any of the additional amounts, this field should be resent in the order request. When the sub total amount changes, you must initiate a new transaction starting with a sessions request. Note The amount value must be a non-negative number containing 2 decimal places and limited to 7 digits before the decimal point. This value can not be changed after a sessions request."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "Currency used for the order. Use the three-character ISO Standard Currency Codes. Used by Authorization Required field. Authorization Reversal For an authorization reversal (reversalInformation) or a capture (processingOptions.capture is set to true), you must use the same currency that you used in your payment authorization request. PIN Debit Currency for the amount you requested for the PIN debit purchase. This value is returned for partial authorizations. The issuing bank can approve a partial amount if the balance on the debit card is less than the requested transaction amount. For the possible values, see the ISO Standard Currency Codes. Returned by PIN debit purchase. For PIN debit reversal requests, you must use the same currency that was used for the PIN debit purchase or PIN debit credit that you are reversing. For the possible values, see the ISO Standard Currency Codes. Required field for PIN Debit purchase and PIN Debit credit requests. Optional field for PIN Debit reversal requests. GPX This field is optional for reversing an authorization or credit. DCC for First Data Your local currency. Tax Calculation Required for international tax and value added tax only. Optional for U.S. and Canadian taxes. Your local currency."
+        },
+        {
+          "name": "discount_amount",
+          "type": "string",
+          "required": false,
+          "description": "Total discount amount applied to the order."
+        },
+        {
+          "name": "duty_amount",
+          "type": "string",
+          "required": false,
+          "description": "Total charges for any import or export duties included in the order."
+        },
+        {
+          "name": "gratuity_amount",
+          "type": "string",
+          "required": false,
+          "description": "Gratuity or tip amount for restaurants. Allowed only when industryDatatype=restaurant. When your customer uses a debit card or prepaid card, and you receive a partial authorization, the payment networks recommend that you do not submit a capture amount that is higher than the authorized amount. When the capture amount exceeds the partial amount that was approved, the issuer has chargeback rights for the excess amount. Used by Capture Optional field. CyberSource through VisaNet Restaurant data is supported only on CyberSource through VisaNet when card is present."
+        },
+        {
+          "name": "tax_amount",
+          "type": "string",
+          "required": false,
+          "description": "Total tax amount for all the items in the order."
+        },
+        {
+          "name": "national_tax_included",
+          "type": "string",
+          "required": false,
+          "description": "Flag that indicates whether a national tax is included in the order total. Possible values: 0: national tax not included 1: national tax included"
+        },
+        {
+          "name": "tax_applied_after_discount",
+          "type": "string",
+          "required": false,
+          "description": "Flag that indicates how the merchant manages discounts. Possible values: 0: no invoice level discount included 1: tax calculated on the postdiscount invoice total 2: tax calculated on the prediscount invoice total"
+        },
+        {
+          "name": "tax_applied_level",
+          "type": "string",
+          "required": false,
+          "description": "Flag that indicates how you calculate tax. Possible values: 0: net prices with tax calculated at line item level 1: net prices with tax calculated at invoice level 2: gross prices with tax provided at line item level 3: gross prices with tax provided at invoice level 4: no tax applies on the invoice for the transaction"
+        },
+        {
+          "name": "tax_type_code",
+          "type": "string",
+          "required": false,
+          "description": "For tax amounts that can be categorized as one tax type. This field contains the tax type code that corresponds to the entry in the _lineItems.taxAmount_ field. Possible values: 056: sales tax (U.S only) TX~: all taxes (Canada only) Note ~ = space."
+        },
+        {
+          "name": "freight_amount",
+          "type": "string",
+          "required": false,
+          "description": "Total freight or shipping and handling charges for the order. When you include this field in your request, you must also include the **totalAmount** field."
+        },
+        {
+          "name": "foreign_amount",
+          "type": "string",
+          "required": false,
+          "description": "Set this field to the converted amount that was returned by the DCC provider."
+        },
+        {
+          "name": "foreign_currency",
+          "type": "string",
+          "required": false,
+          "description": "Set this field to the converted amount that was returned by the DCC provider."
+        },
+        {
+          "name": "exchange_rate",
+          "type": "string",
+          "required": false,
+          "description": "Exchange rate returned by the DCC service. Includes a decimal point and a maximum of 4 decimal places."
+        },
+        {
+          "name": "exchange_rate_time_stamp",
+          "type": "string",
+          "required": false,
+          "description": "Time stamp for the exchange rate. This value is returned by the DCC service. Format: `YYYYMMDD~HH:MM` where ~ denotes a space."
+        },
+        {
+          "name": "surcharge",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "settlement_amount",
+          "type": "string",
+          "required": false,
+          "description": "This is a multicurrency field. It contains the transaction amount (field 4), converted to the Currency used to bill the cardholder's account. This field is returned for OCT transactions."
+        },
+        {
+          "name": "settlement_currency",
+          "type": "string",
+          "required": false,
+          "description": "This is a multicurrency-only field. It contains a 3-digit numeric code that identifies the currency used by the issuer to bill the cardholder's account. This field is returned for OCT transactions."
+        },
+        {
+          "name": "amex_additional_amounts",
+          "type": "array",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tax_details",
+          "type": "array",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "service_fee_amount",
+          "type": "string",
+          "required": false,
+          "description": "Service fee. Required for service fee transactions."
+        },
+        {
+          "name": "original_amount",
+          "type": "string",
+          "required": false,
+          "description": "Amount in your original local pricing currency. This value cannot be negative. You can include a decimal point (.) in this field to denote the currency exponent, but you cannot include any other special characters. If needed, CyberSource truncates the amount to the correct number of decimal places."
+        },
+        {
+          "name": "original_currency",
+          "type": "string",
+          "required": false,
+          "description": "Your local pricing currency code. For the possible values, see the ISO Standard Currency Codes."
+        },
+        {
+          "name": "cashback_amount",
+          "type": "string",
+          "required": false,
+          "description": "Cashback amount in the acquirer's currency. If a cashback amount is included in the request, it must be included in the `orderInformation.amountDetails.totalAmount` value. This field is supported only on CyberSource through VisaNet. Used by Authorization Optional. Authorization Reversal Optional. PIN debit Optional field for PIN debit purchase, PIN debit credit or PIN debit reversal."
+        },
+        {
+          "name": "currency_conversion",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "oct_surcharge",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "anticipated_amount",
+          "type": "string",
+          "required": false,
+          "description": "This API Field contains the anticipated amount details. This supports use cases where the Merchant does not wish to have funds held against the account, but needs to confirm an amount prior to authorization, such as for a trial subscription, reservation service, or loyalty program. In an account verification, the anticipated amount is used to confirm the account has availability to accept purchases."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsOrderInformationAmountDetails.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsOrderInformationBillTo",
+      "fields": [
+        {
+          "name": "first_name",
+          "type": "string",
+          "required": false,
+          "description": "Customer's first name. This name must be the same as the name on the card. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. SEPA Required for Create Mandate and Import Mandate BACS Required for Import Mandate CyberSource Latin American Processing Important For an authorization request, CyberSource Latin American Processing concatenates `orderInformation.billTo.firstName` and `orderInformation.billTo.lastName`. If the concatenated value exceeds 30 characters, CyberSource Latin American Processing declines the authorization request.\\ Note CyberSource Latin American Processing is the name of a specific processing connection that CyberSource supports. In the CyberSource API documentation, CyberSource Latin American Processing does not refer to the general topic of processing in Latin America. The information in this field description is for the specific processing connection called _CyberSource Latin American Processing_. It is not for any other Latin American processors that CyberSource supports. CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. For Payouts: This field may be sent only for FDC Compass. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "required": false,
+          "description": "Customer's last name. This name must be the same as the name on the card. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. SEPA Required for Create Mandate and Import Mandate BACS Required for Import Mandate Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. CyberSource Latin American Processing Important For an authorization request, CyberSource Latin American Processing concatenates `orderInformation.billTo.firstName` and `orderInformation.billTo.lastName`. If the concatenated value exceeds 30 characters, CyberSource Latin American Processing declines the authorization request.\\ Note CyberSource Latin American Processing is the name of a specific processing connection that CyberSource supports. In the CyberSource API documentation, CyberSource Latin American Processing does not refer to the general topic of processing in Latin America. The information in this field description is for the specific processing connection called CyberSource Latin American Processing. It is not for any other Latin American processors that CyberSource supports. CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. For Payouts: This field may be sent only for FDC Compass. OmniPay Direct Optional field. RBS WorldPay Atlanta Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "middle_name",
+          "type": "string",
+          "required": false,
+          "description": "Customer's middle name."
+        },
+        {
+          "name": "name_suffix",
+          "type": "string",
+          "required": false,
+          "description": "Customer's name suffix."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "Title."
+        },
+        {
+          "name": "company",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "address1",
+          "type": "string",
+          "required": false,
+          "description": "Payment card billing street address as it appears on the credit card issuer's records. SEPA Required for Create Mandate and Import Mandate Atos This field must not contain colons (:). CyberSource through VisaNet Important When you populate orderInformation.billTo.address1 and orderInformation.billTo.address2, CyberSource through VisaNet concatenates the two values. If the concatenated value exceeds 40 characters, CyberSource through VisaNet truncates the value at 40 characters before sending it to Visa and the issuing bank. Truncating this value affects AVS results and therefore might also affect risk decisions and chargebacks. Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. FDMS Nashville When the street name is numeric, it must be sent in numeric format. For example, if the address is _One First Street_, it must be sent as _1 1st Street_. Required if keyed; not used if swiped. String (20) TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. All other processors: Optional. String (60) For Payouts This field may be sent only for FDC Compass. Important It is your responsibility to determine whether a field is required for the transaction you are requesting."
+        },
+        {
+          "name": "address2",
+          "type": "string",
+          "required": false,
+          "description": "Used for additional address information. For example: _Attention: Accounts Payable_ Optional field. For Payouts: This field may be sent only for FDC Compass. Atos This field must not contain colons (:). CyberSource through VisaNet Important When you populate `orderInformation.billTo.address1` and `orderInformation.billTo.address2`, CyberSource through VisaNet concatenates the two values. If the concatenated value exceeds 40 characters, CyberSource through VisaNet truncates the value at 40 characters before sending it to Visa and the issuing bank. Truncating this value affects AVS results and therefore might also affect risk decisions and chargebacks. Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. Chase Paymentech Solutions, FDC Compass, and TSYS Acquiring Solutions This value is used for AVS. FDMS Nashville `orderInformation.billTo.address1` and `orderInformation.billTo.address2` together cannot exceed 20 characters. String (20) All Other Processors String (60)"
+        },
+        {
+          "name": "address3",
+          "type": "string",
+          "required": false,
+          "description": "Additional address information (third line of the billing address)"
+        },
+        {
+          "name": "address4",
+          "type": "string",
+          "required": false,
+          "description": "Additional address information (fourth line of the billing address)"
+        },
+        {
+          "name": "locality",
+          "type": "string",
+          "required": false,
+          "description": "Payment card billing city. SEPA Required for Create Mandate and Import Mandate Atos This field must not contain colons (:). CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. For Payouts: This field may be sent only for FDC Compass. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "administrative_area",
+          "type": "string",
+          "required": false,
+          "description": "State or province of the billing address. Use the [State, Province, and Territory Codes for the United States and Canada](https://developer.cybersource.com/library/documentation/sbc/quickref/states_and_provinces.pdf). For Payouts: This field may be sent only for FDC Compass. ##### CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "postal_code",
+          "type": "string",
+          "required": false,
+          "description": "Postal code for the billing address. The postal code must consist of 5 to 9 digits. When the billing country is the U.S., the 9-digit postal code must follow this format: [5 digits][dash][4 digits] Example `12345-6789` When the billing country is Canada, the 6-digit postal code must follow this format: [alpha][numeric][alpha][space][numeric][alpha][numeric] Example `A1B 2C3` Important It is your responsibility to determine whether a field is required for the transaction you are requesting. SEPA Required for Create Mandate and Import Mandate For Payouts: This field may be sent only for FDC Compass. American Express Direct Before sending the postal code to the processor, CyberSource removes all nonalphanumeric characters and, if the remaining value is longer than nine characters, truncates the value starting from the right side. Atos This field must not contain colons (:). CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. FDMS Nashville Required if `pointOfSaleInformation.entryMode=keyed` and the address is in the U.S. or Canada. Optional if `pointOfSaleInformation.entryMode=keyed` and the address is **not** in the U.S. or Canada. Not used if swiped. RBS WorldPay Atlanta: For best card-present keyed rates, send the postal code if `pointOfSaleInformation.entryMode=keyed`. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. All other processors: Optional field."
+        },
+        {
+          "name": "county",
+          "type": "string",
+          "required": false,
+          "description": "U.S. county if available."
+        },
+        {
+          "name": "country",
+          "type": "string",
+          "required": false,
+          "description": "Payment card billing country. Use the two-character [ISO Standard Country Codes](http://apps.cybersource.com/library/documentation/sbc/quickref/countries_alpha_list.pdf). SEPA/BACS Required for Create Mandate and Import Mandate CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "district",
+          "type": "string",
+          "required": false,
+          "description": "Customer's neighborhood, community, or region (a barrio in Brazil) within the city or municipality. This field is available only on **Cielo**."
+        },
+        {
+          "name": "building_number",
+          "type": "string",
+          "required": false,
+          "description": "Building number in the street address. For example, if the street address is: Rua da Quitanda 187 then the building number is 187. This field is supported only for: Cielo transactions. Redecard customer validation with CyberSource Latin American Processing."
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "required": false,
+          "description": "Customer's email address, including the full domain name. CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. Invoicing Email address for the customer for sending the invoice. If the invoice is in SENT status and email is updated, the old email customer payment link won't work and you must resend the invoice with the new payment link. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Required when `processingInformation.billPaymentOptions.billPayment=true` and `pointOfSaleInformation.entryMode=keyed`. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "email_domain",
+          "type": "string",
+          "required": false,
+          "description": "Email domain of the customer. The domain of the email address comprises all characters that follow the @ symbol, such as mail.example.com. For the Risk Update service, if the email address and the domain are sent in the request, the domain supersedes the email address."
+        },
+        {
+          "name": "phone_number",
+          "type": "string",
+          "required": false,
+          "description": "Customer's phone number. It is recommended that you include the country code when the order is from outside the U.S. Chase Paymentech Solutions Optional field. Credit Mutuel-CIC Optional field. CyberSource through VisaNet Credit card networks cannot process transactions that contain non-ASCII characters. CyberSource through VisaNet accepts and stores non-ASCII characters correctly and displays them correctly in reports. However, the limitations of the credit card networks prevent CyberSource through VisaNet from transmitting non-ASCII characters to the credit card networks. Therefore, CyberSource through VisaNet replaces non-ASCII characters with meaningless ASCII characters for transmission to the credit card networks. For Payouts: This field may be sent only for FDC Compass. OmniPay Direct Optional field. SIX Optional field. TSYS Acquiring Solutions Optional field. Worldpay VAP Optional field. All other processors Not used."
+        },
+        {
+          "name": "phone_type",
+          "type": "string",
+          "required": false,
+          "description": "Customer's phone number type. For Payouts: This field may be sent only for FDC Compass. Possible Values: * day * home * night * work"
+        },
+        {
+          "name": "verification_status",
+          "type": "string",
+          "required": false,
+          "description": "Whether buyer has verified their identity. Used in case of PayPal transactions. Possible Values: * VERIFIED * UNVERIFIED"
+        },
+        {
+          "name": "alternate_phone_number",
+          "type": "string",
+          "required": false,
+          "description": "Visa Platform Connect contains customer's alternate phone number."
+        },
+        {
+          "name": "alternate_email",
+          "type": "string",
+          "required": false,
+          "description": "Visa Platform Connect contains customer's alternate email address."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsOrderInformationBillTo.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsPaymentInformation",
+      "fields": [
+        {
+          "name": "card",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tokenized_card",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tokenized_payment_method",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "direct_debit",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "fluid_data",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "customer",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_instrument",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "instrument_identifier",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "shipping_address",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "legacy_token",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "bank",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "options",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_type",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "initiation_channel",
+          "type": "string",
+          "required": false,
+          "description": "Mastercard-defined code that indicates how the account information was obtained. 00: Card 01: Mobile Network Operator (MNO) controlled removable secure element (SIM or UICC) personalized for use with a mobile phone or smartphone 02: Key fob 03: Watch using a contactless chip or a fixed (non-removable) secure element not controlled by the MNO 04: Mobile tag 05: Wristband 06: Mobile phone case or sleeve 07: Mobile phone or smartphone with a fixed (non-removable) secure element controlled by the MNO,for example, code division multiple access (CDMA) 08: Removable secure element not controlled by the MNO, for example, memory card personalized forused with a mobile phone or smartphone 09: Mobile Phone or smartphone with a fixed (non-removable) secure element not controlled by the MNO 10: MNO controlled removable secure element (SIM or UICC) personalized for use with a tablet or e-book 11: Tablet or e-book with a fixed (non-removable) secure element controlled by the MNO 12: Removable secure element not controlled by the MNO, for example, memory card personalized foruse with a tablet or e-book 13: Tablet or e-book with fixed (non-removable) secure element not controlled by the MNO 14: Mobile phone or smartphone with a payment application running in a host processor 15: Tablet or e-book with a payment application running in a host processor 16: Mobile phone or smartphone with a payment application running in the Trusted ExecutionEnvironment (TEE) of a host processor 17: Tablet or e-book with a payment application running in the TEE of a host processor 18: Watch with a payment application running in the TEE of a host processor 19: Watch with a payment application running in a host processor Values from 20–99 exclusively indicate the form factor only without also indicating the storage technology 20: Card 21: Phone e.g. Mobile Phone 22: Tablet/e-reader 23: Watch/Wristband e.g. Watch or wristband, including a fitness band, smart strap, disposable band, watch add-on, and security/ID band 24: Sticker 25: PC 26: Device Peripheral e.g. mobile phone case or sleeve 27: Tag e.g. key fob or mobile tag 28: Jewelry e.g. ring, bracelet, necklace and cuff links 29: Fashion Accessory e.g. handbag, bag charm and glasses 30: Garment e.g. dress 31: Domestic Appliance e.g refrigerator, washing machine 32: Vehicle e.g. vehicle, including vehicle attached devices 33: Media/Gaming Device e.g. media or gaming device, including a set top box, media player and television 34–99 are reserved for future form factors. Any value in this range may occur within form factor and transaction data without prior notice. This field is supported only for Mastercard on CyberSource through VisaNet. When initiation channel is not provided via this API field, the value is extracted from EMV tag 9F6E for Mastercard transactions. To enable this feature please call support. Used by Authorization Optional field."
+        },
+        {
+          "name": "sepa",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "e_wallet",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_account_reference",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "third_party_token",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_limited_acceptance_indicator",
+          "type": "string",
+          "required": false,
+          "description": "Mastercard One Credential merchant limited acceptance indicator. Mastercard One Credential connects multiple Mastercard payment methods and allows cardhollers to access various options and set payment preferences. This field indicates which Mastercard One Credential funding PAN acceptance brands should NOT be assigned for this transaction. This field flows in ISO field 34, DSID 02 tag DB, mapped to Mastercard Data Element (DE) 48, Sub element 02, Subfield 01. Possible values: C: Do not assign a Mastercard One Credential funding PAN containing the Mastercard Credit Acceptance Brand for this transaction D: Do not assign a Mastercard One Credential funding PAN containing the Debit Mastercard Acceptance Brand for this transaction M: Do not assign a Mastercard One Credential funding PAN containing the Maestro Acceptance Brand for this transaction This field is supported for all flavors of Authorization request only. Will not be received in response. Used by Authorization Request Optional field."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsPaymentInformation.md Properties"
+    },
+    {
+      "name": "Ptsv2paymentsPaymentInformationCard",
+      "fields": [
+        {
+          "name": "number",
+          "type": "string",
+          "required": false,
+          "description": "The customer's payment card number, also known as the Primary Account Number (PAN). You can also use this field for encoded account numbers. FDMS Nashville Required. String (19) GPX Required if `pointOfSaleInformation.entryMode=keyed`. However, this field is optional if your account is configured for relaxed requirements for address data and expiration date. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. All other processors Required if `pointOfSaleInformation.entryMode=keyed`. However, this field is optional if your account is configured for relaxed requirements for address data and expiration date. Important It is your responsibility to determine whether a field is required for the transaction you are requesting."
+        },
+        {
+          "name": "expiration_month",
+          "type": "string",
+          "required": false,
+          "description": "Two-digit month in which the payment card expires. Format: `MM`. Valid values: `01` through `12`. Leading 0 is required. Barclays and Streamline For Maestro (UK Domestic) and Maestro (International) cards on Barclays and Streamline, this must be a valid value (`01` through `12`) but is not required to be a valid expiration date. In other words, an expiration date that is in the past does not cause CyberSource to reject your request. However, an invalid expiration date might cause the issuer to reject your request. Encoded Account Numbers For encoded account numbers (_type_=039), if there is no expiration date on the card, use `12`. FDMS Nashville Required field. All other processors Required if `pointOfSaleInformation.entryMode=keyed`. However, this field is optional if your account is configured for relaxed requirements for address data and expiration date. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. Google Pay transactions For PAN-based Google Pay transactions, this field is returned in the API response."
+        },
+        {
+          "name": "expiration_year",
+          "type": "string",
+          "required": false,
+          "description": "Four-digit year in which the payment card expires. Format: `YYYY`. Barclays and Streamline For Maestro (UK Domestic) and Maestro (International) cards on Barclays and Streamline, this must be a valid value (`1900` through `3000`) but is not required to be a valid expiration date. In other words, an expiration date that is in the past does not cause CyberSource to reject your request. However, an invalid expiration date might cause the issuer to reject your request. Encoded Account Numbers For encoded account numbers (**_type_**`=039`), if there is no expiration date on the card, use `2021`. FDMS Nashville Required field. FDC Nashville Global and FDMS South You can send in 2 digits or 4 digits. If you send in 2 digits, they must be the last 2 digits of the year. All other processors Required if `pointOfSaleInformation.entryMode=keyed`. However, this field is optional if your account is configured for relaxed requirements for address data and expiration date. Important It is your responsibility to determine whether a field is required for the transaction you are requesting. Google Pay transactions For PAN-based Google Pay transactions, this field is returned in the API response."
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Three-digit value that indicates the card type. IMPORTANT It is strongly recommended that you include the card type field in request messages even if it is optional for your processor and card type. Omitting the card type can cause the transaction to be processed with the wrong card type. Possible values: `001`: Visa. Use card type value `001` for Visa Electron. `002`: Mastercard, Eurocard[^1], which is a European regional brand of Mastercard. `003`: American Express `004`: Discover `005`: Diners Club `006`: Carte Blanche[^1] `007`: JCB[^1] `008`: Optima `009`: GE Private Label `010`: Beneficial Private Label `011`: Twinpay Credit Card `012`: Twinpay Debit Card `013`: WalMart `014`: Enroute[^1] `015`: Lowe's Consumer `016`: Home Depot Consumer `017`: MBNA `018`: Dick's Sportswear `019`: Casual Corner `020`: Sears `021`: JAL[^1] `023`: Disney Card `024`: Maestro (UK Domestic)[^1] `025`: Sam's Club Consumer `026`: Sam's Club Business `027`: Nico's `028`: Paymentech Bill Me Later `029`: Bebe `030`: Restoration Hardware `031`: Delta Online `032`: Solo `033`: Visa Electron[^1]. Do not use this value. Use `001` for all Visa card types. `034`: Dankort[^1] `035`: Laser `036`: Cartes Bancaires[^1,4] `037`: Carta Si[^1] `038`: Pinless Debit `039`: Encoded account number[^1] `040`: UATP[^1] `041`: HOUSEHOLD `042`: Maestro (International)[^1] `043`: GE MONEY `044`: Korean Cards `045`: Style Cards `046`: JCrew `047`: Payeasecn eWallet `048`: Payeasecn Bank Transfer `049`: Meijer `050`: Hipercard[^2,3] `051`: Aura `052`: Redecard `053`: Orico card `054`: Elo[^3] `055`: Capitol One Private Label `056`: Carnet `057`: Costco Private Label `058`: Carnet `059`: ValueLink `060`: MADA `061`: RuPay `062`: China UnionPay `063`: Falabella Private Label `064`: Prompt Card `065`: Korean Domestic `066`: Banricompras `067`: MEEZA `068`: PayPak `070`: EFTPOS `071`: Codensa `072`: Olimpica `073`: Colsubsidio `074`: Tuya `075`: Sodexo `076`: Naranja `077`: Cabal `078`: DINELCO `079`: PANAL `080`: EPM `081`: Jaywan [^1]: For this card type, you must include the `paymentInformation.card.type` or `paymentInformation.tokenizedCard.type` field in your request for an authorization or a stand-alone credit. [^2]: For this card type on Cielo 3.0, you must include the `paymentInformation.card.type` or `paymentInformation.tokenizedCard.type` field in a request for an authorization or a stand-alone credit. This card type is not supported on Cielo 1.5. [^3]: For this card type on Getnet and Rede, you must include the `paymentInformation.card.type` or `paymentInformation.tokenizedCard.type` field in a request for an authorization or a stand-alone credit. [^4]: For this card type, you must include the `paymentInformation.card.type` in your request for any payer authentication services. Used by Authorization Required for Carte Blanche and JCB. Optional for all other card types. Card Present reply This field is included in the reply message when the client software that is installed on the POS terminal uses the token management service (TMS) to retrieve tokenized payment details. You must contact customer support to have your account enabled to receive these fields in the credit reply message. Returned by the Credit service. This reply field is only supported by the following processors: American Express Direct Credit Mutuel-CIC FDC Nashville Global OmniPay Direct SIX Google Pay transactions For PAN-based Google Pay transactions, this field is returned in the API response. GPX This field only supports transactions from the following card types: Visa Mastercard AMEX Discover Diners JCB Union Pay International"
+        },
+        {
+          "name": "use_as",
+          "type": "string",
+          "required": false,
+          "description": "Flag that specifies the type of account associated with the card. This field is available only for China UnionPay, Cielo, Comercio Latino and Visa Platform Connect. The cardholder provides this information during the payment process. This field is required for: Debit transactions on Cielo and Comercio Latino. Transactions with Brazilian-issued cards on CyberSource through VisaNet. **China UnionPayCard Transactions on China UnionPay:** Possible values: C: Domestic credit card D: Domestic debit card F: International credit card I: International debit card When the value is D, the e-commerce indicator and CAVV fields must be included in the authorization request. When the value is C, F or I the card verification number, expiration month and expiration year fields must in included in the authorization request. **Cielo and Comercio Latino Credit Card Transactions:** On these processors, this field is supported only for authorizations. Possible values: CR: Credit card DB: Debit card **Visa Platform Connect Credit Card Transactions:** This field is supported for all card types on Visa Platform Connect. For combo **card present** transactions with Mastercard on Brazilian-issued cards, possible values: CR: Credit card DB: Debit Card For combo **card not present** transactions with Mastercard on Brazilian-issued cards, possible values: C: Credit card D: Debit card A value of CR or DB in the useAs field takes precedence over any value in the Source Account Type field."
+        },
+        {
+          "name": "source_account_type",
+          "type": "string",
+          "required": false,
+          "description": "Flag that specifies the type of account associated with the card. The cardholder provides this information during the payment process. This field is required in the following cases: Debit transactions on Cielo and Comercio Latino. Transactions with Brazilian-issued cards on CyberSource through VisaNet. Applicable only for CyberSource through VisaNet (CtV). Note Combo cards in Brazil contain credit and debit functionality in a single card. Visa systems use a credit bank identification number (BIN) for this type of card. Using the BIN to determine whether a card is debit or credit can cause transactions with these cards to be processed incorrectly. CyberSource strongly recommends that you include this field for combo card transactions. Possible values include the following. `CH`: Checking account `CR`: Credit card account `SA`: Saving account `LI`: Line of credit or credit portion of combo card `PP`: Prepaid card account or prepaid portion of combo card `UA`: Universal account If useAs is set to credit/debit and there is a value in SourceAccountType, the value in the SourceAccountType field will take precedence. If useAs is set to CR/DB and there is a value in SourceAccountType, the value in the useAs field will take precedence."
+        },
+        {
+          "name": "source_account_type_details",
+          "type": "string",
+          "required": false,
+          "description": "Type of account that is being used when the value for the override_payment_method field is line of credit (LI) or prepaid card (PP). Possible values for line of credit: `AGRC`: Visa Agro Custeio `AGRE`: Visa Agro Electron `AGRI`: Visa Agro Investimento `AGRO`: Visa Agro Possible values for prepaid card: `VVA`: Visa Vale Alimentacao `VVF`: Visa Vale Flex `VVR`: Visa Vale Refeicao This field is supported only for combo card transactions in Brazil on CyberSource through VisaNet."
+        },
+        {
+          "name": "security_code",
+          "type": "string",
+          "required": false,
+          "description": "Card Verification Number. FDMS Nashville Required for American Express or if swiped; otherwise, optional. Ingenico ePayments Do not include this field when `commerceIndicator=recurring`. Note Ingenico ePayments was previously called _Global Collect_. TSYS Acquiring Solutions Optional if pointOfSaleInformation.entryMode=keyed; otherwise, not used. GPX Optional. All other processors: Optional."
+        },
+        {
+          "name": "security_code_indicator",
+          "type": "string",
+          "required": false,
+          "description": "Indicates whether a CVN code was sent. Possible values: `0` (default): CVN service not requested. This default value is used when you do not include `securityCode` field in the request. `1` (default): CVN service requested and supported. This default value is used when you include `securityCode` field in the request. `2`: CVN on credit card is illegible. `9`: CVN was not imprinted on credit card. FDMS Nashville Required for American Express cards; otherwise, optional. TSYS Acquiring Solutions Optional if `pointOfSaleInformation.entryMode=keyed`; otherwise, not used. All other processors Optional."
+        },
+        {
+          "name": "account_encoder_id",
+          "type": "string",
+          "required": false,
+          "description": "Identifier for the issuing bank that provided the customer's encoded account number. Contact your processor for the bank's ID."
+        },
+        {
+          "name": "issue_number",
+          "type": "string",
+          "required": false,
+          "description": "Number of times a Maestro (UK Domestic) card has been issued to the account holder. The card might or might not have an issue number. The number can consist of one or two digits, and the first digit might be a zero. When you include this value in your request, include exactly what is printed on the card. A value of 2 is different than a value of 02. Do not include the field, even with a blank value, if the card is not a Maestro (UK Domestic) card. Note The issue number is not required for Maestro (UK Domestic) transactions."
+        },
+        {
+          "name": "start_month",
+          "type": "string",
+          "required": false,
+          "description": "Month of the start of the Maestro (UK Domestic) card validity period. Do not include the field, even with a blank value, if the card is not a Maestro (UK Domestic) card. `Format: MM`. Possible values: 01 through 12. Note The start date is not required for Maestro (UK Domestic) transactions."
+        },
+        {
+          "name": "start_year",
+          "type": "string",
+          "required": false,
+          "description": "Year of the start of the Maestro (UK Domestic) card validity period. Do not include the field, even with a blank value, if the card is not a Maestro (UK Domestic) card. `Format: YYYY`. Note The start date is not required for Maestro (UK Domestic) transactions."
+        },
+        {
+          "name": "product_name",
+          "type": "string",
+          "required": false,
+          "description": "Name of the card product. Possible value: BNDES This field is supported only for BNDES transactions on CyberSource through VisaNet. The value for this field corresponds to the following data in the TC 33 capture file5: Record: CP07 TCR4 Position: 115-120 Field: Brazil Country Data"
+        },
+        {
+          "name": "product_subtype",
+          "type": "string",
+          "required": false,
+          "description": "This field would contain the indicator for transaction type Possible values: AC: Agriculture Maintenance Account AE: Agriculture Debit Account/Electron AG: Agriculture AI: Agriculture Investment Loan CG: Brazil Cargo CS: Construction DS: Distribution HC: Healthcare LP: Visa Large Purchase Advantage MA: Visa Mobile Agent MB: Interoperable Mobile Branchless Banking MG: Visa Mobile General VA: Visa Vale Supermarket VF: Visa Vale Fuel VR: Visa Vale Restaurant"
+        },
+        {
+          "name": "type_selection_indicator",
+          "type": "string",
+          "required": false,
+          "description": "Flag that identifies how the card type was selected. Possible values: 0: Card type was selected based on default acquirer settings. 1: Customer selected the card type."
+        }
+      ],
+      "enums": [],
+      "source": "docs/Ptsv2paymentsPaymentInformationCard.md Properties"
+    },
+    {
+      "name": "CapturePaymentRequest",
+      "fields": [
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "buyer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "device_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "aggregator_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_defined_information",
+          "type": "array",
+          "required": false,
+          "description": "The object containing the custom data that the merchant defines."
+        },
+        {
+          "name": "merchant_defined_secure_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "installment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "travel_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotion_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/CapturePaymentRequest.md Properties"
+    },
+    {
+      "name": "RefundPaymentRequest",
+      "fields": [
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "buyer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "device_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "aggregator_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_defined_information",
+          "type": "array",
+          "required": false,
+          "description": "The object containing the custom data that the merchant defines."
+        },
+        {
+          "name": "travel_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotion_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/RefundPaymentRequest.md Properties"
+    },
+    {
+      "name": "VoidPaymentRequest",
+      "fields": [
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "agreement_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/VoidPaymentRequest.md Properties"
+    },
+    {
+      "name": "AuthReversalRequest",
+      "fields": [
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "reversal_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "device_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/AuthReversalRequest.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsPost201Response",
+      "fields": [
+        {
+          "name": "links",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "An unique identification number generated by Cybersource to identify the submitted request. Returned by all services. It is also appended to the endpoint of the resource. On incremental authorizations, this value with be the same as the identification number returned in the original authorization response."
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": false,
+          "description": "More information about the transaction response."
+        },
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - AUTHORIZED - PARTIAL_AUTHORIZED - AUTHORIZED_PENDING_REVIEW - AUTHORIZED_RISK_DECLINED - PENDING_AUTHENTICATION - PENDING_REVIEW - DECLINED - INVALID_REQUEST"
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number for the transaction. Depending on how your Cybersource account is configured, this value could either be provided in the API request or generated by CyberSource. The actual value used in the request to the processor is provided back to you by Cybersource in the response."
+        },
+        {
+          "name": "error_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "issuer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_account_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "payment_insights_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "installment_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "token_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "buyer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "risk_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "consumer_authentication_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "merchant_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "clearing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "embedded_actions",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "watchlist_screening_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsPost201Response.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsCapturesPost201Response",
+      "fields": [
+        {
+          "name": "links",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "An unique identification number generated by Cybersource to identify the submitted request. Returned by all services. It is also appended to the endpoint of the resource. On incremental authorizations, this value with be the same as the identification number returned in the original authorization response."
+        },
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - PENDING - TRANSMITTED (Only for Online Capture enabled merchants)"
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number for the transaction. Depending on how your Cybersource account is configured, this value could either be provided in the API request or generated by CyberSource. The actual value used in the request to the processor is provided back to you by Cybersource in the response."
+        },
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "embedded_actions",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsCapturesPost201Response.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsRefundPost201Response",
+      "fields": [
+        {
+          "name": "links",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "An unique identification number generated by Cybersource to identify the submitted request. Returned by all services. It is also appended to the endpoint of the resource. On incremental authorizations, this value with be the same as the identification number returned in the original authorization response."
+        },
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - PENDING - DECLINED - INVALID_REQUEST"
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number for the transaction. Depending on how your Cybersource account is configured, this value could either be provided in the API request or generated by CyberSource. The actual value used in the request to the processor is provided back to you by Cybersource in the response."
+        },
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "refund_amount_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processing_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "order_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "error_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsRefundPost201Response.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsVoidsPost201Response",
+      "fields": [
+        {
+          "name": "links",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "An unique identification number generated by Cybersource to identify the submitted request. Returned by all services. It is also appended to the endpoint of the resource. On incremental authorizations, this value with be the same as the identification number returned in the original authorization response."
+        },
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - VOIDED - CANCELLED - FAILED"
+        },
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "void_amount_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number that you use to reconcile CyberSource reports with your reports."
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsVoidsPost201Response.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsReversalsPost201Response",
+      "fields": [
+        {
+          "name": "links",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "description": "An unique identification number generated by Cybersource to identify the submitted request. Returned by all services. It is also appended to the endpoint of the resource. On incremental authorizations, this value with be the same as the identification number returned in the original authorization response."
+        },
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - REVERSED"
+        },
+        {
+          "name": "reconciliation_id",
+          "type": "string",
+          "required": false,
+          "description": "Reference number for the transaction. Depending on how your Cybersource account is configured, this value could either be provided in the API request or generated by CyberSource. The actual value used in the request to the processor is provided back to you by Cybersource in the response."
+        },
+        {
+          "name": "client_reference_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "reversal_amount_details",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "processor_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "issuer_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "authorization_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "point_of_sale_information",
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsReversalsPost201Response.md Properties"
+    },
+    {
+      "name": "PtsV2PaymentsPost400Response",
+      "fields": [
+        {
+          "name": "submit_time_utc",
+          "type": "string",
+          "required": false,
+          "description": "Time of request in UTC. Format: YYYY-MM-DDThh:mm:ssZ Example 2016-08-11T22:47:57Z equals August 11, 2016, at 22:47:57 (10:47:57 p.m.). The T separates the date and the time. The Z indicates UTC. Returned by Cybersource for all services."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "The status of the submitted transaction. Possible values: - INVALID_REQUEST"
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "description": "The reason of the status. Possible values: - MISSING_FIELD - INVALID_DATA - DUPLICATE_REQUEST - INVALID_CARD - CARD_TYPE_NOT_ACCEPTED - INVALID_MERCHANT_CONFIGURATION - PROCESSOR_UNAVAILABLE - INVALID_AMOUNT - INVALID_CARD_TYPE - INVALID_PAYMENT_ID - NOT_SUPPORTED"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": false,
+          "description": "The detail message related to the status and reason listed above."
+        },
+        {
+          "name": "details",
+          "type": "array",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "enums": [],
+      "source": "docs/PtsV2PaymentsPost400Response.md Properties"
+    }
+  ],
+  "errors": [],
+  "operational": [
+    {
+      "topic": "Message Level Encryption (MLE)",
+      "detail": "README.md states MLE provides encryption of messages at the application level before they are sent over the network; MLE is supported with JWT authentication, particularly with shared secret and MetaKey configurations.",
+      "source": "README.md > Features > Message Level Encryption (MLE) Feature"
+    },
+    {
+      "topic": "MetaKey Support",
+      "detail": "README.md describes a Meta Key as a single key usable by one, some, or all merchants in a portfolio; the Portfolio or Parent Account owns the key and is the transaction submitter. Supported with HTTP Signature, JWT P12, and JWT Shared Secret.",
+      "source": "README.md > MetaKey Support"
+    },
+    {
+      "topic": "Response format (HAL)",
+      "detail": "All endpoints specify Accept: application/hal+json;charset=utf-8, indicating a HAL (Hypertext Application Language) hypermedia response with _links support.",
+      "source": "PaymentsApi.md, CaptureApi.md, RefundApi.md, VoidApi.md, ReversalApi.md > HTTP request headers"
+    },
+    {
+      "topic": "Environment switching",
+      "detail": "By default the SDK communicates with the sandbox; switch run_environment to api.cybersource.com for production. API credentials differ per environment.",
+      "source": "README.md > Switching between the sandbox environment and the production environment"
+    }
+  ],
+  "missing": [
+    "The exact HTTP header name and value format carrying the JWT (e.g. Authorization: Bearer <jwt> vs a custom header) is not stated in the sources.",
+    "The complete HTTP Signature header construction — ordered signed-headers list, digest algorithm, keyid/algorithm tokens, and timestamp format — is not stated in the sources.",
+    "Per-field requiredness/constraints inside request schemas: the SDK docs mark every property [optional]; the true conditional requiredness lives in per-processor guides not included here.",
+    "Error responses beyond create_payment's 400 (e.g. 4xx/5xx for capture/refund/void/reversal) are not enumerated in the source Api.md files.",
+    "HATEOAS _links structure and navigation semantics are not described in these sources.",
+    "Rate limiting, idempotency-key handling, timeout/retry guidance, and API version numbering are not stated in these sources."
+  ]
+}

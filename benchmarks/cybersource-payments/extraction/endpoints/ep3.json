@@ -1,0 +1,81 @@
+{
+  "method": "POST",
+  "path": "/pts/v2/payments/{id}/voids",
+  "source": "VoidApi.md > void_payment (CyberSource Python SDK docs/)",
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The payment ID returned from a previous payment request."
+    },
+    {
+      "name": "client_reference_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "order_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "agreement_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "merchant_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "processing_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "request": {
+    "content_type": "application/json;charset=utf-8",
+    "schema": null,
+    "required": true,
+    "description": "Void a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to cancel the payment."
+  },
+  "responses": [
+    {
+      "status": "201",
+      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsVoidsPost201Response object as application/hal+json.",
+      "schema": null,
+      "schema_ref": "PtsV2PaymentsVoidsPost201Response"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "JWT",
+    "HTTP Signature"
+  ],
+  "examples": [],
+  "missing": [
+    "Per-field requiredness is not source-stated (SDK docs mark every property [optional]); conditional requiredness lives in per-processor guides not in these sources."
+  ]
+}

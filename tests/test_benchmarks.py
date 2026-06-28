@@ -130,4 +130,4 @@ def test_benchmark_harness_discovers_cases() -> None:
     # discovery doesn't make the whole suite silently vacuous).
     names = {c.name for c in _cases()}
     assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
-            "line-pay-online-v3", "stripe-basic-rest"} <= names
+            "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments"} <= names

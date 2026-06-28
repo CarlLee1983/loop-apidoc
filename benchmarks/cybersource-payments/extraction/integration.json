@@ -1,0 +1,152 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "JWT (Shared Secret)",
+      "purpose": "signature",
+      "algorithm": null,
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": "merchant_secretkey (paired with merchant_keyid and merchantid)",
+        "iv": null,
+        "note": "README recommends JWT with jwt_key_type=SHARED_SECRET, reusing the HTTP Signature merchant_keyid + merchant_secretkey credentials and enabling MLE. The exact HTTP header carrying the JWT, the JWT header/claims, and the signing algorithm are NOT in this source (documented in the developer portal)."
+      },
+      "payload_assembly": [],
+      "verify": {
+        "field": null,
+        "method": "JWT signed with the shared secret",
+        "desc": "Recommended authentication. Wire format (header name + JWT structure) not stated in source."
+      },
+      "source": "README.md > Authentication > For JWT authentication with Shared Secret (Recommended)"
+    },
+    {
+      "name": "HTTP Signature",
+      "purpose": "signature",
+      "algorithm": null,
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": "merchant_secretkey (paired with merchant_keyid and merchantid)",
+        "iv": null,
+        "note": "Deprecated per README. The Signature header construction (signed-headers list, digest algorithm, keyid/algorithm tokens, timestamp format) is NOT in this source."
+      },
+      "payload_assembly": [],
+      "verify": {
+        "field": null,
+        "method": "HTTP request signature",
+        "desc": "Deprecated; migrate to JWT with Shared Secret. Wire format not stated in source."
+      },
+      "source": "README.md > Authentication > For HTTP Signature authentication (Deprecated)"
+    },
+    {
+      "name": "Message Level Encryption (MLE)",
+      "purpose": "encryption",
+      "algorithm": null,
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": null,
+        "iv": null,
+        "note": "README states MLE encrypts messages at the application level before they are sent, and is supported with JWT (shared secret) and MetaKey. The encryption algorithm/keys/steps are in the SDK's Logging/MLE feature docs, not in these sources."
+      },
+      "payload_assembly": [],
+      "verify": {
+        "field": null,
+        "method": "Application-level message encryption",
+        "desc": "Optional, enabled via enableRequestMleForOptionalApisGlobally / enableResponseMleGlobally."
+      },
+      "source": "README.md > Features > Message Level Encryption (MLE) Feature"
+    }
+  ],
+  "callbacks": [],
+  "field_conditions": [
+    {
+      "scope": "orderInformation.amountDetails (create_payment / authorization)",
+      "rule": "currency is a required field for Authorization; for an authorization reversal or capture you must use the same currency as the original authorization.",
+      "when": "Authorization (POST /pts/v2/payments)",
+      "then_required": [
+        "order_information.amount_details.currency"
+      ],
+      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > currency ('Used by Authorization Required field')"
+    },
+    {
+      "scope": "orderInformation.amountDetails (create_payment)",
+      "rule": "Include either totalAmount or the first line item's unitPrice for the order (Card Present).",
+      "when": "Card Present authorization",
+      "then_required": [
+        "order_information.amount_details.total_amount"
+      ],
+      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > totalAmount ('Card Present Required to include either this field or orderInformation.lineItems[].unitPrice')"
+    },
+    {
+      "scope": "paymentInformation.card (create_payment)",
+      "rule": "Card number and expiration month/year are required if pointOfSaleInformation.entryMode=keyed (optional only if the account is configured for relaxed requirements).",
+      "when": "pointOfSaleInformation.entryMode = keyed",
+      "then_required": [
+        "payment_information.card.number",
+        "payment_information.card.expiration_month",
+        "payment_information.card.expiration_year"
+      ],
+      "source": "Ptsv2paymentsPaymentInformationCard.md > number / expirationMonth / expirationYear ('Required if pointOfSaleInformation.entryMode=keyed')"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "Process a Payment (authorization) — representative request",
+      "operation_ref": "paths./pts/v2/payments.post",
+      "request": {
+        "clientReferenceInformation": {
+          "code": "TC50171_3"
+        },
+        "processingInformation": {
+          "capture": false
+        },
+        "orderInformation": {
+          "amountDetails": {
+            "totalAmount": "102.21",
+            "currency": "USD"
+          },
+          "billTo": {
+            "firstName": "John",
+            "lastName": "Doe",
+            "address1": "1 Market St",
+            "locality": "san francisco",
+            "administrativeArea": "CA",
+            "postalCode": "94105",
+            "country": "US",
+            "email": "test@cybs.com",
+            "phoneNumber": "4158880000"
+          }
+        },
+        "paymentInformation": {
+          "card": {
+            "number": "4111111111111111",
+            "expirationMonth": "12",
+            "expirationYear": "2031",
+            "type": "001"
+          }
+        }
+      },
+      "response": {},
+      "source": "samples/simple-authorizationinternet.md (official CyberSource Python sample: clientReferenceInformation.code=TC50171_3, card 4111111111111111 exp 12/2031, totalAmount 102.21 USD, billTo John Doe)."
+    }
+  ],
+  "missing": [
+    {
+      "area": "crypto.wire_format",
+      "detail": "The on-the-wire authentication header(s) for both JWT and HTTP Signature — header name(s), the Signature construction (signed-headers list, digest/HMAC algorithm, keyid, timestamp), and the JWT header/claims — are not in the provided sources (developer portal only)."
+    },
+    {
+      "area": "crypto.mle",
+      "detail": "MLE encryption algorithm, key management, and request/response transform steps are not in the provided sources (SDK MLE feature docs only)."
+    },
+    {
+      "area": "field_conditions",
+      "detail": "Most conditional requiredness is processor-specific and not fully enumerated in these SDK docs; only a few source-stated conditions are captured."
+    }
+  ]
+}

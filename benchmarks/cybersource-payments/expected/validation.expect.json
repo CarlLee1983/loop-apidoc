@@ -1,0 +1,23 @@
+{
+  "_note": "大型企業 REST 壓測。首跑即 0 error PASS — pipeline 自第一輪已成熟,本 case 未揭新缺陷(僅修正一處我方自身 fail-closed 範例接地:臆造 test_case 值 → 改引官方 sample md)。5 個 REQUIRED_INFO_MISSING.warning 為 endpoints 無 source 範例(忠實缺漏,降為 WARNING)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5 },
+  "acceptable_warnings": "5 endpoints 各一筆『endpoint 缺少 request/response 範例』:來源 SDK docs 未附逐端點範例(僅 create_payment 有官方 sample,放在 integration.test_cases),降為 WARNING。",
+  "resolved_issue_was": {
+    "kind": "authoring-fail-closed",
+    "code": "SOURCE_UNVERIFIED",
+    "where": "integration.test_cases[0]",
+    "summary": "初版 test_case 範例值為臆造 → 正確被 fail-closed 標 SOURCE_UNVERIFIED(error)。改以官方 sample(samples/simple-authorizationinternet.md,值完全相符)接地後 → SUPPORTED。非 pipeline bug,而是驗證器正確擋下未接地內容。"
+  },
+  "observations": [
+    "securitySchemes JWT / HTTP_Signature 以 missing-source placeholder(apiKey name=unknown)呈現:來源 README 只描述 SDK 設定層,未給 on-the-wire header/簽章格式 → 正確 fail-closed,且 no-speculation 檢查跳過 placeholder。",
+    "requestBody 巢狀物件(order_information 等)以 type:object 平鋪,未 $ref 對應 component schema(Ptsv2paymentsOrderInformationAmountDetails 等存在於 components.schemas 但未被 body 連結)。與 stripe 同屬 generator 既有設計;codegen 無法自動連結巢狀型別。列為後續 generator 改進候選,非本輪 fail。"
+  ]
+}

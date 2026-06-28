@@ -1,0 +1,130 @@
+{
+  "method": "POST",
+  "path": "/pts/v2/payments/{id}/refunds",
+  "source": "RefundApi.md > refund_payment (CyberSource Python SDK docs/)",
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The payment ID. This ID is returned from a previous payment request."
+    },
+    {
+      "name": "client_reference_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "processing_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "order_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "buyer_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "device_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "merchant_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "aggregator_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "point_of_sale_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "merchant_defined_information",
+      "in": "body",
+      "type": "array",
+      "required": false,
+      "description": "The object containing the custom data that the merchant defines."
+    },
+    {
+      "name": "travel_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "promotion_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "processor_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "request": {
+    "content_type": "application/json;charset=utf-8",
+    "schema": null,
+    "required": true,
+    "description": "Refund a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to refund the payment amount."
+  },
+  "responses": [
+    {
+      "status": "201",
+      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsRefundPost201Response object as application/hal+json.",
+      "schema": null,
+      "schema_ref": "PtsV2PaymentsRefundPost201Response"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "JWT",
+    "HTTP Signature"
+  ],
+  "examples": [],
+  "missing": [
+    "Per-field requiredness is not source-stated (SDK docs mark every property [optional]); conditional requiredness lives in per-processor guides not in these sources."
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "method": "POST",
+  "path": "/pts/v2/payments",
+  "source": "PaymentsApi.md > create_payment (CyberSource Python SDK docs/)",
+  "parameters": [
+    {
+      "name": "client_reference_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "processing_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "issuer_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "order_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "buyer_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "sender_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "recipient_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "device_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "merchant_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "aggregator_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "consumer_authentication_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "point_of_sale_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "merchant_defined_information",
+      "in": "body",
+      "type": "array",
+      "required": false,
+      "description": "The object containing the custom data that the merchant defines."
+    },
+    {
+      "name": "merchant_defined_secure_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "installment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "travel_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "health_care_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "promotion_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "token_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "invoice_details",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "processor_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "agreement_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "risk_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "acquirer_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "recurring_payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "unscheduled_payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "hosted_payment_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    },
+    {
+      "name": "watchlist_screening_information",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "request": {
+    "content_type": "application/json;charset=utf-8",
+    "schema": null,
+    "required": true,
+    "description": "A payment authorizes the amount for the transaction. There are a number of supported payment features, such as E-commerce and Card Present - Credit Card/Debit Card, Echeck, e-Wallets, Level II/III Data, etc. A payment response includes the status of the request. It also includes processor-specific information when the request is successful and errors if unsuccessful. Authorization can be requested with Capture, Decision Manager, Payer Authentication(3ds), and Token Creation."
+  },
+  "responses": [
+    {
+      "status": "201",
+      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsPost201Response object as application/hal+json.",
+      "schema": null,
+      "schema_ref": "PtsV2PaymentsPost201Response"
+    },
+    {
+      "status": "400",
+      "description": "Error response. The request was rejected; see PtsV2PaymentsPost400Response for status/reason/message.",
+      "schema": null,
+      "schema_ref": "PtsV2PaymentsPost400Response"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "JWT",
+    "HTTP Signature"
+  ],
+  "examples": [],
+  "missing": [
+    "Per-field requiredness is not source-stated (SDK docs mark every property [optional]); conditional requiredness lives in per-processor guides not in these sources."
+  ]
+}
