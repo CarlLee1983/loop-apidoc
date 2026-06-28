@@ -504,6 +504,35 @@ def test_render_py_non_cbc_mode_falls_to_gap():
     assert "AES.MODE_CBC" not in out, "Should not emit MODE_CBC for non-CBC mode"
 
 
+def test_render_ts_non_cbc_mode_falls_to_gap():
+    """Explicit scheme with non-CBC mode (e.g. GCM) must emit gap, not runnable TS.
+
+    Mirrors the Python fail-closed path: createCipheriv('aes-256-gcm', …) without
+    auth-tag/AAD handling looks runnable but is silently wrong, which violates the
+    no-fabrication invariant. GCM-only schemes must NOT pull in the crypto import.
+    """
+    from loop_apidoc.generate.examples import _render_ts
+    from loop_apidoc.plan.models import CryptoScheme, KeySource
+
+    shape = {
+        "method": "POST", "url": "https://api.example.com/pay",
+        "query": [], "header": [], "path": [],
+        "body": [("Amount", "placeholder", "<amount>")],
+        "content_type": "application/json", "security": [],
+    }
+    explicit_non_cbc = CryptoScheme(
+        status="supported", name="Sig", algorithm="AES-256-GCM", mode="GCM",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "encrypt with GCM"}],
+    )
+    out = _render_ts(shape, [explicit_non_cbc])
+
+    assert "// gap:" in out, "Non-CBC explicit scheme should emit gap comment"
+    assert "createCipheriv(" not in out, "Should not emit createCipheriv() for non-CBC mode"
+    assert "import { createCipheriv" not in out, "GCM-only should not pull crypto import"
+    assert "throw new Error" in out, "Gap should throw"
+
+
 def _shape(**over):
     base = {
         "method": "POST", "url": "https://api.example.com/pay",

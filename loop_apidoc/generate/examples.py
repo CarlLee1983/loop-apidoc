@@ -182,8 +182,10 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
 
-    # Determine if we need the import (at least one explicit scheme)
-    has_explicit = any(_signature_explicit(s) for s in schemes)
+    # Import is only needed when at least one scheme renders runnable CBC code.
+    # An explicit-but-non-CBC scheme (e.g. GCM) becomes a gap and uses none of
+    # these imports, so it must NOT trigger them — mirroring the Python path.
+    has_runnable = any(_signature_explicit(s) and _is_cbc(s) for s in schemes)
 
     # Determine if we need unique function names (multiple schemes)
     need_unique_names = len(schemes) > 1
@@ -191,7 +193,7 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
     parts = []
 
     # Emit import exactly once at the top if needed
-    if has_explicit:
+    if has_runnable:
         parts.append("import { createCipheriv, createHash } from 'node:crypto'\n")
 
     blocks = []
@@ -202,7 +204,7 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
         else:
             func_name = "sign"
 
-        if _signature_explicit(s):
+        if _signature_explicit(s) and _is_cbc(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
             algo = (s.algorithm or "").lower()
@@ -218,12 +220,23 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
             )
         else:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
-            blocks.append(
-                f"// gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
-                f"function {func_name}(payload: string): string {{\n"
-                "  throw new Error('來源未提供完整簽章演算法，請依文件補完')\n"
-                "}\n"
-            )
+            # If explicit but not CBC, the gap is the unsupported crypto mode —
+            # GCM etc. need auth-tag/AAD handling this template can't fabricate.
+            if _signature_explicit(s) and not _is_cbc(s):
+                mode = (s.mode or "").upper() or "unspecified"
+                blocks.append(
+                    f"// gap: 簽章 {s.name or ''} 聲明為 {mode} 模式，但本範例僅支援 CBC；無法生成可跑函式\n"
+                    f"function {func_name}(payload: string): string {{\n"
+                    "  throw new Error('來源聲明的加密模式不支援，請參考 integration-contract.json 手動實作')\n"
+                    "}\n"
+                )
+            else:
+                blocks.append(
+                    f"// gap: 簽章 {s.name or ''} 來源未提供 {', '.join(missing)}；無法生成可跑函式\n"
+                    f"function {func_name}(payload: string): string {{\n"
+                    "  throw new Error('來源未提供完整簽章演算法，請依文件補完')\n"
+                    "}\n"
+                )
 
     parts.append("\n".join(blocks))
     return "".join(parts)
