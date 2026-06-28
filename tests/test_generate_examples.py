@@ -760,7 +760,27 @@ def test_render_ts_wires_into_header_when_target_is_header():
     )
     s = _runnable_scheme(target="X-Signature", fields=("Amount",))
     out = _render_ts(shape, [s])
+    # assignment target must be headers
     assert "(headers as any)[\"X-Signature\"] = sign(payload)" in out
+    # payload-construction line must read field values from body, not from headers
+    assert "(body as any)[k]" in out, "payload fields must be read from body, not from headers"
+    assert "(headers as any)[k]" not in out, "payload construction must NOT read from headers"
+
+
+def test_render_py_wires_into_header_when_target_is_header():
+    from loop_apidoc.generate.examples import _render_py
+    shape = _shape(
+        header=[("X-Signature", "placeholder", "<x_signature>")],
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/json",
+    )
+    s = _runnable_scheme(target="X-Signature", fields=("Amount",))
+    out = _render_py(shape, [s])
+    # assignment target must be headers
+    assert 'headers["X-Signature"] = sign(sig_payload)' in out
+    # payload-construction line must read from payload (body dict), not from headers
+    assert "payload[k]" in out, "payload fields must be read from payload (body dict), not from headers"
+    assert "headers[k]" not in out, "payload construction must NOT read from headers"
 
 
 def test_no_wiring_when_scheme_has_no_verify_field():

@@ -178,6 +178,9 @@ def _ts_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
             continue
         loc, target = wire
         obj = "body" if loc == "body" else "headers"
+        # Payload field values are always sourced from the body object;
+        # `obj` is only used for the write-back assignment target.
+        read_obj = "body"
         fn = _func_name(s, idx, total)
         pvar = "payload" if total == 1 else f"payload_{_snake(s.name or str(idx))}"
         fields = _payload_field_names(s, shape, target)
@@ -185,7 +188,7 @@ def _ts_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
         if fields:
             arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
             lines.append(
-                f"const {pvar} = [{arr}].map((k) => `${{k}}=${{({obj} as any)[k]}}`).join('&')"
+                f"const {pvar} = [{arr}].map((k) => `${{k}}=${{({read_obj} as any)[k]}}`).join('&')"
             )
         else:
             lines.append(f"const {pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
@@ -204,13 +207,16 @@ def _py_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
             continue
         loc, target = wire
         obj = "payload" if loc == "body" else "headers"
+        # Payload field values are always sourced from the body dict (`payload`);
+        # `obj` is only used for the write-back assignment target.
+        read_obj = "payload"
         fn = _func_name(s, idx, total)
         pvar = "sig_payload" if total == 1 else f"sig_payload_{_snake(s.name or str(idx))}"
         fields = _payload_field_names(s, shape, target)
         lines.append(f"# {_PAYLOAD_NOTE}")
         if fields:
             arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
-            lines.append(f'{pvar} = "&".join(f"{{k}}={{{obj}[k]}}" for k in [{arr}])')
+            lines.append(f'{pvar} = "&".join(f"{{k}}={{{read_obj}[k]}}" for k in [{arr}])')
         else:
             lines.append(f"{pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
         lines.append(f"{obj}[{json.dumps(target, ensure_ascii=False)}] = {fn}({pvar})")
