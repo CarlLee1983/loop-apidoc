@@ -1,0 +1,119 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "CheckMacValue",
+      "purpose": "signature",
+      "algorithm": "SHA256 per EncryptType=1",
+      "mode": null,
+      "padding": null,
+      "encoding": "URL encode + 轉小寫（依 PHP urlencode 轉換表）後 SHA256，再轉大寫",
+      "key_source": {
+        "key": "商店 HashKey",
+        "iv": "商店 HashIV",
+        "note": "測試環境HashKey: 5294y06JbISpM5x9；測試環境HashIV: v77hoKGq4kWxNNIS。平台商使用時，請使用平台商的HashKey及HashIV並產生檢查碼計算"
+      },
+      "payload_assembly": [
+        {
+          "step": 1,
+          "desc": "將所有傳遞參數依參數名稱第一個英文字母 A→Z 排序，以 & 串連成 query 字串。",
+          "fields": [
+            "所有請求參數（CheckMacValue 除外）"
+          ]
+        },
+        {
+          "step": 2,
+          "desc": "字串最前面加上 HashKey、最後面加上 HashIV。",
+          "fields": [
+            "HashKey",
+            "HashIV"
+          ]
+        },
+        {
+          "step": 3,
+          "desc": "整串 URL encode 後轉小寫（PHP 需依 urlencode 轉換表更換字元）。",
+          "fields": []
+        },
+        {
+          "step": 4,
+          "desc": "以 SHA256 產生雜湊值，再轉大寫即為 CheckMacValue。",
+          "fields": []
+        }
+      ],
+      "verify": {
+        "field": "CheckMacValue",
+        "method": "SHA256 per EncryptType=1",
+        "desc": "付款結果通知時特店須驗證CheckMacValue是否相符。查詢訂單時亦需檢查CheckMacValue。所有回傳參數皆需要加入檢查碼計算"
+      },
+      "source": "gw_p110.pdf — 12. 檢查碼機制 (lines 1636-1707)"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "付款結果通知 (ReturnURL)",
+      "trigger": "消費者付款完成後，綠界以背景(幕後) POST 將付款結果參數送至訂單的 ReturnURL。",
+      "transport": "HTTP POST，application/x-www-form-urlencoded，送至特店訂單設定的 ReturnURL。",
+      "payload_ref": null,
+      "verification": "特店必須以相同 HashKey/HashIV 重算 CheckMacValue 並比對，驗證通知真偽（參考檢查碼機制）。",
+      "expected_response": "特店須回應純字串 1|OK（第一碼為 1 表成功；0|ErrorMessage 表失敗）。此回應僅表示已收到通知，不影響訂單狀態。",
+      "source": "gw_p110.pdf — 5. 付款結果通知 / 回覆參數說明、注意事項"
+    }
+  ],
+  "field_conditions": [
+    {
+      "scope": "AioCheckOut 產生訂單",
+      "rule": "EncryptType 請固定填 1（使用 SHA256）。",
+      "when": "建立訂單",
+      "then_required": [
+        "EncryptType"
+      ],
+      "source": "gw_p110.pdf — 4. 產生訂單 傳入參數 EncryptType"
+    },
+    {
+      "scope": "AioCheckOut 產生訂單",
+      "rule": "ReturnURL 與 OrderResultURL 不可設為相同位置；若同時設定 ClientBackURL 與 OrderResultURL，以 OrderResultURL 為主。",
+      "when": "設定付款結果回傳網址",
+      "then_required": [],
+      "source": "gw_p110.pdf — 4. 產生訂單 傳入參數 ReturnURL / OrderResultURL"
+    },
+    {
+      "scope": "查詢信用卡單筆明細記錄 CreditDetail/QueryTrade",
+      "rule": "CreditRefundId（信用卡授權單號 gwsr）需在建立訂單時將 NeedExtraPaidInfo 設為 Y，才能由付款結果通知取得。",
+      "when": "查詢信用卡單筆明細",
+      "then_required": [
+        "CreditRefundId"
+      ],
+      "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 CreditRefundId"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "CheckMacValue 計算範例（AioCheckOut 建立訂單）",
+      "operation_ref": "paths./Cashier/AioCheckOut/V5.post",
+      "request": {
+        "MerchantID": "2000132",
+        "MerchantTradeNo": "ecpay20130312153023",
+        "MerchantTradeDate": "2013/03/12 15:30:23",
+        "PaymentType": "aio",
+        "TotalAmount": 1000,
+        "TradeDesc": "促銷方案",
+        "ItemName": "Apple iphone 7 手機殼",
+        "ReturnURL": "https://www.ecpay.com.tw/receive.php",
+        "ChoosePayment": "ALL",
+        "EncryptType": 1
+      },
+      "response": {},
+      "source": "gw_p110.pdf — 12. 檢查碼機制 範例（HashKey=5294y06JbISpM5x9, HashIV=v77hoKGq4kWxNNIS）"
+    }
+  ],
+  "missing": [
+    {
+      "area": "error_codes",
+      "detail": "完整交易狀態代碼表需至廠商後台查詢；文件僅列示部分代碼（如 1 成功、10200095 未成立）。"
+    },
+    {
+      "area": "scope",
+      "detail": "定期定額（QueryCreditCardPeriodInfo / CreditCardPeriodAction）、對帳媒體檔下載等 API 不在本 case 範圍。"
+    }
+  ]
+}

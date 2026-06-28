@@ -1,0 +1,101 @@
+{
+  "title": "綠界全方位金流 信用卡介接技術文件",
+  "version": "5.6.1",
+  "overview": "綠界科技提供完整的信用卡收款方式介接技術，支援多種付款方式包含信用卡、Apple Pay等。本文主要說明信用卡收款方式介接規格與各種交易API的使用時機及方法。採用HTTP POST form-based (application/x-www-form-urlencoded) 介接方式，透過檢查碼(CheckMacValue) SHA256驗證確保交易安全。",
+  "environments": [
+    {
+      "name": "正式環境",
+      "base_url": "https://payment.ecpay.com.tw",
+      "version": null,
+      "source": "gw_p110.pdf — 4. 產生訂單 / 介接路徑 (lines 365)"
+    },
+    {
+      "name": "測試環境",
+      "base_url": "https://payment-stage.ecpay.com.tw",
+      "version": null,
+      "source": "gw_p110.pdf — 4. 產生訂單 / 介接路徑 (lines 367)"
+    }
+  ],
+  "security_schemes": [],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/Cashier/AioCheckOut/V5",
+      "summary": "產生訂單：特店將訂單資料以POST傳送至綠界，準備進行付款",
+      "source": "gw_p110.pdf — 4. 產生訂單 (lines 349-457)"
+    },
+    {
+      "method": "POST",
+      "path": null,
+      "summary": "付款結果通知 (webhook)：綠界以幕後POST通知特店ReturnURL，特店須回應字串1|OK表示已收到",
+      "source": "gw_p110.pdf — 5. 付款結果通知 (lines 591-730)"
+    },
+    {
+      "method": "POST",
+      "path": "/Cashier/QueryTradeInfo/V5",
+      "summary": "查詢訂單：提供查詢訂單資訊，可透過此API來過濾是否為有效訂單",
+      "source": "gw_p110.pdf — 6. 查詢訂單 (lines 835-903)"
+    },
+    {
+      "method": "POST",
+      "path": "/CreditDetail/QueryTrade/V2",
+      "summary": "查詢信用卡單筆明細記錄：提供查詢訂單信用卡單筆明細記錄，返回JSON格式",
+      "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 (lines 919-1090)"
+    },
+    {
+      "method": "POST",
+      "path": "/CreditDetail/DoAction",
+      "summary": "信用卡關帳/退刷/取消/放棄：對信用卡訂單進行關帳(請款)、退刷(部份/全額退款)、取消或放棄等作業",
+      "source": "gw_p110.pdf — 8. 信用卡請退款功能 (lines 1106-1230)"
+    }
+  ],
+  "schemas": [],
+  "errors": [
+    {
+      "code": "1",
+      "meaning": "交易成功/授權成功",
+      "http_status": null,
+      "source": "gw_p110.pdf — 5. 付款結果通知 / 回傳參數說明 (line 667)"
+    },
+    {
+      "code": "10200095",
+      "meaning": "交易訂單未成立，消費者未完成付款作業，故交易失敗",
+      "http_status": null,
+      "source": "gw_p110.pdf — 6. 查詢訂單 / 回傳參數說明 (line 896)"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "傳輸方式",
+      "detail": "Http POST，application/x-www-form-urlencoded；參數不支援html tag及特殊符號；回傳網址不支援中文(需punycode編碼)",
+      "source": "gw_p110.pdf — 3. 前置準備事項 (lines 291-307)"
+    },
+    {
+      "topic": "通知頻率",
+      "detail": "若未正確回應1|OK，系統會隔5~15分鐘後重發訊息給特店，當天重複發送四次",
+      "source": "gw_p110.pdf — 5. 付款結果通知 / 注意事項 (line 713)"
+    },
+    {
+      "topic": "時間校正",
+      "detail": "合作特店須進行主機「時間校正」，避免主機產生時差，延伸API無法正常運作",
+      "source": "gw_p110.pdf — 3. 前置準備事項 (line 324)"
+    },
+    {
+      "topic": "加密通訊",
+      "detail": "綠界串接服務只支援TLS 1.1以上之加密通訊協定",
+      "source": "gw_p110.pdf — 3. 前置準備事項 (line 326)"
+    },
+    {
+      "topic": "防火牆設定",
+      "detail": "確認Server是否有開通防火牆綁定postgate.ecpay.com.tw，以避免付款通知被防火牆阻擋，請勿直接綁定IP",
+      "source": "gw_p110.pdf — 3. 前置準備事項 (line 287)"
+    }
+  ],
+  "missing": [
+    "完整的交易狀態代碼表(文件說明詳細代碼請到廠商後台->系統開發管理->交易狀態代碼查詢，僅列示部份代碼10200095)",
+    "定期定額相關API(QueryCreditCardPeriodInfo / CreditCardPeriodAction)超出本次提取範圍",
+    "對帳媒體檔下載API(TradeNoAio)超出本次提取範圍",
+    "信用卡撥款對帳資料檔下載API(FundingReconDetail)超出本次提取範圍",
+    "額外回傳參數(NeedExtraPaidInfo=Y時的完整參數列表)在第9章詳細列出但未全部摘錄於此JSON"
+  ]
+}

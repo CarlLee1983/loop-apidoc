@@ -28,6 +28,12 @@ def _has_auth_marker(plan: NormalizationPlan) -> bool:
         topic = (op.topic or "").lower()
         if "auth" in topic or "security" in topic:
             return True
+    # A documented request-signing / encryption scheme (integration.crypto) is the
+    # API's authentication mechanism even when it is not an OpenAPI securityScheme
+    # — e.g. a payment gateway secured only by a CheckMacValue / HMAC signature.
+    # The source addressed authenticity, so this is not a silent auth gap.
+    if plan.integration and plan.integration.crypto:
+        return True
     return False
 
 

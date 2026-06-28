@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from loop_apidoc.plan.models import (
+    CryptoScheme,
     EndpointEntry,
+    IntegrationContract,
     MissingItem,
     NormalizationPlan,
     OperationalEntry,
@@ -102,6 +104,20 @@ def test_webhook_without_responses_is_warning_not_error():
     ]))
     assert IssueCode.REQUIRED_INFO_MISSING not in _codes(issues, Severity.ERROR)
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.WARNING)
+
+
+def test_no_security_scheme_but_integration_crypto_is_ok():
+    # A payment API whose only authentication is a documented request-signing
+    # scheme (e.g. ECPay CheckMacValue / a HMAC signature) carries no OpenAPI
+    # securityScheme — the signature lives in integration.crypto. The source DID
+    # address authenticity, so this must NOT trip the "no auth" gap.
+    plan = _plan(
+        security_schemes=[],
+        integration=IntegrationContract(crypto=[
+            CryptoScheme(status=PlanItemStatus.SUPPORTED, name="CheckMacValue",
+                         purpose="signature", algorithm="SHA256")]),
+    )
+    assert _codes(check_completeness(plan), Severity.ERROR) == []
 
 
 def test_no_security_but_public_marked_in_operational_is_ok():

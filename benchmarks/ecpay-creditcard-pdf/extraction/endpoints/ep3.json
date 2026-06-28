@@ -1,0 +1,62 @@
+{
+  "method": "POST",
+  "path": "/CreditDetail/QueryTrade/V2",
+  "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 (lines 919-1090)",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "特店編號(由ecPay提供)"
+    },
+    {
+      "name": "CreditRefundId",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "信用卡授權單號。建立訂單時，將參數[NeedExtraPaidInfo]設定為Y，即可透過付款結果通知取得此參數(CreditRefundId=gwsr)資料"
+    },
+    {
+      "name": "CreditAmount",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "金額"
+    },
+    {
+      "name": "CreditCheckCode",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "商家檢查碼，廠商後台->信用卡收單->信用卡授權資訊中可查到"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "檢查碼，請參考附錄檢查碼機制"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": "查詢信用卡單筆明細記錄：提供查詢訂單信用卡單筆明細記錄，返回JSON格式"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "查詢結果會直接回傳至頁面，並以JSON格式表示。包含主要授權資訊(RtnMsg、RtnValue含TradeID、amount、clsamt、authtime、status、close_data)。主要授權資訊參數：RtnMsg(回應訊息)、RtnValue(回應內容JSON字串)、TradeID(授權單號)、amount(交易金額)、clsamt(已關帳金額)、authtime(訂單成立時間)、status(交易狀態)。明細資訊參數：status、amount、sno(關帳序號)、datetime(關帳時間)",
+      "schema": null,
+      "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 (lines 947-1089)"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

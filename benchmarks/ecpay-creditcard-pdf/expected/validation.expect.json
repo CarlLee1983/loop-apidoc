@@ -1,0 +1,23 @@
+{
+  "_note": "表格密集 PDF。初跑揭 1 項真 pipeline 缺陷(純簽章 auth 誤觸 no-auth gap)→ TDD 修 completeness 後 PASS。5 個 REQUIRED_INFO_MISSING.warning 為 5 個 endpoint 各無逐端點範例(忠實;範例由 generator 合成、CheckMacValue 範例放 integration.test_cases)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5 },
+  "acceptable_warnings": "5 endpoint 各一筆『缺少 request/response 範例』:來源未附逐端點完整 request 範例(降為 WARNING)。",
+  "resolved_issue_was": {
+    "kind": "pipeline-bug",
+    "code": "REQUIRED_INFO_MISSING",
+    "where": "validate/completeness.py _has_auth_marker",
+    "summary": "純靠請求簽章(CheckMacValue,記在 integration.crypto)而無 OpenAPI securityScheme 的金流 API,被誤判『無 security scheme 且來源未標示未提供 auth』→ ERROR。修法:_has_auth_marker 在 plan.integration.crypto 非空時回 True(已記錄的簽章/加密機制即 API 的驗證機制,來源已處理 auth)。"
+  },
+  "observations": [
+    "PDF 表格保真:AioCheckOut 產生訂單的 36 個參數(11 必填)完整穿越 PDF→pymupdf4llm md→擷取→OpenAPI requestBody;付款結果通知 17 欄位、查詢/退款參數表亦保留。",
+    "付款結果通知建模為 webhook(method POST / path=None)→ OpenAPI webhooks 區塊;特店須回 1|OK,重送 5~15 分鐘/天 4 次(integration.callbacks)。"
+  ]
+}

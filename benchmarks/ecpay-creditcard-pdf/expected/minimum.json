@@ -1,0 +1,25 @@
+{
+  "_note": "表格密集 PDF case(綠界 ECPay 信用卡介接技術文件 V5.6.1,61 頁 PDF → pymupdf4llm preprocess)。壓測 PDF 欄位表/錯誤碼表保真:AioCheckOut 產生訂單的 36 個參數表必須完整穿越 PDF→md→OpenAPI。form-POST + CheckMacValue(SHA256)簽章;簽章即 auth,無 OpenAPI securityScheme。",
+  "must_have": {
+    "base_urls": 2,
+    "endpoints_min": 4,
+    "webhooks_min": 1,
+    "schemas_min": 0,
+    "error_codes_min": 1,
+    "security_schemes_min": 0,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": true,
+    "field_conditions_min": 3,
+    "test_cases_min": 1
+  },
+  "critical_operations": [
+    "paths./Cashier/AioCheckOut/V5.post",
+    "paths./Cashier/QueryTradeInfo/V5.post",
+    "paths./CreditDetail/DoAction.post"
+  ]
+}

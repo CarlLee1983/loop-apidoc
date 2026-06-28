@@ -82,3 +82,7 @@ OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critic
 | `line-pay-online-v3` | REST payment HTML | ✅ **PASS**(Phase 3);HMAC-SHA256 簽章 case(非 CBC→正確 fail-closed gap);總覽頁來源(JS 子頁無法 curl,endpoint body 多 faithful missing);7 paths、31 error codes |
 | `tappay-backend` | backend payment HTML | ✅ **PASS**(Phase 3);defuddle 取源;揭 1 項 gap(payload_ref 未 sanitize)→ 修 `_refs` 後 PASS;4 paths+2 webhooks、x-api-key、整合契約齊全 |
 | `stripe-basic-rest` | 高品質 REST(官方 OpenAPI 子集) | ✅ **PASS**(Phase 3);Bearer/Basic auth case;揭 1 項 gap(http scheme 缺失)→ 修 `_build_security_scheme` 後 PASS;PaymentIntents 6 op、form body、$ref 連結 |
+| `cybersource-payments` | 大型企業 REST(SDK codegen docs) | ✅ **PASS**(第二輪);複雜巢狀 schema 壓測;首跑即 0 error(pipeline 已成熟,未揭新缺陷);5 op、18 schema(40+ 欄位 ProcessingInformation)、JWT/HTTP Signature wire 格式 fail-closed placeholder |
+| `github-webhooks` | webhook/callback 專屬 | ✅ **PASS**(第二輪);揭 1 項真 bug(多 webhook 同源碰撞)→ 修 `_merge_one_detail`/`_match_index` + `webhook_name` 後 PASS;3 webhook、HMAC-SHA256 驗簽、無自動重送 |
+| `paypal-webhooks-incomplete` | 文件不完整 | 🟥 **EXPECTED_FAIL**(第二輪);真實不完整官方頁(無 base URL/簽章延後/payload 未文件化);越界 payload schema 被 `SOURCE_UNVERIFIED` 擋下(2 error);證明不臆造,缺漏入 missing |
+| `ecpay-creditcard-pdf` | 表格密集 PDF | ✅ **PASS**(第二輪);pymupdf4llm preprocess;AioCheckOut 36 參數表完整保真;揭 1 項真 bug(純簽章 auth 誤觸 no-auth gap)→ 修 `_has_auth_marker` 後 PASS;4 path+1 webhook、CheckMacValue SHA256 |
