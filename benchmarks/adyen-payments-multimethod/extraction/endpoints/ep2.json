@@ -1,0 +1,88 @@
+{
+  "method": "POST",
+  "path": "/paymentMethods",
+  "source": "CheckoutService-v71.json paths./paymentMethods.post (operationId post-paymentMethods)",
+  "parameters": [
+    {
+      "name": "merchantAccount",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "The merchant account identifier, with which you want to process the transaction."
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Amount used to filter the available payment methods."
+    },
+    {
+      "name": "countryCode",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The shopper's country code."
+    },
+    {
+      "name": "channel",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The platform where a payment transaction takes place. This field can be used for filtering out payment methods that are only available on specific platforms. Possible values: * iOS * Android * Web"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "PaymentMethodsRequest",
+    "required": true,
+    "description": "PaymentMethodsRequest: list the payment methods available to the shopper."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Available payment methods.",
+      "schema": null,
+      "schema_ref": "PaymentMethodsResponse"
+    },
+    {
+      "status": "400",
+      "description": "Bad request.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "401",
+      "description": "Unauthorized.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "403",
+      "description": "Forbidden.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "422",
+      "description": "Unprocessable entity.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "500",
+      "description": "Internal server error.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "ApiKeyAuth",
+    "BasicAuth"
+  ],
+  "examples": [],
+  "missing": []
+}

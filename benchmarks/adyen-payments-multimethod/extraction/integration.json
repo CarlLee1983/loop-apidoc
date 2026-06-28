@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "crypto": [],
+  "callbacks": [],
+  "field_conditions": [
+    {
+      "scope": "paths./payments.post body",
+      "rule": "paymentMethod.type selects which detail object (and its required fields) applies.",
+      "when": "paymentMethod.type = scheme (card)",
+      "then_required": [
+        "paymentMethod.number",
+        "paymentMethod.expiryMonth",
+        "paymentMethod.expiryYear",
+        "paymentMethod.cvc"
+      ],
+      "source": "CheckoutService-v71.json components.schemas.CardDetails (card-direct example post-payments-card-direct)"
+    },
+    {
+      "scope": "paths./payments.post body",
+      "rule": "paymentMethod.type selects which detail object applies.",
+      "when": "paymentMethod.type = applepay",
+      "then_required": [
+        "paymentMethod.applePayToken"
+      ],
+      "source": "CheckoutService-v71.json components.schemas.ApplePayDetails (required: applePayToken)"
+    },
+    {
+      "scope": "paths./payments.post body",
+      "rule": "paymentMethod.type selects which detail object applies.",
+      "when": "paymentMethod.type = ideal",
+      "then_required": [
+        "paymentMethod.type"
+      ],
+      "source": "CheckoutService-v71.json components.schemas.IdealDetails (only type fixed to 'ideal')"
+    },
+    {
+      "scope": "paths./payments.post body",
+      "rule": "returnUrl is required for redirect-based methods so the shopper can return after authentication.",
+      "when": "redirect/3DS payment methods",
+      "then_required": [
+        "returnUrl"
+      ],
+      "source": "CheckoutService-v71.json components.schemas.PaymentRequest.required"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "card-direct (scheme)",
+      "operation_ref": "paths./payments.post",
+      "request": {
+        "amount": {
+          "currency": "USD",
+          "value": 1000
+        },
+        "reference": "Your order number",
+        "paymentMethod": {
+          "type": "scheme",
+          "number": "4111111111111111",
+          "expiryMonth": "03",
+          "expiryYear": "2030",
+          "holderName": "John Smith",
+          "cvc": "737"
+        },
+        "returnUrl": "https://your-company.example.com/...",
+        "merchantAccount": "YOUR_MERCHANT_ACCOUNT"
+      },
+      "response": {},
+      "source": "CheckoutService-v71.json components.examples.post-payments-card-direct"
+    },
+    {
+      "name": "ideal redirect",
+      "operation_ref": "paths./payments.post",
+      "request": {
+        "amount": {
+          "currency": "EUR",
+          "value": 1000
+        },
+        "reference": "Your order number",
+        "paymentMethod": {
+          "type": "ideal"
+        },
+        "returnUrl": "https://your-company.example.com/...",
+        "merchantAccount": "YOUR_MERCHANT_ACCOUNT"
+      },
+      "response": {},
+      "source": "CheckoutService-v71.json components.examples.post-payments-ideal"
+    }
+  ],
+  "missing": [
+    {
+      "area": "crypto",
+      "detail": "CSE algorithm for encrypted* card fields not stated in this spec."
+    },
+    {
+      "area": "callbacks",
+      "detail": "Adyen webhook/notification payloads + HMAC live in a separate API, not the Checkout spec."
+    }
+  ]
+}

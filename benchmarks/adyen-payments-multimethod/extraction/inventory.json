@@ -1,0 +1,518 @@
+{
+  "title": "Adyen Checkout API",
+  "version": "71",
+  "overview": "Adyen Checkout API v71. A single multi-method payment entry point: POST /payments starts a transaction for any of 40+ payment methods, distinguished by the paymentMethod.type discriminator (a oneOf union over per-method detail objects). POST /payments/details continues redirect/3DS flows; POST /paymentMethods lists the methods available to a shopper. The same path therefore serves many payment products.",
+  "environments": [
+    {
+      "name": "test",
+      "base_url": "https://checkout-test.adyen.com/v71",
+      "version": "v71",
+      "source": "CheckoutService-v71.json servers[0].url"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "ApiKeyAuth",
+      "type": "apiKey",
+      "location": "header (X-API-Key)",
+      "details": "API key sent in the X-API-Key request header.",
+      "source": "CheckoutService-v71.json components.securitySchemes.ApiKeyAuth"
+    },
+    {
+      "name": "BasicAuth",
+      "type": "http",
+      "location": "Authorization header",
+      "details": "HTTP Basic authentication (scheme: basic).",
+      "source": "CheckoutService-v71.json components.securitySchemes.BasicAuth"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/payments",
+      "summary": "Start a transaction",
+      "source": "CheckoutService-v71.json paths./payments.post (operationId post-payments)"
+    },
+    {
+      "method": "POST",
+      "path": "/payments/details",
+      "summary": "Submit details for a payment",
+      "source": "CheckoutService-v71.json paths./payments/details.post (operationId post-payments-details)"
+    },
+    {
+      "method": "POST",
+      "path": "/paymentMethods",
+      "summary": "Get a list of available payment methods",
+      "source": "CheckoutService-v71.json paths./paymentMethods.post (operationId post-paymentMethods)"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "Amount",
+      "fields": [
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "The three-character [ISO currency code](https://docs.adyen.com/development-resources/currency-codes#currency-codes) of the amount."
+        },
+        {
+          "name": "value",
+          "type": "integer",
+          "required": true,
+          "description": "The numeric value of the amount, in [minor units](https://docs.adyen.com/development-resources/currency-codes#minor-units)."
+        }
+      ],
+      "enums": [],
+      "constraints": "currency: ISO 4217 three-letter code; value: minor units (integer).",
+      "source": "CheckoutService-v71.json components.schemas.Amount"
+    },
+    {
+      "name": "PaymentRequest",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "object",
+          "required": true,
+          "description": "The amount information for the transaction (Amount object)."
+        },
+        {
+          "name": "merchantAccount",
+          "type": "string",
+          "required": true,
+          "description": "The merchant account identifier, with which you want to process the transaction."
+        },
+        {
+          "name": "reference",
+          "type": "string",
+          "required": true,
+          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. To provide multiple references for one transaction, separate the reference values with the hyphen (`-`) characte..."
+        },
+        {
+          "name": "returnUrl",
+          "type": "string",
+          "required": true,
+          "description": "The URL to return to in case of a redirection. The format depends on the channel. * For web, include the protocol `http://` or `https://`. You can also include your own additional query parameters, for example, shopper ID or order refere..."
+        },
+        {
+          "name": "paymentMethod",
+          "type": "object",
+          "required": true,
+          "description": "The type and required details of a payment method to use. In the spec this is a `oneOf` union over 40+ payment-method detail objects, selected by the `type` discriminator (e.g. scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ach→AchDetails, klarna, googlepay, ...). This benchmark captures three representative members as named schemas (CardDetails / IdealDetails / ApplePayDetails)."
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "required": false,
+          "description": "The platform where a payment transaction takes place. This field is optional for filtering out payment methods that are only available on specific platforms. If this value is not set, then we will try to infer it from the `sdkVersion` or..."
+        },
+        {
+          "name": "countryCode",
+          "type": "string",
+          "required": false,
+          "description": "The shopper country code. Format: [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) Example: NL or DE"
+        },
+        {
+          "name": "shopperReference",
+          "type": "string",
+          "required": false,
+          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. Minimum length: 3 characters. > Your reference must not include personally identifiable information (PII), for example ..."
+        }
+      ],
+      "enums": [],
+      "constraints": "paymentMethod is a oneOf union discriminated by paymentMethod.type.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentRequest"
+    },
+    {
+      "name": "CardDetails",
+      "fields": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": null,
+          "description": "Default payment method details. Common for scheme payment methods, and for simple payment method details."
+        },
+        {
+          "name": "number",
+          "type": "string",
+          "required": null,
+          "description": "The card number. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+        },
+        {
+          "name": "expiryMonth",
+          "type": "string",
+          "required": null,
+          "description": "The card expiry month. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+        },
+        {
+          "name": "expiryYear",
+          "type": "string",
+          "required": null,
+          "description": "The card expiry year. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+        },
+        {
+          "name": "cvc",
+          "type": "string",
+          "required": null,
+          "description": "The card verification code. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+        },
+        {
+          "name": "holderName",
+          "type": "string",
+          "required": null,
+          "description": "The name of the card holder."
+        },
+        {
+          "name": "encryptedCardNumber",
+          "type": "string",
+          "required": null,
+          "description": "The encrypted card number."
+        },
+        {
+          "name": "encryptedExpiryMonth",
+          "type": "string",
+          "required": null,
+          "description": "The encrypted card expiry month."
+        },
+        {
+          "name": "encryptedExpiryYear",
+          "type": "string",
+          "required": null,
+          "description": "The encrypted card expiry year."
+        },
+        {
+          "name": "encryptedSecurityCode",
+          "type": "string",
+          "required": null,
+          "description": "The encrypted card verification code."
+        },
+        {
+          "name": "brand",
+          "type": "string",
+          "required": null,
+          "description": "Secondary brand of the card. For example: **plastix**, **hmclub**."
+        },
+        {
+          "name": "storedPaymentMethodId",
+          "type": "string",
+          "required": null,
+          "description": "This is the `recurringDetailReference` returned in the response when you created the token."
+        }
+      ],
+      "enums": [
+        "bcmc",
+        "scheme",
+        "networkToken",
+        "giftcard",
+        "card",
+        "clicktopay"
+      ],
+      "constraints": "type discriminator default 'scheme'. Use raw number/expiry/cvc (card-direct) OR the encrypted* fields (client-side encryption); the spec does not state the encryption algorithm.",
+      "source": "CheckoutService-v71.json components.schemas.CardDetails"
+    },
+    {
+      "name": "IdealDetails",
+      "fields": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": null,
+          "description": "**ideal**"
+        },
+        {
+          "name": "issuer",
+          "type": "string",
+          "required": null,
+          "description": "The iDEAL issuer value of the shopper's selected bank. Set this to an **id** of an iDEAL issuer to preselect it."
+        },
+        {
+          "name": "storedPaymentMethodId",
+          "type": "string",
+          "required": null,
+          "description": "This is the `recurringDetailReference` returned in the response when you created the token."
+        }
+      ],
+      "enums": [
+        "ideal"
+      ],
+      "constraints": "type discriminator fixed 'ideal'.",
+      "source": "CheckoutService-v71.json components.schemas.IdealDetails"
+    },
+    {
+      "name": "ApplePayDetails",
+      "fields": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "**applepay**"
+        },
+        {
+          "name": "applePayToken",
+          "type": "string",
+          "required": true,
+          "description": "The stringified and base64 encoded `paymentData` you retrieved from the Apple framework."
+        },
+        {
+          "name": "fundingSource",
+          "type": "string",
+          "required": false,
+          "description": "The funding source that should be used when multiple sources are available. For Brazilian combo cards, by default the funding source is credit. To use debit, set this value to **debit**."
+        }
+      ],
+      "enums": [
+        "applepay"
+      ],
+      "constraints": "type discriminator default 'applepay'; applePayToken is required.",
+      "source": "CheckoutService-v71.json components.schemas.ApplePayDetails"
+    },
+    {
+      "name": "PaymentResponse",
+      "fields": [
+        {
+          "name": "resultCode",
+          "type": "string",
+          "required": null,
+          "description": "The result of the payment. For more information, see [Result codes](https://docs.adyen.com/online-payments/payment-result-codes). Possible values: * **AuthenticationFinished** – The payment has been successfully authenticated with 3D Sec..."
+        },
+        {
+          "name": "pspReference",
+          "type": "string",
+          "required": null,
+          "description": "Adyen's 16-character string reference associated with the transaction/request. This value is globally unique; quote it when communicating with us about this request. > For payment methods that require a redirect or additional action, you..."
+        },
+        {
+          "name": "action",
+          "type": null,
+          "required": null,
+          "description": "Action to be taken for completing the payment."
+        },
+        {
+          "name": "refusalReason",
+          "type": "string",
+          "required": null,
+          "description": "If the payment's authorisation is refused or an error occurs during authorisation, this field holds Adyen's mapped reason for the refusal or a description of the error. When a transaction fails, the authorisation response includes `resul..."
+        },
+        {
+          "name": "refusalReasonCode",
+          "type": "string",
+          "required": null,
+          "description": "Code that specifies the refusal reason. For more information, see [Authorisation refusal reasons](https://docs.adyen.com/development-resources/refusal-reasons)."
+        },
+        {
+          "name": "merchantReference",
+          "type": "string",
+          "required": null,
+          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. We recommend using a unique value per payment; however, it is not a requirement. If you need to provide multiple..."
+        },
+        {
+          "name": "amount",
+          "type": "object",
+          "required": null,
+          "description": "Authorised amount in the transaction."
+        }
+      ],
+      "enums": [
+        "AuthenticationFinished",
+        "AuthenticationNotRequired",
+        "Authorised",
+        "Cancelled",
+        "ChallengeShopper",
+        "Error",
+        "IdentifyShopper",
+        "PartiallyAuthorised",
+        "Pending",
+        "PresentToShopper",
+        "Received",
+        "RedirectShopper",
+        "Refused",
+        "Success"
+      ],
+      "constraints": "resultCode drives the next step (Authorised / RedirectShopper / ChallengeShopper / Refused / Pending ...). When not final, 'action' tells the client what to do next.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentResponse"
+    },
+    {
+      "name": "PaymentDetailsRequest",
+      "fields": [
+        {
+          "name": "details",
+          "type": "object",
+          "required": true,
+          "description": "Use this collection to submit the details that were returned as a result of the `/payments` call."
+        },
+        {
+          "name": "paymentData",
+          "type": "string",
+          "required": false,
+          "description": "Encoded payment data. For [authorizing a payment after using 3D Secure 2 Authentication-only](https://docs.adyen.com/online-payments/3d-secure/other-3ds-flows/authentication-only/#authorise-the-payment-with-adyen): If you received `resul..."
+        },
+        {
+          "name": "threeDSAuthenticationOnly",
+          "type": "boolean",
+          "required": false,
+          "description": "Change the `authenticationOnly` indicator originally set in the `/payments` request. Only needs to be set if you want to modify the value set previously."
+        }
+      ],
+      "enums": [],
+      "constraints": "details: key-value pairs returned by the redirect/3DS step.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentDetailsRequest"
+    },
+    {
+      "name": "PaymentMethodsRequest",
+      "fields": [
+        {
+          "name": "merchantAccount",
+          "type": "string",
+          "required": true,
+          "description": "The merchant account identifier, with which you want to process the transaction."
+        },
+        {
+          "name": "amount",
+          "type": "object",
+          "required": false,
+          "description": "The amount information for the transaction (in [minor units](https://docs.adyen.com/development-resources/currency-codes)). For [BIN or card verification](https://docs.adyen.com/payment-methods/cards/bin-data-and-card-verification) reque..."
+        },
+        {
+          "name": "countryCode",
+          "type": "string",
+          "required": false,
+          "description": "The shopper's country code."
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "required": false,
+          "description": "The platform where a payment transaction takes place. This field can be used for filtering out payment methods that are only available on specific platforms. Possible values: * iOS * Android * Web"
+        },
+        {
+          "name": "shopperReference",
+          "type": "string",
+          "required": false,
+          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. The value is case-sensitive and must be at least three characters. > Your reference must not include personally identif..."
+        },
+        {
+          "name": "allowedPaymentMethods",
+          "type": "array",
+          "required": false,
+          "description": "List of payment methods to be presented to the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"allowedPaymentMethods\":[\"ideal\",\"applepay\"]`"
+        },
+        {
+          "name": "blockedPaymentMethods",
+          "type": "array",
+          "required": false,
+          "description": "List of payment methods to be hidden from the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"blockedPaymentMethods\":[\"ideal\",\"applepay\"]`"
+        }
+      ],
+      "enums": [],
+      "constraints": "merchantAccount required.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsRequest"
+    },
+    {
+      "name": "PaymentMethodsResponse",
+      "fields": [
+        {
+          "name": "paymentMethods",
+          "type": "array",
+          "required": null,
+          "description": "Detailed list of payment methods required to generate payment forms."
+        },
+        {
+          "name": "storedPaymentMethods",
+          "type": "array",
+          "required": null,
+          "description": "List of all stored payment methods."
+        }
+      ],
+      "enums": [],
+      "constraints": "paymentMethods: methods available for the given amount/country/shopper.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsResponse"
+    },
+    {
+      "name": "ServiceError",
+      "fields": [
+        {
+          "name": "status",
+          "type": "integer",
+          "required": null,
+          "description": "The HTTP response status."
+        },
+        {
+          "name": "errorCode",
+          "type": "string",
+          "required": null,
+          "description": "The error code mapped to the error message."
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": null,
+          "description": "A short explanation of the issue."
+        },
+        {
+          "name": "errorType",
+          "type": "string",
+          "required": null,
+          "description": "The category of the error."
+        },
+        {
+          "name": "pspReference",
+          "type": "string",
+          "required": null,
+          "description": "The PSP reference of the payment."
+        }
+      ],
+      "enums": [],
+      "constraints": "Returned for 400/401/403/422/500 responses.",
+      "source": "CheckoutService-v71.json components.schemas.ServiceError"
+    }
+  ],
+  "errors": [
+    {
+      "code": "400",
+      "meaning": "Bad request (ServiceError).",
+      "http_status": "400",
+      "source": "CheckoutService-v71.json paths./payments.post.responses.400"
+    },
+    {
+      "code": "401",
+      "meaning": "Unauthorized (ServiceError).",
+      "http_status": "401",
+      "source": "CheckoutService-v71.json paths./payments.post.responses.401"
+    },
+    {
+      "code": "403",
+      "meaning": "Forbidden (ServiceError).",
+      "http_status": "403",
+      "source": "CheckoutService-v71.json paths./payments.post.responses.403"
+    },
+    {
+      "code": "422",
+      "meaning": "Unprocessable entity (ServiceError).",
+      "http_status": "422",
+      "source": "CheckoutService-v71.json paths./payments.post.responses.422"
+    },
+    {
+      "code": "500",
+      "meaning": "Internal server error (ServiceError).",
+      "http_status": "500",
+      "source": "CheckoutService-v71.json paths./payments.post.responses.500"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "multi-method entry point",
+      "detail": "POST /payments serves all payment methods; the paymentMethod.type discriminator selects which detail object (and therefore which required fields) apply.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentRequest.properties.paymentMethod"
+    },
+    {
+      "topic": "redirect / 3DS continuation",
+      "detail": "When resultCode is RedirectShopper/ChallengeShopper, the client follows 'action' then calls POST /payments/details with the returned details.",
+      "source": "CheckoutService-v71.json components.schemas.PaymentResponse.properties.resultCode"
+    }
+  ],
+  "missing": [
+    "paymentMethod is a oneOf union over 40+ payment-method detail objects; the pipeline does not emit native OpenAPI oneOf/discriminator, so it is represented as an object plus three named member schemas (faithful limitation, not speculation).",
+    "Client-side encryption (CSE) algorithm for the encrypted* card fields is not stated in this spec.",
+    "Webhook/notification payloads and HMAC signing live in a separate Adyen Notification API, not in the Checkout spec — no callbacks captured here."
+  ]
+}

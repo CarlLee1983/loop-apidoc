@@ -1,0 +1,20 @@
+{
+  "_note": "多產品共用 endpoint 類。首跑即 0 error PASS — pipeline 已成熟,本 case 未揭新缺陷。3 個 REQUIRED_INFO_MISSING.warning 為 endpoints 無逐端點 inline 範例(忠實缺漏,降為 WARNING;接地範例放在 integration.test_cases → card-direct / ideal 官方 sample)。與 cybersource 同慣例。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 3 },
+  "acceptable_warnings": "3 endpoints(/payments、/payments/details、/paymentMethods)各一筆『endpoint 缺少 request/response 範例』:extraction 的 endpoint 物件未帶 inline 範例,接地官方 sample 改放 integration.test_cases(card-direct、ideal),降為 WARNING。",
+  "observations": [
+    "多產品共用 endpoint 的核心:單一 POST /payments 以 paymentMethod.type discriminator 服務 40+ 付款方式(oneOf union)。pipeline 不產生原生 OpenAPI oneOf/discriminator,故 paymentMethod 以 type:object + 三個具名成員 schema(CardDetails/IdealDetails/ApplePayDetails)+ 描述中標明 discriminator 對應呈現。為忠實限制(已入 missing),非 fail;api-guide 段落清楚說明多型分流,operationId(post_payments / post_payments_details / post_paymentMethods)穩定。",
+    "endpoint merge 未碰撞:三個端點各自獨立(/payments、/payments/details、/paymentMethods 為不同路徑),非同路徑多次描述;對偶 case github-webhooks 已測『同 (method,null) 多 callback 合併』。此 case 證明同一進入點承載多產品時不誤拆、不誤併。",
+    "雙 auth(ApiKeyAuth=X-API-Key header、BasicAuth=http basic)在來源 securitySchemes 完整文件化 → 無 fail-closed placeholder(對照 cybersource 的 wire 格式缺漏)。",
+    "field_conditions 以 discriminator 表達多產品差異化必填(type=scheme→卡號/到期/cvc;type=applepay→applePayToken;type=ideal→僅 type;redirect 類→returnUrl),把『同 endpoint 不同產品不同必填』落進整合契約。",
+    "CSE 加密(encrypted* 卡欄位)演算法與 Adyen webhook/HMAC 不在 Checkout spec → 忠實入 missing,不臆造。"
+  ]
+}

@@ -86,3 +86,4 @@ OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critic
 | `github-webhooks` | webhook/callback 專屬 | ✅ **PASS**(第二輪);揭 1 項真 bug(多 webhook 同源碰撞)→ 修 `_merge_one_detail`/`_match_index` + `webhook_name` 後 PASS;3 webhook、HMAC-SHA256 驗簽、無自動重送 |
 | `paypal-webhooks-incomplete` | 文件不完整 | 🟥 **EXPECTED_FAIL**(第二輪);真實不完整官方頁(無 base URL/簽章延後/payload 未文件化);越界 payload schema 被 `SOURCE_UNVERIFIED` 擋下(2 error);證明不臆造,缺漏入 missing |
 | `ecpay-creditcard-pdf` | 表格密集 PDF | ✅ **PASS**(第二輪);pymupdf4llm preprocess;AioCheckOut 36 參數表完整保真;揭 1 項真 bug(純簽章 auth 誤觸 no-auth gap)→ 修 `_has_auth_marker` 後 PASS;4 path+1 webhook、CheckMacValue SHA256 |
+| `adyen-payments-multimethod` | 多產品共用 endpoint | ✅ **PASS**(第二輪完結);Adyen Checkout v71 官方 OpenAPI;單一 `POST /payments` 以 `paymentMethod.type` discriminator(oneOf union)服務 40+ 付款方式;首跑即 0 error(pipeline 已成熟);3 path、10 schema、雙 auth 完整文件化;oneOf 不產生原生 discriminator 為忠實限制(入 missing);與 github-webhooks 互為對偶 |

@@ -1,0 +1,97 @@
+{
+  "method": "POST",
+  "path": "/payments",
+  "source": "CheckoutService-v71.json paths./payments.post (operationId post-payments)",
+  "parameters": [
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "object",
+      "required": true,
+      "description": "Transaction amount (Amount: currency + value in minor units)."
+    },
+    {
+      "name": "merchantAccount",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "The merchant account identifier, with which you want to process the transaction."
+    },
+    {
+      "name": "reference",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. To provide multiple references for one transaction, separate the reference values with the hyphen (`-`) characte..."
+    },
+    {
+      "name": "returnUrl",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "The URL to return to in case of a redirection. The format depends on the channel. * For web, include the protocol `http://` or `https://`. You can also include your own additional query parameters, for example, shopper ID or order refere..."
+    },
+    {
+      "name": "paymentMethod",
+      "in": "body",
+      "type": "object",
+      "required": true,
+      "description": "The type and required details of a payment method to use. In the spec this is a `oneOf` union over 40+ payment-method detail objects, selected by the `type` discriminator (e.g. scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ach→AchDetails, klarna, googlepay, ...). This benchmark captures three representative members as named schemas (CardDetails / IdealDetails / ApplePayDetails)."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "PaymentRequest",
+    "required": true,
+    "description": "PaymentRequest: amount + merchantAccount + reference + returnUrl + paymentMethod (oneOf union, see CardDetails/IdealDetails/ApplePayDetails)."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Payment result.",
+      "schema": null,
+      "schema_ref": "PaymentResponse"
+    },
+    {
+      "status": "400",
+      "description": "Bad request.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "401",
+      "description": "Unauthorized.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "403",
+      "description": "Forbidden.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "422",
+      "description": "Unprocessable entity.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "500",
+      "description": "Internal server error.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "ApiKeyAuth",
+    "BasicAuth"
+  ],
+  "examples": [],
+  "missing": [
+    "paymentMethod oneOf union not expressible as native OpenAPI oneOf via this pipeline (see inventory.missing)."
+  ]
+}

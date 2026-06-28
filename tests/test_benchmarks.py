@@ -132,4 +132,4 @@ def test_benchmark_harness_discovers_cases() -> None:
     assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
             "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
             "github-webhooks", "paypal-webhooks-incomplete",
-            "ecpay-creditcard-pdf"} <= names
+            "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= names

@@ -1,0 +1,74 @@
+{
+  "method": "POST",
+  "path": "/payments/details",
+  "source": "CheckoutService-v71.json paths./payments/details.post (operationId post-payments-details)",
+  "parameters": [
+    {
+      "name": "details",
+      "in": "body",
+      "type": "object",
+      "required": true,
+      "description": "Use this collection to submit the details that were returned as a result of the `/payments` call."
+    },
+    {
+      "name": "paymentData",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "Encoded payment data. For [authorizing a payment after using 3D Secure 2 Authentication-only](https://docs.adyen.com/online-payments/3d-secure/other-3ds-flows/authentication-only/#authorise-the-payment-with-adyen): If you received `resul..."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "PaymentDetailsRequest",
+    "required": true,
+    "description": "PaymentDetailsRequest: submit the details collected after a redirect/3DS action."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Payment result after submitting details.",
+      "schema": null,
+      "schema_ref": "PaymentResponse"
+    },
+    {
+      "status": "400",
+      "description": "Bad request.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "401",
+      "description": "Unauthorized.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "403",
+      "description": "Forbidden.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "422",
+      "description": "Unprocessable entity.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    },
+    {
+      "status": "500",
+      "description": "Internal server error.",
+      "schema": null,
+      "schema_ref": "ServiceError"
+    }
+  ],
+  "tags": [
+    "Payments"
+  ],
+  "security": [
+    "ApiKeyAuth",
+    "BasicAuth"
+  ],
+  "examples": [],
+  "missing": []
+}

@@ -1,0 +1,26 @@
+{
+  "_note": "多產品共用 endpoint(第二輪最後一類)。國際金流 Adyen Checkout v71:單一 POST /payments 服務 40+ 種付款方式,以 paymentMethod.type discriminator(oneOf union)分流。測 endpoint merge / operationId 穩定 / 多型 body 的文件可讀性。與 github-webhooks 的『多 callback 同源碰撞』互為對偶(此處是『同一路徑多產品』)。三個代表性成員(CardDetails/IdealDetails/ApplePayDetails)以具名 schema 呈現;完整 oneOf 為忠實限制(pipeline 不產生原生 oneOf/discriminator)。",
+  "must_have": {
+    "base_urls": 1,
+    "endpoints_min": 3,
+    "webhooks_min": 0,
+    "schemas_min": 8,
+    "error_codes_min": 0,
+    "security_schemes_min": 2,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": false,
+    "callbacks_required": false,
+    "field_conditions_min": 2,
+    "test_cases_min": 1
+  },
+  "critical_operations": [
+    "paths./payments.post",
+    "paths./payments/details.post",
+    "paths./paymentMethods.post"
+  ],
+  "critical_security_schemes": ["ApiKeyAuth", "BasicAuth"]
+}
