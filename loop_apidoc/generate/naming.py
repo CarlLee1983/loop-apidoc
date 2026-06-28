@@ -38,16 +38,23 @@ def schema_key_map(schemas) -> dict[int, str]:
 
 def webhook_name(summary: str | None, idx: int) -> str:
     """Derive a webhook key from an endpoint summary, taking the leading label
-    before any parenthetical qualifier (e.g. '付款結果通知（綠界 POST…）' →
-    '付款結果通知'). Falls back to webhook<idx> when there is no usable summary.
-    Unlike component keys, OpenAPI webhook keys may be any string, so the label
-    is kept verbatim (CJK allowed)."""
+    before the first qualifier or clause boundary — a parenthesis, newline,
+    sentence end ('. '/'。') or colon (': '/'：'). e.g. '付款結果通知（綠界 POST…）'
+    → '付款結果通知', and 'push webhook event. Sent when…' → 'push webhook event'.
+
+    A whole-paragraph summary (common when one docs page lists many events as
+    prose, e.g. GitHub/Stripe) must not become a giant webhook key, so the
+    earliest boundary wins. Falls back to webhook<idx> when there is no usable
+    summary. Unlike component keys, OpenAPI webhook keys may be any string, so the
+    label is kept verbatim (CJK allowed)."""
     raw = (summary or "").strip()
-    for sep in ("(", "（", "\n"):
-        cut = raw.find(sep)
-        if cut > 0:
-            raw = raw[:cut].strip()
-            break
+    cut = min(
+        (pos for pos in (raw.find(sep) for sep in ("(", "（", "\n", ". ", "。", ": ", "："))
+         if pos > 0),
+        default=-1,
+    )
+    if cut > 0:
+        raw = raw[:cut].strip()
     return raw or f"webhook{idx}"
 
 

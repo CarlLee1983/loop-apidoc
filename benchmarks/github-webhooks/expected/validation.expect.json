@@ -1,0 +1,23 @@
+{
+  "_note": "Webhook/callback case。初跑揭 1 項真 pipeline 缺陷(多 webhook 同源碰撞)→ TDD 修 builder 後重跑 PASS。3 個 REQUIRED_INFO_MISSING.warning 為 webhook 無 source 範例(忠實缺漏)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 3 },
+  "acceptable_warnings": "3 webhook 各一筆『endpoint 缺少 request/response 範例』:GitHub docs 未附逐事件完整範例 body,降為 WARNING(範例由 generator 從 payload schema 合成)。",
+  "resolved_issue_was": {
+    "kind": "pipeline-bug",
+    "code": "DATA_LOSS",
+    "where": "plan/builder.py _merge_one_detail / _detail_matches",
+    "summary": "多個 webhook 共用同一來源頁(GitHub 一頁列多事件)時,path-less detail 僅靠 manifest_source 配對 → 全部堆到第一個 webhook(ping 吞下 star+push 的 18 個欄位,star/push 變成空 default response)。修法:webhook 改優先以 distinct locator 配對、manifest_source 後備,且每個 webhook endpoint 至多被取用一次(consumed set)。另順手強化 webhook_name 在首個句子/冒號邊界切,避免整句 summary 變成 webhook key。"
+  },
+  "observations": [
+    "webhook 無 OpenAPI server(交付 URL 由整合者設定)→ servers 空,正確;completeness 無 base_url 要求。",
+    "簽章(X-Hub-Signature-256 / -256 的 SHA-1 版)為 webhook 的驗證機制,放在 integration.crypto + operational(topic 含 'security' → 不誤判缺 auth gap),而非 OpenAPI securityScheme。"
+  ]
+}

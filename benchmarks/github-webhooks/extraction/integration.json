@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "X-Hub-Signature-256",
+      "purpose": "signature",
+      "algorithm": "HMAC-SHA256",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex (HMAC hex digest, prefixed 'sha256=')",
+      "key_source": {
+        "key": "The webhook secret token configured on the webhook.",
+        "iv": null,
+        "note": "Sent only if the webhook is configured with a secret. The signed content is the raw request body. Example value: sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17"
+      },
+      "payload_assembly": [
+        {"step": 1, "desc": "Take the raw HTTP request body bytes exactly as received (do not re-serialize the JSON).", "fields": ["request body"]},
+        {"step": 2, "desc": "Compute HMAC-SHA256 over the raw body using the webhook secret as the HMAC key; hex-encode the digest and prefix it with 'sha256='.", "fields": ["request body", "webhook secret"]},
+        {"step": 3, "desc": "Compare the result to the X-Hub-Signature-256 header using a constant-time comparison (never a plain == operator).", "fields": ["X-Hub-Signature-256"]}
+      ],
+      "verify": {
+        "field": "X-Hub-Signature-256",
+        "method": "HMAC-SHA256",
+        "desc": "Recompute HMAC-SHA256 of the raw body with the stored secret, prefix 'sha256=', and compare in constant time. A legacy SHA-1 digest is also sent in X-Hub-Signature."
+      },
+      "source": "webhook-delivery-and-signing.md > Validating webhook deliveries; Delivery headers (X-Hub-Signature-256)"
+    },
+    {
+      "name": "X-Hub-Signature",
+      "purpose": "signature",
+      "algorithm": "HMAC-SHA1",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex (HMAC hex digest)",
+      "key_source": {
+        "key": "The webhook secret token configured on the webhook.",
+        "iv": null,
+        "note": "Legacy SHA-1 variant, sent only if a secret is configured. Prefer X-Hub-Signature-256."
+      },
+      "payload_assembly": [],
+      "verify": {
+        "field": "X-Hub-Signature",
+        "method": "HMAC-SHA1",
+        "desc": "HMAC hex digest of the request body generated using the SHA-1 hash function and the secret as the HMAC key."
+      },
+      "source": "webhook-delivery-and-signing.md > Delivery headers (X-Hub-Signature)"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "ping",
+      "trigger": "Sent when a new webhook is created, to confirm the configuration.",
+      "transport": "HTTP POST to the configured webhook URL; Content-Type: application/json; X-GitHub-Event: ping.",
+      "payload_ref": "schemas.PingEvent",
+      "verification": "X-Hub-Signature-256 (HMAC-SHA256 of the raw body with the webhook secret), if a secret is configured.",
+      "expected_response": "HTTP 200 within 10 seconds. A non-200 or slower-than-10s response is recorded as a failed delivery. GitHub does NOT automatically redeliver; redeliver manually from the UI or via the REST API.",
+      "source": "webhook-events-and-payloads.md > Event: ping; webhook-delivery-and-signing.md > Handling failed deliveries"
+    },
+    {
+      "name": "star",
+      "trigger": "Sent when a repository is starred or unstarred (action = created | deleted).",
+      "transport": "HTTP POST to the configured webhook URL; Content-Type: application/json; X-GitHub-Event: star.",
+      "payload_ref": "schemas.StarEvent",
+      "verification": "X-Hub-Signature-256 (HMAC-SHA256 of the raw body with the webhook secret), if a secret is configured.",
+      "expected_response": "HTTP 200 within 10 seconds. No automatic redelivery; manual or REST-API redelivery only.",
+      "source": "webhook-events-and-payloads.md > Event: star; webhook-delivery-and-signing.md > Handling failed deliveries"
+    },
+    {
+      "name": "push",
+      "trigger": "Sent when one or more commits are pushed to a repository branch or tag.",
+      "transport": "HTTP POST to the configured webhook URL; Content-Type: application/json; X-GitHub-Event: push.",
+      "payload_ref": "schemas.PushEvent",
+      "verification": "X-Hub-Signature-256 (HMAC-SHA256 of the raw body with the webhook secret), if a secret is configured.",
+      "expected_response": "HTTP 200 within 10 seconds. No automatic redelivery; manual or REST-API redelivery only.",
+      "source": "webhook-events-and-payloads.md > Event: push; webhook-delivery-and-signing.md > Handling failed deliveries"
+    }
+  ],
+  "field_conditions": [
+    {
+      "scope": "Delivery headers / signature",
+      "rule": "The X-Hub-Signature-256 and X-Hub-Signature headers are sent only when the webhook is configured with a secret.",
+      "when": "a webhook secret is configured",
+      "then_required": ["X-Hub-Signature-256"],
+      "source": "webhook-delivery-and-signing.md > Delivery headers (X-Hub-Signature-256 'sent if the webhook is configured with a secret')"
+    },
+    {
+      "scope": "star event payload",
+      "rule": "starred_at is null when action = deleted (the star was removed).",
+      "when": "action = deleted",
+      "then_required": [],
+      "source": "webhook-events-and-payloads.md > Event: star (starred_at 'Will be null for the deleted action')"
+    }
+  ],
+  "test_cases": [],
+  "missing": [
+    {"area": "crypto.secret",
+     "detail": "The webhook secret length/format and the exact byte encoding fed to HMAC (beyond 'the raw request body') are not specified in these sources."},
+    {"area": "callbacks.retry",
+     "detail": "There is no automatic-retry schedule because GitHub does not auto-redeliver; the receiver/integrator must drive redelivery via the REST API. The REST API redelivery endpoint path is not captured in these sources."},
+    {"area": "test_cases",
+     "detail": "The sources do not ship full example payload bodies for ping/star/push, so no end-to-end request example is grounded here (object-typed properties such as repository/sender are not expanded)."}
+  ]
+}

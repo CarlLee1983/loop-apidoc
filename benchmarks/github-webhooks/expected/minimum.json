@@ -1,0 +1,21 @@
+{
+  "_note": "Webhook/callback 專屬 case(GitHub webhooks)。async HTTP POST 交付、HMAC 簽章驗證、無自動重送。webhook = method 有值 / path=None 的 endpoint → OpenAPI webhooks 區塊。無 API server base URL(交付到使用者設定的 URL)→ base_urls=0、無 securityScheme(簽章即驗證,記在 integration.crypto + operational)。critical_operations 留空:harness 只比對 paths,webhook 改由 webhooks_min 把關。",
+  "must_have": {
+    "base_urls": 0,
+    "endpoints_min": 0,
+    "webhooks_min": 3,
+    "schemas_min": 3,
+    "error_codes_min": 0,
+    "security_schemes_min": 0,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": true,
+    "field_conditions_min": 2,
+    "test_cases_min": 0
+  },
+  "critical_operations": []
+}

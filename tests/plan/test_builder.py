@@ -241,6 +241,42 @@ def test_webhook_details_merge_by_source_not_collapsed():
     assert by_summary["notify B"].responses == [{"status": "201", "description": "B ack"}]
 
 
+def test_webhooks_sharing_one_source_file_pair_by_locator_not_collapsed():
+    # Real-world: a single docs page (one manifest source) documents MANY webhook
+    # events (GitHub/Stripe). All path-less endpoints then reduce to the SAME
+    # manifest_source, so source-only pairing would pile every detail onto the
+    # first webhook. They must still pair to the right endpoint by their distinct
+    # locator (the finer source string), and each webhook is consumed once.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"POST","path":null,"summary":"ping","source":"api.pdf > Event: ping"},'
+        '{"method":"POST","path":null,"summary":"push","source":"api.pdf > Event: push"}]}\n```'
+    )
+    ep_ping = ('```json\n{"method":"POST","path":null,'
+               '"parameters":[{"name":"zen","in":"body"}],'
+               '"responses":[{"status":"200","description":"ping ack"}],'
+               '"source":"api.pdf > Event: ping"}\n```')
+    ep_push = ('```json\n{"method":"POST","path":null,'
+               '"parameters":[{"name":"ref","in":"body"}],'
+               '"responses":[{"status":"201","description":"push ack"}],'
+               '"source":"api.pdf > Event: push"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+        AnswerArtifact(query_id="06-ping", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep_ping, answer_path="answers/06-ping.txt", returncode=0),
+        AnswerArtifact(query_id="06-push", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep_push, answer_path="answers/06-push.txt", returncode=0),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    hooks = [e for e in plan.endpoints if e.path is None]
+    assert len(hooks) == 2
+    by_summary = {e.summary: e for e in hooks}
+    assert {p.get("name") for p in by_summary["ping"].parameters} == {"zen"}
+    assert {p.get("name") for p in by_summary["push"].parameters} == {"ref"}
+    assert by_summary["ping"].responses == [{"status": "200", "description": "ping ack"}]
+    assert by_summary["push"].responses == [{"status": "201", "description": "push ack"}]
+
+
 def test_nested_scalar_wrong_type_in_inventory_does_not_raise():
     # `fields` must be a list[dict]; a bare string used to crash entry build.
     block = '```json\n{"schemas": [{"name": "U", "fields": "bad"}]}\n```'

@@ -305,22 +305,49 @@ def _detail_path(item: dict) -> str | None:
     return url if isinstance(url, str) else None
 
 
-def _detail_matches(existing, method, path, detail_source) -> bool:
-    """Pair a stage-06 detail with its stage-05 endpoint. Path-bearing endpoints
-    join on (method, path). Webhooks have no path and several can share
-    (method, None), so they disambiguate on the manifest source they cite —
-    each callback page is a distinct source."""
-    if existing.method != method:
-        return False
+def _webhook_locators(existing) -> set[str]:
+    return {c.locator for c in existing.citations if getattr(c, "locator", None)}
+
+
+def _match_index(plan: NormalizationPlan, method, path, detail_locator,
+                 detail_source, consumed: set[int]) -> int | None:
+    """Index of the stage-05 endpoint a stage-06 detail belongs to, or None.
+
+    Path-bearing details join on (method, path); several may legitimately share
+    one path (multi-product gateways), so these are NOT consumed — the duplicate
+    endpoints collapse later in `_dedupe_endpoints`.
+
+    Path-less webhook details join to a path-less endpoint with the same method.
+    Because ONE source page can document MANY events (GitHub/Stripe list dozens
+    on a single page), every such webhook reduces to the same manifest_source;
+    source-only pairing would pile every detail onto the first webhook. So they
+    pair FIRST by their distinct `locator` (the finer source string) and only
+    then fall back to manifest_source — and each webhook endpoint is consumed
+    once so details never collapse onto one."""
+    if method is None:
+        return None
     if path is not None:
-        return existing.path == path
-    if existing.path is not None or detail_source is None:
-        return False
-    return any(c.manifest_source == detail_source for c in existing.citations)
+        for idx, e in enumerate(plan.endpoints):
+            if e.method == method and e.path == path:
+                return idx
+        return None
+    candidates = [idx for idx, e in enumerate(plan.endpoints)
+                  if idx not in consumed and e.method == method and e.path is None]
+    if detail_locator:
+        for idx in candidates:
+            if detail_locator in _webhook_locators(plan.endpoints[idx]):
+                return idx
+    if detail_source is not None:
+        for idx in candidates:
+            if any(c.manifest_source == detail_source
+                   for c in plan.endpoints[idx].citations):
+                return idx
+    return None
 
 
 def _merge_one_detail(
-    plan: NormalizationPlan, art, item: dict, manifest: Manifest
+    plan: NormalizationPlan, art, item: dict, manifest: Manifest,
+    consumed: set[int],
 ) -> None:
     method = item.get("method")
     path = _detail_path(item)
@@ -336,28 +363,32 @@ def _merge_one_detail(
         item.get("source"), query_id=art.query_id,
         answer_path=art.answer_path, manifest=manifest,
     )
-    for idx, existing in enumerate(plan.endpoints):
-        if _detail_matches(existing, method, path, citation.manifest_source):
-            # The detail is only as grounded as its own source; take the
-            # strictest of the endpoint's and the detail's status.
-            merged_status = _stricter(existing.status, status)
-            merged = _build_entry(
-                plan, "06", art.query_id, "endpoint_details", EndpointEntry,
-                **{**existing.model_dump(),
-                   **_union_endpoint_fields(existing, detail),
-                   "status": merged_status,
-                   "citations": [*existing.citations, citation]},
-            )
-            if merged is None:
-                return
-            plan.endpoints[idx] = merged
-            if (merged_status is not existing.status
-                    and merged_status in (PlanItemStatus.UNVERIFIED,
-                                          PlanItemStatus.CONFLICTING)):
-                plan.unverified_items.append(
-                    UnverifiedItem(area="06", detail=str(path or "endpoint"),
-                                   query_id=art.query_id))
+    idx = _match_index(plan, method, path, citation.locator,
+                       citation.manifest_source, consumed)
+    if idx is not None:
+        existing = plan.endpoints[idx]
+        # The detail is only as grounded as its own source; take the
+        # strictest of the endpoint's and the detail's status.
+        merged_status = _stricter(existing.status, status)
+        merged = _build_entry(
+            plan, "06", art.query_id, "endpoint_details", EndpointEntry,
+            **{**existing.model_dump(),
+               **_union_endpoint_fields(existing, detail),
+               "status": merged_status,
+               "citations": [*existing.citations, citation]},
+        )
+        if merged is None:
             return
+        plan.endpoints[idx] = merged
+        if path is None:
+            consumed.add(idx)
+        if (merged_status is not existing.status
+                and merged_status in (PlanItemStatus.UNVERIFIED,
+                                      PlanItemStatus.CONFLICTING)):
+            plan.unverified_items.append(
+                UnverifiedItem(area="06", detail=str(path or "endpoint"),
+                               query_id=art.query_id))
+        return
     # No stage-05 endpoint matched: add the detailed endpoint on its own.
     entry = _build_entry(
         plan, "06", art.query_id, "endpoint_details", EndpointEntry,
@@ -383,6 +414,7 @@ def _merge_endpoint_details(
         plan.missing_items.append(
             MissingItem(area="06", detail="no structured answer", query_id=None))
         return
+    consumed: set[int] = set()  # path-less webhook endpoints matched at most once
     for art in arts:
         block = extract_json_block(art.answer)
         if not isinstance(block, dict):
@@ -397,5 +429,5 @@ def _merge_endpoint_details(
                 MissingItem(area="06", detail="endpoint detail missing method/path",
                             query_id=art.query_id))
             continue
-        _merge_one_detail(plan, art, block, manifest)
+        _merge_one_detail(plan, art, block, manifest, consumed)
         _add_missing_and_conflicts(plan, "06", art, block)

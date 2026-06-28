@@ -1,0 +1,81 @@
+{
+  "title": "GitHub Webhooks",
+  "version": null,
+  "overview": "GitHub webhooks deliver events as asynchronous HTTP POST requests to a receiver URL that you configure. Each delivery carries the event name in the X-GitHub-Event header and a JSON event payload in the request body (Content-Type: application/json). When a secret is configured, GitHub signs the raw request body with HMAC and sends the hex digest in the X-Hub-Signature-256 (SHA-256) and X-Hub-Signature (SHA-1) headers. The receiver must respond with HTTP 200 within 10 seconds; GitHub does not automatically redeliver failed deliveries, but they can be redelivered manually or via the REST API.",
+  "environments": [],
+  "security_schemes": [],
+  "endpoints": [
+    {"method": "POST", "path": null, "summary": "ping webhook event. Sent when a new webhook is created, to confirm the configuration. Delivered as an HTTP POST to the configured webhook URL with X-GitHub-Event: ping.", "source": "webhook-events-and-payloads.md > Event: ping"},
+    {"method": "POST", "path": null, "summary": "star webhook event. Sent when a repository is starred or unstarred (action = created | deleted). Delivered as an HTTP POST with X-GitHub-Event: star.", "source": "webhook-events-and-payloads.md > Event: star"},
+    {"method": "POST", "path": null, "summary": "push webhook event. Sent when one or more commits are pushed to a repository branch or tag. Delivered as an HTTP POST with X-GitHub-Event: push.", "source": "webhook-events-and-payloads.md > Event: push"}
+  ],
+  "schemas": [
+    {
+      "name": "CommonWebhookProperties",
+      "fields": [
+        {"name": "action", "type": "string", "required": false, "description": "The specific activity that triggered the event. Present on events that have actions."},
+        {"name": "repository", "type": "object", "required": false, "description": "The repository on GitHub where the event occurred. Present when the event occurs from activity in a repository."},
+        {"name": "sender", "type": "object", "required": true, "description": "A GitHub user — the user that triggered the event."},
+        {"name": "enterprise", "type": "object", "required": false, "description": "An enterprise on GitHub. Present when the webhook is configured on an enterprise account or an organization that's part of an enterprise account."},
+        {"name": "installation", "type": "object", "required": false, "description": "The GitHub App installation. Present when the event is configured for and sent to a GitHub App."},
+        {"name": "organization", "type": "object", "required": false, "description": "A GitHub organization. Present when the webhook is configured for an organization, or when the event occurs from activity in a repository owned by an organization."}
+      ],
+      "enums": [],
+      "source": "webhook-events-and-payloads.md > Common payload properties"
+    },
+    {
+      "name": "PingEvent",
+      "fields": [
+        {"name": "zen", "type": "string", "required": false, "description": "Random string of GitHub zen."},
+        {"name": "hook_id", "type": "integer", "required": false, "description": "The ID of the webhook that triggered the ping."},
+        {"name": "hook", "type": "object", "required": false, "description": "The webhook that is being pinged."},
+        {"name": "sender", "type": "object", "required": false, "description": "A GitHub user."}
+      ],
+      "enums": [],
+      "source": "webhook-events-and-payloads.md > Event: ping"
+    },
+    {
+      "name": "StarEvent",
+      "fields": [
+        {"name": "action", "type": "string", "required": true, "description": "The action performed. Can be created or deleted."},
+        {"name": "starred_at", "type": "string", "required": false, "description": "The time the star was created, in ISO 8601 format YYYY-MM-DDTHH:MM:SSZ. Will be null for the deleted action."},
+        {"name": "repository", "type": "object", "required": false, "description": "The repository that was starred."},
+        {"name": "sender", "type": "object", "required": false, "description": "The user that starred (or unstarred) the repository."}
+      ],
+      "enums": [],
+      "source": "webhook-events-and-payloads.md > Event: star"
+    },
+    {
+      "name": "PushEvent",
+      "fields": [
+        {"name": "ref", "type": "string", "required": false, "description": "The full git ref that was pushed. Example: refs/heads/main or refs/tags/v3.14.1."},
+        {"name": "before", "type": "string", "required": false, "description": "The SHA of the most recent commit on ref before the push."},
+        {"name": "after", "type": "string", "required": false, "description": "The SHA of the most recent commit on ref after the push."},
+        {"name": "created", "type": "boolean", "required": false, "description": "Whether this push created the ref."},
+        {"name": "deleted", "type": "boolean", "required": false, "description": "Whether this push deleted the ref."},
+        {"name": "forced", "type": "boolean", "required": false, "description": "Whether this push was a force push of the ref."},
+        {"name": "base_ref", "type": "string", "required": false, "description": "No description provided in source (string or null)."},
+        {"name": "compare", "type": "string", "required": false, "description": "URL that shows the changes in this ref update, from before to after commit."},
+        {"name": "commits", "type": "array", "required": false, "description": "An array of commit objects describing the pushed commits."},
+        {"name": "head_commit", "type": "object", "required": false, "description": "No description provided in source (object or null)."},
+        {"name": "pusher", "type": "object", "required": false, "description": "Metaproperties for Git author/committer information."},
+        {"name": "repository", "type": "object", "required": false, "description": "The repository that was pushed to."},
+        {"name": "sender", "type": "object", "required": false, "description": "The user that pushed the commits."}
+      ],
+      "enums": [],
+      "source": "webhook-events-and-payloads.md > Event: push"
+    }
+  ],
+  "errors": [],
+  "operational": [
+    {"topic": "Delivery transport", "detail": "Webhooks are delivered as HTTP POST to a receiver URL you configure. Content-Type is application/json (default). The X-GitHub-Event header names the event; X-GitHub-Delivery is a unique GUID; X-GitHub-Hook-ID identifies the webhook. User-Agent always begins with GitHub-Hookshot/.", "source": "webhook-delivery-and-signing.md > Delivery headers"},
+    {"topic": "Webhook security (signature verification)", "detail": "When a secret is configured, GitHub signs the raw request body and sends the HMAC hex digest in X-Hub-Signature-256 (SHA-256, prefixed sha256=) and X-Hub-Signature (SHA-1). Receivers must recompute the HMAC with their stored secret and compare in constant time. No bearer token or API key is used to authenticate the delivery — the signature is the authentication.", "source": "webhook-delivery-and-signing.md > Validating webhook deliveries"},
+    {"topic": "Timeout, retry and redelivery", "detail": "The receiver must respond with HTTP 200 within 10 seconds; a non-200 response or a response slower than 10 seconds is recorded as a failed delivery. GitHub does NOT automatically redeliver failed deliveries; they can be redelivered manually from the UI or via the REST API.", "source": "webhook-delivery-and-signing.md > Handling failed deliveries"}
+  ],
+  "missing": [
+    "There is no fixed API base URL / server for webhook delivery — the receiver endpoint URL is configured by the integrator, so OpenAPI servers are intentionally empty.",
+    "The full schemas of the repository, sender (user), and hook objects are not enumerated here; they are captured as object-typed properties only.",
+    "Only three representative events (ping, star, push) are captured; GitHub defines many more event types and per-action payload variants.",
+    "The webhook secret length/format and the exact byte encoding fed to HMAC beyond 'the raw request body' are not further specified in these sources."
+  ]
+}

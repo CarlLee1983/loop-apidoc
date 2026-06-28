@@ -1,0 +1,120 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "webhook-events-and-payloads.md > Event: push",
+  "parameters": [
+    {
+      "name": "ref",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The full git ref that was pushed. Example: refs/heads/main or refs/tags/v3.14.1."
+    },
+    {
+      "name": "before",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The SHA of the most recent commit on ref before the push."
+    },
+    {
+      "name": "after",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The SHA of the most recent commit on ref after the push."
+    },
+    {
+      "name": "created",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether this push created the ref."
+    },
+    {
+      "name": "deleted",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether this push deleted the ref."
+    },
+    {
+      "name": "forced",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether this push was a force push of the ref."
+    },
+    {
+      "name": "base_ref",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "No description provided in source (string or null)."
+    },
+    {
+      "name": "compare",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "URL that shows the changes in this ref update, from before to after commit."
+    },
+    {
+      "name": "commits",
+      "in": "body",
+      "type": "array",
+      "required": false,
+      "description": "An array of commit objects describing the pushed commits."
+    },
+    {
+      "name": "head_commit",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "No description provided in source (object or null)."
+    },
+    {
+      "name": "pusher",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Metaproperties for Git author/committer information."
+    },
+    {
+      "name": "repository",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "The repository that was pushed to."
+    },
+    {
+      "name": "sender",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "The user that pushed the commits."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": true,
+    "description": "push event payload (JSON request body of the webhook delivery)."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Receiver must respond with HTTP 200 within 10 seconds. A non-200 response or a response slower than 10 seconds is recorded as a failed delivery; GitHub does not automatically redeliver.",
+      "schema": null,
+      "source": "webhook-delivery-and-signing.md > Handling failed deliveries"
+    }
+  ],
+  "tags": [
+    "Webhooks"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No full example payload body is provided in the source for this event; object-typed properties (repository, sender, hook, commits) are not expanded."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "webhook-events-and-payloads.md > Event: star",
+  "parameters": [
+    {
+      "name": "action",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "The action performed. Can be created or deleted."
+    },
+    {
+      "name": "starred_at",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "The time the star was created, in ISO 8601 format YYYY-MM-DDTHH:MM:SSZ. Will be null for the deleted action."
+    },
+    {
+      "name": "repository",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "The repository that was starred."
+    },
+    {
+      "name": "sender",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "The user that starred (or unstarred) the repository."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": true,
+    "description": "star event payload (JSON request body of the webhook delivery)."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Receiver must respond with HTTP 200 within 10 seconds. A non-200 response or a response slower than 10 seconds is recorded as a failed delivery; GitHub does not automatically redeliver.",
+      "schema": null,
+      "source": "webhook-delivery-and-signing.md > Handling failed deliveries"
+    }
+  ],
+  "tags": [
+    "Webhooks"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No full example payload body is provided in the source for this event; object-typed properties (repository, sender, hook, commits) are not expanded."
+  ]
+}
