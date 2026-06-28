@@ -1,0 +1,30 @@
+{
+  "_note": "此 case 至少必須抽到的重點;數字為實跑 20260628 達成值的保守下限,後續回歸不得低於此。",
+  "must_have": {
+    "base_urls": 2,
+    "endpoints_min": 7,
+    "webhooks_min": 3,
+    "schemas_min": 15,
+    "error_codes_min": 80,
+    "security_schemes_min": 4,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": true,
+    "field_conditions_min": 5,
+    "test_cases_min": 1
+  },
+  "critical_operations": [
+    "paths./MPG/mpg_gateway.post",
+    "paths./API/QueryTradeInfo.post",
+    "paths./API/CreditCard/Cancel.post",
+    "paths./API/CreditCard/Close.post"
+  ],
+  "critical_security_schemes": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)"
+  ]
+}

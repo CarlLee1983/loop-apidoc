@@ -157,16 +157,37 @@ def _wire_target(scheme: CryptoScheme, shape: dict) -> tuple[str, str] | None:
     return None
 
 
-def _payload_field_names(scheme: CryptoScheme, shape: dict, target: str) -> list[str]:
-    """Body field names the source says enter the signature payload: union of
-    payload_assembly[].fields ∩ this request's body fields, excluding the target."""
-    body_names = [n for n, _k, _v in shape["body"]]
+def _payload_field_names(scheme: CryptoScheme, target: str) -> list[str]:
+    """Field names the source (`payload_assembly[].fields`) says enter the
+    signature/encryption payload, excluding the target. NOT intersected with the
+    request body: for layered schemes (e.g. NewebPay TradeInfo) the signed payload
+    is the inner, pre-encryption params that never appear in the outer body — the
+    wiring renders a body value where present and a `<field>` placeholder otherwise.
+    """
     names: list[str] = []
     for step in scheme.payload_assembly:
         for f in step.fields:
-            if f in body_names and f != target and f not in names:
+            if f != target and f not in names:
                 names.append(f)
     return names
+
+
+def _payload_pieces(fields: list[str], body_names: set[str], lang: str) -> list[str]:
+    """Per-field source expressions for the signature payload string. A field in
+    the request body reads its live value; an inner/pre-encryption field renders a
+    `<field>` placeholder (so the example never KeyErrors on a non-body field)."""
+    pieces: list[str] = []
+    for f in fields:
+        lhs = json.dumps(f + "=", ensure_ascii=False)
+        key = json.dumps(f, ensure_ascii=False)
+        if f in body_names:
+            if lang == "py":
+                pieces.append(f"{lhs} + str(payload[{key}])")
+            else:
+                pieces.append(f"{lhs} + String((body as any)[{key}])")
+        else:
+            pieces.append(json.dumps(f"{f}=<{f}>", ensure_ascii=False))
+    return pieces
 
 
 def _ts_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
@@ -178,18 +199,14 @@ def _ts_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
             continue
         loc, target = wire
         obj = "body" if loc == "body" else "headers"
-        # Payload field values are always sourced from the body object;
-        # `obj` is only used for the write-back assignment target.
-        read_obj = "body"
         fn = _func_name(s, idx, total)
         pvar = "payload" if total == 1 else f"payload_{_snake(s.name or str(idx))}"
-        fields = _payload_field_names(s, shape, target)
+        fields = _payload_field_names(s, target)
         lines.append(f"// {_PAYLOAD_NOTE}")
         if fields:
-            arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
-            lines.append(
-                f"const {pvar} = [{arr}].map((k) => `${{k}}=${{({read_obj} as any)[k]}}`).join('&')"
-            )
+            body_names = {n for n, _k, _v in shape["body"]}
+            pieces = _payload_pieces(fields, body_names, "ts")
+            lines.append(f"const {pvar} = [{', '.join(pieces)}].join('&')")
         else:
             lines.append(f"const {pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
         lines.append(
@@ -207,16 +224,14 @@ def _py_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
             continue
         loc, target = wire
         obj = "payload" if loc == "body" else "headers"
-        # Payload field values are always sourced from the body dict (`payload`);
-        # `obj` is only used for the write-back assignment target.
-        read_obj = "payload"
         fn = _func_name(s, idx, total)
         pvar = "sig_payload" if total == 1 else f"sig_payload_{_snake(s.name or str(idx))}"
-        fields = _payload_field_names(s, shape, target)
+        fields = _payload_field_names(s, target)
         lines.append(f"# {_PAYLOAD_NOTE}")
         if fields:
-            arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
-            lines.append(f'{pvar} = "&".join(f"{{k}}={{{read_obj}[k]}}" for k in [{arr}])')
+            body_names = {n for n, _k, _v in shape["body"]}
+            pieces = _payload_pieces(fields, body_names, "py")
+            lines.append(f'{pvar} = "&".join([{", ".join(pieces)}])')
         else:
             lines.append(f"{pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
         lines.append(f"{obj}[{json.dumps(target, ensure_ascii=False)}] = {fn}({pvar})")
@@ -294,7 +309,7 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
 
     # Emit import exactly once at the top if needed
     if has_runnable:
-        parts.append("import { createCipheriv, createHash } from 'node:crypto'\n")
+        parts.append("import { createCipheriv } from 'node:crypto'\n")
 
     blocks = []
     for idx, s in enumerate(schemes):
@@ -314,8 +329,8 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
                 f"  const key = process.env.{_snake(key).upper()} ?? '{key}'\n"
                 f"  const iv = process.env.{_snake(iv).upper()} ?? '{iv}'\n"
                 f"  const cipher = createCipheriv('{algo}', key, iv)\n"
-                "  const enc = cipher.update(payload, 'utf8', 'hex') + cipher.final('hex')\n"
-                "  return createHash('sha256').update(enc).digest('hex').toUpperCase()\n"
+                "  // AES 加密輸出(十六進制);此值即寫回請求欄位,不再額外雜湊\n"
+                "  return cipher.update(payload, 'utf8', 'hex') + cipher.final('hex')\n"
                 "}\n"
             )
         else:
@@ -407,7 +422,7 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
     # Emit imports exactly once at the top if needed
     if has_runnable:
         parts.append(
-            "import hashlib\nimport os\n"
+            "import os\n"
             "from Crypto.Cipher import AES  # pip install pycryptodome\n"
             "from Crypto.Util.Padding import pad\n"
         )
@@ -429,8 +444,8 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
                 f"    key = os.environ.get('{_snake(key).upper()}', '{key}').encode()\n"
                 f"    iv = os.environ.get('{_snake(iv).upper()}', '{iv}').encode()\n"
                 "    cipher = AES.new(key, AES.MODE_CBC, iv)\n"
-                "    enc = cipher.encrypt(pad(payload.encode(), 16)).hex()\n"
-                "    return hashlib.sha256(enc.encode()).hexdigest().upper()\n"
+                "    # AES 加密輸出(十六進制);此值即寫回請求欄位,不再額外雜湊\n"
+                "    return cipher.encrypt(pad(payload.encode(), 16)).hex()\n"
             )
         else:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]

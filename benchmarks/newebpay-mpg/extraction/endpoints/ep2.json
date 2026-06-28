@@ -1,0 +1,108 @@
+{
+  "method": "POST",
+  "path": "/API/CreditCard/Cancel",
+  "source": "線上交易─幕前支付技術串接手冊_NDNF-1.2.2.md §4.4 取消授權[NPA-B01] (4.4.1 請求參數 / 4.4.2 回應參數)",
+  "parameters": [
+    {
+      "name": "MerchantID_",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "商店代號。藍新金流商店代號"
+    },
+    {
+      "name": "PostData_",
+      "in": "body",
+      "type": "text",
+      "required": true,
+      "description": "加密資料。請參考4.1.1 AES256(PostData_內含參數欄位說明見下列各參數)"
+    },
+    {
+      "name": "RespondType",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "PostData_內含參數。回傳格式：String或是JSON"
+    },
+    {
+      "name": "Version",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "PostData_內含參數。串接程式版本：1.0"
+    },
+    {
+      "name": "Amt",
+      "in": "body",
+      "type": "Int(10)",
+      "required": true,
+      "description": "PostData_內含參數。取消授權金額：純數字不含符號，需與授權金額相同"
+    },
+    {
+      "name": "MerchantOrderNo",
+      "in": "body",
+      "type": "String(30)",
+      "required": null,
+      "description": "PostData_內含參數。商店訂單編號：與藍新金流交易序號二擇一填入(必填標示為「+」)"
+    },
+    {
+      "name": "TradeNo",
+      "in": "body",
+      "type": "String(17)",
+      "required": null,
+      "description": "PostData_內含參數。藍新金流交易序號：與商店訂單編號二擇一填入(必填標示為「+」)"
+    },
+    {
+      "name": "IndexType",
+      "in": "body",
+      "type": "Int(1)",
+      "required": true,
+      "description": "PostData_內含參數。單號類別：只限定填數字1或2；1表示使用商店訂單編號，2表示使用藍新金流交易單號"
+    },
+    {
+      "name": "TimeStamp",
+      "in": "body",
+      "type": "String(30)",
+      "required": true,
+      "description": "PostData_內含參數。時間戳記：自Unix纪元（格林威治時間1970年1月1日00:00:00）到當前時間的秒數，若以PHP程式語言為例，即為呼叫time()函式所回傳值。例：2014-05-15 15:00:00這個時間的時間戳記為1400137200。*須確實帶入自Unix紀元到當前時間的秒數以避免交易失敗。(容許誤差值120秒)"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": "取消授權請求參數(MerchantID_, PostData_;PostData_為AES256加密之http_build_query字串,明文含 RespondType, Version, Amt, MerchantOrderNo/TradeNo, IndexType, TimeStamp)",
+    "required": true,
+    "description": "Post 參數說明。PostData_ 為依 4.1.1 AES256 加密之資料(明文為各參數的 http_build_query 字串)"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "回應參數：Status(回傳狀態,String(10);取消授權程序成功則回傳SUCCESS;若需由金融機構批次處理則回傳代碼TRA20001;失敗則回傳錯誤代碼,請參考5.錯誤代碼表)、Message(回傳訊息,String(30);敘述此次取消授權狀態)、Result(回傳資料,Array)",
+      "schema": "取消授權回應",
+      "schema_ref": "取消授權回應-Result內含參數"
+    }
+  ],
+  "tags": [
+    "取消授權[NPA-B01]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "CheckCode"
+  ],
+  "examples": [
+    {
+      "lang": "php",
+      "title": "PHP 程式範例",
+      "code": "<?php\n$key=\"Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn\";\n$iv=\"C6AcmfqJILwgnhIP\";\n$mid=\"MS127874575\";\n$data1=http_build_query(array(\n'RespondType'=>'String',\n'Version'=>'1.0',\n'TimeStamp'=>time(),\n'Amt'=>'30',\n'MerchantOrderNo'=>\"Vanespl_ec_1641348593\",\n'IndexType'=>'1',\n'PayerEmail'=>'tek.chen@ezpay.com.tw',\n));\n$edata1=bin2hex(openssl_encrypt($data1, \"AES-256-CBC\", $key, OPENSSL_RAW_DATA, $iv)); // 加密 TradeInfo ?>\n<form method=post action=\"https://ccore.newebpay.com/API/CreditCard/Cancel\">\nMI: <input name=\"MerchantID_\" value=\"<?=$mid?>\"><br>\nTradeInfo: <input name=\"PostData_\" value=\"<?=$edata1?>\"><br>\n<input type=submit>\n</form>"
+    },
+    {
+      "title": "回傳結果範例",
+      "code": "Status=SUCCESS&Message=放棄授權成功&MerchantID=MS12345678&Amt=30&MerchantOrderNo=Vanespl_ec_1641348593&TradeNo=22010510111337004&CheckCode=896ED195169E09E6B7C641D05525DEA870A642362072FFF508B86B454A0BC6F7"
+    }
+  ],
+  "missing": [
+    "request content_type 未載明(HTTP Content-Type)",
+    "回應 HTTP 狀態碼未明確載明(以 200 表示成功回應)",
+    "PHP 範例中明文含 PayerEmail 參數,但 4.4.1 請求參數表未列此欄位",
+    "PHP 範例 Version 為 1.0 與請求參數表一致;但範例缺 IndexType 以外的二擇一單號說明(僅供參考)"
+  ]
+}

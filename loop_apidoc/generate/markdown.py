@@ -56,7 +56,7 @@ def _security(plan: NormalizationPlan) -> list[str]:
         # name is shown as 原名 for readability.
         key = security_scheme_key(s.name, idx)
         out.append(f"- **{key}**（type：`{s.type or '-'}`，位置：`{s.location or '-'}`，"
-                   f"名稱：`{s.details or '-'}`，原名：{s.name or '-'}）")
+                   f"說明：`{s.details or '-'}`，原名：{s.name or '-'}）")
     return out
 
 

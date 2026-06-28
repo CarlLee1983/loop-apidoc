@@ -1,0 +1,79 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "4.2.1 NotifyURL 支付通知網址 / 4.2.2 回應參數-支付完成 / 4.1.3 Step5 結果 / 3.1 即時支付交易流程",
+  "parameters": [
+    {
+      "name": "Status",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "1.若交易付款成功，則回傳SUCCESS。2.若交易付款失敗，則回傳錯誤代碼。錯誤代碼請參考5.錯誤代碼表。"
+    },
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "商店代號。"
+    },
+    {
+      "name": "Version",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "串接程式版本。"
+    },
+    {
+      "name": "TradeInfo",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料AES加密。將交易資料參數透過商店Key及IV進行AES加密（範例參考4.1.1 AES256）。解密後內含欄位請參考 schema「MPG回應-支付完成 TradeInfo內含參數(共同+各支付別)」（4.2.2 回應參數-支付完成），勿展平。"
+    },
+    {
+      "name": "TradeSha",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料SHA256加密。將交易資料經過上述AES加密過的字串，透過商店Key及IV再進行SHA256加密（範例參考4.1.2 SHA256）。"
+    },
+    {
+      "name": "EncryptType",
+      "in": "body",
+      "type": "Int(1)",
+      "required": null,
+      "description": "加密模式。1.若商店設定EncryptType為1，則會回傳此參數。2.若商店設定EncryptType為0或未有此參數，則不會回傳此參數。"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": "消費者完成支付後，藍新金流透過 NotifyURL 以幕後(Form Post)方式回傳已加密的支付結果字串給商店（參考4.2.2回應參數-支付完成）。只接受80與443 Port。"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "商店端接收後須回應 Http=200；藍新金流將 Http=200 視為成功並具 Retry 機制（來源未明確列出所需回應 body 內容）。",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "4.2 MPG交易[NPA-F01]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)"
+  ],
+  "examples": [
+    {
+      "body": "Status=SUCCESS&MerchantID=MS127874575&Version=2.0&TradeInfo=ee11d1501e6dc8433c7...&TradeSha=C80876AEBAC0036268C0E..."
+    }
+  ],
+  "missing": [
+    "商店端對 NotifyURL 通知所需回應的 response body 內容（來源僅以 Http=200 + Retry 機制描述，未列出 body 字串）",
+    "content_type 未在來源以 HTTP header 形式明文標示（依 4.1.3 Form Post 與 Step5 之 key=value&… 範例推得為 form-urlencoded）"
+  ]
+}

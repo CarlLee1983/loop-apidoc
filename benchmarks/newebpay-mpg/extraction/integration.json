@@ -1,0 +1,194 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "TradeInfo",
+      "purpose": "request",
+      "algorithm": "AES-256",
+      "mode": "CBC",
+      "padding": "PKCS7",
+      "encoding": "十六進制 (hex / bin2hex)",
+      "key_source": {"key": "商店 Hash Key (API 串接金鑰)", "iv": "商店 Hash IV (API 串接金鑰)", "note": "範例 $key=\"Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn\"; $iv=\"C6AcmfqJILwgnhIP\"; 加密前先以 http_build_query / http encode 將交易資料參數組成 URL 字串"},
+      "payload_assembly": [
+        {"step": 1, "desc": "Step1: 依各支 API 帶入必要參數，以 http encode (http_build_query) 生成 URL query 請求字串 $data1", "fields": ["MerchantID", "RespondType", "TimeStamp", "Version", "MerchantOrderNo", "Amt", "ItemDesc", "NotifyURL"]},
+        {"step": 2, "desc": "Step2: 對 $data1 以商店 Hash Key、Hash IV 執行 AES-256-CBC (PKCS7 填充) 加密，再 bin2hex 轉十六進制 → $edata1 (即 TradeInfo)。PHP: bin2hex(openssl_encrypt($data1,\"AES-256-CBC\",$key,OPENSSL_RAW_DATA,$iv))", "fields": ["$data1", "HashKey", "HashIV"]}
+      ],
+      "verify": {"field": "TradeInfo", "method": "AES-256-CBC 解密 (4.1.4)：需先去除 PKCS7 padding 後再做 AES 解密，hex2bin($data1) → openssl_decrypt(..., OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING)", "desc": "AES 加密結果即寫回請求參數 TradeInfo (4.2.1 Post 參數說明：『交易資料 AES加密』)；回應 TradeInfo 以相同 Key/IV 解密，得到 Status/Message/...&PaymentMethod 的 URL query 字串 (參照 4.2.2)"},
+      "source": "4.1.1 AES256 加密 (p18-20) / 4.1.4 AES256解密 (p24-25)；請求參數表 TradeInfo (4.2.1)"
+    },
+    {
+      "name": "TradeInfo (AES/GCM 模式)",
+      "purpose": "request",
+      "algorithm": "AES",
+      "mode": "GCM",
+      "padding": null,
+      "encoding": null,
+      "key_source": {"key": "商店 Hash Key", "iv": "商店 Hash IV", "note": "由請求參數 EncryptType=1 啟用 AES/GCM；EncryptType=0 或未帶 = 原 AES/CBC/PKCS7Padding 模式"},
+      "payload_assembly": [],
+      "verify": {"field": "EncryptType", "method": null, "desc": "常見問題 A3：若用 AES GCM 加密 EncryptType 帶 1，若用 AES256(CBC) 帶 0；商店設 EncryptType=1 時回應才回傳此參數"},
+      "source": "4.2.1 請求參數表 EncryptType (p28) / 4.2.2 回應參數 EncryptType / 6.常見問題 A3"
+    },
+    {
+      "name": "TradeSha",
+      "purpose": "signature",
+      "algorithm": "SHA256",
+      "mode": null,
+      "padding": null,
+      "encoding": "SHA256 壓碼後轉大寫 (strtoupper)",
+      "key_source": {"key": "商店 Hash Key", "iv": "商店 Hash IV", "note": null},
+      "payload_assembly": [
+        {"step": 1, "desc": "Step3: 於 AES 加密字串($edata1=TradeInfo) 前加上 'HashKey='+HashKey+'&'，後加上 '&HashIV='+HashIV，組成 $hashs", "fields": ["HashKey", "TradeInfo($edata1)", "HashIV"]},
+        {"step": 2, "desc": "將 $hashs 以 SHA256 壓碼並轉大寫 → TradeSha。PHP: strtoupper(hash(\"sha256\",$hashs))", "fields": ["$hashs"]}
+      ],
+      "verify": {"field": "TradeSha", "method": "重算 SHA256(HashKey=KEY&TradeInfo&HashIV=IV) 轉大寫並比對", "desc": "回應同樣回傳 TradeSha，可用相同規則驗證 TradeInfo 未被竄改"},
+      "source": "4.1.2 SHA256 (p21)；請求/回應參數表 TradeSha (4.2.1 / 4.2.2)"
+    },
+    {
+      "name": "CheckCode",
+      "purpose": "signature",
+      "algorithm": "SHA256",
+      "mode": null,
+      "padding": null,
+      "encoding": "SHA256 壓碼後轉大寫",
+      "key_source": {"key": "商店 HashKey", "iv": "商店 HashIV", "note": "用於驗證結果(回應)中 CheckCode 之正確性"},
+      "payload_assembly": [
+        {"step": 1, "desc": "取回傳資料的 4 個欄位 Amt、MerchantID、MerchantOrderNo、TradeNo，依英文字母 A~Z 排序(ksort)，以 & 串聯 (http_build_query)", "fields": ["Amt", "MerchantID", "MerchantOrderNo", "TradeNo"]},
+        {"step": 2, "desc": "串聯字串前加 'HashIV='+HashIV+'&'，後加 '&HashKey='+HashKey", "fields": ["HashIV", "HashKey"]},
+        {"step": 3, "desc": "整串以 SHA256 壓碼後轉大寫 → CheckCode", "fields": []}
+      ],
+      "verify": {"field": "CheckCode", "method": "重算並與回應中 CheckCode 比對是否一致", "desc": "注意 CheckCode 順序為 HashIV 在前、HashKey 在後 (與 TradeSha 相反)"},
+      "source": "4.1.5 CheckCode (p26)"
+    },
+    {
+      "name": "CheckValue",
+      "purpose": "request",
+      "algorithm": "SHA256",
+      "mode": null,
+      "padding": null,
+      "encoding": "SHA256 壓碼後轉大寫",
+      "key_source": {"key": "商店 HashKey", "iv": "商店 HashIV", "note": "商店發動單筆交易查詢(Query, 4.3 QueryTradeInfo) 時需生成"},
+      "payload_assembly": [
+        {"step": 1, "desc": "取 3 個請求參數 Amt、MerchantID、MerchantOrderNo，依英文字母 A~Z 排序，以 & 串聯", "fields": ["Amt", "MerchantID", "MerchantOrderNo"]},
+        {"step": 2, "desc": "串聯字串前加 'IV='+HashIV+'&'，後加 '&Key='+HashKey (PHP: $hashs=\"IV=\".$iv.\"&\".$data1.\"&Key=\".$key)", "fields": ["IV", "Key"]},
+        {"step": 3, "desc": "整串以 SHA256 壓碼後轉大寫 → CheckValue", "fields": []}
+      ],
+      "verify": {"field": "CheckValue", "method": null, "desc": "前綴用 'IV='/'Key=' (非 HashIV=/HashKey=)，與 CheckCode/TradeSha 的前綴字串不同"},
+      "source": "4.1.6 CheckValue (p27)；4.3.1 請求參數 CheckValue"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "NotifyURL 背景(幕後)付款結果通知",
+      "trigger": "消費者完成支付後，藍新金流以幕後(背景)方式回傳支付結果；P3D=1 時亦用於回傳 3D／Passkey 交易完成結果",
+      "transport": "Form Post (HTTP POST，只接受 80 與 443 Port)；回傳 Status、MerchantID、Version、TradeInfo(AES加密)、TradeSha 等已加密字串",
+      "payload_ref": null,
+      "verification": "以商店 Key/IV AES-256-CBC 解密 TradeInfo (參照 4.1.4 / 4.2.2)；並可用 TradeSha 驗證",
+      "expected_response": null,
+      "source": "3.交易流程 step16 (p_背景通知) / 4.1.3 Form Post Step5 結果 (p23) / 4.2.1 NotifyURL 參數 (p31) / 4.2.2 回應參數-支付完成"
+    },
+    {
+      "name": "ReturnURL 支付完成返回商店(導頁)",
+      "trigger": "交易完成後若欲引導消費者回商店網頁；P3D=1 時請一併傳送以接收 3D／Passkey 結果",
+      "transport": "Form Post 導回商店頁面 (只接受 80 與 443 Port)；攜帶回應參數。玉山 Wallet、台灣 Pay 不支援導頁，此欄位為空值則停留在藍新結果頁",
+      "payload_ref": null,
+      "verification": null,
+      "expected_response": null,
+      "source": "3.交易流程 (p_ReturnURL 導頁) / 4.2.1 ReturnURL 參數 (p32) / 請求參數附註 2-3"
+    },
+    {
+      "name": "CustomerURL 取號完成通知",
+      "trigger": "非即時支付系統取號後將取號結果導回商店指定網址",
+      "transport": "Form Post (form post 方式導回)；此參數空值則顯示取號結果於藍新金流頁面",
+      "payload_ref": null,
+      "verification": null,
+      "expected_response": null,
+      "source": "4.2.1 CustomerURL 參數 (p31) / 4.2.3 回應參數-取號完成"
+    }
+  ],
+  "field_conditions": [
+    {"scope": "MPG 交易 請求參數 (TradeInfo) / OrderDetail", "rule": "啟用 AFTEE 時 OrderDetail 訂單細項為必填欄位", "when": "啟用 AFTEE (AFTEE=1 或 2)", "then_required": ["OrderDetail"], "source": "4.2.1 請求參數附註 4 (p_OrderDetail) / OrderDetail 欄位備註 / 錯誤代碼 MPG01028 '若有啟用AFTEE時即必填OrderDetail訂單細項'"},
+    {"scope": "MPG 交易 請求參數 AFTEE_Inst", "rule": "設定 AFTEE_Inst (AFTEE 啟用分期) 需 AFTEE 啟用一般支付+分期付款", "when": "AFTEE=2", "then_required": ["AFTEE_Inst"], "source": "4.2.1 請求參數 AFTEE_Inst 備註 (p34)"},
+    {"scope": "MPG 交易 請求參數 P3D / 3D・Passkey", "rule": "P3D=1 時請一併傳送 NotifyURL 及 ReturnURL，以接收 3D／Passkey 交易完成結果", "when": "P3D=1", "then_required": ["NotifyURL", "ReturnURL"], "source": "4.2.1 請求參數 P3D 備註 (p29)"},
+    {"scope": "MPG 交易 請求參數 SourceType (智慧ATM2.0)", "rule": "當智慧ATM2.0「繳費帳號必填設定」功能為啟用時，SourceType 欄位必填，值需帶 1 或 2", "when": "智慧ATM2.0 繳費帳號必填設定 = 啟用", "then_required": ["SourceType"], "source": "4.2.1 請求參數 SourceType 備註 (p_SourceType) / 錯誤代碼 MPG02007、MPG02008"},
+    {"scope": "MPG 交易 請求參數 SourceType=2", "rule": "不可修改銀行代號與帳號時(SourceType=2)，須提供指定轉帳的銀行代號與帳號", "when": "SourceType=2", "then_required": ["SourceBankId", "SourceAccountNo"], "source": "錯誤代碼 MPG02009 (p_錯誤代碼表)"},
+    {"scope": "單筆交易查詢 4.3.1 請求參數 Gateway", "rule": "若為複合式商店代號(MS5開頭)，Gateway 參數為必填，固定填入 Composite", "when": "使用複合式商店代號 (MS5 開頭)", "then_required": ["Gateway"], "source": "4.3.1 請求參數 Gateway / MerchantID 備註 (p53)"},
+    {"scope": "MPG 交易 請求參數 EncryptType", "rule": "若用 AES GCM 加密 EncryptType 帶 1；若用 AES256(CBC) 帶 0 或不帶", "when": "選用加密模式", "then_required": ["EncryptType"], "source": "4.2.1 EncryptType (p28) / 6.常見問題 A3"}
+  ],
+  "test_cases": [
+    {
+      "name": "AES256-CBC 加密請求字串範例 (TradeInfo)",
+      "operation_ref": null,
+      "request": {
+        "key": "Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn",
+        "iv": "C6AcmfqJILwgnhIP",
+        "mid": "MS127874575",
+        "$data1": "MerchantID=MS127874575&RespondType=String&TimeStamp=1695795410&Version=2.0&MerchantOrderNo=Vanespl_ec_1695795410&Amt=30&ItemDesc=test&NotifyURL=https%3A%2F%2Fwebhook.site%2Fd4db5ad1-2278-466a-9d66-78585c0dbadb",
+        "TradeInfo($edata1)": "f79eac33c4f3245d58f17b544c5d38b09457a6d77e77bae6f10fcc7236fe153ccef1a80001c0746afc063a7570f80ad970d8a32c72332c9ec5547410188007876bdca2bafa52d07d31b6b183f2204d6e4feee6d245e286ab198cf95422ad5843c7696fc943cbb65979ad207607d4b5d97dac4a90ccd5e7a37adb7d7062e838be09d94e8c5dfa145c048e17feabe58c2e310792f0f50f5af32961ffb07ff6649ae1021ad558242551de5f09316e3182e198775e5d1ad5b66a70be290004de750fa85d86b0c2f087b40005d89e048be2ab6fd83f1c522494c093426a10a1f73fe4"
+      },
+      "response": {},
+      "source": "4.1.1 AES256 加密 (p18-20)"
+    },
+    {
+      "name": "SHA256 簽章字串範例 (TradeSha)",
+      "operation_ref": null,
+      "request": {
+        "$hashs": "HashKey=Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn&f79eac33c4f3245d58f17b544c5d38b09457a6d77e77bae6f10fcc7236fe153c...(TradeInfo)...2494c093426a10a1f73fe4&HashIV=C6AcmfqJILwgnhIP",
+        "TradeSha": "84E4D9F96537E029F8450BE1E759080F9AF6995921B7F6F9AAFDDD2C36E7B287"
+      },
+      "response": {},
+      "source": "4.1.2 SHA256 (p21)"
+    },
+    {
+      "name": "NotifyURL 回傳(加密)結果範例",
+      "operation_ref": null,
+      "request": {},
+      "response": {
+        "Status": "SUCCESS",
+        "MerchantID": "MS127874575",
+        "Version": "2.0",
+        "TradeInfo": "ee11d1501e6dc8433c75988258f2343d11f4d0a423be672e8e02aaf373c53c23...(略)...389e5f775",
+        "TradeSha": "C80876AEBAC0036268C0E240E5BFF69C0470DE9606EEE083C5C8DD64FDB3347A"
+      },
+      "source": "4.1.3 Form Post Step5 結果 (p23)"
+    },
+    {
+      "name": "AES256 解密後支付完成結果 (TradeInfo 明文)",
+      "operation_ref": null,
+      "request": {},
+      "response": {
+        "decrypted_query": "Status=SUCCESS&Message=%E6%8E%88%E6%AC%8A%E6%88%90%E5%8A%9F&MerchantID=MS127874575&Amt=30&TradeNo=23092714215835071&MerchantOrderNo=Vanespl_ec_1695795668&RespondType=String&IP=123.51.237.115&EscrowBank=HNCB&PaymentType=CREDIT&RespondCode=00&Auth=115468&Card6No=400022&Card4No=1111&Exp=2609&AuthBank=KGI&TokenUseStatus=0&InstFirst=0&InstEach=0&Inst=0&ECI=&PayTime=2023-09-27+14%3A21%3A59&PaymentMethod=CREDIT"
+      },
+      "source": "4.1.4 AES256解密 (p24-25)"
+    },
+    {
+      "name": "CheckCode 產生範例",
+      "operation_ref": null,
+      "request": {
+        "MerchantID": "MS12345678",
+        "Amt": "10",
+        "MerchantOrderNo": "MyCompanyOrder_1638423361",
+        "TradeNo": "21120214151152468",
+        "CheckCode_str": "HashIV=IV&Amt=10&MerchantID=MS12345678&MerchantOrderNo=...&TradeNo=...&HashKey=KEY (ksort 後)"
+      },
+      "response": {},
+      "source": "4.1.5 CheckCode (p26)"
+    },
+    {
+      "name": "AFTEE OrderDetail 含運費/折扣範例",
+      "operation_ref": null,
+      "request": {
+        "OrderDetail": "[{\"ItemName\":\"電競筆電\",\"ItemAmt\":10,\"ItemType\":1,\"ItemOrderNo\":\"20260319001\"},{\"ItemName\":\"藍牙耳機\",\"ItemAmt\":20,\"ItemType\":1,\"ItemOrderNo\":\"20260319002\"}]",
+        "note": "ItemName/ItemAmt 可用於運費(運費:80)或折扣(折扣:-139)，最終 Amt 為各項加總"
+      },
+      "response": {},
+      "source": "4.2.1 請求參數附註 4 / PHP 程式範例 (p_OrderDetail)"
+    }
+  ],
+  "missing": [
+    {"area": "crypto.AES/GCM (EncryptType=1)", "detail": "文件僅指出 EncryptType=1 啟用 AES/GCM 模式，未提供 GCM 的 IV/nonce 長度、authentication tag 處理、payload 組裝步驟或 encoding，無法填寫"},
+    {"area": "crypto.TradeInfo.GCM padding/encoding", "detail": "GCM 模式之 padding 與輸出 encoding 未於來源說明"},
+    {"area": "callbacks.expected_response", "detail": "來源未說明商店收到 NotifyURL/ReturnURL/CustomerURL 後應回傳何種 HTTP 回應內容(如需回 '1' 或特定字串)"},
+    {"area": "callbacks.payload_ref / crypto.verify.field schema 連結", "detail": "回應參數對應的 OpenAPI schema 名稱未由來源明確指定，留待 orchestrator 處理"},
+    {"area": "crypto.TradeSha SHA256 輸出 encoding", "detail": "來源僅說明轉大寫，未明示為 hex 字串(雖範例為 64 字元十六進制)，未明文敘述 encoding 名稱"}
+  ]
+}

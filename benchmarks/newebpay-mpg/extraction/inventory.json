@@ -1,0 +1,2926 @@
+{
+  "title": "藍新金流服務平台 ─ 線上交易 幕前支付 技術串接手冊 標準版",
+  "version": "NDNF-1.2.2",
+  "overview": "藍新金流(NewebPay)線上交易幕前支付(MPG, Multiple Payment Gateway)技術串接手冊。涵蓋 MPG 交易、單筆交易查詢、取消授權、請退款/取消請退款、電子錢包退款、BNPL 先買後付(AFTEE)取消/退款與請款共數支 API 介接規格。支付工具含信用卡(含 Apple Pay/Google Pay/Samsung Pay/分期/紅利/銀聯/美國運通/國民旅遊卡)、電子錢包(TWQR、簡單付支付寶/微信、玉山 Wallet、台灣 Pay、LINE Pay、BitoPay)、WebATM、ATM 轉帳、超商代碼/條碼/超商取貨付款、BNPL 先買後付(AFTEE)。請求資料以商店 HashKey/HashIV 經 AES-256-CBC(PKCS7)加密為 TradeInfo,再經 SHA256 產生 TradeSha;支付結果由藍新金流透過 NotifyURL 幕後通知、ReturnURL/CustomerURL 前景導回商店。核心不可違反原則:source 未述者一律 null。",
+  "environments": [
+    {
+      "name": "測試區(Test)",
+      "base_url": "https://ccore.newebpay.com",
+      "version": null,
+      "source": "4.2~4.8 各 API『測試串接網址』"
+    },
+    {
+      "name": "正式區(Production)",
+      "base_url": "https://core.newebpay.com",
+      "version": null,
+      "source": "4.2~4.8 各 API『正式串接網址』"
+    },
+    {
+      "name": "會員專區(Member Zone)",
+      "base_url": "https://www.newebpay.com/",
+      "version": null,
+      "source": "2.詞彙一覽表-會員專區"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "AES256 (TradeInfo / EncryptData_ / PostData_)",
+      "type": "對稱式加密 AES-256-CBC",
+      "location": "request body 參數 TradeInfo / PostData_ / EncryptData_",
+      "details": "以商店 Hash Key(32 字元)及 Hash IV(16 字元)對 http_build_query 生成之請求字串執行 AES-256-CBC(PKCS7 填充),結果轉十六進制。PHP: bin2hex(openssl_encrypt($data,'AES-256-CBC',$key,OPENSSL_RAW_DATA,$iv))。解密需先去除 PKCS7 padding。範例 key=Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn, iv=C6AcmfqJILwgnhIP",
+      "source": "4.1.1 AES256 加密 / 4.1.4 AES256 解密"
+    },
+    {
+      "name": "SHA256 (TradeSha / HashData_)",
+      "type": "雜湊檢查碼 SHA256",
+      "location": "request/response body 參數 TradeSha / HashData_",
+      "details": "於 AES 加密字串前加 'HashKey=(HashKey)&',後加 '&HashIV=(HashIV)',再以 SHA256 壓碼轉大寫。PHP: strtoupper(hash('sha256',$hashs))",
+      "source": "4.1.2 SHA256"
+    },
+    {
+      "name": "EncryptType (AES/GCM 選用)",
+      "type": "加密模式切換",
+      "location": "request body 參數 EncryptType",
+      "details": "1=加密模式 AES/GCM;0 或未帶=原加密模式 AES/CBC/PKCS7Padding",
+      "source": "4.2.1 請求參數 EncryptType"
+    },
+    {
+      "name": "CheckCode",
+      "type": "雜湊檢查碼 SHA256",
+      "location": "回應參數 CheckCode (查詢/取消授權回應)",
+      "details": "取回傳 Amt、MerchantID、MerchantOrderNo、TradeNo 四欄位依 A~Z 排序以 & 串聯,前加 'HashIV=(HashIV)&',後加 '&HashKey=(HashKey)',SHA256 壓碼轉大寫",
+      "source": "4.1.5 CheckCode"
+    },
+    {
+      "name": "CheckValue",
+      "type": "雜湊檢查碼 SHA256",
+      "location": "單筆交易查詢請求參數 CheckValue",
+      "details": "取請求 Amt、MerchantID、MerchantOrderNo 三欄位依 A~Z 排序以 & 串聯,前加 'IV=(HashIV)&',後加 '&Key=(HashKey)',SHA256 壓碼轉大寫",
+      "source": "4.1.6 CheckValue"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/MPG/mpg_gateway",
+      "summary": "MPG 交易[NPA-F01] — 以 HTML Form Post 發動幕前支付交易,導向藍新 MPG 付款頁",
+      "source": "4.2 MPG 交易[NPA-F01]"
+    },
+    {
+      "method": "POST",
+      "path": "/API/QueryTradeInfo",
+      "summary": "單筆交易查詢[NPA-B02] — 查詢交易/請款/退款狀態",
+      "source": "4.3 單筆交易查詢[NPA-B02]"
+    },
+    {
+      "method": "POST",
+      "path": "/API/CreditCard/Cancel",
+      "summary": "取消授權[NPA-B01] — 信用卡取消授權",
+      "source": "4.4 取消授權[NPA-B01]"
+    },
+    {
+      "method": "POST",
+      "path": "/API/CreditCard/Close",
+      "summary": "請退款/取消請退款[NPA-B031~34] — 信用卡請款/退款/取消請款/取消退款",
+      "source": "4.5 請退款/取消請退款[NPA-B031 ~ 34]"
+    },
+    {
+      "method": "POST",
+      "path": "/API/EWallet/refund",
+      "summary": "電子錢包退款[NPA-B06] — 玉山Wallet/台灣Pay/LINE Pay/TWQR/支付寶/微信退款",
+      "source": "4.6.1 請求參數"
+    },
+    {
+      "method": "POST",
+      "path": "/API/Bnpl/refund",
+      "summary": "BNPL 先買後付取消交易/退款[NPA-B07] — AFTEE 整筆取消/退款/部份退款",
+      "source": "4.7 BNPL 先買後付取消交易/退款[NPA-B07]"
+    },
+    {
+      "method": "POST",
+      "path": "/API/Bnpl/settle",
+      "summary": "BNPL 先買後付請款[NPA-B62] — AFTEE 整筆請款",
+      "source": "4.8 先買後付請款[NPA-B62]"
+    },
+    {
+      "method": "POST",
+      "path": null,
+      "summary": "NotifyURL 幕後付款結果通知 — 藍新金流於消費者支付完成後以 Form Post 將加密結果(Status/MerchantID/Version/TradeInfo/TradeSha)POST 至商店設定之 NotifyURL;只接受 80/443 Port;Http=200 才視為成功並具 Retry(三次)機制。回應欄位見 4.2.2",
+      "source": "3.1 即時支付交易流程步驟16 / 4.1.3 Step5 / 4.2.1 NotifyURL / 6.常見問題"
+    },
+    {
+      "method": "POST",
+      "path": null,
+      "summary": "ReturnURL 支付完成返回商店 — 交易完成後以 Form Post 導回商店指定網址;只接受 80/443 Port(玉山Wallet/台灣Pay不支援導頁)",
+      "source": "4.2.1 請求參數 ReturnURL / 3.1 流程"
+    },
+    {
+      "method": "POST",
+      "path": null,
+      "summary": "CustomerURL 取號結果通知 — 系統取號後以 Form Post 將取號結果(見 4.2.3)導回商店指定網址;為空值則顯示於藍新頁面",
+      "source": "4.2.1 請求參數 CustomerURL / 4.2.3 / 3.2 流程"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "MPG交易請求-外層 Post 參數",
+      "fields": [
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號"
+        },
+        {
+          "name": "TradeInfo",
+          "required": true,
+          "description": "交易資料 AES加密（交易資料參數經商店Key/IV AES加密(見4.1.1)）"
+        },
+        {
+          "name": "TradeSha",
+          "required": true,
+          "description": "交易資料 SHA256加密（TradeInfo 再經 SHA256(見4.1.2)）"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本（2.3）"
+        },
+        {
+          "name": "EncryptType",
+          "type": "Int(1)",
+          "required": false,
+          "description": "加密模式（1=AES/GCM;0或未帶=AES/CBC/PKCS7）"
+        }
+      ],
+      "enums": [
+        "EncryptType: 0",
+        "EncryptType: 1"
+      ],
+      "constraints": "TradeInfo/TradeSha 以 AES256+SHA256 產生",
+      "source": "4.2.1 請求參數 Post 參數說明"
+    },
+    {
+      "name": "MPG交易請求-TradeInfo 內含參數",
+      "fields": [
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號"
+        },
+        {
+          "name": "RespondType",
+          "type": "String(6)",
+          "required": true,
+          "description": "回傳格式（JSON 或 String）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(50)",
+          "required": true,
+          "description": "時間戳記（Unix 秒數,容許誤差120秒）"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本（2.3）"
+        },
+        {
+          "name": "P3D",
+          "type": "Varchar(5)",
+          "required": false,
+          "description": "3D交易（1=使用3D或Passkey;P3D=1須一併傳NotifyURL及ReturnURL）"
+        },
+        {
+          "name": "LangType",
+          "type": "String(5)",
+          "required": false,
+          "description": "語系（en/zh-tw/jp,預設zh-tw）"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號（限英數底線,同商店不可重複）"
+        },
+        {
+          "name": "Amt",
+          "type": "int(10)",
+          "required": true,
+          "description": "訂單金額（純數字,新台幣）"
+        },
+        {
+          "name": "ItemDesc",
+          "type": "String(50)",
+          "required": true,
+          "description": "商品資訊（Utf-8,勿用特殊符號）"
+        },
+        {
+          "name": "TradeLimit",
+          "type": "Int(3)",
+          "required": false,
+          "description": "交易有效時間（60~900秒;0或未帶=不啟用）"
+        },
+        {
+          "name": "AFTEE_ExpireTime",
+          "type": "DateTime",
+          "required": false,
+          "description": "交易有效時間（AFTEE結帳模組失效時間,1~24小時,格式YYYY-MM-DD HH:MM:SS）"
+        },
+        {
+          "name": "ExpireDate",
+          "type": "String(10)",
+          "required": false,
+          "description": "繳費有效期限（僅非即時支付,date('Ymd'),預設7天,最大180天）"
+        },
+        {
+          "name": "ExpireTime",
+          "type": "String(6)",
+          "required": false,
+          "description": "繳費截止時間（僅超商代碼/凱基ATM,date('His'),預設235959）"
+        },
+        {
+          "name": "ReturnURL",
+          "type": "String(200)",
+          "required": false,
+          "description": "支付完成返回商店網址（Form Post導回;只接受80/443 Port）"
+        },
+        {
+          "name": "NotifyURL",
+          "type": "String(200)",
+          "required": false,
+          "description": "支付通知網址（幕後回傳支付結果;只接受80/443 Port）"
+        },
+        {
+          "name": "CustomerURL",
+          "type": "String(200)",
+          "required": false,
+          "description": "商店取號網址"
+        },
+        {
+          "name": "ClientBackURL",
+          "type": "String(200)",
+          "required": false,
+          "description": "返回商店網址"
+        },
+        {
+          "name": "Email",
+          "type": "String(50)",
+          "required": false,
+          "description": "付款人電子信箱"
+        },
+        {
+          "name": "EmailModify",
+          "type": "Int(1)",
+          "required": false,
+          "description": "付款人電子信箱是否開放修改（1=可修改 0=不可,預設可修改）"
+        },
+        {
+          "name": "OrderComment",
+          "type": "String(300)",
+          "required": false,
+          "description": "商店備註"
+        },
+        {
+          "name": "CREDIT",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡一次付清啟用（1=啟用）"
+        },
+        {
+          "name": "APPLEPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "Apple Pay啟用"
+        },
+        {
+          "name": "ANDROIDPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "Google Pay啟用"
+        },
+        {
+          "name": "SAMSUNGPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "Samsung Pay啟用"
+        },
+        {
+          "name": "LINEPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "LINE Pay"
+        },
+        {
+          "name": "AFTEE",
+          "type": "Int(1)",
+          "required": false,
+          "description": "AFTEE啟用（0/未帶=不開,1=一般支付,2=一般+分期(申請制);金額>49999不顯示）"
+        },
+        {
+          "name": "ImageUrl",
+          "type": "String(200)",
+          "required": false,
+          "description": "LINE Pay產品圖檔連結網址（建議84*84,jpg/png）"
+        },
+        {
+          "name": "InstFlag",
+          "type": "String(18)",
+          "required": false,
+          "description": "信用卡分期付款啟用（1=全部期別;3/6/8(閘道)/12/18/24/30;多期別以半形逗號分隔）"
+        },
+        {
+          "name": "AFTEE_Inst",
+          "type": "String(21)",
+          "required": false,
+          "description": "AFTEE啟用分期（需AFTEE=2;無值或1=全部;3/6/9/12/15/18/21/24）"
+        },
+        {
+          "name": "CreditRed",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡紅利啟用"
+        },
+        {
+          "name": "UNIONPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡銀聯卡啟用"
+        },
+        {
+          "name": "CREDITAE",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡美國運通卡啟用"
+        },
+        {
+          "name": "WEBATM",
+          "type": "Int(1)",
+          "required": false,
+          "description": "WEBATM啟用（金額>49999或手機裝置不顯示）"
+        },
+        {
+          "name": "VACC",
+          "type": "Int(1)",
+          "required": false,
+          "description": "ATM轉帳啟用（金額>49999不顯示）"
+        },
+        {
+          "name": "BankType",
+          "type": "String(26)",
+          "required": false,
+          "description": "金融機構（BOT/HNCB/KGI(僅ATM);多銀行半形逗號分隔）"
+        },
+        {
+          "name": "SourceType",
+          "type": "Int(1)",
+          "required": false,
+          "description": "指定消費者轉帳銀行代號（智慧ATM2.0:0/1/2/3/4）"
+        },
+        {
+          "name": "SourceBankId",
+          "type": "String(3)",
+          "required": false,
+          "description": "指定轉帳的銀行代碼（SourceType=1或3時必填）"
+        },
+        {
+          "name": "SourceAccountNo",
+          "type": "String(16)",
+          "required": false,
+          "description": "指定轉帳的銀行帳號（SourceType=1或3時必填）"
+        },
+        {
+          "name": "CVS",
+          "type": "Int(1)",
+          "required": false,
+          "description": "超商代碼繳費啟用（金額<30或>20000不顯示）"
+        },
+        {
+          "name": "BARCODE",
+          "type": "Int(1)",
+          "required": false,
+          "description": "超商條碼繳費啟用（金額<20或>40000不顯示）"
+        },
+        {
+          "name": "ESUNWALLET",
+          "type": "Int(1)",
+          "required": false,
+          "description": "玉山Wallet"
+        },
+        {
+          "name": "TAIWANPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "台灣Pay（金額>49999不顯示）"
+        },
+        {
+          "name": "BITOPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "BitoPay（金額<100或>49999不顯示）"
+        },
+        {
+          "name": "CVSCOM",
+          "type": "Int(1)",
+          "required": false,
+          "description": "物流啟用（1=取貨不付款,2=取貨付款,3=兩者;金額>20000無法使用）"
+        },
+        {
+          "name": "TWQR",
+          "type": "Int(1)",
+          "required": false,
+          "description": "TWQR"
+        },
+        {
+          "name": "TWQR_LifeTime",
+          "type": "Int(7)",
+          "required": false,
+          "description": "QR Code有效秒數（預設300秒,上限2678400秒）"
+        },
+        {
+          "name": "EZPWECHAT",
+          "type": "Int(1)",
+          "required": false,
+          "description": "簡單付微信支付"
+        },
+        {
+          "name": "EZPALIPAY",
+          "type": "Int(1)",
+          "required": false,
+          "description": "簡單付支付寶"
+        },
+        {
+          "name": "LgsType",
+          "type": "String(3)",
+          "required": false,
+          "description": "物流型態（B2C=大宗寄倉(7-11),C2C=店到店(7-11/全家/萊爾富/OK mart)）"
+        },
+        {
+          "name": "WalletDisplayMode",
+          "type": "Int(1)",
+          "required": false,
+          "description": "電子支付模式（1=固定顯示QR Code,0/未帶=依裝置自動）"
+        },
+        {
+          "name": "OrderDetail",
+          "type": "array",
+          "required": false,
+          "description": "訂單細項（JSON陣列;啟用AFTEE時必填;程式版本須2.2以上）",
+          "x-conditional-required": true
+        }
+      ],
+      "enums": [
+        "RespondType: JSON",
+        "RespondType: String",
+        "LangType: en",
+        "LangType: zh-tw",
+        "LangType: jp",
+        "BankType: BOT",
+        "BankType: HNCB",
+        "BankType: KGI",
+        "LgsType: B2C",
+        "LgsType: C2C",
+        "AFTEE: 0/1/2",
+        "InstFlag: 1/3/6/8/12/18/24/30"
+      ],
+      "constraints": "OrderDetail 全部 ItemAmt 加總須等於 Amt;啟用 AFTEE 時 OrderDetail 必填",
+      "source": "4.2.1 請求參數 TradeInfo 內含參數"
+    },
+    {
+      "name": "OrderDetail (訂單細項陣列元素)",
+      "fields": [
+        {
+          "name": "OrderDetail[].ItemName",
+          "type": "String(20)",
+          "required": true,
+          "description": "品名"
+        },
+        {
+          "name": "OrderDetail[].ItemAmt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "品項金額（可正可負;負整數前加'-';加總須等於Amt）"
+        },
+        {
+          "name": "OrderDetail[].ItemType",
+          "type": "Int(1)",
+          "required": true,
+          "description": "品項性質（1=一般商品 2=票券 3=儲值金 4=折扣）"
+        },
+        {
+          "name": "OrderDetail[].ItemOrderNo",
+          "type": "String(20)",
+          "required": true,
+          "description": "品項編號（同訂單不得重複）"
+        },
+        {
+          "name": "OrderDetail[].LinepayActiveCode",
+          "type": "String(30)",
+          "required": false,
+          "description": "LinePay加贈點數活動代碼"
+        },
+        {
+          "name": "OrderDetail[].LinepayActiveAmount",
+          "type": "Int(10)",
+          "required": false,
+          "description": "LinePay加贈點數定率合作金額（預設0）",
+          "x-conditional-required": true
+        },
+        {
+          "name": "OrderDetail[].LinepayActiveQuantity",
+          "type": "Int(5)",
+          "required": false,
+          "description": "LinePay加贈點數定額合作數量（預設0）",
+          "x-conditional-required": true
+        }
+      ],
+      "enums": [
+        "ItemType: 1=一般商品",
+        "ItemType: 2=票券",
+        "ItemType: 3=儲值金",
+        "ItemType: 4=折扣"
+      ],
+      "constraints": "LinepayActiveAmount 與 LinepayActiveQuantity 互斥(其一填值另一須為0)",
+      "source": "4.2.1 OrderDetail 所包含欄位"
+    },
+    {
+      "name": "MPG交易請求-國民旅遊卡參數",
+      "fields": [
+        {
+          "name": "NTCB",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡國民旅遊卡交易註記（1=國旅卡交易）"
+        },
+        {
+          "name": "NTCBLocate",
+          "type": "string(3)",
+          "required": false,
+          "description": "旅遊地區代號（見旅遊地區代號對照表,例台北市=001）"
+        },
+        {
+          "name": "NTCBStartDate",
+          "type": "string(10)",
+          "required": false,
+          "description": "國民旅遊卡起始日期（YYYY-MM-DD）"
+        },
+        {
+          "name": "NTCBEndDate",
+          "type": "string(10)",
+          "required": false,
+          "description": "國民旅遊卡結束日期（YYYY-MM-DD）"
+        }
+      ],
+      "enums": [],
+      "constraints": "NTCB=1 且 NTCBLocate/NTCBStartDate/NTCBEndDate 皆正確提供才註記為國旅卡交易",
+      "source": "4.2.1 國民旅遊卡參數說明"
+    },
+    {
+      "name": "MPG交易請求-信用卡記憶卡號參數",
+      "fields": [
+        {
+          "name": "TokenTerm",
+          "type": "String(20)",
+          "required": true,
+          "description": "付款人綁定資料（限英數及 . _ @ - 格式）"
+        },
+        {
+          "name": "TokenTermDemand",
+          "type": "Int(1)",
+          "required": false,
+          "description": "指定付款人信用卡快速結帳必填欄位（1=到期日與安全碼 2=到期日 3=安全碼 4=皆非必填;預設1）"
+        }
+      ],
+      "enums": [
+        "TokenTermDemand: 1/2/3/4"
+      ],
+      "constraints": "同一會員各商店 TokenTerm 不可重複;銀聯/美國運通卡僅支援1或3",
+      "source": "4.2.1 信用卡記憶卡號參數說明"
+    },
+    {
+      "name": "MPG回應-支付完成 外層參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態（成功=SUCCESS,失敗=錯誤代碼）"
+        },
+        {
+          "name": "MerchantID",
+          "type": "String(20)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "TradeInfo",
+          "required": false,
+          "description": "交易資料AES加密"
+        },
+        {
+          "name": "TradeSha",
+          "required": false,
+          "description": "交易資料SHA256加密"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": false,
+          "description": "串接程式版本"
+        },
+        {
+          "name": "EncryptType",
+          "type": "Int(1)",
+          "required": false,
+          "description": "加密模式（商店設EncryptType=1才回傳）"
+        }
+      ],
+      "enums": [
+        "Status: SUCCESS"
+      ],
+      "constraints": null,
+      "source": "4.2.2 回應參數-支付完成"
+    },
+    {
+      "name": "MPG回應-支付完成 TradeInfo內含參數(共同+各支付別)",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態"
+        },
+        {
+          "name": "Message",
+          "type": "String(50)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "Result",
+          "required": false,
+          "description": "回傳參數（RespondType=JSON時參數置於此陣列）"
+        },
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": false,
+          "description": "交易金額"
+        },
+        {
+          "name": "TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String(10)",
+          "required": false,
+          "description": "支付方式"
+        },
+        {
+          "name": "RespondType",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳格式"
+        },
+        {
+          "name": "PayTime",
+          "type": "DateTime",
+          "required": false,
+          "description": "支付完成時間（超商取貨服務時為空值）"
+        },
+        {
+          "name": "IP",
+          "type": "String(15)",
+          "required": false,
+          "description": "交易IP"
+        },
+        {
+          "name": "EscrowBank",
+          "type": "String(10)",
+          "required": false,
+          "description": "款項保管銀行（HNCB=華南銀行）"
+        },
+        {
+          "name": "AuthBank",
+          "type": "String(10)",
+          "required": false,
+          "description": "收單金融機構(信用卡)（Esun/Taishin/CTBC/NCCC/CathayBK/Citibank/UBOT/SKBank/Fubon/FirstBank/LINEBank/SinoPac）"
+        },
+        {
+          "name": "CardBank",
+          "type": "String(10)",
+          "required": false,
+          "description": "發卡金融機構"
+        },
+        {
+          "name": "RespondCode",
+          "type": "String(5)",
+          "required": false,
+          "description": "金融機構回應碼"
+        },
+        {
+          "name": "Auth",
+          "type": "String(6)",
+          "required": false,
+          "description": "授權碼"
+        },
+        {
+          "name": "Card6No",
+          "type": "String(6)",
+          "required": false,
+          "description": "卡號前六碼"
+        },
+        {
+          "name": "Card4No",
+          "type": "String(4)",
+          "required": false,
+          "description": "卡號末四碼"
+        },
+        {
+          "name": "Inst",
+          "type": "Int(10)",
+          "required": false,
+          "description": "分期-期別"
+        },
+        {
+          "name": "InstFirst",
+          "type": "Int(10)",
+          "required": false,
+          "description": "分期-首期金額"
+        },
+        {
+          "name": "InstEach",
+          "type": "Int(10)",
+          "required": false,
+          "description": "分期-每期金額"
+        },
+        {
+          "name": "ECI",
+          "type": "String(2)",
+          "required": false,
+          "description": "ECI值（eci=1,2,5,6 為3D交易）"
+        },
+        {
+          "name": "TokenUseStatus",
+          "type": "Int(1)",
+          "required": false,
+          "description": "信用卡快速結帳使用狀態（0/1/2/9）"
+        },
+        {
+          "name": "RedAmt",
+          "type": "Int(5)",
+          "required": false,
+          "description": "紅利折抵後實際金額"
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "String(15)",
+          "required": false,
+          "description": "交易類別（CREDIT/FOREIGN/UNIONPAY/APPLEPAY/GOOGLEPAY/SAMSUNGPAY/DCC）"
+        },
+        {
+          "name": "DCC_Amt",
+          "type": "Float",
+          "required": false,
+          "description": "外幣金額"
+        },
+        {
+          "name": "DCC_Rate",
+          "type": "Float",
+          "required": false,
+          "description": "匯率"
+        },
+        {
+          "name": "DCC_Markup",
+          "type": "Float",
+          "required": false,
+          "description": "風險匯率"
+        },
+        {
+          "name": "DCC_Currency",
+          "type": "String(4)",
+          "required": false,
+          "description": "幣別"
+        },
+        {
+          "name": "DCC_Currency_Code",
+          "type": "Int(4)",
+          "required": false,
+          "description": "幣別代碼"
+        },
+        {
+          "name": "PayAmt",
+          "type": "Int(10)",
+          "required": false,
+          "description": "實際付款金額(BNPL/玉山/台灣Pay/BitoPay)"
+        },
+        {
+          "name": "PayBankCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "付款人金融機構代碼(WEBATM/ATM)"
+        },
+        {
+          "name": "PayerAccount5Code",
+          "type": "String(5)",
+          "required": false,
+          "description": "付款人金融機構帳號末五碼"
+        },
+        {
+          "name": "CodeNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "繳費代碼(超商代碼)"
+        },
+        {
+          "name": "StoreType",
+          "type": "Int(1)/String(10)",
+          "required": false,
+          "description": "繳費門市類別/超商類別名稱（1=7-11 2=全家 3=OK 4=萊爾富(超商代碼);物流回傳[全家][7-ELEVEN][萊爾富][OK mart]）"
+        },
+        {
+          "name": "StoreID",
+          "type": "String(10)",
+          "required": false,
+          "description": "繳費門市代號"
+        },
+        {
+          "name": "Barcode_1",
+          "type": "String(20)",
+          "required": false,
+          "description": "第一段條碼"
+        },
+        {
+          "name": "Barcode_2",
+          "type": "String(20)",
+          "required": false,
+          "description": "第二段條碼"
+        },
+        {
+          "name": "Barcode_3",
+          "type": "String(20)",
+          "required": false,
+          "description": "第三段條碼"
+        },
+        {
+          "name": "RepayTimes",
+          "type": "Int(3)",
+          "required": false,
+          "description": "付款次數"
+        },
+        {
+          "name": "PayStore",
+          "type": "String(8)",
+          "required": false,
+          "description": "繳費超商（SEVEN/FAMILY/OK/HILIFE）"
+        },
+        {
+          "name": "StoreCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "超商門市編號"
+        },
+        {
+          "name": "StoreName",
+          "type": "String(15)",
+          "required": false,
+          "description": "超商門市名稱"
+        },
+        {
+          "name": "StoreAddr",
+          "type": "String(100)",
+          "required": false,
+          "description": "超商門市地址"
+        },
+        {
+          "name": "TradeType",
+          "type": "Int(1)",
+          "required": false,
+          "description": "取件交易方式（1=取貨付款 3=取貨不付款）"
+        },
+        {
+          "name": "CVSCOMName",
+          "type": "String(20)",
+          "required": false,
+          "description": "取貨人"
+        },
+        {
+          "name": "CVSCOMPhone",
+          "type": "String(10)",
+          "required": false,
+          "description": "取貨人手機號碼"
+        },
+        {
+          "name": "LgsNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "物流寄件單號"
+        },
+        {
+          "name": "LgsType",
+          "type": "String(3)",
+          "required": false,
+          "description": "物流型態（B2C/C2C）"
+        },
+        {
+          "name": "ChannelID",
+          "type": "String(15)",
+          "required": false,
+          "description": "跨境通路類型（ALIPAY/WECHATPAY/ACCLINK/CREDIT/CVS/P2GEACC/VACC/WEBATM/TWQR）"
+        },
+        {
+          "name": "ChannelNo",
+          "type": "String(32)",
+          "required": false,
+          "description": "跨境通路交易序號"
+        },
+        {
+          "name": "RedDisAmt",
+          "type": "Int(5)",
+          "required": false,
+          "description": "紅利折抵金額(玉山Wallet)"
+        },
+        {
+          "name": "CryptoCurrency",
+          "type": "String(10)",
+          "required": false,
+          "description": "加密貨幣代號(BitoPay)（BTC/ETH/USDT）"
+        },
+        {
+          "name": "CryptoAmount",
+          "type": "String(60)",
+          "required": false,
+          "description": "加密貨幣數量"
+        },
+        {
+          "name": "CryptoRate",
+          "type": "String(60)",
+          "required": false,
+          "description": "加密貨幣匯率"
+        }
+      ],
+      "enums": [
+        "PaymentMethod: CREDIT/FOREIGN/UNIONPAY/APPLEPAY/GOOGLEPAY/SAMSUNGPAY/DCC",
+        "StoreType(超商代碼): 1/2/3/4",
+        "PayStore: SEVEN/FAMILY/OK/HILIFE",
+        "ChannelID: ALIPAY/WECHATPAY/ACCLINK/CREDIT/CVS/P2GEACC/VACC/WEBATM/TWQR",
+        "CryptoCurrency: BTC/ETH/USDT",
+        "TradeType: 1/3"
+      ],
+      "constraints": "依支付別回傳對應欄位群(信用卡/BNPL/WEBATM/超商代碼/超商條碼/超商物流/跨境/玉山/台灣Pay/BitoPay)",
+      "source": "4.2.2 回應參數-支付完成 TradeInfo內含參數"
+    },
+    {
+      "name": "MPG回應-取號完成 TradeInfo內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態"
+        },
+        {
+          "name": "Message",
+          "type": "String(50)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "Result",
+          "required": false,
+          "description": "回傳參數"
+        },
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": false,
+          "description": "支付金額"
+        },
+        {
+          "name": "TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String(10)",
+          "required": false,
+          "description": "支付方式"
+        },
+        {
+          "name": "ExpireDate",
+          "type": "DateTime",
+          "required": false,
+          "description": "繳費截止日期（yyyy-mm-dd;超商取貨付款不回傳）"
+        },
+        {
+          "name": "ExpireTime",
+          "type": "String(6)",
+          "required": false,
+          "description": "繳費截止時間（date('His')）"
+        },
+        {
+          "name": "BankCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "金融機構代碼(ATM)"
+        },
+        {
+          "name": "CodeNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "繳費代碼(ATM/超商代碼)"
+        },
+        {
+          "name": "Barcode_1",
+          "type": "String(20)",
+          "required": false,
+          "description": "第一段條碼"
+        },
+        {
+          "name": "Barcode_2",
+          "type": "String(20)",
+          "required": false,
+          "description": "第二段條碼"
+        },
+        {
+          "name": "Barcode_3",
+          "type": "String(20)",
+          "required": false,
+          "description": "第三段條碼"
+        },
+        {
+          "name": "StoreCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "超商門市編號"
+        },
+        {
+          "name": "StoreName",
+          "type": "String(15)",
+          "required": false,
+          "description": "超商門市名稱"
+        },
+        {
+          "name": "StoreType",
+          "type": "String(10)",
+          "required": false,
+          "description": "超商類別名稱（[全家][7-ELEVEN][萊爾富][OK mart]）"
+        },
+        {
+          "name": "StoreAddr",
+          "type": "String(100)",
+          "required": false,
+          "description": "超商門市地址"
+        },
+        {
+          "name": "TradeType",
+          "type": "Int(1)",
+          "required": false,
+          "description": "取件交易方式（1=取貨付款 3=取貨不付款）"
+        },
+        {
+          "name": "CVSCOMName",
+          "type": "String(20)",
+          "required": false,
+          "description": "取貨人"
+        },
+        {
+          "name": "CVSCOMPhone",
+          "type": "String(10)",
+          "required": false,
+          "description": "取貨人手機號碼"
+        },
+        {
+          "name": "LgsNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "物流寄件單號"
+        },
+        {
+          "name": "LgsType",
+          "type": "String(3)",
+          "required": false,
+          "description": "物流型態（B2C/C2C）"
+        }
+      ],
+      "enums": [
+        "TradeType: 1/3",
+        "LgsType: B2C/C2C"
+      ],
+      "constraints": "適用交易類別:超商代碼、超商條碼、超商取貨付款、ATM",
+      "source": "4.2.3 回應參數-取號完成"
+    },
+    {
+      "name": "單筆交易查詢請求參數",
+      "fields": [
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號（MS5開頭複合式商店須帶Gateway）"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本（1.3）"
+        },
+        {
+          "name": "RespondType",
+          "type": "String(6)",
+          "required": true,
+          "description": "回傳格式（JSON或String）"
+        },
+        {
+          "name": "CheckValue",
+          "type": "String(255)",
+          "required": true,
+          "description": "檢查碼（見4.1.6）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(50)",
+          "required": true,
+          "description": "時間戳記（容許誤差120秒）"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "訂單金額"
+        },
+        {
+          "name": "Gateway",
+          "type": "String(10)",
+          "required": false,
+          "description": "資料來源（複合式商店固定填Composite）",
+          "x-conditional-required": true
+        }
+      ],
+      "enums": [
+        "RespondType: JSON/String",
+        "Gateway: Composite"
+      ],
+      "constraints": null,
+      "source": "4.3.1 請求參數"
+    },
+    {
+      "name": "單筆交易查詢回應-Result內含參數(含註1~5專屬欄位)",
+      "fields": [
+        {
+          "name": "MerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": false,
+          "description": "交易金額"
+        },
+        {
+          "name": "TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "TradeStatus",
+          "type": "String(1)",
+          "required": false,
+          "description": "支付狀態（0=未付款 1=付款成功 2=付款失敗 3=取消付款 6=退款）"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String(10)",
+          "required": false,
+          "description": "支付方式（CREDIT/VACC/WEBATM/BARCODE/CVS/LINEPAY/ESUNWALLET/TAIWANPAY/CVSCOM/AFTEE）"
+        },
+        {
+          "name": "CreateTime",
+          "type": "DateTime",
+          "required": false,
+          "description": "交易建立時間"
+        },
+        {
+          "name": "PayTime",
+          "type": "DateTime",
+          "required": false,
+          "description": "支付完成時間"
+        },
+        {
+          "name": "CheckCode",
+          "type": "Hash",
+          "required": false,
+          "description": "檢核碼（見4.1.5）"
+        },
+        {
+          "name": "FundTime",
+          "type": "Date",
+          "required": false,
+          "description": "預計撥款日"
+        },
+        {
+          "name": "ShopMerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "實際交易商店代號（限複合式商店）"
+        },
+        {
+          "name": "RespondCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "金融機構回應碼(註1信用卡/註4錢包/註5 BNPL)"
+        },
+        {
+          "name": "Auth",
+          "type": "String(10)",
+          "required": false,
+          "description": "授權碼(註1)"
+        },
+        {
+          "name": "ECI",
+          "type": "String(1)",
+          "required": false,
+          "description": "ECI(註1)"
+        },
+        {
+          "name": "CloseAmt",
+          "type": "String(10)/Int(10)",
+          "required": false,
+          "description": "請款金額(註1/4/5)"
+        },
+        {
+          "name": "CloseStatus",
+          "type": "String(1)/Int(1)",
+          "required": false,
+          "description": "請款狀態(註1/4/5)（註1:0未/1等待提送/2處理中/3完成;註4加4=失敗;註5:0未/1處理中/2完成/3失敗）"
+        },
+        {
+          "name": "BackBalance",
+          "type": "String(10)/Int(10)/Int(50)",
+          "required": false,
+          "description": "可退款餘額(註1/4/5)"
+        },
+        {
+          "name": "BackStatus",
+          "type": "String(1)/Int(1)",
+          "required": false,
+          "description": "退款狀態(註1/4/5)（0未退款/1等待提送/2處理中/3完成(/4失敗)）"
+        },
+        {
+          "name": "RespondMsg",
+          "type": "String(50)/Int(10)",
+          "required": false,
+          "description": "授權結果訊息(註1/4/5)"
+        },
+        {
+          "name": "Inst",
+          "type": "String(3)/String(15)",
+          "required": false,
+          "description": "分期-期別(註1/5)"
+        },
+        {
+          "name": "InstFirst",
+          "type": "String(10)",
+          "required": false,
+          "description": "分期-首期金額(註1)"
+        },
+        {
+          "name": "InstEach",
+          "type": "String(10)",
+          "required": false,
+          "description": "分期-每期金額(註1)"
+        },
+        {
+          "name": "PaymentMethod",
+          "type": "String(15)/String(10)",
+          "required": false,
+          "description": "交易類別(註1/4/5)（註1:CREDIT/FOREIGN/NTCB/UNIONPAY/APPLEPAY/GOOGLEPAY/SAMSUNGPAY;註4:LINEPAY/ESUNWALLET/TAIWANPAY;註5:AFTEE）"
+        },
+        {
+          "name": "Card6No",
+          "type": "String(6)",
+          "required": false,
+          "description": "信用卡前6碼(註1)"
+        },
+        {
+          "name": "Card4No",
+          "type": "String(4)",
+          "required": false,
+          "description": "信用卡後4碼(註1)"
+        },
+        {
+          "name": "AuthBank",
+          "type": "String(10)",
+          "required": false,
+          "description": "收單金融機構(註1/4)（註4:Linepay=LINE Pay,Esun=玉山銀行）"
+        },
+        {
+          "name": "PayInfo",
+          "type": "String(50)",
+          "required": false,
+          "description": "付款資訊(註2)（超商代碼/條碼/ATM轉帳帳號）"
+        },
+        {
+          "name": "ExpireDate",
+          "type": "Datetime",
+          "required": false,
+          "description": "繳費有效期限(註2)"
+        },
+        {
+          "name": "SourceBankId",
+          "type": "String(3)",
+          "required": false,
+          "description": "指定轉帳的銀行代碼(註2)（智慧ATM2.0）"
+        },
+        {
+          "name": "SourceAccountNo",
+          "type": "String(16)",
+          "required": false,
+          "description": "指定轉帳的銀行帳號(註2)（智慧ATM2.0）"
+        },
+        {
+          "name": "OrderStatus",
+          "type": "Int(1)",
+          "required": false,
+          "description": "交易狀態(註2)（0未付款/1已付款/2訂單失敗/3訂單取消/6已退款/9付款中待確認;須1.3版以上）"
+        },
+        {
+          "name": "StoreType",
+          "type": "String(10)",
+          "required": false,
+          "description": "超商類別名稱(註3)（[全家][統一][萊爾富][OK mart]）"
+        },
+        {
+          "name": "StoreCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "超商門市編號(註3)"
+        },
+        {
+          "name": "StoreName",
+          "type": "String(15)",
+          "required": false,
+          "description": "超商門市名稱(註3)"
+        },
+        {
+          "name": "LgsNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "物流訂單編號(註3)"
+        },
+        {
+          "name": "LgsType",
+          "type": "String(3)",
+          "required": false,
+          "description": "物流型態(註3)（B2C/C2C）"
+        }
+      ],
+      "enums": [
+        "TradeStatus: 0/1/2/3/6",
+        "PaymentType: CREDIT/VACC/WEBATM/BARCODE/CVS/LINEPAY/ESUNWALLET/TAIWANPAY/CVSCOM/AFTEE",
+        "OrderStatus: 0/1/2/3/6/9",
+        "CloseStatus: 0/1/2/3(/4)",
+        "BackStatus: 0/1/2/3(/4)"
+      ],
+      "constraints": "外層 Status/Message/Result;Result依支付別回傳註1(信用卡)/註2(超商/ATM/WebATM)/註3(超商取貨付款)/註4(電子錢包)/註5(BNPL)專屬欄位",
+      "source": "4.3.2 回應參數 + 註1~註5"
+    },
+    {
+      "name": "取消授權請求-PostData_內含參數",
+      "fields": [
+        {
+          "name": "MerchantID_",
+          "type": "String(10)",
+          "required": true,
+          "description": "商店代號(外層)"
+        },
+        {
+          "name": "PostData_",
+          "type": "text",
+          "required": true,
+          "description": "加密資料(外層)"
+        },
+        {
+          "name": "RespondType",
+          "type": "String(5)",
+          "required": true,
+          "description": "回傳格式（String或JSON）"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本（1.0）"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "取消授權金額（需與授權金額相同）"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號（與TradeNo二擇一）",
+          "x-conditional-required": true
+        },
+        {
+          "name": "TradeNo",
+          "type": "String(17)",
+          "required": false,
+          "description": "藍新金流交易序號（與MerchantOrderNo二擇一）",
+          "x-conditional-required": true
+        },
+        {
+          "name": "IndexType",
+          "type": "Int(1)",
+          "required": true,
+          "description": "單號類別（1=商店訂單編號 2=藍新交易單號）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(30)",
+          "required": true,
+          "description": "時間戳記（容許誤差120秒）"
+        }
+      ],
+      "enums": [
+        "IndexType: 1/2",
+        "RespondType: String/JSON"
+      ],
+      "constraints": null,
+      "source": "4.4.1 請求參數"
+    },
+    {
+      "name": "取消授權回應-Result內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態（成功=SUCCESS;批次處理=TRA20001;失敗=錯誤代碼）"
+        },
+        {
+          "name": "Message",
+          "type": "String(30)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "Result.MerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Result.TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "Result.Amt",
+          "type": "Int(15)",
+          "required": false,
+          "description": "交易金額"
+        },
+        {
+          "name": "Result.MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "Result.CheckCode",
+          "type": "Hash",
+          "required": false,
+          "description": "檢核碼（見4.1.5）"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "4.4.2 回應參數"
+    },
+    {
+      "name": "請退款/取消請退款請求-PostData_內含參數",
+      "fields": [
+        {
+          "name": "MerchantID_",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號(外層)"
+        },
+        {
+          "name": "PostData_",
+          "type": "text",
+          "required": true,
+          "description": "加密資料(外層)"
+        },
+        {
+          "name": "RespondType",
+          "type": "String(5)",
+          "required": true,
+          "description": "回傳格式（String或JSON）"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本（1.1）"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "請退款金額（一次付清可整筆/部分;分期紅利僅整筆;銀聯卡僅整筆請款）"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(30)",
+          "required": true,
+          "description": "時間戳記"
+        },
+        {
+          "name": "IndexType",
+          "type": "Int(1)",
+          "required": true,
+          "description": "選用單號類別（1=商店訂單編號 2=藍新交易序號）"
+        },
+        {
+          "name": "TradeNo",
+          "type": "String(20)",
+          "required": true,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "CloseType",
+          "type": "Int(1)",
+          "required": true,
+          "description": "請款或退款（1=請款(B031)/取消請款(B033);2=退款(B032)/取消退款(B034)）"
+        },
+        {
+          "name": "Cancel",
+          "type": "Int(1)",
+          "required": false,
+          "description": "取消請款或退款（取消請款(B033)/取消退款(B034)時填1）"
+        }
+      ],
+      "enums": [
+        "IndexType: 1/2",
+        "CloseType: 1/2",
+        "Cancel: 1"
+      ],
+      "constraints": "B031請款/B032退款/B033取消請款/B034取消退款",
+      "source": "4.5.1 請求參數"
+    },
+    {
+      "name": "請退款/取消請退款回應-Result內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態"
+        },
+        {
+          "name": "Message",
+          "type": "String(30)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "Result.MerchantID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Result.Amt",
+          "type": "Int(10)",
+          "required": false,
+          "description": "請退款金額"
+        },
+        {
+          "name": "Result.TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "Result.MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "4.5.2 回應參數"
+    },
+    {
+      "name": "電子錢包退款請求-外層及EncryptData_內含參數",
+      "fields": [
+        {
+          "name": "UID_",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號(外層)"
+        },
+        {
+          "name": "Version_",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本(外層)（1.0）"
+        },
+        {
+          "name": "EncryptData_",
+          "type": "text",
+          "required": true,
+          "description": "加密資料(外層)（JSON 字串經 AES 加密）"
+        },
+        {
+          "name": "RespondType_",
+          "type": "String(15)",
+          "required": true,
+          "description": "回傳格式(外層)（JSON）"
+        },
+        {
+          "name": "HashData_",
+          "type": "Text",
+          "required": true,
+          "description": "雜湊資料(外層)"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "Amount",
+          "type": "Int(10)",
+          "required": true,
+          "description": "退款金額（需小於等於訂單金額;台灣Pay須等於訂單金額）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(50)",
+          "required": true,
+          "description": "時間戳記"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String",
+          "required": true,
+          "description": "付款方式（ESUNWALLET/LINEPAY/TAIWANPAY/TWQR/EZPALIPAY/EZPWECHAT）"
+        }
+      ],
+      "enums": [
+        "PaymentType: ESUNWALLET/LINEPAY/TAIWANPAY/TWQR/EZPALIPAY/EZPWECHAT"
+      ],
+      "constraints": "此 API 須使用 JSON Encode 產生請求字串(與其他 API http encode 不同)",
+      "source": "4.6.1 請求參數 + 4.6 說明"
+    },
+    {
+      "name": "電子錢包退款回應-外層及EncryptData內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態（成功=1000,失敗=錯誤代碼）"
+        },
+        {
+          "name": "Message",
+          "type": "String(30)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "EncryptData",
+          "type": "Text",
+          "required": false,
+          "description": "加密資料"
+        },
+        {
+          "name": "HashData",
+          "type": "Text",
+          "required": false,
+          "description": "雜湊資料"
+        },
+        {
+          "name": "UID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": false,
+          "description": "串接程式版本（1.0）"
+        },
+        {
+          "name": "EncryptData.TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "EncryptData.BankMessage",
+          "type": "String(30)",
+          "required": false,
+          "description": "銀行回傳訊息"
+        },
+        {
+          "name": "EncryptData.BankCode",
+          "type": "String(10)",
+          "required": false,
+          "description": "銀行回傳代碼"
+        },
+        {
+          "name": "EncryptData.MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "EncryptData.RefundAmount",
+          "type": "Int(10)",
+          "required": false,
+          "description": "退款金額"
+        },
+        {
+          "name": "EncryptData.RefundDate",
+          "type": "String(19)",
+          "required": false,
+          "description": "退款日期（YYYY-MM-DD HH24:MI:SS）"
+        }
+      ],
+      "enums": [
+        "Status: 1000(成功)"
+      ],
+      "constraints": null,
+      "source": "4.6.2 回應參數"
+    },
+    {
+      "name": "BNPL取消交易/退款請求-外層及EncryptData_內含參數",
+      "fields": [
+        {
+          "name": "UID_",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號(外層)"
+        },
+        {
+          "name": "Version_",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本(外層)（1.1）"
+        },
+        {
+          "name": "EncryptData_",
+          "type": "text",
+          "required": true,
+          "description": "加密資料(外層)"
+        },
+        {
+          "name": "RespondType_",
+          "type": "String(6)",
+          "required": true,
+          "description": "回傳格式(外層)（JSON或String,需與加密型態一致）"
+        },
+        {
+          "name": "HashData_",
+          "type": "Text",
+          "required": true,
+          "description": "雜湊資料(外層)"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "取消交易/退款金額（取消須等於訂單金額;退款須小於等於訂單金額）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(50)",
+          "required": true,
+          "description": "時間戳記"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String(10)",
+          "required": true,
+          "description": "付款方式（AFTEE=AFTEE先享後付）"
+        },
+        {
+          "name": "Reason",
+          "type": "String(100)",
+          "required": true,
+          "description": "取消交易/退款原因"
+        }
+      ],
+      "enums": [
+        "PaymentType: AFTEE"
+      ],
+      "constraints": "交易成立後一年內可發動取消或退款",
+      "source": "4.7.1 請求參數"
+    },
+    {
+      "name": "BNPL取消交易/退款回應-外層及EncryptData內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態（成功=SUCCESS）"
+        },
+        {
+          "name": "Message",
+          "type": "String(30)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "EncryptData",
+          "type": "Text",
+          "required": false,
+          "description": "加密資料"
+        },
+        {
+          "name": "HashData",
+          "type": "Text",
+          "required": false,
+          "description": "雜湊資料"
+        },
+        {
+          "name": "UID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": false,
+          "description": "串接程式版本（1.1）"
+        },
+        {
+          "name": "EncryptData.MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "EncryptData.TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "EncryptData.RefundAmount",
+          "type": "Int(10)",
+          "required": false,
+          "description": "取消交易/退款金額"
+        },
+        {
+          "name": "EncryptData.RefundDate",
+          "type": "DateTime",
+          "required": false,
+          "description": "取消交易/退款日期（YYYY-MM-DD HH:ii:ss）"
+        },
+        {
+          "name": "EncryptData.RefundType",
+          "type": "String(6)",
+          "required": false,
+          "description": "退款類型（cancel=取消, refund=退款）"
+        }
+      ],
+      "enums": [
+        "RefundType: cancel/refund"
+      ],
+      "constraints": null,
+      "source": "4.7.2 回應參數"
+    },
+    {
+      "name": "BNPL請款請求-外層及EncryptData_內含參數",
+      "fields": [
+        {
+          "name": "UID_",
+          "type": "String(15)",
+          "required": true,
+          "description": "商店代號(外層)"
+        },
+        {
+          "name": "Version_",
+          "type": "String(5)",
+          "required": true,
+          "description": "串接程式版本(外層)（1.1）"
+        },
+        {
+          "name": "EncryptData_",
+          "type": "text",
+          "required": true,
+          "description": "加密資料(外層)"
+        },
+        {
+          "name": "RespondType_",
+          "type": "String(6)",
+          "required": true,
+          "description": "回傳格式(外層)（JSON or String,需與加密型態一致）"
+        },
+        {
+          "name": "HashData_",
+          "type": "Text",
+          "required": true,
+          "description": "雜湊資料(外層)"
+        },
+        {
+          "name": "MerchantOrderNo",
+          "type": "String(30)",
+          "required": true,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "Amt",
+          "type": "Int(10)",
+          "required": true,
+          "description": "請款金額（需等於訂單完成金額）"
+        },
+        {
+          "name": "TimeStamp",
+          "type": "String(50)",
+          "required": true,
+          "description": "時間戳記"
+        },
+        {
+          "name": "PaymentType",
+          "type": "String(10)",
+          "required": true,
+          "description": "付款方式（AFTEE=AFTEE先享後付）"
+        }
+      ],
+      "enums": [
+        "PaymentType: AFTEE"
+      ],
+      "constraints": "交易成立後89天內可發動請款",
+      "source": "4.8.1 請求參數"
+    },
+    {
+      "name": "BNPL請款回應-外層及EncryptData內含參數",
+      "fields": [
+        {
+          "name": "Status",
+          "type": "String(10)",
+          "required": false,
+          "description": "回傳狀態（成功=SUCCESS）"
+        },
+        {
+          "name": "Message",
+          "type": "String(30)",
+          "required": false,
+          "description": "回傳訊息"
+        },
+        {
+          "name": "EncryptData",
+          "type": "Text",
+          "required": false,
+          "description": "加密資料"
+        },
+        {
+          "name": "HashData",
+          "type": "Text",
+          "required": false,
+          "description": "雜湊資料"
+        },
+        {
+          "name": "UID",
+          "type": "String(15)",
+          "required": false,
+          "description": "商店代號"
+        },
+        {
+          "name": "Version",
+          "type": "String(5)",
+          "required": false,
+          "description": "串接程式版本（1.1）"
+        },
+        {
+          "name": "EncryptData.MerchantOrderNo",
+          "type": "String(30)",
+          "required": false,
+          "description": "商店訂單編號"
+        },
+        {
+          "name": "EncryptData.TradeNo",
+          "type": "String(20)",
+          "required": false,
+          "description": "藍新金流交易序號"
+        },
+        {
+          "name": "EncryptData.Amount",
+          "type": "Int(10)",
+          "required": false,
+          "description": "請款金額"
+        },
+        {
+          "name": "EncryptData.CloseDate",
+          "type": "DateTime",
+          "required": false,
+          "description": "請款日期（YYYY-MM-DD HH:ii:ss）"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "4.8.2 回應參數"
+    }
+  ],
+  "errors": [
+    {
+      "code": "MPG01002",
+      "meaning": "時間戳記不可空白 (TimeStamp)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01005",
+      "meaning": "TokenTerm不可空白/設定錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01008",
+      "meaning": "分期參數設定錯誤 (InstFlag)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01009",
+      "meaning": "商店代號不可空白 (MerchantID)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01010",
+      "meaning": "程式版本設定錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01011",
+      "meaning": "回傳規格設定錯誤 (RespondType)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01012",
+      "meaning": "商店訂單編號不可空白/設定錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01013",
+      "meaning": "付款人電子信箱設定錯誤 (Email)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01014",
+      "meaning": "網址設定錯誤 (ReturnURL/NotifyURL/CustomerURL/ClientBackURL)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01015",
+      "meaning": "訂單金額不可空白/設定錯誤/超過商店單筆金額限制 (Amt)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01016",
+      "meaning": "檢查碼不可空白 (CheckValue)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01017",
+      "meaning": "商品資訊不可空白 (ItemDesc)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01018",
+      "meaning": "繳費有效期限設定錯誤 (ExpireDate)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01023",
+      "meaning": "交易加密資料不可空白 (TradeInfo)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01024",
+      "meaning": "交易加密SHA資料不可空白 (TradeSha)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01025",
+      "meaning": "金融機構格式錯誤(僅接受大小寫英文及半形逗號)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01026",
+      "meaning": "金融機構格式錯誤,不接受XXX參數",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01027",
+      "meaning": "一銀維護中,請選擇其他金融機構",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01028",
+      "meaning": "訂單細項格式錯誤(啟用AFTEE時OrderDetail必填)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01029",
+      "meaning": "訂單金額與訂單細項總金額不相符",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG01030",
+      "meaning": "訂單細項品項編號不可重複",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02001",
+      "meaning": "檢查碼錯誤 (CheckValue)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02002",
+      "meaning": "查無商店開啟任何金流服務",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02003",
+      "meaning": "支付方式未啟用,請洽客服中心",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02004",
+      "meaning": "匯率時間戳記不存在/已過匯率鎖定時限/頁面超過180秒,交易失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02005",
+      "meaning": "驗證資料錯誤(來源不合法)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02006",
+      "meaning": "信用卡收單機構系統發生異常,請洽客服中心",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02007",
+      "meaning": "本商店強制指定需檢核轉出行,請先啟用智慧ATM2.0服務",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02008",
+      "meaning": "SourceType參數錯誤,本商店強制指定需檢核轉出行",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02009",
+      "meaning": "不可修改銀行代號與帳號時,須提供指定轉帳的銀行代號與帳號",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG02010",
+      "meaning": "此版本不支援,請升級至v2.3",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03001",
+      "meaning": "FormPost加密失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03002",
+      "meaning": "拒絕交易IP",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03003",
+      "meaning": "IP交易次數限制(N分鐘內不可交易達M次)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03004",
+      "meaning": "商店狀態已被暫停或關閉,無法進行交易",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03005",
+      "meaning": "回傳參數資料不存在/解密失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03006",
+      "meaning": "回傳參數資料不存在/解密失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03007",
+      "meaning": "該筆訂單交易資訊不存在/查無此商店代號/MerchantID參數不一致",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03008",
+      "meaning": "已存在相同的商店訂單編號",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03009",
+      "meaning": "交易失敗(SHA256檢查不符/TradeInfo解密失敗/EncryptType錯誤/銀行授權失敗)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03010",
+      "meaning": "驗證資料不存在或錯誤(玉山Wallet/台灣Pay/BitoPay)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG03011",
+      "meaning": "訂單資料已不存在,請重新交易(玉山Wallet/台灣Pay/BitoPay)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05001",
+      "meaning": "未有信用卡驗證資料/信用卡驗證資料解密失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05002",
+      "meaning": "信用卡卡號長度不足/未有商店代號/本商店不支援此信用卡付款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05003",
+      "meaning": "此信用卡不支援一次付清/分期/紅利付款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05004",
+      "meaning": "發卡行暫時無法提供信用卡分期付款服務",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05005",
+      "meaning": "警示交易",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05006",
+      "meaning": "物流設定參數[LgsType]錯誤(限C2C或B2C)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05007",
+      "meaning": "請開啟其他支付方式,才能使用超商取貨不付款服務",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05008",
+      "meaning": "因金額限制關係,無法使用物流服務(訂單金額需小於20000元)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MPG05009",
+      "meaning": "超商取貨服務未啟用[服務型態]請洽客服中心",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "ACC10005",
+      "meaning": "會員已被暫時/永久停權,請洽藍新金流客服中心查詢",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MEM40008",
+      "meaning": "必填欄位資料不可空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MEM40012",
+      "meaning": "必填欄位資料傳遞錯誤 (PostData_空白)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MEM40013",
+      "meaning": "必填欄位資料不齊全",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "MEM40014",
+      "meaning": "傳送時間錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "NOR1001",
+      "meaning": "連線異常",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10001",
+      "meaning": "商店資料取得失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10003",
+      "meaning": "金額必須為數字",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10008",
+      "meaning": "資料加密錯誤 (PostData_解密失敗)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10009",
+      "meaning": "商店代號不可空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10012",
+      "meaning": "商店代號停用",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10013",
+      "meaning": "商店信用卡資格停用",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10015",
+      "meaning": "網路連線失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10018",
+      "meaning": "資料不足",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10021",
+      "meaning": "查無該筆交易或該筆交易不為信用卡交易",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10026",
+      "meaning": "此訂單非授權成功狀態,不可請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10027",
+      "meaning": "此訂單已申請過請款,不可重覆請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10028",
+      "meaning": "請退款金額超過授權金額,請確認",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10029",
+      "meaning": "請款超過授權日N天,已不得請(退)款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10030",
+      "meaning": "請款/退款資料新增失敗/模擬信用卡請款失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10031",
+      "meaning": "銀聯卡交易只接受全額請退款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10032",
+      "meaning": "單號類型只能為數字1或2 (IndexType)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10033",
+      "meaning": "選擇使用商店自訂單號不可空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10035",
+      "meaning": "該交易非授權成功或已請款完成狀態,請確認",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10036",
+      "meaning": "RespondType欄位資料格式錯誤/已超過剩餘可退款金額",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10037",
+      "meaning": "商家自訂單號錯誤,只允許英數字及_符號",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10038",
+      "meaning": "選擇使用系統單號格式錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10039",
+      "meaning": "退款金額已超過請款金額,請確認",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10041",
+      "meaning": "網址格式錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10045",
+      "meaning": "該筆交易正在退款中或退款失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10046",
+      "meaning": "該筆交易撥款狀態異常,無法執行退款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10047",
+      "meaning": "該交易不為授權成功狀態,不可放棄授權/尚未發動撥款無法退款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10048",
+      "meaning": "該交易正在請款狀態",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10049",
+      "meaning": "該交易正在退款狀態",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10050",
+      "meaning": "金額不符",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10051",
+      "meaning": "取消授權失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10054",
+      "meaning": "檢查碼CheckValue有錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10058",
+      "meaning": "動態貨幣轉換交易只接受全額請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10070",
+      "meaning": "銀聯卡交易無需請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10071",
+      "meaning": "因查無交易資料次數已達上限,已鎖定交易查詢功能,請待四小時解鎖",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10077",
+      "meaning": "只能退未撥金額",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10094",
+      "meaning": "資料取消失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10095",
+      "meaning": "此筆交易已過關帳時間,不可取消",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10678",
+      "meaning": "銀聯卡退款失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10675",
+      "meaning": "紅利交易只接受全額請退款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA10702",
+      "meaning": "因達到執行請退款筆數上限,商店暫時無法使用本功能,請待1小時後解鎖",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA11002",
+      "meaning": "因失敗過多商店暫時無法使用本功能,請待4小時解鎖",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20001",
+      "meaning": "金融機構取消授權批次處理中",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20002",
+      "meaning": "查無交易資料",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20004",
+      "meaning": "商店訂單編號重覆",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20011",
+      "meaning": "該筆交易已請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20027",
+      "meaning": "此訂單已申請過退款,退款中",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA20028",
+      "meaning": "可退款金額不足,請查看常見問題",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "TRA40014",
+      "meaning": "TimeStamp欄位錯誤",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1101",
+      "meaning": "退款失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1102",
+      "meaning": "查無商店",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1103",
+      "meaning": "查無訂單資料",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1104",
+      "meaning": "訂單狀態不為可請/退款狀態",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1105",
+      "meaning": "可退金額不足",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1106",
+      "meaning": "錢包類型不符",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1107",
+      "meaning": "尚未請款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1108",
+      "meaning": "僅支援全額退款",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1109",
+      "meaning": "退款交易申請中,請稍後",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1110",
+      "meaning": "商店支付方式未啟用",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1111",
+      "meaning": "查詢商店閘道設定,查無資料",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "1116",
+      "meaning": "可退款金額不足,請查看常見問題",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "2100",
+      "meaning": "最低金額為1 (The Amount minimum is 1)",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4101",
+      "meaning": "EncryptData_不可為空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4102",
+      "meaning": "HashData_不可為空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4103",
+      "meaning": "HashData_資料檢查不符合",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4104",
+      "meaning": "加密資料有誤,請確認Hash_Key與Hash_IV是否正確",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4105",
+      "meaning": "TimeStamp為空",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "4106",
+      "meaning": "UID_不可為空白",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "9000",
+      "meaning": "網路連線失敗",
+      "http_status": null,
+      "source": "5.錯誤代碼表"
+    },
+    {
+      "code": "SUCCESS",
+      "meaning": "交易/查詢/取消/請退款成功(MPG與多數API回傳狀態值)",
+      "http_status": null,
+      "source": "4.2.2/4.3.2/4.4.2/4.5.2/4.7.2/4.8.2 Status"
+    },
+    {
+      "code": "1000",
+      "meaning": "電子錢包退款成功(4.6電子錢包退款 Status=1000)",
+      "http_status": null,
+      "source": "4.6.2 回應參數 Status"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "加密流程",
+      "detail": "請求字串先以 http_build_query (電子錢包退款改用 JSON encode) 組成,經 AES-256-CBC(PKCS7)加密轉十六進制為 TradeInfo/EncryptData_/PostData_,再經 SHA256 產生 TradeSha/HashData_。發布以 HTML Form Post 進入對應 API URL。",
+      "source": "4.1.1~4.1.4 / 4.6 Step1~4"
+    },
+    {
+      "topic": "MPG 須前景 Form Post",
+      "detail": "依資安規範,禁用 iframe / proxy / 幕後 Http Post 方式使用 MPG 支付頁;須以 HTML Form Post(前景方式)進入(否則 MPG02005)。",
+      "source": "6.常見問題 MPG02005"
+    },
+    {
+      "topic": "TimeStamp 時效",
+      "detail": "TimeStamp 須帶自 Unix 紀元至當前秒數,容許誤差120秒;產生後須於120秒內發動 API,否則 MPG02004 頁面逾時。",
+      "source": "4.2.1 TimeStamp / 6.常見問題"
+    },
+    {
+      "topic": "Notify 重送機制",
+      "detail": "藍新金流只認定 Http=200 才視為 Notify 成功,具 Retry 機制;Retry 三次皆未收到 200 則 Notify 失敗。非即時支付須繳費且銀行銷帳完成後才回傳 Notify。",
+      "source": "6.常見問題-收不到Notify"
+    },
+    {
+      "topic": "ReturnURL/NotifyURL 不可相同",
+      "detail": "ReturnURL 與 NotifyURL 均會攜帶回應參數,請勿設定相同網址,以免重複接收造成交易誤判;兩者亦可於會員專區設定,API 參數設定優先。",
+      "source": "4.2.1 注意事項"
+    },
+    {
+      "topic": "電子錢包退款時效規則",
+      "detail": "玉山Wallet:交易完成10分鐘後、89天內可退,支援多次部分退款;台灣Pay:10分鐘後、29天內,僅全額退款;LINE Pay:交易日起60天內,支援多次部分退款;ezPay/Alipay/WeChat:89天內,多次部分退款;TWQR:不限次數,請款日起89日曆日內,退款金額須小於等於交易金額。",
+      "source": "4.6 電子錢包退款規則"
+    },
+    {
+      "topic": "BNPL(AFTEE) 取消/退款/請款時效",
+      "detail": "取消/退款:交易成立後一年內可發動;請款:交易成立後89天內可發動。",
+      "source": "4.7 / 4.8 AFTEE 先享後付規則"
+    },
+    {
+      "topic": "測試環境測試卡號",
+      "detail": "信用卡測試卡號:4000-2211-1111-1111(一次付清+分期)、4003-5511-1111-1111(紅利折抵)、3760-000000-00006(美國運通卡);有效月年及末三碼任意填;以測試授權碼模擬,未實際送收單機構;銀聯卡不開放測試。WebATM 測試僅支援華南銀行。",
+      "source": "附錄1 測試區腳本"
+    },
+    {
+      "topic": "金額限制(各支付方式顯示門檻)",
+      "detail": "CVS:30~20000;BARCODE:20~40000;BitoPay:100~49999;WEBATM/VACC/TAIWANPAY/AFTEE:>49999不顯示;物流CVSCOM:>20000無法使用。",
+      "source": "4.2.1 各支付參數備註"
+    },
+    {
+      "topic": "版本號",
+      "detail": "MPG 交易 Version=2.3;單筆查詢 Version=1.3;取消授權 Version=1.0;請退款 Version=1.1;電子錢包退款 Version_=1.0;BNPL 取消/退款與請款 Version_=1.1。",
+      "source": "4.2~4.8 各 API Version 欄位"
+    }
+  ],
+  "missing": [
+    "各 API 的 HTTP 方法雖實際以 HTML Form POST 發動,文件未以 RESTful 動詞明文標註(此處依 Form method=post 與『Post 參數說明』推得為 POST)",
+    "NotifyURL/ReturnURL/CustomerURL 為商店自訂網址,文件未提供固定 path",
+    "各錯誤代碼對應之 HTTP status code 文件未提供",
+    "MPG 交易成功回應之 HTTP 狀態碼未明確記載",
+    "BankType 完整銀行清單(文件僅列 BOT/HNCB/KGI,其餘以『支援所有指定銀行』帶過)",
+    "旅遊地區代號對照表缺代號 010、017、019(文件表格未列出)",
+    "info/聯絡窗口、API 速率限制(rate limit)具體數值(MPG03003 N分鐘M次未給定值)未明確記載",
+    "字元編碼除 ItemDesc 註明 Utf-8 外,其餘參數編碼未統一說明",
+    "TWQR_LifeTime 備註內『未帶則預設300秒(1天86400秒)』語意不一致(預設值與括號說明矛盾),文件原文如此"
+  ]
+}

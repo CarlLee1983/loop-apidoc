@@ -1,0 +1,61 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "4.2.1 CustomerURL 商店取號網址 / 4.2.3 回應參數-取號完成",
+  "parameters": [
+    {
+      "name": "Status",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "1.若交易取號成功，則回傳SUCCESS。2.若交易取號失敗，則回傳錯誤代碼。錯誤代碼請參考5.錯誤代碼表。"
+    },
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "藍新金流商店代號。"
+    },
+    {
+      "name": "TradeInfo",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料AES加密。將交易資料參數透過商店Key及IV進行AES加密（範例參考4.1.1 AES256）。解密後內含欄位請參考 schema「MPG回應-取號完成 TradeInfo內含參數」（4.2.3 回應參數-取號完成），勿展平。"
+    },
+    {
+      "name": "TradeSha",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料SHA256加密。將交易資料經過上述AES加密過的字串，透過商店Key及IV再進行SHA256加密（範例參考4.1.2 SHA256）。"
+    },
+    {
+      "name": "Version",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "串接程式版本。"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": "系統取號後以 Form Post 方式將取號結果導回商店指定的網址（CustomerURL）；請參考4.2.3回應參數-取號完成。此參數若為空值，則會顯示取號結果在藍新金流頁面。"
+  },
+  "responses": [],
+  "tags": [
+    "4.2 MPG交易[NPA-F01]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)"
+  ],
+  "examples": [],
+  "missing": [
+    "商店端對 CustomerURL 取號通知所需回應的內容未說明",
+    "content_type 未在來源以 HTTP header 形式明文標示（依 4.2.1「form post」描述推得為 form-urlencoded）"
+  ]
+}

@@ -189,3 +189,10 @@ def test_empty_plan_still_has_all_sections():
     md = build_markdown(NormalizationPlan(notebook_url="https://nb/x"), _manifest())
     for section in REQUIRED_MARKDOWN_SECTIONS:
         assert section in md
+
+
+def test_security_scheme_detail_label_not_misleading_name():
+    md = build_markdown(_full_plan(), _manifest())
+    # details 不應標為「名稱：」(與 scheme 自身 name 欄位混淆);改用中性「說明：」
+    assert "名稱：`X-API-Key`" not in md
+    assert "`X-API-Key`" in md

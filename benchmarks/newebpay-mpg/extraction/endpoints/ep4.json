@@ -1,0 +1,97 @@
+{
+  "method": "POST",
+  "path": "/API/EWallet/refund",
+  "source": "線上交易─幕前支付技術串接手冊_NDNF-1.2.2.md §4.6 電子錢包退款[NPA-B06]（§4.6.1 請求參數 / §4.6.2 回應參數）；測試串接網址 https://ccore.newebpay.com/API/EWallet/refund，正式串接網址 https://core.newebpay.com/API/EWallet/refund",
+  "parameters": [
+    {
+      "name": "UID_",
+      "in": "body",
+      "type": "String(15)",
+      "required": true,
+      "description": "商店代號；藍新金流商店代號"
+    },
+    {
+      "name": "Version_",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "串接程式版本；1.0"
+    },
+    {
+      "name": "EncryptData_",
+      "in": "body",
+      "type": "text",
+      "required": true,
+      "description": "加密資料；請參考4.6電子錢包退款"
+    },
+    {
+      "name": "RespondType_",
+      "in": "body",
+      "type": "String(15)",
+      "required": true,
+      "description": "回傳格式；JSON"
+    },
+    {
+      "name": "HashData_",
+      "in": "body",
+      "type": "Text",
+      "required": true,
+      "description": "雜湊資料；請參考4.6電子錢包退款"
+    },
+    {
+      "name": "MerchantOrderNo",
+      "in": "body",
+      "type": "String(30)",
+      "required": true,
+      "description": "商店訂單編號（EncryptData_內含參數）；1.同一商店中此編號不可重覆 2.只接受英文或數字與底線"
+    },
+    {
+      "name": "Amount",
+      "in": "body",
+      "type": "Int(10)",
+      "required": true,
+      "description": "退款金額（EncryptData_內含參數）；1.此筆訂單欲退款的交易金額 例：1000 2.純數字不含符號 3.退款金額需小於或等於訂單完成金額 4.台灣Pay退款金額須等於訂單金額"
+    },
+    {
+      "name": "TimeStamp",
+      "in": "body",
+      "type": "String(50)",
+      "required": true,
+      "description": "時間戳記（EncryptData_內含參數）；自從Unix纪元（格林威治時間1970年1月1日00:00:00）到當前時間的秒數，若以PHP程式語言為例，即為呼叫time()函式所回傳值 例：2014-05-15 15:00:00這個時間的時間戳記為1400137200 *須確實帶入自Unix紀元到當前時間的秒數以避免交易失敗。(容許誤差值120秒)"
+    },
+    {
+      "name": "PaymentType",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "付款方式（EncryptData_內含參數）；各項付款方式對應參數如下: 玉山Wallet = ESUNWALLET、Line Pay = LINEPAY、台灣Pay = TAIWANPAY、TWQR = TWQR、Alipay 支付寶 = EZPALIPAY、WeChat 微信 = EZPWECHAT"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": "電子錢包退款請求-外層及EncryptData_內含參數",
+    "required": true,
+    "description": "此 API 將請求字串以 JSON Encode 方式組成（非 http_build_query），再以商店 Hash Key/Hash IV 執行 AES-256-CBC（PKCS7 填充）轉十六進制後帶入 EncryptData_；HashData_ 為加密字串前後加上 HashKey=/HashIV= 後 SHA256 壓碼轉大寫"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "退款回應；外層 Status（退款成功回傳1000，失敗回傳錯誤代碼，請參考5.錯誤代碼表）、Message、EncryptData、HashData、UID、Version；EncryptData 解密後內含 TradeNo、BankMessage、BankCode、MerchantOrderNo、RefundAmount、RefundDate",
+      "schema": null,
+      "schema_ref": "電子錢包退款回應-外層及EncryptData內含參數"
+    }
+  ],
+  "tags": [
+    "4. 串接介接",
+    "4.6 電子錢包退款[NPA-B06]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)"
+  ],
+  "examples": [],
+  "missing": [
+    "request content_type（HTTP Content-Type header 未明確說明，僅以 HTML form method=post 呈現）",
+    "回應 HTTP 狀態碼未明確說明（僅說明回傳 JSON 字串內容）"
+  ]
+}

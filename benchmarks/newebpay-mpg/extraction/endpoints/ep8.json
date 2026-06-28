@@ -1,0 +1,24 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "4.2.1 ReturnURL 支付完成返回商店網址 / 3.1 即時支付交易流程",
+  "parameters": [],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": null,
+    "description": "交易完成後，藍新金流以 Form Post 方式將消費者導回商店頁面（ReturnURL）。若支付工具為玉山Wallet、台灣Pay或本欄位為空值，於交易完成後消費者將停留在藍新金流付款或取號結果頁面；目前玉山Wallet及台灣Pay不支援導頁。只接受80與443 Port。"
+  },
+  "responses": [],
+  "tags": [
+    "4.2 MPG交易[NPA-F01]"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "ReturnURL Form Post 所攜帶之回應參數欄位未在 4.2.1 列舉（來源僅說明以 Form Post 導回商店頁面）",
+    "ReturnURL 是否加密/簽章（TradeInfo/TradeSha）未明確說明",
+    "商店端對 ReturnURL 所需回應內容未說明",
+    "content_type 未在來源以 HTTP header 形式明文標示"
+  ]
+}

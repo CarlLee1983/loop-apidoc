@@ -93,3 +93,12 @@ def test_source_conflict_is_error():
     plan = _plan(source_conflicts=[SourceConflict(area="base_url", detail="兩來源不一致")])
     issues = check_completeness(plan)
     assert IssueCode.SOURCE_CONFLICT in _codes(issues, Severity.ERROR)
+
+
+def test_webhook_without_responses_is_warning_not_error():
+    # path-less webhook(async callback)無接收端回應定義時,降為 WARNING 而非硬 ERROR。
+    issues = check_completeness(_plan(endpoints=[
+        _endpoint(method="POST", path=None, summary="付款結果通知", responses=[]),
+    ]))
+    assert IssueCode.REQUIRED_INFO_MISSING not in _codes(issues, Severity.ERROR)
+    assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.WARNING)

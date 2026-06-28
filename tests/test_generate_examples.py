@@ -712,11 +712,12 @@ def test_wire_target_none_when_not_runnable():
     assert _wire_target(s, _sig_shape()) is None
 
 
-def test_payload_field_names_intersects_body_and_excludes_target():
+def test_payload_field_names_keeps_source_fields_excluding_target():
     from loop_apidoc.generate.examples import _payload_field_names
     s = _runnable_scheme(fields=("MerchantID", "Amount", "CheckMacValue", "Ghost"))
-    names = _payload_field_names(s, _sig_shape(), "CheckMacValue")
-    assert names == ["MerchantID", "Amount"]  # 交集 body、去掉 target 與不存在欄位
+    names = _payload_field_names(s, "CheckMacValue")
+    # 來源明列的簽章欄位全保留(去掉 target);內層欄位如 Ghost 不再被 body 交集濾掉
+    assert names == ["MerchantID", "Amount", "Ghost"]
 
 
 def test_render_ts_wires_signature_into_body():
@@ -724,7 +725,9 @@ def test_render_ts_wires_signature_into_body():
     out = _render_ts(_sig_shape(), [_runnable_scheme()])
     assert "createCipheriv" in out
     assert "請依 payload_assembly 核對" in out
-    assert "[\"MerchantID\", \"Amount\"]" in out
+    # body 欄位以實際值入簽章字串(per-field,非 [k] 迴圈)
+    assert 'String((body as any)["MerchantID"])' in out
+    assert 'String((body as any)["Amount"])' in out
     assert "[\"CheckMacValue\"] = sign(payload)" in out
 
 
@@ -762,9 +765,9 @@ def test_render_ts_wires_into_header_when_target_is_header():
     out = _render_ts(shape, [s])
     # assignment target must be headers
     assert "(headers as any)[\"X-Signature\"] = sign(payload)" in out
-    # payload-construction line must read field values from body, not from headers
-    assert "(body as any)[k]" in out, "payload fields must be read from body, not from headers"
-    assert "(headers as any)[k]" not in out, "payload construction must NOT read from headers"
+    # payload-construction must read field values from body, not from headers
+    assert 'String((body as any)["Amount"])' in out, "payload fields must be read from body"
+    assert "String((headers" not in out, "payload construction must NOT read from headers"
 
 
 def test_render_py_wires_into_header_when_target_is_header():
@@ -778,9 +781,9 @@ def test_render_py_wires_into_header_when_target_is_header():
     out = _render_py(shape, [s])
     # assignment target must be headers
     assert 'headers["X-Signature"] = sign(sig_payload)' in out
-    # payload-construction line must read from payload (body dict), not from headers
-    assert "payload[k]" in out, "payload fields must be read from payload (body dict), not from headers"
-    assert "headers[k]" not in out, "payload construction must NOT read from headers"
+    # payload-construction must read field values from payload (body dict), not headers
+    assert 'str(payload["Amount"])' in out, "payload fields must be read from payload (body dict)"
+    assert 'str(headers[' not in out, "payload construction must NOT read from headers"
 
 
 def test_no_wiring_when_scheme_has_no_verify_field():
@@ -819,3 +822,36 @@ def test_render_py_cbc_via_algorithm_string_is_runnable():
     assert "# gap:" not in out, "Should NOT be a gap when algorithm contains CBC"
     assert "AES.new(" in out, "Should emit AES.new() for CBC"
     assert "AES.MODE_CBC" in out, "Should emit MODE_CBC for CBC"
+
+
+def test_aes_cbc_encryption_signature_returns_hex_not_sha256():
+    from loop_apidoc.generate.examples import _py_signature, _ts_signature
+    s = CryptoScheme(
+        status="supported", name="TradeInfo", purpose="request",
+        algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "enc", "fields": ["Amt"]}],
+    )
+    py = _py_signature([s])
+    assert "AES.new" in py and "MODE_CBC" in py
+    assert "hashlib.sha256" not in py  # AES 加密輸出為 hex,不應接 SHA256
+    ts = _ts_signature([s])
+    assert "createCipheriv" in ts
+    assert "createHash('sha256')" not in ts
+
+
+def test_signed_payload_uses_source_fields_even_when_not_in_body():
+    from loop_apidoc.generate.examples import _py_wiring
+    s = CryptoScheme(
+        status="supported", name="TradeInfo", purpose="request",
+        algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串", "fields": ["RespondType", "Amt"]}],
+        verify=CryptoVerify(field="TradeInfo"),
+    )
+    # body 只攜帶加密後目標欄位 TradeInfo;簽章明文欄位 RespondType/Amt 為內層(加密前)參數
+    shape = {"method": "POST", "url": "u", "query": [], "header": [], "path": [],
+             "body": [("TradeInfo", "placeholder", "<trade_info>")],
+             "content_type": "application/x-www-form-urlencoded", "security": []}
+    out = "\n".join(_py_wiring(shape, [s]))
+    assert "RespondType" in out and "Amt" in out  # 來源明列欄位不應被 body 交集濾掉

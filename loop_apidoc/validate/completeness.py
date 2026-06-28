@@ -36,8 +36,12 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
                 IssueCode.REQUIRED_INFO_MISSING, Severity.ERROR, location,
                 "endpoint 缺少 HTTP method 或 path", "由來源補上 method 與 path"))
         if not endpoint.responses:
+            # A path-less webhook (async callback) often has no source-defined
+            # receiver-response; require responses strictly only for real paths,
+            # and surface a webhook's absence as a non-blocking WARNING.
+            severity = Severity.ERROR if endpoint.path else Severity.WARNING
             issues.append(_issue(
-                IssueCode.REQUIRED_INFO_MISSING, Severity.ERROR, location,
+                IssueCode.REQUIRED_INFO_MISSING, severity, location,
                 "endpoint 沒有任何 response 定義", "由來源補上 response status 與 schema"))
         if not endpoint.summary:
             issues.append(_issue(

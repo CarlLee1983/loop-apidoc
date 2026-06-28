@@ -1,0 +1,53 @@
+{
+  "_note": "預期 PASS/FAIL 與必要 issue 類型。初跑 FAIL 揭出 6 項 pipeline 缺陷,全數修復後重跑 PASS(2026-06-28)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": {
+    "REQUIRED_INFO_MISSING.warning": 7
+  },
+  "acceptable_warnings": "EWallet/BNPL×3 + ReturnURL/CustomerURL 缺 examples、ReturnURL/CustomerURL 無 responses(降為 warning) — 來源 4.6~4.8 無專屬範例、redirect callback 無接收端回應定義,皆 faithful。",
+  "resolved_issues_were": [
+    {
+      "kind": "pipeline-bug",
+      "code": "OUTPUT_MISMATCH",
+      "where": "generate/examples signature-wiring 偵測",
+      "summary": "verify.field=TradeInfo 後,每個『未攜帶 TradeInfo body 欄位』的 endpoint 範例仍因簽章 helper 註解(# 簽章 TradeInfo)含字面 'TradeInfo' 而被偵測為未接回 → 16 個 false-positive。偵測應以『該欄位是否在此 endpoint 的 request body shape』為條件,而非裸字串 in content。",
+      "expected_after_fix": "僅 MPG/NotifyURL(實際攜帶 TradeInfo)受檢,其餘不報。"
+    },
+    {
+      "kind": "validator-strictness",
+      "code": "REQUIRED_INFO_MISSING",
+      "where": "validate/completeness check_completeness (endpoints[8] ReturnURL / endpoints[9] CustomerURL)",
+      "summary": "path-less webhook 被要求必須有 responses,但來源未定義 redirect-style callback 的接收端回應 → 硬 ERROR。應對 webhook 放寬為 WARNING 或豁免 response 要求。",
+      "expected_after_fix": "ReturnURL/CustomerURL 不因缺 responses 而 ERROR。"
+    },
+    {
+      "kind": "extraction-or-source-gap",
+      "code": "REQUIRED_INFO_MISSING",
+      "severity": "warning",
+      "where": "EWallet/refund, Bnpl/refund, Bnpl/settle, ReturnURL, CustomerURL",
+      "summary": "endpoint 缺少 request/response 範例(warning)。需確認來源 4.6~4.8 是否原本就無 PHP 範例;若有則屬擷取漏抽。",
+      "expected_after_fix": "確認來源後:有範例→補抽;無範例→屬來源缺漏,warning 可接受。"
+    }
+  ],
+  "semantic_findings_not_caught_by_validator": [
+    {
+      "where": "generate/examples sign_<scheme> 模板",
+      "summary": "AES-CBC 簽章模板硬接一段 SHA256(sign_trade_info = AES-CBC→hex→SHA256),把 TradeInfo(應只 hex(AES))與 TradeSha(SHA256)兩欄位算法揉成一個函式,TradeInfo 密文算錯。"
+    },
+    {
+      "where": "generate/examples 簽章 payload 欄位選取",
+      "summary": "簽章 payload 取 payload_assembly ∩ 外層 body 欄位;NewebPay 簽章明文為內層(加密前)參數,不在外層 body → 範例只簽到 MerchantID&Version,簽錯欄位。"
+    },
+    {
+      "where": "agentcli/extraction inventory.schemas[].fields 契約",
+      "summary": "SKILL 將 schemas[].fields 定為自由 [{}],但 generate 讀 name/type/required/description;subagent 用中文 key(型態/必填/中文)會遺失 type+required。本次由 orchestrator 手動重塑補救。"
+    }
+  ]
+}

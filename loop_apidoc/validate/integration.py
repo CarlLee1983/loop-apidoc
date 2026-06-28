@@ -141,10 +141,16 @@ def _signature_wiring(plan: NormalizationPlan, result: GenerateResult) -> list[I
             )
             continue
         wired = re.compile(r"\[['\"]" + re.escape(target) + r"['\"]\]\s*=\s*sign\w*\(")
+        # Only examples that actually declare `target` as a request key (body /
+        # header / query all render as a quoted `"name":` entry) are candidates.
+        # A bare mention of the field name elsewhere (e.g. the `# 簽章 TradeInfo`
+        # helper comment every endpoint renders for every scheme) must not trip
+        # the check — match the quoted key form, not raw substring presence.
+        declared_key = re.compile(r"['\"]" + re.escape(target) + r"['\"]\s*:")
         for path, content in examples.items():
             if not (path.endswith("request.ts") or path.endswith("request.py")):
                 continue
-            if target not in content:
+            if not declared_key.search(content):
                 continue
             if not wired.search(content):
                 issues.append(

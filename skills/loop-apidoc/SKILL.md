@@ -64,12 +64,13 @@ returned object to `<WORK>/inventory.json`.
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
  "endpoints": [{"method":"str","path":"str","summary":"str","source":"str"}],
- "schemas": [{"name":"str","fields":[{}],"enums":["str"],"constraints":"str|null","source":"str"}],
+ "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
  "errors": [{"code":"str","meaning":"str","http_status":"str|null","source":"str"}],
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
 ```
 `title` is the source document/product title (verbatim from the source heading, e.g. "綠界全方位金流 API 技術文件"); `null` if the source has no explicit title (it becomes OpenAPI `info.title`). `version` is the source-stated document/API version (verbatim, e.g. "NDNF-1.2.2"); `null` if none is stated (it becomes OpenAPI `info.version`). Include **every** endpoint and **every** error code. Each `source` cites the source section/page.
+Each `schemas[].fields` entry uses the **English** keys `name`/`type`/`required`/`description` (the same shape as endpoint `parameters`) — do **not** substitute localized keys (e.g. 型態/必填/中文), or the generator drops the type/required. Nested fields use the dotted-path convention `Parent.Child` / `Parent[].Child` (see step 3).
 
 ### 3. Extract each endpoint's detail → write `<WORK>/endpoints/<NN>.json`
 For **every** endpoint in `inventory.endpoints`, dispatch a read-only subagent

@@ -1,0 +1,120 @@
+{
+  "method": "POST",
+  "path": "/API/CreditCard/Close",
+  "source": "線上交易─幕前支付技術串接手冊_NDNF-1.2.2.md §4.5 請退款/取消請退款[NPA-B031 ~ 34] (4.5.1 請求參數 / 4.5.2 回應參數)",
+  "parameters": [
+    {
+      "name": "MerchantID_",
+      "in": "body",
+      "type": "String(15)",
+      "required": true,
+      "description": "商店代號。藍新金流商店代號"
+    },
+    {
+      "name": "PostData_",
+      "in": "body",
+      "type": "text",
+      "required": true,
+      "description": "加密資料。請參考4.1.1 AES256(PostData_欄位內含參數說明見下列各參數)"
+    },
+    {
+      "name": "RespondType",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "PostData_內含參數。回傳格式：String或是JSON"
+    },
+    {
+      "name": "Version",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "PostData_內含參數。串接程式版本：1.1"
+    },
+    {
+      "name": "Amt",
+      "in": "body",
+      "type": "Int(10)",
+      "required": true,
+      "description": "PostData_內含參數。請退款金額：1.純數字不含符號；2.一次付清(含三大Pay/國外卡)：可整筆及部分金額請款及退款；3.分期付款及紅利折抵：僅可整筆金額請款及退款；4.銀聯卡：僅可整筆金額請款,可整筆及部分金額退款"
+    },
+    {
+      "name": "MerchantOrderNo",
+      "in": "body",
+      "type": "String(30)",
+      "required": true,
+      "description": "PostData_內含參數。商店訂單編號：1.同一商店中此編號不可重覆；2.只接受英文或數字與底線"
+    },
+    {
+      "name": "TimeStamp",
+      "in": "body",
+      "type": "String(30)",
+      "required": true,
+      "description": "PostData_內含參數。時間戳記：自Unix纪元（格林威治時間1970年1月1日00:00:00）到當前時間的秒數,若以PHP程式語言為例,即為呼叫time()函式所回傳值。例：2014-05-15 15:00:00這個時間的時間戳記為1400137200。*須確實帶入自Unix紀元到當前時間的秒數以避免交易失敗。(容許誤差值120秒)"
+    },
+    {
+      "name": "IndexType",
+      "in": "body",
+      "type": "Int(1)",
+      "required": true,
+      "description": "PostData_內含參數。選用單號類別：1.只能填數字1或2：1代表選用商店訂單編號,2代表選用藍新金流交易序號；2.當選用其中一種單號類別時,該種單號不可空白"
+    },
+    {
+      "name": "TradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "PostData_內含參數。藍新金流交易序號：藍新金流平台交易序號"
+    },
+    {
+      "name": "CloseType",
+      "in": "body",
+      "type": "Int(1)",
+      "required": true,
+      "description": "PostData_內含參數。請款或退款：請款B031 /取消請款B033時請填1；退款B032 /取消退款B034時請填2"
+    },
+    {
+      "name": "Cancel",
+      "in": "body",
+      "type": "Int(1)",
+      "required": null,
+      "description": "PostData_內含參數。取消請款或退款：配合CloseType欄位,欲發動取消請款(B033)或取消退款(B034)時此欄請填1(非必填,必填欄位留空)"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": "請退款/取消請退款請求參數(MerchantID_, PostData_;PostData_為AES256加密之http_build_query字串,明文含 RespondType, Version, Amt, MerchantOrderNo, TimeStamp, IndexType, TradeNo, CloseType, Cancel)",
+    "required": true,
+    "description": "Post 參數說明。對應圖5信用卡交易狀態圖,此 API 具有功能：信用卡請款(B031)、信用卡退款(B032)、信用卡取消請款(B033)、信用卡取消退款(B034)。PostData_ 為依 4.1.1 AES256 加密之資料"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "回應參數：Status(回傳狀態,String(10);請退款成功則回傳SUCCESS;失敗則回傳錯誤代碼,請參考5.錯誤代碼表)、Message(回傳訊息,String(30);敘述此次請退款訊息)、Result(回傳資料,JSON)",
+      "schema": "請退款/取消請退款回應",
+      "schema_ref": "請退款/取消請退款回應-Result內含參數"
+    }
+  ],
+  "tags": [
+    "請退款/取消請退款[NPA-B031 ~ 34]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)"
+  ],
+  "examples": [
+    {
+      "lang": "php",
+      "title": "PHP 程式範例",
+      "code": "<?php $key=\"Fs5cX1TGqYM2PpdbE14a9H83YQSQF5jn\"; $iv=\"C6AcmfqJILwgnhIP\"; $mid=\"MS127874575\" $mon=\"MyCompanyOrder11646990440\"; $amt=\"30\"; $data1=http_build_query(array( 'RespondType'=>'String', 'Version'=>'1.1', 'Amt'=>$amt, 'MerchantOrderNo'=>$mon, 'TimeStamp'=>time(), 'IndexType'=>'1', //MerNO, or TradeNo 'CloseType'=>'1',  //1 for fund, 2 for refund //'Cancel'=>'1' )); $edata1=bin2hex(openssl_encrypt($data1, \"AES-256-CBC\", $key, OPENSSL_RAW_DATA, $iv)); ?> 針對交易 :[<?=$mon?>]\n<form method=post action=\"https://ccore.newebpay.com/API/CreditCard/Close\"> MI: <input name=\"MerchantID_\" value=\"<?=$mid?>\" readonly><br> PostData_: <input name=\"PostData_\" value=\"<?=$edata1?>\" readonly><br> <input type=submit value='Submit'> </form>"
+    },
+    {
+      "title": "回傳結果範例",
+      "code": "Status=SUCCESS&Message=請款資料新增成功_模擬信用卡請款成功&MerchantID=MS12345678&Amt=30&MerchantOrderNo=MyCompanyOrder11646990440&TradeNo=22031117215409023"
+    }
+  ],
+  "missing": [
+    "request content_type 未載明(HTTP Content-Type)",
+    "回應 HTTP 狀態碼未明確載明(以 200 表示成功回應)",
+    "4.5.2 回應 Result 內未列 CheckCode 欄位(回傳結果範例亦無 CheckCode),故 security 未列 CheckCode"
+  ]
+}

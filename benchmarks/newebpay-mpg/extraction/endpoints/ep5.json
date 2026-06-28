@@ -1,0 +1,104 @@
+{
+  "method": "POST",
+  "path": "/API/Bnpl/refund",
+  "source": "線上交易─幕前支付技術串接手冊_NDNF-1.2.2.md §4.7 BNPL 先買後付取消交易/退款[NPA-B07]（§4.7.1 請求參數 / §4.7.2 回應參數）；測試串接網址 https://ccore.newebpay.com/API/Bnpl/refund，正式串接網址 https://core.newebpay.com/API/Bnpl/refund；AFTEE 先享後付規則：1.當交易需整筆取消、整筆退款、部份退款、部份多次退款時發動 2.交易成立後一年內皆可發動取消或退款",
+  "parameters": [
+    {
+      "name": "UID_",
+      "in": "body",
+      "type": "String(15)",
+      "required": true,
+      "description": "商店代號；藍新金流商店代號"
+    },
+    {
+      "name": "Version_",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "串接程式版本；1.1"
+    },
+    {
+      "name": "EncryptData_",
+      "in": "body",
+      "type": "text",
+      "required": true,
+      "description": "加密資料"
+    },
+    {
+      "name": "RespondType_",
+      "in": "body",
+      "type": "String(6)",
+      "required": true,
+      "description": "回傳格式；JSON或String 需與加密型態方式一致"
+    },
+    {
+      "name": "HashData_",
+      "in": "body",
+      "type": "Text",
+      "required": true,
+      "description": "雜湊資料"
+    },
+    {
+      "name": "MerchantOrderNo",
+      "in": "body",
+      "type": "String(30)",
+      "required": true,
+      "description": "商店訂單編號（EncryptData_內含參數）；1.同一商店中此編號不可重覆 2.只接受英文或數字與底線"
+    },
+    {
+      "name": "Amt",
+      "in": "body",
+      "type": "Int(10)",
+      "required": true,
+      "description": "取消交易/退款金額（EncryptData_內含參數）；1.此筆訂單欲取消交易/退款的交易金額,例：1000 2.純數字不含符號 3.取消交易金額需等於訂單完成金額 4.退款金額需小於或等於訂單完成金額"
+    },
+    {
+      "name": "TimeStamp",
+      "in": "body",
+      "type": "String(50)",
+      "required": true,
+      "description": "時間戳記（EncryptData_內含參數）；自從Unix纪元（格林威治時間1970年1月1日00:00:00）到當前時間的秒數，若以PHP程式語言為例，即為呼叫time()函式所回傳值 例：2014-05-15 15:00:00這個時間的時間戳記為1400137200 *須確實帶入自Unix紀元到當前時間的秒數以避免交易失敗。(容許誤差值120秒)"
+    },
+    {
+      "name": "PaymentType",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "付款方式（EncryptData_內含參數）；各項付款方式對應參數如下: AFTEE=AFTEE先享後付"
+    },
+    {
+      "name": "Reason",
+      "in": "body",
+      "type": "String(100)",
+      "required": true,
+      "description": "取消交易/退款原因（EncryptData_內含參數）；請說明退款/取消原因"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": "BNPL取消交易/退款請求-外層及EncryptData_內含參數",
+    "required": true,
+    "description": "請求字串以 http_build_query 組成 Query String（當 RespondType_=String），再以商店 Hash Key/Hash IV 執行 AES-256-CBC（PKCS7 填充）轉十六進制後帶入 EncryptData_；HashData_ 為加密字串前後加上 HashKey=/HashIV= 後 SHA256 壓碼轉大寫"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "取消交易/退款回應；外層 Status（成功回傳SUCCESS，失敗回傳錯誤代碼，請參考5.錯誤代碼表）、Message、EncryptData、HashData、UID、Version(1.1)；EncryptData 內含 MerchantOrderNo、TradeNo、RefundAmount、RefundDate、RefundType（取消: cancel 退款: refund）",
+      "schema": null,
+      "schema_ref": "BNPL取消交易/退款回應-外層及EncryptData內含參數"
+    }
+  ],
+  "tags": [
+    "4. 串接介接",
+    "4.7 BNPL 先買後付取消交易/退款[NPA-B07]"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)"
+  ],
+  "examples": [],
+  "missing": [
+    "request content_type（HTTP Content-Type header 未明確說明）",
+    "回應 HTTP 狀態碼未明確說明（僅說明回傳字串內容）"
+  ]
+}

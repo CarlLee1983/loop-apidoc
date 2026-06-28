@@ -1,0 +1,96 @@
+{
+  "method": "POST",
+  "path": "/MPG/mpg_gateway",
+  "source": "線上交易─幕前支付技術串接手冊_NDNF-1.2.2.md §4.2 MPG 交易[NPA-F01]（請求參數 §4.2.1「Post 參數說明」；測試串接網址 https://ccore.newebpay.com/MPG/mpg_gateway，正式串接網址 https://core.newebpay.com/MPG/mpg_gateway）；發布方式 §4.1.3 Form Post；回應 §4.2.2 回應參數-支付完成 / §4.2.3 回應參數-取號完成",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(15)",
+      "required": true,
+      "description": "商店代號（藍新金流商店代號）"
+    },
+    {
+      "name": "TradeInfo",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料 AES加密。1.將交易資料參數（內含「交易參數」，即 §4.2.1『TradeInfo 內含參數欄位』所列 MerchantID、RespondType、TimeStamp、Version、P3D、LangType、MerchantOrderNo、Amt、各支付別開關等明文參數）透過商店 Key 及 IV 進行 AES 加密；2.範例請參考 4.1.1 AES256。此欄位為 AES 加密後之密文字串，明文即內含交易參數（不在此處展開）"
+    },
+    {
+      "name": "TradeSha",
+      "in": "body",
+      "type": null,
+      "required": true,
+      "description": "交易資料 SHA256加密。1.將交易資料經過上述 AES 加密過的字串，透過商店 Key 及 IV 進行 SHA256 加密；2.範例請參考 4.1.2 SHA256"
+    },
+    {
+      "name": "Version",
+      "in": "body",
+      "type": "String(5)",
+      "required": true,
+      "description": "串接程式版本，值為 2.3"
+    },
+    {
+      "name": "EncryptType",
+      "in": "body",
+      "type": "Int(1)",
+      "required": false,
+      "description": "設定加密模式。1 = 加密模式 AES/GCM；0 或未有此參數 = 原加密模式 AES/CBC/PKCS7Padding"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": "MPG交易請求外層 Post 參數（MerchantID、TradeInfo、TradeSha、Version、EncryptType）",
+    "required": true,
+    "description": "參考各支 API 之請求參數章節，將『加密後』及『不須加密的參數』以 HTML Form 形式組合，並發佈於對應的 API URL（§4.1.3 Form Post，method=post action 為 mpg_gateway 串接網址）。來源未明文指出 HTTP Content-Type 字串"
+  },
+  "responses": [
+    {
+      "status": null,
+      "description": "本閘道 POST 無同步 HTTP 回應主體；消費者完成支付後，藍新金流以幕後方式透過 NotifyURL（並於 P3D=1 時一併使用 ReturnURL）回傳已加密字串（Form Post）給商店，為支付完成結果（§4.2.2 回應參數-支付完成）。外層參數含 Status、MerchantID、TradeInfo、TradeSha、Version、EncryptType",
+      "schema": "MPG回應-支付完成 外層參數",
+      "schema_ref": "MPG回應-支付完成 外層參數"
+    },
+    {
+      "status": null,
+      "description": "取號類交易（如超商代碼/條碼、ATM 等）系統取號後，以 form post 方式將取號結果導回商店指定之 CustomerURL（商店取號網址）；若 CustomerURL 為空值，則顯示取號結果於藍新金流頁面（§4.2.3 回應參數-取號完成）",
+      "schema": "MPG回應-取號完成 TradeInfo內含參數",
+      "schema_ref": "MPG回應-取號完成 TradeInfo內含參數"
+    }
+  ],
+  "tags": [
+    "幕前支付",
+    "MPG"
+  ],
+  "security": [
+    "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256 (TradeSha / HashData_)",
+    "EncryptType (AES/GCM 選用)"
+  ],
+  "examples": [
+    {
+      "type": "request",
+      "format": "HTML Form Post",
+      "action": "https://ccore.newebpay.com/MPG/mpg_gateway",
+      "fields": {
+        "MerchantID": "商店代號",
+        "TradeInfo": "<AES 加密後字串>",
+        "TradeSha": "<SHA256 雜湊值>",
+        "Version": "2.0",
+        "note": "範例參考 §4.1.3 / 4.2.1，TradeInfo 明文以 http_build_query 組合內含交易參數後 AES-256-CBC 加密 bin2hex，TradeSha = strtoupper(sha256('HashKey='.key.'&'.edata.'&HashIV='.iv))"
+      }
+    },
+    {
+      "type": "response",
+      "channel": "NotifyURL",
+      "format": "Form Post（urlencoded 鍵值對）",
+      "value": "Status=SUCCESS&MerchantID=MS127874575&Version=2.0&TradeInfo=<AES 加密字串>&TradeSha=<SHA256>（解密結果請參照 §4.2.2 回應參數-支付完成）"
+    }
+  ],
+  "missing": [
+    "request.content_type：來源僅敘述以 HTML Form 形式組合發佈，未明文指出 HTTP Content-Type 字串（如 application/x-www-form-urlencoded）",
+    "responses：來源未記載閘道 POST 的同步 HTTP 狀態碼與同步回應主體；支付結果均為非同步經 NotifyURL/ReturnURL/CustomerURL 回傳，故各 response 之 status 為 null",
+    "EncryptType 之 required 來源僅標示型態 Int(1) 未標 V（必填），判為選用，但未明文敘述預設值以外之必填語意"
+  ]
+}

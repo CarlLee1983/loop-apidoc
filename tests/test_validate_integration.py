@@ -201,3 +201,18 @@ def test_curl_not_checked_for_wiring():
     examples = {"examples/Pay/request.sh": "curl ... CheckMacValue=<x>"}
     codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
     assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
+def test_target_only_in_comment_is_not_output_mismatch():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    # 目標欄位只出現在簽章 helper 註解,且此 endpoint body 並不攜帶該欄位 → 不應誤報
+    examples = {"examples/Other/request.py": (
+        "# 簽章 CheckMacValue：AES-256\n"
+        "def sign_checkmacvalue(payload):\n    ...\n"
+        'payload = {\n    "PostData_": "<x>",\n}\n'
+    )}
+    codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes
