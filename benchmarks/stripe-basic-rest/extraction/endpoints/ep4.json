@@ -1,0 +1,53 @@
+{
+  "method": "POST",
+  "path": "/v1/payment_intents/{intent}/cancel",
+  "source": "paths./v1/payment_intents/{intent}/cancel.post (Stripe OpenAPI spec3.sdk.json)",
+  "parameters": [
+    {
+      "name": "intent",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "cancellation_reason",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "Reason for canceling this PaymentIntent. Possible values are: `duplicate`, `fraudulent`, `requested_by_customer`, or `abandoned`"
+    },
+    {
+      "name": "expand",
+      "in": "body",
+      "type": "array",
+      "required": false,
+      "description": "Specifies which fields in the response should be expanded."
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": false,
+    "description": "Form-urlencoded body. Cancel a PaymentIntent"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Returns the PaymentIntent object.",
+      "schema": null,
+      "schema_ref": "PaymentIntent"
+    }
+  ],
+  "tags": [
+    "Payment Intents"
+  ],
+  "security": [
+    "bearerAuth",
+    "basicAuth"
+  ],
+  "examples": [],
+  "missing": [
+    "No request example captured in this spec subset."
+  ]
+}

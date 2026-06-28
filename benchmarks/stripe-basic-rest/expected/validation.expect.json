@@ -1,0 +1,9 @@
+{
+  "_note": "Stripe OpenAPI 子集;初跑 FAIL(http scheme 缺失 + 擷取 casing)→ 修 _build_security_scheme + 統一 method casing 後 PASS。",
+  "target_status": "PASS", "current_status": "PASS",
+  "must_validate": { "openapi_3_1_valid": true, "provenance_covers_core": true, "integration_contract_present": false, "examples_present": true },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 6 },
+  "acceptable_warnings": "6 endpoint 缺 request example(spec 子集未取 example)。",
+  "resolved_issue_was": { "kind": "generator-bug", "code": "OPENAPI_INVALID", "where": "generate/openapi.py _build_security_scheme", "summary": "type:http 未輸出必填 scheme → 無效 OpenAPI。已改為由 details 推導 bearer/basic。" },
+  "validates": "HTTP Bearer/Basic 認證、form-urlencoded body、同路徑多 method 合併、$ref 回應連結。"
+}

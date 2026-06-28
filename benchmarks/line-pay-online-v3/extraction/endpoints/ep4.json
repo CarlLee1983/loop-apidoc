@@ -1,0 +1,5 @@
+{"method":"POST","path":"/v3/payments/{transactionId}/refund","source":"Endpoint paths (/v3/payments/{transactionId}/refund)",
+ "parameters":[{"name":"transactionId","in":"path","type":"Integer","required":true,"description":"19-digit transaction ID of the completed payment to refund."}],
+ "request":{"content_type":"application/json","schema":null,"required":false,"description":"JSON body. The Refund request field (refundAmount, for partial refund) is on the JS-rendered Refund sub-page and not in this source."},
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Refund request body field (refundAmount) not in this source (JS-rendered sub-page)."]}

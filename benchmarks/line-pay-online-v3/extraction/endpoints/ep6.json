@@ -1,0 +1,5 @@
+{"method":"GET","path":"/v3/payments/requests/{transactionId}/check","source":"Endpoint paths (/v3/payments/requests/{transactionId}/check); Result code 0000 note",
+ "parameters":[{"name":"transactionId","in":"path","type":"Integer","required":true,"description":"19-digit transaction ID of the payment request to check."}],
+ "request":null,
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Query parameters and full response info for the check endpoint are not enumerated in this source (JS-rendered sub-page)."]}

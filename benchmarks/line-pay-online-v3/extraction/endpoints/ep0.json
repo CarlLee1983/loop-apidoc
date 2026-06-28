@@ -1,0 +1,14 @@
+{"method":"POST","path":"/v3/payments/request","source":"Endpoint paths; Request header + Request body example (productName/amount/currency/orderId); Response envelope",
+ "parameters":[
+   {"name":"X-LINE-Authorization","in":"header","type":"String","required":true,"description":"HMAC-SHA256 credentials."},
+   {"name":"X-LINE-Authorization-Nonce","in":"header","type":"String","required":true,"description":"Random UUID v1/v4 or timestamp."},
+   {"name":"X-LINE-ChannelId","in":"header","type":"String","required":true,"description":"Channel ID."},
+   {"name":"productName","in":"body","type":"String","required":true,"description":"Product name (from Request body example)."},
+   {"name":"amount","in":"body","type":"Integer","required":true,"description":"Payment amount (from Request body example)."},
+   {"name":"currency","in":"body","type":"String","required":true,"description":"Currency code, e.g. TWD (from Request body example)."},
+   {"name":"orderId","in":"body","type":"String","required":true,"description":"Merchant order ID (from Request body example)."}
+ ],
+ "request":{"content_type":"application/json","schema":"Payment Request Body","required":true,"description":"JSON body. Only the four fields in the overview example are captured; the full v3 Request body (packages[], redirectUrls{confirmUrl,cancelUrl}, options) is on the JS-rendered sub-page and not in this source."},
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],
+ "examples":[{"title":"Request body","content_type":"application/json","value":{"productName":"Brown pen","amount":1000,"currency":"TWD","orderId":"Ord2018123100000001"}}],
+ "missing":["Full v3 Payment Request schema (packages[], redirectUrls{confirmUrl,cancelUrl}, options) not in this source — only the four example fields."]}

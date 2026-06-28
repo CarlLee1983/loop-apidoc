@@ -1,0 +1,10 @@
+{
+  "_note": "HMAC 簽章 REST(來源為總覽頁,endpoint body 多在 JS 子頁,faithful 缺漏);達成下限。",
+  "must_have": {
+    "base_urls": 2, "endpoints_min": 7, "schemas_min": 2,
+    "error_codes_min": 20, "security_schemes_min": 1, "examples": true, "provenance": true
+  },
+  "integration": { "required": true, "crypto_required": true, "callbacks_required": false, "test_cases_min": 1 },
+  "critical_operations": ["paths./v3/payments/request.post", "paths./v3/payments/{transactionId}/confirm.post"],
+  "critical_security_schemes": ["X-LINE-Authorization (HMAC-SHA256)"]
+}

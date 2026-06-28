@@ -1,0 +1,5 @@
+{"method":"POST","path":"/v3/payments/authorizations/{transactionId}/capture","source":"Endpoint paths (/v3/payments/authorizations/{transactionId}/capture)",
+ "parameters":[{"name":"transactionId","in":"path","type":"Integer","required":true,"description":"19-digit transaction ID of the authorized payment."}],
+ "request":{"content_type":"application/json","schema":null,"required":true,"description":"JSON body. Capture request fields (amount, currency) are on the JS-rendered Capture sub-page and not in this source."},
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Capture request body fields not in this source (JS-rendered sub-page)."]}

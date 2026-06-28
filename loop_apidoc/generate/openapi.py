@@ -99,7 +99,22 @@ def _build_security_scheme(scheme) -> dict:
             location = scheme.location if scheme.location in _APIKEY_LOCATIONS else "header"
             out["in"] = location
             out["name"] = scheme.details or "Authorization"
-        return out
+            return out
+        if raw == "http":
+            # OpenAPI `http` requires a `scheme` (bearer/basic/...). The contract
+            # has no dedicated field, so derive it from the details/name text. If
+            # neither is present the type cannot be completed into valid OpenAPI,
+            # so fall through to the missing-source apiKey placeholder rather than
+            # emitting an invalid `{"type": "http"}` with no scheme.
+            hint = f"{scheme.details or ''} {scheme.name or ''}".lower()
+            if "bearer" in hint:
+                out["scheme"] = "bearer"
+                return out
+            if "basic" in hint:
+                out["scheme"] = "basic"
+                return out
+        else:
+            return out
     # Unmapped source type: this is not a standard OpenAPI auth scheme (e.g. a
     # request-signing / body-encryption procedure). Emit a minimal legal apiKey
     # PLACEHOLDER flagged missing-source. The real header/param name is not

@@ -1,0 +1,116 @@
+{
+  "method": "POST",
+  "path": "/v1/payment_intents/{intent}/capture",
+  "source": "paths./v1/payment_intents/{intent}/capture.post (Stripe OpenAPI spec3.sdk.json)",
+  "parameters": [
+    {
+      "name": "intent",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "amount_details",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Provides industry-specific information about the amount."
+    },
+    {
+      "name": "amount_to_capture",
+      "in": "body",
+      "type": "integer",
+      "required": false,
+      "description": "The amount to capture from the PaymentIntent, which must be less than or equal to the original amount. Defaults to the full `amount_capturable` if it's not provided."
+    },
+    {
+      "name": "application_fee_amount",
+      "in": "body",
+      "type": "integer",
+      "required": false,
+      "description": "The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. The amount of the application fee collected will be capped at the "
+    },
+    {
+      "name": "expand",
+      "in": "body",
+      "type": "array",
+      "required": false,
+      "description": "Specifies which fields in the response should be expanded."
+    },
+    {
+      "name": "final_capture",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Defaults to `true`. When capturing a PaymentIntent, setting `final_capture` to `false` notifies Stripe to not release the remaining uncaptured funds to make sure that they're captured in future requests. You can only use"
+    },
+    {
+      "name": "hooks",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Automations to be run during the PaymentIntent lifecycle"
+    },
+    {
+      "name": "metadata",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset"
+    },
+    {
+      "name": "payment_details",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "Provides industry-specific information about the charge."
+    },
+    {
+      "name": "statement_descriptor",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "Text that appears on the customer's statement as the statement descriptor for a non-card charge. This value overrides the account's default statement descriptor. For information about requirements, including the 22-chara"
+    },
+    {
+      "name": "statement_descriptor_suffix",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor th"
+    },
+    {
+      "name": "transfer_data",
+      "in": "body",
+      "type": "object",
+      "required": false,
+      "description": "The parameters that you can use to automatically create a transfer after the payment is captured. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts)."
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": false,
+    "description": "Form-urlencoded body. Capture a PaymentIntent"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Returns the PaymentIntent object.",
+      "schema": null,
+      "schema_ref": "PaymentIntent"
+    }
+  ],
+  "tags": [
+    "Payment Intents"
+  ],
+  "security": [
+    "bearerAuth",
+    "basicAuth"
+  ],
+  "examples": [],
+  "missing": [
+    "No request example captured in this spec subset."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "method": "GET",
+  "path": "/v1/payment_intents/{intent}",
+  "source": "paths./v1/payment_intents/{intent}.get (Stripe OpenAPI spec3.sdk.json)",
+  "parameters": [
+    {
+      "name": "intent",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "Returns the PaymentIntent object.",
+      "schema": null,
+      "schema_ref": "PaymentIntent"
+    }
+  ],
+  "tags": [
+    "Payment Intents"
+  ],
+  "security": [
+    "bearerAuth",
+    "basicAuth"
+  ],
+  "examples": [],
+  "missing": []
+}

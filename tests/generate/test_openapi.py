@@ -789,3 +789,45 @@ def test_unknown_param_type_keeps_raw_as_description_only():
     from loop_apidoc.generate.openapi import _schema_from_type
     assert _schema_from_type("WeirdType") == {"description": "WeirdType"}
     assert "type" not in _schema_from_type("WeirdType")
+
+
+def test_security_scheme_http_bearer_emits_scheme():
+    # OpenAPI `http` type requires a `scheme`; derive bearer/basic from details
+    # so a Bearer-auth source (e.g. Stripe) yields valid OpenAPI, not type:http
+    # missing the required `scheme` property.
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="bearerAuth",
+            type="http", location="header",
+            details="HTTP Bearer authentication: Authorization: Bearer <secret API key>.",
+        )
+    ])
+    scheme = build_openapi(plan)["components"]["securitySchemes"]["bearerAuth"]
+    assert scheme["type"] == "http"
+    assert scheme["scheme"] == "bearer"
+
+
+def test_security_scheme_http_basic_emits_scheme():
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="basicAuth",
+            type="http", location="header",
+            details="HTTP Basic authentication: the secret API key as the username.",
+        )
+    ])
+    scheme = build_openapi(plan)["components"]["securitySchemes"]["basicAuth"]
+    assert scheme["type"] == "http"
+    assert scheme["scheme"] == "basic"
+
+
+def test_security_scheme_http_without_derivable_scheme_falls_back_to_placeholder():
+    # http with no bearer/basic hint cannot be a valid http scheme → placeholder
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.UNVERIFIED, name="MysteryHttp",
+            type="http", location="header", details="some custom token",
+        )
+    ])
+    scheme = build_openapi(plan)["components"]["securitySchemes"]["MysteryHttp"]
+    assert scheme["type"] == "apiKey"
+    assert scheme[X_LOOP_STATUS] == MISSING_STATUS

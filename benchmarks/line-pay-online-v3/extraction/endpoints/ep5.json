@@ -1,0 +1,8 @@
+{"method":"GET","path":"/v3/payments","source":"Endpoint paths (GET /v3/payments)",
+ "parameters":[
+   {"name":"X-LINE-Authorization","in":"header","type":"String","required":true,"description":"HMAC-SHA256 credentials."},
+   {"name":"X-LINE-ChannelId","in":"header","type":"String","required":true,"description":"Channel ID."}
+ ],
+ "request":null,
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Query parameters for Payment Details (transactionId, orderId, fields) are not enumerated in this source (JS-rendered sub-page)."]}

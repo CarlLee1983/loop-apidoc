@@ -1,0 +1,8 @@
+{
+  "_note": "總覽頁來源;初跑即 PASS。HMAC 簽章走 fail-closed gap(非 CBC)為正確行為。",
+  "target_status": "PASS", "current_status": "PASS",
+  "must_validate": { "openapi_3_1_valid": true, "provenance_covers_core": true, "integration_contract_present": true, "examples_present": true },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 6 },
+  "acceptable_warnings": "6 endpoint 缺 examples — 其 request/response body 在 JS 渲染子頁,不在所取總覽來源(faithful missing)。",
+  "validates": "HMAC-SHA256 簽章機制抽取 + 非 CBC 簽章的 fail-closed gap 渲染(NewebPay AES 未涵蓋的路徑)。"
+}

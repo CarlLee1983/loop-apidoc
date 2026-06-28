@@ -1,0 +1,5 @@
+{"method":"POST","path":"/v3/payments/authorizations/{transactionId}/void","source":"Endpoint paths (/v3/payments/authorizations/{transactionId}/void)",
+ "parameters":[{"name":"transactionId","in":"path","type":"Integer","required":true,"description":"19-digit transaction ID of the authorized payment to void."}],
+ "request":null,
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Whether Void takes a request body is not stated in this source (JS-rendered sub-page)."]}

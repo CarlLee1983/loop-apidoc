@@ -1,0 +1,5 @@
+{"method":"POST","path":"/v3/payments/{transactionId}/confirm","source":"Endpoint paths (/v3/payments/{transactionId}/confirm)",
+ "parameters":[{"name":"transactionId","in":"path","type":"Integer","required":true,"description":"19-digit transaction ID from the Request API (process as 64-bit long)."}],
+ "request":{"content_type":"application/json","schema":null,"required":true,"description":"JSON body. The Confirm request fields (amount, currency) are on the JS-rendered Confirm sub-page and are not in this source."},
+ "responses":[{"status":"200","description":"HTTP 200 with the standard response envelope {returnCode, returnMessage, info}. returnCode 0000 = success; info present only on success.","schema":null,"schema_ref":"Response Envelope"}],"tags":["Online API v3"],"security":["X-LINE-Authorization (HMAC-SHA256)"],"examples":[],
+ "missing":["Confirm request body fields (amount, currency) not in this source (JS-rendered sub-page).","Confirm response info fields not enumerated in this source."]}

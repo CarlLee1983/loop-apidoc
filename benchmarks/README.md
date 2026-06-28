@@ -66,6 +66,6 @@ PASS / FAIL 條件與「產物是否足夠支援後續開發」評分表見
 | --- | --- | --- |
 | `newebpay-mpg` | 台灣金流簽章 PDF | ✅ **PASS**(Phase 1);初跑揭 6 項 pipeline 缺陷 → 全修復後重跑 PASS;OpenAPI 3.1 valid、整合契約+範例齊全(見 notes.md) |
 | `apis-guru-baseline` | machine-readable OpenAPI | ✅ **PASS**(Phase 2);揭 1 項 gap(公開 API no-auth 誤判)→ 修 `_has_auth_marker` 後 PASS;7 GET、4 schemas、OpenAPI 3.1 valid |
-| `line-pay-online-v3` | REST payment HTML | ⬜ 未開始 |
+| `line-pay-online-v3` | REST payment HTML | ✅ **PASS**(Phase 3);HMAC-SHA256 簽章 case(非 CBC→正確 fail-closed gap);總覽頁來源(JS 子頁無法 curl,endpoint body 多 faithful missing);7 paths、31 error codes |
 | `tappay-backend` | backend payment HTML | ✅ **PASS**(Phase 3);defuddle 取源;揭 1 項 gap(payload_ref 未 sanitize)→ 修 `_refs` 後 PASS;4 paths+2 webhooks、x-api-key、整合契約齊全 |
-| `stripe-basic-rest` | 高品質 REST HTML | ⬜ 未開始 |
+| `stripe-basic-rest` | 高品質 REST(官方 OpenAPI 子集) | ✅ **PASS**(Phase 3);Bearer/Basic auth case;揭 1 項 gap(http scheme 缺失)→ 修 `_build_security_scheme` 後 PASS;PaymentIntents 6 op、form body、$ref 連結 |

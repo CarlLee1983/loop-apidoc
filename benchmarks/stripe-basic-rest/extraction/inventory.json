@@ -1,0 +1,220 @@
+{
+  "title": "Stripe API — Payment Intents",
+  "version": "2026-06-24.dahlia",
+  "overview": "Subset of the official Stripe OpenAPI spec (spec3.sdk.json) covering the core Payment Intents lifecycle: create, retrieve, update, confirm, cancel, capture. Stripe is a REST API; request bodies are application/x-www-form-urlencoded and successful responses return the PaymentIntent object. Authentication uses the secret API key via HTTP Bearer (or HTTP Basic with the key as username).",
+  "environments": [
+    {
+      "name": "Production",
+      "base_url": "https://api.stripe.com/",
+      "version": null,
+      "source": "servers"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "bearerAuth",
+      "type": "http",
+      "location": "header",
+      "details": "HTTP Bearer authentication: Authorization: Bearer <secret API key>.",
+      "source": "components.securitySchemes.bearerAuth"
+    },
+    {
+      "name": "basicAuth",
+      "type": "http",
+      "location": "header",
+      "details": "HTTP Basic authentication: the secret API key as the username, password empty.",
+      "source": "components.securitySchemes.basicAuth"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/v1/payment_intents",
+      "summary": "Create a PaymentIntent",
+      "source": "paths./v1/payment_intents.post"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/payment_intents/{intent}",
+      "summary": "Retrieve a PaymentIntent",
+      "source": "paths./v1/payment_intents/{intent}.get"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payment_intents/{intent}",
+      "summary": "Update a PaymentIntent",
+      "source": "paths./v1/payment_intents/{intent}.post"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payment_intents/{intent}/confirm",
+      "summary": "Confirm a PaymentIntent",
+      "source": "paths./v1/payment_intents/{intent}/confirm.post"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payment_intents/{intent}/cancel",
+      "summary": "Cancel a PaymentIntent",
+      "source": "paths./v1/payment_intents/{intent}/cancel.post"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payment_intents/{intent}/capture",
+      "summary": "Capture a PaymentIntent",
+      "source": "paths./v1/payment_intents/{intent}/capture.post"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "PaymentIntent",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier for the object."
+        },
+        {
+          "name": "object",
+          "type": "string",
+          "required": true,
+          "description": "String representing the object's type. Objects of the same type share the same value."
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "required": true,
+          "description": "Amount intended to be collected by this PaymentIntent. A positive integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal) (e.g., 100 cents to charge $1.00 "
+        },
+        {
+          "name": "amount_received",
+          "type": "integer",
+          "required": true,
+          "description": "Amount that this PaymentIntent collects."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true,
+          "description": "Status of this PaymentIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `requires_capture`, `canceled`, or `succeeded`. Read more about each PaymentIntent [status](https:"
+        },
+        {
+          "name": "client_secret",
+          "type": "string",
+          "required": true,
+          "description": "The client secret of this PaymentIntent. Used for client-side retrieval using a publishable key.   The client secret can be used to complete a payment from your frontend. It should not be stored, logged, or exposed to an"
+        },
+        {
+          "name": "customer",
+          "type": "string",
+          "required": true,
+          "description": "ID of the Customer this PaymentIntent belongs to, if one exists.  Payment methods attached to other Customers cannot be used with this PaymentIntent.  If [setup_future_usage](https://api.stripe.com#payment_intent_object-"
+        },
+        {
+          "name": "payment_method",
+          "type": "string",
+          "required": true,
+          "description": "ID of the payment method used in this PaymentIntent."
+        },
+        {
+          "name": "payment_method_types",
+          "type": "array",
+          "required": true,
+          "description": "The list of payment method types (e.g. card) that this PaymentIntent is allowed to use. A comprehensive list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_me"
+        },
+        {
+          "name": "capture_method",
+          "type": "string",
+          "required": true,
+          "description": "Controls when the funds will be captured from the customer's account."
+        },
+        {
+          "name": "confirmation_method",
+          "type": "string",
+          "required": true,
+          "description": "Describes whether we can confirm this PaymentIntent automatically, or if it requires customer action to confirm the payment."
+        },
+        {
+          "name": "created",
+          "type": "integer",
+          "required": true,
+          "description": "Time at which the object was created. Measured in seconds since the Unix epoch."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": true,
+          "description": "An arbitrary string attached to the object. Often useful for displaying to users."
+        },
+        {
+          "name": "latest_charge",
+          "type": "string",
+          "required": true,
+          "description": "ID of the latest [Charge object](https://docs.stripe.com/api/charges) created by this PaymentIntent. This property is `null` until PaymentIntent confirmation is attempted."
+        },
+        {
+          "name": "next_action",
+          "type": "object",
+          "required": true,
+          "description": "If present, this property tells you what actions you need to take in order for your customer to fulfill a payment using the provided source."
+        },
+        {
+          "name": "receipt_email",
+          "type": "string",
+          "required": true,
+          "description": "Email address that the receipt for the resulting payment will be sent to. If `receipt_email` is specified for a payment in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.co"
+        },
+        {
+          "name": "setup_future_usage",
+          "type": "string",
+          "required": true,
+          "description": "Indicates that you intend to make future payments with this PaymentIntent's payment method.  If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](/payments/save-duri"
+        },
+        {
+          "name": "metadata",
+          "type": "object",
+          "required": true,
+          "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Learn more about [storing in"
+        },
+        {
+          "name": "livemode",
+          "type": "boolean",
+          "required": true,
+          "description": "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."
+        }
+      ],
+      "enums": [],
+      "constraints": "A PaymentIntent guides you through the process of collecting a payment from your customer. We recommend that you create exactly one PaymentIntent for each order or customer session in your system. You can reference the P",
+      "source": "components.schemas.payment_intent"
+    }
+  ],
+  "errors": [],
+  "operational": [
+    {
+      "topic": "Authentication",
+      "detail": "Authenticate with your secret API key via HTTP Bearer (Authorization: Bearer sk_...) or HTTP Basic (key as username).",
+      "source": "components.securitySchemes"
+    },
+    {
+      "topic": "Request encoding",
+      "detail": "Request bodies are application/x-www-form-urlencoded; nested params use Stripe's bracket syntax (e.g. metadata[key]=value).",
+      "source": "requestBody content type"
+    },
+    {
+      "topic": "Idempotency / errors",
+      "detail": "Per-operation error responses are not enumerated inline in the spec subset; Stripe returns a standard error object with an HTTP 4xx status. Not captured here.",
+      "source": "(spec subset omits per-op error responses)"
+    }
+  ],
+  "missing": [
+    "Per-operation error responses / status codes are not captured in this subset (Stripe uses a global error object schema).",
+    "The PaymentIntent schema has ~45 properties; only ~20 representative core fields are captured here.",
+    "Nested request objects (automatic_payment_methods, payment_method_data, shipping, transfer_data, etc.) are captured by name/type only, not their full sub-schemas."
+  ]
+}
