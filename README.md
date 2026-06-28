@@ -107,7 +107,7 @@ uv run loop-apidoc assemble \
   [--url <URL> ...] [--json]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
 
 ---
 
@@ -117,20 +117,24 @@ uv run loop-apidoc assemble \
 
 ```text
 output/
-└── <run-id>/                    # run-id 格式:%Y%m%dT%H%M%SZ
-    ├── manifest.json            # 來源 manifest
-    ├── extraction/
-    │   ├── inventory.json       # API 盤點(agent 擷取產出)
-    │   └── endpoints/           # 逐 endpoint 擷取 JSON
+└── <run-id>/                       # run-id 格式:%Y%m%dT%H%M%SZ
+    ├── manifest.json               # 來源 manifest
+    ├── extraction/                 # 擷取稽核軌跡(非可重跑的原始輸入)
+    │   ├── queries.jsonl           # 每輪查詢紀錄
+    │   └── answers/                # 各查詢回應 <query_id>.txt
     ├── plan/
-    │   └── normalization-plan.json   # 機器可讀規格化計畫
-    ├── openapi.yaml             # OpenAPI 3.1
-    ├── api-guide.zh-TW.md       # 繁體中文串接文件
-    ├── provenance.json          # 每個輸出項目的來源追溯
+    │   └── normalization-plan.json      # 機器可讀規格化計畫
+    ├── openapi.yaml                # OpenAPI 3.1
+    ├── api-guide.zh-TW.md          # 繁體中文串接文件
+    ├── provenance.json             # 每個輸出項目的來源追溯
+    ├── integration-contract.json   # 簽章/加密整合契約(來源有提供時)
+    ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例(產出時)
     └── validation/
         ├── report.json
         └── report.md
 ```
+
+> 注意:agent 產出的擷取輸入(`inventory.json` + `endpoints/*.json` + 選填 `integration.json`)位於傳給 `--extraction` 的工作目錄,**不在** run-dir。run-dir 的 `extraction/` 只保留稽核軌跡(`queries.jsonl` + `answers/`)。
 
 只有同時存在於計畫、且具來源依據的內容,才會進入 OpenAPI 與 Markdown。OpenAPI 必填但來源缺失的欄位,會以最小合法占位填入,並標記 `x-loop-status: missing-source` 與 provenance 缺漏紀錄;若該缺漏影響可串接性,完整性驗證仍會失敗。
 

@@ -253,7 +253,7 @@ def _gaps(plan: NormalizationPlan) -> list[str]:
 def build_markdown(plan: NormalizationPlan, manifest: Manifest) -> str:
     sections = [
         _scope(plan, manifest),
-        ["完成串接前，請先確認已取得 Notebook 對應的來源並完成驗證設定。"],
+        ["完成串接前，請先確認已取得對應的來源文件並完成驗證設定。"],
         _environments(plan),
         _security(plan),
         _schemas(plan),
