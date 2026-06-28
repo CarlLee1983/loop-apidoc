@@ -1,0 +1,27 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "paypal-webhook-event-names.md (CHECKOUT.ORDER.APPROVED); paypal-webhooks-overview.md (delivery, retries)",
+  "parameters": [],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": true,
+    "description": "CHECKOUT.ORDER.APPROVED event notification payload (HTTPS POST body). The payload field schema is NOT documented on the provided pages."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Receiver must respond with HTTP 200 or other 2xx status code. If the endpoint does not respond successfully, PayPal reattempts delivery up to 25 times over the course of 3 days.",
+      "source": "paypal-webhooks-overview.md > Receiver response and retries"
+    }
+  ],
+  "tags": [
+    "Webhooks"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "The JSON payload fields of CHECKOUT.ORDER.APPROVED are not documented on the provided pages; the body is left unspecified rather than inferred."
+  ]
+}

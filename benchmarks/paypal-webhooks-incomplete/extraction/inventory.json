@@ -1,0 +1,39 @@
+{
+  "title": "PayPal Webhooks (incomplete-doc fail-closed sample)",
+  "version": null,
+  "overview": "PayPal delivers webhook events as HTTPS POSTs to listener URLs you subscribe (up to 10 per app). The provided official pages state the event names, the receiver-response/retry rules (respond 2xx; otherwise PayPal retries up to 25 times over 3 days), and that authenticity is verified via a signature — but they DEFER the signature headers/algorithm/steps to a separate Integration guide and do NOT document the JSON payload field schema. This sample is intentionally incomplete to exercise fail-closed behaviour: the missing base URL, signature details, and payload fields must be surfaced (missing / unverified), never fabricated.",
+  "environments": [],
+  "security_schemes": [],
+  "endpoints": [
+    {"method": "POST", "path": null, "summary": "PAYMENT.SALE.COMPLETED webhook. Delivered as an HTTPS POST to your subscribed listener URL when a sale completes.", "source": "paypal-webhook-event-names.md (PAYMENT.SALE.COMPLETED); paypal-webhooks-overview.md (delivery)"},
+    {"method": "POST", "path": null, "summary": "PAYMENT.CAPTURE.COMPLETED webhook. Delivered as an HTTPS POST to your subscribed listener URL when a payment capture completes.", "source": "paypal-webhook-event-names.md (PAYMENT.CAPTURE.COMPLETED); paypal-webhooks-overview.md (delivery)"},
+    {"method": "POST", "path": null, "summary": "CHECKOUT.ORDER.APPROVED webhook. Delivered as an HTTPS POST to your subscribed listener URL when a buyer approved a checkout order.", "source": "paypal-webhook-event-names.md (CHECKOUT.ORDER.APPROVED); paypal-webhooks-overview.md (delivery)"}
+  ],
+  "schemas": [
+    {
+      "name": "WebhookEvent",
+      "fields": [
+        {"name": "id", "type": "string", "required": false, "description": "The ID of the webhook event notification."},
+        {"name": "event_type", "type": "string", "required": false, "description": "The event type (e.g. PAYMENT.SALE.COMPLETED)."},
+        {"name": "resource_type", "type": "string", "required": false, "description": "The name of the resource related to the webhook notification event."},
+        {"name": "summary", "type": "string", "required": false, "description": "A summary description for the event notification."},
+        {"name": "resource", "type": "object", "required": false, "description": "The resource that triggered the webhook event notification."},
+        {"name": "create_time", "type": "string", "required": false, "description": "The date and time when the webhook event notification was created."}
+      ],
+      "enums": [],
+      "source": "PayPal Webhooks REST API reference — webhook-event object (payload field schema NOT present in the provided overview/event-name pages)"
+    }
+  ],
+  "errors": [],
+  "operational": [
+    {"topic": "Delivery transport", "detail": "Webhooks are HTTPS POSTs from PayPal to listener URLs you subscribe (up to 10 per app); messages are posted to every subscribed listener URL.", "source": "paypal-webhooks-overview.md > Delivery"},
+    {"topic": "Webhook security (signature verification)", "detail": "Authenticity is verified either by computing the CRC32 of the message and verifying its signature, or by posting the message + stored webhook ID + header information back to PayPal's verify-signature endpoint. The exact request headers, signing algorithm, and verification steps are NOT on the provided pages — deferred to the Integration guide.", "source": "paypal-webhooks-overview.md > Verifying authenticity"},
+    {"topic": "Receiver response and retries", "detail": "Respond with HTTP 200 or other 2xx. If the endpoint does not respond successfully, PayPal reattempts delivery up to 25 times over the course of 3 days.", "source": "paypal-webhooks-overview.md > Receiver response and retries"}
+  ],
+  "missing": [
+    "No base URL / host for the webhooks management API is stated on the provided pages; OpenAPI servers are intentionally empty (delivery is to a subscriber-configured listener URL).",
+    "The signature verification request headers, the signing algorithm, and the verification steps are deferred to the PayPal Integration guide (not provided) — left unspecified rather than inferred.",
+    "The full JSON payload field schema for each event is NOT documented on the provided pages (the event-names page explicitly says developers must consult separate API reference docs).",
+    "The webhook-subscription management endpoints (create/list/delete subscriptions) are alluded to ('up to 10 URLs may be subscribed') but no path, method, request, or response is given on these pages."
+  ]
+}

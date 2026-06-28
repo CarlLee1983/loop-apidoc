@@ -1,0 +1,21 @@
+{
+  "_note": "文件不完整 fail-closed case(PayPal webhooks 官方頁,真實不完整:無 base URL、簽章細節延後到 Integration guide、payload 欄位未文件化)。這是 EXPECTED_FAIL:當 extraction 越界放入無法接地的 payload schema 時,驗證器以 SOURCE_UNVERIFIED 擋下而非臆造。examples 設 false(來源無範例 body,webhook payload 未文件化)。",
+  "must_have": {
+    "base_urls": 0,
+    "endpoints_min": 0,
+    "webhooks_min": 3,
+    "schemas_min": 1,
+    "error_codes_min": 0,
+    "security_schemes_min": 0,
+    "examples": false,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": false,
+    "callbacks_required": true,
+    "field_conditions_min": 0,
+    "test_cases_min": 0
+  },
+  "critical_operations": []
+}

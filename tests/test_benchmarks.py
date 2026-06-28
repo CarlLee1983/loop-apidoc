@@ -131,4 +131,4 @@ def test_benchmark_harness_discovers_cases() -> None:
     names = {c.name for c in _cases()}
     assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
             "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
-            "github-webhooks"} <= names
+            "github-webhooks", "paypal-webhooks-incomplete"} <= names

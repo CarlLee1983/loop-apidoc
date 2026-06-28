@@ -1,0 +1,28 @@
+{
+  "_note": "EXPECTED_FAIL — 文件不完整 fail-closed 驗證。真實官方 PayPal webhook 頁刻意取其不完整部分(無 base URL、簽章細節延後、payload 欄位未文件化)。當 extraction 試圖納入無法接地的 payload schema(WebhookEvent,source 指向未提供的 REST API reference)時,pipeline 正確以 SOURCE_UNVERIFIED 失敗,而非臆造欄位。這正是『fail-closed,不硬補』。",
+  "target_status": "FAIL",
+  "current_status": "FAIL",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": false
+  },
+  "current_issue_classes": { "SOURCE_UNVERIFIED.error": 2, "REQUIRED_INFO_MISSING.warning": 3 },
+  "acceptable_warnings": "3 webhook 各一筆『缺少 request/response 範例』:來源未附 payload 範例(忠實缺漏)。",
+  "fail_closed_demonstration": {
+    "kind": "expected-fail (not a bug)",
+    "errors": [
+      {"code": "SOURCE_UNVERIFIED", "location": "components.schemas.WebhookEvent",
+       "why": "payload schema 的 source 指向未提供的 PayPal REST API reference → 無 supported 依據 → 被 no-speculation 檢查擋下,不臆造欄位。"},
+      {"code": "SOURCE_UNVERIFIED", "location": "unverified.07",
+       "why": "同一 schema 在 completeness 的 unverified_items 也被記錄(同根因的另一視角)。"}
+    ],
+    "correctly_not_fabricated": [
+      "base URL 缺失 → environments 空 + missing,未補 REST 慣例 host。",
+      "簽章 header/演算法/步驟延後到 Integration guide → integration.crypto.algorithm=null + missing,未臆造 PAYPAL-TRANSMISSION-* 細節。",
+      "payload 欄位未文件化 → 各 webhook body 空、callbacks.payload_ref=null,未硬補。",
+      "webhook 管理 API(訂閱 URL)→ 僅記 missing,未發明 path/method/schema。"
+    ]
+  }
+}

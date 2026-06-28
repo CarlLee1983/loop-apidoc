@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "Webhook signature verification",
+      "purpose": "signature",
+      "algorithm": null,
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": null,
+        "iv": null,
+        "note": "The overview states authenticity is verified either by computing the CRC32 of the message and verifying its signature, or by posting the message + stored webhook ID + header information back to PayPal's verify-signature endpoint. The exact request headers, signing algorithm, and verification steps are NOT on the provided pages — deferred to the Integration guide. Left unspecified rather than inferred."
+      },
+      "payload_assembly": [],
+      "verify": {
+        "field": null,
+        "method": null,
+        "desc": "Mechanism named (CRC32 + signature, or server-side verify-signature endpoint) but headers/algorithm/steps not provided in these sources."
+      },
+      "source": "paypal-webhooks-overview.md > Verifying authenticity"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "PAYMENT.SALE.COMPLETED",
+      "trigger": "A sale completes.",
+      "transport": "HTTPS POST to each subscribed listener URL; Content-Type application/json.",
+      "payload_ref": null,
+      "verification": "Signature verification per the overview (CRC32 + signature, or PayPal verify-signature endpoint); exact headers/algorithm deferred to the Integration guide (not provided).",
+      "expected_response": "HTTP 200 or other 2xx. If not acknowledged successfully, PayPal reattempts delivery up to 25 times over the course of 3 days.",
+      "source": "paypal-webhook-event-names.md (PAYMENT.SALE.COMPLETED); paypal-webhooks-overview.md (delivery, signature, retries)"
+    },
+    {
+      "name": "PAYMENT.CAPTURE.COMPLETED",
+      "trigger": "A payment capture completes.",
+      "transport": "HTTPS POST to each subscribed listener URL; Content-Type application/json.",
+      "payload_ref": null,
+      "verification": "Signature verification per the overview; exact headers/algorithm deferred to the Integration guide (not provided).",
+      "expected_response": "HTTP 200 or other 2xx. Otherwise PayPal reattempts delivery up to 25 times over 3 days.",
+      "source": "paypal-webhook-event-names.md (PAYMENT.CAPTURE.COMPLETED); paypal-webhooks-overview.md (delivery, retries)"
+    },
+    {
+      "name": "CHECKOUT.ORDER.APPROVED",
+      "trigger": "A buyer approved a checkout order.",
+      "transport": "HTTPS POST to each subscribed listener URL; Content-Type application/json.",
+      "payload_ref": null,
+      "verification": "Signature verification per the overview; exact headers/algorithm deferred to the Integration guide (not provided).",
+      "expected_response": "HTTP 200 or other 2xx. Otherwise PayPal reattempts delivery up to 25 times over 3 days.",
+      "source": "paypal-webhook-event-names.md (CHECKOUT.ORDER.APPROVED); paypal-webhooks-overview.md (delivery, retries)"
+    }
+  ],
+  "field_conditions": [],
+  "test_cases": [],
+  "missing": [
+    {"area": "crypto.algorithm",
+     "detail": "The signing algorithm, the request headers (e.g. transmission id/time/sig, cert url, auth algo), and the verification steps are deferred to the PayPal Integration guide, which is not among the provided sources. Left unspecified rather than inferred."},
+    {"area": "callbacks.payload",
+     "detail": "The JSON payload field schema for each event is not documented on the provided pages; payload_ref is left null rather than pointing at an invented schema."},
+    {"area": "management_api",
+     "detail": "The webhook-subscription management endpoints are alluded to (up to 10 listener URLs per app) but no base URL, path, method, request, or response is provided."}
+  ]
+}
