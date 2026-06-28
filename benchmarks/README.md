@@ -58,7 +58,20 @@ uv run loop-apidoc validate --output <run_dir>
 
 PASS / FAIL 條件與「產物是否足夠支援後續開發」評分表見
 [`docs/BENCHMARK_VALIDATION_PLAN.md`](../docs/BENCHMARK_VALIDATION_PLAN.md)。
-第一輪先手動跑通 1–2 個 case(人眼驗收),再決定是否建自動評分 harness。
+
+### 自動回歸 harness
+
+```bash
+uv run pytest tests/test_benchmarks.py -v
+```
+
+對每個 case 用**已 commit 的 `extraction/`** 重跑確定性的 assemble→validate,
+並比對 `expected/{validation.expect.json,minimum.json}`:斷言 PASS/FAIL、error 數、
+OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critical_operations
+存在、provenance/examples/integration-contract 齊備。
+
+> **需本機 `sources/`**:驗證器需 manifest 含被引用來源才會把項目標為 verified;
+> `sources/` 為操作者提供且 gitignore(部分有版權),故缺 `sources/` 的 case 會自動 **skip**。
 
 ## 進度
 
