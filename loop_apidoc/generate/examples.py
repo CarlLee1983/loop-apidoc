@@ -126,6 +126,103 @@ def _is_cbc(scheme: CryptoScheme) -> bool:
     return "CBC" in algo
 
 
+_PAYLOAD_NOTE = "簽章 payload：來源指定下列欄位進入簽章（確切串接/排序為示意，請依 payload_assembly 核對 source）"
+_PAYLOAD_GAP = "<payload：來源未列出簽章欄位，請依 payload_assembly 組裝>"
+
+
+def _func_name(scheme: CryptoScheme, idx: int, total: int) -> str:
+    """Signature function name; unique per scheme only when more than one exists.
+    Mirrors the naming used by _ts_signature / _py_signature."""
+    if total > 1:
+        return f"sign_{_snake(scheme.name or str(idx))}"
+    return "sign"
+
+
+def _wire_target(scheme: CryptoScheme, shape: dict) -> tuple[str, str] | None:
+    """If this runnable scheme's signature value should be written back into the
+    request, return (location, field_name); else None.
+
+    location is 'body' or 'header'. Wiring happens only when the scheme is runnable
+    (explicit + CBC) AND verify.field names a body field or header present in this
+    request — otherwise keep comment-only / gap behavior (no fabrication)."""
+    if not (_signature_explicit(scheme) and _is_cbc(scheme)):
+        return None
+    target = scheme.verify.field if scheme.verify else None
+    if not target:
+        return None
+    if target in [n for n, _k, _v in shape["body"]]:
+        return ("body", target)
+    if target in [n for n, _k, _v in shape["header"]]:
+        return ("header", target)
+    return None
+
+
+def _payload_field_names(scheme: CryptoScheme, shape: dict, target: str) -> list[str]:
+    """Body field names the source says enter the signature payload: union of
+    payload_assembly[].fields ∩ this request's body fields, excluding the target."""
+    body_names = [n for n, _k, _v in shape["body"]]
+    names: list[str] = []
+    for step in scheme.payload_assembly:
+        for f in step.fields:
+            if f in body_names and f != target and f not in names:
+                names.append(f)
+    return names
+
+
+def _ts_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
+    lines: list[str] = []
+    total = len(schemes)
+    for idx, s in enumerate(schemes):
+        wire = _wire_target(s, shape)
+        if wire is None:
+            continue
+        loc, target = wire
+        obj = "body" if loc == "body" else "headers"
+        # Payload field values are always sourced from the body object;
+        # `obj` is only used for the write-back assignment target.
+        read_obj = "body"
+        fn = _func_name(s, idx, total)
+        pvar = "payload" if total == 1 else f"payload_{_snake(s.name or str(idx))}"
+        fields = _payload_field_names(s, shape, target)
+        lines.append(f"// {_PAYLOAD_NOTE}")
+        if fields:
+            arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
+            lines.append(
+                f"const {pvar} = [{arr}].map((k) => `${{k}}=${{({read_obj} as any)[k]}}`).join('&')"
+            )
+        else:
+            lines.append(f"const {pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
+        lines.append(
+            f";({obj} as any)[{json.dumps(target, ensure_ascii=False)}] = {fn}({pvar})"
+        )
+    return lines
+
+
+def _py_wiring(shape: dict, schemes: list[CryptoScheme]) -> list[str]:
+    lines: list[str] = []
+    total = len(schemes)
+    for idx, s in enumerate(schemes):
+        wire = _wire_target(s, shape)
+        if wire is None:
+            continue
+        loc, target = wire
+        obj = "payload" if loc == "body" else "headers"
+        # Payload field values are always sourced from the body dict (`payload`);
+        # `obj` is only used for the write-back assignment target.
+        read_obj = "payload"
+        fn = _func_name(s, idx, total)
+        pvar = "sig_payload" if total == 1 else f"sig_payload_{_snake(s.name or str(idx))}"
+        fields = _payload_field_names(s, shape, target)
+        lines.append(f"# {_PAYLOAD_NOTE}")
+        if fields:
+            arr = ", ".join(json.dumps(f, ensure_ascii=False) for f in fields)
+            lines.append(f'{pvar} = "&".join(f"{{k}}={{{read_obj}[k]}}" for k in [{arr}])')
+        else:
+            lines.append(f"{pvar} = {json.dumps(_PAYLOAD_GAP, ensure_ascii=False)}")
+        lines.append(f"{obj}[{json.dumps(target, ensure_ascii=False)}] = {fn}({pvar})")
+    return lines
+
+
 def _request_signing_schemes(plan: NormalizationPlan) -> list[CryptoScheme]:
     contract = plan.integration
     if contract is None:
@@ -155,6 +252,9 @@ def _render_curl(shape: dict, schemes: list[CryptoScheme]) -> str:
     sig = _signature_comment_steps(schemes)
     if sig:
         parts += [sig, ""]
+    targets = [w[1] for s in schemes if (w := _wire_target(s, shape))]
+    if targets:
+        parts += [_comment("簽章值請填回欄位：" + ", ".join(targets)), ""]
     url = _interpolate_path(shape["url"], shape["path"]) + _query_suffix(shape["query"])
     # Build line-continuation segments without trailing backslashes, then join —
     # this structurally avoids any dangling ` \` on the final line.
@@ -274,6 +374,7 @@ def _render_ts(shape: dict, schemes: list[CryptoScheme]) -> str:
         )
         lines.append("const body = {\n" + body_lines + "\n}")
 
+    lines += _ts_wiring(shape, schemes)
     target = "url + '?' + params" if shape["query"] else "url"
     opts = [f"  method: '{shape['method']}',"]
     if header_entries:
@@ -379,6 +480,7 @@ def _render_py(shape: dict, schemes: list[CryptoScheme]) -> str:
     if shape["body"]:
         lines.append(_py_dict("payload", shape["body"]))
         call_args.append("json=payload" if _is_json(shape["content_type"]) else "data=payload")
+    lines += _py_wiring(shape, schemes)
     lines.append(
         f"resp = httpx.request({json.dumps(shape['method'])}, " + ", ".join(call_args) + ")"
     )

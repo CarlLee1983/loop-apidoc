@@ -6,7 +6,9 @@ from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.plan.models import (
     CryptoScheme,
     ContractTestCase,
+    CryptoVerify,
     IntegrationContract,
+    KeySource,
     NormalizationPlan,
     OperationalEntry,
     PlanItemStatus,
@@ -112,3 +114,90 @@ def test_unverified_crypto_source_is_source_unverified():
     plan = plan.model_copy(update={"integration": contract})
     codes = [i.code for i in check_integration(plan, _result({}))]
     assert IssueCode.SOURCE_UNVERIFIED in codes
+
+
+# --- 範例簽章接回驗證 ---
+
+
+def _runnable_crypto(field):
+    return CryptoScheme(
+        status=PlanItemStatus.SUPPORTED,
+        citations=[SourceCitation(query_id="i", answer_path="i")],
+        name="CheckValue", purpose="request",
+        algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "組字串", "fields": ["Amount"]}],
+        verify=CryptoVerify(field=field) if field else None,
+    )
+
+
+def _result_with_examples(examples: dict) -> GenerateResult:
+    return GenerateResult(
+        openapi={}, markdown="",
+        provenance=ProvenanceDocument(notebook_url="x"),
+        examples=examples,
+    )
+
+
+def test_runnable_without_verify_field_is_required_info_missing():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field=None)]),
+    )
+    codes = [i.code for i in check_integration(plan, _result_with_examples({}))]
+    assert IssueCode.REQUIRED_INFO_MISSING in codes
+
+
+def test_example_uses_target_but_not_wired_is_output_mismatch():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    # 範例含目標欄位作為 body key,但沒有 = sign(...) 接回 → 生成器漏接
+    examples = {"examples/Pay/request.py": 'payload = {\n    "CheckMacValue": "<x>",\n}\n'}
+    issues = check_integration(plan, _result_with_examples(examples))
+    mism = [i for i in issues if i.code is IssueCode.OUTPUT_MISMATCH]
+    assert mism and mism[0].location == "examples/Pay/request.py"
+
+
+def test_example_properly_wired_is_clean():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    examples = {
+        "examples/Pay/request.py": (
+            'payload = {\n    "CheckMacValue": "<x>",\n}\n'
+            'sig_payload = "&".join(...)\n'
+            'payload["CheckMacValue"] = sign(sig_payload)\n'
+        )
+    }
+    codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
+def test_multi_scheme_sign_name_wiring_is_clean():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    examples = {
+        "examples/Pay/request.py": (
+            'payload = {\n    "CheckMacValue": "<x>",\n}\n'
+            'sig_payload = "&".join(...)\n'
+            'payload["CheckMacValue"] = sign_checkvalue(sig_payload)\n'
+        )
+    }
+    codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
+def test_curl_not_checked_for_wiring():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    # 只有 curl 用到欄位且不接回 → 不應報 OUTPUT_MISMATCH
+    examples = {"examples/Pay/request.sh": "curl ... CheckMacValue=<x>"}
+    codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes

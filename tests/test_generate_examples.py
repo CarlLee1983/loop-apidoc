@@ -5,7 +5,7 @@ from loop_apidoc.generate.examples import (
     _request_signing_schemes,
     _signature_explicit,
 )
-from loop_apidoc.plan.models import CryptoScheme, IntegrationContract, NormalizationPlan
+from loop_apidoc.plan.models import CryptoScheme, CryptoVerify, IntegrationContract, KeySource, NormalizationPlan
 
 
 def test_placeholder_is_snake_angle_bracketed():
@@ -663,6 +663,133 @@ def test_py_signature_gcm_only_omits_pycryptodome_import():
     assert "from Crypto.Cipher import AES" not in sig
     assert "import hashlib" not in sig
     assert "NotImplementedError" in sig
+
+
+# --- 簽章接回 request 欄位 ---
+
+
+def _runnable_scheme(target="CheckMacValue", fields=("MerchantID", "Amount")):
+    return CryptoScheme(
+        status="supported", name="CheckValue", purpose="request",
+        algorithm="AES-256-CBC", mode="CBC",
+        key_source=KeySource(key="HashKey", iv="HashIV"),
+        payload_assembly=[{"step": 1, "desc": "排序欄位後加密", "fields": list(fields)}],
+        verify=CryptoVerify(field=target, method="AES", desc="比對簽章"),
+    )
+
+
+def _sig_shape():
+    return _shape(
+        body=[
+            ("MerchantID", "placeholder", "<merchant_id>"),
+            ("Amount", "placeholder", "<amount>"),
+            ("CheckMacValue", "placeholder", "<check_mac_value>"),
+        ],
+        content_type="application/x-www-form-urlencoded",
+    )
+
+
+def test_wire_target_resolves_body_field():
+    from loop_apidoc.generate.examples import _wire_target
+    assert _wire_target(_runnable_scheme(), _sig_shape()) == ("body", "CheckMacValue")
+
+
+def test_wire_target_none_when_field_absent_in_request():
+    from loop_apidoc.generate.examples import _wire_target
+    assert _wire_target(_runnable_scheme(target="NotThere"), _sig_shape()) is None
+
+
+def test_wire_target_none_when_no_verify_field():
+    from loop_apidoc.generate.examples import _wire_target
+    s = _runnable_scheme()
+    s = s.model_copy(update={"verify": None})
+    assert _wire_target(s, _sig_shape()) is None
+
+
+def test_wire_target_none_when_not_runnable():
+    from loop_apidoc.generate.examples import _wire_target
+    s = CryptoScheme(status="supported", name="x", verify=CryptoVerify(field="CheckMacValue"))
+    assert _wire_target(s, _sig_shape()) is None
+
+
+def test_payload_field_names_intersects_body_and_excludes_target():
+    from loop_apidoc.generate.examples import _payload_field_names
+    s = _runnable_scheme(fields=("MerchantID", "Amount", "CheckMacValue", "Ghost"))
+    names = _payload_field_names(s, _sig_shape(), "CheckMacValue")
+    assert names == ["MerchantID", "Amount"]  # 交集 body、去掉 target 與不存在欄位
+
+
+def test_render_ts_wires_signature_into_body():
+    from loop_apidoc.generate.examples import _render_ts
+    out = _render_ts(_sig_shape(), [_runnable_scheme()])
+    assert "createCipheriv" in out
+    assert "請依 payload_assembly 核對" in out
+    assert "[\"MerchantID\", \"Amount\"]" in out
+    assert "[\"CheckMacValue\"] = sign(payload)" in out
+
+
+def test_render_py_wires_signature_into_body():
+    from loop_apidoc.generate.examples import _render_py
+    out = _render_py(_sig_shape(), [_runnable_scheme()])
+    assert "def sign" in out
+    assert "sig_payload = " in out
+    assert 'payload["CheckMacValue"] = sign(sig_payload)' in out
+
+
+def test_render_py_wiring_empty_fields_uses_placeholder_but_still_wires():
+    from loop_apidoc.generate.examples import _render_py
+    s = _runnable_scheme(fields=())
+    out = _render_py(_sig_shape(), [s])
+    assert "來源未列出簽章欄位" in out
+    assert 'payload["CheckMacValue"] = sign(sig_payload)' in out
+
+
+def test_render_curl_notes_target_field_but_does_not_wire():
+    from loop_apidoc.generate.examples import _render_curl
+    out = _render_curl(_sig_shape(), [_runnable_scheme()])
+    assert "簽章值請填回欄位：CheckMacValue" in out
+    assert "= sign(" not in out  # curl 不接回
+
+
+def test_render_ts_wires_into_header_when_target_is_header():
+    from loop_apidoc.generate.examples import _render_ts
+    shape = _shape(
+        header=[("X-Signature", "placeholder", "<x_signature>")],
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/json",
+    )
+    s = _runnable_scheme(target="X-Signature", fields=("Amount",))
+    out = _render_ts(shape, [s])
+    # assignment target must be headers
+    assert "(headers as any)[\"X-Signature\"] = sign(payload)" in out
+    # payload-construction line must read field values from body, not from headers
+    assert "(body as any)[k]" in out, "payload fields must be read from body, not from headers"
+    assert "(headers as any)[k]" not in out, "payload construction must NOT read from headers"
+
+
+def test_render_py_wires_into_header_when_target_is_header():
+    from loop_apidoc.generate.examples import _render_py
+    shape = _shape(
+        header=[("X-Signature", "placeholder", "<x_signature>")],
+        body=[("Amount", "placeholder", "<amount>")],
+        content_type="application/json",
+    )
+    s = _runnable_scheme(target="X-Signature", fields=("Amount",))
+    out = _render_py(shape, [s])
+    # assignment target must be headers
+    assert 'headers["X-Signature"] = sign(sig_payload)' in out
+    # payload-construction line must read from payload (body dict), not from headers
+    assert "payload[k]" in out, "payload fields must be read from payload (body dict), not from headers"
+    assert "headers[k]" not in out, "payload construction must NOT read from headers"
+
+
+def test_no_wiring_when_scheme_has_no_verify_field():
+    # 既有行為回歸:無 verify.field 的可跑 scheme 不接回(只渲染 sign 函式)
+    from loop_apidoc.generate.examples import _render_py
+    s = _runnable_scheme().model_copy(update={"verify": None})
+    out = _render_py(_sig_shape(), [s])
+    assert "def sign" in out
+    assert "= sign(sig_payload)" not in out
 
 
 def test_render_py_cbc_via_algorithm_string_is_runnable():

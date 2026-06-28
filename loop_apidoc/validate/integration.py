@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+import re
+
+from loop_apidoc.generate.examples import (
+    _is_cbc,
+    _request_signing_schemes,
+    _signature_explicit,
+)
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan, PlanItemStatus
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
@@ -113,6 +120,45 @@ def _signal_gap(plan: NormalizationPlan, contract: IntegrationContract | None) -
     return []
 
 
+def _signature_wiring(plan: NormalizationPlan, result: GenerateResult) -> list[Issue]:
+    """情境 A：可跑簽章+有目標欄位，但 ts/py 範例用到該欄位卻沒接回 → OUTPUT_MISMATCH。
+    情境 B：可跑簽章但來源未指明 verify.field → REQUIRED_INFO_MISSING。curl 不檢查。"""
+    issues: list[Issue] = []
+    examples = result.examples or {}
+    for idx, s in enumerate(_request_signing_schemes(plan)):
+        if not (_signature_explicit(s) and _is_cbc(s)):
+            continue
+        label = s.name or str(idx)
+        target = s.verify.field if s.verify else None
+        if not target:
+            issues.append(
+                _issue(
+                    IssueCode.REQUIRED_INFO_MISSING,
+                    f"integration.crypto.{label}",
+                    "可生成可跑簽章但來源未指明簽章值的目標欄位(verify.field)",
+                    "重讀來源補上 verify.field 後重跑 assemble",
+                )
+            )
+            continue
+        wired = re.compile(r"\[['\"]" + re.escape(target) + r"['\"]\]\s*=\s*sign\w*\(")
+        for path, content in examples.items():
+            if not (path.endswith("request.ts") or path.endswith("request.py")):
+                continue
+            if target not in content:
+                continue
+            if not wired.search(content):
+                issues.append(
+                    _issue(
+                        IssueCode.OUTPUT_MISMATCH,
+                        path,
+                        f"範例用到欄位「{target}」但未接回簽章值(缺 {target}=sign(...))",
+                        "重新產生範例使其將 sign() 結果接回該欄位",
+                        fixable=True,
+                    )
+                )
+    return issues
+
+
 def check_integration(plan: NormalizationPlan, result: GenerateResult) -> list[Issue]:
     """Validate the integration contract: no-speculation + ref resolution + signal-word gap."""
     contract = plan.integration
@@ -121,4 +167,5 @@ def check_integration(plan: NormalizationPlan, result: GenerateResult) -> list[I
         issues += _uncited(contract)
         issues += _refs(contract, result.openapi)
     issues += _signal_gap(plan, contract)
+    issues += _signature_wiring(plan, result)
     return issues

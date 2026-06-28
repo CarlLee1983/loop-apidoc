@@ -89,7 +89,7 @@ def assemble(
     ),
     extraction: Path = typer.Option(
         ..., "--extraction",
-        help="agent 產出的擷取目錄(inventory.json + endpoints/*.json)",
+        help="agent 產出的擷取目錄(inventory.json + endpoints/*.json,選用 integration.json)",
         exists=True, file_okay=False, dir_okay=True, readable=True,
     ),
     output: Path = typer.Option(
