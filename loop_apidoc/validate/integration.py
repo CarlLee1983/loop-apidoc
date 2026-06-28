@@ -140,7 +140,7 @@ def _signature_wiring(plan: NormalizationPlan, result: GenerateResult) -> list[I
                 )
             )
             continue
-        wired = re.compile(r"\[['\"]" + re.escape(target) + r"['\"]\]\s*=\s*sign")
+        wired = re.compile(r"\[['\"]" + re.escape(target) + r"['\"]\]\s*=\s*sign\w*\(")
         for path, content in examples.items():
             if not (path.endswith("request.ts") or path.endswith("request.py")):
                 continue

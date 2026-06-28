@@ -176,6 +176,22 @@ def test_example_properly_wired_is_clean():
     assert IssueCode.OUTPUT_MISMATCH not in codes
 
 
+def test_multi_scheme_sign_name_wiring_is_clean():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[_runnable_crypto(field="CheckMacValue")]),
+    )
+    examples = {
+        "examples/Pay/request.py": (
+            'payload = {\n    "CheckMacValue": "<x>",\n}\n'
+            'sig_payload = "&".join(...)\n'
+            'payload["CheckMacValue"] = sign_checkvalue(sig_payload)\n'
+        )
+    }
+    codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
 def test_curl_not_checked_for_wiring():
     plan = NormalizationPlan(
         notebook_url="x",
