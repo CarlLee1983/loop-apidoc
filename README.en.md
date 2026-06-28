@@ -107,7 +107,7 @@ uv run loop-apidoc assemble \
   [--url <URL> ...] [--json]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
 
 ---
 
@@ -117,20 +117,24 @@ Each execution uses an isolated run directory:
 
 ```text
 output/
-└── <run-id>/                    # run-id format: %Y%m%dT%H%M%SZ
-    ├── manifest.json            # source manifest
-    ├── extraction/
-    │   ├── inventory.json       # API inventory (agent-produced)
-    │   └── endpoints/           # per-endpoint extraction JSON
+└── <run-id>/                       # run-id format: %Y%m%dT%H%M%SZ
+    ├── manifest.json               # source manifest
+    ├── extraction/                 # extraction audit trail (not re-runnable input)
+    │   ├── queries.jsonl           # per-round query records
+    │   └── answers/                # per-query responses <query_id>.txt
     ├── plan/
-    │   └── normalization-plan.json   # machine-readable normalization plan
-    ├── openapi.yaml             # OpenAPI 3.1
-    ├── api-guide.zh-TW.md       # Traditional Chinese integration guide
-    ├── provenance.json          # per-output source traceability
+    │   └── normalization-plan.json      # machine-readable normalization plan
+    ├── openapi.yaml                # OpenAPI 3.1
+    ├── api-guide.zh-TW.md          # Traditional Chinese integration guide
+    ├── provenance.json             # per-output source traceability
+    ├── integration-contract.json   # signing/crypto integration contract (when sources provide one)
+    ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
     └── validation/
         ├── report.json
         └── report.md
 ```
+
+> Note: the agent-produced extraction input (`inventory.json` + `endpoints/*.json` + optional `integration.json`) lives in the working directory passed to `--extraction`, **not** in the run-dir. The run-dir `extraction/` only holds the audit trail (`queries.jsonl` + `answers/`).
 
 Only content that is both present in the plan and source-grounded reaches the OpenAPI and Markdown outputs. OpenAPI fields that are required but missing from sources are filled with a minimal legal placeholder, marked `x-loop-status: missing-source` plus a provenance gap record; if the gap affects integrability, completeness validation still fails.
 
