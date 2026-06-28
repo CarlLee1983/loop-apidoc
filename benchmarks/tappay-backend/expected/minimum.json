@@ -1,0 +1,26 @@
+{
+  "_note": "Backend payment REST API(x-api-key 無簽章 + callbacks);達成值保守下限。",
+  "must_have": {
+    "base_urls": 2,
+    "endpoints_min": 4,
+    "webhooks_min": 2,
+    "schemas_min": 8,
+    "error_codes_min": 1,
+    "security_schemes_min": 1,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": false,
+    "callbacks_required": true,
+    "field_conditions_min": 3,
+    "test_cases_min": 1
+  },
+  "critical_operations": [
+    "paths./tpc/payment/pay-by-prime.post",
+    "paths./tpc/payment/pay-by-token.post",
+    "paths./tpc/transaction/refund.post"
+  ],
+  "critical_security_schemes": ["x-api-key"]
+}

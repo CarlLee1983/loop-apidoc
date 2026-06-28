@@ -216,3 +216,32 @@ def test_target_only_in_comment_is_not_output_mismatch():
     )}
     codes = [i.code for i in check_integration(plan, _result_with_examples(examples))]
     assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
+def test_callback_payload_ref_resolves_via_sanitized_schema_key():
+    # payload_ref names the inventory schema ("Backend Notify Body"); the OpenAPI
+    # component key is sanitized ("Backend_Notify_Body"). The check must resolve
+    # via the same sanitization the generator uses, not a raw-name compare.
+    from loop_apidoc.plan.models import Callback
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(
+            callbacks=[Callback(**_cited(name="Backend Notify", payload_ref="schemas.Backend Notify Body"))]
+        ),
+    )
+    openapi = {"components": {"schemas": {"Backend_Notify_Body": {}}}, "paths": {}}
+    codes = [i.code for i in check_integration(plan, _result(openapi))]
+    assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
+def test_callback_payload_ref_truly_missing_is_output_mismatch():
+    from loop_apidoc.plan.models import Callback
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(
+            callbacks=[Callback(**_cited(name="cb", payload_ref="schemas.Ghost Schema"))]
+        ),
+    )
+    openapi = {"components": {"schemas": {"Backend_Notify_Body": {}}}, "paths": {}}
+    codes = [i.code for i in check_integration(plan, _result(openapi))]
+    assert IssueCode.OUTPUT_MISMATCH in codes

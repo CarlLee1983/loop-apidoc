@@ -1,0 +1,298 @@
+{
+  "title": "APIs.guru",
+  "version": "2.2.0",
+  "overview": "Wikipedia for Web APIs. Repository of API definitions in OpenAPI format. **Warning**: If you want to be notified about changes in advance please join our [Slack channel](https://join.slack.com/t/mermade/shared_invite/zt-g78g7xir-MLE_CTCcXCdfJfG3CJe9qA). Client sample: [[Demo]](https://apis.guru/simple-ui) [[Repo]](https://github.com/APIs-guru/simple-ui)",
+  "environments": [
+    {
+      "name": "default",
+      "base_url": "https://api.apis.guru/v2",
+      "version": null,
+      "source": "servers"
+    }
+  ],
+  "security_schemes": [],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/list.json",
+      "summary": "List all APIs",
+      "source": "paths./list.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/metrics.json",
+      "summary": "Get basic metrics",
+      "source": "paths./metrics.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/providers.json",
+      "summary": "List all providers",
+      "source": "paths./providers.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/specs/{provider}/{api}.json",
+      "summary": "Retrieve one version of a particular API",
+      "source": "paths./specs/{provider}/{api}.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/specs/{provider}/{service}/{api}.json",
+      "summary": "Retrieve one version of a particular API with a serviceName.",
+      "source": "paths./specs/{provider}/{service}/{api}.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/{provider}.json",
+      "summary": "List all APIs for a particular provider",
+      "source": "paths./{provider}.json.get"
+    },
+    {
+      "method": "GET",
+      "path": "/{provider}/services.json",
+      "summary": "List all serviceNames for a particular provider",
+      "source": "paths./{provider}/services.json.get"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "API",
+      "fields": [
+        {
+          "name": "added",
+          "type": "string",
+          "required": true,
+          "description": "Timestamp when the API was first added to the directory (format: date-time)"
+        },
+        {
+          "name": "preferred",
+          "type": "string",
+          "required": true,
+          "description": "Recommended version"
+        },
+        {
+          "name": "versions",
+          "type": "object",
+          "required": true,
+          "description": "List of supported versions of the API"
+        },
+        {
+          "name": "versions.{*}",
+          "type": "ApiVersion",
+          "required": null,
+          "description": "additionalProperties is $ref ApiVersion; map keyed by version id, minProperties 1"
+        }
+      ],
+      "enums": [],
+      "constraints": "additionalProperties: false; description: Meta information about API; versions is a map (additionalProperties -> ApiVersion, minProperties 1)",
+      "source": "components.schemas.API"
+    },
+    {
+      "name": "APIs",
+      "fields": [
+        {
+          "name": "{*}",
+          "type": "API",
+          "required": null,
+          "description": "additionalProperties is $ref API; map keyed by API IDs (`<provider>[:<service>]`)"
+        }
+      ],
+      "enums": [],
+      "constraints": "type object; additionalProperties -> API (map); minProperties 1; description: List of API details. It is a JSON object with API IDs(`<provider>[:<service>]`) as keys.",
+      "source": "components.schemas.APIs"
+    },
+    {
+      "name": "ApiVersion",
+      "fields": [
+        {
+          "name": "added",
+          "type": "string",
+          "required": true,
+          "description": "Timestamp when the version was added (format: date-time)"
+        },
+        {
+          "name": "externalDocs",
+          "type": "object",
+          "required": false,
+          "description": "Copy of `externalDocs` section from OpenAPI definition (minProperties 1)"
+        },
+        {
+          "name": "info",
+          "type": "object",
+          "required": true,
+          "description": "Copy of `info` section from OpenAPI definition (minProperties 1)"
+        },
+        {
+          "name": "link",
+          "type": "string",
+          "required": false,
+          "description": "Link to the individual API entry for this API (format: url)"
+        },
+        {
+          "name": "openapiVer",
+          "type": "string",
+          "required": true,
+          "description": "The value of the `openapi` or `swagger` property of the source definition"
+        },
+        {
+          "name": "swaggerUrl",
+          "type": "string",
+          "required": true,
+          "description": "URL to OpenAPI definition in JSON format (format: url)"
+        },
+        {
+          "name": "swaggerYamlUrl",
+          "type": "string",
+          "required": true,
+          "description": "URL to OpenAPI definition in YAML format (format: url)"
+        },
+        {
+          "name": "updated",
+          "type": "string",
+          "required": true,
+          "description": "Timestamp when the version was updated (format: date-time)"
+        }
+      ],
+      "enums": [],
+      "constraints": "additionalProperties: false; type object",
+      "source": "components.schemas.ApiVersion"
+    },
+    {
+      "name": "Metrics",
+      "fields": [
+        {
+          "name": "datasets",
+          "type": "array",
+          "required": false,
+          "description": "Data used for charting etc (items: {})"
+        },
+        {
+          "name": "fixedPct",
+          "type": "integer",
+          "required": false,
+          "description": "Percentage of all APIs where auto fixes have been applied"
+        },
+        {
+          "name": "fixes",
+          "type": "integer",
+          "required": false,
+          "description": "Total number of fixes applied across all APIs"
+        },
+        {
+          "name": "invalid",
+          "type": "integer",
+          "required": false,
+          "description": "Number of newly invalid APIs"
+        },
+        {
+          "name": "issues",
+          "type": "integer",
+          "required": false,
+          "description": "Open GitHub issues on our main repo"
+        },
+        {
+          "name": "numAPIs",
+          "type": "integer",
+          "required": true,
+          "description": "Number of unique APIs (minimum 1)"
+        },
+        {
+          "name": "numDrivers",
+          "type": "integer",
+          "required": false,
+          "description": "Number of methods of API retrieval"
+        },
+        {
+          "name": "numEndpoints",
+          "type": "integer",
+          "required": true,
+          "description": "Total number of endpoints inside all definitions (minimum 1)"
+        },
+        {
+          "name": "numProviders",
+          "type": "integer",
+          "required": false,
+          "description": "Number of API providers in directory"
+        },
+        {
+          "name": "numSpecs",
+          "type": "integer",
+          "required": true,
+          "description": "Number of API definitions including different versions of the same API (minimum 1)"
+        },
+        {
+          "name": "stars",
+          "type": "integer",
+          "required": false,
+          "description": "GitHub stars for our main repo"
+        },
+        {
+          "name": "thisWeek",
+          "type": "object",
+          "required": false,
+          "description": "Summary totals for the last 7 days"
+        },
+        {
+          "name": "thisWeek.added",
+          "type": "integer",
+          "required": null,
+          "description": "APIs added in the last week"
+        },
+        {
+          "name": "thisWeek.updated",
+          "type": "integer",
+          "required": null,
+          "description": "APIs updated in the last week"
+        },
+        {
+          "name": "unofficial",
+          "type": "integer",
+          "required": false,
+          "description": "Number of unofficial APIs"
+        },
+        {
+          "name": "unreachable",
+          "type": "integer",
+          "required": false,
+          "description": "Number of unreachable (4XX,5XX status) APIs"
+        }
+      ],
+      "enums": [],
+      "constraints": "additionalProperties: false; type object; description: List of basic metrics",
+      "source": "components.schemas.Metrics"
+    }
+  ],
+  "errors": [],
+  "operational": [
+    {
+      "topic": "Authentication",
+      "detail": "來源明示 root security: [] 且無 securitySchemes,此 API 公開無需驗證",
+      "source": "security / components.securitySchemes"
+    },
+    {
+      "topic": "Path parameters",
+      "detail": "Reusable path parameters: `provider` (required string, maxLength 255, minLength 1, example apis.guru), `api` (required string, maxLength 255, minLength 1, example 2.1.0), and inline `service` (required string, maxLength 255, minLength 1, example graph)",
+      "source": "components.parameters / paths./specs/{provider}/{service}/{api}.json.get.parameters"
+    },
+    {
+      "topic": "License",
+      "detail": "CC0 1.0 — https://github.com/APIs-guru/openapi-directory#licenses",
+      "source": "info.license"
+    },
+    {
+      "topic": "Contact",
+      "detail": "APIs.guru — mike.ralphson@gmail.com — https://APIs.guru",
+      "source": "info.contact"
+    },
+    {
+      "topic": "External documentation",
+      "detail": "https://github.com/APIs-guru/openapi-directory/blob/master/API.md",
+      "source": "externalDocs"
+    }
+  ],
+  "missing": [
+    "No error responses/codes are documented; every operation documents only a 200 OK response",
+    "providers.json and {provider}/services.json return inline anonymous object schemas (property `data`: array of strings) that are not named components.schemas entries"
+  ]
+}

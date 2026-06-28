@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "crypto": [],
+  "callbacks": [
+    {
+      "name": "Backend Notify",
+      "trigger": "After an e-payment or Direct Pay 3D transaction is completed, TapPay automatically sends a backend notification to the URL specified in backend_notify_url in the request.",
+      "transport": "HTTP POST to backend_notify_url; Content-Type: application/json; URL must start with https and only supports port 443",
+      "payload_ref": "schemas.Backend Notify Body",
+      "verification": "Frontend redirect could be faked; TapPay recommends implementing backend notify. If backend notify fails, use the Record API (use rec_trade_id as the search criteria) to verify the latest transaction result.",
+      "expected_response": "Merchant must respond HTTP 200. If TapPay does not receive a successful Backend Notify (not HTTP 200), it resends every 1, 2, 4, 8, 16 minutes, up to five times at most; if all fail, a notification letter is sent to the contact person's and technical email mailbox.",
+      "source": "## Backend Notify (lines 259-354)"
+    },
+    {
+      "name": "Frontend Redirect",
+      "trigger": "After an e-payment or Direct Pay 3D transaction is completed, TapPay redirects the user to the URL specified in frontend_redirect_url in the request.",
+      "transport": "Web redirection (GET) to frontend_redirect_url with four query-string parameters (rec_trade_id, order_number, bank_transaction_id, status); Request Header Content-Type: html/text",
+      "payload_ref": "schemas.Frontend Redirect Query String",
+      "verification": "Frontend redirect could be faked; TapPay suggests implementing backend notify. After receiving the frontend redirect URL and before displaying the transaction result page, call the Record API (use rec_trade_id as the search criteria) to check the latest transaction result.",
+      "expected_response": null,
+      "source": "## Frontend Redirect (lines 228-257)"
+    }
+  ],
+  "field_conditions": [
+    {
+      "scope": "Pay by Prime API / Pay by Card Token API",
+      "rule": "result_url (containing frontend_redirect_url and backend_notify_url) is required.",
+      "when": "three_domain_secure = true (Direct Pay 3D) or e-payment transaction",
+      "then_required": [
+        "result_url",
+        "frontend_redirect_url",
+        "backend_notify_url"
+      ],
+      "source": "Pay by Prime / Pay by Card Token request tables, result_url row; flow note"
+    },
+    {
+      "scope": "Pay by Prime API / Pay by Card Token API / all transaction requests",
+      "rule": "merchant_group_id cannot be used with merchant_id at the same time.",
+      "when": "using merchant_group_id",
+      "then_required": [],
+      "source": "merchant_group_id row"
+    },
+    {
+      "scope": "Pay by Card Token API",
+      "rule": "card_ccv cannot be used together with ccv_prime.",
+      "when": "providing card_ccv or ccv_prime",
+      "then_required": [],
+      "source": "card_ccv and ccv_prime rows"
+    },
+    {
+      "scope": "Pay by Prime API / Pay by Card Token API",
+      "rule": "order_number does not allow null.",
+      "when": "order_number is provided",
+      "then_required": [],
+      "source": "order_number row"
+    },
+    {
+      "scope": "cardholder (e-payments)",
+      "rule": "bank_member_id is required for binding transaction on e-payments (only supported by some e-payments).",
+      "when": "binding transaction on e-payments",
+      "then_required": [
+        "bank_member_id"
+      ],
+      "source": "cardholder.bank_member_id row"
+    },
+    {
+      "scope": "cardholder_verify (KYC)",
+      "rule": "To perform two-step identity authentication (KYC), kyc_verification_merchant_id must contain the Merchant ID from the KYC verification merchant settings. If a field is marked true, the corresponding cardholder field is sent to the acquirer for KYC.",
+      "when": "transaction requires identity authentication (KYC); two-step KYC",
+      "then_required": [
+        "kyc_verification_merchant_id"
+      ],
+      "source": "cardholder_verify / kyc_verification_merchant_id rows"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "Pay by Prime API request",
+      "operation_ref": "paths./tpc/payment/pay-by-prime.post",
+      "request": {
+        "prime": "String",
+        "partner_key": "String",
+        "merchant_id": "merchantA",
+        "details": "TapPay Test",
+        "amount": 100,
+        "cardholder": {
+          "phone_number": "+886923456789",
+          "name": "Jane Doe",
+          "email": "Jane@Doe.com",
+          "zip_code": "12345",
+          "address": "123 1st Avenue, City, Country",
+          "national_id": "A123456789"
+        },
+        "remember": true
+      },
+      "response": {},
+      "source": "lines 43-66"
+    },
+    {
+      "name": "Pay by Card Token API request",
+      "operation_ref": "paths./tpc/payment/pay-by-token.post",
+      "request": {
+        "card_key": "String",
+        "card_token": "String",
+        "partner_key": "String",
+        "currency": "TWD",
+        "merchant_id": "merchantA",
+        "details": "TapPay Test",
+        "amount": 100
+      },
+      "response": {},
+      "source": "lines 147-163"
+    },
+    {
+      "name": "Backend Notify request body (example)",
+      "operation_ref": null,
+      "request": {
+        "amount": 1,
+        "order_number": "KK44845743",
+        "status": 0,
+        "bank_transaction_id": "TP201711088cHQHr",
+        "transaction_time_millis": 1510136365539,
+        "acquirer": "TW_LINE_PAY",
+        "msg": "Success",
+        "rec_trade_id": "LN201711088cHQHr",
+        "pay_info": {
+          "point": 0,
+          "masked_credit_card_number": "************2178",
+          "method": "CREDIT_CARD"
+        }
+      },
+      "response": {},
+      "source": "lines 337-354"
+    },
+    {
+      "name": "Frontend Redirect request URL (example)",
+      "operation_ref": null,
+      "request": {
+        "url": "https://your.domain.com/transaction_is_done?rec_trade_id=LN20171109WsvKhn&order_number=CF46019917&status=0&bank_transaction_id=TP20171109WsvKhn",
+        "query": {
+          "rec_trade_id": "LN20171109WsvKhn",
+          "order_number": "CF46019917",
+          "status": 0,
+          "bank_transaction_id": "TP20171109WsvKhn"
+        }
+      },
+      "response": {},
+      "source": "lines 240-246"
+    },
+    {
+      "name": "Refund API request",
+      "operation_ref": "paths./tpc/transaction/refund.post",
+      "request": {
+        "partner_key": "String",
+        "rec_trade_id": "String",
+        "amount": "int // Optional"
+      },
+      "response": {},
+      "source": "lines 376-388"
+    },
+    {
+      "name": "Record API request",
+      "operation_ref": "paths./tpc/transaction/query.post",
+      "request": {
+        "partner_key": "String",
+        "records_per_page": "int",
+        "page": "int",
+        "filters": {
+          "time": {
+            "start_time": "long",
+            "end_time": "long"
+          },
+          "amount": {
+            "upper_limit": "int",
+            "lower_limit": "int"
+          },
+          "cardholder": {
+            "phone_number": "String",
+            "name": "String",
+            "email": "String"
+          },
+          "merchant_id": [
+            "String"
+          ],
+          "record_status": "int",
+          "rec_trade_id": "String",
+          "order_number": "String",
+          "bank_transaction_id": "String",
+          "currency": "String"
+        },
+        "order_by": {
+          "attribute": "String",
+          "is_descending": "boolean"
+        }
+      },
+      "response": {},
+      "source": "lines 420-457"
+    }
+  ],
+  "missing": [
+    {
+      "area": "crypto",
+      "detail": "No request signing or payload encryption mechanism is documented. Authentication is via the x-api-key header (partner_key); requests/responses are plain JSON."
+    },
+    {
+      "area": "crypto.additional_data",
+      "detail": "additional_data states 'Data will be encrypted and decrypted when other customization requirements' but no algorithm, mode, padding, key/IV, or steps are specified."
+    },
+    {
+      "area": "callbacks.Frontend Redirect.expected_response",
+      "detail": "The source does not state what HTTP response the merchant must return for the Frontend Redirect (browser redirect to the merchant page)."
+    },
+    {
+      "area": "callbacks.verification",
+      "detail": "No cryptographic signature/verification is provided for Backend Notify or Frontend Redirect. Verification is only via re-querying the Record API with rec_trade_id."
+    }
+  ]
+}

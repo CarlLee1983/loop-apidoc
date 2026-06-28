@@ -21,6 +21,13 @@ def _has_auth_marker(plan: NormalizationPlan) -> bool:
         area = (item.area or "").lower()
         if "auth" in area or "security" in area:
             return True
+    # An explicit "no auth / public" statement recorded as an operational note
+    # (topic naming authentication/security) also counts: the source addressed
+    # auth — a public API (e.g. OpenAPI root `security: []`) is not a silent gap.
+    for op in plan.operational:
+        topic = (op.topic or "").lower()
+        if "auth" in topic or "security" in topic:
+            return True
     return False
 
 

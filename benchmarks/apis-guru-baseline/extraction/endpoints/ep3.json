@@ -1,0 +1,31 @@
+{
+  "method": "GET",
+  "path": "/{provider}.json",
+  "source": "paths./{provider}.json.get",
+  "parameters": [
+    {
+      "name": "provider",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": null
+    }
+  ],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "schema": null,
+      "schema_ref": "APIs"
+    }
+  ],
+  "tags": [
+    "APIs"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "provider parameter has no description (only example, maxLength 255, minLength 1)"
+  ]
+}

@@ -8,6 +8,7 @@ from loop_apidoc.generate.examples import (
     _signature_explicit,
 )
 from loop_apidoc.generate.models import GenerateResult
+from loop_apidoc.generate.naming import component_key
 from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan, PlanItemStatus
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
 
@@ -73,16 +74,23 @@ def _refs(contract: IntegrationContract, openapi: dict) -> list[Issue]:
     schemas = ((openapi.get("components") or {}).get("schemas")) or {}
     for cb in contract.callbacks:
         ref = cb.payload_ref
-        if ref and ref.startswith("schemas.") and ref.split("schemas.", 1)[1] not in schemas:
-            issues.append(
-                _issue(
-                    IssueCode.OUTPUT_MISMATCH,
-                    f"integration.callbacks.{cb.name}",
-                    f"payload_ref 指向不存在的 schema:{ref}",
-                    "更正 payload_ref 或補上對應 schema",
-                    fixable=True,
+        if ref and ref.startswith("schemas."):
+            ref_name = ref.split("schemas.", 1)[1]
+            # payload_ref names the inventory schema; the OpenAPI component key is
+            # sanitized (spaces/CJK → key-safe). Resolve via the same sanitization
+            # the generator uses so a spaced name like "Backend Notify Body" matches
+            # its key "Backend_Notify_Body" instead of false-flagging a mismatch.
+            sanitized = component_key(ref_name, 0, prefix="schema")
+            if ref_name not in schemas and sanitized not in schemas:
+                issues.append(
+                    _issue(
+                        IssueCode.OUTPUT_MISMATCH,
+                        f"integration.callbacks.{cb.name}",
+                        f"payload_ref 指向不存在的 schema:{ref}",
+                        "更正 payload_ref 或補上對應 schema",
+                        fixable=True,
+                    )
                 )
-            )
     for case in contract.test_cases:
         ref = case.operation_ref
         if ref and ref.startswith("paths."):

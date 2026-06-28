@@ -1,0 +1,200 @@
+{
+  "method": "POST",
+  "path": "/tpc/transaction/query",
+  "source": "## Record API (request table + code-block URL + request skeleton + Response table)",
+  "parameters": [
+    {
+      "name": "x-api-key",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "Authentication key (YourPartnerKey). Header: x-api-key: YourPartnerKey."
+    },
+    {
+      "name": "partner_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Authentication key for each individual partner."
+    },
+    {
+      "name": "records_per_page",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "Number of records on each page, up to 200. Default 50."
+    },
+    {
+      "name": "page",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "The returned page. Default 0."
+    },
+    {
+      "name": "filters",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Restrictions on the trade records. Default None. time filter (frame should be 90 days or less)."
+    },
+    {
+      "name": "filters.time.start_time",
+      "in": "body",
+      "type": "long",
+      "required": null,
+      "description": "Start time. time filter required when filters used; frame should be 90 days or less."
+    },
+    {
+      "name": "filters.time.end_time",
+      "in": "body",
+      "type": "long",
+      "required": null,
+      "description": "End time."
+    },
+    {
+      "name": "filters.amount.upper_limit",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "Upper limit of the amount filter."
+    },
+    {
+      "name": "filters.amount.lower_limit",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "Lower limit of the amount filter."
+    },
+    {
+      "name": "filters.cardholder.phone_number",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "Cardholder phone number filter."
+    },
+    {
+      "name": "filters.cardholder.name",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "Cardholder name filter."
+    },
+    {
+      "name": "filters.cardholder.email",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "Cardholder email filter."
+    },
+    {
+      "name": "filters.merchant_id",
+      "in": "body",
+      "type": "[String]",
+      "required": null,
+      "description": "Merchant id filter (array of String)."
+    },
+    {
+      "name": "filters.record_status",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "Record status filter."
+    },
+    {
+      "name": "filters.rec_trade_id",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "rec_trade_id filter."
+    },
+    {
+      "name": "filters.order_number",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "order_number filter."
+    },
+    {
+      "name": "filters.bank_transaction_id",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "bank_transaction_id filter."
+    },
+    {
+      "name": "filters.currency",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "currency filter."
+    },
+    {
+      "name": "order_by",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Criteria for ordering. Default attribute = time, is_descending = true."
+    },
+    {
+      "name": "order_by.attribute",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "'time' (Order by time) or 'amount' (Order by amount)."
+    },
+    {
+      "name": "order_by.is_descending",
+      "in": "body",
+      "type": "boolean",
+      "required": null,
+      "description": "Whether ordering is descending."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "Record Request",
+    "required": true,
+    "description": "Record (query trade records) request body. Sandbox: https://sandbox.tappaysdk.com/tpc/transaction/query ; Production: https://prod.tappaysdk.com/tpc/transaction/query. Headers: Content-Type: application/json, x-api-key: YourPartnerKey."
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Trade records. status=2 indicates end of list; fields records_per_page, page, total_page_count, number_of_transactions, trade_records (JSONArray). HTTP status not stated; 200 assumed.",
+      "schema": null,
+      "schema_ref": "Record Response"
+    }
+  ],
+  "tags": [
+    "Record API"
+  ],
+  "security": [
+    "x-api-key"
+  ],
+  "examples": [
+    {
+      "lang": "java",
+      "title": "Format",
+      "body": {
+        "partner_key": "String",
+        "records_per_page": "int",
+        "page": "int",
+        "filters": {
+          "time": {
+            "start_time": "long",
+            "end_time": "long"
+          }
+        },
+        "order_by": {
+          "attribute": "String",
+          "is_descending": "boolean"
+        }
+      }
+    }
+  ],
+  "missing": [
+    "Structure/fields of trade_records array elements not defined in this section",
+    "No example response JSON body",
+    "No explicit non-200/error HTTP status codes"
+  ]
+}

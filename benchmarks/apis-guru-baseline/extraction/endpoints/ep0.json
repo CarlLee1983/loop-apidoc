@@ -1,0 +1,23 @@
+{
+  "method": "GET",
+  "path": "/list.json",
+  "source": "paths./list.json.get",
+  "parameters": [],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "schema": null,
+      "schema_ref": "APIs"
+    }
+  ],
+  "tags": [
+    "APIs"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "parameters not declared"
+  ]
+}

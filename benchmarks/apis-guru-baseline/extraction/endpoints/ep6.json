@@ -1,0 +1,47 @@
+{
+  "method": "GET",
+  "path": "/specs/{provider}/{service}/{api}.json",
+  "source": "paths./specs/{provider}/{service}/{api}.json.get",
+  "parameters": [
+    {
+      "name": "provider",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": null
+    },
+    {
+      "name": "service",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": null
+    },
+    {
+      "name": "api",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": null
+    }
+  ],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "schema": null,
+      "schema_ref": "API"
+    }
+  ],
+  "tags": [
+    "APIs"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "provider parameter has no description (only example, maxLength 255, minLength 1)",
+    "service parameter has no description (only example graph, maxLength 255, minLength 1)",
+    "api parameter has no description (only example 2.1.0, maxLength 255, minLength 1)"
+  ]
+}

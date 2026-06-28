@@ -1,0 +1,19 @@
+{
+  "_note": "REST backend payment;初跑 FAIL(payload_ref sanitize 誤判)→ 修 _refs 後 PASS(2026-06-28)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 1 },
+  "acceptable_warnings": "endpoints[5] Frontend Redirect(GET 導頁)無 responses — 來源未定義接收端回應,降為 WARNING。",
+  "resolved_issue_was": {
+    "kind": "validator-bug",
+    "code": "OUTPUT_MISMATCH",
+    "where": "validate/integration.py _refs payload_ref",
+    "summary": "payload_ref 用裸 inventory 名比對 sanitized OpenAPI key → 含空白名稱誤判。已改用 component_key sanitize 比對。"
+  }
+}

@@ -1,0 +1,712 @@
+{
+  "title": "TapPay Server APIs",
+  "version": null,
+  "overview": "TapPay Server APIs adopt the REST archetype, so all requests are sent using HTTP POST. The APIs cover credit-card and e-payment processing: Pay by Prime (charge with a one-time prime token from the frontend), Pay by Card Token (charge with a stored card_key/card_token, e.g. for recurring transactions), Refund, and Record (query trade records). Payment method categories are Direct Pay (cardholder enters credit card on merchant frontend), E-Payment (e-wallet accounts such as LINE Pay, JKOPay, Easy Wallet), and Token Pay (tokenized cards from Apple Pay, Google Pay, Samsung Pay). 3D Secure transactions are supported by setting three_domain_secure=true together with frontend_redirect_url and backend_notify_url. After an e-payment or Direct Pay 3D transaction, TapPay sends a Backend Notify to backend_notify_url and a Frontend Redirect to frontend_redirect_url; the Record API can verify the latest transaction result.",
+  "environments": [
+    {
+      "name": "Sandbox",
+      "base_url": "https://sandbox.tappaysdk.com",
+      "version": null,
+      "source": "Pay by Prime API (code-block Format comment: Sandbox URL)"
+    },
+    {
+      "name": "Production",
+      "base_url": "https://prod.tappaysdk.com",
+      "version": null,
+      "source": "Pay by Prime API (code-block Format comment: Production URL)"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "x-api-key",
+      "type": "apiKey",
+      "location": "header",
+      "details": "x-api-key: YourPartnerKey. Header sent on every request; value is the partner_key, the authentication key for each individual partner. Header also requires Content-Type: application/json.",
+      "source": "Pay by Prime API (code-block Header comment); partner_key field 'Authentication key for each individual partner.'"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/tpc/payment/pay-by-prime",
+      "summary": "Pay by Prime API. Pay using the one-time prime token obtained from the frontend. If remember=true, the response returns card_key and card_token for future Pay by Card Token calls.",
+      "source": "Pay by Prime API (code-block Format comment URL)"
+    },
+    {
+      "method": "POST",
+      "path": "/tpc/payment/pay-by-token",
+      "summary": "Pay by Card Token API. Pay using a permanent card_key and card_token, skipping createToken and Pay by Prime. Used for recurring/fixed-amount transactions.",
+      "source": "Pay by Card Token API (code-block Format comment URL)"
+    },
+    {
+      "method": "POST",
+      "path": "/tpc/transaction/refund",
+      "summary": "Refund API. Refund a transaction, reversing capture and authorization; supports partial refund via the amount parameter.",
+      "source": "Refund API (code-block Format comment URL)"
+    },
+    {
+      "method": "POST",
+      "path": "/tpc/transaction/query",
+      "summary": "Record API. Get trade records, filtered and paginated.",
+      "source": "Record API (code-block Format comment URL)"
+    },
+    {
+      "method": "POST",
+      "path": null,
+      "summary": "Backend Notify (webhook). After an e-payment or Direct Pay 3D transaction is completed, TapPay POSTs a JSON transaction-result notification to the merchant-supplied backend_notify_url (Content-Type: application/json). If not acknowledged with HTTP 200, it is resent at 1,2,4,8,16 minutes (up to 5 times).",
+      "source": "Backend Notify"
+    },
+    {
+      "method": "GET",
+      "path": null,
+      "summary": "Frontend Redirect (webhook/redirect). After an e-payment or Direct Pay 3D transaction is completed, TapPay redirects the user to the merchant-supplied frontend_redirect_url with transaction-result query-string parameters (rec_trade_id, order_number, status, bank_transaction_id). Content-Type: html/text.",
+      "source": "Frontend Redirect"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "Pay by Prime Request",
+      "fields": [
+        {
+          "name": "prime",
+          "type": "String(71)",
+          "required": true,
+          "description": "The one time token returned from getPrime. Expires after 90 seconds."
+        },
+        {
+          "name": "partner_key",
+          "type": "String(64)",
+          "required": true,
+          "description": "Authentication key for each individual partner."
+        },
+        {
+          "name": "merchant_id",
+          "type": "String(50)",
+          "required": true,
+          "description": "Involved merchant's identifier as defined on Portal."
+        },
+        {
+          "name": "merchant_group_id",
+          "type": "String(50)",
+          "required": false,
+          "description": "Cannot be used with merchant_id at the same time."
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": true,
+          "description": "Transaction price. Except TWD, times 100."
+        },
+        {
+          "name": "cardholder",
+          "type": "JSONObject",
+          "required": true,
+          "description": "Information of the cardholder."
+        },
+        {
+          "name": "cardholder.phone_number",
+          "type": "String(16)",
+          "required": true,
+          "description": "Cardholder phone number. E.164 format."
+        },
+        {
+          "name": "cardholder.name",
+          "type": "String(40)",
+          "required": true,
+          "description": "Name"
+        },
+        {
+          "name": "cardholder.email",
+          "type": "String(40)",
+          "required": true,
+          "description": "Cardholder email address."
+        },
+        {
+          "name": "three_domain_secure",
+          "type": "Boolean",
+          "required": false,
+          "description": "Enable 3D Secure authentication. Default false."
+        },
+        {
+          "name": "result_url",
+          "type": "JSONObject",
+          "required": false,
+          "description": "Required for e-payment and Direct Pay 3D transactions."
+        },
+        {
+          "name": "result_url.frontend_redirect_url",
+          "type": "String",
+          "required": false,
+          "description": "Frontend redirect URL. Must start with https."
+        },
+        {
+          "name": "result_url.backend_notify_url",
+          "type": "String",
+          "required": false,
+          "description": "Backend notify URL. https, port 443."
+        },
+        {
+          "name": "remember",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, response returns card_secret (card_key and card_token)."
+        },
+        {
+          "name": "order_number",
+          "type": "String(50)",
+          "required": false,
+          "description": "Self-defined identifier. Doesn't allow null."
+        },
+        {
+          "name": "currency",
+          "type": "String(3)",
+          "required": false,
+          "description": "ISO 4217 alphabetic code."
+        }
+      ],
+      "enums": [],
+      "constraints": "merchant_group_id cannot be used with merchant_id. Set timeout to 30 seconds.",
+      "source": "Pay by Prime API (request parameter table)"
+    },
+    {
+      "name": "Pay by Prime Response",
+      "fields": [
+        {
+          "name": "status",
+          "type": "int",
+          "required": null,
+          "description": "Response code. 0 indicates success."
+        },
+        {
+          "name": "msg",
+          "type": "String",
+          "required": null,
+          "description": "Error message."
+        },
+        {
+          "name": "rec_trade_id",
+          "type": "String(20)",
+          "required": null,
+          "description": "Unique transaction identifier."
+        },
+        {
+          "name": "bank_transaction_id",
+          "type": "String(40)",
+          "required": null,
+          "description": "Transaction identifier for the bank."
+        },
+        {
+          "name": "auth_code",
+          "type": "String(6)",
+          "required": null,
+          "description": "Authorization code. Direct Pay and Token Pay only."
+        },
+        {
+          "name": "card_secret",
+          "type": "JSONObject",
+          "required": null,
+          "description": "Contains card_token (String(67)) and card_key (String(64))."
+        },
+        {
+          "name": "card_secret.card_token",
+          "type": "String(67)",
+          "required": null,
+          "description": "Card token for future Pay by Card Token."
+        },
+        {
+          "name": "card_secret.card_key",
+          "type": "String(64)",
+          "required": null,
+          "description": "Card authorization key."
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": null,
+          "description": "Transaction price."
+        },
+        {
+          "name": "currency",
+          "type": "String(3)",
+          "required": null,
+          "description": "ISO 4217 alphabetic code."
+        }
+      ],
+      "enums": [
+        "funding: -1 = Unknown, 0 = Credit Card, 1 = Debit Card, 2 = Prepaid Card",
+        "type: -1 = Unknown, 1 = VISA, 2 = MasterCard, 3 = JCB, 4 = Union Pay, 5 = AMEX",
+        "status: 0 = success"
+      ],
+      "constraints": null,
+      "source": "Pay by Prime API > Response"
+    },
+    {
+      "name": "Pay by Card Token Request",
+      "fields": [
+        {
+          "name": "card_key",
+          "type": "String(64)",
+          "required": true,
+          "description": "Card authorization key."
+        },
+        {
+          "name": "card_token",
+          "type": "String(67)",
+          "required": true,
+          "description": "Card token."
+        },
+        {
+          "name": "partner_key",
+          "type": "String(64)",
+          "required": true,
+          "description": "Authentication key for each individual partner."
+        },
+        {
+          "name": "merchant_id",
+          "type": "String(50)",
+          "required": true,
+          "description": "Merchant identifier as defined on Portal."
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": true,
+          "description": "Transaction price. Except TWD, times 100."
+        },
+        {
+          "name": "currency",
+          "type": "String(3)",
+          "required": true,
+          "description": "ISO 4217 alphabetic code, e.g., TWD."
+        },
+        {
+          "name": "cardholder",
+          "type": "JSONObject",
+          "required": true,
+          "description": "Information of the cardholder. Same sub-fields as Pay by Prime."
+        },
+        {
+          "name": "card_ccv",
+          "type": "String",
+          "required": false,
+          "description": "Security code. Cannot be used together with ccv_prime. Direct Pay only."
+        },
+        {
+          "name": "ccv_prime",
+          "type": "String",
+          "required": false,
+          "description": "One time token of security code from get-ccv-prime. Cannot be used with card_ccv. Expires after 90 seconds."
+        },
+        {
+          "name": "is_merchant_initiated_transaction",
+          "type": "Boolean",
+          "required": false,
+          "description": "Whether MIT (true) or CIT (false). Default false."
+        }
+      ],
+      "enums": [],
+      "constraints": "merchant_group_id cannot be used with merchant_id. card_ccv and ccv_prime are mutually exclusive. Set timeout to 30 seconds.",
+      "source": "Pay by Card Token API (request parameter table)"
+    },
+    {
+      "name": "Pay by Card Token Response",
+      "fields": [
+        {
+          "name": "status",
+          "type": "int",
+          "required": null,
+          "description": "Response code. 0 indicates success."
+        },
+        {
+          "name": "msg",
+          "type": "String",
+          "required": null,
+          "description": "Error message."
+        },
+        {
+          "name": "rec_trade_id",
+          "type": "String(20)",
+          "required": null,
+          "description": "Unique transaction identifier."
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": null,
+          "description": "Transaction price."
+        },
+        {
+          "name": "currency",
+          "type": "String(3)",
+          "required": true,
+          "description": "ISO 4217 alphabetic code."
+        },
+        {
+          "name": "auth_code",
+          "type": "String(6)",
+          "required": null,
+          "description": "Authorization code. Direct Pay and Token Pay only."
+        }
+      ],
+      "enums": [
+        "funding: -1 = Unknown, 0 = Credit Card, 1 = Debit Card, 2 = Prepaid Card",
+        "type: -1 = Unknown, 1 = VISA, 2 = MasterCard, 3 = JCB, 4 = Union Pay, 5 = AMEX"
+      ],
+      "constraints": null,
+      "source": "Pay by Card Token API > Response"
+    },
+    {
+      "name": "Refund Request",
+      "fields": [
+        {
+          "name": "partner_key",
+          "type": "String(64)",
+          "required": true,
+          "description": "Authentication key for each individual partner."
+        },
+        {
+          "name": "rec_trade_id",
+          "type": "String(20)",
+          "required": true,
+          "description": "Identifier for the transaction being refunded."
+        },
+        {
+          "name": "bank_refund_id",
+          "type": "String(20)",
+          "required": false,
+          "description": "Self-defined refund record identifier (half-shaped English number, must be unique)."
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": false,
+          "description": "Only required for partial refund. Instalment and T2P transactions do not support partial refunds."
+        }
+      ],
+      "enums": [],
+      "constraints": "Cannot call Refund API during capping time of acquiring banks. Set timeout to 30 seconds.",
+      "source": "Refund API (request parameter table)"
+    },
+    {
+      "name": "Refund Response",
+      "fields": [
+        {
+          "name": "status",
+          "type": "int",
+          "required": null,
+          "description": "Response code. 0 indicates success."
+        },
+        {
+          "name": "msg",
+          "type": "String",
+          "required": null,
+          "description": "Error message."
+        },
+        {
+          "name": "refund_amount",
+          "type": "int",
+          "required": null,
+          "description": "Amount being refunded. Except TWD, times 100."
+        },
+        {
+          "name": "refund_id",
+          "type": "String",
+          "required": null,
+          "description": "Identifier for the action refunded."
+        },
+        {
+          "name": "is_captured",
+          "type": "boolean",
+          "required": null,
+          "description": "Whether the transaction has been captured or not."
+        },
+        {
+          "name": "currency",
+          "type": "String(3)",
+          "required": null,
+          "description": "ISO 4217 alphabetic code."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "Refund API > Response"
+    },
+    {
+      "name": "Record Request",
+      "fields": [
+        {
+          "name": "partner_key",
+          "type": "String(64)",
+          "required": true,
+          "description": "Authentication key for each individual partner."
+        },
+        {
+          "name": "records_per_page",
+          "type": "int",
+          "required": false,
+          "description": "Number of records on each page, up to 200. Default 50."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": false,
+          "description": "The returned page. Default 0."
+        },
+        {
+          "name": "filters",
+          "type": "JSONObject",
+          "required": false,
+          "description": "Restrictions on the trade records. Default None."
+        },
+        {
+          "name": "filters.time.start_time",
+          "type": "long",
+          "required": null,
+          "description": "Start time. time frame should be 90 days or less."
+        },
+        {
+          "name": "filters.time.end_time",
+          "type": "long",
+          "required": null,
+          "description": "End time."
+        },
+        {
+          "name": "order_by",
+          "type": "JSONObject",
+          "required": false,
+          "description": "Criteria for ordering. Default attribute = time, is_descending = true."
+        },
+        {
+          "name": "order_by.attribute",
+          "type": "String",
+          "required": null,
+          "description": "'time' or 'amount'."
+        },
+        {
+          "name": "order_by.is_descending",
+          "type": "boolean",
+          "required": null,
+          "description": "Whether ordering is descending."
+        }
+      ],
+      "enums": [],
+      "constraints": "filters.time frame should be 90 days or less. records_per_page up to 200.",
+      "source": "Record API (request parameter table)"
+    },
+    {
+      "name": "Record Response",
+      "fields": [
+        {
+          "name": "status",
+          "type": "int",
+          "required": null,
+          "description": "Response code. 2 indicates end of list (no more records)."
+        },
+        {
+          "name": "msg",
+          "type": "String",
+          "required": null,
+          "description": "Error message."
+        },
+        {
+          "name": "records_per_page",
+          "type": "int",
+          "required": null,
+          "description": "Number of records on each page, up to 200."
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": null,
+          "description": "The returned page."
+        },
+        {
+          "name": "total_page_count",
+          "type": "int",
+          "required": null,
+          "description": "Total number of pages."
+        },
+        {
+          "name": "number_of_transactions",
+          "type": "long",
+          "required": null,
+          "description": "Total number of transactions."
+        }
+      ],
+      "enums": [
+        "status: 2 = end of list (no more records)"
+      ],
+      "constraints": "The full per-record 'trade_records' array structure is not included in the provided source.",
+      "source": "Record API > Response"
+    },
+    {
+      "name": "Frontend Redirect Query String",
+      "fields": [
+        {
+          "name": "rec_trade_id",
+          "type": "String",
+          "required": null,
+          "description": "Unique transaction identifier."
+        },
+        {
+          "name": "order_number",
+          "type": "String",
+          "required": null,
+          "description": "Self-defined identifier. Doesn't allow null."
+        },
+        {
+          "name": "bank_transaction_id",
+          "type": "String",
+          "required": null,
+          "description": "Transaction identifier for the bank."
+        },
+        {
+          "name": "status",
+          "type": "Int",
+          "required": null,
+          "description": "Response code. 0 indicates success."
+        }
+      ],
+      "enums": [
+        "status: 0 = success"
+      ],
+      "constraints": "Request Header Content-Type: html/text. Frontend redirect could be faked; implement Backend Notify, and if it fails use Record API for verification.",
+      "source": "Frontend Redirect > Request Query String"
+    },
+    {
+      "name": "Backend Notify Body",
+      "fields": [
+        {
+          "name": "rec_trade_id",
+          "type": "String",
+          "required": null,
+          "description": "Unique transaction identifier."
+        },
+        {
+          "name": "auth_code",
+          "type": "String",
+          "required": null,
+          "description": "Authorization code. Direct Pay and Token Pay only."
+        },
+        {
+          "name": "bank_transaction_id",
+          "type": "String",
+          "required": null,
+          "description": "Transaction identifier for the bank."
+        },
+        {
+          "name": "order_number",
+          "type": "String",
+          "required": null,
+          "description": "Self-defined identifier. Doesn't allow null."
+        },
+        {
+          "name": "amount",
+          "type": "Int",
+          "required": null,
+          "description": "Transaction price."
+        },
+        {
+          "name": "status",
+          "type": "Int",
+          "required": null,
+          "description": "Response code. 0 indicates success."
+        },
+        {
+          "name": "msg",
+          "type": "String",
+          "required": null,
+          "description": "Error message."
+        },
+        {
+          "name": "transaction_time_millis",
+          "type": "Long",
+          "required": null,
+          "description": "Time when the bank handles the transaction."
+        },
+        {
+          "name": "pay_info",
+          "type": "JSONObject",
+          "required": null,
+          "description": "E-payment related information object. Only returned for e-payments transactions."
+        },
+        {
+          "name": "acquirer",
+          "type": "String",
+          "required": null,
+          "description": "Acquiring banks or payment processors."
+        }
+      ],
+      "enums": [
+        "pay_info.method: 1. CREDIT_CARD, 2. BALANCE (Electronic Payment Account), 3. POINT (Point Redeem), 4. DISCOUNT, 5. ACCOUNT_LINK (Bank Account), 6. CREDIT_BNPL (Buy Now Pay Later)",
+        "pay_info.payment_provider: EPI = LINE Pay Electronic Payment, TSP = non-LINE Pay Electronic Payment provider",
+        "status: 0 = success"
+      ],
+      "constraints": "Request Header Content-Type: application/json. POST to the merchant backend_notify_url. If not acknowledged with HTTP 200, resent at 1, 2, 4, 8, 16 minutes (max 5 times).",
+      "source": "Backend Notify > Request Body"
+    }
+  ],
+  "errors": [
+    {
+      "code": "0",
+      "meaning": "Success. status=0 indicates success (request-level response code in the `status` field).",
+      "http_status": null,
+      "source": "Pay by Prime API > Response (status field)"
+    },
+    {
+      "code": "2",
+      "meaning": "In Record API response, status=2 indicates end of list (no more records under the given filter).",
+      "http_status": null,
+      "source": "Record API > Response (status field)"
+    },
+    {
+      "code": "421",
+      "meaning": "gateway time out (referenced as 'error 421: gateway time out'; mitigated by defining a unique bank_transaction_id).",
+      "http_status": null,
+      "source": "Pay by Prime API (bank_transaction_id usage)"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "Timeout",
+      "detail": "Set your request timeout to 30 seconds for Pay by Prime, Pay by Card Token, and Refund APIs.",
+      "source": "Pay by Prime API / Pay by Card Token API / Refund API"
+    },
+    {
+      "topic": "Authentication",
+      "detail": "Every request must include the x-api-key header set to the partner_key (Authentication key for each individual partner), plus Content-Type: application/json. partner_key is also passed in the request body.",
+      "source": "Code-block Header comments; partner_key field"
+    },
+    {
+      "topic": "3D Secure flow",
+      "detail": "To execute a 3D secure transaction, set three_domain_secure=true and provide frontend_redirect_url and backend_notify_url. Only applicable to Direct Pay. After completion, TapPay redirects to frontend_redirect_url and sends Backend Notify to backend_notify_url. Recommended to call Record API (using rec_trade_id) before showing the result page.",
+      "source": "Pay by Prime API / Pay by Card Token API (3D secure notes)"
+    },
+    {
+      "topic": "Backend Notify retry policy",
+      "detail": "If a Backend Notify is not acknowledged with HTTP 200, TapPay resends it at 1, 2, 4, 8, 16 minutes (up to 5 times). If all fail, a notification email is sent to the contact and technical mailboxes.",
+      "source": "Backend Notify"
+    },
+    {
+      "topic": "Recurring transactions via card token",
+      "detail": "If remember=true, the Pay by Prime response returns card_key and card_token. Save them and call Pay by Card Token to handle recurring transactions. Not supported for Apple Pay, Google Pay, Samsung Pay, JKOPAY, Easy Wallet, Atome, Pi Wallet, Plus Pay.",
+      "source": "Pay by Prime API (remember note)"
+    },
+    {
+      "topic": "Refund timing",
+      "detail": "Do not call Refund API during the acquiring banks' capping time. Instalment and T2P transactions do not support partial refunds.",
+      "source": "Refund API"
+    },
+    {
+      "topic": "Payment method definitions",
+      "detail": "Direct Pay = cardholder enters credit card on merchant frontend; E-Payment = e-wallet accounts (LINE Pay, JKOPay, Easy Wallet, etc.); Token Pay = tokenized cards via Apple Pay, Google Pay, Samsung Pay.",
+      "source": "Overview > Payment Method Definitions"
+    }
+  ],
+  "missing": [
+    "No API-level version string is stated anywhere in the source (version = null).",
+    "No HTTP status codes are documented; all result codes are carried in the body `status` field. Full enumeration of status/msg error codes is via external reference.html, not included.",
+    "The Record API response per-record trade-record structure is truncated/cut off after number_of_transactions.",
+    "Many fields reference external reference.html / back.html pages for format rules, supported acquirers, currency limits, and e-payment support lists; those details are not in this source."
+  ]
+}

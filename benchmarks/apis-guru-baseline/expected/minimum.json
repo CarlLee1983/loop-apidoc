@@ -1,0 +1,21 @@
+{
+  "_note": "machine-readable OpenAPI baseline;達成值的保守下限。",
+  "must_have": {
+    "base_urls": 1,
+    "endpoints_min": 7,
+    "webhooks_min": 0,
+    "schemas_min": 4,
+    "error_codes_min": 0,
+    "security_schemes_min": 0,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": false
+  },
+  "critical_operations": [
+    "paths./list.json.get",
+    "paths./metrics.json.get",
+    "paths./specs/{provider}/{api}.json.get"
+  ]
+}

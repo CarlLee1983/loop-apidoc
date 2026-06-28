@@ -1,0 +1,340 @@
+{
+  "method": "POST",
+  "path": "/tpc/payment/pay-by-prime",
+  "source": "## Pay by Prime API (request HTML table, code-block Format/Header, Response table)",
+  "parameters": [
+    {
+      "name": "x-api-key",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Header authentication key (YourPartnerKey). x-api-key: YourPartnerKey."
+    },
+    {
+      "name": "prime",
+      "in": "body",
+      "type": "String(71)",
+      "required": true,
+      "description": "The one time token returned from getPrime. Expires after 90 seconds. You can use test prime for test in sandbox environment."
+    },
+    {
+      "name": "partner_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Authentication key for each individual partner."
+    },
+    {
+      "name": "merchant_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": true,
+      "description": "Involved merchant's identifier as defined on Portal."
+    },
+    {
+      "name": "merchant_group_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Merchant management settings on the portal. Cannot be used with merchant_id at the same time."
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "int",
+      "required": true,
+      "description": "Transaction price. Except TWD, transaction price should times 100."
+    },
+    {
+      "name": "merchandise_details",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "The item amount or points that are excluded from redeems. Only supported by some e-payments."
+    },
+    {
+      "name": "currency",
+      "in": "body",
+      "type": "String(3)",
+      "required": false,
+      "description": "Transaction currency (ISO 4217 alphabetic code, e.g., TWD)."
+    },
+    {
+      "name": "order_number",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "A self-defined identifier for each transaction. Doesn't allow null."
+    },
+    {
+      "name": "bank_transaction_id",
+      "in": "body",
+      "type": "String(40)",
+      "required": false,
+      "description": "Transaction identifier for the bank. Must be unique. Recommended to define yourself to avoid error 421: gateway time out."
+    },
+    {
+      "name": "details",
+      "in": "body",
+      "type": "String(100)",
+      "required": false,
+      "description": "Item description. Required for PCI compliance."
+    },
+    {
+      "name": "cardholder",
+      "in": "body",
+      "type": "JSONObject",
+      "required": true,
+      "description": "Information of the cardholder. Feeds the Fraud Detector and 3-D Secure risk verification."
+    },
+    {
+      "name": "cardholder.phone_number_country_code",
+      "in": "body",
+      "type": "String(3)",
+      "required": false,
+      "description": "Phone number country code (default 886). Do not include symbols, e.g., '+'."
+    },
+    {
+      "name": "cardholder.phone_number",
+      "in": "body",
+      "type": "String(16)",
+      "required": true,
+      "description": "Cardholder phone number. Must comply with the E.164 format."
+    },
+    {
+      "name": "cardholder.name",
+      "in": "body",
+      "type": "String(40)",
+      "required": true,
+      "description": "Name"
+    },
+    {
+      "name": "cardholder.name_en",
+      "in": "body",
+      "type": "String(45)",
+      "required": false,
+      "description": "If name_en is blank, a default value will be forwarded."
+    },
+    {
+      "name": "cardholder.email",
+      "in": "body",
+      "type": "String(40)",
+      "required": true,
+      "description": "Cardholder email address. Must conform to RFC 5322."
+    },
+    {
+      "name": "cardholder.zip_code",
+      "in": "body",
+      "type": "String(40)",
+      "required": false,
+      "description": "Zip code number"
+    },
+    {
+      "name": "cardholder.address",
+      "in": "body",
+      "type": "String(90)",
+      "required": false,
+      "description": "Billing address"
+    },
+    {
+      "name": "cardholder.national_id",
+      "in": "body",
+      "type": "String(40)",
+      "required": false,
+      "description": "National ID"
+    },
+    {
+      "name": "cardholder.member_id",
+      "in": "body",
+      "type": "String(64)",
+      "required": false,
+      "description": "The member ID of the buyer or cardholder. Supported: Direct Pay."
+    },
+    {
+      "name": "cardholder.bank_member_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Member ID of the cardholder or consumer. Required for binding transaction on e-payments."
+    },
+    {
+      "name": "cardholder_verify",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Authentication Fields for KYC. Supported: Direct Pay."
+    },
+    {
+      "name": "cardholder_verify.phone_number",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Whether to verify phone number"
+    },
+    {
+      "name": "cardholder_verify.national_id",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Whether to verify national id"
+    },
+    {
+      "name": "kyc_verification_merchant_id",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "The merchant id can only do authentication except authorization."
+    },
+    {
+      "name": "instalment",
+      "in": "body",
+      "type": "int(2)",
+      "required": false,
+      "description": "Number of intervals of payments. Default 0. Only Support: Direct Pay."
+    },
+    {
+      "name": "delay_capture_in_days",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "Days between bank authorization and capture. Default 0. Use -1 to disable automatic capture."
+    },
+    {
+      "name": "three_domain_secure",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Enable 3D Secure authentication. Default false. Only applicable to Direct Pay."
+    },
+    {
+      "name": "result_url",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Transaction result notification URL. Required for e-payment and Direct Pay 3D transactions (when three_domain_secure = true)."
+    },
+    {
+      "name": "result_url.frontend_redirect_url",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Frontend redirect URL of the merchant. Must start with https. Required for e-payment and Direct Pay 3D transactions."
+    },
+    {
+      "name": "result_url.backend_notify_url",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Backend notify URL. Must start with https and only supports port 443. Required for e-payment and Direct Pay 3D transactions."
+    },
+    {
+      "name": "result_url.go_back_url",
+      "in": "body",
+      "type": "String(500)",
+      "required": false,
+      "description": "URL of the Go back button in the TapPay Payment Error page."
+    },
+    {
+      "name": "redeem",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether to use the redeem. Only Support: Direct Pay."
+    },
+    {
+      "name": "remember",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether to store this payment method. If true, response returns card_secret (card_key and card_token) for future Pay by Card Token transactions."
+    },
+    {
+      "name": "additional_data",
+      "in": "body",
+      "type": "JSONString(3000)",
+      "required": false,
+      "description": "Data will be encrypted and decrypted when other customization requirements."
+    },
+    {
+      "name": "event_code",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "A code defined by the bank, E-Wallet and merchants. Support: Easy Wallet."
+    },
+    {
+      "name": "product_image_url",
+      "in": "body",
+      "type": "String(500)",
+      "required": false,
+      "description": "The picture of the store or the product on the pay page."
+    },
+    {
+      "name": "jko_pay_insurance_policy",
+      "in": "body",
+      "type": "StringArray",
+      "required": false,
+      "description": "JKOPAY insurance details of property and life insurance transaction. Support: JKOPAY."
+    },
+    {
+      "name": "store_id",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "Store branch ID. If supported by the acquirer, forwarded."
+    },
+    {
+      "name": "store_name",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Store name. If supported by the acquirer, forwarded."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "Pay by Prime Request",
+    "required": true,
+    "description": "JSON request body. Headers: Content-Type: application/json, x-api-key: YourPartnerKey. Sandbox: https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime ; Production: https://prod.tappaysdk.com/tpc/payment/pay-by-prime"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Transaction result. status=0 indicates success; see response field table (rec_trade_id, bank_transaction_id, auth_code, card_secret{card_key,card_token}, amount, currency, card_info, etc.). HTTP status code not stated by source; 200 assumed for the success response.",
+      "schema": null,
+      "schema_ref": "Pay by Prime Response"
+    }
+  ],
+  "tags": [
+    "Pay by Prime"
+  ],
+  "security": [
+    "x-api-key"
+  ],
+  "examples": [
+    {
+      "title": "Request body (Format code block)",
+      "content_type": "application/json",
+      "value": {
+        "prime": "String",
+        "partner_key": "String",
+        "merchant_id": "merchantA",
+        "details": "TapPay Test",
+        "amount": 100,
+        "cardholder": {
+          "phone_number": "+886923456789",
+          "name": "Jane Doe",
+          "email": "Jane@Doe.com",
+          "zip_code": "12345",
+          "address": "123 1st Avenue, City, Country",
+          "national_id": "A123456789"
+        },
+        "remember": true
+      }
+    }
+  ],
+  "missing": [
+    "No response example (only a response field table)",
+    "HTTP status code for the response is not stated (errors conveyed via body status/msg); 200 assumed"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "_note": "乾淨 OpenAPI baseline;初跑 FAIL(no-auth 誤判)→ 修 _has_auth_marker 後 PASS(2026-06-28)。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": false,
+    "examples_present": true
+  },
+  "current_issue_classes": {
+    "REQUIRED_INFO_MISSING.warning": 7
+  },
+  "acceptable_warnings": "7× endpoint 缺 examples(GET 且 spec 無 example;產出仍含 curl/ts/py)。",
+  "resolved_issue_was": {
+    "kind": "validator-false-positive",
+    "code": "REQUIRED_INFO_MISSING",
+    "where": "validate/completeness.py _has_auth_marker @ components.securitySchemes",
+    "summary": "公開 API(來源明示 security: [])被誤判為缺 authentication;_has_auth_marker 只認 missing_items 的 auth 標記,不認 operational 的 Authentication 註記。",
+    "expected_after_fix": "公開 API 不再 ERROR → baseline PASS(剩 7 warning)。"
+  }
+}

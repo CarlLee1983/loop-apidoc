@@ -1,0 +1,24 @@
+{
+  "method": "GET",
+  "path": "/providers.json",
+  "source": "paths./providers.json.get",
+  "parameters": [],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK; inline object schema with property `data` (type array of string, minItems 1, item minLength 1)",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "APIs"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "parameters not declared",
+    "response schema is inline (no named $ref)"
+  ]
+}

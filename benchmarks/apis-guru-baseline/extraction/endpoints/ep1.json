@@ -1,0 +1,23 @@
+{
+  "method": "GET",
+  "path": "/metrics.json",
+  "source": "paths./metrics.json.get",
+  "parameters": [],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "schema": null,
+      "schema_ref": "Metrics"
+    }
+  ],
+  "tags": [
+    "APIs"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "parameters not declared"
+  ]
+}

@@ -102,3 +102,14 @@ def test_webhook_without_responses_is_warning_not_error():
     ]))
     assert IssueCode.REQUIRED_INFO_MISSING not in _codes(issues, Severity.ERROR)
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.WARNING)
+
+
+def test_no_security_but_public_marked_in_operational_is_ok():
+    # 來源明示公開無需驗證(記在 operational,topic=Authentication)→ 不應 ERROR
+    plan = _plan(
+        security_schemes=[],
+        operational=[OperationalEntry(
+            status=PlanItemStatus.SUPPORTED, topic="Authentication",
+            detail="來源明示 root security: [] 公開無需驗證")],
+    )
+    assert _codes(check_completeness(plan), Severity.ERROR) == []
