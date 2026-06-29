@@ -82,3 +82,39 @@ def test_has_benchmark_skips_detects_skip_signals(stdout):
 
 def test_has_benchmark_skips_accepts_no_skip_output():
     assert not quality_gate.has_benchmark_skips("11 passed in 0.20s\n...........")
+
+
+def test_scenario_result_requires_expected_exit_and_signal():
+    result = quality_gate.ScenarioResult(
+        scenario_id="ADV-001",
+        exit_code=2,
+        expected_exit=2,
+        signal="inventory.json 不是合法 JSON",
+        expected_signal="inventory.json 不是合法 JSON",
+        cleanup_ok=True,
+    )
+    assert result.ok
+
+
+def test_scenario_result_fails_on_exit_mismatch():
+    result = quality_gate.ScenarioResult(
+        scenario_id="ADV-001",
+        exit_code=1,
+        expected_exit=2,
+        signal="inventory.json 不是合法 JSON",
+        expected_signal="inventory.json 不是合法 JSON",
+        cleanup_ok=True,
+    )
+    assert not result.ok
+
+
+def test_scenario_result_fails_on_missing_signal():
+    result = quality_gate.ScenarioResult(
+        scenario_id="ADV-001",
+        exit_code=2,
+        expected_exit=2,
+        signal="different",
+        expected_signal="inventory.json 不是合法 JSON",
+        cleanup_ok=True,
+    )
+    assert not result.ok
