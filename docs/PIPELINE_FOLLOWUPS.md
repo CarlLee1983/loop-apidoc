@@ -3,7 +3,11 @@
 This document tracks pipeline improvements from item 2 onward, after the benchmark
 regression harness work.
 
-## 2. Run Directory Isolation
+> **Status (2026-06-29):** items 2–5 implemented on branch `feat/pipeline-followups`
+> (commits `d3b0ae8`, `e89cbd7`, `75ef8cb`, `f7d374d`). Each section's acceptance
+> criteria are met and covered by tests / CI.
+
+## 2. Run Directory Isolation — ✅ done (`d3b0ae8`)
 
 ### Current State
 
@@ -41,7 +45,7 @@ results and artifacts harder to trust.
 - Existing tests still pass.
 - README output structure is updated if the run ID format changes.
 
-## 3. More Actionable Correction Reports
+## 3. More Actionable Correction Reports — ✅ done (`e89cbd7`)
 
 ### Current State
 
@@ -78,7 +82,7 @@ misidentify whether to update `inventory.json`, `endpoints/<N>.json`, or
 - Existing consumers that read only `report.issues[*].location` keep working.
 - Tests cover JSON serialization of the new fields.
 
-## 4. Earlier Extraction Input Schema Validation
+## 4. Earlier Extraction Input Schema Validation — ✅ done (`75ef8cb`)
 
 ### Current State
 
@@ -116,7 +120,7 @@ contract error.
 - Tests cover localized-key/schema-field mistakes, malformed endpoint details,
   and optional `integration.json`.
 
-## 5. CI / Release Gate
+## 5. CI / Release Gate — ✅ done (`f7d374d`)
 
 ### Current State
 
