@@ -79,6 +79,11 @@ uv run pytest tests/plan/          # 單一套件
    - [ ] 沒有硬編碼祕密、沒有殘留除錯輸出
    - [ ] 變更涉及 CLI／輸出結構時,同步更新 `README.md`
 
+PR 與 push 到 `main` 會觸發 CI(`.github/workflows/ci.yml`:`uv sync` → `ruff` →
+`pytest`)。benchmark *case* 因來源 gitignored 在 CI 會 SKIP,但 discovery 守門測試仍會
+跑,缺任一必備 case 即失敗。發版前的完整檢查(含需本機來源的項目)見
+[`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)。
+
 ## 專案結構
 
 各套件職責見 [`README.md`](README.md#套件結構);整體流程與資料流見 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。完整設計 spec 與分階段實作 plan 位於 `docs/superpowers/`。

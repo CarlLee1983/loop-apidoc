@@ -1,0 +1,43 @@
+# Release Checklist
+
+Run before tagging a release or merging a significant pipeline change. CI
+(`.github/workflows/ci.yml`) covers the deterministic checks automatically; the
+items marked **(local sources)** can only run on a machine that has the
+operator-provided, gitignored `benchmarks/<case>/sources/` present.
+
+## Automated in CI
+
+- [ ] `uv sync --dev` resolves cleanly.
+- [ ] `uv run ruff check .` passes.
+- [ ] `uv run pytest` passes — unit + integration + the benchmark discovery guard.
+  - CI fails on any test failure.
+  - CI fails if benchmark case discovery becomes empty or loses a required case
+    (`test_benchmark_harness_discovers_cases` asserts the 10 required cases are
+    still discovered).
+
+## Requires local benchmark sources (local sources)
+
+The benchmark *case* assertions in `tests/test_benchmarks.py`
+(`test_benchmark_case`) **SKIP** when `benchmarks/<case>/sources/` is absent, so
+CI does not exercise them. Run them where the sources exist:
+
+- [ ] `uv run pytest tests/test_benchmarks.py` with sources present — every
+  committed case runs (no skips) and matches its `expected/` declaration.
+- [ ] Confirm no case is silently skipped: the run reports 10 benchmark cases
+  executed, not skipped.
+
+## Manual spot-check (local sources)
+
+Generate one representative run and eyeball the products (validation PASS does
+**not** guarantee good output — read the artifacts):
+
+- [ ] `openapi.yaml` — OpenAPI 3.1, paths/webhooks/schemas/securitySchemes as expected.
+- [ ] `api-guide.zh-TW.md` — readable, complete, no placeholder leakage.
+- [ ] `provenance.json` — targets align 1:1 with OpenAPI locations.
+- [ ] `examples/` — the three-language request examples render and wire signatures correctly.
+- [ ] `integration-contract.json` — crypto/callbacks/field_conditions/test_cases match the source.
+
+## Invariant re-check
+
+- [ ] No fabricated content: anything a source does not state stays `null` and is
+  recorded in `missing`; fail-closed gaps are reported, never guessed.

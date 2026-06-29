@@ -73,3 +73,5 @@ Validation issues are classified, not blindly retried. There is **no determinist
 - Design spec: `docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`
 - Stage implementation plans: `docs/superpowers/plans/`
 - Contributing: `CONTRIBUTING.md`
+- CI workflow: `.github/workflows/ci.yml`; release checklist: `docs/RELEASE_CHECKLIST.md`
+- Pipeline follow-ups (post-benchmark improvements): `docs/PIPELINE_FOLLOWUPS.md`
