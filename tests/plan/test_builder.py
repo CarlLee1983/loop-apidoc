@@ -380,3 +380,65 @@ def test_nested_scalar_wrong_type_in_merged_detail_does_not_raise():
     assert ep.path == "/u"
     assert ep.responses == []  # bad detail rejected, endpoint left intact
     assert any(m.area == "06" for m in plan.missing_items)
+
+
+def test_endpoints_differing_only_by_method_case_collapse():
+    # Stage-05 lists the same operation twice with different method casing
+    # (GET vs get). They are the SAME operation and must collapse into one plan
+    # endpoint — a case-sensitive dedupe key would leave two.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"GET","path":"/u","summary":"upper","source":"api.pdf"},'
+        '{"method":"get","path":"/u","summary":"lower","source":"api.pdf"}]}\n```'
+    )
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    eps = [e for e in plan.endpoints if e.path == "/u"]
+    assert len(eps) == 1
+
+
+def test_detail_joins_endpoint_despite_method_case_mismatch():
+    # Stage-05 endpoint is `post /pay`; the stage-06 detail says `POST /pay`.
+    # The detail must join the existing endpoint (not become a second one), so
+    # its params/responses merge and exactly one /pay endpoint remains.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"post","path":"/pay","summary":"pay","source":"api.pdf"}]}\n```'
+    )
+    ep0 = ('```json\n{"method":"POST","path":"/pay",'
+           '"parameters":[{"name":"amount","in":"body"}],'
+           '"responses":[{"status":"200"}],"source":"api.pdf"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+        AnswerArtifact(query_id="06-ep0", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=ep0, answer_path="answers/06-ep0.txt", returncode=0),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    eps = [e for e in plan.endpoints if e.path == "/pay"]
+    assert len(eps) == 1
+    assert {p.get("name") for p in eps[0].parameters} == {"amount"}
+    assert any(r.get("status") == "200" for r in eps[0].responses)
+
+
+def test_webhook_detail_joins_despite_method_case_mismatch():
+    # Path-less webhook: stage-05 is `POST` (no path); the detail says `post`.
+    # The detail must still pair to the webhook endpoint (line ~335 candidate
+    # filter), so its responses land on the single hook.
+    block05 = (
+        '```json\n{"endpoints": ['
+        '{"method":"POST","path":null,"summary":"notify","source":"api.pdf"}]}\n```'
+    )
+    detail = ('```json\n{"method":"post","path":null,'
+              '"responses":[{"status":"200","description":"ack"}],'
+              '"source":"api.pdf"}\n```')
+    extraction = ExtractionResult(notebook_url="https://nb/x", artifacts=[
+        _art("05", QueryKind.INITIAL, block05),
+        AnswerArtifact(query_id="06-a", stage_id="06", kind=QueryKind.INITIAL,
+                       answer=detail, answer_path="answers/06-a.txt", returncode=0),
+    ])
+    plan = build_normalization_plan(extraction, _manifest())
+    hooks = [e for e in plan.endpoints if e.path is None]
+    assert len(hooks) == 1
+    assert hooks[0].responses == [{"status": "200", "description": "ack"}]
