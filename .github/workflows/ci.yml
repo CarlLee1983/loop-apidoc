@@ -19,13 +19,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --dev
 
-      - name: Lint
-        run: uv run ruff check .
-
-      - name: Test
+      - name: Quality gate
         # The full suite includes tests/test_benchmarks.py. Benchmark *case* runs
         # SKIP in CI (sources/ are operator-provided and gitignored), but the
         # discovery guard test_benchmark_harness_discovers_cases still runs and
         # FAILS if any required benchmark case is lost — so coverage can't silently
         # go vacuous. See docs/RELEASE_CHECKLIST.md for what needs local sources.
-        run: uv run pytest
+        # The default gate tolerates benchmark skips; only --strict-local fails on skips.
+        run: uv run python scripts/quality_gate.py
