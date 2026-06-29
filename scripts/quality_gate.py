@@ -9,9 +9,18 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 
-Runner = Callable[[list[str]], subprocess.CompletedProcess[str]]
+class _RunResult(Protocol):
+    """Structural contract for a finished command: the bits the gate reads."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+Runner = Callable[[list[str]], _RunResult]
 
 STEP_TIMEOUT_SECONDS = 600
 
@@ -81,23 +90,34 @@ def missing_benchmark_sources(
     missing: list[str] = []
     for case in cases:
         src = benchmark_root / case / "sources"
-        if not src.is_dir() or not any(path.is_file() for path in src.iterdir()):
+        # rglob so nested layouts (e.g. sources/docs/spec.pdf) count as present;
+        # the manifest scanner walks recursively, so the gate must too.
+        if not src.is_dir() or not any(path.is_file() for path in src.rglob("*")):
             missing.append(case)
     return missing
 
 
 def has_benchmark_skips(stdout: str) -> bool:
+    """Detect skipped tests in ``pytest -q`` output.
+
+    Assumes ``pytest -q`` output; not safe for arbitrary text. The reliable path is
+    the ``"skipped"`` summary; the progress-dots path is a backup that only matches a
+    genuine progress line (dominated by ``.``) to avoid false positives on prose
+    words like ``"esp"`` that happen to subset the result-char set.
+    """
     if "skipped" in stdout.lower():
         return True
-    # pytest progress line: only result chars; an "s" marks a skipped test
     for line in stdout.splitlines():
         stripped = line.strip()
-        if stripped and set(stripped) <= set(".sfexXpP") and "s" in stripped:
+        if not stripped or set(stripped) > set(".sfexXpP"):
+            continue
+        # genuine progress line: an "s" marks a skip, and dots dominate the line
+        if "s" in stripped and stripped.count(".") * 2 >= len(stripped):
             return True
     return False
 
 
-def run_step(name: str, cmd: list[str], *, runner: Runner = _default_runner) -> subprocess.CompletedProcess[str]:
+def run_step(name: str, cmd: list[str], *, runner: Runner = _default_runner) -> _RunResult:
     print(f"[quality-gate] {name}: {' '.join(cmd)}")
     try:
         result = runner(cmd)
@@ -226,8 +246,9 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
         os.symlink(secret, srcroot / "leak.md")
         res = runner(["uv", "run", "loop-apidoc", "manifest", "--sources", str(srcroot)])
         signal = res.stdout
-        # Also verify the secret bytes did NOT leak into the manifest output
-        secret_absent = "TOP SECRET DO NOT READ" not in res.stdout
+        # Verify the secret bytes did NOT leak into EITHER stream — a regression
+        # that surfaces the secret on stderr must still fail the gate.
+        secret_absent = "TOP SECRET DO NOT READ" not in f"{res.stdout}\n{res.stderr}"
         results.append(ScenarioResult(
             "ADV-006", res.returncode, 0, signal,
             '"status": "unreadable"', secret_absent))
@@ -257,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
                     "strict-local benchmark sources missing or empty: "
                     + ", ".join(missing)
                 )
-        benchmark_result: subprocess.CompletedProcess[str] | None = None
+        benchmark_result: _RunResult | None = None
         for name, cmd in command_plan(strict_local=args.strict_local):
             result = run_step(name, cmd)
             if name == "benchmarks":

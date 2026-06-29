@@ -79,6 +79,20 @@ def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):
     assert missing == ["empty-source", "absent-source"]
 
 
+def test_missing_benchmark_sources_accepts_nested_only_sources(tmp_path):
+    root = tmp_path / "benchmarks"
+    nested = root / "nested-source" / "sources" / "docs"
+    nested.mkdir(parents=True)
+    (nested / "spec.pdf").write_text("ok", encoding="utf-8")
+
+    missing = quality_gate.missing_benchmark_sources(
+        benchmark_root=root,
+        cases=["nested-source"],
+    )
+
+    assert missing == []
+
+
 @pytest.mark.parametrize("stdout", [
     "10 passed, 1 skipped in 0.20s",
     "........s..",
@@ -90,6 +104,28 @@ def test_has_benchmark_skips_detects_skip_signals(stdout):
 
 def test_has_benchmark_skips_accepts_no_skip_output():
     assert not quality_gate.has_benchmark_skips("11 passed in 0.20s\n...........")
+
+
+def test_has_benchmark_skips_rejects_non_pytest_word():
+    # "esp" is a subset of the pytest result-char set and contains an "s", but it
+    # is not a genuine progress line; it must not be treated as a skip signal.
+    assert not quality_gate.has_benchmark_skips("esp")
+
+
+def test_adversarial_smoke_detects_secret_leaked_to_stderr():
+    secret = "TOP SECRET DO NOT READ"
+
+    def runner(cmd: list[str]) -> FakeResult:
+        if "manifest" in cmd:
+            # status surfaces the expected signal on stdout, but the secret leaks
+            # into stderr — the gate must still catch it.
+            return FakeResult(returncode=0, stdout='"status": "unreadable"', stderr=secret)
+        return FakeResult(returncode=0, stdout='{"ok": true, "status": "PASS"}')
+
+    results = quality_gate.run_adversarial_cli_smoke(runner=runner)
+    adv006 = next(r for r in results if r.scenario_id == "ADV-006")
+
+    assert not adv006.ok
 
 
 def test_run_step_raises_quality_gate_failure_on_timeout():
