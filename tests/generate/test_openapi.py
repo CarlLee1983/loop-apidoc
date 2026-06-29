@@ -908,3 +908,87 @@ def test_property_schema_returns_union_when_one_of_resolves():
 def test_property_schema_falls_back_to_type_when_no_one_of():
     field = {"name": "pm", "type": "object"}
     assert _property_schema(field, {"CardDetails": "CardDetails"}) == {"type": "object"}
+
+
+def _adyen_members():
+    return [
+        SchemaEntry(status=PlanItemStatus.SUPPORTED, name="CardDetails",
+                    fields=[{"name": "type", "type": "string", "required": True}]),
+        SchemaEntry(status=PlanItemStatus.SUPPORTED, name="IdealDetails",
+                    fields=[{"name": "type", "type": "string", "required": True}]),
+        SchemaEntry(status=PlanItemStatus.SUPPORTED, name="ApplePayDetails",
+                    fields=[{"name": "type", "type": "string", "required": True}]),
+    ]
+
+
+def test_body_param_one_of_emits_oneof_and_discriminator():
+    plan = _plan(
+        schemas=_adyen_members(),
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="POST", path="/payments",
+            parameters=[{
+                "name": "paymentMethod", "in": "body", "type": "object", "required": True,
+                "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+                "discriminator": {
+                    "property_name": "type",
+                    "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails",
+                                "applepay": "ApplePayDetails"},
+                },
+            }],
+            responses=[{"status": "200", "description": "ok"}],
+        )],
+    )
+    schema = build_openapi(plan)["paths"]["/payments"]["post"]["requestBody"][
+        "content"]["application/json"]["schema"]
+    pm = schema["properties"]["paymentMethod"]
+    assert pm["oneOf"] == [
+        {"$ref": "#/components/schemas/CardDetails"},
+        {"$ref": "#/components/schemas/IdealDetails"},
+        {"$ref": "#/components/schemas/ApplePayDetails"},
+    ]
+    assert pm["discriminator"]["propertyName"] == "type"
+    assert pm["discriminator"]["mapping"]["scheme"] == "#/components/schemas/CardDetails"
+
+
+def test_schema_field_one_of_emits_oneof():
+    plan = _plan(
+        schemas=_adyen_members() + [SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="PaymentRequest",
+            fields=[{"name": "paymentMethod", "type": "object", "required": True,
+                     "one_of": ["CardDetails", "IdealDetails"]}],
+        )],
+    )
+    pr = build_openapi(plan)["components"]["schemas"]["PaymentRequest"]
+    assert pr["properties"]["paymentMethod"]["oneOf"] == [
+        {"$ref": "#/components/schemas/CardDetails"},
+        {"$ref": "#/components/schemas/IdealDetails"},
+    ]
+
+
+def test_one_of_all_unresolvable_falls_back_to_object():
+    plan = _plan(schemas=[SchemaEntry(
+        status=PlanItemStatus.SUPPORTED, name="PaymentRequest",
+        fields=[{"name": "paymentMethod", "type": "object",
+                 "one_of": ["Nope", "AlsoNope"]}],
+    )])
+    pr = build_openapi(plan)["components"]["schemas"]["PaymentRequest"]
+    assert pr["properties"]["paymentMethod"] == {"type": "object"}
+
+
+def test_one_of_leaf_is_terminal_not_expanded_as_nested_object():
+    # A union leaf with the same name as a would-be parent must not be expanded
+    # into a nested dotted-path object; the union wins.
+    plan = _plan(
+        schemas=_adyen_members() + [SchemaEntry(
+            status=PlanItemStatus.SUPPORTED, name="PaymentRequest",
+            fields=[
+                {"name": "paymentMethod", "type": "object",
+                 "one_of": ["CardDetails"]},
+                {"name": "paymentMethod.ignored", "type": "string"},
+            ],
+        )],
+    )
+    pm = build_openapi(plan)["components"]["schemas"]["PaymentRequest"][
+        "properties"]["paymentMethod"]
+    assert "oneOf" in pm
+    assert "properties" not in pm
