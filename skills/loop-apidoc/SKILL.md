@@ -92,6 +92,19 @@ returned object to `<WORK>/endpoints/ep<N>.json` (`ep0.json`, `ep1.json`, …).
 **`tags`**: source-stated grouping labels for this endpoint (e.g. a section/category title the source uses — "信用卡", "電子錢包"); they become the operation's OpenAPI `tags` and are declared at the document root. Empty when the source groups nothing.
 **`security`**: the **exact `name`s** of the `inventory.security_schemes` entries this endpoint requires (e.g. `["AES256 (TradeInfo)"]`); they become the operation's `security` requirement. Empty when the source states no auth/signing for this endpoint; never list a scheme name that isn't in `inventory.security_schemes`.
 **`schema_ref`**: when a response body is the structured shape you also captured as a named entry in `inventory.schemas` (e.g. the response of `取消授權` ↔ schema `取消授權回應參數（Result）`), set `schema_ref` to that schema's **exact `name`**. The OpenAPI then links the response via `$ref: #/components/schemas/...` instead of restating the field list as prose. Use `null` when no such named schema exists; never invent a name that isn't in `inventory.schemas`.
+**`one_of` / `discriminator`** (optional, for polymorphic fields): an `in:body` parameter or a `schemas[].fields` entry MAY declare a union when the source documents the field as **one of** several named member shapes (e.g. a single `POST /payments` whose `paymentMethod` is one of `CardDetails` / `IdealDetails` / `ApplePayDetails`, selected by a `type` discriminator):
+
+```json
+{"name":"paymentMethod","in":"body","type":"object","required":true,
+ "one_of":["CardDetails","IdealDetails","ApplePayDetails"],
+ "discriminator":{"property_name":"type",
+   "mapping":{"scheme":"CardDetails","ideal":"IdealDetails","applepay":"ApplePayDetails"}}}
+```
+
+- `one_of`: a list of schema **names**, each of which MUST also appear as a named entry in `inventory.schemas` (so every member is independently captured and provenance-backed). A name that isn't in `inventory.schemas` is dropped — never invent one.
+- `discriminator` (optional): `property_name` is the **source-stated** discriminating property; `mapping` maps each discriminator value to a member schema **name**. Omit `discriminator` entirely when the source states no explicit discriminator.
+- **Grounding rule:** declare `one_of` only when the source documents the field as one of those member shapes; never synthesize a union from REST/payment conventions. Keys are snake_case (`one_of`, `property_name`), consistent with the other extraction keys.
+
 Top-level `source` is required: cite the source section/page/URL where this endpoint's detail lives (consistent with the matching `source` in inventory.endpoints). **With multiple sources this is the only thing attributing detail to the correct source** — omitting it triggers `SOURCE_UNVERIFIED`.
 
 **Async notifications / callbacks / webhooks** (server POSTs to a caller-supplied URL, e.g. payment-result notifications): keep `method`, set `path` to `null`. These become OpenAPI 3.1 top-level `webhooks` (named by summary), no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`). **Multiple callbacks sharing the same (method, null) are distinguished only by their `source`** — give every callback detail the correct `source`.
