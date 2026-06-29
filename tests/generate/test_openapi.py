@@ -3,6 +3,8 @@ from __future__ import annotations
 from loop_apidoc.generate.openapi import (
     MISSING_STATUS,
     X_LOOP_STATUS,
+    _property_schema,
+    _union_schema,
     build_openapi,
 )
 from loop_apidoc.plan.models import (
@@ -831,3 +833,78 @@ def test_security_scheme_http_without_derivable_scheme_falls_back_to_placeholder
     scheme = build_openapi(plan)["components"]["securitySchemes"]["MysteryHttp"]
     assert scheme["type"] == "apiKey"
     assert scheme[X_LOOP_STATUS] == MISSING_STATUS
+
+
+def test_union_schema_none_without_one_of():
+    assert _union_schema({"name": "x", "type": "object"}, {}) is None
+    assert _union_schema({"name": "x", "one_of": []}, {"A": "A"}) is None
+
+
+def test_union_schema_resolves_members_and_keeps_description():
+    field = {
+        "name": "paymentMethod",
+        "one_of": ["CardDetails", "IdealDetails"],
+        "description": "pick one",
+    }
+    name_to_key = {"CardDetails": "CardDetails", "IdealDetails": "IdealDetails"}
+    out = _union_schema(field, name_to_key)
+    assert out["oneOf"] == [
+        {"$ref": "#/components/schemas/CardDetails"},
+        {"$ref": "#/components/schemas/IdealDetails"},
+    ]
+    assert out["description"] == "pick one"
+    assert "discriminator" not in out
+
+
+def test_union_schema_drops_unresolvable_member_keeps_rest():
+    field = {"one_of": ["CardDetails", "Nope"]}
+    out = _union_schema(field, {"CardDetails": "CardDetails"})
+    assert out["oneOf"] == [{"$ref": "#/components/schemas/CardDetails"}]
+
+
+def test_union_schema_all_unresolvable_returns_none():
+    assert _union_schema({"one_of": ["Nope", "AlsoNope"]}, {"A": "A"}) is None
+
+
+def test_union_schema_discriminator_with_resolvable_mapping():
+    field = {
+        "one_of": ["CardDetails", "IdealDetails"],
+        "discriminator": {
+            "property_name": "type",
+            "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "x": "Nope"},
+        },
+    }
+    name_to_key = {"CardDetails": "CardDetails", "IdealDetails": "IdealDetails"}
+    out = _union_schema(field, name_to_key)
+    assert out["discriminator"]["propertyName"] == "type"
+    # unresolvable mapping target "x"->"Nope" dropped; resolvable ones kept as $refs
+    assert out["discriminator"]["mapping"] == {
+        "scheme": "#/components/schemas/CardDetails",
+        "ideal": "#/components/schemas/IdealDetails",
+    }
+
+
+def test_union_schema_discriminator_without_property_name_ignored():
+    field = {"one_of": ["CardDetails"], "discriminator": {"mapping": {"x": "CardDetails"}}}
+    out = _union_schema(field, {"CardDetails": "CardDetails"})
+    assert "discriminator" not in out
+
+
+def test_union_schema_empty_mapping_omitted():
+    field = {
+        "one_of": ["CardDetails"],
+        "discriminator": {"property_name": "type", "mapping": {"x": "Nope"}},
+    }
+    out = _union_schema(field, {"CardDetails": "CardDetails"})
+    assert out["discriminator"] == {"propertyName": "type"}
+
+
+def test_property_schema_returns_union_when_one_of_resolves():
+    field = {"name": "pm", "type": "object", "one_of": ["CardDetails"]}
+    out = _property_schema(field, {"CardDetails": "CardDetails"})
+    assert out == {"oneOf": [{"$ref": "#/components/schemas/CardDetails"}]}
+
+
+def test_property_schema_falls_back_to_type_when_no_one_of():
+    field = {"name": "pm", "type": "object"}
+    assert _property_schema(field, {"CardDetails": "CardDetails"}) == {"type": "object"}

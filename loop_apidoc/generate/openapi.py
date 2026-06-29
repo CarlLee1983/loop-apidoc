@@ -191,9 +191,47 @@ def _normalize_media_type(raw: str | None) -> str:
     return "application/json"
 
 
-def _property_schema(field: dict) -> dict:
+def _union_schema(field: dict, name_to_key: dict[str, str]) -> dict | None:
+    """A native OpenAPI `oneOf` (+ optional `discriminator`) for a field the source
+    documents as a union of already-named member schemas. Returns None unless the
+    field carries a truthy `one_of` that resolves to at least one named schema — a
+    dangling `$ref` is never invented (same rule as response `schema_ref`)."""
+    one_of = field.get("one_of")
+    if not one_of:
+        return None
+    members = [
+        {"$ref": f"#/components/schemas/{name_to_key[name]}"}
+        for name in one_of
+        if name in name_to_key
+    ]
+    if not members:
+        return None
+    result: dict = {"oneOf": members}
+    if field.get("description"):
+        result["description"] = field["description"]
+    disc = field.get("discriminator")
+    if isinstance(disc, dict) and disc.get("property_name"):
+        built: dict = {"propertyName": disc["property_name"]}
+        mapping = disc.get("mapping")
+        if isinstance(mapping, dict):
+            resolved = {
+                value: f"#/components/schemas/{name_to_key[target]}"
+                for value, target in mapping.items()
+                if target in name_to_key
+            }
+            if resolved:
+                built["mapping"] = resolved
+        result["discriminator"] = built
+    return result
+
+
+def _property_schema(field: dict, name_to_key: dict[str, str] | None = None) -> dict:
     """One object property fragment from a source field/param dict.
-    Field `description` wins over the raw type hint; `enum` is preserved."""
+    A resolvable `one_of` becomes a native `oneOf` union; otherwise the
+    field `description` wins over the raw type hint and `enum` is preserved."""
+    union = _union_schema(field, name_to_key or {})
+    if union is not None:
+        return union
     prop = _schema_from_type(
         field.get("type") if "type" in field else field.get("schema")
     ) or {}
