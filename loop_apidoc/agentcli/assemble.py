@@ -22,6 +22,10 @@ class AssembleInputError(ValueError):
     """agent 產出的擷取檔缺漏或格式錯誤時拋出(fail loudly)。"""
 
 
+class RunDirectoryCollisionError(RuntimeError):
+    """目標 run 目錄已存在時拋出,避免兩個 run 的輸出混在同一目錄(fail loudly)。"""
+
+
 def load_extraction_inputs(
     extraction_dir: Path,
 ) -> tuple[dict, list[str], dict | None]:
@@ -101,7 +105,12 @@ def run_assemble_pipeline(
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
 
     run_dir = output_root / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    output_root.mkdir(parents=True, exist_ok=True)
+    try:
+        run_dir.mkdir(exist_ok=False)
+    except FileExistsError as exc:
+        raise RunDirectoryCollisionError(
+            f"run 目錄已存在,拒絕覆寫:{run_dir}") from exc
 
     manifest = build_manifest(
         sources_root=sources_root, urls=urls or [], generated_at=generated_at)
