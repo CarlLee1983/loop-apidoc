@@ -47,3 +47,38 @@ def test_command_plan_default_mode():
         ("pytest", ["uv", "run", "pytest"]),
         ("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]),
     ]
+
+
+def test_required_benchmark_cases_lists_committed_cases():
+    cases = quality_gate.required_benchmark_cases()
+    assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
+            "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
+            "github-webhooks", "paypal-webhooks-incomplete",
+            "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= set(cases)
+
+
+def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):
+    root = tmp_path / "benchmarks"
+    (root / "has-source" / "sources").mkdir(parents=True)
+    (root / "has-source" / "sources" / "manual.md").write_text("ok", encoding="utf-8")
+    (root / "empty-source" / "sources").mkdir(parents=True)
+
+    missing = quality_gate.missing_benchmark_sources(
+        benchmark_root=root,
+        cases=["has-source", "empty-source", "absent-source"],
+    )
+
+    assert missing == ["empty-source", "absent-source"]
+
+
+@pytest.mark.parametrize("stdout", [
+    "10 passed, 1 skipped in 0.20s",
+    "........s..",
+    "SKIPPED [1] sources missing",
+])
+def test_has_benchmark_skips_detects_skip_signals(stdout):
+    assert quality_gate.has_benchmark_skips(stdout)
+
+
+def test_has_benchmark_skips_accepts_no_skip_output():
+    assert not quality_gate.has_benchmark_skips("11 passed in 0.20s\n...........")
