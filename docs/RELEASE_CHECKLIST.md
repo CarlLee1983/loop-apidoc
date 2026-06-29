@@ -14,6 +14,7 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
   - CI fails if benchmark case discovery becomes empty or loses a required case
     (`test_benchmark_harness_discovers_cases` asserts the 10 required cases are
     still discovered).
+- [ ] `uv run python scripts/quality_gate.py` passes in CI-safe mode.
 
 ## Requires local benchmark sources (local sources)
 
@@ -25,6 +26,8 @@ CI does not exercise them. Run them where the sources exist:
   committed case runs (no skips) and matches its `expected/` declaration.
 - [ ] Confirm no case is silently skipped: the run reports 10 benchmark cases
   executed, not skipped.
+- [ ] `uv run python scripts/quality_gate.py --strict-local` passes — no
+  benchmark source directory is missing and no benchmark case is skipped.
 
 ## Manual spot-check (local sources)
 
@@ -41,3 +44,5 @@ Generate one representative run and eyeball the products (validation PASS does
 
 - [ ] No fabricated content: anything a source does not state stays `null` and is
   recorded in `missing`; fail-closed gaps are reported, never guessed.
+- [ ] Any defect fixed in this release has a regression test, benchmark fixture,
+  quality-gate scenario, or documented follow-up in `docs/PIPELINE_FOLLOWUPS.md`.
