@@ -551,6 +551,7 @@ def _integration_items(integration: dict | None, section: str) -> dict[str, dict
     if not isinstance(raw, list):
         return {}
     out: dict[str, dict] = {}
+    seen: dict[str, int] = {}
     for idx, item in enumerate(raw):
         if not isinstance(item, dict):
             continue
@@ -564,7 +565,14 @@ def _integration_items(integration: dict | None, section: str) -> dict[str, dict
             key = item.get("name") or item.get("operation_ref") or str(idx)
         else:
             key = str(idx)
-        out[str(key)] = item
+        key = str(key)
+        # Unnamed items can collapse to the same fallback key (e.g. two crypto
+        # blocks sharing purpose+algorithm). Suffix repeats with a stable
+        # occurrence index so each is tracked separately instead of silently
+        # overwriting the prior one.
+        occurrence = seen.get(key, 0)
+        seen[key] = occurrence + 1
+        out[f"{key}#{occurrence}" if occurrence else key] = item
     return out
 
 
@@ -691,12 +699,16 @@ def _compare_provenance(base: RunArtifacts, head: RunArtifacts) -> list[DiffFind
     return findings
 
 
-def _issue_key(issue) -> tuple[str, str, str, str]:
+def _issue_key(issue) -> tuple[str, str, str, str, str]:
+    # `suggested_fix` is part of the issue's identity here: changing only the
+    # remediation text still alters validation/report.json, so it must shift the
+    # key (surfacing as a removed+added pair) rather than diffing to nothing.
     return (
         issue.code.value,
         issue.severity.value,
         issue.location,
         issue.evidence,
+        issue.suggested_fix,
     )
 
 
@@ -730,14 +742,22 @@ def _compare_validation(base: RunArtifacts, head: RunArtifacts) -> list[DiffFind
 
 
 def _manifest_local_map(artifacts: RunArtifacts) -> dict[str, dict]:
+    # Exclude `scanned_at`: it changes on every rescan even when the source file
+    # is byte-identical, which would flood a normal rerun diff with spurious
+    # "manifest source changed" noise. Content identity lives in sha256/status.
     return {
-        source.relative_path: source.model_dump(mode="json")
+        source.relative_path: source.model_dump(mode="json", exclude={"scanned_at"})
         for source in artifacts.manifest.local_sources
     }
 
 
 def _manifest_url_map(artifacts: RunArtifacts) -> dict[str, dict]:
-    return {source.url: source.model_dump(mode="json") for source in artifacts.manifest.url_sources}
+    # Same rationale as local sources: `fetched_at` is a rerun timestamp, not a
+    # content signal (content_sha256/http_status carry that).
+    return {
+        source.url: source.model_dump(mode="json", exclude={"fetched_at"})
+        for source in artifacts.manifest.url_sources
+    }
 
 
 def _compare_manifest(base: RunArtifacts, head: RunArtifacts) -> list[DiffFinding]:

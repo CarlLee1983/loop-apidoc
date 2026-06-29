@@ -3,13 +3,16 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeVar
 
 import yaml
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from loop_apidoc.generate.models import ProvenanceDocument
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.validate.models import ValidationReport
+
+_ModelT = TypeVar("_ModelT", bound=BaseModel)
 
 
 class DiffInputError(ValueError):
@@ -36,6 +39,13 @@ def _read_text(path: Path, label: str) -> str:
         return path.read_text(encoding="utf-8")
     except OSError as exc:
         raise DiffInputError(f"cannot read {label}: {str(exc)[:200]}") from exc
+
+
+def _validate_model(model: type[_ModelT], path: Path, label: str) -> _ModelT:
+    try:
+        return model.model_validate_json(_read_text(path, label))
+    except ValidationError as exc:
+        raise DiffInputError(f"{label} schema mismatch: {str(exc)[:200]}") from exc
 
 
 def _load_json(path: Path, label: str) -> object:
@@ -70,16 +80,11 @@ def load_run_artifacts(run_dir: Path) -> RunArtifacts:
     if not isinstance(openapi, dict):
         raise DiffInputError("openapi.yaml must parse to an object")
 
-    try:
-        provenance = ProvenanceDocument.model_validate_json(
-            _read_text(provenance_path, "provenance.json")
-        )
-        validation = ValidationReport.model_validate_json(
-            _read_text(validation_path, "validation/report.json")
-        )
-        manifest = Manifest.model_validate_json(_read_text(manifest_path, "manifest.json"))
-    except ValidationError as exc:
-        raise DiffInputError(f"run artifact schema mismatch: {str(exc)[:200]}") from exc
+    provenance = _validate_model(ProvenanceDocument, provenance_path, "provenance.json")
+    validation = _validate_model(
+        ValidationReport, validation_path, "validation/report.json"
+    )
+    manifest = _validate_model(Manifest, manifest_path, "manifest.json")
 
     integration: dict | None = None
     if integration_path.exists():

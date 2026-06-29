@@ -162,3 +162,66 @@ def test_manifest_source_hash_change_is_source_only():
     finding = _find("manifest source changed", build_diff_report(base, head).findings)
     assert finding.impact is DiffImpact.SOURCE_ONLY
     assert finding.location == "manifest.local.manual.md"
+
+
+def _manifest_scanned(scanned_at: datetime) -> Manifest:
+    return Manifest(
+        sources_root="./sources",
+        generated_at=_NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="manual.md",
+                mime_type="text/markdown",
+                source_format=SourceFormat.MARKDOWN,
+                size_bytes=10,
+                sha256="abc",
+                scanned_at=scanned_at,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+
+
+def test_manifest_scanned_at_only_change_is_not_reported():
+    later = datetime(2026, 6, 30, 9, 0, tzinfo=timezone.utc)
+    base = _artifacts(manifest=_manifest_scanned(_NOW))
+    head = _artifacts(manifest=_manifest_scanned(later))
+
+    findings = build_diff_report(base, head).findings
+    assert not [f for f in findings if "manifest source changed" in f.summary]
+
+
+def test_integration_unnamed_collision_removal_is_reported():
+    base = _artifacts(
+        integration={
+            "crypto": [
+                {"purpose": "encrypt", "algorithm": "AES"},
+                {"purpose": "encrypt", "algorithm": "AES"},
+            ]
+        }
+    )
+    head = _artifacts(
+        integration={"crypto": [{"purpose": "encrypt", "algorithm": "AES"}]}
+    )
+
+    finding = _find("integration crypto removed", build_diff_report(base, head).findings)
+    assert finding.impact is DiffImpact.BREAKING
+
+
+def test_validation_issue_suggested_fix_change_is_reported():
+    issue = dict(
+        code=IssueCode.REQUIRED_INFO_MISSING,
+        severity=Severity.WARNING,
+        location="operational",
+        evidence="no rate limit",
+    )
+    base = _artifacts(
+        validation=ValidationReport(issues=[Issue(**issue, suggested_fix="add source A")])
+    )
+    head = _artifacts(
+        validation=ValidationReport(issues=[Issue(**issue, suggested_fix="add source B")])
+    )
+
+    findings = build_diff_report(base, head).findings
+    assert [f for f in findings if "validation issue" in f.summary]

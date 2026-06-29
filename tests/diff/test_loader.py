@@ -148,3 +148,17 @@ def test_load_run_artifacts_rejects_non_object_integration(tmp_path):
         load_run_artifacts(run_dir)
 
     assert "integration-contract.json" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    ["provenance.json", "validation/report.json", "manifest.json"],
+)
+def test_load_run_artifacts_schema_error_names_the_file(tmp_path, relative_path):
+    run_dir = write_run(tmp_path / "run")
+    (run_dir / relative_path).write_text("123", encoding="utf-8")
+
+    with pytest.raises(DiffInputError) as excinfo:
+        load_run_artifacts(run_dir)
+
+    assert relative_path in str(excinfo.value)
