@@ -228,6 +228,81 @@ def test_security_scheme_change_is_breaking():
     assert finding.impact is DiffImpact.BREAKING
 
 
+def _doc_with_webhook() -> dict:
+    doc = _doc()
+    doc["webhooks"] = {
+        "Notify": {
+            "post": {
+                "summary": "Payment notification",
+                "responses": {"200": {"description": "ok"}},
+            }
+        }
+    }
+    return doc
+
+
+def test_webhook_addition_is_additive():
+    base = _doc()
+    head = _doc_with_webhook()
+
+    finding = _by_summary(base, head, "operation added")[0]
+    assert finding.impact is DiffImpact.ADDITIVE
+    assert finding.location == "POST webhooks:Notify"
+
+
+def test_webhook_removal_is_breaking():
+    base = _doc_with_webhook()
+    head = _doc()
+
+    finding = _by_summary(base, head, "operation removed")[0]
+    assert finding.impact is DiffImpact.BREAKING
+    assert finding.location == "POST webhooks:Notify"
+
+
+def test_webhook_response_removal_is_breaking():
+    base = _doc_with_webhook()
+    head = _doc_with_webhook()
+    head["webhooks"]["Notify"]["post"]["responses"]["200"] = {"description": "changed"}
+    del head["webhooks"]["Notify"]["post"]["responses"]["200"]
+    head["webhooks"]["Notify"]["post"]["responses"]["201"] = {"description": "ok"}
+
+    removed = _by_summary(base, head, "response removed")
+    assert any(f.location == "POST webhooks:Notify responses.200" for f in removed)
+
+
+def test_array_item_type_change_is_breaking():
+    base = _doc()
+    head = _doc()
+    schema = base["paths"]["/payments"]["post"]["requestBody"]["content"]["application/json"]["schema"]
+    schema["properties"]["tags"] = {"type": "array", "items": {"type": "string"}}
+    head_schema = head["paths"]["/payments"]["post"]["requestBody"]["content"]["application/json"]["schema"]
+    head_schema["properties"]["tags"] = {"type": "array", "items": {"type": "integer"}}
+
+    findings = _by_summary(base, head, "schema changed")
+    assert any("tags[]" in f.location and f.impact is DiffImpact.BREAKING for f in findings)
+
+
+def test_request_body_becoming_required_is_breaking():
+    base = _doc()
+    head = _doc()
+    base["paths"]["/payments"]["post"]["requestBody"]["required"] = False
+    head["paths"]["/payments"]["post"]["requestBody"]["required"] = True
+
+    finding = _by_summary(base, head, "request body became required")[0]
+    assert finding.impact is DiffImpact.BREAKING
+    assert finding.location == "POST /payments requestBody.required"
+
+
+def test_request_body_no_longer_required_is_changed():
+    base = _doc()
+    head = _doc()
+    base["paths"]["/payments"]["post"]["requestBody"]["required"] = True
+    head["paths"]["/payments"]["post"]["requestBody"]["required"] = False
+
+    finding = _by_summary(base, head, "request body no longer required")[0]
+    assert finding.impact is DiffImpact.CHANGED
+
+
 def test_summary_counts_all_impacts():
     base = _doc()
     head = _doc()

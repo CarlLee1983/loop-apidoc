@@ -48,19 +48,34 @@ def _summary(findings: list[DiffFinding]) -> dict[str, int]:
     return counts
 
 
-def _operation_map(openapi: dict) -> dict[str, dict]:
-    paths = openapi.get("paths")
-    if not isinstance(paths, dict):
-        return {}
-    out: dict[str, dict] = {}
-    for path, path_item in paths.items():
-        if not isinstance(path_item, dict):
+def _collect_operations(
+    items: Any, out: dict[str, dict], key: Any
+) -> None:
+    if not isinstance(items, dict):
+        return
+    for name, item in items.items():
+        if not isinstance(item, dict):
             continue
-        for method, operation in path_item.items():
+        for method, operation in item.items():
             method_l = str(method).lower()
             if method_l in _METHODS and isinstance(operation, dict):
-                out[f"{method_l.upper()} {path}"] = operation
+                out[key(method_l.upper(), name)] = operation
+
+
+def _operation_map(openapi: dict) -> dict[str, dict]:
+    # OpenAPI 3.1 splits operations across top-level `paths` and `webhooks`;
+    # the generator emits both, so the diff must cover both. The op-key prefix
+    # marks which namespace a location lives in (`POST /x` vs `POST webhooks:x`).
+    out: dict[str, dict] = {}
+    _collect_operations(openapi.get("paths"), out, lambda m, name: f"{m} {name}")
+    _collect_operations(
+        openapi.get("webhooks"), out, lambda m, name: f"{m} webhooks:{name}"
+    )
     return out
+
+
+def _op_area(op_key: str) -> str:
+    return "openapi.webhooks" if " webhooks:" in op_key else "openapi.paths"
 
 
 def _schema_signature(schema: Any) -> Any:
@@ -154,6 +169,22 @@ def _compare_schema(
             head_props[name],
             area=area,
             location=f"{location}.{name}",
+            findings=findings,
+            added_required_is_breaking=added_required_is_breaking,
+            removed_property_is_breaking=removed_property_is_breaking,
+        )
+
+    # `_schema_signature` deliberately omits `items` (it would be a nested dict),
+    # so array element changes (array<string> -> array<integer>) only surface by
+    # recursing into items the same way we recurse into object properties.
+    base_items = base.get("items")
+    head_items = head.get("items")
+    if isinstance(base_items, dict) and isinstance(head_items, dict):
+        _compare_schema(
+            base_items,
+            head_items,
+            area=area,
+            location=f"{location}[]",
             findings=findings,
             added_required_is_breaking=added_required_is_breaking,
             removed_property_is_breaking=removed_property_is_breaking,
@@ -265,6 +296,25 @@ def _compare_request_body(
     head: dict,
     findings: list[DiffFinding],
 ) -> None:
+    base_body = base.get("requestBody")
+    head_body = head.get("requestBody")
+    if isinstance(base_body, dict) and isinstance(head_body, dict):
+        base_req = bool(base_body.get("required"))
+        head_req = bool(head_body.get("required"))
+        if base_req != head_req:
+            findings.append(
+                _finding(
+                    DiffImpact.BREAKING if head_req else DiffImpact.CHANGED,
+                    "openapi.requestBody",
+                    f"{op_key} requestBody.required",
+                    "request body became required"
+                    if head_req
+                    else "request body no longer required",
+                    base_req,
+                    head_req,
+                )
+            )
+
     base_schemas = _request_schemas(base)
     head_schemas = _request_schemas(head)
     for media_type in sorted(head_schemas.keys() - base_schemas.keys()):
@@ -379,11 +429,11 @@ def _compare_operations(base: dict, head: dict) -> list[DiffFinding]:
     head_ops = _operation_map(head)
     for op_key in sorted(head_ops.keys() - base_ops.keys()):
         findings.append(
-            _finding(DiffImpact.ADDITIVE, "openapi.paths", op_key, "operation added", None, head_ops[op_key])
+            _finding(DiffImpact.ADDITIVE, _op_area(op_key), op_key, "operation added", None, head_ops[op_key])
         )
     for op_key in sorted(base_ops.keys() - head_ops.keys()):
         findings.append(
-            _finding(DiffImpact.BREAKING, "openapi.paths", op_key, "operation removed", base_ops[op_key], None)
+            _finding(DiffImpact.BREAKING, _op_area(op_key), op_key, "operation removed", base_ops[op_key], None)
         )
     for op_key in sorted(base_ops.keys() & head_ops.keys()):
         base_op = base_ops[op_key]
