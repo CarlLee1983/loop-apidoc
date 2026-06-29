@@ -26,6 +26,11 @@ class Issue(BaseModel):
     evidence: str
     suggested_fix: str
     auto_fixable: bool = False
+    # 選填的結構化修正路由(供 agent 校正迴圈直接定位要改哪個檔/哪個欄位,
+    # 不必再從自由文字 location 推斷;validator 僅在映射確定時填寫,否則維持 None)。
+    target_file: str | None = None  # "inventory.json" | "endpoints/" | "integration.json"
+    field_path: str | None = None  # 進入該檔的 JSON-pointer 式路徑
+    requery_scope: str | None = None  # 有界的重讀提示(來源段落/endpoint ref/契約區塊)
 
 
 class ValidationReport(BaseModel):

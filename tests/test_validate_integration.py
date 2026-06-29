@@ -68,6 +68,47 @@ def test_signal_word_without_crypto_is_required_info_missing():
     assert IssueCode.REQUIRED_INFO_MISSING in codes
 
 
+def test_signal_gap_routes_to_integration_crypto():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        operational=[OperationalEntry(status=PlanItemStatus.SUPPORTED, topic="安全", detail="請以 AES 加密 TradeInfo")],
+        integration=IntegrationContract(),
+    )
+    issue = next(i for i in check_integration(plan, _result({}))
+                 if i.code is IssueCode.REQUIRED_INFO_MISSING)
+    assert issue.target_file == "integration.json"
+    assert issue.field_path == "crypto"
+    assert issue.requery_scope
+
+
+def test_dangling_operation_ref_routes_to_test_case_field():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(
+            test_cases=[ContractTestCase(**_cited(name="t", operation_ref="paths./ghost.post"))]
+        ),
+    )
+    issue = next(i for i in check_integration(plan, _result({"paths": {}}))
+                 if i.code is IssueCode.OUTPUT_MISMATCH)
+    assert issue.target_file == "integration.json"
+    assert issue.field_path == "test_cases.t.operation_ref"
+
+
+def test_dangling_payload_ref_routes_to_callback_field():
+    from loop_apidoc.plan.models import Callback
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(
+            callbacks=[Callback(**_cited(name="cb", payload_ref="schemas.Ghost Schema"))]
+        ),
+    )
+    openapi = {"components": {"schemas": {}}, "paths": {}}
+    issue = next(i for i in check_integration(plan, _result(openapi))
+                 if i.code is IssueCode.OUTPUT_MISMATCH)
+    assert issue.target_file == "integration.json"
+    assert issue.field_path == "callbacks.cb.payload_ref"
+
+
 def test_no_mechanics_no_signal_is_clean():
     plan = NormalizationPlan(notebook_url="x")
     assert check_integration(plan, _result({})) == []

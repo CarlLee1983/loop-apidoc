@@ -15,7 +15,10 @@ from loop_apidoc.validate.models import Issue, IssueCode, Severity
 _SIGNAL_WORDS = ("加密", "簽章", "AES", "HashKey", "HashIV", "SHA256")
 
 
-def _issue(code: IssueCode, location: str, evidence: str, fix: str, *, fixable: bool = False) -> Issue:
+def _issue(code: IssueCode, location: str, evidence: str, fix: str, *,
+           fixable: bool = False, target_file: str | None = None,
+           field_path: str | None = None,
+           requery_scope: str | None = None) -> Issue:
     return Issue(
         code=code,
         severity=Severity.ERROR,
@@ -23,6 +26,9 @@ def _issue(code: IssueCode, location: str, evidence: str, fix: str, *, fixable: 
         evidence=evidence,
         suggested_fix=fix,
         auto_fixable=fixable,
+        target_file=target_file,
+        field_path=field_path,
+        requery_scope=requery_scope,
     )
 
 
@@ -89,6 +95,9 @@ def _refs(contract: IntegrationContract, openapi: dict) -> list[Issue]:
                         f"payload_ref 指向不存在的 schema:{ref}",
                         "更正 payload_ref 或補上對應 schema",
                         fixable=True,
+                        target_file="integration.json",
+                        field_path=f"callbacks.{cb.name}.payload_ref",
+                        requery_scope=f"callbacks.{cb.name}",
                     )
                 )
     for case in contract.test_cases:
@@ -104,6 +113,9 @@ def _refs(contract: IntegrationContract, openapi: dict) -> list[Issue]:
                         f"operation_ref 指向不存在的 operation:{ref}",
                         "更正 operation_ref 至既有 paths.{path}.{method}",
                         fixable=True,
+                        target_file="integration.json",
+                        field_path=f"test_cases.{case.name}.operation_ref",
+                        requery_scope=f"test_cases.{case.name}",
                     )
                 )
     return issues
@@ -123,6 +135,9 @@ def _signal_gap(plan: NormalizationPlan, contract: IntegrationContract | None) -
                 "integration.crypto",
                 f"來源出現「{hit}」訊號詞,但契約未抽到任何加解密/簽章機制",
                 "重讀相關來源段落,補上 crypto 細節後重跑 assemble",
+                target_file="integration.json",
+                field_path="crypto",
+                requery_scope=f"來源中出現「{hit}」的加解密/簽章段落",
             )
         ]
     return []

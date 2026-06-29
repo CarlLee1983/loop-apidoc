@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        # The full suite includes tests/test_benchmarks.py. Benchmark *case* runs
+        # SKIP in CI (sources/ are operator-provided and gitignored), but the
+        # discovery guard test_benchmark_harness_discovers_cases still runs and
+        # FAILS if any required benchmark case is lost — so coverage can't silently
+        # go vacuous. See docs/RELEASE_CHECKLIST.md for what needs local sources.
+        run: uv run pytest

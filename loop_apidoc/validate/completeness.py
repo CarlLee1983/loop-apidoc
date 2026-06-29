@@ -5,9 +5,12 @@ from loop_apidoc.validate.models import Issue, IssueCode, Severity
 
 
 def _issue(code: IssueCode, severity: Severity, location: str,
-           evidence: str, fix: str) -> Issue:
+           evidence: str, fix: str, *, target_file: str | None = None,
+           field_path: str | None = None,
+           requery_scope: str | None = None) -> Issue:
     return Issue(code=code, severity=severity, location=location,
-                 evidence=evidence, suggested_fix=fix)
+                 evidence=evidence, suggested_fix=fix, target_file=target_file,
+                 field_path=field_path, requery_scope=requery_scope)
 
 
 def _endpoint_location(endpoint, index: int) -> str:
@@ -41,13 +44,23 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
     issues: list[Issue] = []
     for index, endpoint in enumerate(plan.endpoints):
         location = _endpoint_location(endpoint, index)
+        # Route every endpoint-level gap to the endpoints/ dir + the offending
+        # field, and reread only that endpoint's source section (its path.method).
+        # We deliberately do NOT name a specific ep<N>.json: the plan index is not
+        # a reliable filename — _dedupe_endpoints collapses duplicate method+path
+        # (shifting indices) and the assemble loader reads endpoints/*.json in
+        # lexicographic glob order (ep10 before ep2 at 11+ files). The agent maps
+        # the file by requery_scope (path.method), which is unambiguous.
+        target_file = "endpoints/"
         # An endpoint with a method but no path is a valid OpenAPI 3.1 webhook
         # (an async callback delivered to a caller-defined URL), so only a
         # missing method — or a path with no method — is incomplete.
         if not endpoint.method:
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, Severity.ERROR, location,
-                "endpoint 缺少 HTTP method 或 path", "由來源補上 method 與 path"))
+                "endpoint 缺少 HTTP method 或 path", "由來源補上 method 與 path",
+                target_file=target_file, field_path="method",
+                requery_scope=location))
         if not endpoint.responses:
             # A path-less webhook (async callback) often has no source-defined
             # receiver-response; require responses strictly only for real paths,
@@ -55,15 +68,21 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
             severity = Severity.ERROR if endpoint.path else Severity.WARNING
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, severity, location,
-                "endpoint 沒有任何 response 定義", "由來源補上 response status 與 schema"))
+                "endpoint 沒有任何 response 定義", "由來源補上 response status 與 schema",
+                target_file=target_file, field_path="responses",
+                requery_scope=location))
         if not endpoint.summary:
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, Severity.WARNING, location,
-                "endpoint 缺少 operation 說明", "由來源補上 operation 說明"))
+                "endpoint 缺少 operation 說明", "由來源補上 operation 說明",
+                target_file=target_file, field_path="summary",
+                requery_scope=location))
         if not endpoint.examples:
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, Severity.WARNING, location,
-                "endpoint 缺少 request/response 範例", "由來源補上範例"))
+                "endpoint 缺少 request/response 範例", "由來源補上範例",
+                target_file=target_file, field_path="examples",
+                requery_scope=location))
 
     if not plan.security_schemes and not _has_auth_marker(plan):
         issues.append(_issue(

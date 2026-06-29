@@ -4,7 +4,15 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
+from loop_apidoc.agentcli.input_schema import (
+    EndpointDetailInput,
+    IntegrationInput,
+    InventoryInput,
+    first_error,
+)
 from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.extraction.stages import QueryKind
 from loop_apidoc.extraction.store import ExtractionStore
@@ -22,6 +30,10 @@ class AssembleInputError(ValueError):
     """agent 產出的擷取檔缺漏或格式錯誤時拋出(fail loudly)。"""
 
 
+class RunDirectoryCollisionError(RuntimeError):
+    """目標 run 目錄已存在時拋出,避免兩個 run 的輸出混在同一目錄(fail loudly)。"""
+
+
 def load_extraction_inputs(
     extraction_dir: Path,
 ) -> tuple[dict, list[str], dict | None]:
@@ -36,6 +48,11 @@ def load_extraction_inputs(
         raise AssembleInputError(f"inventory.json 不是合法 JSON:{exc}") from exc
     if not isinstance(inventory, dict):
         raise AssembleInputError("inventory.json 必須是一個 JSON 物件")
+    try:
+        InventoryInput.model_validate(inventory)
+    except ValidationError as exc:
+        raise AssembleInputError(
+            f"inventory.json 欄位 {first_error(exc)}") from exc
 
     endpoint_texts: list[str] = []
     endpoints_dir = extraction_dir / "endpoints"
@@ -43,10 +60,15 @@ def load_extraction_inputs(
         for path in sorted(endpoints_dir.glob("*.json")):
             text = path.read_text(encoding="utf-8")
             try:
-                json.loads(text)
+                obj = json.loads(text)
             except json.JSONDecodeError as exc:
                 raise AssembleInputError(
                     f"{path.name} 不是合法 JSON:{exc}") from exc
+            try:
+                EndpointDetailInput.model_validate(obj)
+            except ValidationError as exc:
+                raise AssembleInputError(
+                    f"{path.name} 欄位 {first_error(exc)}") from exc
             endpoint_texts.append(text)
 
     integration: dict | None = None
@@ -60,6 +82,11 @@ def load_extraction_inputs(
             ) from exc
         if not isinstance(integration, dict):
             raise AssembleInputError("integration.json 必須是 JSON 物件")
+        try:
+            IntegrationInput.model_validate(integration)
+        except ValidationError as exc:
+            raise AssembleInputError(
+                f"integration.json 欄位 {first_error(exc)}") from exc
 
     return inventory, endpoint_texts, integration
 
@@ -101,7 +128,12 @@ def run_assemble_pipeline(
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
 
     run_dir = output_root / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    output_root.mkdir(parents=True, exist_ok=True)
+    try:
+        run_dir.mkdir(exist_ok=False)
+    except FileExistsError as exc:
+        raise RunDirectoryCollisionError(
+            f"run 目錄已存在,拒絕覆寫:{run_dir}") from exc
 
     manifest = build_manifest(
         sources_root=sources_root, urls=urls or [], generated_at=generated_at)

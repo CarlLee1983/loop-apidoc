@@ -40,7 +40,7 @@ The four CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `ass
 | Package | Responsibility |
 | --- | --- |
 | `loop_apidoc/manifest/` | scan local sources + build `manifest.json` |
-| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written JSON → plan→generate→validate, `AssembleInputError`), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written JSON → plan→generate→validate, `AssembleInputError` / `RunDirectoryCollisionError`), `input_schema.py` (typed pydantic guards that validate agent-written extraction JSON at the assemble boundary, before any run dir is created), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/extraction/` | shared models + utilities (models, stages, questions, store, jsonblock) used by the agent extraction |
 | `loop_apidoc/plan/` | normalization plan + source-match classification |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation |
@@ -73,3 +73,5 @@ Validation issues are classified, not blindly retried. There is **no determinist
 - Design spec: `docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`
 - Stage implementation plans: `docs/superpowers/plans/`
 - Contributing: `CONTRIBUTING.md`
+- CI workflow: `.github/workflows/ci.yml`; release checklist: `docs/RELEASE_CHECKLIST.md`
+- Pipeline follow-ups (post-benchmark improvements): `docs/PIPELINE_FOLLOWUPS.md`

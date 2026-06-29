@@ -103,6 +103,7 @@ def assemble(
     """從 agent 產出的擷取 JSON 組裝:manifest→plan→generate→validate(不擷取)。"""
     from loop_apidoc.agentcli.assemble import (
         AssembleInputError,
+        RunDirectoryCollisionError,
         run_assemble_pipeline,
     )
 
@@ -118,6 +119,9 @@ def assemble(
         )
     except AssembleInputError as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    except RunDirectoryCollisionError as exc:
+        typer.echo(f"run 目錄衝突:{exc}", err=True)
         raise typer.Exit(code=2) from exc
 
     if json_out:

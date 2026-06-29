@@ -117,7 +117,7 @@ uv run loop-apidoc assemble \
 
 ```text
 output/
-└── <run-id>/                       # run-id 格式:%Y%m%dT%H%M%SZ
+└── <run-id>/                       # run-id 格式:%Y%m%dT%H%M%S.%fZ(含微秒,避免同秒衝突)
     ├── manifest.json               # 來源 manifest
     ├── extraction/                 # 擷取稽核軌跡(非可重跑的原始輸入)
     │   ├── queries.jsonl           # 每輪查詢紀錄
