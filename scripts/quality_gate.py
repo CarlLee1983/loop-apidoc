@@ -13,6 +13,8 @@ from pathlib import Path
 
 Runner = Callable[[list[str]], subprocess.CompletedProcess[str]]
 
+STEP_TIMEOUT_SECONDS = 600
+
 BENCHMARK_ROOT = Path("benchmarks")
 REQUIRED_BENCHMARK_CASES = (
     "newebpay-mpg",
@@ -57,7 +59,7 @@ class ScenarioResult:
 
 
 def _default_runner(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+    return subprocess.run(cmd, text=True, capture_output=True, timeout=STEP_TIMEOUT_SECONDS)
 
 
 def _excerpt(text: str, limit: int = 1200) -> str:
@@ -97,7 +99,17 @@ def has_benchmark_skips(stdout: str) -> bool:
 
 def run_step(name: str, cmd: list[str], *, runner: Runner = _default_runner) -> subprocess.CompletedProcess[str]:
     print(f"[quality-gate] {name}: {' '.join(cmd)}")
-    result = runner(cmd)
+    try:
+        result = runner(cmd)
+    except subprocess.TimeoutExpired as exc:
+        timeout_val = exc.timeout
+        raise QualityGateFailure(
+            f"{name} timed out after {timeout_val}s"
+        ) from exc
+    except OSError as exc:
+        raise QualityGateFailure(
+            f"{name} could not be started: {exc}"
+        ) from exc
     if result.returncode != 0:
         raise QualityGateFailure(
             f"{name} failed with exit code {result.returncode}\n"
@@ -163,6 +175,8 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
             signal = f"ok={payload['ok']} status={payload['status']}"
         except json.JSONDecodeError:
             pass
+        # cleanup_ok asserts the run dir was created on successful assemble
+        # (couples to assemble's run-dir layout by design)
         results.append(ScenarioResult("ADV-001", res.returncode, 0, signal, "ok=True", out.exists()))
 
         sources, extraction, out = _write_valid_fixture(root / "bad-json")
@@ -212,19 +226,23 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
         os.symlink(secret, srcroot / "leak.md")
         res = runner(["uv", "run", "loop-apidoc", "manifest", "--sources", str(srcroot)])
         signal = res.stdout
+        # Also verify the secret bytes did NOT leak into the manifest output
+        secret_absent = "TOP SECRET DO NOT READ" not in res.stdout
         results.append(ScenarioResult(
             "ADV-006", res.returncode, 0, signal,
-            '"status": "unreadable"', True))
+            '"status": "unreadable"', secret_absent))
 
     return results
 
 
 def command_plan(*, strict_local: bool) -> list[tuple[str, list[str]]]:
-    return [
+    plan: list[tuple[str, list[str]]] = [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
         ("pytest", ["uv", "run", "pytest"]),
-        ("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]),
     ]
+    if strict_local:
+        plan.append(("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]))
+    return plan
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -252,7 +270,16 @@ def main(argv: list[str] | None = None) -> int:
                     "must execute where local sources are present"
                 )
         print("[quality-gate] adversarial CLI smoke")
-        scenario_results = run_adversarial_cli_smoke()
+        try:
+            scenario_results = run_adversarial_cli_smoke()
+        except subprocess.TimeoutExpired as exc:
+            raise QualityGateFailure(
+                f"adversarial CLI smoke timed out after {exc.timeout}s"
+            ) from exc
+        except OSError as exc:
+            raise QualityGateFailure(
+                f"adversarial CLI smoke could not be started: {exc}"
+            ) from exc
         failed = [result for result in scenario_results if not result.ok]
         if failed:
             lines = [

@@ -45,6 +45,14 @@ def test_command_plan_default_mode():
     assert plan == [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
         ("pytest", ["uv", "run", "pytest"]),
+    ]
+
+
+def test_command_plan_strict_local_includes_benchmarks():
+    plan = quality_gate.command_plan(strict_local=True)
+    assert plan == [
+        ("ruff", ["uv", "run", "ruff", "check", "."]),
+        ("pytest", ["uv", "run", "pytest"]),
         ("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]),
     ]
 
@@ -82,6 +90,22 @@ def test_has_benchmark_skips_detects_skip_signals(stdout):
 
 def test_has_benchmark_skips_accepts_no_skip_output():
     assert not quality_gate.has_benchmark_skips("11 passed in 0.20s\n...........")
+
+
+def test_run_step_raises_quality_gate_failure_on_timeout():
+    import subprocess
+
+    cmd = ["uv", "run", "pytest"]
+
+    def runner(c: list[str]) -> FakeResult:
+        raise subprocess.TimeoutExpired(c, 600)
+
+    with pytest.raises(quality_gate.QualityGateFailure) as exc:
+        quality_gate.run_step("pytest", cmd, runner=runner)
+
+    message = str(exc.value)
+    assert "pytest" in message
+    assert "TimeoutExpired" not in type(exc.value).__name__
 
 
 def test_scenario_result_requires_expected_exit_and_signal():
