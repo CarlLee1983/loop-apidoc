@@ -82,6 +82,62 @@ def validate(
 
 
 @app.command()
+def diff(
+    base: Path = typer.Option(
+        ...,
+        "--base",
+        help="舊版/基準 run 目錄",
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+    ),
+    head: Path = typer.Option(
+        ...,
+        "--head",
+        help="新版/待比較 run 目錄",
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        help="diff report 輸出目錄；省略時寫入 <head>/diff",
+    ),
+) -> None:
+    """比較兩個已完成 run 目錄並輸出版本差異報告。"""
+    from loop_apidoc.diff import (
+        DiffInputError,
+        build_diff_report,
+        load_run_artifacts,
+        write_reports,
+    )
+
+    output_dir = output or (head / "diff")
+    if output_dir.exists() and output_dir.is_file():
+        typer.echo(f"diff input error: output path is a file: {output_dir}", err=True)
+        raise typer.Exit(code=2)
+
+    try:
+        base_artifacts = load_run_artifacts(base)
+        head_artifacts = load_run_artifacts(head)
+        report = build_diff_report(base_artifacts, head_artifacts)
+    except DiffInputError as exc:
+        typer.echo(f"diff input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    write_reports(report, output_dir)
+    typer.echo(
+        "diff COMPLETE: "
+        f"breaking {report.summary['breaking']}，"
+        f"additive {report.summary['additive']}，"
+        f"changed {report.summary['changed']}，"
+        f"source_only {report.summary['source_only']}；"
+        f"報告寫入 {output_dir / 'report.json'}"
+    )
+
+
+@app.command()
 def assemble(
     sources: Path = typer.Option(
         ..., "--sources", help="本機來源目錄",

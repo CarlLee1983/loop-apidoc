@@ -89,6 +89,19 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 `<run-dir>/validation/`。通過回傳 `0`,有 ERROR 級問題回傳 `1`。
 
+### `diff` — 比較兩次 run 的版本差異
+
+```bash
+uv run loop-apidoc diff --base ./output/<old-run> --head ./output/<new-run>
+```
+
+比較兩個已完成 run directory，依 downstream impact 輸出差異報告。預設寫入
+`<new-run>/diff/report.{json,md}`；可用 `--output` 指定其他目錄。差異分類為
+`breaking`、`additive`、`changed`、`source_only`，比較範圍包含
+`openapi.yaml`、`integration-contract.json`、`provenance.json`、
+`validation/report.json` 與 `manifest.json`。第一版不比較 Markdown guide 或
+generated examples。
+
 ### `preprocess` — PDF 轉高保真 markdown(可選)
 
 ```bash
