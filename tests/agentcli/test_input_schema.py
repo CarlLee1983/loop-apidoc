@@ -75,6 +75,20 @@ def test_malformed_endpoint_detail_is_rejected(tmp_path):
     assert "parameters" in str(exc.value)
 
 
+def test_generator_supported_param_field_keys_are_allowed(tmp_path):
+    # 產生器(openapi.py)會讀 param/field 上的 enum/location/schema 作為 in/type 的
+    # 後備鍵;這些是合法 English 鍵(非本地化錯誤),嚴格守門不可誤擋。
+    inv = json.loads(json.dumps(_INVENTORY))
+    inv["schemas"][0]["fields"] = [
+        {"name": "status", "enum": ["A", "B"], "schema": "string"}]
+    ep = json.loads(json.dumps(_ENDPOINT))
+    ep["parameters"] = [
+        {"name": "q", "location": "query", "schema": "string", "enum": ["x"]}]
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=inv, endpoint=ep)
+    load_extraction_inputs(extraction)  # 不應拋出
+
+
 def test_x_extension_key_on_field_is_allowed(tmp_path):
     # x-conditional-required 等 x- 擴充鍵屬合法(benchmark 實際使用),不可誤擋。
     ok = json.loads(json.dumps(_INVENTORY))

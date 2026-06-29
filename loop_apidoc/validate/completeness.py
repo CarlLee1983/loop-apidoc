@@ -44,10 +44,14 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
     issues: list[Issue] = []
     for index, endpoint in enumerate(plan.endpoints):
         location = _endpoint_location(endpoint, index)
-        # Endpoints are written one-per-file in plan order as endpoints/ep<N>.json;
-        # route every endpoint-level gap to its source file and field, and reread
-        # only that endpoint's source section (its path.method).
-        target_file = f"endpoints/ep{index}.json"
+        # Route every endpoint-level gap to the endpoints/ dir + the offending
+        # field, and reread only that endpoint's source section (its path.method).
+        # We deliberately do NOT name a specific ep<N>.json: the plan index is not
+        # a reliable filename — _dedupe_endpoints collapses duplicate method+path
+        # (shifting indices) and the assemble loader reads endpoints/*.json in
+        # lexicographic glob order (ep10 before ep2 at 11+ files). The agent maps
+        # the file by requery_scope (path.method), which is unambiguous.
+        target_file = "endpoints/"
         # An endpoint with a method but no path is a valid OpenAPI 3.1 webhook
         # (an async callback delivered to a caller-defined URL), so only a
         # missing method — or a path with no method — is incomplete.

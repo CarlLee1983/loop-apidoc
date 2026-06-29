@@ -24,9 +24,18 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 
+# Keys the generator (loop_apidoc/generate/openapi.py) defensively reads on a
+# parameter/field but are not part of the documented contract: `location` (an
+# alias for `in`), `schema` (a fallback for `type`), and `enum` (an inline enum).
+# They are legitimate English keys — not the localized-key mistake this guard
+# targets — so tolerate them rather than hard-rejecting before the run dir exists.
+_TOLERATED_KEYS = frozenset({"location", "schema", "enum"})
+
+
 class _StrictEntry(BaseModel):
-    """Forbids unknown keys but tolerates `x-` extension keys (stripped before
-    validation, since these models only gate — they do not feed the pipeline)."""
+    """Forbids unknown keys but tolerates `x-` extension keys and the
+    generator-supported fallback keys (stripped before validation, since these
+    models only gate — they do not feed the pipeline)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -34,7 +43,8 @@ class _StrictEntry(BaseModel):
     @classmethod
     def _drop_extensions(cls, data: Any) -> Any:
         if isinstance(data, dict):
-            return {k: v for k, v in data.items() if not str(k).startswith("x-")}
+            return {k: v for k, v in data.items()
+                    if not str(k).startswith("x-") and k not in _TOLERATED_KEYS}
         return data
 
 

@@ -174,8 +174,9 @@ Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 - `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
 - `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
   `suggested_fix`, plus optional `target_file`/`field_path`/`requery_scope`).
-  **Prefer the structured fields when present**: `target_file` names the exact file
-  to edit (`inventory.json`, `endpoints/ep<N>.json`, or `integration.json`),
+  **Prefer the structured fields when present**: `target_file` names where to edit
+  (`inventory.json`, `integration.json`, or `endpoints/` — the directory, since the
+  exact `ep<N>.json` isn't derivable; match it by `requery_scope`'s path.method),
   `field_path` the field inside it, and `requery_scope` the bounded source area to
   re-read. Fall back to parsing `location` only when these are `null`. Then
   **dispatch a targeted read-only subagent to re-read only that scope** and return

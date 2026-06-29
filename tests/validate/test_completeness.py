@@ -68,9 +68,10 @@ def test_no_responses_is_error():
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.ERROR)
 
 
-def test_missing_endpoint_detail_routes_to_endpoint_file():
-    # The second endpoint(index 1)缺 responses → 結構化提示應指向 endpoints/ep1.json
-    # 的 responses 欄位,並以該 endpoint 的 path.method 作為重讀範圍。
+def test_missing_endpoint_detail_routes_to_endpoint_dir_and_path():
+    # 缺 responses 的 endpoint → 結構化提示帶 field_path=responses、以 endpoints/ 為
+    # 目標目錄,並以該 endpoint 的 path.method 作為(可證、唯一)重讀範圍。
+    # 注意:不指向特定 ep<N>.json — plan 順序經 dedup/字典序 glob 後不保證等於檔名編號。
     issues = check_completeness(_plan(endpoints=[
         _endpoint(),
         _endpoint(path="/orders", responses=[]),
@@ -78,7 +79,7 @@ def test_missing_endpoint_detail_routes_to_endpoint_file():
     routed = [i for i in issues if i.field_path == "responses"]
     assert routed, "缺 responses 的 endpoint 應帶 field_path=responses"
     issue = routed[0]
-    assert issue.target_file == "endpoints/ep1.json"
+    assert issue.target_file == "endpoints/"
     assert issue.requery_scope == issue.location == "paths./orders.get"
 
 
