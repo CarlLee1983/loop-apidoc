@@ -23,17 +23,19 @@
 | 4 | 高品質國際 REST 文件 | Stripe API Reference: `https://docs.stripe.com/api` | 標準 REST、auth、request/response、error handling |
 | 5 | Machine-readable baseline | APIs.guru OpenAPI Directory: `https://github.com/APIs-guru/openapi-directory` | 對照既有 OpenAPI 規格,檢查 schema/operation 基準 |
 
-### 第二輪:擴充覆蓋
+### 第二輪:擴充覆蓋 — ✅ 完成(5/5 類,2026-06-29)
 
-第一輪穩定後再補 3-5 份。
+第一輪穩定後再補 3-5 份。五類覆蓋全數完成。
 
-| 類型 | 建議來源 | 驗證目的 |
-| --- | --- | --- |
-| 表格密集 PDF | 金流或物流官方 PDF | PDF `preprocess`、欄位表、錯誤碼表 |
-| callback / webhook 文件 | 支付、訊息或訂閱服務官方 webhook 文件 | async flow、驗簽、重送規則 |
-| 多產品共用 endpoint | 金流整合文件常見同一路徑不同交易類型 | endpoint merge、operationId、文件可讀性 |
-| 文件不完整案例 | 官方文件中刻意挑缺 base URL、缺 response 或簽章描述不完整者 | fail-closed、missing、conflict、provenance |
-| 大型企業 API | Cybersource API Reference: `https://developer.cybersource.com/api-reference-assets/index.html` | 大型文件、複雜 schema、範例產出壓力測試 |
+| 類型 | 對應 case | 驗證目的 | 狀態 |
+| --- | --- | --- | --- |
+| 表格密集 PDF | `ecpay-creditcard-pdf` | PDF `preprocess`、欄位表、錯誤碼表 | ✅ PASS(修純簽章 auth 誤判) |
+| callback / webhook 文件 | `github-webhooks` | async flow、驗簽、重送規則 | ✅ PASS(修多 webhook 同源碰撞) |
+| 多產品共用 endpoint | `adyen-payments-multimethod` | endpoint merge、operationId、文件可讀性 | ✅ PASS(`POST /payments` oneOf discriminator,首跑 0 error) |
+| 文件不完整案例 | `paypal-webhooks-incomplete` | fail-closed、missing、conflict、provenance | 🟥 EXPECTED_FAIL(SOURCE_UNVERIFIED 正確擋下越界 schema) |
+| 大型企業 API | `cybersource-payments` | 大型文件、複雜 schema、範例產出壓力測試 | ✅ PASS(18 schema/40+ 欄位,首跑 0 error) |
+
+> 來源型態:PDF(綠界 V5.6.1)/ WebFetch HTML(GitHub webhooks)/ 官方 OpenAPI curl(Adyen Checkout v71)/ 官方頁(PayPal,刻意不完整)/ SDK codegen md(CyberSource)。原始 `sources/` gitignore,只入庫 `extraction/` + `expected/` + `notes.md`。
 
 ## 目錄結構
 
@@ -83,6 +85,7 @@ benchmarks/
     "required": true,
     "crypto_required": true,
     "callbacks_required": true,
+    "field_conditions_min": 1,
     "test_cases_min": 1
   },
   "critical_operations": [
@@ -267,3 +270,40 @@ uv run loop-apidoc validate --output <run_dir>
 - 至少 1 份金流簽章 case 產出 `integration-contract.json` 與 request examples。
 - 至少 1 份缺漏/不完整 case 能正確 fail-closed。
 - 已整理出前 3 個最影響「生成可開發套件/應用」的缺口。
+
+## 執行結果(兩輪完結)
+
+### 第一輪 — ✅ 完成(5/5 PASS)
+
+`newebpay-mpg`(台灣金流簽章 PDF)、`line-pay-online-v3`(HMAC REST)、`tappay-backend`
+(backend payment)、`stripe-basic-rest`(高品質 REST)、`apis-guru-baseline`
+(machine-readable)全數 PASS。初跑揭出並修復 **9 項 pipeline 缺陷**(簽章接回
+false-positive、AES 模板硬接 SHA256、簽章 payload 選錯欄位、webhook 強制 responses、
+schemas.fields 中文 key 遺失 type、公開 API no-auth 誤判、payload_ref 未 sanitize、
+http securityScheme 缺 scheme 等),全數 TDD。
+
+### 第二輪 — ✅ 完成(5/5 類)
+
+見上方「第二輪:擴充覆蓋」表。4 PASS + 1 EXPECTED_FAIL,新增修復 **3 項 pipeline 缺陷**
+(多 webhook 同源碰撞、webhook_name 切分、純簽章 auth 誤判),`adyen` 與 `cybersource`
+首跑即 0 error(pipeline 已成熟,未揭新缺陷)。
+
+### 自動回歸 harness
+
+`tests/test_benchmarks.py`:對每個 case 用**已 commit 的 `extraction/`** 重跑確定性的
+assemble→validate,比對 `expected/{validation.expect.json,minimum.json}` —
+斷言 PASS/FAIL、**完整 issue-class map 全等**(error 與 warning 漂移皆為回歸訊號)、
+OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes/**base_urls** 下限、
+**error_codes** 下限、critical_operations、provenance/examples/integration-contract
+存在,以及 integration 子欄位(`crypto_required`/`callbacks_required` 正向、
+`field_conditions_min`/`test_cases_min` floor)。**需本機 `sources/`**(gitignore)才
+標 verified,故缺來源的 case 自動 skip。現況:**10 case + 守門 = 11 passed,全套 348 passed**。
+
+### 已知忠實限制(後續 generator 改進候選)
+
+- **oneOf / discriminator 原生支援**:`adyen-payments-multimethod` 的單一 `/payments`
+  以 `paymentMethod.type` 分流 40+ 付款方式;pipeline 目前不產生原生 OpenAPI
+  `oneOf`/`discriminator`,改以 object + 具名成員 schema + 描述標 discriminator 對應
+  呈現(忠實入 `missing`,非 fail)。為兩輪後最主要的單一改進方向。
+- pipeline endpoint method 比對大小寫敏感(inventory 小寫 vs endpoint 大寫 → 重複端點;
+  觀察未修)。
