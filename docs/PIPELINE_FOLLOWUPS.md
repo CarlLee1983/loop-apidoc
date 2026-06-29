@@ -163,7 +163,14 @@ operator-provided and gitignored.
 - CI fails if benchmark case discovery becomes empty or loses required cases.
 - Release checklist documents which benchmark checks require local source files.
 
-## 6. Quality-Gate `Runner` Type Alias Too Narrow — open
+## 6. Quality-Gate `Runner` Type Alias Too Narrow — resolved (2026-06-29)
+
+> Resolved: `Runner` now returns a structural `_RunResult` Protocol
+> (`returncode`/`stdout`/`stderr`); `_default_runner`'s `CompletedProcess` and the
+> tests' `FakeResult` both satisfy it. `pyright scripts/quality_gate.py
+> tests/test_quality_gate.py` reports 0 errors (was 3).
+
+
 
 ### Current State
 
@@ -205,7 +212,15 @@ day a type-check step is added (which the quality gate itself might eventually g
   and `tests/test_quality_gate.py` for the runner contract.
 - Existing tests still pass with no runtime change.
 
-## 7. `has_benchmark_skips` Char-Set Heuristic False Positive — open
+## 7. `has_benchmark_skips` Char-Set Heuristic False Positive — resolved (2026-06-29)
+
+> Resolved: the progress-dots path now requires the line to be dominated by `.`
+> (`stripped.count(".") * 2 >= len(stripped)`), so prose words like `"esp"` return
+> `False` while genuine progress lines (`"........s.."`) still return `True`. A
+> docstring documents the `pytest -q` assumption. Regression test:
+> `test_has_benchmark_skips_rejects_non_pytest_word`.
+
+
 
 ### Current State
 
