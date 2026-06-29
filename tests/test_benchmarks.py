@@ -14,6 +14,7 @@ the committed `extraction/` + `expected/` are enough to define the assertions.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,9 +43,14 @@ def _has_sources(case: Path) -> bool:
     return src.is_dir() and any(src.iterdir())
 
 
-def _expected_error_count(expect: dict) -> int:
-    classes = expect.get("current_issue_classes", {}) or {}
-    return sum(v for k, v in classes.items() if k.endswith(".error"))
+def _issue_classes(report) -> dict[str, int]:
+    """Full classified issue tally as `{CODE.severity: count}` — the same shape as
+    each case's `validation.expect.json.current_issue_classes`. Asserting the whole
+    map (not just errors) makes a drift in *warning* counts a real regression signal."""
+    counts: Counter[str] = Counter()
+    for issue in report.issues:
+        counts[f"{issue.code.value}.{issue.severity.value}"] += 1
+    return dict(counts)
 
 
 @pytest.mark.parametrize("case", _cases(), ids=[c.name for c in _cases()])
@@ -74,11 +80,14 @@ def test_benchmark_case(case: Path, tmp_path: Path) -> None:
         f"{[(i.code.value, i.location) for i in report.errors()]}"
     )
 
-    # --- 2. error issue count matches (warnings are allowed to drift) ---
-    want_errors = _expected_error_count(expect)
-    assert len(report.errors()) == want_errors, (
-        f"{case.name}: expected {want_errors} error(s), got "
-        f"{[(i.code.value, i.location) for i in report.errors()]}"
+    # --- 2. full classified issue map matches (errors AND warnings) ---
+    # The whole {CODE.severity: count} map must match the case's declaration, so a
+    # drift in warning counts (not just errors) is caught as a regression.
+    want_classes = expect.get("current_issue_classes", {}) or {}
+    got_classes = _issue_classes(report)
+    assert got_classes == want_classes, (
+        f"{case.name}: issue-class map drift — expected {want_classes}, got {got_classes} "
+        f"(detail: {[(i.code.value, i.severity.value, i.location) for i in report.issues]})"
     )
 
     # --- 3. OpenAPI 3.1 is structurally valid ---
@@ -90,12 +99,15 @@ def test_benchmark_case(case: Path, tmp_path: Path) -> None:
     webhooks = doc.get("webhooks", {}) or {}
     schemas = (doc.get("components", {}) or {}).get("schemas", {}) or {}
     sec = (doc.get("components", {}) or {}).get("securitySchemes", {}) or {}
+    servers = doc.get("servers", []) or []
 
     # --- 4. structural minimums (>= floor; harness must not silently regress) ---
     assert len(paths) >= must.get("endpoints_min", 0), f"{case.name}: too few paths"
     assert len(webhooks) >= must.get("webhooks_min", 0), f"{case.name}: too few webhooks"
     assert len(schemas) >= must.get("schemas_min", 0), f"{case.name}: too few schemas"
     assert len(sec) >= must.get("security_schemes_min", 0), f"{case.name}: too few securitySchemes"
+    # base_urls = OpenAPI servers (0 is valid for webhook-only specs, e.g. github/paypal)
+    assert len(servers) >= must.get("base_urls", 0), f"{case.name}: too few servers/base URLs"
 
     # --- 5. critical operations are present (paths.{path}.{method}) ---
     for ref in minimum.get("critical_operations", []):
@@ -106,6 +118,17 @@ def test_benchmark_case(case: Path, tmp_path: Path) -> None:
         )
 
     run_dir = Path(result.run_dir)
+
+    # integration-contract is also where error codes + integration mechanics land;
+    # load once (absent for cases with no integration source).
+    ic_path = run_dir / "integration-contract.json"
+    ic = json.loads(ic_path.read_text("utf-8")) if ic_path.is_file() else {}
+
+    # error-code floor (inventory.errors → integration-contract.error_codes)
+    assert len(ic.get("error_codes", [])) >= must.get("error_codes_min", 0), (
+        f"{case.name}: too few error codes "
+        f"({len(ic.get('error_codes', []))} < {must.get('error_codes_min', 0)})"
+    )
 
     # --- 6. provenance present and covers something ---
     if must.get("provenance"):
@@ -118,10 +141,26 @@ def test_benchmark_case(case: Path, tmp_path: Path) -> None:
         ex = run_dir / "examples"
         assert ex.is_dir() and any(ex.rglob("request.*")), f"{case.name}: no examples generated"
 
-    # --- 8. integration-contract present iff the case declares integration ---
-    if (minimum.get("integration", {}) or {}).get("required"):
-        assert (run_dir / "integration-contract.json").is_file(), (
+    # --- 8. integration-contract present + meets declared floors ---
+    integ = minimum.get("integration", {}) or {}
+    if integ.get("required"):
+        assert ic_path.is_file(), (
             f"{case.name}: integration required but integration-contract.json missing"
+        )
+        # crypto/callbacks are asserted only in the positive direction: required=True
+        # demands ≥1 entry. required=False does NOT mean empty (e.g. paypal declares
+        # callbacks_required=False yet legitimately carries crypto/callbacks).
+        if integ.get("crypto_required"):
+            assert ic.get("crypto"), f"{case.name}: crypto required but none in integration-contract"
+        if integ.get("callbacks_required"):
+            assert ic.get("callbacks"), f"{case.name}: callbacks required but none in integration-contract"
+        assert len(ic.get("field_conditions", [])) >= integ.get("field_conditions_min", 0), (
+            f"{case.name}: too few field_conditions "
+            f"({len(ic.get('field_conditions', []))} < {integ.get('field_conditions_min', 0)})"
+        )
+        assert len(ic.get("test_cases", [])) >= integ.get("test_cases_min", 0), (
+            f"{case.name}: too few test_cases "
+            f"({len(ic.get('test_cases', []))} < {integ.get('test_cases_min', 0)})"
         )
 
 
