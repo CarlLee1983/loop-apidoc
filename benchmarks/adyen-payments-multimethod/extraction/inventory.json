@@ -98,7 +98,12 @@
           "name": "paymentMethod",
           "type": "object",
           "required": true,
-          "description": "The type and required details of a payment method to use. In the spec this is a `oneOf` union over 40+ payment-method detail objects, selected by the `type` discriminator (e.g. scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ach→AchDetails, klarna, googlepay, ...). This benchmark captures three representative members as named schemas (CardDetails / IdealDetails / ApplePayDetails)."
+          "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+          "discriminator": {
+            "property_name": "type",
+            "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+          },
+          "description": "The type and required details of a payment method, selected by the `type` discriminator (scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ...). The full spec lists 40+ members; three representative ones are captured here as named schemas."
         },
         {
           "name": "channel",
@@ -511,7 +516,6 @@
     }
   ],
   "missing": [
-    "paymentMethod is a oneOf union over 40+ payment-method detail objects; the pipeline does not emit native OpenAPI oneOf/discriminator, so it is represented as an object plus three named member schemas (faithful limitation, not speculation).",
     "Client-side encryption (CSE) algorithm for the encrypted* card fields is not stated in this spec.",
     "Webhook/notification payloads and HMAC signing live in a separate Adyen Notification API, not in the Checkout spec — no callbacks captured here."
   ]

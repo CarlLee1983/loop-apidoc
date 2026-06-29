@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from loop_apidoc.generate.markdown import REQUIRED_MARKDOWN_SECTIONS, build_markdown
+from loop_apidoc.generate.markdown import REQUIRED_MARKDOWN_SECTIONS, build_markdown, _field_line
 from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
@@ -196,3 +196,24 @@ def test_security_scheme_detail_label_not_misleading_name():
     # details 不應標為「名稱：」(與 scheme 自身 name 欄位混淆);改用中性「說明：」
     assert "名稱：`X-API-Key`" not in md
     assert "`X-API-Key`" in md
+
+
+def test_field_line_renders_one_of_members_and_discriminator():
+    field = {
+        "name": "paymentMethod", "type": "object", "required": True,
+        "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+        "discriminator": {"property_name": "type"},
+        "description": "pick one",
+    }
+    line = _field_line("paymentMethod", field)
+    assert "oneOf：CardDetails / IdealDetails / ApplePayDetails" in line
+    assert "判別子 `type`" in line
+    assert "型別 `object`" not in line
+    assert "必填" in line
+    assert "— pick one" in line
+
+
+def test_field_line_without_one_of_still_shows_type():
+    line = _field_line("amount", {"name": "amount", "type": "object"})
+    assert "型別 `object`" in line
+    assert "oneOf" not in line

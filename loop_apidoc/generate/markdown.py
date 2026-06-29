@@ -78,7 +78,14 @@ def _field_line(name: str, field: dict, location: str | None = None) -> str:
     bits: list[str] = []
     if location:
         bits.append(f"位置 `{location}`")
-    bits.append(f"型別 `{field.get('type') or '-'}`")
+    one_of = field.get("one_of")
+    if one_of:
+        bits.append("oneOf：" + " / ".join(str(m) for m in one_of))
+        disc = field.get("discriminator")
+        if isinstance(disc, dict) and disc.get("property_name"):
+            bits.append(f"判別子 `{disc['property_name']}`")
+    else:
+        bits.append(f"型別 `{field.get('type') or '-'}`")
     if field.get("required"):
         bits.append("必填")
     enum = field.get("enum")

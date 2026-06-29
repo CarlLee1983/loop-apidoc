@@ -191,9 +191,47 @@ def _normalize_media_type(raw: str | None) -> str:
     return "application/json"
 
 
-def _property_schema(field: dict) -> dict:
+def _union_schema(field: dict, name_to_key: dict[str, str]) -> dict | None:
+    """A native OpenAPI `oneOf` (+ optional `discriminator`) for a field the source
+    documents as a union of already-named member schemas. Returns None unless the
+    field carries a truthy `one_of` that resolves to at least one named schema — a
+    dangling `$ref` is never invented (same rule as response `schema_ref`)."""
+    one_of = field.get("one_of")
+    if not one_of:
+        return None
+    members = [
+        {"$ref": f"#/components/schemas/{name_to_key[name]}"}
+        for name in one_of
+        if name in name_to_key
+    ]
+    if not members:
+        return None
+    result: dict = {"oneOf": members}
+    if field.get("description"):
+        result["description"] = field["description"]
+    disc = field.get("discriminator")
+    if isinstance(disc, dict) and disc.get("property_name"):
+        built: dict = {"propertyName": disc["property_name"]}
+        mapping = disc.get("mapping")
+        if isinstance(mapping, dict):
+            resolved = {
+                value: f"#/components/schemas/{name_to_key[target]}"
+                for value, target in mapping.items()
+                if target in name_to_key
+            }
+            if resolved:
+                built["mapping"] = resolved
+        result["discriminator"] = built
+    return result
+
+
+def _property_schema(field: dict, name_to_key: dict[str, str] | None = None) -> dict:
     """One object property fragment from a source field/param dict.
-    Field `description` wins over the raw type hint; `enum` is preserved."""
+    A resolvable `one_of` becomes a native `oneOf` union; otherwise the
+    field `description` wins over the raw type hint and `enum` is preserved."""
+    union = _union_schema(field, name_to_key or {})
+    if union is not None:
+        return union
     prop = _schema_from_type(
         field.get("type") if "type" in field else field.get("schema")
     ) or {}
@@ -204,7 +242,9 @@ def _property_schema(field: dict) -> dict:
     return prop
 
 
-def _nest_properties(fields: list[dict]) -> tuple[dict, list[str]]:
+def _nest_properties(
+    fields: list[dict], name_to_key: dict[str, str] | None = None
+) -> tuple[dict, list[str]]:
     """Reconstruct nested object/array schemas from the flat dotted-name
     convention the extraction emits: `Parent[].Child` is a field of the object
     elements of array `Parent`; `Parent.Child` is a field of nested object
@@ -232,34 +272,43 @@ def _nest_properties(fields: list[dict]) -> tuple[dict, list[str]]:
             if i == len(parts) - 1:
                 child["leaf"] = field
             node = child
-    return _materialize_node(tree)
+    return _materialize_node(tree, name_to_key)
 
 
-def _materialize_node(node: dict) -> tuple[dict, list[str]]:
+def _materialize_node(
+    node: dict, name_to_key: dict[str, str] | None = None
+) -> tuple[dict, list[str]]:
     properties: dict = {}
     required: list[str] = []
     for key in node["order"]:
         child = node["children"][key]
-        properties[key] = _node_schema(child)
+        properties[key] = _node_schema(child, name_to_key)
         if child["leaf"] and child["leaf"].get("required"):
             required.append(key)
     return properties, required
 
 
-def _node_schema(node: dict) -> dict:
+def _node_schema(node: dict, name_to_key: dict[str, str] | None = None) -> dict:
+    leaf = node["leaf"]
+    # A union leaf is terminal: its members already describe the shape, so it is
+    # never also expanded as a nested dotted-path object.
+    if leaf is not None and leaf.get("one_of"):
+        return _property_schema(leaf, name_to_key)
     if not node["children"]:
-        return _property_schema(node["leaf"]) if node["leaf"] else {}
-    child_props, child_required = _materialize_node(node)
+        return _property_schema(leaf, name_to_key) if leaf else {}
+    child_props, child_required = _materialize_node(node, name_to_key)
     obj: dict = {"type": "object", "properties": child_props}
     if child_required:
         obj["required"] = child_required
     schema = {"type": "array", "items": obj} if node["array"] else obj
-    if node["leaf"] and node["leaf"].get("description"):
-        schema["description"] = node["leaf"]["description"]
+    if leaf and leaf.get("description"):
+        schema["description"] = leaf["description"]
     return schema
 
 
-def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
+def _build_request_body(
+    request: dict | None, body_params: list[dict], name_to_key: dict[str, str] | None = None
+) -> dict:
     """Assemble requestBody from the prose `request` blob and/or `in:body` fields.
 
     OpenAPI 3.x has no `in: body` parameter — body fields belong here as an
@@ -270,7 +319,7 @@ def _build_request_body(request: dict | None, body_params: list[dict]) -> dict:
     request = request or {}
     content_type = _normalize_media_type(request.get("content_type"))
     if body_params:
-        properties, required = _nest_properties(body_params)
+        properties, required = _nest_properties(body_params, name_to_key)
         schema: dict = {"type": "object", "properties": properties}
         if required:
             schema["required"] = required
@@ -442,7 +491,7 @@ def _build_operation(
         op["parameters"] = params
     request = next((e.request for e in endpoints if e.request), None)
     if request or body_params:
-        op["requestBody"] = _build_request_body(request, body_params)
+        op["requestBody"] = _build_request_body(request, body_params, name_to_key)
     # Security schemes this operation requires, resolved from scheme names to the
     # sanitized component keys; unresolvable names are dropped (never invented).
     requirements: list[dict] = []
@@ -512,8 +561,8 @@ def _root_tags(plan: NormalizationPlan) -> list[dict]:
     return [{"name": name} for name in names]
 
 
-def _build_object_schema(entry) -> dict:
-    properties, required = _nest_properties(entry.fields)
+def _build_object_schema(entry, name_to_key: dict[str, str] | None = None) -> dict:
+    properties, required = _nest_properties(entry.fields, name_to_key)
     schema: dict = {"type": "object", "properties": properties}
     if required:
         schema["required"] = required
@@ -528,12 +577,15 @@ def _build_object_schema(entry) -> dict:
     return schema
 
 
-def _build_schemas(plan: NormalizationPlan, key_map: dict[int, str]) -> dict:
+def _build_schemas(
+    plan: NormalizationPlan, key_map: dict[int, str],
+    name_to_key: dict[str, str] | None = None,
+) -> dict:
     out: dict = {}
     for idx, entry in enumerate(plan.schemas):
         if entry.name:
             key = key_map[idx]
-            obj = _build_object_schema(entry)
+            obj = _build_object_schema(entry, name_to_key)
             # When the source name can't be a valid component key (CJK, slashes,
             # spaces) the key is sanitized/falls back to schema<idx>; keep the
             # original human-readable name in `title` so it isn't lost.
@@ -578,7 +630,7 @@ def build_openapi(plan: NormalizationPlan) -> dict:
         doc["webhooks"] = webhooks
     _assign_operation_ids(doc)
     components: dict = {}
-    schemas = _build_schemas(plan, key_map)
+    schemas = _build_schemas(plan, key_map, name_to_key)
     if schemas:
         components["schemas"] = schemas
     security_schemes = _build_security_schemes(plan)
