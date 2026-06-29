@@ -36,7 +36,12 @@
       "in": "body",
       "type": "object",
       "required": true,
-      "description": "The type and required details of a payment method to use. In the spec this is a `oneOf` union over 40+ payment-method detail objects, selected by the `type` discriminator (e.g. scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ach→AchDetails, klarna, googlepay, ...). This benchmark captures three representative members as named schemas (CardDetails / IdealDetails / ApplePayDetails)."
+      "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+      "discriminator": {
+        "property_name": "type",
+        "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+      },
+      "description": "The type and required details of a payment method to use, selected by the `type` discriminator. The full spec lists 40+ members; this benchmark captures three representative ones (CardDetails / IdealDetails / ApplePayDetails)."
     }
   ],
   "request": {
@@ -91,7 +96,5 @@
     "BasicAuth"
   ],
   "examples": [],
-  "missing": [
-    "paymentMethod oneOf union not expressible as native OpenAPI oneOf via this pipeline (see inventory.missing)."
-  ]
+  "missing": []
 }

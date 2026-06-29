@@ -53,10 +53,11 @@ googlepay…)。「同一路徑、不同交易類型」在國際金流即以此 
 
 ## 忠實限制 / 缺漏(入 `missing`,不臆造)
 
-1. **oneOf union 不產生原生 OpenAPI `oneOf`/`discriminator`**:pipeline 以
-   `paymentMethod: type=object` + 三個具名成員 schema + 描述中標明 discriminator
-   對應呈現。完整 40+ 方法與 mapping 為忠實限制,已記錄;列為後續 generator 改進候選
-   (oneOf/discriminator 原生支援),非本輪 fail。
+1. **oneOf/discriminator 現原生產生**:pipeline 已支援 `one_of` + `discriminator`
+   欄位宣告,generator 直接輸出原生 OpenAPI `oneOf`/`discriminator`。`paymentMethod`
+   以 `oneOf` 指向三個具名成員 schema(CardDetails/IdealDetails/ApplePayDetails),
+   `discriminator.propertyName=type`,`mapping` 對應 scheme/ideal/applepay。此為
+   正面證明(機器可用的多型),非忠實限制。
 2. **CSE 客戶端加密演算法**:`CardDetails.encrypted*` 欄位的加密演算法不在 Checkout
    spec(card-direct 範例用原始卡號)→ 忠實入 missing。
 3. **Webhook / HMAC 驗簽**:Adyen 通知 payload 與 HMAC 屬另一支 Notification API,
