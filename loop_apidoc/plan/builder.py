@@ -114,6 +114,15 @@ def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
     )
 
 
+def _method_key(method: str | None) -> str | None:
+    """Case/space-insensitive comparison key for an HTTP method. Method casing
+    is a display detail (sources write GET / get / Get); two endpoints that
+    differ only by method case are the SAME operation, so all grouping and
+    detail-matching compares this normalized key. The stored
+    EndpointEntry.method keeps its source-stated casing."""
+    return method.strip().lower() if method else None
+
+
 def _dedupe_endpoints(plan: NormalizationPlan) -> None:
     """OpenAPI allows one operation per method+path and the validator checks
     plan.endpoints, so several source endpoints sharing one method+path (e.g.
@@ -122,7 +131,7 @@ def _dedupe_endpoints(plan: NormalizationPlan) -> None:
     out: list[EndpointEntry] = []
     index: dict[tuple, int] = {}
     for ep in plan.endpoints:
-        key = (ep.method, ep.path) if ep.method and ep.path else None
+        key = (_method_key(ep.method), ep.path) if ep.method and ep.path else None
         if key is not None and key in index:
             i = index[key]
             out[i] = _combine_endpoints(out[i], ep)
@@ -328,11 +337,13 @@ def _match_index(plan: NormalizationPlan, method, path, detail_locator,
         return None
     if path is not None:
         for idx, e in enumerate(plan.endpoints):
-            if e.method == method and e.path == path:
+            if _method_key(e.method) == _method_key(method) and e.path == path:
                 return idx
         return None
     candidates = [idx for idx, e in enumerate(plan.endpoints)
-                  if idx not in consumed and e.method == method and e.path is None]
+                  if idx not in consumed
+                  and _method_key(e.method) == _method_key(method)
+                  and e.path is None]
     if detail_locator:
         for idx in candidates:
             if detail_locator in _webhook_locators(plan.endpoints[idx]):
