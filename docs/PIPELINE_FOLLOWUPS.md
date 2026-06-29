@@ -6,6 +6,10 @@ regression harness work.
 > **Status (2026-06-29):** items 2–5 implemented on branch `feat/pipeline-followups`
 > (commits `d3b0ae8`, `e89cbd7`, `75ef8cb`, `f7d374d`). Each section's acceptance
 > criteria are met and covered by tests / CI.
+>
+> Items 6–7 are **open** — deferred from the continuous-correction quality-gate
+> review (merge `4eb5ba6`, fix `9c4bce6`). Both are non-blocking polish on
+> `scripts/quality_gate.py`.
 
 ## 2. Run Directory Isolation — ✅ done (`d3b0ae8`)
 
@@ -158,4 +162,80 @@ operator-provided and gitignored.
 - CI fails on unit/integration test failures.
 - CI fails if benchmark case discovery becomes empty or loses required cases.
 - Release checklist documents which benchmark checks require local source files.
+
+## 6. Quality-Gate `Runner` Type Alias Too Narrow — open
+
+### Current State
+
+- `scripts/quality_gate.py` declares
+  `Runner = Callable[[list[str]], subprocess.CompletedProcess[str]]`.
+- The unit tests inject a `FakeResult` dataclass (with `returncode` / `stdout` /
+  `stderr`) as the runner. It is structurally compatible at runtime (duck typing),
+  so all tests pass and ruff is clean.
+
+### Risk
+
+The alias nominally requires `subprocess.CompletedProcess[str]`, but the fakes are
+not instances of it. Under `mypy --strict` or `pyright` strict, every test site
+passing a `FakeResult`-returning runner would raise a type error. The repo does not
+currently run a strict type-checker in CI, so this is latent — it would surface the
+day a type-check step is added (which the quality gate itself might eventually grow).
+
+### Recommended Work
+
+1. Replace the alias's return type with a structural `Protocol`:
+
+   ```python
+   class _RunResult(Protocol):
+       returncode: int
+       stdout: str
+       stderr: str
+
+   Runner = Callable[[list[str]], _RunResult]
+   ```
+
+2. Keep `_default_runner` returning a real `subprocess.CompletedProcess` (it
+   satisfies the Protocol).
+3. Optionally type the test `FakeResult` against the same Protocol to lock the
+   contract.
+
+### Acceptance Criteria
+
+- A strict type-checker (mypy/pyright) reports no errors on `scripts/quality_gate.py`
+  and `tests/test_quality_gate.py` for the runner contract.
+- Existing tests still pass with no runtime change.
+
+## 7. `has_benchmark_skips` Char-Set Heuristic False Positive — open
+
+### Current State
+
+- `has_benchmark_skips(stdout)` returns `True` when `"skipped"` appears in the
+  output (the reliable path), or when a stripped line is a subset of the pytest
+  result-character set (`.sfexXpP`) and contains an `s` (the progress-dots path).
+- It is only ever called on `uv run pytest tests/test_benchmarks.py -q` output,
+  where the reliable `"skipped"` summary path always fires for real skips.
+
+### Risk
+
+The progress-line path has a theoretical false positive: a standalone line such as
+`esp` (a subset of `.sfexXpP` that contains `s`) returns `True`. This is unreachable
+from the actual wired `pytest -q` output (summary lines contain digits/spaces that
+break the subset test), so it is not a live defect — but the function reads like a
+general-purpose helper and could mislead if reused elsewhere (e.g. against xdist
+`[gw0]` / `[100%]` decorated output).
+
+### Recommended Work
+
+1. Tighten the progress-line detection so it only matches a genuine pytest progress
+   line — e.g. require the line to be non-trivially long and dominated by `.`, or
+   anchor on the summary line exclusively and drop the dots heuristic.
+2. If the helper is intended to stay single-purpose, add a docstring stating it
+   assumes `pytest -q` output and is not safe for arbitrary text.
+3. Keep all four existing parametrized cases passing unchanged.
+
+### Acceptance Criteria
+
+- A contrived non-pytest line like `"esp"` returns `False`.
+- The four existing cases still return `[True, True, True, False]`.
+- `--strict-local` skip detection behavior is unchanged on real benchmark output.
 
