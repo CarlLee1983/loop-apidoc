@@ -104,7 +104,6 @@ pre {
   padding: 16px 18px; overflow-x: auto; line-height: 1.6;
 }
 pre code { background: none; padding: 0; }
-pre.mermaid { background: var(--panel); border: 1px solid var(--border); text-align: center; }
 table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14.5px; }
 th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
 th { background: var(--panel); }
@@ -921,7 +920,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization plan, manifest, run-dir path",
       outputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
-      sideEffect: "Writes generated artifact files"
+      sideEffect: "File I/O: writes generated artifact files"
     },
     validate: {
       title: "validate/",
@@ -941,7 +940,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       seam: "persist.py / runid.py",
       inputs: "run id, output root, generated artifacts, reports",
       outputs: "stable run directory layout",
-      sideEffect: "Writes run-dir files"
+      sideEffect: "File I/O: writes run-dir files"
     }
   };
 
