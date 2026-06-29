@@ -35,6 +35,30 @@ def test_issue_auto_fixable_defaults_false():
     assert _issue(Severity.WARNING).auto_fixable is False
 
 
+def test_issue_routing_fields_default_none():
+    issue = _issue(Severity.ERROR)
+    assert issue.target_file is None
+    assert issue.field_path is None
+    assert issue.requery_scope is None
+
+
+def test_issue_routing_fields_serialize_in_json():
+    issue = Issue(
+        code=IssueCode.REQUIRED_INFO_MISSING,
+        severity=Severity.ERROR,
+        location="paths./users.get",
+        evidence="no response defined",
+        suggested_fix="add a response from source",
+        target_file="endpoints/ep0.json",
+        field_path="responses",
+        requery_scope="paths./users.get",
+    )
+    payload = issue.model_dump(mode="json")
+    assert payload["target_file"] == "endpoints/ep0.json"
+    assert payload["field_path"] == "responses"
+    assert payload["requery_scope"] == "paths./users.get"
+
+
 def test_report_ok_when_no_errors():
     report = ValidationReport(issues=[_issue(Severity.WARNING)])
     assert report.ok is True

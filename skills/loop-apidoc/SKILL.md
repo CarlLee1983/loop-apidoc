@@ -173,10 +173,13 @@ Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
 ### 6. Correction loop (max 3 rounds)
 - `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
 - `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
-  `suggested_fix`); from `location` identify the inventory field or the endpoint
-  at fault, **dispatch a targeted read-only subagent to re-read only the relevant
-  source** and return the corrected JSON, then **you** overwrite `inventory.json`
-  or the matching `endpoints/<NN>.json` and return to step 5.
+  `suggested_fix`, plus optional `target_file`/`field_path`/`requery_scope`).
+  **Prefer the structured fields when present**: `target_file` names the exact file
+  to edit (`inventory.json`, `endpoints/ep<N>.json`, or `integration.json`),
+  `field_path` the field inside it, and `requery_scope` the bounded source area to
+  re-read. Fall back to parsing `location` only when these are `null`. Then
+  **dispatch a targeted read-only subagent to re-read only that scope** and return
+  the corrected JSON, **you** overwrite the named file, and return to step 5.
 - On `REQUIRED_INFO_MISSING` at `integration.crypto`: the source mentions
   encryption/signing but no crypto detail was extracted — re-read the relevant
   section and overwrite `integration.json`, then re-run assemble.
