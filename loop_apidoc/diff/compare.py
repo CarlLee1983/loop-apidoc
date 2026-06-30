@@ -783,6 +783,86 @@ def _compare_manifest(base: RunArtifacts, head: RunArtifacts) -> list[DiffFindin
     return findings
 
 
+def _preparation_phase_map(artifacts: RunArtifacts) -> dict[str, dict]:
+    if artifacts.preparation is None:
+        return {}
+    return {
+        phase.id: phase.model_dump(mode="json")
+        for phase in artifacts.preparation.phases
+    }
+
+
+def _compare_preparation(base: RunArtifacts, head: RunArtifacts) -> list[DiffFinding]:
+    findings: list[DiffFinding] = []
+    if base.preparation is None and head.preparation is None:
+        return findings
+    if base.preparation is None:
+        findings.append(
+            _finding(
+                DiffImpact.SOURCE_ONLY,
+                "preparation",
+                "preparation",
+                "preparation report added",
+                None,
+                head.preparation.model_dump(mode="json"),
+            )
+        )
+        return findings
+    if head.preparation is None:
+        findings.append(
+            _finding(
+                DiffImpact.SOURCE_ONLY,
+                "preparation",
+                "preparation",
+                "preparation report removed",
+                base.preparation.model_dump(mode="json"),
+                None,
+            )
+        )
+        return findings
+
+    if base.preparation.status != head.preparation.status:
+        findings.append(
+            _finding(
+                DiffImpact.SOURCE_ONLY,
+                "preparation",
+                "preparation.status",
+                "preparation status changed",
+                base.preparation.status.value,
+                head.preparation.status.value,
+            )
+        )
+    if base.preparation.summary != head.preparation.summary:
+        findings.append(
+            _finding(
+                DiffImpact.SOURCE_ONLY,
+                "preparation",
+                "preparation.summary",
+                "preparation summary changed",
+                base.preparation.summary,
+                head.preparation.summary,
+            )
+        )
+
+    base_phases = _preparation_phase_map(base)
+    head_phases = _preparation_phase_map(head)
+    for phase_id in sorted(set(base_phases) | set(head_phases)):
+        before = base_phases.get(phase_id)
+        after = head_phases.get(phase_id)
+        if before != after:
+            findings.append(
+                _finding(
+                    DiffImpact.SOURCE_ONLY,
+                    "preparation",
+                    f"preparation.phases.{phase_id}",
+                    "preparation phase changed",
+                    before,
+                    after,
+                )
+            )
+    return findings
+
+
 def build_diff_report(base: RunArtifacts, head: RunArtifacts) -> DiffReport:
     findings: list[DiffFinding] = []
     findings.extend(_compare_openapi(base.openapi, head.openapi))
@@ -790,6 +870,7 @@ def build_diff_report(base: RunArtifacts, head: RunArtifacts) -> DiffReport:
     findings.extend(_compare_provenance(base, head))
     findings.extend(_compare_validation(base, head))
     findings.extend(_compare_manifest(base, head))
+    findings.extend(_compare_preparation(base, head))
     findings = _sorted_findings(findings)
     return DiffReport(
         base_run=str(base.run_dir),

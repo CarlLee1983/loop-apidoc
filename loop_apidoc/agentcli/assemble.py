@@ -20,9 +20,11 @@ from loop_apidoc.generate.writer import generate_outputs
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
+from loop_apidoc.preparation import assess_preparation
+from loop_apidoc.preparation import write_reports as write_preparation_reports
 from loop_apidoc.run.models import RunResult, RunStatus
 from loop_apidoc.run.persist import persist_plan
-from loop_apidoc.validate.report import write_reports
+from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 
 
@@ -147,9 +149,16 @@ def run_assemble_pipeline(
     contract = build_integration_contract(integration, plan, manifest)
     plan = plan.model_copy(update={"integration": contract})
     persist_plan(run_dir, plan)
+    preparation_report = assess_preparation(
+        manifest=manifest,
+        inventory=inventory,
+        endpoint_texts=endpoint_texts,
+        plan=plan,
+    )
+    write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
     report = validate_outputs(plan, result, manifest)
-    write_reports(report, run_dir / "validation")
+    write_validation_reports(report, run_dir / "validation")
 
     return RunResult(
         run_id=run_id,

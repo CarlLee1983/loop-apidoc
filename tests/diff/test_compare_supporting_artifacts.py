@@ -15,6 +15,7 @@ from loop_apidoc.manifest.models import (
     SourceFormat,
 )
 from loop_apidoc.plan.models import PlanItemStatus
+from loop_apidoc.preparation.models import PreparationReport, PreparationStatus
 from loop_apidoc.validate.models import Issue, IssueCode, Severity, ValidationReport
 
 _NOW = datetime(2026, 6, 29, 12, 0, tzinfo=timezone.utc)
@@ -225,3 +226,38 @@ def test_validation_issue_suggested_fix_change_is_reported():
 
     findings = build_diff_report(base, head).findings
     assert [f for f in findings if "validation issue" in f.summary]
+
+
+def test_preparation_status_change_is_source_only():
+    base = _artifacts(
+        preparation=PreparationReport(
+            status=PreparationStatus.READY,
+            summary={"blocked": 0, "needs_attention": 0, "ready": 4},
+        )
+    )
+    head = _artifacts(
+        preparation=PreparationReport(
+            status=PreparationStatus.BLOCKED,
+            summary={"blocked": 1, "needs_attention": 3, "ready": 0},
+        )
+    )
+
+    finding = _find("preparation status changed", build_diff_report(base, head).findings)
+
+    assert finding.impact is DiffImpact.SOURCE_ONLY
+    assert finding.location == "preparation.status"
+
+
+def test_preparation_report_added_is_source_only():
+    base = _artifacts(preparation=None)
+    head = _artifacts(
+        preparation=PreparationReport(
+            status=PreparationStatus.READY,
+            summary={"blocked": 0, "needs_attention": 0, "ready": 4},
+        )
+    )
+
+    finding = _find("preparation report added", build_diff_report(base, head).findings)
+
+    assert finding.impact is DiffImpact.SOURCE_ONLY
+    assert finding.location == "preparation"

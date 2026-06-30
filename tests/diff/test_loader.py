@@ -16,6 +16,7 @@ from loop_apidoc.manifest.models import (
     SourceFormat,
 )
 from loop_apidoc.plan.models import PlanItemStatus
+from loop_apidoc.preparation.models import PreparationReport, PreparationStatus
 from loop_apidoc.validate.models import ValidationReport
 
 _NOW = datetime(2026, 6, 29, 12, 0, tzinfo=timezone.utc)
@@ -29,7 +30,16 @@ def _openapi() -> dict:
     }
 
 
-def write_run(run_dir: Path, *, integration: dict | None = None) -> Path:
+def _preparation_report(status: PreparationStatus = PreparationStatus.READY) -> PreparationReport:
+    return PreparationReport(status=status, summary={"blocked": 0, "needs_attention": 0, "ready": 4})
+
+
+def write_run(
+    run_dir: Path,
+    *,
+    integration: dict | None = None,
+    preparation: PreparationReport | None = None,
+) -> Path:
     run_dir.mkdir(parents=True)
     (run_dir / "openapi.yaml").write_text(
         yaml.safe_dump(_openapi(), sort_keys=False),
@@ -83,6 +93,11 @@ def write_run(run_dir: Path, *, integration: dict | None = None) -> Path:
             json.dumps(integration, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+    if preparation is not None:
+        (run_dir / "preparation-report.json").write_text(
+            preparation.model_dump_json(indent=2),
+            encoding="utf-8",
+        )
     return run_dir
 
 
@@ -105,6 +120,23 @@ def test_load_run_artifacts_reads_required_and_optional_files(tmp_path):
 def test_load_run_artifacts_allows_missing_integration_contract(tmp_path):
     artifacts = load_run_artifacts(write_run(tmp_path / "run"))
     assert artifacts.integration is None
+
+
+def test_load_run_artifacts_reads_optional_preparation_report(tmp_path):
+    run_dir = write_run(
+        tmp_path / "run",
+        preparation=_preparation_report(PreparationStatus.NEEDS_ATTENTION),
+    )
+
+    artifacts = load_run_artifacts(run_dir)
+
+    assert artifacts.preparation is not None
+    assert artifacts.preparation.status is PreparationStatus.NEEDS_ATTENTION
+
+
+def test_load_run_artifacts_allows_missing_preparation_report(tmp_path):
+    artifacts = load_run_artifacts(write_run(tmp_path / "run"))
+    assert artifacts.preparation is None
 
 
 @pytest.mark.parametrize(

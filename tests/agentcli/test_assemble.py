@@ -103,8 +103,15 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     assert (run_dir / "openapi.yaml").is_file()
     assert (run_dir / "api-guide.zh-TW.md").is_file()
     assert (run_dir / "provenance.json").is_file()
+    assert (run_dir / "preparation-report.json").is_file()
+    assert (run_dir / "preparation-report.md").is_file()
     assert (run_dir / "plan" / "normalization-plan.json").is_file()
     assert (run_dir / "validation" / "report.json").is_file()
+    prep_payload = json.loads(
+        (run_dir / "preparation-report.json").read_text(encoding="utf-8")
+    )
+    assert prep_payload["status"] == "ready"
+    assert prep_payload["summary"]["ready"] == 4
     assert result.status in (RunStatus.PASSED, RunStatus.FAILED)
     assert result.run_dir == str(run_dir)
 
