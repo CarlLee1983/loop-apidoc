@@ -90,6 +90,18 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 `<run-dir>/validation/`。通過回傳 `0`,有 ERROR 級問題回傳 `1`。
 
+### `score` — 評分既有 run 目錄
+
+```bash
+uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min-score 85] [--json]
+```
+
+讀取既有 run 目錄的 `validation/report.json`、`openapi.yaml`、
+`provenance.json`、`manifest.json` 與選填的 `plan/normalization-plan.json`，
+輸出 `score/score.json` 與 `score/score.md`。`ci` profile 預設門檻為
+`85`，`review` profile 預設門檻為 `70`。退出碼：`0` = pass，`1` =
+needs_attention / fail，`2` = run-dir 輸入錯誤。
+
 ### `diff` — 比較兩次 run 的版本差異
 
 ```bash
@@ -118,10 +130,11 @@ uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url <URL> ...] [--json]
+  [--url <URL> ...] [--json] [--score]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
+`score/score.md`；assemble 的退出碼仍維持既有驗證語意。
 
 ---
 
@@ -151,6 +164,9 @@ output/
     ├── validation/
     │   ├── report.json
     │   └── report.md
+    ├── score/                       # 文件品質評分（使用 loop-apidoc score 或 assemble --score）
+    │   ├── score.json
+    │   └── score.md
     └── diff/                       # 與另一個 run 比較版本差異時(loop-apidoc diff)
         ├── report.json
         └── report.md
@@ -201,6 +217,7 @@ uv run ruff check .
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口) |
 | `loop_apidoc/validate/` | 結構／完整性／一致性／禁止推測驗證與報告 |
 | `loop_apidoc/run/` | run-id 產生、結果／狀態 models、將計畫寫入 run 目錄 |
+| `loop_apidoc/score/` | 既有 run-dir 文件品質評分(JSON/Markdown report, CI gate 狀態) |
 
 ---
 

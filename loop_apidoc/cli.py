@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.run.runid import make_run_id
+from loop_apidoc.score.models import ScoreProfile
 from loop_apidoc.validate import validate_run_dir, write_reports
 
 app = typer.Typer(
@@ -138,6 +140,61 @@ def diff(
 
 
 @app.command()
+def score(
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="已完成的 run 目錄（含 openapi.yaml / provenance.json / validation/report.json）",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+    ),
+    profile: ScoreProfile = typer.Option(
+        ScoreProfile.CI,
+        "--profile",
+        case_sensitive=False,
+        help="評分嚴格度：ci 較嚴格，review 較適合人工健檢",
+    ),
+    min_score: Annotated[
+        int | None,
+        typer.Option("--min-score", min=0, max=100, help="覆寫 profile 預設分數門檻"),
+    ] = None,
+    json_out: bool = typer.Option(
+        False,
+        "--json",
+        help="把 score report JSON 印到 stdout",
+    ),
+) -> None:
+    """評分既有 run 目錄並寫出 score/score.{json,md}。"""
+    from loop_apidoc.score import (
+        ScoreInputError,
+        evaluate_score,
+        load_score_inputs,
+        write_reports as write_score_reports,
+    )
+
+    score_dir = output / "score"
+    try:
+        inputs = load_score_inputs(output)
+        report = evaluate_score(inputs, profile=profile, min_score=min_score)
+    except ScoreInputError as exc:
+        typer.echo(f"score input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    write_score_reports(report, score_dir)
+    if json_out:
+        typer.echo(report.model_dump_json(indent=2))
+    else:
+        typer.echo(
+            f"score {report.status.value.upper()}: {report.score}/100 "
+            f"(profile {report.profile.value}, min {report.min_score})；"
+            f"報告寫入 {score_dir / 'score.json'}"
+        )
+    raise typer.Exit(code=0 if report.status.value == "pass" else 1)
+
+
+@app.command()
 def assemble(
     sources: Path = typer.Option(
         ..., "--sources", help="本機來源目錄",
@@ -154,6 +211,11 @@ def assemble(
     url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
     json_out: bool = typer.Option(
         False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
+    ),
+    score_report: bool = typer.Option(
+        False,
+        "--score",
+        help="在 assemble 完成後寫出 score/score.{json,md}",
     ),
 ) -> None:
     """從 agent 產出的擷取 JSON 組裝:manifest→plan→generate→validate(不擷取)。"""
@@ -180,6 +242,27 @@ def assemble(
         typer.echo(f"run 目錄衝突:{exc}", err=True)
         raise typer.Exit(code=2) from exc
 
+    score_payload = None
+    score_error = None
+    if score_report:
+        from loop_apidoc.score import (
+            ScoreInputError,
+            evaluate_score,
+            load_score_inputs,
+            write_reports as write_score_reports,
+        )
+
+        try:
+            score_inputs = load_score_inputs(Path(result.run_dir))
+            score_payload = evaluate_score(score_inputs)
+            write_score_reports(score_payload, Path(result.run_dir) / "score")
+        except ScoreInputError as exc:
+            score_error = str(exc)
+            typer.echo(f"score input error: {exc}", err=True)
+        except Exception as exc:
+            score_error = f"score failed: {exc}"
+            typer.echo(f"score failed: {exc}", err=True)
+
     if json_out:
         review_html = str(Path(result.run_dir) / "review.html")
         payload = {
@@ -190,12 +273,25 @@ def assemble(
             "status": result.status.value,
             "report": result.report.model_dump(mode="json"),
         }
+        if score_payload is not None:
+            payload["score"] = score_payload.model_dump(mode="json")
+        if score_error is not None:
+            payload["score_error"] = score_error
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
+        suffix = ""
+        if score_payload is not None:
+            suffix = (
+                f"；score {score_payload.status.value.upper()} "
+                f"{score_payload.score}/100"
+            )
+        elif score_error is not None:
+            suffix = f"；score input error: {score_error}"
         typer.echo(
             f"狀態 {result.status.value}:error {len(result.report.errors())}，"
             f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}；"
             f"核對頁 {Path(result.run_dir) / 'review.html'}"
+            f"{suffix}"
         )
     raise typer.Exit(code=0 if result.ok else 1)
 

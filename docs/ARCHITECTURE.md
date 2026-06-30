@@ -43,6 +43,10 @@ flowchart LR
 
 `assemble` 不擷取,只組裝 agent 已寫出的 JSON:`manifest → plan → generate → validate`,再以 `--json` 回報 `ok`/`run_dir`/`report`。修正由 **agent 自行驅動**(無 CLI 內建迴圈):agent 依報告回頭重讀相關來源、覆寫對應的 `inventory.json` 或 `endpoints/<NN>.json`,再重跑 `assemble`,最多 3 輪。`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
 
+`assemble --score` 在驗證報告寫出後讀取同一個 run-dir artifact 集合並產生
+`score/score.{json,md}`；這是後段品質摘要，不會回頭擷取來源，也不改變
+validation pass/fail 的語意。
+
 ## 套件邊界
 
 ```mermaid
@@ -53,6 +57,7 @@ flowchart TD
     cli --> agentcli[agentcli/<br/>assemble + 前處理]
     cli --> validate[validate/<br/>驗證 + 報告]
     cli --> diff[diff/<br/>run 對 run 版本差異]
+    cli --> score[score/<br/>run-dir 評分 + 報告]
 
     agentcli --> manifest
     agentcli --> extraction[extraction/<br/>共用 models + 工具]
@@ -64,12 +69,12 @@ flowchart TD
     plan --> manifest
 
     classDef io fill:#fde,stroke:#c69
-    class generate,run,diff io
+    class generate,run,diff,score io
 ```
 
-`cli.py`(Typer)暴露五個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證)、`validate`(驗證既有 run-dir)、`diff`(比較兩個已完成 run-dir 的版本差異)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。
+`cli.py`(Typer)暴露六個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證,可選 `--score`)、`validate`(驗證既有 run-dir)、`score`(評分既有 run-dir)、`diff`(比較兩個已完成 run-dir 的版本差異)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。
 
-**檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)、`run/`(`persist.py` 將計畫寫入 run-dir)與 `diff/report.py`(`write_reports` 寫出 `diff/report.{json,md}`)寫檔;其餘模組皆為純函式,便於單元測試。
+**檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)、`run/`(`persist.py` 將計畫寫入 run-dir)、`diff/report.py`(`write_reports` 寫出 `diff/report.{json,md}`)與 `score/report.py`(`write_reports` 寫出 `score/score.{json,md}`)寫檔;其餘模組皆為純函式,便於單元測試。
 
 ## 資料流與關鍵 seam
 
@@ -83,6 +88,7 @@ flowchart TD
 | 計畫 | `build_normalization_plan(extraction, manifest)` | `plan/normalization-plan.json` |
 | 生成 | `generate_outputs(plan, manifest, run_dir)` | `openapi.yaml`、`api-guide.zh-TW.md`、`review.html`、`provenance.json`、`handoff/` |
 | 驗證 | `validate_outputs(plan, result, manifest)`(純）／ `validate_run_dir(run_dir)`(讀檔) | `validation/report.{json,md}` |
+| 評分(可選) | `load_score_inputs(run_dir)` → `evaluate_score(inputs, profile, min_score)` → `write_reports(report, score_dir)` | `<run-dir>/score/score.{json,md}` |
 | 版本差異(可選) | `load_run_artifacts(run_dir)` → `build_diff_report(base, head)`(純）→ `write_reports(report, out_dir)` | `<head>/diff/report.{json,md}` |
 
 `handoff/`(`integration-tasks.md`/`postman_collection.json`/`sdk-hints.json`)為衍生工程導引,由 `build_handoff(openapi, plan, integration)` 純函式產出,不做檔案 I/O、不重讀 `openapi.yaml`、不複製 schema;契約來源仍為 OpenAPI 與 integration-contract。
