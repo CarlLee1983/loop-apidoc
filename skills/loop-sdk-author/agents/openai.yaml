@@ -1,0 +1,4 @@
+interface:
+  display_name: "Loop SDK Author"
+  short_description: "Plan stack-neutral SDKs from Loop outputs"
+  default_prompt: "Use $loop-sdk-author to prepare a stack-neutral SDK authoring plan from a loop-apidoc run directory."
