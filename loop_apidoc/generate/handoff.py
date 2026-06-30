@@ -89,6 +89,130 @@ def _operation_groups(openapi: dict) -> list[dict]:
     return [{"name": tag, "operations": groups[tag]} for tag in order]
 
 
+def _base_url_initial(openapi: dict) -> str:
+    servers = openapi.get("servers") or []
+    return (servers[0].get("url") if servers else None) or "<base_url>"
+
+
+def _runtime_config_lines(openapi: dict, plan: NormalizationPlan) -> list[str]:
+    lines = [f"- [ ] `base_url` — initial value: `{_base_url_initial(openapi)}`"]
+    schemes = ((openapi.get("components") or {}).get("securitySchemes") or {})
+    for name, scheme in schemes.items():
+        kind = scheme.get("type", "")
+        where = scheme.get("name") or scheme.get("scheme") or scheme.get("in") or ""
+        suffix = f" ({where})" if where else ""
+        lines.append(f"- [ ] Auth `{name}` — {kind}{suffix}")
+    contract = plan.integration
+    if contract is not None:
+        for idx, s in enumerate(contract.crypto):
+            ks = s.key_source
+            if ks and (ks.key or ks.iv):
+                parts = [p for p in (ks.key and f"key=`{ks.key}`", ks.iv and f"iv=`{ks.iv}`") if p]
+                lines.append(
+                    f"- [ ] Secret for `{s.name or idx}` — {', '.join(parts)} "
+                    f"(`../integration-contract.json#/crypto/{idx}`)"
+                )
+    return lines
+
+
+def _implementation_order_lines(openapi: dict, plan: NormalizationPlan) -> list[str]:
+    crypto_labels = _request_signing_labels(plan)
+    lines: list[str] = []
+    for rec in _iter_operations(openapi):
+        oid, _ = _op_identity(rec)
+        ident = (
+            f"`{oid}` (`{rec['method']} {rec['path']}`)"
+            if rec["path"] is not None
+            else f"`{oid}` (webhook `{rec['webhook']}` receiver)"
+        )
+        lines.append(f"- [ ] Implement {ident}")
+        lines.append(f"  - Contract: `{_contract_pointer(rec)}`")
+        if rec["operation_id"]:
+            lines.append(f"  - Example: `../examples/{oid}/request.ts`")
+        for label in crypto_labels:
+            lines.append(f"  - Requires {label}")
+    if not lines:
+        lines.append("- No source-grounded operations were found.")
+    return lines
+
+
+def _mechanism_lines(plan: NormalizationPlan) -> list[str]:
+    contract = plan.integration
+    if contract is None:
+        return ["- Integration contract not present for this run."]
+    lines: list[str] = []
+    for idx, s in enumerate(contract.crypto):
+        lines.append(
+            f"- [ ] Signing/encryption `{s.name or idx}` "
+            f"(`../integration-contract.json#/crypto/{idx}`)"
+        )
+    for idx, cb in enumerate(contract.callbacks):
+        lines.append(
+            f"- [ ] Callback `{cb.name or idx}` "
+            f"(`../integration-contract.json#/callbacks/{idx}`)"
+        )
+    for idx, _cond in enumerate(contract.field_conditions):
+        lines.append(
+            f"- [ ] Field condition #{idx} "
+            f"(`../integration-contract.json#/field_conditions/{idx}`)"
+        )
+    if not lines:
+        lines.append(
+            "- No source-grounded signing, encryption, callback, condition, or "
+            "test-case mechanisms were found."
+        )
+    return lines
+
+
+def _blocker_lines(plan: NormalizationPlan, integration: dict | None) -> list[str]:
+    lines: list[str] = []
+    for m in plan.missing_items:
+        lines.append(f"- [ ] Blocked: {m.area} — {m.detail}")
+    for c in plan.source_conflicts:
+        lines.append(f"- [ ] Conflict: {c.area} — {c.detail}")
+    for u in plan.unverified_items:
+        lines.append(f"- [ ] Unverified: {u.area} — {u.detail}")
+    for gap in (integration or {}).get("missing", []) or []:
+        lines.append(f"- [ ] Gap: {gap.get('area')} — {gap.get('detail')}")
+    if not lines:
+        lines.append("- No outstanding blockers, conflicts, unverified items, or gaps.")
+    return lines
+
+
+def _build_integration_tasks(
+    openapi: dict, plan: NormalizationPlan, integration: dict | None
+) -> str:
+    parts = [
+        "# Developer Integration Tasks",
+        "",
+        "Derived navigation aid — NOT a contract. See `../openapi.yaml` for the schema.",
+        "",
+        "## Run Context",
+        "",
+        "- Primary contract: `../openapi.yaml`",
+        "- Integration mechanisms: `../integration-contract.json`",
+        "- Validation status: `../validation/report.md`",
+        "- Request examples: `../examples/README.md`",
+        "",
+        "## Runtime Configuration",
+        "",
+        *_runtime_config_lines(openapi, plan),
+        "",
+        "## Implementation Order",
+        "",
+        *_implementation_order_lines(openapi, plan),
+        "",
+        "## Integration Mechanisms",
+        "",
+        *_mechanism_lines(plan),
+        "",
+        "## Blockers & Gaps",
+        "",
+        *_blocker_lines(plan, integration),
+    ]
+    return "\n".join(parts) + "\n"
+
+
 def _build_sdk_hints(openapi: dict, plan: NormalizationPlan) -> str:
     crypto_labels = _request_signing_labels(plan)
     notes: list[dict] = []
@@ -125,4 +249,7 @@ def _build_sdk_hints(openapi: dict, plan: NormalizationPlan) -> str:
 def build_handoff(
     openapi: dict, plan: NormalizationPlan, integration: dict | None
 ) -> dict[str, str]:
-    return {"handoff/sdk-hints.json": _build_sdk_hints(openapi, plan)}
+    return {
+        "handoff/integration-tasks.md": _build_integration_tasks(openapi, plan, integration),
+        "handoff/sdk-hints.json": _build_sdk_hints(openapi, plan),
+    }
