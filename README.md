@@ -144,6 +144,10 @@ output/
     ├── provenance.json             # 每個輸出項目的來源追溯
     ├── integration-contract.json   # 簽章/加密整合契約(來源有提供時)
     ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例(產出時)
+    ├── handoff/                    # 開發交接輔助(衍生產物,非契約來源)
+    │   ├── integration-tasks.md    # 實作順序/執行設定/阻塞項檢查表
+    │   ├── postman_collection.json # Postman v2.1 請求形狀集合(可匯入)
+    │   └── sdk-hints.json          # 精簡 SDK/client 生成提示(不複製 schema)
     ├── validation/
     │   ├── report.json
     │   └── report.md
@@ -151,6 +155,8 @@ output/
         ├── report.json
         └── report.md
 ```
+
+`handoff/` 為衍生的工程導引與工具轉接產物,**契約來源仍是 `openapi.yaml` 與 `integration-contract.json`**,不重複 schema。
 
 > 注意:agent 產出的擷取輸入(`inventory.json` + `endpoints/*.json` + 選填 `integration.json`)位於傳給 `--extraction` 的工作目錄,**不在** run-dir。run-dir 的 `extraction/` 只保留稽核軌跡(`queries.jsonl` + `answers/`)。
 

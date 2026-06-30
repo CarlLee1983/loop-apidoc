@@ -121,9 +121,10 @@ JSON file/field (or choose a fresh `--output`) and re-run.
   `review.html` for an offline, at-a-glance review of scope / sources / gaps.
 - **`ok == false`** → open **`reference/assemble-and-correction.md`** and drive correction.
   The gate is **severity** (only `error` issues fail; surface `warning`s as known gaps).
-  Prefer each issue's structured-routing fields (`target_file`/`field_path`/`requery_scope`)
-  to re-read just that scope with a targeted read-only subagent, overwrite the named JSON, and
-  re-run assemble. **Max 3 rounds.** Conflicts / unsupported assertions that survive
+  Each issue carries `code`, `severity`, `location`, `evidence`, `suggested_fix`, and
+  structured-routing fields (`target_file`/`field_path`/`requery_scope`). Use `location` and
+  `suggested_fix` to understand which field is missing or incorrect, then re-read just that
+  scope with a targeted read-only subagent, overwrite the named JSON, and re-run assemble. **Max 3 rounds.** Conflicts / unsupported assertions that survive
   re-verification → present the gaps to the user; **never fabricate.**
 
 ### 7. Final evidence check
