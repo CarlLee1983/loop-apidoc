@@ -97,6 +97,14 @@ uv run loop-apidoc validate --output ./output/<run-id>
 
 Runs structure / completeness / consistency / no-speculation validation over the run directory and writes reports to `<run-dir>/validation/`. Exits `0` on pass, `1` when there are ERROR-level issues.
 
+### `diff` — compare two runs for a version delta
+
+```bash
+uv run loop-apidoc diff --base ./output/<old-run> --head ./output/<new-run>
+```
+
+Compares two completed run directories and emits a diff report classified by downstream impact. Writes to `<new-run>/diff/report.{json,md}` by default; pass `--output` to choose another directory. Changes are classified as `breaking`, `additive`, `changed`, or `source_only`, and the comparison spans `openapi.yaml`, `integration-contract.json`, `provenance.json`, `validation/report.json`, and `manifest.json`. The first version does not diff the Markdown guide or generated examples. Exits `0` on completion, `2` when an input run-dir is missing files or malformed.
+
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
 ```bash
@@ -129,7 +137,10 @@ output/
     ├── provenance.json             # per-output source traceability
     ├── integration-contract.json   # signing/crypto integration contract (when sources provide one)
     ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
-    └── validation/
+    ├── validation/
+    │   ├── report.json
+    │   └── report.md
+    └── diff/                       # when diffed against another run (loop-apidoc diff)
         ├── report.json
         └── report.md
 ```
@@ -174,9 +185,10 @@ uv run ruff check .
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
-| `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation (sole file-I/O exit) |
+| `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation (a file-I/O exit) |
 | `loop_apidoc/validate/` | Structure / completeness / consistency / no-speculation validation and reports |
 | `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
+| `loop_apidoc/diff/` | run-to-run version diff: load run artifacts, classify changes (`breaking` / `additive` / `changed` / `source_only`), render and write `diff/report.{json,md}` |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 

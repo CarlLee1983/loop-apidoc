@@ -52,6 +52,7 @@ flowchart TD
     cli --> manifest[manifest/<br/>掃描 + manifest]
     cli --> agentcli[agentcli/<br/>assemble + 前處理]
     cli --> validate[validate/<br/>驗證 + 報告]
+    cli --> diff[diff/<br/>run 對 run 版本差異]
 
     agentcli --> manifest
     agentcli --> extraction[extraction/<br/>共用 models + 工具]
@@ -63,12 +64,12 @@ flowchart TD
     plan --> manifest
 
     classDef io fill:#fde,stroke:#c69
-    class generate,run io
+    class generate,run,diff io
 ```
 
-`cli.py`(Typer)只暴露四個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證)、`validate`(驗證既有 run-dir)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。
+`cli.py`(Typer)暴露五個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證)、`validate`(驗證既有 run-dir)、`diff`(比較兩個已完成 run-dir 的版本差異)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。
 
-**唯一檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)與 `run/`(`persist.py` 將計畫寫入 run-dir)寫檔;其餘模組皆為純函式,便於單元測試。
+**檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)、`run/`(`persist.py` 將計畫寫入 run-dir)與 `diff/report.py`(`write_reports` 寫出 `diff/report.{json,md}`)寫檔;其餘模組皆為純函式,便於單元測試。
 
 ## 資料流與關鍵 seam
 
@@ -82,6 +83,9 @@ flowchart TD
 | 計畫 | `build_normalization_plan(extraction, manifest)` | `plan/normalization-plan.json` |
 | 生成 | `generate_outputs(plan, manifest, run_dir)` | `openapi.yaml`、`api-guide.zh-TW.md`、`provenance.json` |
 | 驗證 | `validate_outputs(plan, result, manifest)`(純）／ `validate_run_dir(run_dir)`(讀檔) | `validation/report.{json,md}` |
+| 版本差異(可選) | `load_run_artifacts(run_dir)` → `build_diff_report(base, head)`(純）→ `write_reports(report, out_dir)` | `<head>/diff/report.{json,md}` |
+
+`build_diff_report` 比較兩個已完成 run-dir,依 downstream impact 把差異分類為 `breaking`／`additive`／`changed`／`source_only`(涵蓋 OpenAPI 路徑·方法·參數·schema·security·webhook、integration-contract、provenance、validation 摘要與 manifest;第一版不比較 Markdown guide 與 generated examples)。退出碼:`0`=完成、`2`=輸入 run-dir 缺檔或格式錯誤(`DiffInputError`)。
 
 `run_assemble_pipeline` 會先驗證擷取輸入(`inventory.json` + `endpoints/*.json`)再建 run 目錄;輸入有誤時拋 `AssembleInputError`,CLI 以退出碼 `2` 結束、不留下孤兒目錄。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。
 

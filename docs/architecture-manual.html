@@ -762,6 +762,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">run/ <span class="pill io">File I/O</span></div>
             <div class="module-role">管理 run-id 並將計畫與產物落到 run-dir。</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="diff">
+            <div class="module-name">diff/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">比較兩個 run-dir，依 impact 分類並輸出差異報告。</div>
+          </button>
         </div>
       </div>
     </div>
@@ -770,8 +774,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 只暴露四個指令：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）。
-      <strong>唯一檔案 I/O 出口</strong>：只有 <code>generate/</code>（<code>generate_outputs</code>）與 <code>run/</code>（<code>persist.py</code> 將計畫寫入 run-dir）擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
+      <code>cli.py</code> 暴露五個指令：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）、<code>diff</code>（比較兩個 run-dir 的版本差異）。
+      <strong>檔案 I/O 出口</strong>：只有 <code>generate/</code>（<code>generate_outputs</code>）、<code>run/</code>（<code>persist.py</code> 將計畫寫入 run-dir）與 <code>diff/</code>（<code>report.py</code> 寫出 diff 報告）擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
     </div>
   </div>
 
@@ -866,10 +870,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 preprocess、manifest、assemble、validate 四個命令，將使用者操作導向對應的 deterministic pipeline seam。",
+      description: "Typer CLI 入口，對外暴露 preprocess、manifest、assemble、validate、diff 五個命令，將使用者操作導向對應的 deterministic pipeline seam。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to preprocess / manifest / assemble / validate commands",
+      outputs: "Delegates to preprocess / manifest / assemble / validate / diff commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -941,6 +945,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "run id, output root, generated artifacts, reports",
       outputs: "stable run directory layout",
       sideEffect: "File I/O: writes run-dir files"
+    },
+    diff: {
+      title: "diff/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "比較兩個已完成 run-dir，依 downstream impact 把 OpenAPI、integration-contract、provenance、validation 與 manifest 的差異分類為 breaking／additive／changed／source_only。",
+      seam: "load_run_artifacts(run_dir) / build_diff_report(base, head) / write_reports(report, out_dir)",
+      inputs: "two completed run directories (base, head)",
+      outputs: "diff/report.json, diff/report.md",
+      sideEffect: "File I/O: writes diff report files; compare logic is pure"
     }
   };
 

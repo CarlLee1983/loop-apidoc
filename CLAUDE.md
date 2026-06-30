@@ -31,7 +31,7 @@ There is **one** extraction path: the current coding agent (Claude Code or Codex
 
 `assemble` does **not** extract — it only assembles agent-written JSON (`manifest → plan → generate → validate`) and reports results via `--json` so the agent can drive the correction loop itself (re-reading sources and overwriting the JSON, then re-running `assemble`).
 
-The four CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `assemble` (assemble + validate), and `validate` (validate an existing run-dir).
+The five CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `assemble` (assemble + validate), `validate` (validate an existing run-dir), and `diff` (compare two completed run-dirs by downstream impact).
 
 > A former `run-agent` CLI mode (subprocess `claude -p`) and a NotebookLM extraction backend were both retired in 2026-06; agent-native is now the only path.
 
@@ -46,8 +46,9 @@ The four CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `ass
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation |
 | `loop_apidoc/validate/` | structure / completeness / consistency / no-speculation checks + report |
 | `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
+| `loop_apidoc/diff/` | run-to-run version diff: `loader.py` (load a completed run-dir's artifacts, `DiffInputError`), `compare.py` (classify changes across `openapi.yaml` / `integration-contract.json` / `provenance.json` / `validation/report.json` / `manifest.json` into `breaking` / `additive` / `changed` / `source_only`), `models.py` (`DiffFinding` / `DiffImpact` / `DiffReport`), `report.py` (render + write `diff/report.{json,md}`) |
 
-**Single file-I/O exit:** only `generate/` (`generate_outputs`) and `run/` (which owns the run-dir) write files. Every other module is pure functions — keep it that way; it's what makes them unit-testable.
+**File-I/O exits:** only `generate/` (`generate_outputs`), `run/` (which owns the run-dir), and `diff/report.py` (`write_reports`, writes `diff/report.{json,md}`) write files. Every other module is pure functions — keep it that way; it's what makes them unit-testable.
 
 ## Correction & fail-closed classification
 

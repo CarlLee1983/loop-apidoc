@@ -82,6 +82,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
+  <a class="lvl-3" href="#diff-run">diff — 比較兩次 run 版本差異</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
   <a class="lvl-2" href="#_9">開發</a>
@@ -146,7 +147,7 @@ uv run loop-apidoc --help
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<p>CLI 暴露四個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code> 與 <code>validate</code> 可獨立使用。</p>
+<p>CLI 暴露五個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>、<code>diff</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code>、<code>validate</code> 與 <code>diff</code> 可獨立使用。</p>
 <h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -167,6 +168,10 @@ uv run loop-apidoc --help
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
 <p>對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 <code>&lt;run-dir&gt;/validation/</code>。通過回傳 <code>0</code>,有 ERROR 級問題回傳 <code>1</code>。</p>
+<h3 id="diff-run"><code>diff</code> — 比較兩次 run 的版本差異</h3>
+<pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
+</code></pre>
+<p>比較兩個已完成 run directory,依 downstream impact 把差異分類為 <code>breaking</code>／<code>additive</code>／<code>changed</code>／<code>source_only</code>。預設寫入 <code>&lt;new-run&gt;/diff/report.{json,md}</code>,可用 <code>--output</code> 指定其他目錄。比較範圍涵蓋 <code>openapi.yaml</code>、<code>integration-contract.json</code>、<code>provenance.json</code>、<code>validation/report.json</code> 與 <code>manifest.json</code>;第一版不比較 Markdown guide 或 generated examples。退出碼:<code>0</code>=完成、<code>2</code>=輸入 run-dir 缺檔或格式錯誤。</p>
 <hr />
 <h2 id="_7">輸出結構</h2>
 <p>每次執行使用獨立 run directory:</p>
@@ -181,7 +186,10 @@ uv run loop-apidoc --help
     ├── openapi.yaml             # OpenAPI 3.1
     ├── api-guide.zh-TW.md       # 繁體中文串接文件
     ├── provenance.json          # 每個輸出項目的來源追溯
-    └── validation/
+    ├── validation/
+    │   ├── report.json
+    │   └── report.md
+    └── diff/                    # 與另一個 run 比較版本差異時（loop-apidoc diff）
         ├── report.json
         └── report.md
 </code></pre>
@@ -262,6 +270,10 @@ uv run ruff check .
 <tr>
 <td><code>loop_apidoc/run/</code></td>
 <td>run-id 產生、結果／狀態 models、將計畫寫入 run 目錄</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/diff/</code></td>
+<td>run 對 run 版本差異:讀取產物、分類差異(<code>breaking</code>／<code>additive</code>／<code>changed</code>／<code>source_only</code>)、輸出 <code>diff/report.{json,md}</code></td>
 </tr>
 </tbody>
 </table>

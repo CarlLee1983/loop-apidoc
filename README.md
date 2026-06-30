@@ -142,7 +142,10 @@ output/
     ├── provenance.json             # 每個輸出項目的來源追溯
     ├── integration-contract.json   # 簽章/加密整合契約(來源有提供時)
     ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例(產出時)
-    └── validation/
+    ├── validation/
+    │   ├── report.json
+    │   └── report.md
+    └── diff/                       # 與另一個 run 比較版本差異時(loop-apidoc diff)
         ├── report.json
         └── report.md
 ```
