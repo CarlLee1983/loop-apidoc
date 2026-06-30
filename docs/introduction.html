@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>認識 loop-apidoc — 把雜亂的技術文件變成人人看得懂的說明書</title>
+<style>
+  :root {
+    --bg: #fdfaf4;
+    --bg-soft: #fff;
+    --ink: #2c3043;
+    --ink-soft: #5d6478;
+    --teal: #15a39a;
+    --teal-deep: #0f7a73;
+    --teal-soft: #d8f3f0;
+    --coral: #ff6f61;
+    --coral-deep: #d9483b;
+    --coral-soft: #ffe2dd;
+    --amber: #f5a524;
+    --amber-deep: #b5791a;
+    --amber-soft: #fdeccb;
+    --purple: #7c6df2;
+    --purple-deep: #5b4cc4;
+    --purple-soft: #e7e3fd;
+    --green: #2bb673;
+    --red: #ef5350;
+    --grey: #b6bccb;
+    --line: #ece5d8;
+    --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
+    --shadow-sm: 0 4px 14px -6px rgba(44, 48, 67, 0.18);
+    --radius: 22px;
+    --radius-sm: 14px;
+    font-size: 17px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+      -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  section { padding: 78px 0; }
+
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+  }
+
+  .section-title {
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    margin: 0 0 14px;
+  }
+
+  .section-lead {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 40px;
+  }
+
+  /* ---------- icon system (no emoji) ---------- */
+  .ico { width: 28px; height: 28px; display: block; }
+  .num .ico { width: 30px; height: 30px; }
+  .tint-coral  { background: var(--coral-soft);  color: var(--coral-deep); }
+  .tint-amber  { background: var(--amber-soft);  color: var(--amber-deep); }
+  .tint-teal   { background: var(--teal-soft);   color: var(--teal-deep); }
+  .tint-purple { background: var(--purple-soft); color: var(--purple-deep); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(1200px 500px at 80% -10%, var(--teal-soft) 0%, transparent 55%),
+      radial-gradient(900px 480px at -5% 110%, var(--coral-soft) 0%, transparent 50%);
+    padding: 92px 0 64px;
+  }
+  .hero h1 {
+    font-size: clamp(1.9rem, 5.4vw, 3rem);
+    margin: 0 0 20px;
+    max-width: 760px;
+  }
+  .hero h1 .hl { color: var(--teal-deep); }
+  .hero p.sub {
+    font-size: 1.18rem;
+    color: var(--ink-soft);
+    max-width: 620px;
+    margin: 0 0 38px;
+  }
+  .hero-art {
+    width: 100%;
+    max-width: 820px;
+    margin: 8px auto 0;
+    display: block;
+  }
+
+  /* ---------- friendly API definition callout ---------- */
+  .def {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--amber);
+    border-radius: var(--radius-sm);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+    max-width: 720px;
+    margin: 36px auto 0;
+  }
+  .def .ico-wrap {
+    flex: none;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    background: var(--amber-soft);
+    color: var(--amber-deep);
+  }
+  .def b { color: var(--ink); }
+  .def span { color: var(--ink-soft); font-size: 0.98rem; }
+
+  /* ---------- alt section background ---------- */
+  .alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  /* ---------- pain cards ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 22px;
+  }
+  .card {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px 26px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .alt .card { background: var(--bg); }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .card .badge {
+    width: 56px; height: 56px;
+    display: grid; place-items: center;
+    border-radius: 16px;
+    margin-bottom: 18px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 1.15rem; }
+  .card p { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  /* ---------- promise banner ---------- */
+  .promise {
+    background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+    color: #fff;
+    border-radius: 30px;
+    padding: 54px 48px;
+    box-shadow: 0 24px 50px -20px rgba(15, 122, 115, 0.6);
+    position: relative;
+    overflow: hidden;
+  }
+  .promise::after {
+    content: "“";
+    position: absolute;
+    right: 28px; top: -30px;
+    font-size: 14rem;
+    opacity: 0.12;
+    font-family: Georgia, serif;
+  }
+  .promise .tag {
+    font-size: 0.82rem; font-weight: 700; letter-spacing: 0.16em;
+    opacity: 0.85; text-transform: uppercase;
+  }
+  .promise h2 {
+    font-size: clamp(1.5rem, 4.4vw, 2.3rem);
+    margin: 14px 0 18px;
+    max-width: 700px;
+  }
+  .promise p { font-size: 1.1rem; max-width: 640px; margin: 0; opacity: 0.94; }
+  .promise .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 26px;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 20px; border-radius: 999px;
+    font-weight: 600; font-size: 0.98rem;
+  }
+  .promise .pill svg { width: 18px; height: 18px; flex: none; }
+
+  /* ---------- step flow ---------- */
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step {
+    display: grid;
+    grid-template-columns: 78px 1fr;
+    gap: 22px;
+    align-items: center;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+  .step .num {
+    width: 64px; height: 64px;
+    border-radius: 20px;
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .step .num .n {
+    position: absolute; top: -8px; left: -8px;
+    width: 26px; height: 26px;
+    background: var(--ink); color: #fff;
+    border-radius: 50%;
+    font-size: 0.82rem; font-weight: 700;
+    display: grid; place-items: center;
+    border: 3px solid var(--bg-soft);
+  }
+  .step h3 { margin: 0 0 4px; font-size: 1.12rem; }
+  .step p { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+  .step-arrow { display: grid; place-items: center; color: var(--grey); margin: -6px 0; }
+  .step-arrow svg { width: 26px; height: 26px; }
+
+  /* ---------- value cards ---------- */
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+  }
+  .value {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .alt .value { background: var(--bg); }
+  .value .badge {
+    width: 54px; height: 54px; border-radius: 15px;
+    display: grid; place-items: center; margin-bottom: 16px;
+  }
+  .value h3 { margin: 0 0 6px; font-size: 1.08rem; }
+  .value .file {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 0.78rem; color: var(--teal-deep);
+    background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
+  }
+  .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.96rem; }
+
+  /* ---------- provenance ---------- */
+  .prov-art { width: 100%; max-width: 700px; margin: 10px auto 0; display: block; }
+
+  /* ---------- diff lights ---------- */
+  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+  .light {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 20px 22px; box-shadow: var(--shadow-sm);
+  }
+  .alt .light { background: var(--bg); }
+  .dot { width: 18px; height: 18px; border-radius: 50%; margin-top: 6px; flex: none; box-shadow: 0 0 0 5px rgba(0,0,0,0.04); }
+  .dot.red { background: var(--red); }
+  .dot.green { background: var(--green); }
+  .dot.amber { background: var(--amber); }
+  .dot.grey { background: var(--grey); }
+  .light h3 { margin: 0 0 4px; font-size: 1.02rem; }
+  .light .en { font-size: 0.78rem; color: var(--ink-soft); font-weight: 400; }
+  .light p { margin: 0; color: var(--ink-soft); font-size: 0.94rem; }
+
+  /* ---------- before / after ---------- */
+  .ba {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch;
+  }
+  .ba-col {
+    border-radius: var(--radius); padding: 28px 24px; border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+  }
+  .ba-before { background: var(--coral-soft); border-color: #f6cfc8; }
+  .ba-after  { background: var(--teal-soft); border-color: #bce8e3; }
+  .ba-col .lbl { font-weight: 700; font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .ba-before .lbl { color: var(--coral-deep); }
+  .ba-after .lbl { color: var(--teal-deep); }
+  .ba-col h3 { margin: 8px 0 16px; font-size: 1.18rem; }
+  .ba-col ul { margin: 0; padding-left: 20px; color: var(--ink-soft); }
+  .ba-col li { margin-bottom: 8px; font-size: 0.98rem; }
+  .ba-mid { display: grid; place-items: center; color: var(--teal); }
+  .ba-mid svg { width: 40px; height: 40px; }
+
+  /* ---------- closing ---------- */
+  .closing {
+    text-align: center;
+    background:
+      radial-gradient(700px 400px at 50% 0%, var(--purple-soft) 0%, transparent 60%);
+  }
+  .closing .section-title { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .closing .big {
+    font-size: clamp(1.2rem, 3.2vw, 1.5rem);
+    color: var(--ink);
+    max-width: 720px; margin: 0 auto 30px; font-weight: 500;
+  }
+  .who {
+    display: inline-flex; gap: 14px; align-items: center;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 999px; padding: 14px 26px; box-shadow: var(--shadow-sm);
+    color: var(--ink-soft); font-size: 0.98rem; text-align: left;
+  }
+  .who .ico-wrap { flex: none; color: var(--purple-deep); display: grid; place-items: center; }
+  .who b { color: var(--ink); }
+
+  footer {
+    text-align: center; padding: 40px 24px 56px;
+    color: var(--ink-soft); font-size: 0.86rem;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px) {
+    section { padding: 56px 0; }
+    .promise { padding: 38px 26px; border-radius: 22px; }
+    .ba { grid-template-columns: 1fr; }
+    .ba-mid { transform: rotate(90deg); padding: 4px 0; }
+    .def { flex-direction: column; gap: 12px; }
+    .who { flex-direction: column; text-align: center; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">認識 LOOP-APIDOC</span>
+    <h1>把雜亂的技術文件,<br />變成人人看得懂、<span class="hl">可信賴</span>的說明書</h1>
+    <p class="sub">各家廠商的串接文件,格式亂、又常缺漏。loop-apidoc 像一位一絲不苟的整理師,把它們統一成乾淨、查得到出處的標準說明 —— 而且絕不自己亂編。</p>
+
+    <!-- hero illustration: messy docs -> funnel -> clean output -->
+    <svg class="hero-art" viewBox="0 0 820 292" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="雜亂的來源文件經過整理,變成乾淨統一的說明書">
+      <!-- messy docs (left) -->
+      <g transform="translate(20 40)">
+        <rect x="0" y="30" width="120" height="150" rx="12" fill="#fff" stroke="#f6cfc8" stroke-width="2" transform="rotate(-8 60 105)"/>
+        <rect x="20" y="20" width="120" height="150" rx="12" fill="#fff" stroke="#fdeccb" stroke-width="2" transform="rotate(5 80 95)"/>
+        <rect x="40" y="40" width="120" height="150" rx="12" fill="#fff" stroke="#ece5d8" stroke-width="2"/>
+        <rect x="60" y="64" width="58" height="9" rx="4.5" fill="#e7d8c2"/>
+        <rect x="60" y="92" width="80" height="8" rx="4" fill="#eee3d2"/>
+        <rect x="60" y="110" width="62" height="8" rx="4" fill="#eee3d2"/>
+        <rect x="60" y="128" width="74" height="8" rx="4" fill="#eee3d2"/>
+        <rect x="60" y="146" width="40" height="8" rx="4" fill="#f3d6d0"/>
+      </g>
+
+      <!-- arrow -->
+      <g transform="translate(208 120)" stroke="#b6bccb" stroke-width="3" stroke-linecap="round">
+        <line x1="0" y1="0" x2="44" y2="0"/>
+        <path d="M36 -8 L46 0 L36 8" fill="none"/>
+      </g>
+
+      <!-- funnel (middle) -->
+      <g transform="translate(300 56)">
+        <path d="M0 0 H220 L150 92 V150 L70 178 V92 Z" fill="#d8f3f0" stroke="#15a39a" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="110" cy="70" r="26" fill="#fff" stroke="#15a39a" stroke-width="2.5"/>
+        <path d="M98 70 l9 9 l16 -18" stroke="#15a39a" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- arrow -->
+      <g transform="translate(556 120)" stroke="#b6bccb" stroke-width="3" stroke-linecap="round">
+        <line x1="0" y1="0" x2="44" y2="0"/>
+        <path d="M36 -8 L46 0 L36 8" fill="none"/>
+      </g>
+
+      <!-- clean output (right) -->
+      <g transform="translate(636 40)">
+        <rect x="0" y="20" width="150" height="180" rx="14" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
+        <rect x="22" y="44" width="106" height="10" rx="5" fill="#15a39a"/>
+        <rect x="22" y="70" width="84" height="8" rx="4" fill="#cfeae7"/>
+        <rect x="22" y="88" width="100" height="8" rx="4" fill="#cfeae7"/>
+        <rect x="22" y="106" width="72" height="8" rx="4" fill="#cfeae7"/>
+        <rect x="22" y="132" width="106" height="8" rx="4" fill="#e7e3fd"/>
+        <rect x="22" y="150" width="90" height="8" rx="4" fill="#e7e3fd"/>
+        <circle cx="128" cy="190" r="22" fill="#2bb673"/>
+        <path d="M118 190 l7 7 l13 -15" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- captions on a shared baseline, centred under each element -->
+      <g font-size="13" text-anchor="middle">
+        <text x="110" y="278" fill="#5d6478">PDF · 網頁 · 程式檔 · 網址</text>
+        <text x="410" y="278" fill="#0f7a73">逐段閱讀 · 只記錄寫的</text>
+        <text x="711" y="278" fill="#0f7a73">統一 · 可追溯 · 已檢查</text>
+      </g>
+    </svg>
+
+    <div class="def">
+      <span class="ico-wrap">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      </span>
+      <div>
+        <b>先解釋一個詞:API 是什麼?</b><br />
+        <span>簡單說,API 就是兩套軟體互相溝通的「接口」;而 <b>API 文件</b>,就是教你怎麼跟對方系統「對接」的操作手冊。例如要串接金流、物流、簡訊服務時,對方都會給你一份這樣的文件。</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== PAIN ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">為什麼需要它</span>
+    <h2 class="section-title">沒有它,日子有多難?</h2>
+    <p class="section-lead">當一個團隊要同時串接很多家外部服務時,光是「讀懂文件」就是一場硬仗 —— 而且藏著看不見的風險。</p>
+    <div class="cards">
+      <div class="card">
+        <div class="badge tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9h10v10H9z"/><path d="M5 15V5h10"/></svg>
+        </div>
+        <h3>十家廠商,十種格式</h3>
+        <p>有的給你一份 PDF、有的丟一個網頁、有的是一堆程式碼檔。光是把它們「讀懂」就耗掉大把時間與耐心。</p>
+      </div>
+      <div class="card">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke-dasharray="3.5 3"/><path d="M8.5 12h7"/></svg>
+        </div>
+        <h3>文件常常缺東缺西</h3>
+        <p>漏了關鍵欄位、沒寫清楚失敗時會怎樣。最危險的是 —— 有人為了趕進度,乾脆「用猜的」把空白補上去。</p>
+      </div>
+      <div class="card">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4"/><path d="M12 17.5h.01"/></svg>
+        </div>
+        <h3>猜錯就出包</h3>
+        <p>一個猜錯的小細節,上線後可能變成付款失敗、訂單遺失這種真實事故,事後才發現「原來文件根本沒這樣寫」。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROMISE ===================== -->
+<section>
+  <div class="wrap">
+    <div class="promise">
+      <span class="tag">最重要的一件事</span>
+      <h2>它只寫「文件真正講到的」,<br />絕不自己編。</h2>
+      <p>文件沒寫的,它一律留白、並老實標記為「缺漏」,永遠不會用慣例或猜測來填。寧可明白告訴你「這裡缺了」,也不給你一份看起來完整、其實是編出來的文件。</p>
+      <span class="pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
+        你可以信任它的每一句話
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">它怎麼運作</span>
+    <h2 class="section-title">它是怎麼做到的?</h2>
+    <p class="section-lead">整個過程就像一位認真的整理師,把雜亂的資料一步步變成乾淨的成果。</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
+          <span class="n">1</span>
+        </div>
+        <div><h3>收集來源</h3><p>把各種格式的文件餵給它 —— PDF、網頁、現成的規格檔,甚至一個公開網址都行。</p></div>
+      </div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.4-4.4"/></svg>
+          <span class="n">2</span>
+        </div>
+        <div><h3>逐段仔細閱讀</h3><p>一段一段擷取內容,像認真的讀者抄重點 —— 但只抄文件真的寫的,絕不腦補。</p></div>
+      </div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>
+          <span class="n">3</span>
+        </div>
+        <div><h3>整理成標準格式</h3><p>把零散資訊重新拼組成一份統一、機器與人都能讀懂的標準規格。</p></div>
+      </div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
+          <span class="n">4</span>
+        </div>
+        <div><h3>自我檢查</h3><p>自動驗證成果:有缺漏就回頭重讀補齊;真的查不到,就誠實標成「缺漏／衝突」,不硬填。</p></div>
+      </div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+
+      <div class="step">
+        <div class="num tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.2L12 12l8.7-4.8"/><path d="M12 12v10"/></svg>
+          <span class="n">5</span>
+        </div>
+        <div><h3>交付成果</h3><p>產出標準規格、看得懂的中文說明書、來源追溯,以及一份品質檢查報告。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VALUE ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">你會拿到什麼</span>
+    <h2 class="section-title">最後你會拿到四樣東西</h2>
+    <p class="section-lead">每一份都對應一個明確用途,從工程師到主管都能各取所需。</p>
+    <div class="value-grid">
+      <div class="value">
+        <div class="badge tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9.5 13 8 14.5 9.5 16"/><path d="M13.5 13 15 14.5 13.5 16"/></svg>
+        </div>
+        <h3>標準規格藍圖</h3>
+        <span class="file">openapi.yaml</span>
+        <p>業界通用的標準格式,各種工具與工程師都能直接拿去使用,不必再各自解讀。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
+        </div>
+        <h3>看得懂的中文說明書</h3>
+        <span class="file">api-guide.zh-TW.md</span>
+        <p>用繁體中文整理好的串接指南,不必再硬啃原文文件。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 12h5"/><path d="M10.5 8H8a4 4 0 0 0 0 8h2.5"/><path d="M13.5 8H16a4 4 0 0 1 0 8h-2.5"/></svg>
+        </div>
+        <h3>來源追溯</h3>
+        <span class="file">provenance.json</span>
+        <p>每一項內容都標明出自哪份文件、哪一段,經得起「這資訊哪來的?」的追問。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><path d="M15 5.5h2.5a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1H9"/><path d="M9 14l2 2 4-4"/></svg>
+        </div>
+        <h3>品質檢查報告</h3>
+        <span class="file">validation/report</span>
+        <p>清楚列出哪裡完整、哪裡還缺,文件品質一目了然,不用憑感覺。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROVENANCE / TRUST ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">為什麼可以信任</span>
+    <h2 class="section-title">每一句話,都查得到出處</h2>
+    <p class="section-lead">就像論文會標注引用來源,loop-apidoc 產出的每個欄位、每條規則,都能追回是哪份來源文件、哪個段落寫的。</p>
+
+    <svg class="prov-art" viewBox="0 0 700 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="產出文件中的一條內容,用一條線追溯回原始來源文件的對應段落">
+      <!-- output doc (left) -->
+      <g transform="translate(20 20)">
+        <rect x="0" y="0" width="250" height="160" rx="14" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
+        <text x="20" y="32" font-size="13" fill="#0f7a73" font-weight="700">產出的說明書</text>
+        <rect x="20" y="50" width="160" height="9" rx="4.5" fill="#cfeae7"/>
+        <rect x="20" y="70" width="120" height="9" rx="4.5" fill="#cfeae7"/>
+        <!-- highlighted line -->
+        <rect x="14" y="90" width="222" height="26" rx="8" fill="#fdeccb" stroke="#f5a524" stroke-width="2"/>
+        <rect x="24" y="99" width="150" height="9" rx="4.5" fill="#e3a93a"/>
+        <text x="196" y="108" font-size="13" fill="#b5791a" font-weight="700">①</text>
+        <rect x="20" y="128" width="140" height="9" rx="4.5" fill="#cfeae7"/>
+      </g>
+
+      <!-- connector line -->
+      <path d="M276 113 C 350 113, 350 70, 424 70" stroke="#f5a524" stroke-width="2.5" stroke-dasharray="6 6" fill="none"/>
+      <circle cx="424" cy="70" r="5" fill="#f5a524"/>
+
+      <!-- source doc (right) -->
+      <g transform="translate(430 20)">
+        <rect x="0" y="0" width="250" height="160" rx="14" fill="#fff" stroke="#f6cfc8" stroke-width="2.5"/>
+        <text x="20" y="32" font-size="13" fill="#c2493d" font-weight="700">原始來源文件</text>
+        <rect x="20" y="50" width="120" height="9" rx="4.5" fill="#f3d6d0"/>
+        <!-- matched line -->
+        <rect x="14" y="62" width="222" height="22" rx="8" fill="#ffe2dd" stroke="#ff6f61" stroke-width="2"/>
+        <rect x="24" y="69" width="150" height="9" rx="4.5" fill="#e0857c"/>
+        <text x="208" y="78" font-size="12" fill="#b5791a" font-weight="700">①</text>
+        <rect x="20" y="96" width="180" height="9" rx="4.5" fill="#f3d6d0"/>
+        <rect x="20" y="114" width="140" height="9" rx="4.5" fill="#f6e0dc"/>
+        <rect x="20" y="132" width="160" height="9" rx="4.5" fill="#f6e0dc"/>
+      </g>
+    </svg>
+    <p class="section-lead" style="margin: 30px auto 0; text-align:center;">有人質疑「這個設定是哪來的?」時,你能立刻指出證據 —— 這就是「可追溯」帶來的安心。</p>
+  </div>
+</section>
+
+<!-- ===================== DIFF ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">版本比對 · 新功能</span>
+    <h2 class="section-title">換版本了?一眼看出差在哪</h2>
+    <p class="section-lead">廠商更新了文件,新版到底改了什麼?loop-apidoc 能比較新舊兩版,把每一處變化標上四種「燈號」,讓你一眼判斷風險高低。</p>
+    <div class="lights">
+      <div class="light">
+        <span class="dot red"></span>
+        <div><h3>破壞性變更 <span class="en">breaking</span></h3><p>可能讓你既有的串接「壞掉」,要特別小心、優先處理。</p></div>
+      </div>
+      <div class="light">
+        <span class="dot green"></span>
+        <div><h3>新增 <span class="en">additive</span></h3><p>多了新功能或新欄位,通常是安全的,不影響現有串接。</p></div>
+      </div>
+      <div class="light">
+        <span class="dot amber"></span>
+        <div><h3>內容調整 <span class="en">changed</span></h3><p>既有內容有改動,不一定危險,但值得花一分鐘看一下。</p></div>
+      </div>
+      <div class="light">
+        <span class="dot grey"></span>
+        <div><h3>僅來源異動 <span class="en">source_only</span></h3><p>只是來源文件本身動了,最終規格其實沒變,可放心。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BEFORE / AFTER ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">前後對照</span>
+    <h2 class="section-title">一張圖看懂前後差別</h2>
+    <p class="section-lead">同樣一批來源文件,有沒有經過 loop-apidoc,差別非常明顯。</p>
+    <div class="ba">
+      <div class="ba-col ba-before">
+        <span class="lbl">使用前</span>
+        <h3>一疊看不懂的文件</h3>
+        <ul>
+          <li>格式各家不同,讀起來費力</li>
+          <li>缺頁、漏欄位,不知道完不完整</li>
+          <li>不確定的地方只能用猜的</li>
+          <li>出處難查,很難對帳追責</li>
+        </ul>
+      </div>
+      <div class="ba-mid" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="ba-col ba-after">
+        <span class="lbl">使用後</span>
+        <h3>一份乾淨的說明書</h3>
+        <ul>
+          <li>統一標準格式,人與工具都好讀</li>
+          <li>缺漏明白標出,品質有報告佐證</li>
+          <li>只寫文件真有的,絕不臆測</li>
+          <li>每句話都查得到來源出處</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CLOSING ===================== -->
+<section class="closing">
+  <div class="wrap">
+    <span class="eyebrow">一句話總結</span>
+    <h2 class="section-title">該有的整理好,沒有的老實說,絕不瞎掰。</h2>
+    <p class="big">loop-apidoc 把「雜亂、不可靠的技術文件」,變成「乾淨、可信賴、查得到出處的說明書」。</p>
+    <div class="who">
+      <span class="ico-wrap">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><path d="M3.5 20c0-3.3 2.5-5.2 5.5-5.2s5.5 1.9 5.5 5.2"/><path d="M16 6.2A3 3 0 0 1 16 12"/><path d="M17.5 14.8c2 .6 3 2.3 3 5.2"/></svg>
+      </span>
+      <div><b>適合誰?</b>　需要串接多家外部服務(金流、物流、簡訊…),又重視文件正確與可追溯的團隊。</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  由專案文件產生 · loop-apidoc · 來源依據式 API 文件 pipeline
+</footer>
+
+</body>
+</html>
