@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.run.runid import make_run_id
+from loop_apidoc.score.models import ScoreProfile
 from loop_apidoc.validate import validate_run_dir, write_reports
 
 app = typer.Typer(
@@ -135,6 +137,61 @@ def diff(
         f"source_only {report.summary['source_only']}；"
         f"報告寫入 {output_dir / 'report.json'}"
     )
+
+
+@app.command()
+def score(
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="已完成的 run 目錄（含 openapi.yaml / provenance.json / validation/report.json）",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+    ),
+    profile: ScoreProfile = typer.Option(
+        ScoreProfile.CI,
+        "--profile",
+        case_sensitive=False,
+        help="評分嚴格度：ci 較嚴格，review 較適合人工健檢",
+    ),
+    min_score: Annotated[
+        int | None,
+        typer.Option("--min-score", min=0, max=100, help="覆寫 profile 預設分數門檻"),
+    ] = None,
+    json_out: bool = typer.Option(
+        False,
+        "--json",
+        help="把 score report JSON 印到 stdout",
+    ),
+) -> None:
+    """評分既有 run 目錄並寫出 score/score.{json,md}。"""
+    from loop_apidoc.score import (
+        ScoreInputError,
+        evaluate_score,
+        load_score_inputs,
+        write_reports as write_score_reports,
+    )
+
+    score_dir = output / "score"
+    try:
+        inputs = load_score_inputs(output)
+        report = evaluate_score(inputs, profile=profile, min_score=min_score)
+    except ScoreInputError as exc:
+        typer.echo(f"score input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    write_score_reports(report, score_dir)
+    if json_out:
+        typer.echo(report.model_dump_json(indent=2))
+    else:
+        typer.echo(
+            f"score {report.status.value.upper()}: {report.score}/100 "
+            f"(profile {report.profile.value}, min {report.min_score})；"
+            f"報告寫入 {score_dir / 'score.json'}"
+        )
+    raise typer.Exit(code=0 if report.status.value == "pass" else 1)
 
 
 @app.command()
