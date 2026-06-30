@@ -246,10 +246,89 @@ def _build_sdk_hints(openapi: dict, plan: NormalizationPlan) -> str:
     return json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
 
 
+def _param_value(name: str, node: dict) -> object:
+    """Source value only (example / single-enum / const / default); else `<name>`.
+
+    Mirrors examples._resolve_value — never derives a type-based sample, so we
+    never emit fabricated "string"/0/true placeholders.
+    """
+    if isinstance(node, dict) and "example" in node:
+        return node["example"]
+    schema = node.get("schema") if isinstance(node.get("schema"), dict) else node
+    if isinstance(schema, dict):
+        if "example" in schema:
+            return schema["example"]
+        enum = schema.get("enum")
+        if isinstance(enum, list) and len(enum) == 1:
+            return enum[0]
+        if "const" in schema:
+            return schema["const"]
+        if "default" in schema:
+            return schema["default"]
+    return f"<{_snake(name)}>"
+
+
+def _postman_item(rec: dict, plan: NormalizationPlan) -> dict:
+    oid, _ = _op_identity(rec)
+    op = rec["op"]
+    path = rec["path"] or ""
+    segments = [seg for seg in path.split("/") if seg]
+    headers = []
+    query = []
+    for raw in op.get("parameters", []) or []:
+        loc = raw.get("in")
+        value = _param_value(raw.get("name", ""), raw)
+        if loc == "header":
+            headers.append({"key": raw.get("name"), "value": value})
+        elif loc == "query":
+            query.append({"key": raw.get("name"), "value": value})
+    url = {"raw": "{{base_url}}" + path, "host": ["{{base_url}}"], "path": segments}
+    if query:
+        url["query"] = query
+    request: dict = {"method": rec["method"], "header": headers, "url": url}
+    body = (op.get("requestBody") or {}).get("content") or {}
+    if body:
+        content_type = next(iter(body))
+        schema = body[content_type].get("schema", {}) or {}
+        fields = {
+            pname: _param_value(pname, {"schema": pnode})
+            for pname, pnode in (schema.get("properties") or {}).items()
+        }
+        request["body"] = {
+            "mode": "raw",
+            "raw": json.dumps(fields, ensure_ascii=False, indent=2),
+            "options": {"raw": {"language": "json"}},
+        }
+    desc_lines = [f"OpenAPI: `{_contract_pointer(rec)}`"]
+    if rec["operation_id"]:
+        desc_lines.append(f"Example: `../examples/{oid}/request.ts`")
+    contract = plan.integration
+    if contract is not None and contract.crypto:
+        desc_lines.append(
+            "Requires signing — see `../integration-contract.json#/crypto/0` "
+            "(no pre-request script generated; implement crypto from the contract)."
+        )
+    return {"name": oid, "request": request, "description": "\n".join(desc_lines)}
+
+
+def _build_postman_collection(openapi: dict, plan: NormalizationPlan) -> str:
+    title = (openapi.get("info") or {}).get("title") or "Untitled API"
+    doc = {
+        "info": {
+            "name": title,
+            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        },
+        "variable": [{"key": "base_url", "value": _base_url_initial(openapi)}],
+        "item": [_postman_item(rec, plan) for rec in _iter_operations(openapi)],
+    }
+    return json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
+
+
 def build_handoff(
     openapi: dict, plan: NormalizationPlan, integration: dict | None
 ) -> dict[str, str]:
     return {
         "handoff/integration-tasks.md": _build_integration_tasks(openapi, plan, integration),
+        "handoff/postman_collection.json": _build_postman_collection(openapi, plan),
         "handoff/sdk-hints.json": _build_sdk_hints(openapi, plan),
     }
