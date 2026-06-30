@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from loop_apidoc.generate.examples import build_examples
+from loop_apidoc.generate.handoff import build_handoff
 from loop_apidoc.generate.integration import build_integration_document
 from loop_apidoc.generate.markdown import build_markdown
 from loop_apidoc.generate.models import GenerateResult
@@ -17,12 +18,14 @@ from loop_apidoc.plan.models import NormalizationPlan
 
 def build_result(plan: NormalizationPlan, manifest: Manifest) -> GenerateResult:
     openapi = build_openapi(plan)
+    integration = build_integration_document(plan)
     result = GenerateResult(
         openapi=openapi,
         markdown=build_markdown(plan, manifest),
         provenance=build_provenance(plan),
-        integration=build_integration_document(plan),
+        integration=integration,
         examples=build_examples(openapi, plan),
+        handoff=build_handoff(openapi, plan, integration),
     )
     return result.model_copy(update={
         "review_html": build_review_html(plan, manifest, result)
@@ -51,6 +54,10 @@ def generate_outputs(
             encoding="utf-8",
         )
     for relpath, content in result.examples.items():
+        target = run_dir / relpath
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+    for relpath, content in result.handoff.items():
         target = run_dir / relpath
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")

@@ -117,3 +117,20 @@ def test_review_html_visualizes_generated_artifacts_for_manual_review(tmp_path):
     assert "缺少退款端點" in html
     assert "章節 A/B 認證名稱不同" in html
     assert "欄位 memo 未確認" in html
+
+
+def test_review_html_links_handoff(tmp_path):
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                method="GET",
+                path="/ping",
+                responses=[{"status": "200", "description": "ok"}],
+            )
+        ],
+    )
+    generate_outputs(plan, _manifest(), tmp_path)
+    html = (tmp_path / "review.html").read_text(encoding="utf-8")
+    assert "handoff/integration-tasks.md" in html
