@@ -139,6 +139,10 @@ output/
     ├── provenance.json             # per-output source traceability
     ├── integration-contract.json   # signing/crypto integration contract (when sources provide one)
     ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
+    ├── handoff/                    # developer handoff aids (derived artifacts, not a contract source)
+    │   ├── integration-tasks.md    # implementation order / runtime config / blocker checklist
+    │   ├── postman_collection.json # Postman v2.1 request-shape collection (importable)
+    │   └── sdk-hints.json          # per-endpoint hints for SDK / client scaffolding
     ├── validation/
     │   ├── report.json
     │   └── report.md
@@ -146,6 +150,8 @@ output/
         ├── report.json
         └── report.md
 ```
+
+`handoff/` holds derived engineering guidance and tooling adapters; the **contract sources remain `openapi.yaml` and `integration-contract.json`** — it never duplicates schema.
 
 > Note: the agent-produced extraction input (`inventory.json` + `endpoints/*.json` + optional `integration.json`) lives in the working directory passed to `--extraction`, **not** in the run-dir. The run-dir `extraction/` only holds the audit trail (`queries.jsonl` + `answers/`).
 

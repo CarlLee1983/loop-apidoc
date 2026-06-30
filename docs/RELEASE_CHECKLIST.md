@@ -40,6 +40,7 @@ Generate one representative run and eyeball the products (validation PASS does
 - [ ] `provenance.json` — targets align 1:1 with OpenAPI locations.
 - [ ] `examples/` — the three-language request examples render and wire signatures correctly.
 - [ ] `integration-contract.json` — crypto/callbacks/field_conditions/test_cases match the source.
+- [ ] `handoff/` — `integration-tasks.md` order/blockers read sensibly, `postman_collection.json` imports, `sdk-hints.json` covers the endpoints (derived; no schema duplicated).
 
 ## Invariant re-check
 
