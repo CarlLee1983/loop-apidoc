@@ -60,6 +60,8 @@ def _artifact_links(result: GenerateResult) -> str:
         links.append(("整合契約", "integration-contract.json", "integration-contract.json"))
     if result.examples:
         links.append(("請求範例", "examples/README.md", "examples/README.md"))
+    if result.handoff:
+        links.append(("開發交接", "handoff/integration-tasks.md", "handoff/integration-tasks.md"))
     return "\n".join(
         f'<a class="artifact-link" href="{_h(href)}">'
         f"<strong>{_h(label)}</strong><span>{_h(path)}</span></a>"

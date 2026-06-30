@@ -1,5 +1,6 @@
 """Standardized output generation layer (spec §8)."""
 
+from loop_apidoc.generate.handoff import build_handoff
 from loop_apidoc.generate.markdown import REQUIRED_MARKDOWN_SECTIONS
 from loop_apidoc.generate.models import (
     GenerateResult,
@@ -14,6 +15,7 @@ __all__ = [
     "GenerateResult",
     "ProvenanceDocument",
     "ProvenanceEntry",
+    "build_handoff",
     "build_review_html",
     "build_result",
     "generate_outputs",

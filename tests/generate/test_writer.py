@@ -50,3 +50,16 @@ def test_generate_outputs_creates_nested_run_dir(tmp_path):
     run_dir = tmp_path / "output" / "run-1"
     generate_outputs(_plan(), _manifest(), run_dir)
     assert (run_dir / "openapi.yaml").exists()
+
+
+def test_generate_outputs_writes_handoff(tmp_path):
+    run_dir = tmp_path / "run"
+    result = generate_outputs(_plan(), _manifest(), run_dir)
+    assert set(result.handoff) == {
+        "handoff/integration-tasks.md",
+        "handoff/postman_collection.json",
+        "handoff/sdk-hints.json",
+    }
+    assert (run_dir / "handoff" / "integration-tasks.md").is_file()
+    assert (run_dir / "handoff" / "postman_collection.json").is_file()
+    assert (run_dir / "handoff" / "sdk-hints.json").is_file()

@@ -25,4 +25,5 @@ class GenerateResult(BaseModel):
     provenance: ProvenanceDocument
     integration: dict | None = None
     examples: dict[str, str] = Field(default_factory=dict)
+    handoff: dict[str, str] = Field(default_factory=dict)
     review_html: str = ""
