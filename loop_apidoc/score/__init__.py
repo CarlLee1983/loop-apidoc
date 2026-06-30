@@ -14,6 +14,7 @@ from loop_apidoc.score.models import (
     ScoreStatus,
     resolved_min_score,
 )
+from loop_apidoc.score.report import render_markdown, write_reports
 
 __all__ = [
     "CATEGORY_WEIGHTS",
@@ -27,5 +28,7 @@ __all__ = [
     "ScoreStatus",
     "evaluate_score",
     "load_score_inputs",
+    "render_markdown",
     "resolved_min_score",
+    "write_reports",
 ]
