@@ -86,3 +86,50 @@ def test_postman_title_fallback_when_missing():
     out = build_handoff(op, _plan(), None)
     c = json.loads(out["handoff/postman_collection.json"])
     assert c["info"]["name"] == "Untitled API"
+
+
+def _form_openapi() -> dict:
+    return {
+        "openapi": "3.1.0",
+        "info": {"title": "Form API", "version": "1.0"},
+        "servers": [{"url": "https://api.example.com"}],
+        "paths": {
+            "/pay": {
+                "post": {
+                    "operationId": "submitPayment",
+                    "requestBody": {
+                        "content": {
+                            "application/x-www-form-urlencoded": {
+                                "schema": {
+                                    "properties": {
+                                        "MerchantID": {"type": "string"},
+                                        "TradeAmt": {"type": "integer"},
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }
+            }
+        },
+    }
+
+
+def test_postman_form_encoded_body():
+    out = build_handoff(_form_openapi(), _plan(), None)
+    c = json.loads(out["handoff/postman_collection.json"])
+    item = c["item"][0]
+    body = item["request"]["body"]
+    # form-encoded → urlencoded mode, not raw
+    assert body["mode"] == "urlencoded"
+    assert "urlencoded" in body
+    keys = {entry["key"] for entry in body["urlencoded"]}
+    assert "MerchantID" in keys
+    assert "TradeAmt" in keys
+    # values must be placeholders (no source example given)
+    values = {entry["key"]: entry["value"] for entry in body["urlencoded"]}
+    assert values["MerchantID"] == "<merchant_id>"
+    assert values["TradeAmt"] == "<trade_amt>"
+    # Content-Type header must be set
+    headers = {h["key"]: h["value"] for h in item["request"]["header"]}
+    assert headers.get("Content-Type") == "application/x-www-form-urlencoded"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from loop_apidoc.generate.handoff import build_handoff
 from loop_apidoc.plan.models import (
+    ContractTestCase,
     CryptoScheme,
     IntegrationContract,
     KeySource,
@@ -27,7 +28,14 @@ def _plan() -> NormalizationPlan:
                     purpose="request",
                     key_source=KeySource(key="HASH_KEY", iv="HASH_IV"),
                 )
-            ]
+            ],
+            test_cases=[
+                ContractTestCase(
+                    status=PlanItemStatus.SUPPORTED,
+                    name="happy_path",
+                    operation_ref="post_payments",
+                )
+            ],
         ),
     )
 
@@ -77,6 +85,7 @@ def test_tasks_crypto_and_blockers():
     assert "Unverified" in md    # unverified_items
     assert "Gap" in md           # integration["missing"]
     assert "AES padding" in md
+    assert "../integration-contract.json#/test_cases/0" in md  # test_cases rendered
 
 
 def test_tasks_no_schema_tables():

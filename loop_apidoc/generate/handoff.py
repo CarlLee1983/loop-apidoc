@@ -156,6 +156,11 @@ def _mechanism_lines(plan: NormalizationPlan) -> list[str]:
             f"- [ ] Field condition #{idx} "
             f"(`../integration-contract.json#/field_conditions/{idx}`)"
         )
+    for idx, tc in enumerate(contract.test_cases):
+        lines.append(
+            f"- [ ] Contract test `{tc.name or idx}` "
+            f"(`../integration-contract.json#/test_cases/{idx}`)"
+        )
     if not lines:
         lines.append(
             "- No source-grounded signing, encryption, callback, condition, or "
@@ -246,6 +251,12 @@ def _build_sdk_hints(openapi: dict, plan: NormalizationPlan) -> str:
     return json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
 
 
+def _is_json(content_type: str | None) -> bool:
+    if not content_type:
+        return False
+    return content_type.split(";")[0].strip().lower().endswith("json")
+
+
 def _param_value(name: str, node: dict) -> object:
     """Source value only (example / single-enum / const / default); else `<name>`.
 
@@ -290,15 +301,23 @@ def _postman_item(rec: dict, plan: NormalizationPlan) -> dict:
     if body:
         content_type = next(iter(body))
         schema = body[content_type].get("schema", {}) or {}
-        fields = {
-            pname: _param_value(pname, {"schema": pnode})
-            for pname, pnode in (schema.get("properties") or {}).items()
-        }
-        request["body"] = {
-            "mode": "raw",
-            "raw": json.dumps(fields, ensure_ascii=False, indent=2),
-            "options": {"raw": {"language": "json"}},
-        }
+        props = list((schema.get("properties") or {}).items())
+        headers.append({"key": "Content-Type", "value": content_type})
+        if _is_json(content_type):
+            fields = {pname: _param_value(pname, {"schema": pnode}) for pname, pnode in props}
+            request["body"] = {
+                "mode": "raw",
+                "raw": json.dumps(fields, ensure_ascii=False, indent=2),
+                "options": {"raw": {"language": "json"}},
+            }
+        else:
+            request["body"] = {
+                "mode": "urlencoded",
+                "urlencoded": [
+                    {"key": pname, "value": _param_value(pname, {"schema": pnode})}
+                    for pname, pnode in props
+                ],
+            }
     desc_lines = [f"OpenAPI: `{_contract_pointer(rec)}`"]
     if rec["operation_id"]:
         desc_lines.append(f"Example: `../examples/{oid}/request.ts`")
