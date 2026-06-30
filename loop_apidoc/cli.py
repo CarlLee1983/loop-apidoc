@@ -259,6 +259,9 @@ def assemble(
         except ScoreInputError as exc:
             score_error = str(exc)
             typer.echo(f"score input error: {exc}", err=True)
+        except Exception as exc:
+            score_error = f"score failed: {exc}"
+            typer.echo(f"score failed: {exc}", err=True)
 
     if json_out:
         review_html = str(Path(result.run_dir) / "review.html")

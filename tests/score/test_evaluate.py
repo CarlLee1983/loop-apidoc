@@ -168,3 +168,9 @@ def test_manifest_source_warnings_reduce_reviewability() -> None:
     assert report.status is ScoreStatus.NEEDS_ATTENTION
     assert report.category_scores["reviewability"] == 90
     assert report.findings[0].code == "SOURCE_UNSUPPORTED"
+
+
+def test_issue_category_mapping_covers_every_issue_code() -> None:
+    from loop_apidoc.score.evaluate import _ISSUE_CATEGORY
+
+    assert set(_ISSUE_CATEGORY) == set(IssueCode)
