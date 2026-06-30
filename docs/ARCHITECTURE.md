@@ -69,12 +69,12 @@ flowchart TD
     plan --> manifest
 
     classDef io fill:#fde,stroke:#c69
-    class generate,run,diff io
+    class generate,run,diff,score io
 ```
 
 `cli.py`(Typer)暴露六個指令:`preprocess`(PDF→markdown)、`manifest`(掃描)、`assemble`(組裝 + 驗證,可選 `--score`)、`validate`(驗證既有 run-dir)、`score`(評分既有 run-dir)、`diff`(比較兩個已完成 run-dir 的版本差異)。`agentcli/` 內含三個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(pymupdf4llm 把 PDF 轉 markdown)。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。
 
-**檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)、`run/`(`persist.py` 將計畫寫入 run-dir)與 `diff/report.py`(`write_reports` 寫出 `diff/report.{json,md}`)寫檔;其餘模組皆為純函式,便於單元測試。
+**檔案 I/O 出口**:只有 `generate/`(`generate_outputs`)、`run/`(`persist.py` 將計畫寫入 run-dir)、`diff/report.py`(`write_reports` 寫出 `diff/report.{json,md}`)與 `score/report.py`(`write_reports` 寫出 `score/score.{json,md}`)寫檔;其餘模組皆為純函式,便於單元測試。
 
 ## 資料流與關鍵 seam
 
