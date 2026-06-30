@@ -9,6 +9,7 @@ from loop_apidoc.plan.models import (
     NormalizationPlan,
     PlanItemStatus,
     SourceConflict,
+    UnverifiedItem,
 )
 
 
@@ -17,6 +18,7 @@ def _plan() -> NormalizationPlan:
         notebook_url="n/a",
         missing_items=[MissingItem(area="crypto", detail="source does not state AES padding for TradeInfo")],
         source_conflicts=[SourceConflict(area="auth", detail="two base URLs disagree")],
+        unverified_items=[UnverifiedItem(area="rate_limit", detail="rate limit not stated in source")],
         integration=IntegrationContract(
             crypto=[
                 CryptoScheme(
@@ -43,7 +45,7 @@ def _openapi() -> dict:
 
 
 def _tasks() -> str:
-    return build_handoff(_openapi(), _plan(), {"crypto": [{"name": "TradeInfo"}], "missing": []})[
+    return build_handoff(_openapi(), _plan(), {"crypto": [{"name": "TradeInfo"}], "missing": [{"area": "auth", "detail": "rate limit not stated"}]})[
         "handoff/integration-tasks.md"
     ]
 
@@ -70,8 +72,10 @@ def test_tasks_runtime_config_base_url_and_auth():
 def test_tasks_crypto_and_blockers():
     md = _tasks()
     assert "../integration-contract.json#/crypto/0" in md
-    assert "Conflict" in md  # source_conflicts
-    assert "Blocked" in md   # missing_items
+    assert "Conflict" in md      # source_conflicts
+    assert "Blocked" in md       # missing_items
+    assert "Unverified" in md    # unverified_items
+    assert "Gap" in md           # integration["missing"]
     assert "AES padding" in md
 
 
