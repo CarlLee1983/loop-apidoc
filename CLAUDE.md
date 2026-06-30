@@ -52,11 +52,17 @@ The five CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `ass
 
 ## Correction & fail-closed classification
 
-Validation issues are classified, not blindly retried. There is **no deterministic in-code correction loop** — `assemble` reports the classified results via `--json` and the agent drives correction itself (re-reading sources and overwriting the extraction JSON), then re-running `assemble`.
+There is **no deterministic in-code correction loop** — `assemble` reports the validation result via `--json`; the agent drives correction itself (re-read sources → overwrite the extraction JSON → re-run `assemble`).
 
-- `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → fixable (regenerate after the agent corrects the JSON)
-- `REQUIRED_INFO_MISSING` → the agent re-reads the affected sources and fills the gap
-- `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → **unfixable, fail-closed** — reported as remaining gaps/conflicts rather than fabricating content.
+**The gate is severity, not the issue code:** a run FAILs iff it has any `error`-severity issue (`ValidationReport.ok`); `warning`s are reported gaps that don't block. The same code can be `error` or `warning` by context, so don't key blocking off the code. (`auto_fixable` is a per-issue bool set only for the three integration-reference mismatches; the `CorrectionCategory` enum is defined but unused — not a live taxonomy.)
+
+How the agent responds, by intent:
+
+- **Regenerate after fix** (`OPENAPI_INVALID`, `OUTPUT_MISMATCH`): invalid OpenAPI/Markdown or an unresolved integration `payload_ref`/`operation_ref` → correct the upstream JSON/reference, re-assemble.
+- **Re-read & fill** (`REQUIRED_INFO_MISSING`, or `SOURCE_UNVERIFIED` from a missing citation): re-read the affected source scope and fill the JSON.
+- **Fail-closed** (`SOURCE_CONFLICT`, `UNSUPPORTED_ASSERTION`, or `SOURCE_UNVERIFIED` surviving re-verification): present the remaining gaps/conflicts — **never fabricate**.
+
+Per-code severity and the structured-routing fields (`target_file`/`field_path`/`requery_scope`) are documented in `skills/loop-apidoc/reference/assemble-and-correction.md`.
 
 ## Provenance ↔ validation alignment
 
