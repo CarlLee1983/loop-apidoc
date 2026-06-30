@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>loop-apidoc 技術導覽 — 給新進工程同仁</title>
+<style>
+  :root {
+    --bg: #fdfaf4;
+    --bg-soft: #fff;
+    --ink: #2c3043;
+    --ink-soft: #5d6478;
+    --teal: #15a39a;
+    --teal-deep: #0f7a73;
+    --teal-soft: #d8f3f0;
+    --coral: #ff6f61;
+    --coral-deep: #d9483b;
+    --coral-soft: #ffe2dd;
+    --amber: #f5a524;
+    --amber-deep: #b5791a;
+    --amber-soft: #fdeccb;
+    --purple: #7c6df2;
+    --purple-deep: #5b4cc4;
+    --purple-soft: #e7e3fd;
+    --green: #2bb673;
+    --red: #ef5350;
+    --grey: #b6bccb;
+    --line: #ece5d8;
+    --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
+    --shadow-sm: 0 4px 14px -6px rgba(44, 48, 67, 0.18);
+    --radius: 22px;
+    --radius-sm: 14px;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 17px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+      -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 70px 0; }
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+
+  code, .mono { font-family: var(--mono); }
+  code.inline {
+    font-size: 0.86em;
+    background: var(--teal-soft);
+    color: var(--teal-deep);
+    padding: 1px 7px;
+    border-radius: 6px;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+  }
+  .section-title { font-size: clamp(1.5rem, 4vw, 2.1rem); margin: 0 0 14px; }
+  .section-lead {
+    font-size: 1.06rem;
+    color: var(--ink-soft);
+    max-width: 720px;
+    margin: 0 0 40px;
+  }
+
+  .ico { width: 28px; height: 28px; display: block; }
+  .tint-coral  { background: var(--coral-soft);  color: var(--coral-deep); }
+  .tint-amber  { background: var(--amber-soft);  color: var(--amber-deep); }
+  .tint-teal   { background: var(--teal-soft);   color: var(--teal-deep); }
+  .tint-purple { background: var(--purple-soft); color: var(--purple-deep); }
+
+  .alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(1200px 500px at 82% -12%, var(--teal-soft) 0%, transparent 55%),
+      radial-gradient(900px 480px at -5% 110%, var(--purple-soft) 0%, transparent 52%);
+    padding: 86px 0 60px;
+  }
+  .hero .eyebrow { background: var(--purple-soft); color: var(--purple-deep); }
+  .hero h1 {
+    font-size: clamp(1.85rem, 5vw, 2.9rem);
+    margin: 0 0 20px;
+    max-width: 800px;
+  }
+  .hero h1 .hl { color: var(--teal-deep); }
+  .hero p.sub {
+    font-size: 1.14rem;
+    color: var(--ink-soft);
+    max-width: 680px;
+    margin: 0 0 14px;
+  }
+  .hero .ladder {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-top: 26px; font-size: 0.92rem; color: var(--ink-soft);
+  }
+  .hero .ladder .here {
+    background: var(--ink); color: #fff; border-radius: 999px;
+    padding: 4px 14px; font-weight: 600;
+  }
+  .hero .ladder .other {
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 14px;
+  }
+  .hero .ladder .sep { color: var(--grey); }
+
+  /* ---------- prereq vocab callout ---------- */
+  .vocab {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--purple);
+    border-radius: var(--radius-sm);
+    padding: 22px 26px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 34px;
+  }
+  .vocab b.h { color: var(--ink); display: block; margin-bottom: 12px; }
+  .vocab dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; }
+  .vocab dt { font-family: var(--mono); font-size: 0.82rem; color: var(--purple-deep); font-weight: 600; white-space: nowrap; }
+  .vocab dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* ---------- invariant banner ---------- */
+  .invariant {
+    background: linear-gradient(135deg, var(--coral-deep), var(--coral));
+    color: #fff;
+    border-radius: 28px;
+    padding: 50px 46px;
+    box-shadow: 0 24px 50px -22px rgba(217, 72, 59, 0.55);
+    position: relative; overflow: hidden;
+  }
+  .invariant .tag {
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.16em;
+    opacity: 0.9; text-transform: uppercase;
+  }
+  .invariant h2 { font-size: clamp(1.4rem, 4vw, 2.1rem); margin: 14px 0 16px; max-width: 720px; }
+  .invariant p { font-size: 1.06rem; max-width: 700px; margin: 0 0 12px; opacity: 0.96; }
+  .invariant code { background: rgba(255,255,255,0.2); padding: 1px 7px; border-radius: 6px; font-size: 0.9em; }
+  .invariant .pill {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.32);
+    padding: 9px 18px; border-radius: 999px; font-weight: 600; font-size: 0.96rem;
+  }
+  .invariant .pill svg { width: 18px; height: 18px; flex: none; }
+
+  /* ---------- two-column architecture ---------- */
+  .arch { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch; }
+  .arch-col {
+    border-radius: var(--radius); padding: 26px 24px;
+    border: 1px solid var(--line); box-shadow: var(--shadow-sm); background: var(--bg-soft);
+  }
+  .alt .arch-col { background: var(--bg); }
+  .arch-agent { border-top: 5px solid var(--amber); }
+  .arch-cli   { border-top: 5px solid var(--teal); }
+  .arch-col .lbl { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .arch-agent .lbl { color: var(--amber-deep); }
+  .arch-cli .lbl { color: var(--teal-deep); }
+  .arch-col h3 { margin: 8px 0 14px; font-size: 1.12rem; }
+  .arch-col ol { margin: 0; padding-left: 20px; color: var(--ink-soft); }
+  .arch-col li { margin-bottom: 9px; font-size: 0.96rem; }
+  .arch-col li b { color: var(--ink); }
+  .arch-seam {
+    display: grid; place-items: center; padding: 0 20px;
+    position: relative;
+  }
+  .arch-seam .seam-box {
+    background: var(--ink); color: #fff; border-radius: var(--radius-sm);
+    padding: 14px 16px; text-align: center; box-shadow: var(--shadow);
+    max-width: 180px;
+  }
+  .arch-seam .seam-box .t { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; }
+  .arch-seam .seam-box code { display: block; font-size: 0.78rem; color: #ffd9a8; margin-top: 6px; }
+  .arch-note {
+    margin-top: 22px; background: var(--bg-soft); border: 1px solid var(--line);
+    border-left: 6px solid var(--amber); border-radius: var(--radius-sm);
+    padding: 16px 20px; color: var(--ink-soft); font-size: 0.96rem;
+  }
+  .alt .arch-note { background: var(--bg); }
+
+  /* ---------- flow strip ---------- */
+  .flow { display: flex; flex-direction: column; gap: 14px; }
+  .flow-row {
+    display: grid; grid-template-columns: 150px 1fr 1fr; gap: 18px; align-items: center;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 16px 22px; box-shadow: var(--shadow-sm);
+  }
+  .alt .flow-row { background: var(--bg); }
+  .flow-row .stage { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .flow-row .stage .n {
+    width: 26px; height: 26px; flex: none; border-radius: 8px;
+    display: grid; place-items: center; font-size: 0.82rem; font-weight: 700;
+  }
+  .flow-row .desc { color: var(--ink-soft); font-size: 0.95rem; }
+  .flow-row .out { font-family: var(--mono); font-size: 0.8rem; color: var(--teal-deep); }
+  .flow-row .out .opt { color: var(--grey); font-family: inherit; }
+
+  /* ---------- command list ---------- */
+  .cmds { display: flex; flex-direction: column; gap: 12px; }
+  .cmd {
+    display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: start;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 18px 22px; box-shadow: var(--shadow-sm);
+  }
+  .alt .cmd { background: var(--bg); }
+  .cmd .name { font-family: var(--mono); font-size: 0.92rem; color: var(--ink); font-weight: 600; }
+  .cmd .name .kw { color: var(--teal-deep); }
+  .cmd p { margin: 0 0 6px; color: var(--ink-soft); font-size: 0.95rem; }
+  .cmd .codes { font-size: 0.82rem; color: var(--ink-soft); }
+  .cmd .codes b { color: var(--ink); font-family: var(--mono); }
+
+  /* ---------- stage grid ---------- */
+  .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .stage-cell {
+    display: flex; gap: 12px; align-items: baseline;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 14px 18px; box-shadow: var(--shadow-sm);
+  }
+  .alt .stage-cell { background: var(--bg); }
+  .stage-cell .sn { font-family: var(--mono); font-weight: 700; color: var(--purple-deep); flex: none; }
+  .stage-cell span { color: var(--ink-soft); font-size: 0.94rem; }
+
+  /* ---------- value cards ---------- */
+  .value-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+  .value {
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 26px 24px; box-shadow: var(--shadow-sm);
+  }
+  .alt .value { background: var(--bg); }
+  .value .badge { width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; margin-bottom: 16px; }
+  .value h3 { margin: 0 0 6px; font-size: 1.06rem; }
+  .value .file { font-family: var(--mono); font-size: 0.76rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px; }
+  .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* ---------- provenance art ---------- */
+  .prov-art { width: 100%; max-width: 720px; margin: 10px auto 0; display: block; }
+
+  /* ---------- classification (fixable vs not) ---------- */
+  .cls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .cls-col { border-radius: var(--radius); padding: 26px 24px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+  .cls-fix { background: var(--teal-soft); border-color: #bce8e3; }
+  .cls-stop { background: var(--coral-soft); border-color: #f6cfc8; }
+  .cls-col h3 { margin: 0 0 14px; font-size: 1.12rem; display: flex; align-items: center; gap: 10px; }
+  .cls-fix h3 { color: var(--teal-deep); }
+  .cls-stop h3 { color: var(--coral-deep); }
+  .cls-col .item { margin-bottom: 14px; }
+  .cls-col .item:last-child { margin-bottom: 0; }
+  .cls-col .code { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; }
+  .cls-fix .code { color: var(--teal-deep); }
+  .cls-stop .code { color: var(--coral-deep); }
+  .cls-col .item p { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.93rem; }
+
+  /* ---------- diff lights ---------- */
+  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .light {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 18px 20px; box-shadow: var(--shadow-sm);
+  }
+  .alt .light { background: var(--bg); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; margin-top: 6px; flex: none; box-shadow: 0 0 0 5px rgba(0,0,0,0.04); }
+  .dot.red { background: var(--red); } .dot.green { background: var(--green); }
+  .dot.amber { background: var(--amber); } .dot.grey { background: var(--grey); }
+  .light h3 { margin: 0 0 4px; font-size: 1rem; }
+  .light .en { font-size: 0.76rem; color: var(--ink-soft); font-weight: 400; font-family: var(--mono); }
+  .light p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+
+  /* ---------- package table ---------- */
+  .pkg-table { width: 100%; border-collapse: collapse; background: var(--bg-soft); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .alt .pkg-table { background: var(--bg); }
+  .pkg-table th, .pkg-table td { text-align: left; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 0.94rem; vertical-align: top; }
+  .pkg-table th { background: var(--teal-soft); color: var(--teal-deep); font-size: 0.82rem; letter-spacing: 0.06em; }
+  .pkg-table tr:last-child td { border-bottom: none; }
+  .pkg-table td code { font-family: var(--mono); font-size: 0.84rem; color: var(--purple-deep); }
+  .pkg-table .io td:first-child code { color: var(--coral-deep); }
+  .pkg-table td:last-child { color: var(--ink-soft); }
+  .io-note { margin-top: 14px; font-size: 0.9rem; color: var(--ink-soft); }
+  .io-note .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: var(--coral-soft); border: 1px solid var(--coral); vertical-align: middle; margin-right: 5px; }
+
+  /* ---------- glossary + next reads ---------- */
+  .two-col { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: start; }
+  .gloss { background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 28px; box-shadow: var(--shadow-sm); }
+  .gloss h3, .reads h3 { margin: 0 0 16px; font-size: 1.05rem; }
+  .gloss dl { margin: 0; }
+  .gloss dt { font-family: var(--mono); font-size: 0.86rem; color: var(--teal-deep); font-weight: 600; margin-top: 12px; }
+  .gloss dt:first-child { margin-top: 0; }
+  .gloss dd { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.94rem; }
+  .reads { background: var(--purple-soft); border: 1px solid #d6cffb; border-radius: var(--radius); padding: 26px 28px; }
+  .reads ul { margin: 0; padding-left: 18px; }
+  .reads li { margin-bottom: 12px; color: var(--ink-soft); font-size: 0.95rem; }
+  .reads li code { font-family: var(--mono); font-size: 0.84rem; color: var(--purple-deep); }
+  .reads li b { color: var(--ink); }
+
+  footer { text-align: center; padding: 38px 24px 54px; color: var(--ink-soft); font-size: 0.86rem; border-top: 1px solid var(--line); }
+
+  @media (max-width: 720px) {
+    section { padding: 52px 0; }
+    .arch { grid-template-columns: 1fr; }
+    .arch-seam { padding: 16px 0; }
+    .arch-seam .seam-box { max-width: none; width: 100%; }
+    .cls, .two-col { grid-template-columns: 1fr; }
+    .flow-row { grid-template-columns: 1fr; gap: 8px; }
+    .cmd { grid-template-columns: 1fr; gap: 8px; }
+    .invariant { padding: 36px 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
+    <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
+    <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計 —— 讀完你就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
+
+    <div class="ladder">
+      <span class="other">introduction.html<br>非技術 · 賣點</span>
+      <span class="sep">→</span>
+      <span class="here">你在這裡<br>新人 · 技術全貌</span>
+      <span class="sep">→</span>
+      <span class="other">ARCHITECTURE.md<br>維護者 · seam 細節</span>
+    </div>
+
+    <div class="vocab">
+      <b class="h">開始前,先對齊幾個會反覆出現的詞</b>
+      <dl>
+        <dt>OpenAPI</dt><dd>描述 REST API 的業界標準格式(本專案產出 OpenAPI 3.1 YAML),工具鏈與工程師都能直接吃。</dd>
+        <dt>agent</dt><dd>當前的 coding agent(Claude Code 或 Codex)本身 —— 在本專案裡,它就是擷取引擎。</dd>
+        <dt>subagent</dt><dd>由主 agent 派出的唯讀小幫手,只負責「讀來源、回傳 JSON」,不寫檔。</dd>
+        <dt>run-dir</dt><dd>一次執行產出的輸出目錄,裝著該次跑出來的所有產物(OpenAPI、指南、provenance、報告)。</dd>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== CORE INVARIANT ===================== -->
+<section>
+  <div class="wrap">
+    <div class="invariant">
+      <span class="tag">不可協商的核心不變式</span>
+      <h2>來源文件是唯一的真實來源。</h2>
+      <p>來源沒寫的東西,一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
+      <p>驗證遇到缺漏會大聲失敗(fail loudly),而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策,都是為了守住這條線。</p>
+      <span class="pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
+        寧可標記「缺漏」,也不編造內容
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ARCHITECTURE: agent-native ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">關鍵架構</span>
+    <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
+    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界 —— 兩邊各自可獨立測試、各自可獨立替換。</p>
+
+    <div class="arch">
+      <div class="arch-col arch-agent">
+        <span class="lbl">前段 · 不確定性</span>
+        <h3>agent 擷取(Claude Code / Codex)</h3>
+        <ol>
+          <li><b>唯讀 subagent fan-out</b>:主 agent 派出多個 subagent,每個只讀檔 / 搜尋 / 抓 URL,回傳結構化 JSON,<b>從不寫檔</b>。</li>
+          <li>主 agent 把回傳的 JSON 彙整、<b>寫成交界檔</b>。</li>
+          <li>依 <code class="inline">SKILL.md</code> 分段擷取(見下方十段),確保只記錄來源真正寫的內容。</li>
+        </ol>
+      </div>
+
+      <div class="arch-seam">
+        <div class="seam-box">
+          <span class="t">唯一交界 (seam)</span>
+          <code>inventory.json</code>
+          <code>endpoints/*.json</code>
+        </div>
+      </div>
+
+      <div class="arch-col arch-cli">
+        <span class="lbl">後段 · 確定性純函式</span>
+        <h3>assemble(deterministic CLI)</h3>
+        <ol>
+          <li><b>不擷取</b>,只組裝 agent 寫出的 JSON。</li>
+          <li>依序跑 <code class="inline">manifest → plan → generate → validate</code>。</li>
+          <li>以 <code class="inline">--json</code> 回報 <code class="inline">ok</code> / <code class="inline">run_dir</code> / <code class="inline">report</code>,讓 agent 自行驅動修正。</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="arch-note">
+      <b>為什麼這樣切?</b> 把「需要語意理解、本質不確定」的擷取交給 agent,把「組裝、生成、驗證」這些必須可重現的步驟交給確定性程式碼。曾經有過用子行程 <code class="inline">claude -p</code> 擷取的 <code class="inline">run-agent</code> 模式與 NotebookLM 後端,皆已於 2026-06 退役 —— 現在 <b>agent-native 是唯一擷取路徑</b>。
+    </div>
+  </div>
+</section>
+
+<!-- ===================== END-TO-END FLOW ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">端到端資料流</span>
+    <h2 class="section-title">一次完整執行,經過哪些階段</h2>
+    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段。</p>
+
+    <div class="flow">
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-purple">0</span>preprocess</span>
+        <span class="desc">把 PDF 轉成高保真 markdown(pymupdf4llm),保留表格與巢狀結構。</span>
+        <span class="out"><span class="opt">可選 →</span> sources_md/</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-amber">1</span>擷取</span>
+        <span class="desc">agent 唯讀 fan-out 讀來源、主 agent 寫出交界 JSON。</span>
+        <span class="out">inventory.json · endpoints/*.json</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-teal">2</span>manifest</span>
+        <span class="desc">掃描本地來源與 URL,建立來源盤點。</span>
+        <span class="out">manifest.json</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-teal">3</span>plan</span>
+        <span class="desc">把擷取結果規格化成計畫,並做來源比對分類。</span>
+        <span class="out">plan/normalization-plan.json</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-teal">4</span>generate</span>
+        <span class="desc">生成 OpenAPI、中文指南與來源追溯。</span>
+        <span class="out">openapi.yaml · api-guide.zh-TW.md · provenance.json</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-teal">5</span>validate</span>
+        <span class="desc">結構 / 完整性 / 一致性 / 禁止推測四類檢查並出報告。</span>
+        <span class="out">validation/report.{json,md}</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-purple">6</span>diff</span>
+        <span class="desc">比較兩個已完成 run-dir,依 downstream impact 分類差異。</span>
+        <span class="out"><span class="opt">可選 →</span> diff/report.{json,md}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FIVE CLI COMMANDS ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">CLI 介面</span>
+    <h2 class="section-title">五個指令,各司其職</h2>
+    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>)。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟。</p>
+
+    <div class="cmds">
+      <div class="cmd">
+        <span class="name"><span class="kw">preprocess</span></span>
+        <div><p>PDF → markdown 前處理(可選),供 agent 更易讀取。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">manifest</span></span>
+        <div><p>掃描本地來源 + URL,建立 <code class="inline">manifest.json</code>。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">assemble</span></span>
+        <div>
+          <p>組裝 agent 寫出的 JSON → plan → generate → validate,以 <code class="inline">--json</code> 回報。</p>
+          <p class="codes">退出碼:<b>0</b> 驗證 PASS · <b>1</b> 驗證 FAIL · <b>2</b> 擷取輸入檔錯誤(不留孤兒目錄)。</p>
+        </div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">validate</span></span>
+        <div><p>對既有 run-dir 重跑驗證並出報告(不重新生成)。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">diff</span></span>
+        <div>
+          <p>比較兩個已完成 run-dir 的版本差異。</p>
+          <p class="codes">退出碼:<b>0</b> 完成 · <b>2</b> 輸入 run-dir 缺檔或格式錯誤(<code class="inline">DiffInputError</code>)。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EXTRACTION STAGES ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">擷取分段</span>
+    <h2 class="section-title">擷取拆成十段</h2>
+    <p class="section-lead">為什麼分段?避免單一回答承載全部內容而失真。agent 依這十段逐步擷取,收斂成 <code class="inline">inventory.json</code> 與逐 endpoint 的 <code class="inline">endpoints/*.json</code>。</p>
+
+    <div class="stages">
+      <div class="stage-cell"><span class="sn">01</span><span>來源盤點</span></div>
+      <div class="stage-cell"><span class="sn">02</span><span>API 系統概覽與術語</span></div>
+      <div class="stage-cell"><span class="sn">03</span><span>環境 / base URL / 版本</span></div>
+      <div class="stage-cell"><span class="sn">04</span><span>驗證 / 授權 / 簽章</span></div>
+      <div class="stage-cell"><span class="sn">05</span><span>Endpoint 清單</span></div>
+      <div class="stage-cell"><span class="sn">06</span><span>逐 endpoint 細節(method / path / 參數 / req / resp / 範例)</span></div>
+      <div class="stage-cell"><span class="sn">07</span><span>共用 schema / enum / 資料限制</span></div>
+      <div class="stage-cell"><span class="sn">08</span><span>錯誤碼與失敗行為</span></div>
+      <div class="stage-cell"><span class="sn">09</span><span>rate limit / timeout / retry / idempotency / webhook</span></div>
+      <div class="stage-cell"><span class="sn">10</span><span>來源衝突、缺漏、無法確認事項</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ARTIFACTS ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">產物</span>
+    <h2 class="section-title">一次執行交付四份產物</h2>
+    <p class="section-lead">全部落在該次的 run-dir 裡,各自對應明確用途。</p>
+    <div class="value-grid">
+      <div class="value">
+        <div class="badge tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9.5 13 8 14.5 9.5 16"/><path d="M13.5 13 15 14.5 13.5 16"/></svg>
+        </div>
+        <h3>標準規格</h3>
+        <span class="file">openapi.yaml</span>
+        <p>OpenAPI 3.1,工具鏈與工程師可直接取用,不必各自解讀來源。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
+        </div>
+        <h3>繁中串接指南</h3>
+        <span class="file">api-guide.zh-TW.md</span>
+        <p>給人讀的 Traditional Chinese 指南,不必硬啃原文。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 12h5"/><path d="M10.5 8H8a4 4 0 0 0 0 8h2.5"/><path d="M13.5 8H16a4 4 0 0 1 0 8h-2.5"/></svg>
+        </div>
+        <h3>來源追溯</h3>
+        <span class="file">provenance.json</span>
+        <p>每項輸出都標明出自哪份來源、哪一段,可逐一交叉比對。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><path d="M15 5.5h2.5a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1H9"/><path d="M9 14l2 2 4-4"/></svg>
+        </div>
+        <h3>驗證報告</h3>
+        <span class="file">validation/report</span>
+        <p>列出哪裡完整、哪裡缺漏 / 衝突,品質有憑據可查。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROVENANCE <-> VALIDATION ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">可追溯 ↔ 驗證對齊</span>
+    <h2 class="section-title">禁止推測,靠 target 逐一對齊來把關</h2>
+    <p class="section-lead">這是「絕不臆測」如何被機器強制執行的關鍵機制:<code class="inline">provenance.json</code> 的 <code class="inline">target</code> 字串,與 OpenAPI 位置一對一對齊。</p>
+
+    <svg class="prov-art" viewBox="0 0 720 168" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="provenance target 與 OpenAPI 位置一對一對齊">
+      <g transform="translate(20 18)">
+        <rect x="0" y="0" width="300" height="132" rx="14" fill="#fff" stroke="#d6cffb" stroke-width="2.5"/>
+        <text x="20" y="30" font-size="13" fill="#5b4cc4" font-weight="700">provenance.json · target</text>
+        <rect x="20" y="48" width="260" height="22" rx="6" fill="#e7e3fd"/>
+        <text x="30" y="63" font-size="12" fill="#5b4cc4" font-family="monospace">paths./pay.post</text>
+        <rect x="20" y="78" width="260" height="22" rx="6" fill="#e7e3fd"/>
+        <text x="30" y="93" font-size="12" fill="#5b4cc4" font-family="monospace">components.schemas.Order</text>
+      </g>
+      <g stroke="#15a39a" stroke-width="2.2" stroke-dasharray="6 5">
+        <path d="M320 77 H400" fill="none"/>
+        <path d="M320 107 H400" fill="none"/>
+      </g>
+      <circle cx="400" cy="77" r="4" fill="#15a39a"/>
+      <circle cx="400" cy="107" r="4" fill="#15a39a"/>
+      <g transform="translate(400 18)">
+        <rect x="0" y="0" width="300" height="132" rx="14" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
+        <text x="20" y="30" font-size="13" fill="#0f7a73" font-weight="700">openapi.yaml · 位置</text>
+        <rect x="20" y="48" width="260" height="22" rx="6" fill="#d8f3f0"/>
+        <text x="30" y="63" font-size="12" fill="#0f7a73" font-family="monospace">paths./pay.post</text>
+        <rect x="20" y="78" width="260" height="22" rx="6" fill="#d8f3f0"/>
+        <text x="30" y="93" font-size="12" fill="#0f7a73" font-family="monospace">components.schemas.Order</text>
+      </g>
+    </svg>
+
+    <p class="section-lead" style="margin: 28px auto 0; text-align:center; max-width: 760px;">
+      no-speculation 檢查就在這些 target 上交叉比對:<b>任何進入輸出的內容,都必須能追溯回一個具來源依據的計畫項目,否則視為違規。</b>對齊的位置包含 <code class="inline">paths.{path}.{method}</code>、<code class="inline">components.schemas.{name}</code>、<code class="inline">components.securitySchemes.{name}</code>。
+    </p>
+  </div>
+</section>
+
+<!-- ===================== CORRECTION LOOP ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">修正迴圈</span>
+    <h2 class="section-title">驗證問題會被分類,而不是盲目重試</h2>
+    <p class="section-lead">沒有 CLI 內建的修正迴圈。<code class="inline">assemble</code> 回報分類結果,修正由 <b>agent 自行驅動</b>:回頭重讀來源、覆寫對應 JSON、再跑一次,最多 3 輪。問題分兩類:</p>
+
+    <div class="cls">
+      <div class="cls-col cls-fix">
+        <h3>
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          可修正(FIXABLE)
+        </h3>
+        <div class="item">
+          <span class="code">OPENAPI_INVALID · OUTPUT_MISMATCH</span>
+          <p>產物本身有誤 → agent 修正 JSON 後重新生成即可。</p>
+        </div>
+        <div class="item">
+          <span class="code">REQUIRED_INFO_MISSING</span>
+          <p>必要資訊缺漏 → agent 回頭重讀受影響來源,補齊那一塊。</p>
+        </div>
+      </div>
+      <div class="cls-col cls-stop">
+        <h3>
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+          不可修正(fail-closed)
+        </h3>
+        <div class="item">
+          <span class="code">SOURCE_UNVERIFIED · SOURCE_CONFLICT · UNSUPPORTED_ASSERTION</span>
+          <p>來源無法確認 / 彼此衝突 / 不被支援的斷言 → <b>不補寫</b>,如實回報為缺漏或衝突。這正是核心不變式落地的地方。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VERSION DIFF ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">版本差異</span>
+    <h2 class="section-title">換版本時,依 downstream impact 分四類</h2>
+    <p class="section-lead"><code class="inline">diff</code> 比較兩個已完成 run-dir,涵蓋 OpenAPI 路徑·方法·參數·schema·security·webhook、integration-contract、provenance、validation 摘要與 manifest(第一版不比 Markdown guide 與 examples)。</p>
+    <div class="lights">
+      <div class="light"><span class="dot red"></span><div><h3>破壞性 <span class="en">breaking</span></h3><p>可能讓既有串接壞掉,需優先處理。</p></div></div>
+      <div class="light"><span class="dot green"></span><div><h3>新增 <span class="en">additive</span></h3><p>新功能 / 新欄位,通常向後相容。</p></div></div>
+      <div class="light"><span class="dot amber"></span><div><h3>內容調整 <span class="en">changed</span></h3><p>既有內容有改動,值得確認影響。</p></div></div>
+      <div class="light"><span class="dot grey"></span><div><h3>僅來源異動 <span class="en">source_only</span></h3><p>來源動了但最終規格沒變。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PACKAGE BOUNDARIES ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">套件邊界</span>
+    <h2 class="section-title">程式碼怎麼分包</h2>
+    <p class="section-lead">原則:除了少數 I/O 出口,其餘模組皆為純函式,便於單元測試。修改時請守住這個邊界。</p>
+    <table class="pkg-table">
+      <thead><tr><th>套件</th><th>職責</th></tr></thead>
+      <tbody>
+        <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
+        <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+        <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
+        <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
+        <tr class="io"><td><code>generate/</code></td><td>生成 OpenAPI / Markdown / provenance(寫檔)</td></tr>
+        <tr><td><code>validate/</code></td><td>結構 / 完整性 / 一致性 / 禁止推測檢查 + 報告</td></tr>
+        <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
+        <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
+      </tbody>
+    </table>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:只有 <code class="inline">generate/</code>、<code class="inline">run/</code> 與 <code class="inline">diff/report.py</code> 會寫檔,其餘維持純函式。</p>
+  </div>
+</section>
+
+<!-- ===================== GLOSSARY + NEXT READS ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">收尾</span>
+    <h2 class="section-title">名詞速查 · 接下來讀什麼</h2>
+    <div class="two-col">
+      <div class="gloss">
+        <h3>名詞速查</h3>
+        <dl>
+          <dt>seam</dt><dd>前後兩段的唯一交界(inventory.json + endpoints/*.json),也是測試的切點。</dd>
+          <dt>manifest</dt><dd>來源盤點檔,記錄掃到哪些來源與 URL。</dd>
+          <dt>normalization-plan</dt><dd>把擷取結果規格化後的計畫,generate 與 validate 的共同輸入。</dd>
+          <dt>provenance</dt><dd>來源追溯;target 與 OpenAPI 位置逐一對齊。</dd>
+          <dt>fail-closed</dt><dd>遇到無法確認 / 衝突時,選擇「不輸出」而非「猜一個」。</dd>
+          <dt>run-dir</dt><dd>單次執行的輸出目錄,裝著該次全部產物。</dd>
+        </dl>
+      </div>
+      <div class="reads">
+        <h3>接下來讀什麼</h3>
+        <ul>
+          <li><b>跑一次看看</b> — 依 <code>README.md</code> 安裝(<code>uv sync</code>),用 <code>benchmarks/</code> 的樣本走一遍。</li>
+          <li><b>架構細節</b> — <code>docs/ARCHITECTURE.md</code>:seam、套件圖、資料流表。</li>
+          <li><b>擷取行為</b> — <code>skills/loop-apidoc/SKILL.md</code>:agent 實際怎麼讀來源、怎麼分段。</li>
+          <li><b>設計依據</b> — <code>docs/superpowers/specs/</code> 內的設計規格與 plan。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  loop-apidoc 技術導覽 · 給新進工程同仁 · 來源依據式 API 文件 pipeline
+</footer>
+
+</body>
+</html>
