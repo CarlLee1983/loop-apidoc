@@ -440,8 +440,8 @@
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">4</span>generate</span>
-        <span class="desc">生成 OpenAPI、中文指南與來源追溯。</span>
-        <span class="out">openapi.yaml · api-guide.zh-TW.md · provenance.json</span>
+        <span class="desc">生成 OpenAPI、中文指南、人工核對頁與來源追溯。</span>
+        <span class="out">openapi.yaml · api-guide.zh-TW.md · review.html · provenance.json</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">5</span>validate</span>
@@ -555,6 +555,14 @@
         <h3>驗證報告</h3>
         <span class="file">validation/report</span>
         <p>列出哪裡完整、哪裡缺漏 / 衝突,品質有憑據可查。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>人工核對頁</h3>
+        <span class="file">review.html</span>
+        <p>離線可開的單檔 HTML,把範圍、來源、缺漏與 API 結構彙整成一頁,供人眼快速核對。</p>
       </div>
     </div>
   </div>

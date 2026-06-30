@@ -181,9 +181,11 @@ def assemble(
         raise typer.Exit(code=2) from exc
 
     if json_out:
+        review_html = str(Path(result.run_dir) / "review.html")
         payload = {
             "run_id": result.run_id,
             "run_dir": result.run_dir,
+            "review_html": review_html,
             "ok": result.ok,
             "status": result.status.value,
             "report": result.report.model_dump(mode="json"),
@@ -192,7 +194,8 @@ def assemble(
     else:
         typer.echo(
             f"狀態 {result.status.value}:error {len(result.report.errors())}，"
-            f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}"
+            f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}；"
+            f"核對頁 {Path(result.run_dir) / 'review.html'}"
         )
     raise typer.Exit(code=0 if result.ok else 1)
 

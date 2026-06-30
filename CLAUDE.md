@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`loop-apidoc` is a **source-grounded API documentation pipeline**: it turns heterogeneous API integration docs (PDF/MD/HTML/OpenAPI JSON/public URLs) into standardized, traceable artifacts — OpenAPI 3.1 YAML, a Traditional-Chinese Markdown guide (`api-guide.zh-TW.md`), `provenance.json`, and a `validation/report.{json,md}`.
+`loop-apidoc` is a **source-grounded API documentation pipeline**: it turns heterogeneous API integration docs (PDF/MD/HTML/OpenAPI JSON/public URLs) into standardized, traceable artifacts — OpenAPI 3.1 YAML, a Traditional-Chinese Markdown guide (`api-guide.zh-TW.md`), an offline manual review page (`review.html`), `provenance.json`, and a `validation/report.{json,md}`.
 
 It ships as **both** a Python CLI and an agent-native skill. The repo root is a Claude Code plugin (see `.claude-plugin/` and `skills/loop-apidoc/SKILL.md`); the same `SKILL.md` is portable and also loads under the OpenAI Codex CLI — it abstracts the CLI call behind an `<APIDOC>` placeholder (`$CLAUDE_PLUGIN_ROOT` set → bundled `uv run --project`; otherwise → globally-installed `loop-apidoc`).
 
@@ -43,7 +43,7 @@ The five CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `ass
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written JSON → plan→generate→validate, `AssembleInputError` / `RunDirectoryCollisionError`), `input_schema.py` (typed pydantic guards that validate agent-written extraction JSON at the assemble boundary, before any run dir is created), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/extraction/` | shared models + utilities (models, stages, questions, store, jsonblock) used by the agent extraction |
 | `loop_apidoc/plan/` | normalization plan + source-match classification |
-| `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation |
+| `loop_apidoc/generate/` | OpenAPI / Markdown / `review.html` / provenance generation (`review.py` builds the offline manual-review page) |
 | `loop_apidoc/validate/` | structure / completeness / consistency / no-speculation checks + report |
 | `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
 | `loop_apidoc/diff/` | run-to-run version diff: `loader.py` (load a completed run-dir's artifacts, `DiffInputError`), `compare.py` (classify changes across `openapi.yaml` / `integration-contract.json` / `provenance.json` / `validation/report.json` / `manifest.json` into `breaking` / `additive` / `changed` / `source_only`), `models.py` (`DiffFinding` / `DiffImpact` / `DiffReport`), `report.py` (render + write `diff/report.{json,md}`) |

@@ -36,6 +36,7 @@ Generate one representative run and eyeball the products (validation PASS does
 
 - [ ] `openapi.yaml` — OpenAPI 3.1, paths/webhooks/schemas/securitySchemes as expected.
 - [ ] `api-guide.zh-TW.md` — readable, complete, no placeholder leakage.
+- [ ] `review.html` — open it in a browser; metrics, endpoint/schema tables, and gap list reflect the run.
 - [ ] `provenance.json` — targets align 1:1 with OpenAPI locations.
 - [ ] `examples/` — the three-language request examples render and wire signatures correctly.
 - [ ] `integration-contract.json` — crypto/callbacks/field_conditions/test_cases match the source.

@@ -8,6 +8,7 @@
 
 - **OpenAPI 3.1 YAML** (`openapi.yaml`)
 - **Traditional Chinese Markdown integration guide** (`api-guide.zh-TW.md`)
+- **Offline manual review page** (`review.html`)
 - **Source provenance** (`provenance.json`)
 - **Validation & gap report** (`validation/report.{json,md}`)
 
@@ -115,7 +116,7 @@ uv run loop-apidoc assemble \
   [--url <URL> ...] [--json]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
 
 ---
 
@@ -134,6 +135,7 @@ output/
     │   └── normalization-plan.json      # machine-readable normalization plan
     ├── openapi.yaml                # OpenAPI 3.1
     ├── api-guide.zh-TW.md          # Traditional Chinese integration guide
+    ├── review.html                 # offline HTML page for manual artifact review
     ├── provenance.json             # per-output source traceability
     ├── integration-contract.json   # signing/crypto integration contract (when sources provide one)
     ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)

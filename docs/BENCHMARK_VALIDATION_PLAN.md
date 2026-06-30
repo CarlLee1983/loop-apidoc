@@ -153,6 +153,7 @@ uv run loop-apidoc validate --output <run_dir>
 
 - `openapi.yaml`
 - `api-guide.zh-TW.md`
+- `review.html`
 - `provenance.json`
 - `plan/normalization-plan.json`
 - `validation/report.json`

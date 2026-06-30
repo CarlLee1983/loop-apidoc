@@ -8,6 +8,7 @@
 
 - **OpenAPI 3.1 YAML**（`openapi.yaml`）
 - **繁體中文 Markdown 串接文件**（`api-guide.zh-TW.md`）
+- **離線人工核對頁**（`review.html`）
 - **來源追溯資料**（`provenance.json`）
 - **驗證與缺漏報告**（`validation/report.{json,md}`）
 
@@ -120,7 +121,7 @@ uv run loop-apidoc assemble \
   [--url <URL> ...] [--json]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。
 
 ---
 
@@ -139,6 +140,7 @@ output/
     │   └── normalization-plan.json      # 機器可讀規格化計畫
     ├── openapi.yaml                # OpenAPI 3.1
     ├── api-guide.zh-TW.md          # 繁體中文串接文件
+    ├── review.html                 # 生成產物人工核對頁(離線 HTML)
     ├── provenance.json             # 每個輸出項目的來源追溯
     ├── integration-contract.json   # 簽章/加密整合契約(來源有提供時)
     ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例(產出時)

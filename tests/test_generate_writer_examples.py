@@ -37,3 +37,18 @@ def test_generate_outputs_writes_example_files(tmp_path: Path):
     assert sh, "expected at least one request.sh under examples/"
     assert (tmp_path / "examples" / "README.md").exists()
     assert "NOT a source document" in sh[0].read_text(encoding="utf-8")
+
+
+def test_generate_outputs_writes_review_html(tmp_path: Path):
+    generate_outputs(_plan(), _manifest(), tmp_path)
+
+    review = tmp_path / "review.html"
+
+    assert review.exists()
+    html = review.read_text(encoding="utf-8")
+    assert 'class="review-dashboard"' in html
+    assert 'href="openapi.yaml"' in html
+    assert 'href="api-guide.zh-TW.md"' in html
+    assert 'href="provenance.json"' in html
+    assert "POST" in html
+    assert "/pay" in html

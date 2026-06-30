@@ -10,19 +10,23 @@ from loop_apidoc.generate.markdown import build_markdown
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.generate.openapi import build_openapi
 from loop_apidoc.generate.provenance import build_provenance
+from loop_apidoc.generate.review import build_review_html
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 
 
 def build_result(plan: NormalizationPlan, manifest: Manifest) -> GenerateResult:
     openapi = build_openapi(plan)
-    return GenerateResult(
+    result = GenerateResult(
         openapi=openapi,
         markdown=build_markdown(plan, manifest),
         provenance=build_provenance(plan),
         integration=build_integration_document(plan),
         examples=build_examples(openapi, plan),
     )
+    return result.model_copy(update={
+        "review_html": build_review_html(plan, manifest, result)
+    })
 
 
 def generate_outputs(
@@ -35,6 +39,7 @@ def generate_outputs(
         encoding="utf-8",
     )
     (run_dir / "api-guide.zh-TW.md").write_text(result.markdown, encoding="utf-8")
+    (run_dir / "review.html").write_text(result.review_html, encoding="utf-8")
     (run_dir / "provenance.json").write_text(
         result.provenance.model_dump_json(indent=2), encoding="utf-8"
     )

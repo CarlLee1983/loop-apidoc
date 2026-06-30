@@ -168,10 +168,10 @@ object (no prose, no file writes); you write it to `<WORK>/integration.json` bes
 <APIDOC> assemble \
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" --json
 ```
-Parse the JSON on stdout: `ok`, `run_dir`, `report.issues`.
+Parse the JSON on stdout: `ok`, `run_dir`, `review_html`, `report.issues`.
 
 ### 6. Correction loop (max 3 rounds)
-- `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `provenance.json` / `validation/report.md` inside `run_dir`, done.
+- `ok == true` → report the `openapi.yaml` / `api-guide.zh-TW.md` / `review.html` / `provenance.json` / `validation/report.md` inside `run_dir` (point the user at `review.html` for an offline, at-a-glance review of scope/sources/gaps), done.
 - `ok == false` → read `report.issues` (`code`/`severity`/`location`/`evidence`/
   `suggested_fix`, plus optional `target_file`/`field_path`/`requery_scope`).
   **Prefer the structured fields when present**: `target_file` names where to edit

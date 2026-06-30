@@ -46,12 +46,16 @@ def test_assemble_json_emits_run_dir_and_report(tmp_path):
     ])
     assert res.exit_code in (0, 1)  # PASS 或驗證 FAIL,皆非崩潰
     payload = json.loads(res.stdout)
-    # spec 要求五個鍵全部存在
-    assert set(payload) >= {"run_id", "run_dir", "ok", "status", "report"}
+    # spec 要求五個鍵全部存在；review_html 是人工核對入口。
+    assert set(payload) >= {
+        "run_id", "run_dir", "ok", "status", "report", "review_html"
+    }
     assert isinstance(payload["ok"], bool)
     # exit code 必須與 ok 一致(避免「永遠 FAIL」之類的回歸)
     assert res.exit_code == (0 if payload["ok"] else 1)
     assert Path(payload["run_dir"]).is_dir()
+    assert Path(payload["review_html"]).name == "review.html"
+    assert Path(payload["review_html"]).is_file()
 
 
 def test_assemble_plain_output_mentions_status(tmp_path):
@@ -63,6 +67,7 @@ def test_assemble_plain_output_mentions_status(tmp_path):
     ])
     assert res.exit_code in (0, 1)
     assert "狀態" in res.stdout
+    assert "review.html" in res.stdout
 
 
 def test_assemble_missing_inventory_exits_2(tmp_path):

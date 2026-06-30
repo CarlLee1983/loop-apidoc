@@ -836,10 +836,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "io",
       pillLabel: "File Output",
       desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
-      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema／缺漏供人眼複核</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
-      outputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json"
+      outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json"
     },
     validate: {
       num: "STEP 05",
@@ -920,10 +920,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "generate/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "把 normalization plan 轉成實際交付產物，包含 OpenAPI、Markdown guide 與 provenance mapping。",
+      description: "把 normalization plan 轉成實際交付產物，包含 OpenAPI、Markdown guide、人工核對頁與 provenance mapping。",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization plan, manifest, run-dir path",
-      outputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
+      outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json",
       sideEffect: "File I/O: writes generated artifact files"
     },
     validate: {

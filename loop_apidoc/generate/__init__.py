@@ -6,6 +6,7 @@ from loop_apidoc.generate.models import (
     ProvenanceDocument,
     ProvenanceEntry,
 )
+from loop_apidoc.generate.review import build_review_html
 from loop_apidoc.generate.writer import build_result, generate_outputs
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
     "GenerateResult",
     "ProvenanceDocument",
     "ProvenanceEntry",
+    "build_review_html",
     "build_result",
     "generate_outputs",
 ]

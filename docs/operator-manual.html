@@ -100,6 +100,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <ul>
 <li><strong>OpenAPI 3.1 YAML</strong>（<code>openapi.yaml</code>）</li>
 <li><strong>繁體中文 Markdown 串接文件</strong>（<code>api-guide.zh-TW.md</code>）</li>
+<li><strong>離線人工核對頁</strong>（<code>review.html</code>）</li>
 <li><strong>來源追溯資料</strong>（<code>provenance.json</code>）</li>
 <li><strong>驗證與缺漏報告</strong>（<code>validation/report.{json,md}</code>）</li>
 </ul>
@@ -185,6 +186,7 @@ uv run loop-apidoc --help
     │   └── normalization-plan.json   # 機器可讀規格化計畫
     ├── openapi.yaml             # OpenAPI 3.1
     ├── api-guide.zh-TW.md       # 繁體中文串接文件
+    ├── review.html              # 生成產物人工核對頁（離線 HTML）
     ├── provenance.json          # 每個輸出項目的來源追溯
     ├── validation/
     │   ├── report.json
