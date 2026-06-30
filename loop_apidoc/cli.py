@@ -212,6 +212,11 @@ def assemble(
     json_out: bool = typer.Option(
         False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
     ),
+    score_report: bool = typer.Option(
+        False,
+        "--score",
+        help="在 assemble 完成後寫出 score/score.{json,md}",
+    ),
 ) -> None:
     """從 agent 產出的擷取 JSON 組裝:manifest→plan→generate→validate(不擷取)。"""
     from loop_apidoc.agentcli.assemble import (
@@ -237,6 +242,24 @@ def assemble(
         typer.echo(f"run 目錄衝突:{exc}", err=True)
         raise typer.Exit(code=2) from exc
 
+    score_payload = None
+    score_error = None
+    if score_report:
+        from loop_apidoc.score import (
+            ScoreInputError,
+            evaluate_score,
+            load_score_inputs,
+            write_reports as write_score_reports,
+        )
+
+        try:
+            score_inputs = load_score_inputs(Path(result.run_dir))
+            score_payload = evaluate_score(score_inputs)
+            write_score_reports(score_payload, Path(result.run_dir) / "score")
+        except ScoreInputError as exc:
+            score_error = str(exc)
+            typer.echo(f"score input error: {exc}", err=True)
+
     if json_out:
         review_html = str(Path(result.run_dir) / "review.html")
         payload = {
@@ -247,12 +270,25 @@ def assemble(
             "status": result.status.value,
             "report": result.report.model_dump(mode="json"),
         }
+        if score_payload is not None:
+            payload["score"] = score_payload.model_dump(mode="json")
+        if score_error is not None:
+            payload["score_error"] = score_error
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
+        suffix = ""
+        if score_payload is not None:
+            suffix = (
+                f"；score {score_payload.status.value.upper()} "
+                f"{score_payload.score}/100"
+            )
+        elif score_error is not None:
+            suffix = f"；score input error: {score_error}"
         typer.echo(
             f"狀態 {result.status.value}:error {len(result.report.errors())}，"
             f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}；"
             f"核對頁 {Path(result.run_dir) / 'review.html'}"
+            f"{suffix}"
         )
     raise typer.Exit(code=0 if result.ok else 1)
 

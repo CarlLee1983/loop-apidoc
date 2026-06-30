@@ -78,3 +78,41 @@ def test_assemble_missing_inventory_exits_2(tmp_path):
         "--output", str(out),
     ])
     assert res.exit_code == 2
+
+
+def test_assemble_score_writes_score_reports_and_preserves_exit_status(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+
+    res = runner.invoke(app, [
+        "assemble",
+        "--sources", str(sources),
+        "--extraction", str(extraction),
+        "--output", str(out),
+        "--score",
+        "--json",
+    ])
+
+    assert res.exit_code in (0, 1)
+    payload = json.loads(res.stdout)
+    run_dir = Path(payload["run_dir"])
+    assert "score" in payload
+    assert payload["score"]["status"] in {"pass", "needs_attention", "fail"}
+    assert (run_dir / "score" / "score.json").is_file()
+    assert (run_dir / "score" / "score.md").is_file()
+    assert res.exit_code == (0 if payload["ok"] else 1)
+
+
+def test_assemble_without_score_does_not_write_score_reports(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+
+    res = runner.invoke(app, [
+        "assemble",
+        "--sources", str(sources),
+        "--extraction", str(extraction),
+        "--output", str(out),
+        "--json",
+    ])
+
+    payload = json.loads(res.stdout)
+    assert "score" not in payload
+    assert not (Path(payload["run_dir"]) / "score").exists()
