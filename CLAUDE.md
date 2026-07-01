@@ -31,7 +31,7 @@ There is **one** extraction path: the current coding agent (Claude Code or Codex
 
 `assemble` does **not** extract — it only assembles agent-written JSON (`manifest → plan → generate → validate`) and reports results via `--json` so the agent can drive the correction loop itself (re-reading sources and overwriting the JSON, then re-running `assemble`).
 
-The five CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `assemble` (assemble + validate), `validate` (validate an existing run-dir), and `diff` (compare two completed run-dirs by downstream impact).
+The six CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `assemble` (assemble + validate; optional `--score`), `validate` (validate an existing run-dir), `score` (grade a completed run-dir's documentation quality), and `diff` (compare two completed run-dirs by downstream impact).
 
 > A former `run-agent` CLI mode (subprocess `claude -p`) and a NotebookLM extraction backend were both retired in 2026-06; agent-native is now the only path.
 
@@ -47,8 +47,10 @@ The five CLI commands are `preprocess` (PDF→markdown), `manifest` (scan), `ass
 | `loop_apidoc/validate/` | structure / completeness / consistency / no-speculation checks + report |
 | `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
 | `loop_apidoc/diff/` | run-to-run version diff: `loader.py` (load a completed run-dir's artifacts, `DiffInputError`), `compare.py` (classify changes across `openapi.yaml` / `integration-contract.json` / `provenance.json` / `validation/report.json` / `manifest.json` into `breaking` / `additive` / `changed` / `source_only`), `models.py` (`DiffFinding` / `DiffImpact` / `DiffReport`), `report.py` (render + write `diff/report.{json,md}`) |
+| `loop_apidoc/preparation/` | pre-generation readiness assessment: `assess.py` (`assess_preparation` grades `manifest` + inventory + endpoint texts + `plan` into a `PreparationReport` of phases/findings with severity `error`/`warning` and status `blocked`/`needs_attention`/`ready`), `report.py` (`write_reports` → `preparation-report.{json,md}`). Runs *inside* `assemble` between plan and generate; also read back by `diff/` as a supporting artifact |
+| `loop_apidoc/score/` | deterministic documentation-quality score for a completed run-dir: `loader.py` (`load_score_inputs`, `ScoreInputError`), `evaluate.py` (`evaluate_score` — weighted categories openapi_validity / completeness / consistency / source_grounding / reviewability → 0–100, `ci` / `review` profiles), `report.py` (`write_reports` → `score/score.{json,md}`). Surfaced via the `score` command and `assemble --score`; **never** changes validation pass/fail or exit code |
 
-**File-I/O exits:** only `generate/` (`generate_outputs`), `run/` (which owns the run-dir), and `diff/report.py` (`write_reports`, writes `diff/report.{json,md}`) write files. Every other module is pure functions — keep it that way; it's what makes them unit-testable.
+**File-I/O exits:** only `generate/` (`generate_outputs`), `run/` (which owns the run-dir), `preparation/report.py` (`write_reports`, writes `preparation-report.{json,md}`), `score/report.py` (`write_reports`, writes `score/score.{json,md}`), and `diff/report.py` (`write_reports`, writes `diff/report.{json,md}`) write files. Every other module is pure functions — keep it that way; it's what makes them unit-testable.
 
 ## Correction & fail-closed classification
 

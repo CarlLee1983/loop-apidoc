@@ -82,6 +82,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
+  <a class="lvl-3" href="#score-run">score — 為完成的 run 評分</a>
   <a class="lvl-3" href="#diff-run">diff — 比較兩次 run 版本差異</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
@@ -148,7 +149,7 @@ uv run loop-apidoc --help
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<p>CLI 暴露五個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>、<code>diff</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code>、<code>validate</code> 與 <code>diff</code> 可獨立使用。</p>
+<p>CLI 暴露六個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code>、<code>validate</code>、<code>score</code> 與 <code>diff</code> 可獨立使用。</p>
 <h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -162,13 +163,17 @@ uv run loop-apidoc --help
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--json]
+  [--url &lt;URL&gt; ...] [--json] [--score]
 </code></pre>
-<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>)組裝成輸出:manifest → plan → generate → validate。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。</p>
+<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>)組裝成輸出:manifest → plan → generate → validate。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
 <h3 id="validate-run"><code>validate</code> — 驗證既有 run 目錄</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
 <p>對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 <code>&lt;run-dir&gt;/validation/</code>。通過回傳 <code>0</code>,有 ERROR 級問題回傳 <code>1</code>。</p>
+<h3 id="score-run"><code>score</code> — 為完成的 run 目錄評分</h3>
+<pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
+</code></pre>
+<p>對已完成 run directory 做確定性文件品質評分,五類加權(<code>openapi_validity</code>／<code>completeness</code>／<code>consistency</code>／<code>source_grounding</code>／<code>reviewability</code>)算出 0–100,寫入 <code>&lt;run-id&gt;/score/score.{json,md}</code>。<code>--profile</code> 決定分數門檻(<code>ci</code>=85、<code>review</code>=70),可用 <code>--min-score</code> 覆寫。退出碼:<code>0</code>=達門檻、<code>1</code>=未達、<code>2</code>=輸入缺檔或格式錯誤。<code>assemble --score</code> 會附帶產生同一份報告,但<strong>不影響</strong> assemble 的退出碼(仍由 validation 決定)。</p>
 <h3 id="diff-run"><code>diff</code> — 比較兩次 run 的版本差異</h3>
 <pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
 </code></pre>
@@ -188,9 +193,14 @@ uv run loop-apidoc --help
     ├── api-guide.zh-TW.md       # 繁體中文串接文件
     ├── review.html              # 生成產物人工核對頁（離線 HTML）
     ├── provenance.json          # 每個輸出項目的來源追溯
+    ├── preparation-report.json  # 產生前就緒度評估（assemble 產出）
+    ├── preparation-report.md
     ├── validation/
     │   ├── report.json
     │   └── report.md
+    ├── score/                   # 文件品質評分（assemble --score 或 loop-apidoc score）
+    │   ├── score.json
+    │   └── score.md
     └── diff/                    # 與另一個 run 比較版本差異時（loop-apidoc diff）
         ├── report.json
         └── report.md
@@ -263,7 +273,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/generate/</code></td>
-<td>OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口)</td>
+<td>OpenAPI / Markdown / review.html / provenance 生成(檔案 I/O 出口之一)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/validate/</code></td>
@@ -276,6 +286,14 @@ uv run ruff check .
 <tr>
 <td><code>loop_apidoc/diff/</code></td>
 <td>run 對 run 版本差異:讀取產物、分類差異(<code>breaking</code>／<code>additive</code>／<code>changed</code>／<code>source_only</code>)、輸出 <code>diff/report.{json,md}</code></td>
+</tr>
+<tr>
+<td><code>loop_apidoc/preparation/</code></td>
+<td>產生前就緒度評估,於 <code>assemble</code> 內把 manifest／inventory／endpoints／plan 評成 <code>preparation-report.{json,md}</code>(檔案 I/O 出口之一)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/score/</code></td>
+<td>對完成 run-dir 做確定性文件品質評分,五類加權算出 0–100,輸出 <code>score/score.{json,md}</code>(檔案 I/O 出口之一)</td>
 </tr>
 </tbody>
 </table>

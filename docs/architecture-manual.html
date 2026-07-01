@@ -717,13 +717,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer 入口，只暴露 preprocess、manifest、assemble、validate。</div>
+          <div class="module-role">Typer 入口，暴露 preprocess、manifest、assemble、validate、score、diff 六個命令。</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
           <div class="command-chip">manifest</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
+          <div class="command-chip">score</div>
+          <div class="command-chip">diff</div>
         </div>
       </div>
 
@@ -765,6 +767,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <button type="button" class="module-card io-boundary" data-module="diff">
             <div class="module-name">diff/ <span class="pill io">File I/O</span></div>
             <div class="module-role">比較兩個 run-dir，依 impact 分類並輸出差異報告。</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="preparation">
+            <div class="module-name">preparation/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">產生前就緒度評估，於 assemble 內把 manifest 與 plan 評成 preparation-report。</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="score">
+            <div class="module-name">score/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">對完成 run-dir 做確定性文件品質評分，輸出 score/score.{json,md}。</div>
           </button>
         </div>
       </div>
@@ -870,10 +880,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 preprocess、manifest、assemble、validate、diff 五個命令，將使用者操作導向對應的 deterministic pipeline seam。",
+      description: "Typer CLI 入口，對外暴露 preprocess、manifest、assemble、validate、score、diff 六個命令，將使用者操作導向對應的 deterministic pipeline seam。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to preprocess / manifest / assemble / validate / diff commands",
+      outputs: "Delegates to preprocess / manifest / assemble / validate / score / diff commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -955,6 +965,26 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "two completed run directories (base, head)",
       outputs: "diff/report.json, diff/report.md",
       sideEffect: "File I/O: writes diff report files; compare logic is pure"
+    },
+    preparation: {
+      title: "preparation/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "產生前就緒度評估：在 assemble 內於 plan 之後、generate 之前，把 manifest、inventory、endpoints 與 plan 評成 phase／finding，狀態為 blocked／needs_attention／ready，並被 diff/ 讀回比較。",
+      seam: "assess_preparation(manifest, inventory, endpoint_texts, plan) / write_reports(report, run_dir)",
+      inputs: "manifest, inventory.json, endpoints/*.json, normalization plan",
+      outputs: "preparation-report.json, preparation-report.md",
+      sideEffect: "File I/O: writes preparation report files; assessment logic is pure"
+    },
+    score: {
+      title: "score/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "對已完成 run-dir 做確定性文件品質評分，五類加權（openapi_validity／completeness／consistency／source_grounding／reviewability）算出 0–100，支援 ci／review profile；不改變 validation pass/fail。",
+      seam: "load_score_inputs(run_dir) / evaluate_score(inputs, profile, min_score) / write_reports(report, score_dir)",
+      inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
+      outputs: "score/score.json, score/score.md",
+      sideEffect: "File I/O: writes score report files; evaluation logic is pure"
     }
   };
 
