@@ -279,9 +279,6 @@ def assemble(
         except ScoreInputError as exc:
             score_error = str(exc)
             typer.echo(f"score input error: {exc}", err=True)
-        except Exception as exc:
-            score_error = f"score failed: {exc}"
-            typer.echo(f"score failed: {exc}", err=True)
 
     loop_payload = None
     if score_payload is not None:
