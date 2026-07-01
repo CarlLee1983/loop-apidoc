@@ -53,7 +53,7 @@ your extraction JSON and re-running.
 | `SOURCE_CONFLICT` | error | two sources disagree about the same target | re-read both; **report the conflict** — do not silently pick one |
 | `UNSUPPORTED_ASSERTION` | error | the output asserts something no source states (speculation leaked in) | remove the unsupported content; fail-closed |
 
-## Driving a correction round (max 3 rounds)
+## Driving a correction round (default max 3 rounds; `--score` uses `--max-rounds`, default 6)
 
 1. **Prefer the structured-routing fields.** `target_file` names where to edit
    (`inventory.json`, `integration.json`, or `endpoints/` — the *directory*; match the exact
@@ -64,6 +64,34 @@ your extraction JSON and re-running.
    corrected JSON (same subagent contract + grounding rule as extraction).
 3. **You overwrite** the named file, then re-run `assemble`.
 4. Each round overwrites the same `inventory.json` / `endpoints/*.json` / `integration.json`.
+
+## Score-gated loop (`--score`)
+
+Pass `--score --target-score <T> [--prev-score <P>] --round-index <R> --max-rounds <M>`
+to make quality — not just "no errors" — the acceptance bar. The `--json` payload then
+carries a `loop` block:
+
+```json
+{"loop": {"verdict": "continue", "target": 85, "prev_score": 72, "curr_score": 80,
+  "round_index": 2, "max_rounds": 6,
+  "actionable": [ {"code": "...", "target_file": "...", "field_path": "...",
+                   "requery_scope": "...", "score_impact": 12} ],
+  "irreducible": [ {"code": "SOURCE_CONFLICT", "evidence": "...", "score_impact": 50} ]}}
+```
+
+Drive off `loop.verdict`:
+
+| verdict | meaning | do |
+|---|---|---|
+| `continue` | below target, improved, rounds left, fixable work remains | for each `loop.actionable`, re-read only `requery_scope` with a read-only subagent, overwrite `target_file`; re-run assemble with `--prev-score <curr_score>` and `--round-index <R+1>` |
+| `converged` | `curr_score >= target` | stop — the run met the quality bar |
+| `plateau` | below target but no improvement / nothing fixable left | stop — the deficit is irreducible from these sources; present `loop.irreducible` |
+| `exhausted` | round cap hit without converging | stop — present `loop.irreducible` and any leftover `loop.actionable` |
+
+**Never** re-read or edit an `irreducible` finding to raise the score — that is the
+fail-closed boundary. `curr_score` from this round becomes the next `--prev-score`.
+The score and its verdict never change assemble's exit code: a validation `error`
+still exits 1 and still needs fixing regardless of verdict.
 
 ## Fail-closed
 

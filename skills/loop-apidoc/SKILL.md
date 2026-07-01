@@ -110,6 +110,17 @@ Open **`reference/extraction-schemas.md`** for the exact schemas and conventions
   --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] --json
 ```
 
+To iterate toward a **quality bar** (not just "no errors"), add the score-gated flags:
+
+```bash
+<APIDOC> assemble --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" \
+  --score --target-score 85 --round-index 1 --max-rounds 6 --json
+```
+
+The payload then carries a `loop` block; drive correction off `loop.verdict` (see
+`reference/assemble-and-correction.md`). Without `--score`, the loop below is the
+baseline validation-gated flow.
+
 Parse the JSON on stdout: `ok`, `run_dir`, `review_html`, `status`, `report.issues` (full key
 list + the 9-field issue shape are in `reference/assemble-and-correction.md`). Exit `2` is an
 input-contract error **or** a run-dir collision, **not** a validation round — fix the named
@@ -125,8 +136,12 @@ JSON file/field (or choose a fresh `--output`) and re-run.
   structured-routing fields (`target_file`/`field_path`/`requery_scope`). Use `location` and
   `suggested_fix` to understand which field is missing or incorrect, then re-read just that
   scope with a targeted read-only subagent, overwrite the named JSON, and re-run assemble.
-  **Max 3 rounds.** Conflicts / unsupported assertions that survive re-verification →
-  present the gaps to the user; **never fabricate.**
+  **Max 3 rounds** for the baseline flow. When you ran with `--score`, drive the
+  loop off `loop.verdict` instead (`continue` → correct `loop.actionable` and
+  re-assemble with an incremented `--round-index` and `--prev-score`; `converged`
+  → done; `plateau`/`exhausted` → stop). Conflicts / unsupported assertions that
+  survive re-verification, and anything in `loop.irreducible`, → present the gaps
+  to the user; **never fabricate.**
 
 ### 7. Final evidence check
 
