@@ -346,9 +346,18 @@ def preprocess(
     非 PDF 文字檔原樣複製。供 agent-native 擷取時 subagent 讀取高保真 markdown。"""
     from loop_apidoc.agentcli.preprocess import prepare_markdown
 
-    dest = prepare_markdown(sources, out)
-    count = sum(1 for p in dest.glob("*") if p.is_file())
-    typer.echo(f"已前處理 {count} 個檔案於 {dest}")
+    result = prepare_markdown(sources, out)
+    typer.echo(
+        "已前處理 "
+        f"converted {len(result.converted)} / "
+        f"copied {len(result.copied)} / "
+        f"passthrough {len(result.passthrough)} 於 {result.dest_dir}"
+    )
+    for relative in result.passthrough:
+        typer.echo(
+            f"passthrough {relative.as_posix()} "
+            "(not converted; agent must read source format)"
+        )
 
 
 def main() -> None:
