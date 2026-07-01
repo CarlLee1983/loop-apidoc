@@ -217,6 +217,26 @@ def assemble(
         "--score",
         help="在 assemble 完成後寫出 score/score.{json,md}",
     ),
+    target_score: Annotated[
+        int | None,
+        typer.Option("--target-score", min=0, max=100,
+                     help="score 自循環目標分(loop verdict 用);省略取 ci profile 預設 85"),
+    ] = None,
+    prev_score: Annotated[
+        int | None,
+        typer.Option("--prev-score", min=0, max=100,
+                     help="上一輪 score 總分(agent 跨輪帶入,供高原偵測);首輪省略"),
+    ] = None,
+    round_index: Annotated[
+        int,
+        typer.Option("--round-index", min=1,
+                     help="目前修正輪次(1 起);loop verdict 用"),
+    ] = 1,
+    max_rounds: Annotated[
+        int,
+        typer.Option("--max-rounds", min=1,
+                     help="修正輪次上限;達上限且未達標→exhausted"),
+    ] = 6,
 ) -> None:
     """從 agent 產出的擷取 JSON 組裝:manifest→plan→generate→validate(不擷取)。"""
     from loop_apidoc.agentcli.assemble import (
@@ -263,6 +283,20 @@ def assemble(
             score_error = f"score failed: {exc}"
             typer.echo(f"score failed: {exc}", err=True)
 
+    loop_payload = None
+    if score_payload is not None:
+        from loop_apidoc.score import loop_verdict, resolved_min_score
+
+        resolved_target = resolved_min_score(ScoreProfile.CI, target_score)
+        loop_payload = loop_verdict(
+            prev_score=prev_score,
+            curr_score=score_payload.score,
+            target=resolved_target,
+            round_index=round_index,
+            max_rounds=max_rounds,
+            findings=score_payload.findings,
+        )
+
     if json_out:
         review_html = str(Path(result.run_dir) / "review.html")
         payload = {
@@ -275,6 +309,8 @@ def assemble(
         }
         if score_payload is not None:
             payload["score"] = score_payload.model_dump(mode="json")
+        if loop_payload is not None:
+            payload["loop"] = loop_payload.model_dump(mode="json")
         if score_error is not None:
             payload["score_error"] = score_error
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
