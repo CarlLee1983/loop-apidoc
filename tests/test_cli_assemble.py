@@ -143,3 +143,44 @@ def test_assemble_score_failure_does_not_change_exit_code(tmp_path, monkeypatch)
     assert "score_error" in payload
     assert "score failed" in payload["score_error"]
     assert "score" not in payload
+
+
+def test_assemble_score_emits_loop_block(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json", "--score",
+        "--target-score", "85", "--round-index", "1", "--max-rounds", "6",
+    ])
+    assert res.exit_code in (0, 1)
+    payload = json.loads(res.stdout)
+    assert "score" in payload
+    assert "loop" in payload
+    loop = payload["loop"]
+    assert loop["verdict"] in {"converged", "plateau", "exhausted", "continue"}
+    assert loop["target"] == 85
+    assert loop["round_index"] == 1
+    assert loop["max_rounds"] == 6
+    assert "actionable" in loop and "irreducible" in loop
+
+
+def test_assemble_without_score_has_no_loop_block(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json",
+    ])
+    payload = json.loads(res.stdout)
+    assert "loop" not in payload
+
+
+def test_assemble_score_exit_code_tracks_ok_not_verdict(tmp_path):
+    # target 100 is unreachable, so verdict is plateau/exhausted, but the exit
+    # code must still track validation ok, never the verdict.
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json", "--score", "--target-score", "100",
+    ])
+    payload = json.loads(res.stdout)
+    assert res.exit_code == (0 if payload["ok"] else 1)
