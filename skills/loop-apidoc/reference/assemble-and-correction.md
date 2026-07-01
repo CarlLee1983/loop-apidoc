@@ -74,16 +74,22 @@ carries a `loop` block:
 ```json
 {"loop": {"verdict": "continue", "target": 85, "prev_score": 72, "curr_score": 80,
   "round_index": 2, "max_rounds": 6,
-  "actionable": [ {"code": "...", "target_file": "...", "field_path": "...",
-                   "requery_scope": "...", "score_impact": 12} ],
+  "actionable": [ {"code": "...", "location": "...", "suggested_fix": "...",
+                   "score_impact": 12} ],
   "irreducible": [ {"code": "SOURCE_CONFLICT", "evidence": "...", "score_impact": 50} ]}}
 ```
+
+`actionable`/`irreducible` items are `ScoreFinding` objects
+(`code`/`location`/`evidence`/`suggested_fix`/`category`/`score_impact`) — they do **not**
+carry the structured-routing fields. To route a re-read, match each `actionable` to its
+`report.issues` entry by `code`+`location` and use that entry's
+`requery_scope`/`target_file`/`field_path` (see "Driving a correction round" above).
 
 Drive off `loop.verdict`:
 
 | verdict | meaning | do |
 |---|---|---|
-| `continue` | below target, improved, rounds left, fixable work remains | for each `loop.actionable`, re-read only `requery_scope` with a read-only subagent, overwrite `target_file`; re-run assemble with `--prev-score <curr_score>` and `--round-index <R+1>` |
+| `continue` | below target, improved, rounds left, fixable work remains | for each `loop.actionable`, look up its `report.issues` entry (by `code`+`location`) to get `requery_scope`/`target_file`, re-read only `requery_scope` with a read-only subagent, overwrite `target_file`; re-run assemble with `--prev-score <curr_score>` and `--round-index <R+1>` |
 | `converged` | `curr_score >= target` | stop — the run met the quality bar |
 | `plateau` | below target but no improvement / nothing fixable left | stop — the deficit is irreducible from these sources; present `loop.irreducible` |
 | `exhausted` | round cap hit without converging | stop — present `loop.irreducible` and any leftover `loop.actionable` |
