@@ -17,6 +17,10 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+from loop_apidoc.foundry.cli import foundry_app  # noqa: E402  (must follow `app` definition)
+
+app.add_typer(foundry_app, name="foundry")
+
 
 @app.callback()
 def _root() -> None:
