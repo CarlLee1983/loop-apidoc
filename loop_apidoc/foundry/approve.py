@@ -106,12 +106,6 @@ def approve_candidate(
         known_gaps=list(known_gaps or []),
     )
 
-    if docset.current_asset:
-        prior = store.load_asset(project_root, docset_id, docset.current_asset)
-        store.save_asset(
-            project_root, prior.model_copy(update={"status": AssetStatus.SUPERSEDED})
-        )
-
     store.save_asset(project_root, asset)
     store.save_current(
         project_root,
@@ -141,4 +135,11 @@ def approve_candidate(
             ),
         ),
     )
+
+    if docset.current_asset:
+        prior = store.load_asset(project_root, docset_id, docset.current_asset)
+        store.save_asset(
+            project_root, prior.model_copy(update={"status": AssetStatus.SUPERSEDED})
+        )
+
     return asset

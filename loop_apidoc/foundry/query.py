@@ -3,17 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from loop_apidoc.foundry import paths, store
-from loop_apidoc.foundry.models import Asset, Catalog, FoundryInputError
+from loop_apidoc.foundry.models import Asset, AssetArtifacts, Catalog, FoundryInputError
 
-_ARTIFACT_FIELDS = {
-    "openapi",
-    "integration_contract",
-    "provenance",
-    "review",
-    "validation",
-    "score",
-    "handoff",
-}
+_ARTIFACT_FIELDS = frozenset(AssetArtifacts.model_fields)
 
 
 def load_current_asset(project_root: Path, docset_id: str) -> Asset:

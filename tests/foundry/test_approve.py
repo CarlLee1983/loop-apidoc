@@ -100,6 +100,14 @@ def test_approve_refuses_failing_validation(tmp_path: Path) -> None:
         )
 
 
+def test_approve_refuses_min_score_when_score_absent(tmp_path: Path) -> None:
+    _setup(tmp_path, score=None)
+    with pytest.raises(FoundryApprovalError, match="score"):
+        approve.approve_candidate(
+            tmp_path, "tappay-backend", _RUN_ID, approved_by="ci-score-90", now=_NOW, min_score=90
+        )
+
+
 def test_approve_allow_failing_overrides_gate(tmp_path: Path) -> None:
     _setup(tmp_path, validation_ok=False)
     asset = approve.approve_candidate(

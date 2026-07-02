@@ -13,13 +13,15 @@ _NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
 _RUN_ID = "20260702T120000.000000Z"
 
 
-def _approve(tmp_path: Path) -> str:
+def _approve(tmp_path: Path, **run_kwargs: object) -> str:
     register.register_docset(
         tmp_path,
         Docset(docset_id="tappay-backend", title="T", provider="tappay", product="backend-api"),
     )
     importer.import_run(
-        tmp_path, "tappay-backend", write_run_dir(tmp_path / "output" / _RUN_ID)
+        tmp_path,
+        "tappay-backend",
+        write_run_dir(tmp_path / "output" / _RUN_ID, **run_kwargs),  # type: ignore[arg-type]
     )
     return approve.approve_candidate(
         tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
@@ -57,6 +59,12 @@ def test_resolve_current_artifact_unknown_name_raises(tmp_path: Path) -> None:
     _approve(tmp_path)
     with pytest.raises(FoundryInputError, match="unknown artifact"):
         query.resolve_current_artifact(tmp_path, "tappay-backend", "bogus")
+
+
+def test_resolve_current_artifact_absent_field_raises(tmp_path: Path) -> None:
+    _approve(tmp_path, with_integration=False)
+    with pytest.raises(FoundryInputError, match="not present"):
+        query.resolve_current_artifact(tmp_path, "tappay-backend", "integration_contract")
 
 
 def test_list_docsets_returns_catalog(tmp_path: Path) -> None:
