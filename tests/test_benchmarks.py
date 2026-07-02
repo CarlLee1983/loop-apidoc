@@ -23,6 +23,7 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -178,6 +179,25 @@ def test_benchmark_case(case, assembled) -> None:
             f"{case.name}: too few test_cases "
             f"({len(ic.get('test_cases', []))} < {integ.get('test_cases_min', 0)})"
         )
+
+
+def test_benchmark_score(case, assembled) -> None:
+    """score grades every run dir 0–100, deterministically, without ever changing
+    validation pass/fail (the CLAUDE.md invariant). No per-case score floor — a
+    validation-PASS case can legitimately score low on completeness warnings."""
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    inputs = load_score_inputs(Path(assembled.run_dir))
+
+    for profile in (ScoreProfile.CI, ScoreProfile.REVIEW):
+        report = evaluate_score(inputs, profile=profile)
+        assert 0 <= report.score <= 100, f"{case.name}: score {report.score} out of band"
+        assert report.profile is profile, f"{case.name}: profile not echoed"
+        again = evaluate_score(inputs, profile=profile)
+        assert again.score == report.score, f"{case.name}: score not deterministic"
+
+    # Core invariant: scoring does not change the validation verdict.
+    want_pass = expect.get("current_status") == "PASS"
+    assert assembled.report.ok is want_pass, f"{case.name}: score run perturbed validation ok"
 
 
 def test_benchmark_harness_discovers_cases() -> None:
