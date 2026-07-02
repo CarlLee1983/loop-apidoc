@@ -207,6 +207,27 @@ def test_response_schema_type_change_is_breaking():
     assert "responses.200.application/json.id" in finding.location
 
 
+def test_object_to_scalar_schema_change_reports_only_schema_change():
+    base = _doc()
+    head = _doc()
+    head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "string"
+    }
+
+    findings = _findings(base, head)
+
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.summary == "schema changed"
+    assert finding.location == "POST /payments responses.200.application/json"
+    assert finding.impact is DiffImpact.BREAKING
+    assert not any(
+        f.summary == "property removed"
+        and f.location.startswith("POST /payments responses.200.application/json.")
+        for f in findings
+    )
+
+
 def test_info_and_server_changes_are_changed():
     base = _doc()
     head = _doc()

@@ -85,6 +85,10 @@ def _schema_signature(schema: Any) -> Any:
     return {key: schema.get(key) for key in keys if key in schema}
 
 
+def _is_object_schema(signature: Any) -> bool:
+    return isinstance(signature, dict) and signature.get("type") == "object"
+
+
 def _content_schemas(container: dict | None) -> dict[str, dict]:
     if not isinstance(container, dict):
         return {}
@@ -139,6 +143,8 @@ def _compare_schema(
                 head_sig,
             )
         )
+        if _is_object_schema(base_sig) != _is_object_schema(head_sig):
+            return
 
     base_props = _properties(base)
     head_props = _properties(head)
