@@ -81,7 +81,7 @@ flowchart TD
 
 | 階段 | 公開 seam | 產物 |
 | --- | --- | --- |
-| 前處理(可選) | `prepare_markdown(sources_dir, dest_dir)` / `pdf_to_markdown(pdf_path)` | `<WORK>/sources_md/`(高保真 markdown) |
+| 前處理(可選) | `prepare_markdown(sources_dir, dest_dir)` → `PreprocessResult` / `pdf_to_markdown(pdf_path)` | `<WORK>/sources_md/`(PDF 轉 markdown;文字檔複製;其他來源 passthrough) |
 | 擷取(agent 寫出) | —(agent 依 SKILL 寫檔) | `inventory.json` + `endpoints/*.json` |
 | 組裝入口 | `run_assemble_pipeline(*, sources_root, extraction_dir, output_root, run_id, generated_at, urls)` | 整個 run-dir;`--json` 回報 `ok`/`run_dir`/`review_html`/`report` |
 | 掃描 | `build_manifest(sources_root, urls, generated_at)` | `manifest.json` |
