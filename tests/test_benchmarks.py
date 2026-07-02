@@ -53,24 +53,40 @@ def _issue_classes(report) -> dict[str, int]:
     return dict(counts)
 
 
-@pytest.mark.parametrize("case", _cases(), ids=[c.name for c in _cases()])
-def test_benchmark_case(case: Path, tmp_path: Path) -> None:
+@pytest.fixture(params=_cases(), ids=[c.name for c in _cases()])
+def case(request) -> Path:
+    return request.param
+
+
+# Assemble each case at most once per session; the produced run dir is treated
+# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
+# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
+# survives for the whole session.
+_ASSEMBLED: dict[str, object] = {}
+
+
+@pytest.fixture
+def assembled(case, tmp_path_factory):
     if not _has_sources(case):
         pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
+    if case.name not in _ASSEMBLED:
+        out = tmp_path_factory.mktemp(f"bench-{case.name}")
+        _ASSEMBLED[case.name] = run_assemble_pipeline(
+            sources_root=case / "sources",
+            extraction_dir=case / "extraction",
+            output_root=out,
+            run_id="bench",
+            generated_at=_FIXED_TS,
+        )
+    return _ASSEMBLED[case.name]
 
+
+def test_benchmark_case(case, assembled) -> None:
     expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
     minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
     must = minimum.get("must_have", {})
 
-    # A malformed committed extraction raises AssembleInputError → the test errors,
-    # which is the correct signal (the committed JSON must stay assemble-able).
-    result = run_assemble_pipeline(
-        sources_root=case / "sources",
-        extraction_dir=case / "extraction",
-        output_root=tmp_path,
-        run_id="bench",
-        generated_at=_FIXED_TS,
-    )
+    result = assembled
     report = result.report
 
     # --- 1. PASS/FAIL matches expectation ---
