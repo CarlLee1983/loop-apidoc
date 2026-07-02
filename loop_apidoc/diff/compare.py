@@ -79,26 +79,21 @@ def _op_area(op_key: str) -> str:
     return "openapi.webhooks" if " webhooks:" in op_key else "openapi.paths"
 
 
+def _looks_like_object(schema: Any) -> bool:
+    return isinstance(schema, dict) and (
+        schema.get("type") == "object"
+        or ("type" not in schema and isinstance(schema.get("properties"), dict))
+    )
+
+
 def _schema_signature(schema: Any) -> Any:
     if not isinstance(schema, dict):
         return schema
     keys = ("type", "$ref", "enum", "oneOf", "anyOf", "allOf", "format")
     signature = {key: schema.get(key) for key in keys if key in schema}
-    if schema.get("type") == "object" or (
-        "type" not in schema and isinstance(schema.get("properties"), dict)
-    ):
+    if _looks_like_object(schema):
         signature["type"] = "object"
     return signature
-
-
-def _is_object_schema(schema: Any) -> bool:
-    return (
-        isinstance(schema, dict)
-        and (
-            schema.get("type") == "object"
-            or ("type" not in schema and isinstance(schema.get("properties"), dict))
-        )
-    )
 
 
 def _content_schemas(container: dict | None) -> dict[str, dict]:
@@ -155,7 +150,7 @@ def _compare_schema(
                 head_sig,
             )
         )
-        if _is_object_schema(base) != _is_object_schema(head):
+        if _looks_like_object(base) != _looks_like_object(head):
             return
 
     base_props = _properties(base)

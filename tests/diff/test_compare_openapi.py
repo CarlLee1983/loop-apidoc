@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from loop_apidoc.diff.compare import build_diff_report
+from loop_apidoc.diff.compare import build_diff_report, _looks_like_object
 from loop_apidoc.diff.loader import RunArtifacts
 from loop_apidoc.diff.models import DiffImpact
 from loop_apidoc.generate.models import ProvenanceDocument
@@ -449,3 +449,12 @@ def test_summary_counts_all_impacts():
     assert report.summary["additive"] == 1
     assert report.summary["changed"] == 1
     assert report.summary["source_only"] == 0
+
+
+def test_looks_like_object_predicate():
+    assert _looks_like_object({"type": "object"}) is True
+    assert _looks_like_object({"properties": {"a": {"type": "string"}}}) is True
+    assert _looks_like_object({"type": "string", "properties": {"a": {}}}) is False
+    assert _looks_like_object({"type": "string"}) is False
+    assert _looks_like_object("nope") is False
+    assert _looks_like_object({}) is False
