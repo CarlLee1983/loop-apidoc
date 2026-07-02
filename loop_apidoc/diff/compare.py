@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from typing import Any
 
@@ -692,6 +693,14 @@ def _provenance_map(artifacts: RunArtifacts) -> dict[str, list[dict]]:
     out: dict[str, list[dict]] = {}
     for entry in artifacts.provenance.entries:
         out.setdefault(entry.target, []).append(entry.model_dump(mode="json"))
+    for entries in out.values():
+        entries.sort(
+            key=lambda entry: (
+                entry.get("manifest_source") or "",
+                entry.get("query_id") or "",
+                json.dumps(entry, sort_keys=True, separators=(",", ":")),
+            )
+        )
     return out
 
 
