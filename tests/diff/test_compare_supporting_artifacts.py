@@ -288,3 +288,39 @@ def test_preparation_report_added_is_source_only():
 
     assert finding.impact is DiffImpact.SOURCE_ONLY
     assert finding.location == "preparation"
+
+
+def test_callback_core_field_change_is_breaking():
+    base = _artifacts(
+        integration={
+            "callbacks": [{"name": "notify", "verification": "hmac-sha256"}]
+        }
+    )
+    head = _artifacts(
+        integration={
+            "callbacks": [{"name": "notify", "verification": "hmac-sha512"}]
+        }
+    )
+
+    report = build_diff_report(base, head)
+    finding = _find("integration callback core field changed", report.findings)
+
+    assert finding.impact is DiffImpact.BREAKING
+    assert finding.location == "integration.callbacks.notify.verification"
+
+
+def test_removed_validation_issue_is_source_only():
+    issue = Issue(
+        code=IssueCode.REQUIRED_INFO_MISSING,
+        severity=Severity.WARNING,
+        location="operational",
+        evidence="no rate limit",
+        suggested_fix="add source",
+    )
+    base = _artifacts(validation=ValidationReport(issues=[issue]))
+    head = _artifacts(validation=ValidationReport())
+
+    finding = _find("validation issue removed", build_diff_report(base, head).findings)
+
+    assert finding.area == "validation"
+    assert finding.impact is DiffImpact.SOURCE_ONLY

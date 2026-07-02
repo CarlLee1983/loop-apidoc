@@ -202,9 +202,14 @@ def test_response_schema_type_change_is_breaking():
     head_schema = head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"]
     head_schema["properties"]["id"] = {"type": "integer"}
 
-    finding = _by_summary(base, head, "schema changed")[0]
-    assert finding.impact is DiffImpact.BREAKING
-    assert "responses.200.application/json.id" in finding.location
+    findings = _findings(base, head)
+    hits = [
+        f for f in findings
+        if f.location == "POST /payments responses.200.application/json.id"
+        and f.summary == "schema changed"
+    ]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.BREAKING
 
 
 def test_object_to_scalar_schema_change_reports_only_schema_change():
@@ -487,3 +492,41 @@ def test_looks_like_object_predicate():
     assert _looks_like_object({"type": "string"}) is False
     assert _looks_like_object("nope") is False
     assert _looks_like_object({}) is False
+
+
+def test_info_title_change_is_changed():
+    base = _doc()
+    head = _doc()
+    head["info"]["title"] = "Renamed API"
+    findings = _findings(base, head)
+    hits = [f for f in findings if f.location == "openapi.info.title"]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
+
+
+def test_property_no_longer_required_is_changed():
+    base = _doc()
+    head = _doc()
+    schema = head["paths"]["/payments"]["post"]["requestBody"]["content"][
+        "application/json"
+    ]["schema"]
+    schema["required"] = []
+    findings = _findings(base, head)
+    hits = [f for f in findings if f.summary == "property no longer required"]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
+
+
+def test_removed_component_schema_is_changed():
+    base = _doc()
+    base.setdefault("components", {}).setdefault("schemas", {})["Money"] = {
+        "type": "object"
+    }
+    head = _doc()
+    findings = _findings(base, head)
+    hits = [
+        f for f in findings
+        if f.location == "components.schemas.Money" and f.summary == "schema removed"
+    ]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
