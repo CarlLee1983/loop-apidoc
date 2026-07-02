@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.validate.consistency import check_consistency
-from loop_apidoc.validate.models import IssueCode
+from loop_apidoc.validate.models import IssueCode, Severity
 
 _OPENAPI = {
     "openapi": "3.1.0",
@@ -70,9 +70,6 @@ def test_security_name_mismatch_flagged():
     issues = check_consistency(_OPENAPI, md)
     assert any(i.code is IssueCode.OUTPUT_MISMATCH and "securitySchemes" in i.location
                for i in issues)
-
-
-from loop_apidoc.validate.models import Severity
 
 
 def test_declared_path_param_absent_from_template_is_conflict():

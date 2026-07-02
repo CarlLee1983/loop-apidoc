@@ -291,15 +291,13 @@ cleanup and coverage work.
    are visible.
 5. **Resolved (2026-07-02 health check): Integration key-collision on name-less
    items.** Duplicate unnamed items are disambiguated instead of overwritten.
-6. **Open for correctness batch 2: CLI summary key access.** `cli.py` still uses
-   literal `report.summary['breaking']` style lookups; replacing these with
-   `.get(k, 0)` remains defensive cleanup.
-7. **Open for correctness batch 2: Coverage gaps.** Remaining logic coverage:
-   `info.title` CHANGED; property-no-longer-required CHANGED;
-   removed-component-schema CHANGED; callbacks core-field
-   (`verification`/`expected_response`) → BREAKING; validation-issue-removed →
-   SOURCE_ONLY; strengthen `test_response_schema_type_change_is_breaking`
-   location assertion from substring `in` to exact equality.
+6. **Resolved (2026-07-02 correctness batch 2): CLI summary key access.** `cli.py`
+   diff summary now uses `report.summary.get(k, 0)` defensive lookups.
+7. **Resolved (2026-07-02 correctness batch 2): Coverage gaps.** Added diff
+   classification tests (`info.title` CHANGED; property-no-longer-required CHANGED;
+   removed-component-schema CHANGED; callback core-field → BREAKING;
+   validation-issue-removed → SOURCE_ONLY) and strengthened
+   `test_response_schema_type_change_is_breaking` to exact-equality location.
 
 ### Acceptance Criteria
 
@@ -313,5 +311,14 @@ cleanup and coverage work.
 
 - **Resolved (2026-07-02 health check): examples encoding consistency.**
 - **Resolved (2026-07-02 health check): generator native oneOf/discriminator.**
-- **Open edge:** path parameters absent from the URL template can still be silently
-  dropped; keep this for a later correctness batch with focused fixtures.
+- **Resolved (2026-07-02 correctness batch 2): path parameters absent from the URL
+  template.** Template tokens without a declared parameter are synthesized (empty
+  schema); declared `in: path` params with no matching token surface as an
+  `error`-severity `SOURCE_CONFLICT`.
+- **Resolved (2026-07-02 correctness batch 2): diff comparator review minors.**
+  M1 (object-detection predicate deduped into `_looks_like_object`); M3
+  (`_compare_parameters` recurses into object-typed parameter schemas).
+- **Open edge:** preprocess flattens `rglob` output into one directory, so sources
+  with the same basename in different subdirectories (or a `foo.pdf` and a sibling
+  `foo.md`) collide on write and the category counts can overstate files on disk;
+  keep this for a later batch with focused fixtures.
