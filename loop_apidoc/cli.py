@@ -17,6 +17,10 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+from loop_apidoc.foundry.cli import foundry_app  # noqa: E402  (must follow `app` definition)
+
+app.add_typer(foundry_app, name="foundry")
+
 
 @app.callback()
 def _root() -> None:
@@ -131,10 +135,10 @@ def diff(
     write_reports(report, output_dir)
     typer.echo(
         "diff COMPLETE: "
-        f"breaking {report.summary['breaking']}，"
-        f"additive {report.summary['additive']}，"
-        f"changed {report.summary['changed']}，"
-        f"source_only {report.summary['source_only']}；"
+        f"breaking {report.summary.get('breaking', 0)}，"
+        f"additive {report.summary.get('additive', 0)}，"
+        f"changed {report.summary.get('changed', 0)}，"
+        f"source_only {report.summary.get('source_only', 0)}；"
         f"報告寫入 {output_dir / 'report.json'}"
     )
 

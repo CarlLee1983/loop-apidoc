@@ -6,7 +6,7 @@
 <title>loop-apidoc 技術導覽 — 給新進工程同仁</title>
 <style>
   :root {
-    --bg: #fdfaf4;
+    --bg: #faf7ef;
     --bg-soft: #fff;
     --ink: #2c3043;
     --ink-soft: #5d6478;
@@ -26,16 +26,17 @@
     --red: #ef5350;
     --grey: #b6bccb;
     --line: #ece5d8;
+    --nav-h: 62px;
     --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
     --shadow-sm: 0 4px 14px -6px rgba(44, 48, 67, 0.18);
-    --radius: 22px;
-    --radius-sm: 14px;
+    --radius: 8px;
+    --radius-sm: 8px;
     --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
     font-size: 17px;
   }
 
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); }
 
   body {
     margin: 0;
@@ -47,9 +48,18 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; }
+  .skip-link {
+    position: fixed; left: 16px; top: 10px; z-index: 20;
+    transform: translateY(-160%);
+    background: var(--ink); color: #fff; border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 0.9rem; text-decoration: none;
+  }
+  .skip-link:focus { transform: translateY(0); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   section { padding: 70px 0; }
   h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+  section[id] { scroll-margin-top: calc(var(--nav-h) + 18px); }
 
   code, .mono { font-family: var(--mono); }
   code.inline {
@@ -87,6 +97,39 @@
 
   .alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 
+  /* ---------- PAGE NAV ---------- */
+  .page-nav {
+    position: sticky; top: 0; z-index: 10;
+    height: var(--nav-h);
+    background: rgba(250, 247, 239, 0.92);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(14px);
+  }
+  .page-nav .wrap {
+    height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px; min-width: max-content;
+    font-weight: 800; text-decoration: none; color: var(--ink);
+  }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: grid; place-items: center;
+    background: var(--ink); color: #fff; font-family: var(--mono); font-size: 0.72rem;
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 4px; overflow-x: auto;
+    scrollbar-width: none; white-space: nowrap;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a {
+    border-radius: 8px; color: var(--ink-soft); font-size: 0.86rem;
+    font-weight: 700; padding: 7px 10px; text-decoration: none;
+  }
+  .nav-links a:hover, .nav-links a:focus-visible {
+    background: var(--teal-soft); color: var(--teal-deep); outline: none;
+  }
+
   /* ---------- HERO ---------- */
   .hero {
     position: relative;
@@ -94,7 +137,7 @@
     background:
       radial-gradient(1200px 500px at 82% -12%, var(--teal-soft) 0%, transparent 55%),
       radial-gradient(900px 480px at -5% 110%, var(--purple-soft) 0%, transparent 52%);
-    padding: 86px 0 60px;
+    padding: 74px 0 54px;
   }
   .hero .eyebrow { background: var(--purple-soft); color: var(--purple-deep); }
   .hero h1 {
@@ -106,8 +149,23 @@
   .hero p.sub {
     font-size: 1.14rem;
     color: var(--ink-soft);
-    max-width: 680px;
+    max-width: 760px;
     margin: 0 0 14px;
+  }
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; align-items: start;
+  }
+  .hero-summary {
+    background: rgba(255,255,255,0.78); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .hero-summary h2 { margin: 0 0 12px; font-size: 0.98rem; }
+  .hero-summary ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 11px; }
+  .hero-summary li { display: flex; gap: 9px; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.5; }
+  .hero-summary li::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 0.55em;
+    background: var(--teal);
   }
   .hero .ladder {
     display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
@@ -142,7 +200,7 @@
   .invariant {
     background: linear-gradient(135deg, var(--coral-deep), var(--coral));
     color: #fff;
-    border-radius: 28px;
+    border-radius: var(--radius);
     padding: 50px 46px;
     box-shadow: 0 24px 50px -22px rgba(217, 72, 59, 0.55);
     position: relative; overflow: hidden;
@@ -162,7 +220,7 @@
   .invariant .pill svg { width: 18px; height: 18px; flex: none; }
 
   /* ---------- two-column architecture ---------- */
-  .arch { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch; }
+  .arch { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 0; align-items: stretch; }
   .arch-col {
     border-radius: var(--radius); padding: 26px 24px;
     border: 1px solid var(--line); box-shadow: var(--shadow-sm); background: var(--bg-soft);
@@ -198,7 +256,7 @@
   /* ---------- flow strip ---------- */
   .flow { display: flex; flex-direction: column; gap: 14px; }
   .flow-row {
-    display: grid; grid-template-columns: 150px 1fr 1fr; gap: 18px; align-items: center;
+    display: grid; grid-template-columns: 160px minmax(0, 1.1fr) minmax(220px, 1fr); gap: 18px; align-items: center;
     background: var(--bg-soft); border: 1px solid var(--line);
     border-radius: var(--radius-sm); padding: 16px 22px; box-shadow: var(--shadow-sm);
   }
@@ -215,7 +273,7 @@
   /* ---------- command list ---------- */
   .cmds { display: flex; flex-direction: column; gap: 12px; }
   .cmd {
-    display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: start;
+    display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: start;
     background: var(--bg-soft); border: 1px solid var(--line);
     border-radius: var(--radius-sm); padding: 18px 22px; box-shadow: var(--shadow-sm);
   }
@@ -242,12 +300,18 @@
   .value {
     background: var(--bg-soft); border: 1px solid var(--line);
     border-radius: var(--radius); padding: 26px 24px; box-shadow: var(--shadow-sm);
+    min-width: 0;
   }
   .alt .value { background: var(--bg); }
-  .value .badge { width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; margin-bottom: 16px; }
+  .value .badge { width: 52px; height: 52px; border-radius: var(--radius); display: grid; place-items: center; margin-bottom: 16px; }
   .value h3 { margin: 0 0 6px; font-size: 1.06rem; }
-  .value .file { font-family: var(--mono); font-size: 0.76rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px; }
-  .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.95rem; }
+  .value .file {
+    display: inline-block;
+    max-width: 100%;
+    font-family: var(--mono); font-size: 0.76rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
+    overflow-wrap: anywhere;
+  }
+  .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.95rem; overflow-wrap: anywhere; }
 
   /* ---------- provenance art ---------- */
   .prov-art { width: 100%; max-width: 720px; margin: 10px auto 0; display: block; }
@@ -284,6 +348,8 @@
 
   /* ---------- package table ---------- */
   .pkg-table { width: 100%; border-collapse: collapse; background: var(--bg-soft); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .table-scroll { overflow-x: auto; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
+  .table-scroll .pkg-table { min-width: 680px; box-shadow: none; }
   .alt .pkg-table { background: var(--bg); }
   .pkg-table th, .pkg-table td { text-align: left; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 0.94rem; vertical-align: top; }
   .pkg-table th { background: var(--teal-soft); color: var(--teal-deep); font-size: 0.82rem; letter-spacing: 0.06em; }
@@ -310,8 +376,20 @@
 
   footer { text-align: center; padding: 38px 24px 54px; color: var(--ink-soft); font-size: 0.86rem; border-top: 1px solid var(--line); }
 
+  @media (max-width: 900px) {
+    :root { --nav-h: 104px; }
+    .page-nav { height: auto; min-height: var(--nav-h); }
+    .page-nav .wrap { align-items: flex-start; flex-direction: column; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+    .nav-links { width: 100%; padding-bottom: 2px; }
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-summary { max-width: 640px; }
+  }
+
   @media (max-width: 720px) {
+    :root { font-size: 16px; }
     section { padding: 52px 0; }
+    .wrap { padding: 0 18px; }
+    .hero { padding: 48px 0 44px; }
     .arch { grid-template-columns: 1fr; }
     .arch-seam { padding: 16px 0; }
     .arch-seam .seam-box { max-width: none; width: 100%; }
@@ -319,24 +397,63 @@
     .flow-row { grid-template-columns: 1fr; gap: 8px; }
     .cmd { grid-template-columns: 1fr; gap: 8px; }
     .invariant { padding: 36px 26px; }
+    .vocab dl { grid-template-columns: 1fr; gap: 2px; }
+    .vocab dd { margin-bottom: 10px; }
+    .hero .ladder { align-items: stretch; }
+    .hero .ladder .sep { display: none; }
+    .hero .ladder .here, .hero .ladder .other { flex: 1 1 100%; }
+    .prov-art { overflow: visible; }
   }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+
+<nav class="page-nav" aria-label="頁面章節">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="回到頁首">
+      <span class="brand-mark">API</span>
+      <span>loop-apidoc 導覽</span>
+    </a>
+    <div class="nav-links">
+      <a href="#loops">Loops</a>
+      <a href="#architecture">架構</a>
+      <a href="#flow">流程</a>
+      <a href="#commands">CLI</a>
+      <a href="#artifacts">產物</a>
+      <a href="#validation">驗證</a>
+      <a href="#packages">分包</a>
+      <a href="#next">速查</a>
+    </div>
+  </div>
+</nav>
 
 <!-- ===================== HERO ===================== -->
-<header class="hero">
+<header class="hero" id="top">
   <div class="wrap">
-    <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
-    <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
-    <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計 —— 讀完你就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
+        <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
+        <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計 —— 讀完你就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
 
-    <div class="ladder">
-      <span class="other">introduction.html<br>非技術 · 賣點</span>
-      <span class="sep">→</span>
-      <span class="here">你在這裡<br>新人 · 技術全貌</span>
-      <span class="sep">→</span>
-      <span class="other">ARCHITECTURE.md<br>維護者 · seam 細節</span>
+        <div class="ladder">
+          <span class="other">introduction.html<br>非技術 · 賣點</span>
+          <span class="sep">→</span>
+          <span class="here">你在這裡<br>新人 · 技術全貌</span>
+          <span class="sep">→</span>
+          <span class="other">ARCHITECTURE.md<br>維護者 · seam 細節</span>
+        </div>
+      </div>
+
+      <aside class="hero-summary" aria-label="閱讀重點">
+        <h2>讀完要掌握</h2>
+        <ul>
+          <li>來源文件是唯一真實來源,缺漏就標記缺漏。</li>
+          <li>agent 只負責擷取,CLI 後段負責可重現組裝。</li>
+          <li>每次 run 都留下驗證、評分、差異與交接證據。</li>
+        </ul>
+      </aside>
     </div>
 
     <div class="vocab">
@@ -351,8 +468,10 @@
   </div>
 </header>
 
+<main id="main">
+
 <!-- ===================== CORE INVARIANT ===================== -->
-<section>
+<section id="invariant">
   <div class="wrap">
     <div class="invariant">
       <span class="tag">不可協商的核心不變式</span>
@@ -367,8 +486,52 @@
   </div>
 </section>
 
+<!-- ===================== LOOP ENGINEERING LAYERS ===================== -->
+<section class="alt" id="loops">
+  <div class="wrap">
+    <span class="eyebrow">Loop Engineering</span>
+    <h2 class="section-title">這不是一次性轉檔,而是四個閉環</h2>
+    <p class="section-lead">loop-apidoc 的工程重點不是「產一份文件」,而是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手。</p>
+
+    <div class="value-grid">
+      <div class="value">
+        <div class="badge tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <h3>Source-grounded loop</h3>
+        <span class="file">sources → extraction → provenance</span>
+        <p>所有輸出必須回到來源引用;來源沒寫的資訊留缺漏,不靠慣例補齊。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+        </div>
+        <h3>Quality loop</h3>
+        <span class="file">preparation · validate · score</span>
+        <p>preparation 在生成前標出風險,驗證阻擋錯誤,score 把完成品轉成可比較的品質訊號。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10"/><path d="M4 17h10"/><path d="M14 7l3-3 3 3"/><path d="M17 4v16"/><path d="M14 17l3 3 3-3"/></svg>
+        </div>
+        <h3>Version loop</h3>
+        <span class="file">run-dir → diff/report</span>
+        <p>兩次 run 能依 breaking/additive/changed/source_only 分類,讓版本更新有 downstream impact 判讀。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10"/><path d="M7 12h6"/><path d="M5 20h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/><path d="M9 16h6"/></svg>
+        </div>
+        <h3>Handoff loop</h3>
+        <span class="file">integration-contract · examples · handoff/</span>
+        <p>OpenAPI 是契約,衍生的 Postman、SDK hints、任務清單與 examples 幫下一位工程師接手。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== ARCHITECTURE: agent-native ===================== -->
-<section class="alt">
+<section id="architecture">
   <div class="wrap">
     <span class="eyebrow">關鍵架構</span>
     <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
@@ -398,7 +561,7 @@
         <h3>assemble(deterministic CLI)</h3>
         <ol>
           <li><b>不擷取</b>,只組裝 agent 寫出的 JSON。</li>
-          <li>依序跑 <code class="inline">manifest → plan → generate → validate</code>。</li>
+          <li>依序跑 <code class="inline">manifest → plan → preparation → generate → validate</code>。</li>
           <li>以 <code class="inline">--json</code> 回報 <code class="inline">ok</code> / <code class="inline">run_dir</code> / <code class="inline">report</code>,讓 agent 自行驅動修正。</li>
         </ol>
       </div>
@@ -411,11 +574,11 @@
 </section>
 
 <!-- ===================== END-TO-END FLOW ===================== -->
-<section>
+<section id="flow">
   <div class="wrap">
     <span class="eyebrow">端到端資料流</span>
     <h2 class="section-title">一次完整執行,經過哪些階段</h2>
-    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段。</p>
+    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段;preparation、score、diff 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
 
     <div class="flow">
       <div class="flow-row">
@@ -439,17 +602,27 @@
         <span class="out">plan/normalization-plan.json</span>
       </div>
       <div class="flow-row">
-        <span class="stage"><span class="n tint-teal">4</span>generate</span>
-        <span class="desc">生成 OpenAPI、中文指南、人工核對頁與來源追溯。</span>
-        <span class="out">openapi.yaml · api-guide.zh-TW.md · review.html · provenance.json</span>
+        <span class="stage"><span class="n tint-teal">4</span>preparation</span>
+        <span class="desc">生成前評估 manifest、inventory、endpoint JSON 與 plan 的就緒度。</span>
+        <span class="out">preparation-report.{json,md}</span>
       </div>
       <div class="flow-row">
-        <span class="stage"><span class="n tint-teal">5</span>validate</span>
+        <span class="stage"><span class="n tint-teal">5</span>generate</span>
+        <span class="desc">生成 OpenAPI、中文指南、人工核對頁、來源追溯與交接輔助產物。</span>
+        <span class="out">openapi.yaml · api-guide.zh-TW.md · review.html · provenance.json · handoff/</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-teal">6</span>validate</span>
         <span class="desc">結構 / 完整性 / 一致性 / 禁止推測四類檢查並出報告。</span>
         <span class="out">validation/report.{json,md}</span>
       </div>
       <div class="flow-row">
-        <span class="stage"><span class="n tint-purple">6</span>diff</span>
+        <span class="stage"><span class="n tint-purple">7</span>score</span>
+        <span class="desc">對完成的 run-dir 做品質評分,不改變 validate 的 pass/fail 語意。</span>
+        <span class="out"><span class="opt">可選 →</span> score/score.{json,md}</span>
+      </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-purple">8</span>diff</span>
         <span class="desc">比較兩個已完成 run-dir,依 downstream impact 分類差異。</span>
         <span class="out"><span class="opt">可選 →</span> diff/report.{json,md}</span>
       </div>
@@ -457,11 +630,11 @@
   </div>
 </section>
 
-<!-- ===================== FIVE CLI COMMANDS ===================== -->
-<section class="alt">
+<!-- ===================== SIX CLI COMMANDS ===================== -->
+<section class="alt" id="commands">
   <div class="wrap">
     <span class="eyebrow">CLI 介面</span>
-    <h2 class="section-title">五個指令,各司其職</h2>
+    <h2 class="section-title">六個指令,各司其職</h2>
     <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>)。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟。</p>
 
     <div class="cmds">
@@ -476,13 +649,20 @@
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
-          <p>組裝 agent 寫出的 JSON → plan → generate → validate,以 <code class="inline">--json</code> 回報。</p>
+          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報。</p>
           <p class="codes">退出碼:<b>0</b> 驗證 PASS · <b>1</b> 驗證 FAIL · <b>2</b> 擷取輸入檔錯誤(不留孤兒目錄)。</p>
         </div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">validate</span></span>
         <div><p>對既有 run-dir 重跑驗證並出報告(不重新生成)。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">score</span></span>
+        <div>
+          <p>讀取既有 run-dir 的 OpenAPI、provenance、manifest 與 validation report,產出品質評分。</p>
+          <p class="codes">退出碼:<b>0</b> pass · <b>1</b> needs_attention / fail · <b>2</b> run-dir 輸入錯誤。</p>
+        </div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">diff</span></span>
@@ -496,7 +676,7 @@
 </section>
 
 <!-- ===================== EXTRACTION STAGES ===================== -->
-<section>
+<section id="extraction">
   <div class="wrap">
     <span class="eyebrow">擷取分段</span>
     <h2 class="section-title">擷取拆成十段</h2>
@@ -518,11 +698,11 @@
 </section>
 
 <!-- ===================== ARTIFACTS ===================== -->
-<section class="alt">
+<section class="alt" id="artifacts">
   <div class="wrap">
     <span class="eyebrow">產物</span>
-    <h2 class="section-title">一次執行交付四份產物</h2>
-    <p class="section-lead">全部落在該次的 run-dir 裡,各自對應明確用途。</p>
+    <h2 class="section-title">一次 run 交付契約、證據與交接資產</h2>
+    <p class="section-lead">核心產物提供 API 契約與來源依據;衍生產物提供品質判讀、版本比較與 downstream 工程交接。</p>
     <div class="value-grid">
       <div class="value">
         <div class="badge tint-teal">
@@ -557,6 +737,22 @@
         <p>列出哪裡完整、哪裡缺漏 / 衝突,品質有憑據可查。</p>
       </div>
       <div class="value">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M7 16V8"/><path d="M12 16V5"/><path d="M17 16v-6"/></svg>
+        </div>
+        <h3>品質評分</h3>
+        <span class="file">score/score.{json,md}</span>
+        <p>把 openapi_validity、completeness、consistency、source_grounding、reviewability 轉成可比較分數。</p>
+      </div>
+      <div class="value">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18H6z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>
+        </div>
+        <h3>交接包</h3>
+        <span class="file">handoff/ · examples/</span>
+        <p>任務清單、Postman collection、SDK hints 與請求範例,協助串接工程師接手。</p>
+      </div>
+      <div class="value">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
@@ -569,7 +765,7 @@
 </section>
 
 <!-- ===================== PROVENANCE <-> VALIDATION ===================== -->
-<section>
+<section id="validation">
   <div class="wrap">
     <span class="eyebrow">可追溯 ↔ 驗證對齊</span>
     <h2 class="section-title">禁止推測,靠 target 逐一對齊來把關</h2>
@@ -607,7 +803,7 @@
 </section>
 
 <!-- ===================== CORRECTION LOOP ===================== -->
-<section class="alt">
+<section class="alt" id="correction">
   <div class="wrap">
     <span class="eyebrow">修正迴圈</span>
     <h2 class="section-title">驗證問題會被分類,而不是盲目重試</h2>
@@ -643,7 +839,7 @@
 </section>
 
 <!-- ===================== VERSION DIFF ===================== -->
-<section>
+<section id="diff">
   <div class="wrap">
     <span class="eyebrow">版本差異</span>
     <h2 class="section-title">換版本時,依 downstream impact 分四類</h2>
@@ -658,30 +854,34 @@
 </section>
 
 <!-- ===================== PACKAGE BOUNDARIES ===================== -->
-<section class="alt">
+<section class="alt" id="packages">
   <div class="wrap">
     <span class="eyebrow">套件邊界</span>
     <h2 class="section-title">程式碼怎麼分包</h2>
-    <p class="section-lead">原則:除了少數 I/O 出口,其餘模組皆為純函式,便於單元測試。修改時請守住這個邊界。</p>
-    <table class="pkg-table">
-      <thead><tr><th>套件</th><th>職責</th></tr></thead>
-      <tbody>
-        <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
-        <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
-        <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
-        <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
-        <tr class="io"><td><code>generate/</code></td><td>生成 OpenAPI / Markdown / provenance(寫檔)</td></tr>
-        <tr><td><code>validate/</code></td><td>結構 / 完整性 / 一致性 / 禁止推測檢查 + 報告</td></tr>
-        <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
-        <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
-      </tbody>
-    </table>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:只有 <code class="inline">generate/</code>、<code class="inline">run/</code> 與 <code class="inline">diff/report.py</code> 會寫檔,其餘維持純函式。</p>
+    <p class="section-lead">原則:除了少數 I/O 出口,其餘模組皆為純函式,便於單元測試。修改時請守住這個邊界,讓每個 loop 都能獨立驗證。</p>
+    <div class="table-scroll" tabindex="0" aria-label="套件邊界表格">
+      <table class="pkg-table">
+        <thead><tr><th>套件</th><th>職責</th></tr></thead>
+        <tbody>
+          <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+          <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
+          <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
+          <tr class="io"><td><code>preparation/</code></td><td>產生前就緒度評估 + preparation-report(report.py 寫檔)</td></tr>
+          <tr class="io"><td><code>generate/</code></td><td>生成 OpenAPI / Markdown / review.html / provenance / examples / handoff(寫檔)</td></tr>
+          <tr><td><code>validate/</code></td><td>結構 / 完整性 / 一致性 / 禁止推測檢查 + 報告</td></tr>
+          <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
+          <tr class="io"><td><code>score/</code></td><td>讀取完成 run-dir,以五類權重產生 score/score.{json,md}(report.py 寫檔)</td></tr>
+          <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code> 與 <code class="inline">diff/report.py</code> 會寫檔,其餘維持純函式。</p>
   </div>
 </section>
 
 <!-- ===================== GLOSSARY + NEXT READS ===================== -->
-<section>
+<section id="next">
   <div class="wrap">
     <span class="eyebrow">收尾</span>
     <h2 class="section-title">名詞速查 · 接下來讀什麼</h2>
@@ -693,6 +893,9 @@
           <dt>manifest</dt><dd>來源盤點檔,記錄掃到哪些來源與 URL。</dd>
           <dt>normalization-plan</dt><dd>把擷取結果規格化後的計畫,generate 與 validate 的共同輸入。</dd>
           <dt>provenance</dt><dd>來源追溯;target 與 OpenAPI 位置逐一對齊。</dd>
+          <dt>preparation</dt><dd>生成前就緒度評估,在品質 loop 裡先標出阻塞與注意事項。</dd>
+          <dt>score</dt><dd>完成 run-dir 的品質分數,用於 CI 或 review profile 的後段判讀。</dd>
+          <dt>handoff</dt><dd>從 OpenAPI 與 integration-contract 衍生的工程交接包,不是新的契約來源。</dd>
           <dt>fail-closed</dt><dd>遇到無法確認 / 衝突時,選擇「不輸出」而非「猜一個」。</dd>
           <dt>run-dir</dt><dd>單次執行的輸出目錄,裝著該次全部產物。</dd>
         </dl>
@@ -709,6 +912,7 @@
     </div>
   </div>
 </section>
+</main>
 
 <footer>
   loop-apidoc 技術導覽 · 給新進工程同仁 · 來源依據式 API 文件 pipeline

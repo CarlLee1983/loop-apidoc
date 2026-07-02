@@ -992,3 +992,44 @@ def test_one_of_leaf_is_terminal_not_expanded_as_nested_object():
         "properties"]["paymentMethod"]
     assert "oneOf" in pm
     assert "properties" not in pm
+
+
+def test_path_token_without_declaration_is_synthesized():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/users/{id}",
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/users/{id}"]["get"]
+    path_params = [p for p in op["parameters"] if p["in"] == "path"]
+    assert path_params == [
+        {"name": "id", "in": "path", "required": True, "schema": {}}
+    ]
+
+
+def test_declared_path_param_is_not_duplicated_by_synthesis():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/users/{id}",
+            parameters=[{"name": "id", "in": "path", "type": "string"}],
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/users/{id}"]["get"]
+    path_params = [p for p in op["parameters"] if p["in"] == "path"]
+    assert len(path_params) == 1
+    assert path_params[0]["name"] == "id"
+    assert path_params[0]["schema"] == {"type": "string"}
+
+
+def test_multiple_path_tokens_synthesized_in_template_order():
+    plan = _plan(endpoints=[
+        EndpointEntry(
+            status=PlanItemStatus.SUPPORTED, method="GET", path="/a/{x}/b/{y}",
+            responses=[{"status": "200", "description": "ok"}],
+        )
+    ])
+    op = build_openapi(plan)["paths"]["/a/{x}/b/{y}"]["get"]
+    names = [p["name"] for p in op["parameters"] if p["in"] == "path"]
+    assert names == ["x", "y"]

@@ -79,26 +79,21 @@ def _op_area(op_key: str) -> str:
     return "openapi.webhooks" if " webhooks:" in op_key else "openapi.paths"
 
 
+def _looks_like_object(schema: Any) -> bool:
+    return isinstance(schema, dict) and (
+        schema.get("type") == "object"
+        or ("type" not in schema and isinstance(schema.get("properties"), dict))
+    )
+
+
 def _schema_signature(schema: Any) -> Any:
     if not isinstance(schema, dict):
         return schema
     keys = ("type", "$ref", "enum", "oneOf", "anyOf", "allOf", "format")
     signature = {key: schema.get(key) for key in keys if key in schema}
-    if schema.get("type") == "object" or (
-        "type" not in schema and isinstance(schema.get("properties"), dict)
-    ):
+    if _looks_like_object(schema):
         signature["type"] = "object"
     return signature
-
-
-def _is_object_schema(schema: Any) -> bool:
-    return (
-        isinstance(schema, dict)
-        and (
-            schema.get("type") == "object"
-            or ("type" not in schema and isinstance(schema.get("properties"), dict))
-        )
-    )
 
 
 def _content_schemas(container: dict | None) -> dict[str, dict]:
@@ -155,7 +150,7 @@ def _compare_schema(
                 head_sig,
             )
         )
-        if _is_object_schema(base) != _is_object_schema(head):
+        if _looks_like_object(base) != _looks_like_object(head):
             return
 
     base_props = _properties(base)
@@ -282,19 +277,32 @@ def _compare_parameters(
             )
         )
     for key in sorted(base_params.keys() & head_params.keys()):
-        before = _schema_signature(base_params[key].get("schema"))
-        after = _schema_signature(head_params[key].get("schema"))
-        if before != after:
-            findings.append(
-                _finding(
-                    DiffImpact.BREAKING,
-                    "openapi.parameters",
-                    f"{op_key} parameters.{key}",
-                    "parameter schema changed",
-                    before,
-                    after,
-                )
+        base_schema = base_params[key].get("schema")
+        head_schema = head_params[key].get("schema")
+        if _looks_like_object(base_schema) and _looks_like_object(head_schema):
+            _compare_schema(
+                base_schema,
+                head_schema,
+                area="openapi.parameters",
+                location=f"{op_key} parameters.{key}",
+                findings=findings,
+                added_required_is_breaking=True,
+                removed_property_is_breaking=False,
             )
+        else:
+            before = _schema_signature(base_schema)
+            after = _schema_signature(head_schema)
+            if before != after:
+                findings.append(
+                    _finding(
+                        DiffImpact.BREAKING,
+                        "openapi.parameters",
+                        f"{op_key} parameters.{key}",
+                        "parameter schema changed",
+                        before,
+                        after,
+                    )
+                )
         if base_params[key].get("description") != head_params[key].get("description"):
             findings.append(
                 _finding(

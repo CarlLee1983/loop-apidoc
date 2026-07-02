@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.validate.consistency import check_consistency
-from loop_apidoc.validate.models import IssueCode
+from loop_apidoc.validate.models import IssueCode, Severity
 
 _OPENAPI = {
     "openapi": "3.1.0",
@@ -70,3 +70,51 @@ def test_security_name_mismatch_flagged():
     issues = check_consistency(_OPENAPI, md)
     assert any(i.code is IssueCode.OUTPUT_MISMATCH and "securitySchemes" in i.location
                for i in issues)
+
+
+def test_declared_path_param_absent_from_template_is_conflict():
+    openapi = {
+        "openapi": "3.1.0",
+        "info": {"title": "X", "version": "1.0"},
+        "paths": {
+            "/users": {
+                "get": {
+                    "parameters": [
+                        {"name": "id", "in": "path", "required": True, "schema": {}}
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    markdown = "## Endpoint\n### `GET` `/users`\n## 驗證／授權\n"
+    conflicts = [
+        i for i in check_consistency(openapi, markdown)
+        if i.code is IssueCode.SOURCE_CONFLICT
+    ]
+    assert len(conflicts) == 1
+    assert conflicts[0].severity is Severity.ERROR
+    assert "id" in conflicts[0].evidence
+    assert "/users" in conflicts[0].evidence
+
+
+def test_path_param_matching_template_is_not_a_conflict():
+    openapi = {
+        "openapi": "3.1.0",
+        "info": {"title": "X", "version": "1.0"},
+        "paths": {
+            "/users/{id}": {
+                "get": {
+                    "parameters": [
+                        {"name": "id", "in": "path", "required": True, "schema": {}}
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    markdown = "## Endpoint\n### `GET` `/users/{id}`\n## 驗證／授權\n"
+    assert not [
+        i for i in check_consistency(openapi, markdown)
+        if i.code is IssueCode.SOURCE_CONFLICT
+    ]

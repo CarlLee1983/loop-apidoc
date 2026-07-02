@@ -74,6 +74,37 @@ def _markdown_security(markdown: str) -> set[str]:
     return out
 
 
+def _path_parameter_conflicts(openapi: dict) -> list[Issue]:
+    issues: list[Issue] = []
+    for path, item in sorted((openapi.get("paths") or {}).items()):
+        if not isinstance(item, dict):
+            continue
+        tokens = set(re.findall(r"\{([^{}/]+)\}", path))
+        for method, operation in sorted(item.items()):
+            if method.lower() not in _HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            params = operation.get("parameters")
+            if not isinstance(params, list):
+                continue
+            orphans = sorted(
+                str(param.get("name"))
+                for param in params
+                if isinstance(param, dict)
+                and param.get("in") == "path"
+                and param.get("name")
+                and str(param.get("name")) not in tokens
+            )
+            for name in orphans:
+                issues.append(Issue(
+                    code=IssueCode.SOURCE_CONFLICT,
+                    severity=Severity.ERROR,
+                    location=f"paths.{path}.{method.lower()}.parameters.{name}",
+                    evidence=f"宣告的 path 參數 '{name}' 不在路徑模板 '{path}' 中",
+                    suggested_fix="修正來源:改用正確的參數位置,或在路徑模板補上對應的 {token}",
+                ))
+    return issues
+
+
 def check_consistency(openapi: dict, markdown: str) -> list[Issue]:
     issues: list[Issue] = []
     api_eps = _openapi_endpoints(openapi)
@@ -104,4 +135,6 @@ def check_consistency(openapi: dict, markdown: str) -> list[Issue]:
         issues.append(_mismatch(
             f"components.securitySchemes.{name}",
             f"security scheme {name} 在 Markdown 與 OpenAPI 不一致"))
+
+    issues.extend(_path_parameter_conflicts(openapi))
     return issues

@@ -511,6 +511,18 @@ def _build_operation(
     return op
 
 
+# Path template variables are the names inside single `{...}` segments; OpenAPI
+# requires every such token to have a matching `in: path` parameter. The token
+# name is source-stated (it is literally in the path string), so synthesizing a
+# minimal parameter for it is grounding, not inference.
+def _path_template_tokens(path: str) -> list[str]:
+    seen: list[str] = []
+    for token in re.findall(r"\{([^{}/]+)\}", path):
+        if token not in seen:
+            seen.append(token)
+    return seen
+
+
 def _build_paths(
     plan: NormalizationPlan,
     name_to_key: dict[str, str],
@@ -528,9 +540,20 @@ def _build_paths(
         )
     paths: dict = {}
     for (path, method), endpoints in grouped.items():
-        paths.setdefault(path, {})[method] = _build_operation(
-            endpoints, name_to_key, scheme_keys
-        )
+        op = _build_operation(endpoints, name_to_key, scheme_keys)
+        declared_path = {
+            param["name"]
+            for param in op.get("parameters", [])
+            if isinstance(param, dict) and param.get("in") == "path"
+        }
+        synthesized = [
+            {"name": token, "in": "path", "required": True, "schema": {}}
+            for token in _path_template_tokens(path)
+            if token not in declared_path
+        ]
+        if synthesized:
+            op["parameters"] = op.get("parameters", []) + synthesized
+        paths.setdefault(path, {})[method] = op
     return paths
 
 

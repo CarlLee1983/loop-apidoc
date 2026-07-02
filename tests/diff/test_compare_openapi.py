@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from loop_apidoc.diff.compare import build_diff_report
+from loop_apidoc.diff.compare import build_diff_report, _looks_like_object
 from loop_apidoc.diff.loader import RunArtifacts
 from loop_apidoc.diff.models import DiffImpact
 from loop_apidoc.generate.models import ProvenanceDocument
@@ -202,9 +202,14 @@ def test_response_schema_type_change_is_breaking():
     head_schema = head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"]
     head_schema["properties"]["id"] = {"type": "integer"}
 
-    finding = _by_summary(base, head, "schema changed")[0]
-    assert finding.impact is DiffImpact.BREAKING
-    assert "responses.200.application/json.id" in finding.location
+    findings = _findings(base, head)
+    hits = [
+        f for f in findings
+        if f.location == "POST /payments responses.200.application/json.id"
+        and f.summary == "schema changed"
+    ]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.BREAKING
 
 
 def test_object_to_scalar_schema_change_reports_only_schema_change():
@@ -449,3 +454,79 @@ def test_summary_counts_all_impacts():
     assert report.summary["additive"] == 1
     assert report.summary["changed"] == 1
     assert report.summary["source_only"] == 0
+
+
+def test_object_typed_parameter_property_removal_is_reported():
+    base = _doc()
+    head = _doc()
+    obj_param = {
+        "name": "filter",
+        "in": "query",
+        "schema": {
+            "type": "object",
+            "properties": {"a": {"type": "string"}, "b": {"type": "string"}},
+        },
+    }
+    base["paths"]["/payments"]["post"]["parameters"].append(obj_param)
+    head_param = {
+        "name": "filter",
+        "in": "query",
+        "schema": {"type": "object", "properties": {"a": {"type": "string"}}},
+    }
+    head["paths"]["/payments"]["post"]["parameters"].append(head_param)
+
+    findings = _findings(base, head)
+    removed = [
+        f for f in findings
+        if f.summary == "property removed"
+        and f.location == "POST /payments parameters.query.filter.b"
+    ]
+    assert len(removed) == 1
+    assert removed[0].impact is DiffImpact.CHANGED
+
+
+def test_looks_like_object_predicate():
+    assert _looks_like_object({"type": "object"}) is True
+    assert _looks_like_object({"properties": {"a": {"type": "string"}}}) is True
+    assert _looks_like_object({"type": "string", "properties": {"a": {}}}) is False
+    assert _looks_like_object({"type": "string"}) is False
+    assert _looks_like_object("nope") is False
+    assert _looks_like_object({}) is False
+
+
+def test_info_title_change_is_changed():
+    base = _doc()
+    head = _doc()
+    head["info"]["title"] = "Renamed API"
+    findings = _findings(base, head)
+    hits = [f for f in findings if f.location == "openapi.info.title"]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
+
+
+def test_property_no_longer_required_is_changed():
+    base = _doc()
+    head = _doc()
+    schema = head["paths"]["/payments"]["post"]["requestBody"]["content"][
+        "application/json"
+    ]["schema"]
+    schema["required"] = []
+    findings = _findings(base, head)
+    hits = [f for f in findings if f.summary == "property no longer required"]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
+
+
+def test_removed_component_schema_is_changed():
+    base = _doc()
+    base.setdefault("components", {}).setdefault("schemas", {})["Money"] = {
+        "type": "object"
+    }
+    head = _doc()
+    findings = _findings(base, head)
+    hits = [
+        f for f in findings
+        if f.location == "components.schemas.Money" and f.summary == "schema removed"
+    ]
+    assert len(hits) == 1
+    assert hits[0].impact is DiffImpact.CHANGED
