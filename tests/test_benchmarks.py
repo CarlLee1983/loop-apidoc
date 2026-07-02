@@ -23,6 +23,12 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.foundry.approve import approve_candidate
+from loop_apidoc.foundry.importer import import_run
+from loop_apidoc.foundry.models import Docset
+from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
+from loop_apidoc.foundry.register import register_docset
+from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -53,24 +59,40 @@ def _issue_classes(report) -> dict[str, int]:
     return dict(counts)
 
 
-@pytest.mark.parametrize("case", _cases(), ids=[c.name for c in _cases()])
-def test_benchmark_case(case: Path, tmp_path: Path) -> None:
+@pytest.fixture(params=_cases(), ids=[c.name for c in _cases()])
+def case(request) -> Path:
+    return request.param
+
+
+# Assemble each case at most once per session; the produced run dir is treated
+# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
+# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
+# survives for the whole session.
+_ASSEMBLED: dict[str, object] = {}
+
+
+@pytest.fixture
+def assembled(case, tmp_path_factory):
     if not _has_sources(case):
         pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
+    if case.name not in _ASSEMBLED:
+        out = tmp_path_factory.mktemp(f"bench-{case.name}")
+        _ASSEMBLED[case.name] = run_assemble_pipeline(
+            sources_root=case / "sources",
+            extraction_dir=case / "extraction",
+            output_root=out,
+            run_id="bench",
+            generated_at=_FIXED_TS,
+        )
+    return _ASSEMBLED[case.name]
 
+
+def test_benchmark_case(case, assembled) -> None:
     expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
     minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
     must = minimum.get("must_have", {})
 
-    # A malformed committed extraction raises AssembleInputError → the test errors,
-    # which is the correct signal (the committed JSON must stay assemble-able).
-    result = run_assemble_pipeline(
-        sources_root=case / "sources",
-        extraction_dir=case / "extraction",
-        output_root=tmp_path,
-        run_id="bench",
-        generated_at=_FIXED_TS,
-    )
+    result = assembled
     report = result.report
 
     # --- 1. PASS/FAIL matches expectation ---
@@ -162,6 +184,50 @@ def test_benchmark_case(case: Path, tmp_path: Path) -> None:
             f"{case.name}: too few test_cases "
             f"({len(ic.get('test_cases', []))} < {integ.get('test_cases_min', 0)})"
         )
+
+
+def test_benchmark_score(case, assembled) -> None:
+    """score grades every run dir 0–100, deterministically, without ever changing
+    validation pass/fail (the CLAUDE.md invariant). No per-case score floor — a
+    validation-PASS case can legitimately score low on completeness warnings."""
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    inputs = load_score_inputs(Path(assembled.run_dir))
+
+    for profile in (ScoreProfile.CI, ScoreProfile.REVIEW):
+        report = evaluate_score(inputs, profile=profile)
+        assert 0 <= report.score <= 100, f"{case.name}: score {report.score} out of band"
+        assert report.profile is profile, f"{case.name}: profile not echoed"
+        again = evaluate_score(inputs, profile=profile)
+        assert again.score == report.score, f"{case.name}: score not deterministic"
+
+    # Core invariant: scoring does not change the validation verdict.
+    want_pass = expect.get("current_status") == "PASS"
+    assert assembled.report.ok is want_pass, f"{case.name}: score run perturbed validation ok"
+
+
+def test_benchmark_foundry(case, assembled, tmp_path) -> None:
+    """Full governance chain against a throwaway .foundry/: register → import →
+    approve → resolve current. import_run needs only a complete run dir (not a
+    PASS), so the EXPECTED_FAIL case imports fine and only approval needs the
+    allow_failing override."""
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    want_pass = expect.get("current_status") == "PASS"
+    root = tmp_path  # fresh .foundry/, zero pollution
+
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    imported = import_run(root, "bench", Path(assembled.run_dir))
+    asset = approve_candidate(
+        root, "bench", imported.run_id,
+        approved_by="bench", now=_FIXED_TS,
+        allow_failing=not want_pass,  # EXPECTED_FAIL cases (e.g. paypal) need this
+    )
+
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset.asset_id, f"{case.name}: current pointer != approved asset"
+    openapi = resolve_current_artifact(root, "bench", "openapi")
+    assert openapi.is_file(), f"{case.name}: current asset openapi artifact missing on disk"
 
 
 def test_benchmark_harness_discovers_cases() -> None:
