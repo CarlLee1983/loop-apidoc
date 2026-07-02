@@ -273,6 +273,48 @@ def test_explicit_to_implicit_object_schema_change_still_reports_nested_diff():
     )
 
 
+def test_explicit_and_implicit_object_schemas_with_identical_properties_do_not_change():
+    base = _doc()
+    head = _doc()
+    base["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "object",
+        "properties": {"id": {"type": "string"}},
+    }
+    head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "properties": {"id": {"type": "string"}}
+    }
+
+    location = "POST /payments responses.200.application/json"
+    findings = [
+        f
+        for f in _findings(base, head)
+        if f.location == location or f.location.startswith(f"{location}.")
+    ]
+
+    assert findings == []
+
+
+def test_implicit_and_explicit_object_schemas_with_identical_properties_do_not_change():
+    base = _doc()
+    head = _doc()
+    base["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "properties": {"id": {"type": "string"}}
+    }
+    head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "object",
+        "properties": {"id": {"type": "string"}},
+    }
+
+    location = "POST /payments responses.200.application/json"
+    findings = [
+        f
+        for f in _findings(base, head)
+        if f.location == location or f.location.startswith(f"{location}.")
+    ]
+
+    assert findings == []
+
+
 def test_info_and_server_changes_are_changed():
     base = _doc()
     head = _doc()

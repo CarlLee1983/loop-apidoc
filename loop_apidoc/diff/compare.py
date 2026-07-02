@@ -82,7 +82,12 @@ def _schema_signature(schema: Any) -> Any:
     if not isinstance(schema, dict):
         return schema
     keys = ("type", "$ref", "enum", "oneOf", "anyOf", "allOf", "format")
-    return {key: schema.get(key) for key in keys if key in schema}
+    signature = {key: schema.get(key) for key in keys if key in schema}
+    if schema.get("type") == "object" or (
+        "type" not in schema and isinstance(schema.get("properties"), dict)
+    ):
+        signature["type"] = "object"
+    return signature
 
 
 def _is_object_schema(schema: Any) -> bool:
