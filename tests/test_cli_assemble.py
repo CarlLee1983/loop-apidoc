@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from loop_apidoc.cli import app
@@ -118,14 +119,14 @@ def test_assemble_without_score_does_not_write_score_reports(tmp_path):
     assert not (Path(payload["run_dir"]) / "score").exists()
 
 
-def test_assemble_score_failure_does_not_change_exit_code(tmp_path, monkeypatch):
-    """Any non-ScoreInputError from scoring must not alter assemble's validation exit code."""
+def test_assemble_score_input_error_does_not_change_exit_code(tmp_path, monkeypatch):
     import loop_apidoc.score as _score_mod
+    from loop_apidoc.score import ScoreInputError
 
-    def _boom(*_args, **_kwargs):
-        raise RuntimeError("boom")
+    def _missing_score_artifact(*_args, **_kwargs):
+        raise ScoreInputError("missing score artifact")
 
-    monkeypatch.setattr(_score_mod, "evaluate_score", _boom)
+    monkeypatch.setattr(_score_mod, "load_score_inputs", _missing_score_artifact)
 
     sources, extraction, out = _setup(tmp_path)
     res = runner.invoke(app, [
@@ -140,9 +141,29 @@ def test_assemble_score_failure_does_not_change_exit_code(tmp_path, monkeypatch)
     assert res.exit_code in (0, 1)
     payload = json.loads(res.stdout)
     assert res.exit_code == (0 if payload["ok"] else 1)
-    assert "score_error" in payload
-    assert "score failed" in payload["score_error"]
+    assert payload["score_error"] == "missing score artifact"
     assert "score" not in payload
+    assert "score input error: missing score artifact" in res.stderr
+
+
+def test_assemble_score_unexpected_exception_propagates(tmp_path, monkeypatch):
+    import loop_apidoc.score as _score_mod
+
+    def _boom(*_args, **_kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(_score_mod, "evaluate_score", _boom)
+
+    sources, extraction, out = _setup(tmp_path)
+    with pytest.raises(RuntimeError, match="boom"):
+        runner.invoke(app, [
+            "assemble",
+            "--sources", str(sources),
+            "--extraction", str(extraction),
+            "--output", str(out),
+            "--score",
+            "--json",
+        ], catch_exceptions=False)
 
 
 def test_assemble_score_emits_loop_block(tmp_path):

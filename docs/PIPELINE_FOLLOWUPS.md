@@ -254,7 +254,7 @@ general-purpose helper and could mislead if reused elsewhere (e.g. against xdist
 - The four existing cases still return `[True, True, True, False]`.
 - `--strict-local` skip detection behavior is unchanged on real benchmark output.
 
-## 8. Run Version Diff — Deferred Minor Findings — open (2026-06-29)
+## 8. Run Version Diff — Deferred Minor Findings — partially resolved (2026-07-02)
 
 > Deferred from the `loop-apidoc diff` subagent-driven build (branch
 > `feat/run-version-diff`, commits `519a321`..`786086c`). The final whole-branch
@@ -271,39 +271,35 @@ general-purpose helper and could mislead if reused elsewhere (e.g. against xdist
 
 ### Risk
 
-Each item is low-probability or confidence-bucket-only; none misclassifies API
-impact. Left unaddressed they are mild diagnostic/noise/coverage gaps, not
-correctness defects.
+Items 1, 4, and 5 were already resolved before the 2026-07-02 correctness batch.
+This batch resolves items 2 and 3. Items 6 and 7 remain open as second-batch
+cleanup and coverage work.
 
 ### Recommended Work
 
-1. **Loader schema-mismatch error omits the file** (`loader.py`, shared
-   `try/except ValidationError` over provenance/validation/manifest). Split into
-   three labelled `model_validate_json` calls so the message names the bad file —
-   matching the missing-file path which already names it. *(Reviewer's top pick if
-   collecting debt.)*
-2. **`compare.py` object→scalar schema change double-reports** — emits a
-   `schema changed` (BREAKING) finding AND a `property removed` finding per former
-   sub-property. Headline impact stays correct; consider a guard suppressing the
-   property-level walk when the top-level signature flips object→non-object, plus a
-   regression test. Plan-mandated as written; treat as granular-vs-noisy judgement.
-3. **`_provenance_map` compares entry lists by ordered position** → false-positive
-   `SOURCE_ONLY` if entries are reordered but semantically identical. Sort entries
-   by `(target, manifest_source, query_id)` before grouping.
-4. **`_issue_key` excludes `suggested_fix`** — two issues differing only in
-   `suggested_fix` collapse to one, dropping a `SOURCE_ONLY` finding. Add the field
-   to the key.
-5. **Integration key-collision on name-less items** — `_integration_items`
-   silently overwrites when multiple items in a section lack `name` and share other
-   keys. Disambiguate the fallback key (e.g. append index).
-6. **CLI summary key access** (`cli.py`) uses literal `report.summary['breaking']`
-   etc.; unreachable `KeyError` today (`_summary` always inits all four keys) but
-   `.get(k, 0)` would be defensive.
-7. **Coverage gaps** (logic implemented, untested): `info.title` CHANGED;
-   property-no-longer-required CHANGED; removed-component-schema CHANGED; callbacks
-   core-field (`verification`/`expected_response`) → BREAKING; validation-issue-removed
-   → SOURCE_ONLY. Also strengthen `test_response_schema_type_change_is_breaking`'s
-   location assertion from substring `in` to `==`.
+1. **Resolved (2026-07-02 health check): Loader schema-mismatch error omits the file.**
+   Bad provenance/validation/manifest parse paths now identify the offending
+   artifact.
+2. **Resolved (2026-07-02 correctness batch 1): `compare.py` object→scalar schema
+   change double-reports.** Object/non-object flips now stop after the parent
+   `schema changed` finding.
+3. **Resolved (2026-07-02 correctness batch 1): `_provenance_map` compares entry
+   lists by ordered position.** Entries are sorted inside each target group by
+   `(manifest_source, query_id)` before comparison.
+4. **Resolved (2026-07-02 health check): `_issue_key` excludes `suggested_fix`.**
+   The issue key now includes remediation text so source-only validation changes
+   are visible.
+5. **Resolved (2026-07-02 health check): Integration key-collision on name-less
+   items.** Duplicate unnamed items are disambiguated instead of overwritten.
+6. **Open for correctness batch 2: CLI summary key access.** `cli.py` still uses
+   literal `report.summary['breaking']` style lookups; replacing these with
+   `.get(k, 0)` remains defensive cleanup.
+7. **Open for correctness batch 2: Coverage gaps.** Remaining logic coverage:
+   `info.title` CHANGED; property-no-longer-required CHANGED;
+   removed-component-schema CHANGED; callbacks core-field
+   (`verification`/`expected_response`) → BREAKING; validation-issue-removed →
+   SOURCE_ONLY; strengthen `test_response_schema_type_change_is_breaking`
+   location assertion from substring `in` to exact equality.
 
 ### Acceptance Criteria
 
@@ -313,3 +309,9 @@ correctness defects.
 - New coverage tests assert `DiffImpact` enum identity, consistent with the
   existing diff test style.
 
+### Later Correctness Ledger
+
+- **Resolved (2026-07-02 health check): examples encoding consistency.**
+- **Resolved (2026-07-02 health check): generator native oneOf/discriminator.**
+- **Open edge:** path parameters absent from the URL template can still be silently
+  dropped; keep this for a later correctness batch with focused fixtures.

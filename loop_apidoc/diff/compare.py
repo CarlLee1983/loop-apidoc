@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from typing import Any
 
@@ -82,7 +83,22 @@ def _schema_signature(schema: Any) -> Any:
     if not isinstance(schema, dict):
         return schema
     keys = ("type", "$ref", "enum", "oneOf", "anyOf", "allOf", "format")
-    return {key: schema.get(key) for key in keys if key in schema}
+    signature = {key: schema.get(key) for key in keys if key in schema}
+    if schema.get("type") == "object" or (
+        "type" not in schema and isinstance(schema.get("properties"), dict)
+    ):
+        signature["type"] = "object"
+    return signature
+
+
+def _is_object_schema(schema: Any) -> bool:
+    return (
+        isinstance(schema, dict)
+        and (
+            schema.get("type") == "object"
+            or ("type" not in schema and isinstance(schema.get("properties"), dict))
+        )
+    )
 
 
 def _content_schemas(container: dict | None) -> dict[str, dict]:
@@ -139,6 +155,8 @@ def _compare_schema(
                 head_sig,
             )
         )
+        if _is_object_schema(base) != _is_object_schema(head):
+            return
 
     base_props = _properties(base)
     head_props = _properties(head)
@@ -675,6 +693,14 @@ def _provenance_map(artifacts: RunArtifacts) -> dict[str, list[dict]]:
     out: dict[str, list[dict]] = {}
     for entry in artifacts.provenance.entries:
         out.setdefault(entry.target, []).append(entry.model_dump(mode="json"))
+    for entries in out.values():
+        entries.sort(
+            key=lambda entry: (
+                entry.get("manifest_source") or "",
+                entry.get("query_id") or "",
+                json.dumps(entry, sort_keys=True, separators=(",", ":")),
+            )
+        )
     return out
 
 

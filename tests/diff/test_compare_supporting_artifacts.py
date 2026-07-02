@@ -136,6 +136,33 @@ def test_provenance_citation_change_is_source_only():
     assert finding.impact is DiffImpact.SOURCE_ONLY
 
 
+def test_provenance_entry_reorder_is_not_reported():
+    first = ProvenanceEntry(
+        target="paths./payments.post",
+        status=PlanItemStatus.SUPPORTED,
+        manifest_source="manual-v1.md",
+        query_id="06",
+    )
+    second = ProvenanceEntry(
+        target="paths./payments.post",
+        status=PlanItemStatus.SUPPORTED,
+        manifest_source="manual-v2.md",
+        query_id="07",
+    )
+    base = _artifacts(
+        provenance=ProvenanceDocument(notebook_url="", entries=[first, second])
+    )
+    head = _artifacts(
+        provenance=ProvenanceDocument(notebook_url="", entries=[second, first])
+    )
+
+    report = build_diff_report(base, head)
+
+    assert [
+        finding for finding in report.findings if finding.area == "provenance"
+    ] == []
+
+
 def test_validation_issue_change_is_source_only():
     base = _artifacts(validation=ValidationReport())
     head = _artifacts(
