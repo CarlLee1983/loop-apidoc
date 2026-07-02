@@ -252,6 +252,31 @@ def test_implicit_object_to_scalar_schema_change_reports_only_parent_change():
     )
 
 
+def test_explicit_scalar_with_properties_to_object_reports_only_parent_change():
+    base = _doc()
+    head = _doc()
+    base["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "string",
+        "properties": {"bogus": {"type": "string"}},
+    }
+    head["paths"]["/payments"]["post"]["responses"]["200"]["content"]["application/json"]["schema"] = {
+        "type": "object",
+        "properties": {"actual": {"type": "integer"}},
+    }
+
+    findings = _findings(base, head)
+
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.summary == "schema changed"
+    assert finding.location == "POST /payments responses.200.application/json"
+    assert finding.impact is DiffImpact.BREAKING
+    assert not any(
+        f.location.startswith("POST /payments responses.200.application/json.")
+        for f in findings
+    )
+
+
 def test_explicit_to_implicit_object_schema_change_still_reports_nested_diff():
     base = _doc()
     head = _doc()

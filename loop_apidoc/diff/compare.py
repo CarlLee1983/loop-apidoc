@@ -93,7 +93,10 @@ def _schema_signature(schema: Any) -> Any:
 def _is_object_schema(schema: Any) -> bool:
     return (
         isinstance(schema, dict)
-        and (schema.get("type") == "object" or isinstance(schema.get("properties"), dict))
+        and (
+            schema.get("type") == "object"
+            or ("type" not in schema and isinstance(schema.get("properties"), dict))
+        )
     )
 
 
