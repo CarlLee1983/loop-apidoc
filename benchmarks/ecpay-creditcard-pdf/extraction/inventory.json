@@ -1,101 +1,251 @@
 {
-  "title": "綠界全方位金流 信用卡介接技術文件",
-  "version": "5.6.1",
-  "overview": "綠界科技提供完整的信用卡收款方式介接技術，支援多種付款方式包含信用卡、Apple Pay等。本文主要說明信用卡收款方式介接規格與各種交易API的使用時機及方法。採用HTTP POST form-based (application/x-www-form-urlencoded) 介接方式，透過檢查碼(CheckMacValue) SHA256驗證確保交易安全。",
+  "title": "綠界科技全方位金流 信用卡介接技術文件",
+  "version": "V5.6.1",
+  "overview": "ECPay (綠界科技) 全方位金流信用卡收款介接規格。說明信用卡 (含 Apple Pay、銀聯卡) 收款方式的各種交易 API 使用時機與方法，涵蓋產生訂單、付款結果通知 (Server 端 ReturnURL / Client 端 OrderResultURL)、查詢訂單、查詢信用卡單筆明細記錄、信用卡請退款 (關帳/退刷/取消/放棄)。所有與綠界間傳遞的參數皆需以 CheckMacValue (SHA256) 檢查碼機制簽章驗證。",
   "environments": [
-    {
-      "name": "正式環境",
-      "base_url": "https://payment.ecpay.com.tw",
-      "version": null,
-      "source": "gw_p110.pdf — 4. 產生訂單 / 介接路徑 (lines 365)"
-    },
-    {
-      "name": "測試環境",
-      "base_url": "https://payment-stage.ecpay.com.tw",
-      "version": null,
-      "source": "gw_p110.pdf — 4. 產生訂單 / 介接路徑 (lines 367)"
-    }
+    {"name": "production", "base_url": "https://payment.ecpay.com.tw", "version": null, "source": "gw_p110.pdf p.10/p.23/p.25/p.30 介接路徑"},
+    {"name": "staging", "base_url": "https://payment-stage.ecpay.com.tw", "version": null, "source": "gw_p110.pdf p.10/p.23 介接路徑 (測試環境)。注意：查詢信用卡單筆明細 (/CreditDetail/QueryTrade/V2) 與信用卡請退款 (/CreditDetail/DoAction) 測試環境因無法提供實際授權故無法使用"}
   ],
   "security_schemes": [],
   "endpoints": [
+    {"method": "POST", "path": "/Cashier/AioCheckOut/V5", "summary": "產生訂單：特店將訂單資料以 HTTP POST (application/x-www-form-urlencoded) 傳送至綠界，開始付款", "source": "gw_p110.pdf p.10 §4 產生訂單 介接路徑"},
+    {"method": "POST", "path": null, "summary": "付款結果通知 (Server 端 ReturnURL)：消費者付款完成後，綠界以背景 ServerPost 方式將付款結果參數回傳至訂單所設定的 ReturnURL；特店驗證檢查碼相符後須回應純字串 1|OK。此為非同步回呼 (callback/webhook)，路徑由特店的 ReturnURL 決定", "source": "gw_p110.pdf p.18 §5 付款結果通知 應用場景Ⅰ"},
+    {"method": "POST", "path": "/Cashier/QueryTradeInfo/V5", "summary": "查詢訂單：特店以背景方式傳送參數查詢訂單資訊，過濾是否為有效訂單 (產生訂單後 40 分鐘未收到通知時可查詢)", "source": "gw_p110.pdf p.23 §6 查詢訂單 介接路徑"},
+    {"method": "POST", "path": "/CreditDetail/QueryTrade/V2", "summary": "查詢信用卡單筆明細記錄：查詢訂單信用卡單筆明細記錄，回傳 JSON (主要授權資訊 + 明細資訊)。測試環境無法使用", "source": "gw_p110.pdf p.25 §7 查詢信用卡單筆明細記錄 介接路徑"},
+    {"method": "POST", "path": "/CreditDetail/DoAction", "summary": "信用卡請退款：依交易狀態對訂單執行關帳(C)/退刷(R)/取消(E)/放棄(N) 動作。測試環境無法使用", "source": "gw_p110.pdf p.30 §8 信用卡請退款功能 介接路徑"}
+  ],
+  "schemas": [
     {
-      "method": "POST",
-      "path": "/Cashier/AioCheckOut/V5",
-      "summary": "產生訂單：特店將訂單資料以POST傳送至綠界，準備進行付款",
-      "source": "gw_p110.pdf — 4. 產生訂單 (lines 349-457)"
+      "name": "AioCheckOutRequest",
+      "fields": [
+        {"name": "MerchantID", "type": "String(10)", "required": true, "description": "合作特店編號，由 ECPAY 提供。範例 2000132"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": true, "description": "特店交易編號，為唯一值，不可重複使用。英數字大小寫混合"},
+        {"name": "StoreID", "type": "String(20)", "required": false, "description": "特店旗下店舖代號，僅可用英數字大小寫混合"},
+        {"name": "MerchantTradeDate", "type": "String(20)", "required": true, "description": "交易時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "PaymentType", "type": "String(20)", "required": true, "description": "交易類型，請固定填入 aio"},
+        {"name": "TotalAmount", "type": "Int", "required": true, "description": "交易金額，請帶整數不可有小數點，僅限新台幣"},
+        {"name": "TradeDesc", "type": "String(200)", "required": true, "description": "交易描述，請勿帶入特殊字元"},
+        {"name": "ItemName", "type": "String(400)", "required": true, "description": "商品名稱，多筆以符號 # 分隔，字數限制中英數 400 字，超過自動截斷"},
+        {"name": "ReturnURL", "type": "String(200)", "required": true, "description": "付款完成通知回傳網址。付款完成後綠界以背景回傳付款結果參數。收到後須正確回應 1|OK。請勿與 OrderResultURL 設定相同位置"},
+        {"name": "ChoosePayment", "type": "String(20)", "required": true, "description": "選擇預設付款方式。Credit:信用卡或銀聯卡(需申請開通)；ApplePay:Apple 手機支付。瀏覽器非 Safari 時不顯示 ApplePay"},
+        {"name": "CheckMacValue", "type": "String", "required": true, "description": "檢查碼，請參考附錄檢查碼機制"},
+        {"name": "EncryptType", "type": "Int", "required": true, "description": "CheckMacValue 加密類型，請固定填入 1，使用 SHA256 加密"},
+        {"name": "ClientBackURL", "type": "String(200)", "required": false, "description": "Client 端返回特店的按鈕連結。導回時不會帶付款結果。設定後會顯示[返回商店]按鈕"},
+        {"name": "ItemURL", "type": "String(200)", "required": false, "description": "商品銷售網址"},
+        {"name": "Remark", "type": "String(100)", "required": false, "description": "備註欄位"},
+        {"name": "ChooseSubPayment", "type": "String(20)", "required": false, "description": "付款子項目。設定後轉導至綠界訂單成立頁，依設定付款方式及子項目帶入，無法選擇其他子項目。請參考付款方式一覽表"},
+        {"name": "OrderResultURL", "type": "String(200)", "required": false, "description": "Client 端回傳付款結果網址。消費者付款完成後綠界以幕前回傳付款結果。與 ClientBackURL 同時設定時以此為主。銀聯卡及非即時交易(ATM、CVS、BARCODE)不支援"},
+        {"name": "NeedExtraPaidInfo", "type": "String(1)", "required": false, "description": "是否需要額外的付款資訊。預設值 N。傳 Y 時付款完成後綠界以背景回傳額外付款資訊。參考額外回傳的參數"},
+        {"name": "DeviceSource", "type": "String(10)", "required": false, "description": "裝置來源，請帶空值，由系統自動判定"},
+        {"name": "IgnorePayment", "type": "String(100)", "required": false, "description": "隱藏付款方式。當 ChoosePayment 為 ALL 時可隱藏不需要的付款方式，多筆以 # 分隔。可用值 Credit、ApplePay"},
+        {"name": "PlatformID", "type": "String(10)", "required": false, "description": "平台商代號。一般特店或平台商本身介接請帶空值；專案平台商特店使用時請帶平台商所綁的特店編號 MerchantID"},
+        {"name": "CustomField1", "type": "String(50)", "required": false, "description": "自訂名稱欄位1。特殊符號只支援 ,.#()$[];%{}:/?&@<>!"},
+        {"name": "CustomField2", "type": "String(50)", "required": false, "description": "自訂名稱欄位2"},
+        {"name": "CustomField3", "type": "String(50)", "required": false, "description": "自訂名稱欄位3"},
+        {"name": "CustomField4", "type": "String(50)", "required": false, "description": "自訂名稱欄位4"},
+        {"name": "BindingCard", "type": "int", "required": false, "description": "記憶卡號 (ChoosePayment 為 ALL 或 Credit 時)。使用:1，不使用:0。僅支援 Visa/MasterCard/JCB，不支援銀聯卡；特店須有會員系統"},
+        {"name": "MerchantMemberID", "type": "String(30)", "required": false, "description": "記憶卡號識別碼 (特店代號 MerchantID + 廠商會員編號)。ChoosePayment 為 ALL 或 Credit 時"},
+        {"name": "Language", "type": "String(3)", "required": false, "description": "語系設定 (ChoosePayment 為 Credit 時)。預設中文。ENG 英語/KOR 韓語/JPN 日語/CHI 簡體中文。使用語系時不支援記憶卡號功能且不支援手機版"},
+        {"name": "Redeem", "type": "String(1)", "required": false, "description": "是否使用紅利折抵 (ChoosePayment 為 ALL 或 Credit 一次付清時)。設 Y 時進入紅利折抵交易流程"},
+        {"name": "UnionPay", "type": "Int", "required": false, "description": "銀聯卡交易選項 (ChoosePayment 為 ALL 或 Credit 時)，預設值 0。0:可選是否使用銀聯；1:只使用銀聯卡並直接導到銀聯網站；2:不可使用銀聯卡並隱藏銀聯選項。需申請方可使用"},
+        {"name": "CreditInstallment", "type": "String(20)", "required": null, "description": "刷卡分期期數 (分期付款時必填)。一般分期可用 3,6,12,18,24；圓夢彈性分期可用 30N。不可與定期定額、紅利折抵一起設定。銀聯卡不支援分期"},
+        {"name": "PeriodAmount", "type": "Int", "required": null, "description": "每次授權金額 (定期定額時必填)。TotalAmount 必須與 PeriodAmount 相同。請帶整數僅限新台幣。(定期定額功能，本擷取為信用卡收款範圍，列此供 AioCheckOut 完整性)"},
+        {"name": "PeriodType", "type": "String(1)", "required": null, "description": "週期種類 (定期定額時必填)。D:以天為週期；M:以月為週期；Y:以年為週期"},
+        {"name": "Frequency", "type": "Int", "required": null, "description": "執行頻率 (定期定額時必填)。PeriodType=D 時 1~365；M 時 1~12；Y 時只可設 1"},
+        {"name": "ExecTimes", "type": "Int", "required": null, "description": "執行次數 (定期定額時必填)。至少大於 1；D 時最多 999；M 時最多 99；Y 時最多 9"},
+        {"name": "PeriodReturnURL", "type": "String(200)", "required": false, "description": "定期定額的執行結果回應 URL。每次執行授權完會將授權結果回傳到此 URL"}
+      ],
+      "enums": [],
+      "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前紅色星號(*)為必填欄位。傳輸參數不支援特殊符號與 html tag。所有參數皆需加入 CheckMacValue 計算",
+      "source": "gw_p110.pdf p.10-p.17 §4 產生訂單 傳入參數說明"
     },
     {
-      "method": "POST",
-      "path": null,
-      "summary": "付款結果通知 (webhook)：綠界以幕後POST通知特店ReturnURL，特店須回應字串1|OK表示已收到",
-      "source": "gw_p110.pdf — 5. 付款結果通知 (lines 591-730)"
+      "name": "PaymentResultNotification",
+      "fields": [
+        {"name": "MerchantID", "type": "String(10)", "required": null, "description": "特店編號。範例 2000132"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": null, "description": "特店交易編號，訂單產生時傳送給綠界的交易編號。英數字大小寫混合"},
+        {"name": "StoreID", "type": "String(20)", "required": null, "description": "特店旗下店舖代號"},
+        {"name": "RtnCode", "type": "Int", "required": null, "description": "交易狀態。回傳值為 1 時為付款成功，其餘代碼皆為交易異常"},
+        {"name": "RtnMsg", "type": "String(200)", "required": null, "description": "交易訊息。背景成功回傳:交易成功；背景補送通知回傳:paid；幕前成功回傳:Succeeded"},
+        {"name": "TradeNo", "type": "String(20)", "required": null, "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"},
+        {"name": "TradeAmt", "type": "Int", "required": null, "description": "交易金額"},
+        {"name": "PaymentDate", "type": "String(20)", "required": null, "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "PaymentType", "type": "String(20)", "required": null, "description": "特店選擇的付款方式。請參考回覆付款方式一覽表 (例 Credit_CreditCard)"},
+        {"name": "PaymentTypeChargeFee", "type": "Int", "required": null, "description": "交易手續費"},
+        {"name": "TradeDate", "type": "String(20)", "required": null, "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "SimulatePaid", "type": "Int", "required": null, "description": "是否為模擬付款。0:非模擬付款；1:為模擬付款(RtnCode 也為 1)，綠界不會撥款，請勿出貨"},
+        {"name": "CustomField1", "type": "String(50)", "required": null, "description": "自訂名稱欄位1"},
+        {"name": "CustomField2", "type": "String(50)", "required": null, "description": "自訂名稱欄位2"},
+        {"name": "CustomField3", "type": "String(50)", "required": null, "description": "自訂名稱欄位3"},
+        {"name": "CustomField4", "type": "String(50)", "required": null, "description": "自訂名稱欄位4"},
+        {"name": "CheckMacValue", "type": "String", "required": null, "description": "檢查碼。必須檢查以驗證，請參考附錄檢查碼機制"}
+      ],
+      "enums": [],
+      "constraints": "回傳 (應用場景Ⅰ)：Accept: text/html；Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。以 form-data 格式「參數=值」回傳，參數間以 & 隔開。特店須驗證 CheckMacValue 並回應純字串 1|OK；未正確回應時系統每 5~15 分鐘重發，當天重複發送四次",
+      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知 回傳參數說明Ⅰ"
     },
     {
-      "method": "POST",
-      "path": "/Cashier/QueryTradeInfo/V5",
-      "summary": "查詢訂單：提供查詢訂單資訊，可透過此API來過濾是否為有效訂單",
-      "source": "gw_p110.pdf — 6. 查詢訂單 (lines 835-903)"
+      "name": "PaymentResultResponse",
+      "fields": [
+        {"name": "response", "type": "String", "required": null, "description": "回傳值為純字串並無參數名稱。第一碼為 1 時成功 (1|OK)；第一碼為 0 時失敗，格式 0|ErrorMessage (錯誤代碼－錯誤訊息)。此訊息僅代表特店是否收到通知，不影響訂單狀態"}
+      ],
+      "enums": [],
+      "constraints": "特店回應綠界付款通知的內容 (純字串)。常見錯誤回應值：1|ok、_OK、1\\OK、空白 等皆屬未正確回應",
+      "source": "gw_p110.pdf p.20 §5 回覆參數說明"
     },
     {
-      "method": "POST",
-      "path": "/CreditDetail/QueryTrade/V2",
-      "summary": "查詢信用卡單筆明細記錄：提供查詢訂單信用卡單筆明細記錄，返回JSON格式",
-      "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 (lines 919-1090)"
+      "name": "QueryTradeInfoRequest",
+      "fields": [
+        {"name": "MerchantID", "type": "String(10)", "required": true, "description": "特店編號。範例 2000132"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": true, "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"},
+        {"name": "TimeStamp", "type": "Int", "required": true, "description": "驗證時間。將當下時間轉為 UnixTimeStamp 用於驗證介接時間區間，暫訂 3 分鐘內有效，超過則無效"},
+        {"name": "PlatformID", "type": "String(10)", "required": false, "description": "平台商代號。一般特店或平台商本身介接請帶空值"},
+        {"name": "CheckMacValue", "type": "String", "required": true, "description": "檢查碼，請參考附錄檢查碼機制"}
+      ],
+      "enums": [],
+      "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填",
+      "source": "gw_p110.pdf p.23 §6 查詢訂單 傳入參數說明"
     },
     {
-      "method": "POST",
-      "path": "/CreditDetail/DoAction",
-      "summary": "信用卡關帳/退刷/取消/放棄：對信用卡訂單進行關帳(請款)、退刷(部份/全額退款)、取消或放棄等作業",
-      "source": "gw_p110.pdf — 8. 信用卡請退款功能 (lines 1106-1230)"
+      "name": "QueryTradeInfoResponse",
+      "fields": [
+        {"name": "MerchantID", "type": "String(9)", "required": null, "description": "特店編號"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": null, "description": "特店交易編號"},
+        {"name": "StoreID", "type": "String(20)", "required": null, "description": "特店旗下店舖代號"},
+        {"name": "TradeNo", "type": "String(20)", "required": null, "description": "綠界交易編號"},
+        {"name": "TradeAmt", "type": "Int", "required": null, "description": "交易金額"},
+        {"name": "PaymentDate", "type": "String(20)", "required": null, "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "PaymentType", "type": "String(20)", "required": null, "description": "特店選擇的付款方式 (例 Credit)"},
+        {"name": "HandlingCharge", "type": "Int", "required": null, "description": "手續費合計。履約結束後才計算，未計算前為 0"},
+        {"name": "PaymentTypeChargeFee", "type": "Int", "required": null, "description": "交易手續費"},
+        {"name": "TradeDate", "type": "String(20)", "required": null, "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "TradeStatus", "type": "String(8)", "required": null, "description": "交易狀態。0:交易訂單成立未付款；1:交易訂單成立已付款；10200095:交易訂單未成立，消費者未完成付款作業，交易失敗"},
+        {"name": "ItemName", "type": "String(400)", "required": null, "description": "商品名稱"},
+        {"name": "CustomField1", "type": "String(50)", "required": null, "description": "自訂名稱欄位1"},
+        {"name": "CustomField2", "type": "String(50)", "required": null, "description": "自訂名稱欄位2"},
+        {"name": "CustomField3", "type": "String(50)", "required": null, "description": "自訂名稱欄位3"},
+        {"name": "CustomField4", "type": "String(50)", "required": null, "description": "自訂名稱欄位4"},
+        {"name": "CheckMacValue", "type": "String", "required": null, "description": "檢查碼，必須驗證，請參考附錄檢查碼機制"}
+      ],
+      "enums": [],
+      "constraints": "以 form-data 格式「參數=值」直接回傳至頁面，參數間以 & 隔開",
+      "source": "gw_p110.pdf p.24 §6 查詢訂單 回傳參數說明"
+    },
+    {
+      "name": "CreditDetailQueryTradeRequest",
+      "fields": [
+        {"name": "MerchantID", "type": "String(10)", "required": true, "description": "特店編號 (由 ecPay 提供)"},
+        {"name": "CreditRefundId", "type": "Int", "required": true, "description": "信用卡授權單號。建立訂單時將 NeedExtraPaidInfo 設為 Y，即可透過付款結果通知取得此參數 (CreditRefundId = gwsr)"},
+        {"name": "CreditAmount", "type": "Int", "required": true, "description": "金額"},
+        {"name": "CreditCheckCode", "type": "Int", "required": true, "description": "商家檢查碼。廠商後台->信用卡收單->信用卡授權資訊中可查到"},
+        {"name": "CheckMacValue", "type": "String", "required": true, "description": "檢查碼，請參考附錄檢查碼機制"}
+      ],
+      "enums": [],
+      "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填。測試環境因無法提供實際授權故無法使用此 API",
+      "source": "gw_p110.pdf p.25 §7 查詢信用卡單筆明細記錄 傳入參數說明"
+    },
+    {
+      "name": "CreditDetailQueryTradeResponse",
+      "fields": [
+        {"name": "RtnMsg", "type": "String(200)", "required": null, "description": "回應訊息。成功時回傳空值，其餘為失敗。查無商家或商家已到期:error_Stop；查無該筆交易授權單號:error_nopay；發生錯誤或資料檢核失敗:error"},
+        {"name": "RtnValue", "type": "String", "required": null, "description": "回應內容，Json 字串。若回傳空值則為查詢失敗"},
+        {"name": "RtnValue.TradeID", "type": "Int", "required": null, "description": "授權單號"},
+        {"name": "RtnValue.amount", "type": "Int", "required": null, "description": "交易金額"},
+        {"name": "RtnValue.clsamt", "type": "Int", "required": null, "description": "已關帳金額"},
+        {"name": "RtnValue.authtime", "type": "String(24)", "required": null, "description": "訂單成立時間 (例 2016/5/12 下午 07:09:17)"},
+        {"name": "RtnValue.status", "type": "String(30)", "required": null, "description": "交易狀態。無關帳明細時:已取消/未授權/已授權。已有關帳明細時:銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/銀行追回中/銀行已追回/批次失敗/不明/操作取消"},
+        {"name": "RtnValue.close_data[].status", "type": "String(30)", "required": null, "description": "明細狀態。銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/已取消/銀行追回中/銀行已追回/批次失敗/不明/操作取消"},
+        {"name": "RtnValue.close_data[].amount", "type": "Int", "required": null, "description": "明細交易金額"},
+        {"name": "RtnValue.close_data[].sno", "type": "String(30)", "required": null, "description": "關帳序號"},
+        {"name": "RtnValue.close_data[].datetime", "type": "String(24)", "required": null, "description": "關帳時間 (例 2016/5/12 下午 08:00:00)"}
+      ],
+      "enums": [],
+      "constraints": "查詢結果直接回傳至頁面，以 JSON 格式表示。分為主要授權資訊與明細資訊 (close_data 陣列) 兩部分",
+      "source": "gw_p110.pdf p.25-p.28 §7 查詢信用卡單筆明細記錄 回傳參數說明"
+    },
+    {
+      "name": "DoActionRequest",
+      "fields": [
+        {"name": "MerchantID", "type": "String(10)", "required": true, "description": "特店編號 (由 ECPAY 提供)"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": true, "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"},
+        {"name": "TradeNo", "type": "String(20)", "required": true, "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"},
+        {"name": "Action", "type": "String(1)", "required": true, "description": "執行動作。C:關帳；R:退刷；E:取消；N:放棄"},
+        {"name": "TotalAmount", "type": "Int", "required": true, "description": "金額"},
+        {"name": "CheckMacValue", "type": "String", "required": true, "description": "檢查碼，請參考附錄檢查碼機制"},
+        {"name": "PlatformID", "type": "String(10)", "required": false, "description": "平台商代號。一般特店或平台商本身介接請帶空值"}
+      ],
+      "enums": ["C", "R", "E", "N"],
+      "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填。測試環境因無法提供實際授權故無法使用此 API。若「每日自動關帳」開啟時，每天 20:15~20:30 請勿執行此 API",
+      "source": "gw_p110.pdf p.30 §8 信用卡請退款功能 傳入參數說明"
+    },
+    {
+      "name": "DoActionResponse",
+      "fields": [
+        {"name": "MerchantID", "type": "String(9)", "required": null, "description": "特店編號"},
+        {"name": "PlatformID", "type": "String(10)", "required": null, "description": "平台商代號。專案合作的平台商代號"},
+        {"name": "MerchantTradeNo", "type": "String(20)", "required": null, "description": "特店交易編號"},
+        {"name": "TradeNo", "type": "String(20)", "required": null, "description": "綠界交易編號"},
+        {"name": "RtnCode", "type": "Int", "required": null, "description": "交易狀態。1 代表成功，其餘為失敗"},
+        {"name": "RtnMsg", "type": "String(200)", "required": null, "description": "交易訊息"}
+      ],
+      "enums": [],
+      "constraints": "結果直接回傳至頁面，以「參數=值」表示，參數間以 & 隔開",
+      "source": "gw_p110.pdf p.31 §8 信用卡請退款功能 回傳參數說明"
+    },
+    {
+      "name": "ExtraPaidInfo",
+      "fields": [
+        {"name": "WebATMAccBank", "type": "String(3)", "required": null, "description": "付款人銀行代碼，未提供則回傳空白"},
+        {"name": "WebATMAccNo", "type": "String(5)", "required": null, "description": "付款人銀行帳號後五碼"},
+        {"name": "WebATMBankName", "type": "String(10)", "required": null, "description": "銀行名稱，請參考付款方式一覽表"},
+        {"name": "ATMAccBank", "type": "String(3)", "required": null, "description": "付款人銀行代碼"},
+        {"name": "ATMAccNo", "type": "String(5)", "required": null, "description": "付款人銀行帳號後五碼"},
+        {"name": "PaymentNo", "type": "String(14)", "required": null, "description": "繳費代碼，BARCODE 則回傳空白"},
+        {"name": "PayFrom", "type": "String(10)", "required": null, "description": "繳費超商。family:全家；hilife:萊爾富；okmart:OK超商；ibon:7-11"},
+        {"name": "gwsr", "type": "Int", "required": null, "description": "授權交易單號"},
+        {"name": "process_date", "type": "String(20)", "required": null, "description": "處理時間，格式 yyyy/MM/dd HH:mm:ss"},
+        {"name": "auth_code", "type": "String(6)", "required": null, "description": "授權碼"},
+        {"name": "amount", "type": "Int", "required": null, "description": "金額"},
+        {"name": "stage", "type": "Int", "required": null, "description": "分期期數"},
+        {"name": "stast", "type": "Int", "required": null, "description": "頭期金額 (圓夢彈性分期:第一階段各期金額)"},
+        {"name": "staed", "type": "Int", "required": null, "description": "各期金額 (圓夢彈性分期:第二階段各期金額)"},
+        {"name": "eci", "type": "Int", "required": null, "description": "3D(VBV)。eci=5,6,2,1 代表該筆交易為 3D 交易"},
+        {"name": "card4no", "type": "String(4)", "required": null, "description": "卡片的末 4 碼。銀聯卡交易不會回傳卡號資料"},
+        {"name": "card6no", "type": "String(6)", "required": null, "description": "卡片的前 6 碼。銀聯卡交易不會回傳卡號資料"},
+        {"name": "red_dan", "type": "Int", "required": null, "description": "紅利扣點"},
+        {"name": "red_de_amt", "type": "Int", "required": null, "description": "紅利折抵金額"},
+        {"name": "red_ok_amt", "type": "Int", "required": null, "description": "實際扣款金額"},
+        {"name": "red_yet", "type": "Int", "required": null, "description": "紅利剩餘點數"}
+      ],
+      "enums": [],
+      "constraints": "產生訂單時 NeedExtraPaidInfo 設為 Y 時，付款結果通知與查詢訂單會額外回傳這些參數。額外回傳的參數全部都需要加入檢查碼計算。(已無提供的 AlipayID/AlipayTradeNo/TenpayTradeNo 及定期定額相關額外欄位未納入信用卡收款範圍)",
+      "source": "gw_p110.pdf p.33-p.34 §9 額外回傳的參數 回傳參數說明"
     }
   ],
-  "schemas": [],
   "errors": [
-    {
-      "code": "1",
-      "meaning": "交易成功/授權成功",
-      "http_status": null,
-      "source": "gw_p110.pdf — 5. 付款結果通知 / 回傳參數說明 (line 667)"
-    },
-    {
-      "code": "10200095",
-      "meaning": "交易訂單未成立，消費者未完成付款作業，故交易失敗",
-      "http_status": null,
-      "source": "gw_p110.pdf — 6. 查詢訂單 / 回傳參數說明 (line 896)"
-    }
+    {"code": "1", "meaning": "交易狀態成功 (RtnCode=1 付款/授權成功；TradeStatus=1 交易訂單成立已付款)", "http_status": null, "source": "gw_p110.pdf p.19/p.24 RtnCode / TradeStatus 說明"},
+    {"code": "0", "meaning": "TradeStatus=0 交易訂單成立未付款", "http_status": null, "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus"},
+    {"code": "10200095", "meaning": "交易訂單未成立，消費者未完成付款作業，故交易失敗", "http_status": null, "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus"},
+    {"code": "error_Stop", "meaning": "查無商家或商家已到期 (RtnMsg)", "http_status": null, "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"},
+    {"code": "error_nopay", "meaning": "查無該筆交易授權單號 (RtnMsg)", "http_status": null, "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"},
+    {"code": "error", "meaning": "發生錯誤或資料檢核失敗 (RtnMsg)", "http_status": null, "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"},
+    {"code": "error_overDAY", "meaning": "訂單超過關帳期限 (超過 90 天系統會將未關帳訂單放棄，不作請款)，須通知客服協助關帳", "http_status": null, "source": "gw_p110.pdf p.29 §8 信用卡請退款功能 關帳注意事項"}
   ],
   "operational": [
-    {
-      "topic": "傳輸方式",
-      "detail": "Http POST，application/x-www-form-urlencoded；參數不支援html tag及特殊符號；回傳網址不支援中文(需punycode編碼)",
-      "source": "gw_p110.pdf — 3. 前置準備事項 (lines 291-307)"
-    },
-    {
-      "topic": "通知頻率",
-      "detail": "若未正確回應1|OK，系統會隔5~15分鐘後重發訊息給特店，當天重複發送四次",
-      "source": "gw_p110.pdf — 5. 付款結果通知 / 注意事項 (line 713)"
-    },
-    {
-      "topic": "時間校正",
-      "detail": "合作特店須進行主機「時間校正」，避免主機產生時差，延伸API無法正常運作",
-      "source": "gw_p110.pdf — 3. 前置準備事項 (line 324)"
-    },
-    {
-      "topic": "加密通訊",
-      "detail": "綠界串接服務只支援TLS 1.1以上之加密通訊協定",
-      "source": "gw_p110.pdf — 3. 前置準備事項 (line 326)"
-    },
-    {
-      "topic": "防火牆設定",
-      "detail": "確認Server是否有開通防火牆綁定postgate.ecpay.com.tw，以避免付款通知被防火牆阻擋，請勿直接綁定IP",
-      "source": "gw_p110.pdf — 3. 前置準備事項 (line 287)"
-    }
+    {"topic": "簽章機制 (CheckMacValue)", "detail": "除 CheckMacValue 外所有傳遞給綠界的參數皆需加入檢查碼計算。步驟：(1)參數依英文字母 A→Z 排序並以 & 串連；(2)前面加 HashKey、後面加 HashIV；(3)整串 URL encode；(4)轉小寫；(5)依 URLEncode 轉換表更換字元 (須符合 .NET 編碼);(6)以 SHA256 加密產生雜湊值；(7)轉大寫產生 CheckMacValue。EncryptType 固定為 1 (SHA256)。接收綠界資訊時亦須驗證 CheckMacValue", "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制"},
+    {"topic": "測試環境認證資訊", "detail": "MerchantID:2000132 (或 2000214 非OTP)；PlatformID:3002599；ALL IN ONE HashKey:5294y06JbISpM5x9 (平台商 spPjZn66i0OhqJsQ)；HashIV:v77hoKGq4kWxNNIS (平台商 hT5OJckN45isQTTs)；信用卡測試卡號 4311-9522-2222-2222 (成功流程)、4938-1777-7777-7777 (圓夢彈性分期)；安全碼 222；有效月/年須大於當下時間", "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊"},
+    {"topic": "連線與防火牆要求", "detail": "呼叫綠界 API 只提供 https (443 port)，並須以 Domain Name System 介接。各項交易參數以 Http POST 傳送。只支援 TLS 1.1 以上加密。綠界主機 IP 不固定，防火牆需以 FQDN 設定 domain：綠界->特店 postgate.ecpay.com.tw、postgate-stage.ecpay.com.tw；特店->綠界 payment.ecpay.com.tw、payment-stage.ecpay.com.tw。ReturnURL 請勿設定於 CDN，勿綁定 IP。回傳網址不支援中文網址，須使用 punycode 編碼", "source": "gw_p110.pdf p.8-p.9 §3 前置準備事項 注意事項"},
+    {"topic": "付款結果通知回應與重送", "detail": "特店收到 Server 端付款結果通知後須驗證 CheckMacValue 並回應純字串 1|OK。未正確回應時系統每 5~15 分鐘重發，當天重複發送四次。1|OK 僅表示廠商是否收到通知，不改變付款狀態。務必判斷 RtnCode 是否為 1 及 SimulatePaid 是否為模擬付款，避免對模擬付款出貨", "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知"},
+    {"topic": "請退款狀態流程", "detail": "付款成功查詢顯示[已授權](僅占用額度)。關帳(C)後顯示[要關帳],完成請款後顯示[已關帳]。退款：[已授權]階段執行放棄(N)釋放佔額；[要關帳]階段全額退款先取消(E)再放棄(N)、部份退款執行退刷(R);[已關帳]階段執行退刷(R)。分期與紅利折抵交易須全額退刷。若「每日自動關帳」開啟每日 20:00 系統自行關帳；關閉後訂單須於 21 天內完成關帳，逾 90 天系統放棄不請款", "source": "gw_p110.pdf p.29-p.30 §8 信用卡請退款功能 使用說明"},
+    {"topic": "查詢訂單時機", "detail": "產生訂單後 40 分鐘未收到綠界付款結果通知時，可用查詢訂單 API 查詢付款結果。TimeStamp 驗證時間區間暫訂 3 分鐘內有效", "source": "gw_p110.pdf p.23 §6 查詢訂單"},
+    {"topic": "付款方式與回覆付款方式對照", "detail": "付款方式一覽表：Credit=信用卡_MasterCard_JCB_VISA；ApplePay=Apple 手機支付。回覆付款方式 (PaymentType)：Credit_CreditCard=信用卡付款或 Apple 手機支付；Flexible_Installment=圓夢彈性分期", "source": "gw_p110.pdf p.53-p.54 附錄3/附錄4"}
   ],
   "missing": [
-    "完整的交易狀態代碼表(文件說明詳細代碼請到廠商後台->系統開發管理->交易狀態代碼查詢，僅列示部份代碼10200095)",
-    "定期定額相關API(QueryCreditCardPeriodInfo / CreditCardPeriodAction)超出本次提取範圍",
-    "對帳媒體檔下載API(TradeNoAio)超出本次提取範圍",
-    "信用卡撥款對帳資料檔下載API(FundingReconDetail)超出本次提取範圍",
-    "額外回傳參數(NeedExtraPaidInfo=Y時的完整參數列表)在第9章詳細列出但未全部摘錄於此JSON"
+    "無 header/token 式的 OpenAPI 安全機制：ECPay 使用 CheckMacValue (SHA256 檢查碼) 對請求簽章，非 header bearer/token，故 security_schemes 留空 (簽章細節記於 operational)",
+    "付款結果通知 (ReturnURL) 的路徑由特店自訂，來源未指定固定 path (endpoint path 設 null)",
+    "各 API 未提供 HTTP 狀態碼 (http_status 全部 null)；錯誤以回傳欄位 RtnCode/RtnMsg/TradeStatus 表示",
+    "附錄2 交易狀態代碼表以圖片呈現且說明「錯誤代碼一直在新增，詳細請至廠商管理後台查詢」，完整錯誤代碼清單未於文件列出",
+    "AioCheckOut 部分欄位範例欄為空 (ItemURL/Remark/StoreID/CustomField 等) — 來源未提供範例值",
+    "定期定額 (§10/§11) 與對帳媒體檔下載 (§13/§14) 端點依範圍排除，未納入 endpoints；AioCheckOut 內的定期定額參數 (PeriodAmount/PeriodType/Frequency/ExecTimes/PeriodReturnURL) 仍列於 request schema 以保完整性"
   ]
 }

@@ -1,0 +1,283 @@
+{
+  "method": "POST",
+  "path": "/Cashier/AioCheckOut/V5",
+  "source": "gw_p110.pdf p.10 §4 產生訂單 介接路徑",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "合作特店編號，由 ECPAY 提供。範例 2000132"
+    },
+    {
+      "name": "MerchantTradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "特店交易編號，為唯一值，不可重複使用。英數字大小寫混合"
+    },
+    {
+      "name": "StoreID",
+      "in": "body",
+      "type": "String(20)",
+      "required": false,
+      "description": "特店旗下店舖代號，僅可用英數字大小寫混合"
+    },
+    {
+      "name": "MerchantTradeDate",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "交易時間，格式 yyyy/MM/dd HH:mm:ss"
+    },
+    {
+      "name": "PaymentType",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "交易類型，請固定填入 aio"
+    },
+    {
+      "name": "TotalAmount",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "交易金額，請帶整數不可有小數點，僅限新台幣"
+    },
+    {
+      "name": "TradeDesc",
+      "in": "body",
+      "type": "String(200)",
+      "required": true,
+      "description": "交易描述，請勿帶入特殊字元"
+    },
+    {
+      "name": "ItemName",
+      "in": "body",
+      "type": "String(400)",
+      "required": true,
+      "description": "商品名稱，多筆以符號 # 分隔，字數限制中英數 400 字，超過自動截斷"
+    },
+    {
+      "name": "ReturnURL",
+      "in": "body",
+      "type": "String(200)",
+      "required": true,
+      "description": "付款完成通知回傳網址。付款完成後綠界以背景回傳付款結果參數。收到後須正確回應 1|OK。請勿與 OrderResultURL 設定相同位置"
+    },
+    {
+      "name": "ChoosePayment",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "選擇預設付款方式。Credit:信用卡或銀聯卡(需申請開通)；ApplePay:Apple 手機支付。瀏覽器非 Safari 時不顯示 ApplePay"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "檢查碼，請參考附錄檢查碼機制"
+    },
+    {
+      "name": "EncryptType",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "CheckMacValue 加密類型，請固定填入 1，使用 SHA256 加密"
+    },
+    {
+      "name": "ClientBackURL",
+      "in": "body",
+      "type": "String(200)",
+      "required": false,
+      "description": "Client 端返回特店的按鈕連結。導回時不會帶付款結果。設定後會顯示[返回商店]按鈕"
+    },
+    {
+      "name": "ItemURL",
+      "in": "body",
+      "type": "String(200)",
+      "required": false,
+      "description": "商品銷售網址"
+    },
+    {
+      "name": "Remark",
+      "in": "body",
+      "type": "String(100)",
+      "required": false,
+      "description": "備註欄位"
+    },
+    {
+      "name": "ChooseSubPayment",
+      "in": "body",
+      "type": "String(20)",
+      "required": false,
+      "description": "付款子項目。設定後轉導至綠界訂單成立頁，依設定付款方式及子項目帶入，無法選擇其他子項目。請參考付款方式一覽表"
+    },
+    {
+      "name": "OrderResultURL",
+      "in": "body",
+      "type": "String(200)",
+      "required": false,
+      "description": "Client 端回傳付款結果網址。消費者付款完成後綠界以幕前回傳付款結果。與 ClientBackURL 同時設定時以此為主。銀聯卡及非即時交易(ATM、CVS、BARCODE)不支援"
+    },
+    {
+      "name": "NeedExtraPaidInfo",
+      "in": "body",
+      "type": "String(1)",
+      "required": false,
+      "description": "是否需要額外的付款資訊。預設值 N。傳 Y 時付款完成後綠界以背景回傳額外付款資訊。參考額外回傳的參數"
+    },
+    {
+      "name": "DeviceSource",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "裝置來源，請帶空值，由系統自動判定"
+    },
+    {
+      "name": "IgnorePayment",
+      "in": "body",
+      "type": "String(100)",
+      "required": false,
+      "description": "隱藏付款方式。當 ChoosePayment 為 ALL 時可隱藏不需要的付款方式，多筆以 # 分隔。可用值 Credit、ApplePay"
+    },
+    {
+      "name": "PlatformID",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "平台商代號。一般特店或平台商本身介接請帶空值；專案平台商特店使用時請帶平台商所綁的特店編號 MerchantID"
+    },
+    {
+      "name": "CustomField1",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "自訂名稱欄位1。特殊符號只支援 ,.#()$[];%{}:/?&@<>!"
+    },
+    {
+      "name": "CustomField2",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "自訂名稱欄位2"
+    },
+    {
+      "name": "CustomField3",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "自訂名稱欄位3"
+    },
+    {
+      "name": "CustomField4",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "自訂名稱欄位4"
+    },
+    {
+      "name": "BindingCard",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "記憶卡號 (ChoosePayment 為 ALL 或 Credit 時)。使用:1，不使用:0。僅支援 Visa/MasterCard/JCB，不支援銀聯卡；特店須有會員系統"
+    },
+    {
+      "name": "MerchantMemberID",
+      "in": "body",
+      "type": "String(30)",
+      "required": false,
+      "description": "記憶卡號識別碼 (特店代號 MerchantID + 廠商會員編號)。ChoosePayment 為 ALL 或 Credit 時"
+    },
+    {
+      "name": "Language",
+      "in": "body",
+      "type": "String(3)",
+      "required": false,
+      "description": "語系設定 (ChoosePayment 為 Credit 時)。預設中文。ENG 英語/KOR 韓語/JPN 日語/CHI 簡體中文。使用語系時不支援記憶卡號功能且不支援手機版"
+    },
+    {
+      "name": "Redeem",
+      "in": "body",
+      "type": "String(1)",
+      "required": false,
+      "description": "是否使用紅利折抵 (ChoosePayment 為 ALL 或 Credit 一次付清時)。設 Y 時進入紅利折抵交易流程"
+    },
+    {
+      "name": "UnionPay",
+      "in": "body",
+      "type": "Int",
+      "required": false,
+      "description": "銀聯卡交易選項 (ChoosePayment 為 ALL 或 Credit 時)，預設值 0。0:可選是否使用銀聯；1:只使用銀聯卡並直接導到銀聯網站；2:不可使用銀聯卡並隱藏銀聯選項。需申請方可使用"
+    },
+    {
+      "name": "CreditInstallment",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "刷卡分期期數 (分期付款時必填)。一般分期可用 3,6,12,18,24；圓夢彈性分期可用 30N。不可與定期定額、紅利折抵一起設定。銀聯卡不支援分期"
+    },
+    {
+      "name": "PeriodAmount",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "每次授權金額 (定期定額時必填)。TotalAmount 必須與 PeriodAmount 相同。請帶整數僅限新台幣。(定期定額功能，本擷取為信用卡收款範圍，列此供 AioCheckOut 完整性)"
+    },
+    {
+      "name": "PeriodType",
+      "in": "body",
+      "type": "String(1)",
+      "required": null,
+      "description": "週期種類 (定期定額時必填)。D:以天為週期；M:以月為週期；Y:以年為週期"
+    },
+    {
+      "name": "Frequency",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "執行頻率 (定期定額時必填)。PeriodType=D 時 1~365；M 時 1~12；Y 時只可設 1"
+    },
+    {
+      "name": "ExecTimes",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "執行次數 (定期定額時必填)。至少大於 1；D 時最多 999；M 時最多 99；Y 時最多 9"
+    },
+    {
+      "name": "PeriodReturnURL",
+      "in": "body",
+      "type": "String(200)",
+      "required": false,
+      "description": "定期定額的執行結果回應 URL。每次執行授權完會將授權結果回傳到此 URL"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": "AioCheckOutRequest",
+    "required": true,
+    "description": "產生訂單：特店以 HTTP POST (application/x-www-form-urlencoded) 傳送訂單參數至綠界開始付款；所有參數需納入 CheckMacValue (SHA256) 計算"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "以 HTML 表單重新導向至綠界付款頁面供消費者操作；付款結果另以付款結果通知 (ReturnURL) 及 OrderResultURL 回傳，非本 API 直接回應",
+      "schema": null,
+      "schema_ref": null,
+      "source": "gw_p110.pdf p.10 §4 產生訂單 應用場景"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "來源未提供逐欄位完整 request 範例值（多數欄位範例欄為空）",
+    "本 API 無同步 JSON 回應主體，付款結果以 webhook 回傳"
+  ]
+}

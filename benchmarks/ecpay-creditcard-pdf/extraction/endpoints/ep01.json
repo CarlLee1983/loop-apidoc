@@ -1,0 +1,149 @@
+{
+  "method": "POST",
+  "path": null,
+  "source": "gw_p110.pdf p.18 §5 付款結果通知 應用場景Ⅰ",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(10)",
+      "required": null,
+      "description": "特店編號。範例 2000132"
+    },
+    {
+      "name": "MerchantTradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "特店交易編號，訂單產生時傳送給綠界的交易編號。英數字大小寫混合"
+    },
+    {
+      "name": "StoreID",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "特店旗下店舖代號"
+    },
+    {
+      "name": "RtnCode",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "交易狀態。回傳值為 1 時為付款成功，其餘代碼皆為交易異常"
+    },
+    {
+      "name": "RtnMsg",
+      "in": "body",
+      "type": "String(200)",
+      "required": null,
+      "description": "交易訊息。背景成功回傳:交易成功；背景補送通知回傳:paid；幕前成功回傳:Succeeded"
+    },
+    {
+      "name": "TradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"
+    },
+    {
+      "name": "TradeAmt",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "交易金額"
+    },
+    {
+      "name": "PaymentDate",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss"
+    },
+    {
+      "name": "PaymentType",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "特店選擇的付款方式。請參考回覆付款方式一覽表 (例 Credit_CreditCard)"
+    },
+    {
+      "name": "PaymentTypeChargeFee",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "交易手續費"
+    },
+    {
+      "name": "TradeDate",
+      "in": "body",
+      "type": "String(20)",
+      "required": null,
+      "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss"
+    },
+    {
+      "name": "SimulatePaid",
+      "in": "body",
+      "type": "Int",
+      "required": null,
+      "description": "是否為模擬付款。0:非模擬付款；1:為模擬付款(RtnCode 也為 1)，綠界不會撥款，請勿出貨"
+    },
+    {
+      "name": "CustomField1",
+      "in": "body",
+      "type": "String(50)",
+      "required": null,
+      "description": "自訂名稱欄位1"
+    },
+    {
+      "name": "CustomField2",
+      "in": "body",
+      "type": "String(50)",
+      "required": null,
+      "description": "自訂名稱欄位2"
+    },
+    {
+      "name": "CustomField3",
+      "in": "body",
+      "type": "String(50)",
+      "required": null,
+      "description": "自訂名稱欄位3"
+    },
+    {
+      "name": "CustomField4",
+      "in": "body",
+      "type": "String(50)",
+      "required": null,
+      "description": "自訂名稱欄位4"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "String",
+      "required": null,
+      "description": "檢查碼。必須檢查以驗證，請參考附錄檢查碼機制"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": "PaymentResultNotification",
+    "required": true,
+    "description": "付款結果通知 (Server 端 ReturnURL)：綠界以背景 ServerPost 將付款結果參數以 form-data 回傳至特店設定的 ReturnURL；特店須驗證 CheckMacValue"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "特店須回應純字串 1|OK 表示已收到通知；未正確回應時綠界每 5~15 分鐘重送、當天最多 4 次。回應內容不影響訂單狀態",
+      "schema": "PaymentResultResponse",
+      "schema_ref": "PaymentResultResponse",
+      "source": "gw_p110.pdf p.20 §5 回覆參數說明"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "回呼路徑由特店 ReturnURL 決定，來源未指定固定 path"
+  ]
+}

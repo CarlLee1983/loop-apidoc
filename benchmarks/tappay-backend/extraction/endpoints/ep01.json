@@ -1,0 +1,220 @@
+{
+  "method": "POST",
+  "path": "/tpc/payment/pay-by-token",
+  "source": "tappay-backend-api.md — Pay by Card Token API / URL https://docs.tappaysdk.com/tutorial/en/back.html#pay-by-card-token-api",
+  "parameters": [
+    {
+      "name": "x-api-key",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Header authentication key (partner_key). x-api-key: YourPartnerKey."
+    },
+    {
+      "name": "card_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Card authorization key."
+    },
+    {
+      "name": "card_token",
+      "in": "body",
+      "type": "String(67)",
+      "required": true,
+      "description": "Card token."
+    },
+    {
+      "name": "partner_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Authentication key for each individual partner."
+    },
+    {
+      "name": "merchant_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": true,
+      "description": "Involved merchant's identifier as defined on Portal."
+    },
+    {
+      "name": "merchant_group_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Merchant management settings set on the portal. Cannot be used with merchant_id at the same time."
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "int",
+      "required": true,
+      "description": "Transaction price. Except TWD, times 100 (HKD1 = 100)."
+    },
+    {
+      "name": "currency",
+      "in": "body",
+      "type": "String(3)",
+      "required": true,
+      "description": "Transaction currency, ISO 4217 alphabetic code, e.g. TWD."
+    },
+    {
+      "name": "order_number",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Self-defined identifier for each transaction. Does not allow null."
+    },
+    {
+      "name": "bank_transaction_id",
+      "in": "body",
+      "type": "String(40)",
+      "required": false,
+      "description": "Transaction identifier for the bank. Must be unique. Recommended to define to avoid error 421."
+    },
+    {
+      "name": "details",
+      "in": "body",
+      "type": "String(100)",
+      "required": false,
+      "description": "Item description. Required for PCI compliance; forwarded if acquirer supports."
+    },
+    {
+      "name": "cardholder",
+      "in": "body",
+      "type": "JSONObject",
+      "required": true,
+      "description": "Information of the cardholder (see Cardholder schema)."
+    },
+    {
+      "name": "cardholder_verify",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Authentication (KYC) fields (see CardholderVerify schema). Supported: Direct Pay."
+    },
+    {
+      "name": "kyc_verification_merchant_id",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Merchant id that can only do authentication except authorization."
+    },
+    {
+      "name": "instalment",
+      "in": "body",
+      "type": "int(2)",
+      "required": false,
+      "description": "Number of intervals of payments. Default 0. Only Support: Direct Pay."
+    },
+    {
+      "name": "delay_capture_in_days",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "Days between authorization and capture. Default 0. -1 disables automatic capture."
+    },
+    {
+      "name": "three_domain_secure",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Enable 3D Secure authentication. Default false. Only applicable to Direct Pay."
+    },
+    {
+      "name": "result_url",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Transaction result notification URL object (see ResultUrl schema). Required for e-payment and Direct Pay 3D transactions."
+    },
+    {
+      "name": "card_ccv",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Security code. Cannot be used together with ccv_prime. Supported only for Direct Pay. Use when ccv_prime was not obtained but bank should verify the security code, or for 3DS 2.0 authentication with an AMEX card."
+    },
+    {
+      "name": "redeem",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether to use the redeem. Support: National Credit Card Center of R.O.C. Only Support: Direct Pay."
+    },
+    {
+      "name": "additional_data",
+      "in": "body",
+      "type": "JSONString(3000)",
+      "required": false,
+      "description": "Data encrypted and decrypted for other customization requirements."
+    },
+    {
+      "name": "ccv_prime",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "One-time token of security code returned from get-ccv-prime. Cannot be used with card_ccv. Expires after 90 seconds. Support: Direct Pay. Sandbox test values provided in source."
+    },
+    {
+      "name": "device_id",
+      "in": "body",
+      "type": "String(64)",
+      "required": false,
+      "description": "ID of each device. Must be included when using TapPay RBA transaction risk analysis system. Obtain via Get Device ID of TapPay SDK."
+    },
+    {
+      "name": "is_merchant_initiated_transaction",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Whether the transaction is a Merchant-Initiated Transaction (MIT) or Customer-Initiated Transaction (CIT). Default false. true = MIT (recurring, subscription), false = CIT."
+    },
+    {
+      "name": "cardholderinfo_prime",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Obtain using get-cardholderinfo-prime."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "PayByCardTokenRequest",
+    "required": true,
+    "description": "JSON body. Header x-api-key. Pay using a permanent card_key/card_token; Sandbox/Production /tpc/payment/pay-by-token"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Transaction result JSON; status=0 indicates success. HTTP status not stated by source (200 assumed).",
+      "schema": "PayByCardTokenResponse",
+      "schema_ref": "PayByCardTokenResponse",
+      "source": "tappay-backend-api.md — Pay by Card Token API Response"
+    }
+  ],
+  "tags": [
+    "Direct Pay",
+    "Token Pay"
+  ],
+  "security": [
+    "x-api-key"
+  ],
+  "examples": [
+    {
+      "title": "Request body (Format code block)",
+      "content_type": "application/json",
+      "value": {
+        "card_key": "String",
+        "card_token": "String",
+        "partner_key": "String",
+        "currency": "TWD",
+        "merchant_id": "merchantA",
+        "details": "TapPay Test",
+        "amount": 100
+      }
+    }
+  ],
+  "missing": []
+}

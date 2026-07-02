@@ -4,26 +4,24 @@
     {
       "name": "CheckMacValue",
       "purpose": "signature",
-      "algorithm": "SHA256 per EncryptType=1",
+      "algorithm": "SHA256",
       "mode": null,
       "padding": null,
-      "encoding": "URL encode + 轉小寫（依 PHP urlencode 轉換表）後 SHA256，再轉大寫",
+      "encoding": "URL encode (.NET) + lower-case then SHA256 hex upper-case",
       "key_source": {
-        "key": "商店 HashKey",
-        "iv": "商店 HashIV",
-        "note": "測試環境HashKey: 5294y06JbISpM5x9；測試環境HashIV: v77hoKGq4kWxNNIS。平台商使用時，請使用平台商的HashKey及HashIV並產生檢查碼計算"
+        "key": "HashKey (前綴)",
+        "iv": "HashIV (後綴)",
+        "note": "測試環境 HashKey:5294y06JbISpM5x9 / HashIV:v77hoKGq4kWxNNIS（平台商另有一組）"
       },
       "payload_assembly": [
         {
           "step": 1,
-          "desc": "將所有傳遞參數依參數名稱第一個英文字母 A→Z 排序，以 & 串連成 query 字串。",
-          "fields": [
-            "所有請求參數（CheckMacValue 除外）"
-          ]
+          "desc": "除 CheckMacValue 外所有參數依參數名英文字母 A→Z 排序，以 & 串連為「key=value&key=value」",
+          "fields": []
         },
         {
           "step": 2,
-          "desc": "字串最前面加上 HashKey、最後面加上 HashIV。",
+          "desc": "字串前面加上 HashKey=、後面加上 &HashIV=",
           "fields": [
             "HashKey",
             "HashIV"
@@ -31,89 +29,115 @@
         },
         {
           "step": 3,
-          "desc": "整串 URL encode 後轉小寫（PHP 需依 urlencode 轉換表更換字元）。",
+          "desc": "整串進行 URL encode",
           "fields": []
         },
         {
           "step": 4,
-          "desc": "以 SHA256 產生雜湊值，再轉大寫即為 CheckMacValue。",
+          "desc": "轉為小寫",
           "fields": []
+        },
+        {
+          "step": 5,
+          "desc": "依 .NET URLEncode 轉換表更換特定字元",
+          "fields": []
+        },
+        {
+          "step": 6,
+          "desc": "以 SHA256 加密產生雜湊值",
+          "fields": []
+        },
+        {
+          "step": 7,
+          "desc": "轉為大寫，即為 CheckMacValue",
+          "fields": [
+            "CheckMacValue"
+          ]
         }
       ],
       "verify": {
         "field": "CheckMacValue",
-        "method": "SHA256 per EncryptType=1",
-        "desc": "付款結果通知時特店須驗證CheckMacValue是否相符。查詢訂單時亦需檢查CheckMacValue。所有回傳參數皆需要加入檢查碼計算"
+        "method": "SHA256",
+        "desc": "送出與接收綠界資料時皆須以相同步驟計算並比對 CheckMacValue；EncryptType 固定為 1 (SHA256)"
       },
-      "source": "gw_p110.pdf — 12. 檢查碼機制 (lines 1636-1707)"
+      "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制"
     }
   ],
   "callbacks": [
     {
       "name": "付款結果通知 (ReturnURL)",
-      "trigger": "消費者付款完成後，綠界以背景(幕後) POST 將付款結果參數送至訂單的 ReturnURL。",
-      "transport": "HTTP POST，application/x-www-form-urlencoded，送至特店訂單設定的 ReturnURL。",
-      "payload_ref": null,
-      "verification": "特店必須以相同 HashKey/HashIV 重算 CheckMacValue 並比對，驗證通知真偽（參考檢查碼機制）。",
-      "expected_response": "特店須回應純字串 1|OK（第一碼為 1 表成功；0|ErrorMessage 表失敗）。此回應僅表示已收到通知，不影響訂單狀態。",
-      "source": "gw_p110.pdf — 5. 付款結果通知 / 回覆參數說明、注意事項"
+      "trigger": "消費者付款完成後綠界以背景 ServerPost 通知",
+      "transport": "HTTP POST application/x-www-form-urlencoded (form-data)",
+      "payload_ref": "schemas.PaymentResultNotification",
+      "verification": "特店須以 CheckMacValue 驗證通知內容",
+      "expected_response": "純字串 1|OK；未正確回應時每 5~15 分鐘重送、當天最多 4 次",
+      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知"
     }
   ],
   "field_conditions": [
     {
-      "scope": "AioCheckOut 產生訂單",
-      "rule": "EncryptType 請固定填 1（使用 SHA256）。",
-      "when": "建立訂單",
+      "scope": "AioCheckOutRequest",
+      "rule": "分期付款時 CreditInstallment 必填",
+      "when": "使用信用卡分期",
       "then_required": [
-        "EncryptType"
+        "CreditInstallment"
       ],
-      "source": "gw_p110.pdf — 4. 產生訂單 傳入參數 EncryptType"
+      "source": "gw_p110.pdf p.15 §4 CreditInstallment 說明"
     },
     {
-      "scope": "AioCheckOut 產生訂單",
-      "rule": "ReturnURL 與 OrderResultURL 不可設為相同位置；若同時設定 ClientBackURL 與 OrderResultURL，以 OrderResultURL 為主。",
-      "when": "設定付款結果回傳網址",
+      "scope": "AioCheckOutRequest",
+      "rule": "使用記憶卡號 (BindingCard=1) 時須提供 MerchantMemberID，且特店須有會員系統",
+      "when": "BindingCard=1",
+      "then_required": [
+        "MerchantMemberID"
+      ],
+      "source": "gw_p110.pdf p.14 §4 BindingCard/MerchantMemberID 說明"
+    },
+    {
+      "scope": "AioCheckOutRequest",
+      "rule": "OrderResultURL 不支援銀聯卡及非即時交易 (ATM/CVS/BARCODE)",
+      "when": "ChoosePayment 為銀聯卡或非即時付款",
       "then_required": [],
-      "source": "gw_p110.pdf — 4. 產生訂單 傳入參數 ReturnURL / OrderResultURL"
+      "source": "gw_p110.pdf p.13 §4 OrderResultURL 說明"
     },
     {
-      "scope": "查詢信用卡單筆明細記錄 CreditDetail/QueryTrade",
-      "rule": "CreditRefundId（信用卡授權單號 gwsr）需在建立訂單時將 NeedExtraPaidInfo 設為 Y，才能由付款結果通知取得。",
-      "when": "查詢信用卡單筆明細",
+      "scope": "CreditDetailQueryTradeRequest",
+      "rule": "CreditRefundId 需先於產生訂單時將 NeedExtraPaidInfo 設為 Y，才能由付款結果通知取得 gwsr",
+      "when": "欲查詢信用卡單筆明細",
       "then_required": [
-        "CreditRefundId"
+        "NeedExtraPaidInfo"
       ],
-      "source": "gw_p110.pdf — 7. 查詢信用卡單筆明細記錄 CreditRefundId"
+      "source": "gw_p110.pdf p.25 §7 CreditRefundId 說明"
     }
   ],
   "test_cases": [
     {
-      "name": "CheckMacValue 計算範例（AioCheckOut 建立訂單）",
+      "name": "測試環境信用卡成功付款",
       "operation_ref": "paths./Cashier/AioCheckOut/V5.post",
       "request": {
         "MerchantID": "2000132",
-        "MerchantTradeNo": "ecpay20130312153023",
-        "MerchantTradeDate": "2013/03/12 15:30:23",
-        "PaymentType": "aio",
-        "TotalAmount": 1000,
-        "TradeDesc": "促銷方案",
-        "ItemName": "Apple iphone 7 手機殼",
-        "ReturnURL": "https://www.ecpay.com.tw/receive.php",
-        "ChoosePayment": "ALL",
-        "EncryptType": 1
+        "TotalAmount": "（整數新台幣）",
+        "ChoosePayment": "Credit",
+        "EncryptType": "1",
+        "卡號": "4311-9522-2222-2222",
+        "安全碼": "222",
+        "有效月年": "需大於當下時間"
       },
-      "response": {},
-      "source": "gw_p110.pdf — 12. 檢查碼機制 範例（HashKey=5294y06JbISpM5x9, HashIV=v77hoKGq4kWxNNIS）"
+      "response": {
+        "付款結果通知 RtnCode": "1 (成功)",
+        "SimulatePaid": "0 表非模擬"
+      },
+      "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊 / 測試卡號"
     }
   ],
   "missing": [
     {
-      "area": "error_codes",
-      "detail": "完整交易狀態代碼表需至廠商後台查詢；文件僅列示部分代碼（如 1 成功、10200095 未成立）。"
+      "area": "CheckMacValue",
+      "detail": "URLEncode 轉換表 (.NET 編碼對照) 完整字元清單需參考文件附錄，擷取僅記錄步驟順序"
     },
     {
-      "area": "scope",
-      "detail": "定期定額（QueryCreditCardPeriodInfo / CreditCardPeriodAction）、對帳媒體檔下載等 API 不在本 case 範圍。"
+      "area": "error codes",
+      "detail": "完整交易錯誤代碼表以圖片呈現且持續新增，來源未完整列出"
     }
   ]
 }

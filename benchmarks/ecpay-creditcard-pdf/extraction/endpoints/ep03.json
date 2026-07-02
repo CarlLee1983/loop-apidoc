@@ -1,0 +1,65 @@
+{
+  "method": "POST",
+  "path": "/CreditDetail/QueryTrade/V2",
+  "source": "gw_p110.pdf p.25 §7 查詢信用卡單筆明細記錄 介接路徑",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "特店編號 (由 ecPay 提供)"
+    },
+    {
+      "name": "CreditRefundId",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "信用卡授權單號。建立訂單時將 NeedExtraPaidInfo 設為 Y，即可透過付款結果通知取得此參數 (CreditRefundId = gwsr)"
+    },
+    {
+      "name": "CreditAmount",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "金額"
+    },
+    {
+      "name": "CreditCheckCode",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "商家檢查碼。廠商後台->信用卡收單->信用卡授權資訊中可查到"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "檢查碼，請參考附錄檢查碼機制"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": "CreditDetailQueryTradeRequest",
+    "required": true,
+    "description": "查詢信用卡單筆明細記錄：查詢訂單信用卡授權主檔與關帳明細（測試環境無法使用）"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "以 JSON 回傳，含主要授權資訊與明細資訊 (close_data 陣列)；RtnMsg 為空代表成功",
+      "schema": "CreditDetailQueryTradeResponse",
+      "schema_ref": "CreditDetailQueryTradeResponse",
+      "source": "gw_p110.pdf p.25-p.28 §7 查詢信用卡單筆明細記錄 回傳參數說明"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "測試環境因無法提供實際授權故無法使用此 API"
+  ]
+}

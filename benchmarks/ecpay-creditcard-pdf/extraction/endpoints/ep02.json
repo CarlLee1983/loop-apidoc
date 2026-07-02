@@ -1,0 +1,63 @@
+{
+  "method": "POST",
+  "path": "/Cashier/QueryTradeInfo/V5",
+  "source": "gw_p110.pdf p.23 §6 查詢訂單 介接路徑",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "特店編號。範例 2000132"
+    },
+    {
+      "name": "MerchantTradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"
+    },
+    {
+      "name": "TimeStamp",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "驗證時間。將當下時間轉為 UnixTimeStamp 用於驗證介接時間區間，暫訂 3 分鐘內有效，超過則無效"
+    },
+    {
+      "name": "PlatformID",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "平台商代號。一般特店或平台商本身介接請帶空值"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "檢查碼，請參考附錄檢查碼機制"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": "QueryTradeInfoRequest",
+    "required": true,
+    "description": "查詢訂單：特店以背景 POST 傳送參數查詢訂單付款結果（產生訂單後 40 分鐘未收到通知時可查詢）"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "以 form-data「參數=值」回傳訂單資訊（TradeStatus 表付款狀態）；特店須驗證 CheckMacValue",
+      "schema": "QueryTradeInfoResponse",
+      "schema_ref": "QueryTradeInfoResponse",
+      "source": "gw_p110.pdf p.24 §6 查詢訂單 回傳參數說明"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

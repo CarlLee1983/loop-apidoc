@@ -1,0 +1,111 @@
+{
+  "method": "POST",
+  "path": "/tpc/transaction/query",
+  "source": "tappay-backend-api.md — Record API / URL https://docs.tappaysdk.com/tutorial/en/back.html#record-api",
+  "parameters": [
+    {
+      "name": "x-api-key",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Header authentication key (partner_key). x-api-key: YourPartnerKey."
+    },
+    {
+      "name": "partner_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Authentication key for each individual partner."
+    },
+    {
+      "name": "records_per_page",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "Number of records on each page, up to 200. Default 50."
+    },
+    {
+      "name": "page",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "The returned page. Default 0."
+    },
+    {
+      "name": "filters",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Restrictions on the trade records (see RecordFilters schema). Default None. Possible filters: time (required within filters, frame ≤ 90 days), amount, cardholder, merchant_id, record_status, rec_trade_id, order_number, bank_transaction_id, auth_code, currency, tsp, card_identifier."
+    },
+    {
+      "name": "order_by",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Criteria for ordering. Default attribute = time, is_descending = true. Contains attribute (String: \"time\" or \"amount\") and is_descending (boolean)."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "RecordRequest",
+    "required": true,
+    "description": "JSON body. Header x-api-key. Retrieve trade records with filters/paging (time filter required, frame ≤ 90 days)"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Trade records JSON; status=2 indicates end of list. HTTP status not stated by source (200 assumed).",
+      "schema": "RecordResponse",
+      "schema_ref": "RecordResponse",
+      "source": "tappay-backend-api.md — Record API Response"
+    }
+  ],
+  "tags": [
+    "Record"
+  ],
+  "security": [
+    "x-api-key"
+  ],
+  "examples": [
+    {
+      "title": "Request body (Format code block)",
+      "content_type": "application/json",
+      "value": {
+        "partner_key": "String",
+        "records_per_page": "int",
+        "page": "int",
+        "filters": {
+          "time": {
+            "start_time": "long",
+            "end_time": "long"
+          },
+          "amount": {
+            "upper_limit": "int",
+            "lower_limit": "int"
+          },
+          "cardholder": {
+            "phone_number": "String",
+            "name": "String",
+            "email": "String"
+          },
+          "merchant_id": [
+            "String"
+          ],
+          "record_status": "int",
+          "rec_trade_id": "String",
+          "order_number": "String",
+          "bank_transaction_id": "String",
+          "currency": "String"
+        },
+        "order_by": {
+          "attribute": "String (\"time\" or \"amount\")",
+          "is_descending": "boolean"
+        }
+      }
+    }
+  ],
+  "missing": [
+    "trade_records array element structure not detailed in source"
+  ]
+}

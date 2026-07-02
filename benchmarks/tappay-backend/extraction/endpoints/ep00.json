@@ -1,0 +1,235 @@
+{
+  "method": "POST",
+  "path": "/tpc/payment/pay-by-prime",
+  "source": "tappay-backend-api.md — Pay by Prime API / URL https://docs.tappaysdk.com/tutorial/en/back.html#pay-by-prime-api",
+  "parameters": [
+    {
+      "name": "x-api-key",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Header authentication key (partner_key). x-api-key: YourPartnerKey."
+    },
+    {
+      "name": "prime",
+      "in": "body",
+      "type": "String(71)",
+      "required": true,
+      "description": "The one-time token returned from getPrime. Expires after 90 seconds. If using Apple Pay Deferred Payments, keep prime yourself (default duration 30 days). Test prime can be used in sandbox."
+    },
+    {
+      "name": "partner_key",
+      "in": "body",
+      "type": "String(64)",
+      "required": true,
+      "description": "Authentication key for each individual partner."
+    },
+    {
+      "name": "merchant_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": true,
+      "description": "Involved merchant's identifier as defined on Portal."
+    },
+    {
+      "name": "merchant_group_id",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Merchant management settings set on the portal; transactions performed according to the portal's payment configuration. Cannot be used with merchant_id at the same time."
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "int",
+      "required": true,
+      "description": "Transaction price. Except TWD, transaction price should be times 100 (e.g. HKD1 = 100). See reference for each foreign currency's transaction limit. When using AFTEE, max amount is NT$9,999,999."
+    },
+    {
+      "name": "merchandise_details",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Item amount or points excluded from redeems. Only supported by some e-payments."
+    },
+    {
+      "name": "currency",
+      "in": "body",
+      "type": "String(3)",
+      "required": false,
+      "description": "Transaction currency, ISO 4217 alphabetic code, e.g. TWD."
+    },
+    {
+      "name": "order_number",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Self-defined identifier for each transaction. Does not allow null."
+    },
+    {
+      "name": "bank_transaction_id",
+      "in": "body",
+      "type": "String(40)",
+      "required": false,
+      "description": "Transaction identifier for the bank. May be customized but must be unique. Strongly recommended to define unique bank_transaction_id to avoid error 421: gateway time out."
+    },
+    {
+      "name": "details",
+      "in": "body",
+      "type": "String(100)",
+      "required": false,
+      "description": "Item description. Required for PCI compliance; forwarded by TapPay if acquirer supports. Required by some acquirers; if omitted the transaction may fail."
+    },
+    {
+      "name": "cardholder",
+      "in": "body",
+      "type": "JSONObject",
+      "required": true,
+      "description": "Information of the cardholder (see Cardholder schema). Feeds Fraud Detector and 3-D Secure risk verification."
+    },
+    {
+      "name": "cardholder_verify",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Authentication (KYC) fields (see CardholderVerify schema). Supported: Direct Pay."
+    },
+    {
+      "name": "kyc_verification_merchant_id",
+      "in": "body",
+      "type": "String",
+      "required": false,
+      "description": "Merchant id that can only do authentication except authorization. Support Industry: property and life insurance / electronic payment."
+    },
+    {
+      "name": "instalment",
+      "in": "body",
+      "type": "int(2)",
+      "required": false,
+      "description": "Number of intervals of payments. Default 0. Support: Taishin Bank, National Credit Card Center of R.O.C., NewebPay, Cathay United Bank, E.SUN BANK, CTBC BANK, globalpayments, UNION BANK OF TAIWAN. Only Support: Direct Pay."
+    },
+    {
+      "name": "delay_capture_in_days",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "Days between bank authorization and actual capture. Default 0. Use -1 to disable automatic capture (self-capture)."
+    },
+    {
+      "name": "three_domain_secure",
+      "in": "body",
+      "type": "Boolean",
+      "required": false,
+      "description": "Enable 3D Secure authentication. Default false. Only applicable to Direct Pay."
+    },
+    {
+      "name": "result_url",
+      "in": "body",
+      "type": "JSONObject",
+      "required": false,
+      "description": "Transaction result notification URL object (see ResultUrl schema). Required for e-payment and Direct Pay 3D transactions (when three_domain_secure = true)."
+    },
+    {
+      "name": "redeem",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether to use the redeem. Support: National Credit Card Center of R.O.C. Only Support: Direct Pay."
+    },
+    {
+      "name": "remember",
+      "in": "body",
+      "type": "boolean",
+      "required": false,
+      "description": "Whether to store this payment method. If true, response returns card_secret (card_key and card_token) for future Pay by Card Token transactions. Supported for Direct Pay and some e-payments with binding support."
+    },
+    {
+      "name": "additional_data",
+      "in": "body",
+      "type": "JSONString(3000)",
+      "required": false,
+      "description": "Data encrypted and decrypted for other customization requirements."
+    },
+    {
+      "name": "event_code",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Code defined by the bank, E-Wallet and merchants. Support: Easy Wallet."
+    },
+    {
+      "name": "product_image_url",
+      "in": "body",
+      "type": "String(500)",
+      "required": false,
+      "description": "Picture of the store or product on the pay page. Same feature as line_pay_product_image_url; if both set, product_image_url is used."
+    },
+    {
+      "name": "jko_pay_insurance_policy",
+      "in": "body",
+      "type": "StringArray",
+      "required": false,
+      "description": "JKOPAY insurance details of property and life insurance transaction (see JkoPayInsurancePolicy schema). Support: JKOPAY."
+    },
+    {
+      "name": "store_id",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "Store branch ID. Forwarded if supported by acquirer."
+    },
+    {
+      "name": "store_name",
+      "in": "body",
+      "type": "String(50)",
+      "required": false,
+      "description": "Store name. Forwarded if supported by acquirer."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "PayByPrimeRequest",
+    "required": true,
+    "description": "JSON body. Header: Content-Type: application/json, x-api-key: YourPartnerKey. Sandbox https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime ; Production https://prod.tappaysdk.com/tpc/payment/pay-by-prime"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Transaction result JSON; status=0 indicates success. HTTP status code not stated by source (200 assumed for success).",
+      "schema": "PayByPrimeResponse",
+      "schema_ref": "PayByPrimeResponse",
+      "source": "tappay-backend-api.md — Pay by Prime API Response"
+    }
+  ],
+  "tags": [
+    "Direct Pay",
+    "E-Payment",
+    "Token Pay"
+  ],
+  "security": [
+    "x-api-key"
+  ],
+  "examples": [
+    {
+      "title": "Request body (Format code block)",
+      "content_type": "application/json",
+      "value": {
+        "prime": "String",
+        "partner_key": "String",
+        "merchant_id": "merchantA",
+        "details": "TapPay Test",
+        "amount": 100,
+        "cardholder": {
+          "phone_number": "+886923456789",
+          "name": "Jane Doe",
+          "email": "Jane@Doe.com",
+          "zip_code": "12345",
+          "address": "123 1st Avenue, City, Country",
+          "national_id": "A123456789"
+        },
+        "remember": true
+      }
+    }
+  ],
+  "missing": []
+}

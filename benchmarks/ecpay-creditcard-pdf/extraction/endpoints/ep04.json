@@ -1,0 +1,79 @@
+{
+  "method": "POST",
+  "path": "/CreditDetail/DoAction",
+  "source": "gw_p110.pdf p.30 §8 信用卡請退款功能 介接路徑",
+  "parameters": [
+    {
+      "name": "MerchantID",
+      "in": "body",
+      "type": "String(10)",
+      "required": true,
+      "description": "特店編號 (由 ECPAY 提供)"
+    },
+    {
+      "name": "MerchantTradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"
+    },
+    {
+      "name": "TradeNo",
+      "in": "body",
+      "type": "String(20)",
+      "required": true,
+      "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"
+    },
+    {
+      "name": "Action",
+      "in": "body",
+      "type": "String(1)",
+      "required": true,
+      "description": "執行動作。C:關帳；R:退刷；E:取消；N:放棄"
+    },
+    {
+      "name": "TotalAmount",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "金額"
+    },
+    {
+      "name": "CheckMacValue",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "檢查碼，請參考附錄檢查碼機制"
+    },
+    {
+      "name": "PlatformID",
+      "in": "body",
+      "type": "String(10)",
+      "required": false,
+      "description": "平台商代號。一般特店或平台商本身介接請帶空值"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": "DoActionRequest",
+    "required": true,
+    "description": "信用卡請退款：依交易狀態執行關帳(C)/退刷(R)/取消(E)/放棄(N)（測試環境無法使用）"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "以 form-data「參數=值」回傳，RtnCode=1 代表成功",
+      "schema": "DoActionResponse",
+      "schema_ref": "DoActionResponse",
+      "source": "gw_p110.pdf p.31 §8 信用卡請退款功能 回傳參數說明"
+    }
+  ],
+  "tags": [
+    "信用卡"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "測試環境因無法提供實際授權故無法使用此 API"
+  ]
+}
