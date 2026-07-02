@@ -23,6 +23,11 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.foundry.approve import approve_candidate
+from loop_apidoc.foundry.importer import import_run
+from loop_apidoc.foundry.models import Docset
+from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
+from loop_apidoc.foundry.register import register_docset
 from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
@@ -198,6 +203,31 @@ def test_benchmark_score(case, assembled) -> None:
     # Core invariant: scoring does not change the validation verdict.
     want_pass = expect.get("current_status") == "PASS"
     assert assembled.report.ok is want_pass, f"{case.name}: score run perturbed validation ok"
+
+
+def test_benchmark_foundry(case, assembled, tmp_path) -> None:
+    """Full governance chain against a throwaway .foundry/: register → import →
+    approve → resolve current. import_run needs only a complete run dir (not a
+    PASS), so the EXPECTED_FAIL case imports fine and only approval needs the
+    allow_failing override."""
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    want_pass = expect.get("current_status") == "PASS"
+    root = tmp_path  # fresh .foundry/, zero pollution
+
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    imported = import_run(root, "bench", Path(assembled.run_dir))
+    asset = approve_candidate(
+        root, "bench", imported.run_id,
+        approved_by="bench", now=_FIXED_TS,
+        allow_failing=not want_pass,  # EXPECTED_FAIL cases (e.g. paypal) need this
+    )
+
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset.asset_id, f"{case.name}: current pointer != approved asset"
+    openapi = resolve_current_artifact(root, "bench", "openapi")
+    assert openapi.is_file(), f"{case.name}: current asset openapi artifact missing on disk"
 
 
 def test_benchmark_harness_discovers_cases() -> None:
