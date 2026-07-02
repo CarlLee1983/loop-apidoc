@@ -8,6 +8,7 @@ from loop_apidoc.manifest.models import (
     Manifest,
     ProcessingStatus,
     SourceFormat,
+    UrlSource,
 )
 from loop_apidoc.plan.models import (
     EndpointEntry,
@@ -117,6 +118,44 @@ def test_review_html_visualizes_generated_artifacts_for_manual_review(tmp_path):
     assert "缺少退款端點" in html
     assert "章節 A/B 認證名稱不同" in html
     assert "欄位 memo 未確認" in html
+
+
+def test_review_html_renders_url_sources_without_crashing(tmp_path):
+    # Regression: a manifest carrying a URL source (assemble --url ...) must not
+    # crash review-page generation. UrlSource has no `status` field — its status
+    # is derived from http_status.
+    manifest = Manifest(
+        sources_root="./sources",
+        generated_at=_NOW,
+        local_sources=[],
+        url_sources=[
+            UrlSource(
+                url="https://docs.example.com/api.html",
+                fetched_at=_NOW,
+                http_status=200,
+            ),
+            UrlSource(
+                url="https://docs.example.com/missing.html",
+                fetched_at=_NOW,
+                http_status=None,
+            ),
+        ],
+    )
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                method="GET",
+                path="/ping",
+                responses=[{"status": "200", "description": "ok"}],
+            )
+        ],
+    )
+    generate_outputs(plan, manifest, tmp_path)
+    html = (tmp_path / "review.html").read_text(encoding="utf-8")
+    assert "https://docs.example.com/api.html" in html
+    assert "https://docs.example.com/missing.html" in html
 
 
 def test_review_html_links_handoff(tmp_path):

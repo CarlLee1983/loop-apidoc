@@ -111,11 +111,18 @@ def _source_rows(manifest: Manifest) -> str:
             "</tr>"
         )
     for source in manifest.url_sources:
+        # UrlSource has no `status`; derive a label from the fetch http_status.
+        if source.http_status is None:
+            url_status = "未取得"
+        elif source.http_status == 200:
+            url_status = "ok"
+        else:
+            url_status = f"http {source.http_status}"
         rows.append(
             "<tr>"
             f"<td>{_h(source.url)}</td>"
             "<td>url</td>"
-            f"<td>{_h(source.status.value)}</td>"
+            f"<td>{_h(url_status)}</td>"
             "</tr>"
         )
     if not rows:
