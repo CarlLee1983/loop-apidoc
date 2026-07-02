@@ -277,19 +277,32 @@ def _compare_parameters(
             )
         )
     for key in sorted(base_params.keys() & head_params.keys()):
-        before = _schema_signature(base_params[key].get("schema"))
-        after = _schema_signature(head_params[key].get("schema"))
-        if before != after:
-            findings.append(
-                _finding(
-                    DiffImpact.BREAKING,
-                    "openapi.parameters",
-                    f"{op_key} parameters.{key}",
-                    "parameter schema changed",
-                    before,
-                    after,
-                )
+        base_schema = base_params[key].get("schema")
+        head_schema = head_params[key].get("schema")
+        if _looks_like_object(base_schema) and _looks_like_object(head_schema):
+            _compare_schema(
+                base_schema,
+                head_schema,
+                area="openapi.parameters",
+                location=f"{op_key} parameters.{key}",
+                findings=findings,
+                added_required_is_breaking=True,
+                removed_property_is_breaking=False,
             )
+        else:
+            before = _schema_signature(base_schema)
+            after = _schema_signature(head_schema)
+            if before != after:
+                findings.append(
+                    _finding(
+                        DiffImpact.BREAKING,
+                        "openapi.parameters",
+                        f"{op_key} parameters.{key}",
+                        "parameter schema changed",
+                        before,
+                        after,
+                    )
+                )
         if base_params[key].get("description") != head_params[key].get("description"):
             findings.append(
                 _finding(

@@ -451,6 +451,35 @@ def test_summary_counts_all_impacts():
     assert report.summary["source_only"] == 0
 
 
+def test_object_typed_parameter_property_removal_is_reported():
+    base = _doc()
+    head = _doc()
+    obj_param = {
+        "name": "filter",
+        "in": "query",
+        "schema": {
+            "type": "object",
+            "properties": {"a": {"type": "string"}, "b": {"type": "string"}},
+        },
+    }
+    base["paths"]["/payments"]["post"]["parameters"].append(obj_param)
+    head_param = {
+        "name": "filter",
+        "in": "query",
+        "schema": {"type": "object", "properties": {"a": {"type": "string"}}},
+    }
+    head["paths"]["/payments"]["post"]["parameters"].append(head_param)
+
+    findings = _findings(base, head)
+    removed = [
+        f for f in findings
+        if f.summary == "property removed"
+        and f.location == "POST /payments parameters.query.filter.b"
+    ]
+    assert len(removed) == 1
+    assert removed[0].impact is DiffImpact.CHANGED
+
+
 def test_looks_like_object_predicate():
     assert _looks_like_object({"type": "object"}) is True
     assert _looks_like_object({"properties": {"a": {"type": "string"}}}) is True
