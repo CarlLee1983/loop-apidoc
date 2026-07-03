@@ -16,6 +16,8 @@ Two reference files hold the heavy detail — load each when you reach that phas
   (load while extracting, steps 2–4).
 - **`reference/assemble-and-correction.md`** — the `assemble --json` contract, the issue
   model, and the correction strategy (load when handling assemble results, steps 5–7).
+- **`reference/url-fetching.md`** — the coverage-checked URL fetching SOP + `coverage.json`
+  schema (load when any source is a public URL, before fetching).
 
 ## CLI invocation (`<APIDOC>`)
 
@@ -68,9 +70,11 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   read it directly; preserve the original filename + headings so citations point back.
 - **OpenAPI JSON/YAML** → read as a source for endpoints/schemas/security/servers/examples;
   still go through `inventory.json` / `endpoints/*.json` (do not bypass).
-- **Public URLs** → fetch each once, save readable text/HTML/Markdown under
-  `<WORK>/url_sources/`, point subagents there (no re-fetching). Still pass the original URLs
-  to `manifest`/`assemble` via `--url`, and cite the original URL + anchor.
+- **Public URLs** → follow **`reference/url-fetching.md`** (discover → confirm → fetch →
+  report). Save readable text/HTML/Markdown under `<WORK>/url_sources/`, point subagents
+  there (no re-fetching), and write `<WORK>/url_sources/coverage.json`. Pass the original
+  URLs to `manifest`/`assemble` via `--url` and the coverage file via
+  `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the original URL + anchor.
 
 ## Subagent contract (extraction)
 
