@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import shutil
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -25,13 +25,14 @@ from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
 from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
+from loop_apidoc.foundry import store as foundry_store
 from loop_apidoc.foundry.approve import approve_candidate
 from loop_apidoc.foundry.importer import import_run
-from loop_apidoc.foundry.models import Docset
+from loop_apidoc.foundry.models import AssetStatus, Docset, FoundryApprovalError
 from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
 from loop_apidoc.foundry.register import register_docset
 from loop_apidoc.run.models import RunResult
-from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
+from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs, write_reports as write_score_reports
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -374,3 +375,79 @@ def test_benchmark_diff_detects_change(tmp_path_factory, tmp_path) -> None:
         and f.summary == "property no longer required"
         for f in by_impact[DiffImpact.CHANGED]
     ), f"missing changed (description loosened): {[(f.location, f.summary) for f in by_impact[DiffImpact.CHANGED]]}"
+
+
+def _score_candidate(run_dir: Path) -> int:
+    """Compute the CI-profile score for a run dir, write it to <run_dir>/score/
+    (the path approve_candidate reads via _read_score), and return the score.
+    The assembled run dir has no score.json, so the min_score gate needs this."""
+    report = evaluate_score(load_score_inputs(run_dir), profile=ScoreProfile.CI)
+    write_score_reports(report, run_dir / "score")
+    return report.score
+
+
+def test_benchmark_foundry_supersession(tmp_path_factory, tmp_path) -> None:
+    """Approving a second asset for the same docset supersedes the first and
+    moves the `current` pointer. Two distinct timestamps are required because
+    make_asset_id is one-second-resolution; identical timestamps would collide."""
+    case = _case_by_name(_STRIPE)
+    run = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+    run_dir = Path(run.run_dir)
+
+    v1_dir = tmp_path / "runs" / "v1"
+    v2_dir = tmp_path / "runs" / "v2"
+    shutil.copytree(run_dir, v1_dir)
+    shutil.copytree(run_dir, v2_dir)
+
+    root = tmp_path / "project"  # fresh .foundry/, zero pollution
+    root.mkdir()
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    import_run(root, "bench", v1_dir)  # run_id == "v1" (run_dir.name)
+    import_run(root, "bench", v2_dir)  # run_id == "v2"
+
+    asset_v1 = approve_candidate(root, "bench", "v1", approved_by="bench", now=_FIXED_TS)
+    asset_v2 = approve_candidate(
+        root, "bench", "v2", approved_by="bench", now=_FIXED_TS + timedelta(seconds=1),
+    )
+
+    superseded = foundry_store.load_asset(root, "bench", asset_v1.asset_id)
+    assert superseded.status is AssetStatus.SUPERSEDED, (
+        f"v1 asset should be superseded, got {superseded.status.value}"
+    )
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset_v2.asset_id, "current pointer should resolve to v2"
+
+
+def test_benchmark_foundry_min_score_gate(tmp_path_factory, tmp_path) -> None:
+    """approve_candidate rejects a candidate whose score is below min_score and
+    accepts one that meets it. allow_failing does NOT bypass this gate (it only
+    bypasses the validation-ok gate), so the success path uses a met min_score.
+    The candidate needs a real score.json (the run dir has none) — see
+    _score_candidate."""
+    case = _case_by_name(_STRIPE)
+    run = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+
+    cand_dir = tmp_path / "runs" / "gate"
+    shutil.copytree(Path(run.run_dir), cand_dir)
+    score = _score_candidate(cand_dir)  # writes cand_dir/score/score.json
+
+    root = tmp_path / "project"
+    root.mkdir()
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    import_run(root, "bench", cand_dir)  # run_id == "gate"
+
+    with pytest.raises(FoundryApprovalError):
+        approve_candidate(
+            root, "bench", "gate", approved_by="bench", now=_FIXED_TS,
+            min_score=score + 1,
+        )
+
+    asset = approve_candidate(
+        root, "bench", "gate", approved_by="bench", now=_FIXED_TS, min_score=score,
+    )
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset.asset_id, "met-min_score approval should become current"
