@@ -10,6 +10,7 @@ from loop_apidoc.preparation.coverage import (
     ResultStatus,
     UrlCoverage,
     load_coverage,
+    normalize_url,
 )
 
 
@@ -85,3 +86,11 @@ def test_load_rejects_invalid_json(tmp_path):
 def test_load_rejects_missing_file(tmp_path):
     with pytest.raises(CoverageInputError):
         load_coverage(tmp_path / "does-not-exist.json")
+
+
+def test_normalize_url_strips_fragment_and_trailing_slash():
+    assert normalize_url("https://a.example/doc/") == "https://a.example/doc"
+    assert normalize_url("https://a.example/doc#sec-2") == "https://a.example/doc"
+    assert normalize_url("https://a.example/doc/#top") == "https://a.example/doc"
+    # 同頁異寫正規化後相等
+    assert normalize_url("https://a.example/p/") == normalize_url("https://a.example/p#x")

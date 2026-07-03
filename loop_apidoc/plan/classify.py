@@ -48,22 +48,32 @@ def match_manifest_source(locator: str | None, manifest: Manifest) -> str | None
 
 
 def sole_source(manifest: Manifest) -> str | None:
-    """Return the lone usable source's identifier if the manifest has exactly one
-    (a single readable/supported local file, or a single URL), else None.
+    """Return the lone usable *document*'s identifier if the manifest collapses to
+    exactly one, else None.
 
-    When a notebook contains exactly one source document, every grounded answer
-    necessarily comes from it — NotebookLM cannot cite anything else. So an item
-    whose citation names a section (not the filename), or carries no locator at
-    all, is still attributable to that one source rather than left UNVERIFIED.
-    With multiple sources we cannot disambiguate and fall back to strict matching.
+    A document is a usable local source, plus each URL whose snapshot_file does NOT
+    point at a usable local source. A URL saved as a local snapshot (per the
+    url-fetching SOP) is the SAME document as that snapshot, so it is not counted
+    twice — otherwise every SOP-following URL run would have ≥2 documents and lose
+    single-source attribution. When exactly one document remains, a citation that
+    names a section (not the filename), or carries no locator, is still
+    attributable to it. With multiple documents we cannot disambiguate and fall
+    back to strict matching. The collapsed URL returns the LOCAL file's
+    relative_path (where the content actually lives, and what provenance targets),
+    not the URL.
     """
     usable = [
         s.relative_path
         for s in manifest.local_sources
         if s.supported and s.status not in _UNUSABLE
     ]
-    usable += [u.url for u in manifest.url_sources]
-    return usable[0] if len(usable) == 1 else None
+    usable_set = set(usable)
+    documents = list(usable)
+    for url_source in manifest.url_sources:
+        if url_source.snapshot_file is not None and url_source.snapshot_file in usable_set:
+            continue  # 這個 URL 就是某可用本地快照檔,不另計一份文件
+        documents.append(url_source.url)
+    return documents[0] if len(documents) == 1 else None
 
 
 def classify_item(

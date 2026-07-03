@@ -40,6 +40,7 @@ class UrlSource(BaseModel):
     http_status: int | None
     content_sha256: str | None = None
     note: str | None = None
+    snapshot_file: str | None = None
 
 
 class Manifest(BaseModel):

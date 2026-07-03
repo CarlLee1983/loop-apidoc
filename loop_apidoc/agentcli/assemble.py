@@ -18,11 +18,18 @@ from loop_apidoc.extraction.stages import QueryKind
 from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.generate.writer import generate_outputs
 from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.preparation import assess_preparation
 from loop_apidoc.preparation import write_reports as write_preparation_reports
-from loop_apidoc.preparation.coverage import CoverageInputError, load_coverage
+from loop_apidoc.preparation.coverage import (
+    CoverageInputError,
+    ResultStatus,
+    UrlCoverage,
+    load_coverage,
+    normalize_url,
+)
 from loop_apidoc.run.models import RunResult, RunStatus
 from loop_apidoc.run.persist import persist_plan
 from loop_apidoc.validate.report import write_reports as write_validation_reports
@@ -35,6 +42,47 @@ class AssembleInputError(ValueError):
 
 class RunDirectoryCollisionError(RuntimeError):
     """目標 run 目錄已存在時拋出,避免兩個 run 的輸出混在同一目錄(fail loudly)。"""
+
+
+# 只有帶 file 且成功抓到/需登入(仍留了本地檔)的 result 提供 URL→本地檔映射。
+_MAPPING_STATUSES = (
+    ResultStatus.FETCHED,
+    ResultStatus.FETCHED_RENDERED,
+    ResultStatus.AUTH_REQUIRED,
+)
+
+
+def _ledger_file_matches(ledger_file: str, relative_path: str) -> bool:
+    """帳本 file(相對 work dir,如 sources/overview.md)以 `/` 為界、
+    以某本地來源 relative_path(相對 sources_root)結尾即命中。"""
+    return ledger_file == relative_path or ledger_file.endswith("/" + relative_path)
+
+
+def backfill_snapshot_files(manifest: Manifest, coverage: UrlCoverage) -> Manifest:
+    """把 coverage 帳本 results[].file 的 URL→本地檔映射回填到
+    manifest.url_sources[].snapshot_file,回傳新的 Manifest(純函式,不就地修改)。
+
+    - URL 比對用 normalize_url(去 fragment/尾斜線)。
+    - 只有帶 file 且 status ∈ fetched/fetched_rendered/auth_required 的 result 提供映射。
+    - 帳本 file 對本地 relative_path 採路徑後綴匹配。
+    - 須唯一命中才配對;零命中或多重命中(含多個 result 映到不同檔)→ 維持 None,不誤配。
+    """
+    local_paths = [s.relative_path for s in manifest.local_sources]
+    updated: list[UrlSource] = []
+    for url_source in manifest.url_sources:
+        key = normalize_url(url_source.url)
+        candidates: set[str] = set()
+        for result in coverage.results:
+            if result.file is None or result.status not in _MAPPING_STATUSES:
+                continue
+            if normalize_url(result.url) != key:
+                continue
+            for rel in local_paths:
+                if _ledger_file_matches(result.file, rel):
+                    candidates.add(rel)
+        snapshot = next(iter(candidates)) if len(candidates) == 1 else None
+        updated.append(url_source.model_copy(update={"snapshot_file": snapshot}))
+    return manifest.model_copy(update={"url_sources": updated})
 
 
 def load_extraction_inputs(
@@ -154,6 +202,9 @@ def run_assemble_pipeline(
 
     manifest = build_manifest(
         sources_root=sources_root, urls=urls or [], generated_at=generated_at)
+    if url_coverage is not None:
+        # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
+        manifest = backfill_snapshot_files(manifest, url_coverage)
     (run_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2), encoding="utf-8")
 

@@ -72,6 +72,11 @@ def _first_error(exc: ValidationError) -> str:
     return f"{loc}: {err['msg']}"
 
 
+def normalize_url(url: str) -> str:
+    """比對用正規化:去除 fragment 與尾斜線,同頁異寫不誤報/不誤配。"""
+    return url.split("#", 1)[0].rstrip("/")
+
+
 def load_coverage(path: Path) -> UrlCoverage:
     """Read + validate coverage.json. Fail loud on any malformed input."""
     try:

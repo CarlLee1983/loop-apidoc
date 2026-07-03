@@ -7,8 +7,9 @@ from loop_apidoc.manifest.models import (
     Manifest,
     ProcessingStatus,
     SourceFormat,
+    UrlSource,
 )
-from loop_apidoc.plan.classify import classify_item, match_manifest_source
+from loop_apidoc.plan.classify import classify_item, match_manifest_source, sole_source
 from loop_apidoc.plan.models import PlanItemStatus
 
 
@@ -182,3 +183,93 @@ def test_single_source_ignores_unreadable_source():
     )
     assert status is PlanItemStatus.UNVERIFIED
     assert cite.manifest_source is None
+
+
+def _now():
+    return datetime(2026, 7, 4, tzinfo=timezone.utc)
+
+
+def _local_src(rel: str, status=ProcessingStatus.PENDING) -> LocalSource:
+    return LocalSource(
+        relative_path=rel, mime_type="text/markdown", source_format=SourceFormat.MARKDOWN,
+        size_bytes=1, sha256="x", scanned_at=_now(), supported=True, status=status,
+    )
+
+
+def _url_src(url: str, snapshot_file: str | None = None) -> UrlSource:
+    return UrlSource(url=url, fetched_at=_now(), http_status=200, snapshot_file=snapshot_file)
+
+
+def test_sole_source_collapses_url_pointing_to_local_snapshot():
+    # 1 快照檔 + 1 entry URL(snapshot 指回該檔)→ 1 份文件 → 回傳本地檔 relative_path
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md")],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    assert sole_source(manifest) == "overview.md"
+
+
+def test_sole_source_url_without_snapshot_counts_as_separate_document():
+    # 無 snapshot_file → URL 另計一份 → 2 份文件 → None(維持現狀)
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md")],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file=None)],
+    )
+    assert sole_source(manifest) is None
+
+
+def test_sole_source_snapshot_to_unusable_source_does_not_collapse():
+    # snapshot_file 指向不可用(UNREADABLE)本地來源 → 該 URL 不被摺疊,另計一份
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md", status=ProcessingStatus.UNREADABLE)],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    # 本地來源不可用(0 份)+ URL 不摺疊(1 份)→ 恰好 1 份 → 回傳 URL
+    assert sole_source(manifest) == "https://a.example/overview"
+
+
+def test_sole_source_snapshot_to_unsupported_source_does_not_collapse():
+    # snapshot_file 指向不可用(UNSUPPORTED)本地來源 → 該 URL 不被摺疊,另計一份
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md", status=ProcessingStatus.UNSUPPORTED)],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    # 本地來源不可用(0 份)+ URL 不摺疊(1 份)→ 恰好 1 份 → 回傳 URL
+    assert sole_source(manifest) == "https://a.example/overview"
+
+
+def test_sole_source_snapshot_to_duplicate_source_does_not_collapse():
+    # snapshot_file 指向不可用(DUPLICATE)本地來源 → 該 URL 不被摺疊,另計一份
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md", status=ProcessingStatus.DUPLICATE)],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    # 本地來源不可用(0 份)+ URL 不摺疊(1 份)→ 恰好 1 份 → 回傳 URL
+    assert sole_source(manifest) == "https://a.example/overview"
+
+
+def test_sole_source_dangling_snapshot_reference_does_not_collapse():
+    # snapshot_file 指向 manifest.local_sources 中根本不存在的 relative_path
+    # (懸空引用)→ URL 摺疊目標不在可用集合中 → 不摺疊 → 連同另一份可用本地來源
+    # 共 2 份文件 → None
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md")],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="missing.md")],
+    )
+    assert sole_source(manifest) is None
+
+
+def test_sole_source_multi_file_plus_url_still_none():
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("a.md"), _local_src("b.md")],
+        url_sources=[_url_src("https://a.example/a", snapshot_file="a.md")],
+    )
+    # 摺疊後仍是 a.md + b.md = 2 份 → None(多來源 run 仍須嚴格比對)
+    assert sole_source(manifest) is None
