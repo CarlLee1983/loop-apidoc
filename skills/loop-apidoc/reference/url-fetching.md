@@ -33,7 +33,7 @@ and set `confirmed_by_user: false` in coverage.json.
 
 ## 4. Report (coverage)
 
-After fetching, write `<WORK>/url_sources/coverage.json` (schema in §6). Then run
+After fetching, write `<WORK>/url_sources/coverage.json` (schema in §7). Then run
 assemble with `--url-coverage "<WORK>/url_sources/coverage.json"`. The preparation
 stage compares expected vs. results and emits `warning`-level findings for gaps
 (fetch failures, empty shells, unfetched expected pages, auth-required pages without
