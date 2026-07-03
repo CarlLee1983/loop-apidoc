@@ -202,6 +202,9 @@ def run_assemble_pipeline(
 
     manifest = build_manifest(
         sources_root=sources_root, urls=urls or [], generated_at=generated_at)
+    if url_coverage is not None:
+        # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
+        manifest = backfill_snapshot_files(manifest, url_coverage)
     (run_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2), encoding="utf-8")
 

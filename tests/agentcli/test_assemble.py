@@ -4,8 +4,10 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import httpx
 import pytest
 
+from loop_apidoc import manifest as _manifest_pkg  # noqa: F401  (確保套件已載入)
 from loop_apidoc.agentcli.assemble import (
     AssembleInputError,
     backfill_snapshot_files,
@@ -252,3 +254,84 @@ def test_backfill_multiple_results_to_different_files_leaves_none():
     ])
     out = backfill_snapshot_files(manifest, coverage)
     assert out.url_sources[0].snapshot_file is None
+
+
+def _mock_client() -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html><body>overview</body></html>")
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def test_pipeline_backfills_snapshot_file_into_manifest(tmp_path, monkeypatch):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "overview.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+
+    # coverage 帳本:entry URL 對應 sources/overview.md 快照
+    cov = tmp_path / "coverage.json"
+    cov.write_text(json.dumps({
+        "entry_url": "https://a.example/overview",
+        "confirmed_by_user": True,
+        "expected": [{"url": "https://a.example/overview", "source": "user"}],
+        "results": [{"url": "https://a.example/overview", "status": "fetched",
+                     "file": "sources/overview.md", "method": "defuddle"}],
+    }), encoding="utf-8")
+
+    # build_manifest 內部會探測 URL — 用 MockTransport 攔截,避免真網路。
+    real_build = assemble_mod.build_manifest
+
+    def fake_build(*, sources_root, urls, generated_at):
+        return real_build(sources_root=sources_root, urls=urls,
+                          generated_at=generated_at, client=_mock_client())
+
+    monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
+
+    out = tmp_path / "out"
+    assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=out,
+        run_id="run-cov",
+        generated_at=datetime(2026, 7, 4, tzinfo=timezone.utc),
+        urls=["https://a.example/overview"],
+        url_coverage_path=cov,
+    )
+
+    manifest_payload = json.loads(
+        (out / "run-cov" / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest_payload["url_sources"][0]["snapshot_file"] == "overview.md"
+
+
+def test_pipeline_without_coverage_leaves_snapshot_file_none(tmp_path, monkeypatch):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "overview.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+
+    real_build = assemble_mod.build_manifest
+
+    def fake_build(*, sources_root, urls, generated_at):
+        return real_build(sources_root=sources_root, urls=urls,
+                          generated_at=generated_at, client=_mock_client())
+
+    monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
+
+    out = tmp_path / "out"
+    assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=out,
+        run_id="run-nocov",
+        generated_at=datetime(2026, 7, 4, tzinfo=timezone.utc),
+        urls=["https://a.example/overview"],
+        url_coverage_path=None,
+    )
+
+    manifest_payload = json.loads(
+        (out / "run-nocov" / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest_payload["url_sources"][0]["snapshot_file"] is None
