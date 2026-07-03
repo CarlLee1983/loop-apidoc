@@ -5,6 +5,7 @@ from typing import Any
 
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import NormalizationPlan
+from loop_apidoc.preparation.coverage import ResultStatus, UrlCoverage
 from loop_apidoc.preparation.models import (
     PreparationFinding,
     PreparationPhase,
@@ -298,12 +299,135 @@ def _assess_integration(plan: NormalizationPlan) -> PreparationPhase:
     )
 
 
+def _assess_url_coverage(
+    manifest: Manifest, coverage: UrlCoverage | None
+) -> PreparationPhase | None:
+    """比對「應抓 vs 實抓」的 URL 涵蓋率。僅在 run 有 URL 來源時啟用;
+    全為 warning——遺漏是誠實回報的缺口,不擋 pipeline,但必須看得見。"""
+    if not manifest.url_sources:
+        return None
+
+    findings: list[PreparationFinding] = []
+
+    if coverage is None:
+        findings.append(
+            _finding(
+                PreparationSeverity.WARNING,
+                "url_sources/coverage.json is missing; URL coverage is unknown",
+                "Follow reference/url-fetching.md, write url_sources/coverage.json, "
+                "and pass it to assemble via --url-coverage.",
+                target_file="url_sources/coverage.json",
+            )
+        )
+        return _phase(
+            "url_coverage",
+            "URL Coverage",
+            {
+                "url_sources": len(manifest.url_sources),
+                "expected": 0,
+                "fetched": 0,
+                "fetch_failed": 0,
+                "empty_suspect": 0,
+                "auth_required": 0,
+                "not_fetched": 0,
+            },
+            findings,
+        )
+
+    if not coverage.confirmed_by_user:
+        findings.append(
+            _finding(
+                PreparationSeverity.WARNING,
+                "expected URL list was not confirmed by a human",
+                "Review the discovered page list with the user, or accept it as "
+                "machine-discovered only.",
+                target_file="url_sources/coverage.json",
+                field_path="/confirmed_by_user",
+            )
+        )
+
+    fetched = fetch_failed = empty_suspect = auth_required = 0
+    for result in coverage.results:
+        if result.status in (ResultStatus.FETCHED, ResultStatus.FETCHED_RENDERED):
+            fetched += 1
+        elif result.status is ResultStatus.FETCH_FAILED:
+            fetch_failed += 1
+            findings.append(
+                _finding(
+                    PreparationSeverity.WARNING,
+                    f"URL fetch failed: {result.url}",
+                    "Re-fetch the page; if it is a JS SPA, render it with Playwright "
+                    "before saving.",
+                    evidence=result.url,
+                    target_file="url_sources/coverage.json",
+                )
+            )
+        elif result.status is ResultStatus.EMPTY_SUSPECT:
+            empty_suspect += 1
+            findings.append(
+                _finding(
+                    PreparationSeverity.WARNING,
+                    f"URL fetched but looks empty: {result.url}",
+                    "Re-fetch with Playwright rendering; do not fill the gap with "
+                    "inferred content.",
+                    evidence=result.url,
+                    target_file="url_sources/coverage.json",
+                )
+            )
+        elif result.status is ResultStatus.AUTH_REQUIRED:
+            auth_required += 1
+            if result.file is None:
+                findings.append(
+                    _finding(
+                        PreparationSeverity.WARNING,
+                        f"URL requires login and has no local alternative: {result.url}",
+                        "Log in manually, save the page (HTML/PDF) into the local "
+                        "sources, and reference it in results[].file.",
+                        evidence=result.url,
+                        target_file="url_sources/coverage.json",
+                    )
+                )
+        # ResultStatus.SKIPPED_BY_USER → intentional drop, no finding.
+
+    fetched_urls = {result.url for result in coverage.results}
+    not_fetched = 0
+    for expected in coverage.expected:
+        if expected.url not in fetched_urls:
+            not_fetched += 1
+            findings.append(
+                _finding(
+                    PreparationSeverity.WARNING,
+                    f"expected URL was never fetched: {expected.url}",
+                    "Fetch the page per reference/url-fetching.md, or mark it "
+                    "skipped_by_user if intentionally dropped.",
+                    evidence=expected.url,
+                    target_file="url_sources/coverage.json",
+                )
+            )
+
+    return _phase(
+        "url_coverage",
+        "URL Coverage",
+        {
+            "url_sources": len(manifest.url_sources),
+            "expected": len(coverage.expected),
+            "fetched": fetched,
+            "fetch_failed": fetch_failed,
+            "empty_suspect": empty_suspect,
+            "auth_required": auth_required,
+            "not_fetched": not_fetched,
+        },
+        findings,
+    )
+
+
 def assess_preparation(
     *,
     manifest: Manifest,
     inventory: dict,
     endpoint_texts: list[str],
     plan: NormalizationPlan,
+    url_coverage: UrlCoverage | None = None,
 ) -> PreparationReport:
     phases = [
         _assess_sources(manifest),
@@ -311,6 +435,9 @@ def assess_preparation(
         _assess_plan(plan),
         _assess_integration(plan),
     ]
+    url_phase = _assess_url_coverage(manifest, url_coverage)
+    if url_phase is not None:
+        phases.append(url_phase)
     return PreparationReport(
         status=_overall_status(phases),
         summary=_summary(phases),
