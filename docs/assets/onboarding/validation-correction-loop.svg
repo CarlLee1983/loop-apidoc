@@ -1,0 +1,73 @@
+<svg width="1120" height="640" viewBox="0 0 1120 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">provenance 驗證與修正迴圈</title>
+  <desc id="desc">provenance target 與 OpenAPI 位置對齊；驗證問題分成可修正與不可修正，agent 最多三輪回頭重讀來源並覆寫 JSON。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#2c3043" flood-opacity=".16"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#15a39a"/>
+    </marker>
+    <marker id="stoparrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#ff6f61"/>
+    </marker>
+    <style>
+      text{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+      .h{font-size:26px;font-weight:900;fill:#2c3043}
+      .p{font-size:16px;fill:#5d6478}
+      .title{font-size:20px;font-weight:850;fill:#2c3043}
+      .body{font-size:16px;fill:#5d6478}
+      .code{font-size:14px;font-weight:800}
+    </style>
+  </defs>
+  <rect width="1120" height="640" rx="28" fill="#fff"/>
+  <rect x="24" y="24" width="1072" height="592" rx="24" fill="#faf7ef" stroke="#ece5d8" stroke-width="2"/>
+  <text x="62" y="78" class="h">驗證不是盲目重試：先對齊 target，再分類處理</text>
+  <text x="62" y="111" class="p">所有輸出都要有 provenance target；validate 依問題類型決定能否回頭修正。</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="168" width="272" height="168" rx="16" fill="#fff" stroke="#d6cffb" stroke-width="2.5"/>
+    <text x="98" y="208" class="title">provenance.json</text>
+    <rect x="98" y="232" width="216" height="30" rx="7" fill="#e7e3fd"/>
+    <text x="112" y="252" class="mono code" fill="#5b4cc4">target: paths./pay.post</text>
+    <rect x="98" y="276" width="216" height="30" rx="7" fill="#e7e3fd"/>
+    <text x="112" y="296" class="mono code" fill="#5b4cc4">source: PDF p.12</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="424" y="168" width="272" height="168" rx="16" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
+    <text x="452" y="208" class="title">openapi.yaml</text>
+    <rect x="452" y="232" width="216" height="30" rx="7" fill="#d8f3f0"/>
+    <text x="466" y="252" class="mono code" fill="#0f7a73">paths./pay.post</text>
+    <rect x="452" y="276" width="216" height="30" rx="7" fill="#d8f3f0"/>
+    <text x="466" y="296" class="mono code" fill="#0f7a73">requestBody / responses</text>
+  </g>
+  <path d="M342 247H424" stroke="#15a39a" stroke-width="4" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+  <text x="383" y="229" text-anchor="middle" class="mono" font-size="13" font-weight="800" fill="#0f7a73">1:1</text>
+
+  <g filter="url(#shadow)">
+    <rect x="778" y="168" width="272" height="168" rx="16" fill="#fff" stroke="#ff6f61" stroke-width="2.5"/>
+    <text x="806" y="208" class="title">validate</text>
+    <text x="806" y="243" class="body">結構、完整性、一致性、</text>
+    <text x="806" y="274" class="body">no-speculation 四類檢查。</text>
+    <text x="806" y="306" class="mono code" fill="#d9483b">report.{json,md}</text>
+  </g>
+  <path d="M696 247H778" stroke="#15a39a" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="120" y="420" width="382" height="126" rx="16" fill="#d8f3f0" stroke="#15a39a" stroke-width="2"/>
+    <text x="150" y="459" class="title">FIXABLE：回頭修 seam</text>
+    <text x="150" y="492" class="body">OPENAPI_INVALID / OUTPUT_MISMATCH / REQUIRED_INFO_MISSING</text>
+    <text x="150" y="522" class="body">agent 重讀受影響來源，覆寫 JSON，再跑 assemble。</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="618" y="420" width="382" height="126" rx="16" fill="#ffe2dd" stroke="#ff6f61" stroke-width="2"/>
+    <text x="648" y="459" class="title">FAIL-CLOSED：不補寫</text>
+    <text x="648" y="492" class="body">SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</text>
+    <text x="648" y="522" class="body">如實回報缺漏或衝突，禁止用慣例猜答案。</text>
+  </g>
+  <path d="M914 336C914 375 512 375 380 420" stroke="#15a39a" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M914 336V420" stroke="#ff6f61" stroke-width="4" marker-end="url(#stoparrow)"/>
+  <path d="M311 420C245 370 252 324 295 306" stroke="#15a39a" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="274" y="377" class="mono" font-size="14" font-weight="800" fill="#0f7a73">最多 3 輪</text>
+</svg>

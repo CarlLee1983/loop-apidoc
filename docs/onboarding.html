@@ -315,6 +315,34 @@
 
   /* ---------- provenance art ---------- */
   .prov-art { width: 100%; max-width: 720px; margin: 10px auto 0; display: block; }
+  .visual-figure {
+    margin: 10px 0 34px;
+    padding: 0;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .visual-frame {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+    max-width: 100%;
+    min-width: 0;
+  }
+  .alt .visual-frame { background: var(--bg); }
+  .visual-frame img {
+    display: block;
+    width: max(100%, 760px);
+    max-width: none;
+    height: auto;
+  }
+  .visual-figure figcaption {
+    margin-top: 10px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    text-align: center;
+  }
 
   /* ---------- classification (fixable vs not) ---------- */
   .cls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -493,6 +521,13 @@
     <h2 class="section-title">這不是一次性轉檔,而是四個閉環</h2>
     <p class="section-lead">loop-apidoc 的工程重點不是「產一份文件」,而是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手。</p>
 
+    <figure class="visual-figure">
+      <div class="visual-frame">
+        <img src="assets/onboarding/loop-layers.svg" alt="四個閉環圍繞來源真實性核心的流層圖：source-grounded、quality、version、handoff。" loading="lazy" />
+      </div>
+      <figcaption>四個 loop 是同一條 pipeline 的四層保護，而不是四條互不相干的流程。</figcaption>
+    </figure>
+
     <div class="value-grid">
       <div class="value">
         <div class="badge tint-teal">
@@ -537,6 +572,13 @@
     <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
     <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界 —— 兩邊各自可獨立測試、各自可獨立替換。</p>
 
+    <figure class="visual-figure">
+      <div class="visual-frame">
+        <img src="assets/onboarding/two-stage-architecture.svg" alt="兩段式架構圖：前段 agent-native extraction 經 inventory.json 與 endpoints JSON seam 交給 deterministic CLI。" loading="lazy" />
+      </div>
+      <figcaption>不確定性集中在擷取前段；確定性後段只讀 seam JSON 並產生可重跑產物。</figcaption>
+    </figure>
+
     <div class="arch">
       <div class="arch-col arch-agent">
         <span class="lbl">前段 · 不確定性</span>
@@ -579,6 +621,13 @@
     <span class="eyebrow">端到端資料流</span>
     <h2 class="section-title">一次完整執行,經過哪些階段</h2>
     <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段;preparation、score、diff 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
+
+    <figure class="visual-figure">
+      <div class="visual-frame">
+        <img src="assets/onboarding/end-to-end-flow.svg" alt="端到端資料流圖：preprocess、擷取、manifest、plan、preparation、generate、validate、score、diff。" loading="lazy" />
+      </div>
+      <figcaption>主幹流程產出 run-dir；score 與 diff 把完成品延伸成品質與版本判讀訊號。</figcaption>
+    </figure>
 
     <div class="flow">
       <div class="flow-row">
@@ -808,6 +857,13 @@
     <span class="eyebrow">修正迴圈</span>
     <h2 class="section-title">驗證問題會被分類,而不是盲目重試</h2>
     <p class="section-lead">沒有 CLI 內建的修正迴圈。<code class="inline">assemble</code> 回報分類結果,修正由 <b>agent 自行驅動</b>:回頭重讀來源、覆寫對應 JSON、再跑一次,最多 3 輪。問題分兩類:</p>
+
+    <figure class="visual-figure">
+      <div class="visual-frame">
+        <img src="assets/onboarding/validation-correction-loop.svg" alt="provenance target 對齊 OpenAPI 後進入 validate，錯誤分類為可修正或 fail-closed 的修正迴圈圖。" loading="lazy" />
+      </div>
+      <figcaption>target 對齊先決定輸出是否有來源依據；分類結果再決定是修 seam 還是 fail-closed。</figcaption>
+    </figure>
 
     <div class="cls">
       <div class="cls-col cls-fix">

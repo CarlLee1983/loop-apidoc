@@ -1,0 +1,75 @@
+<svg width="1120" height="620" viewBox="0 0 1120 620" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">兩段式 agent 擷取與確定性 CLI 架構</title>
+  <desc id="desc">前段由 agent 和唯讀 subagent 讀取來源並寫出交界 JSON，後段 deterministic CLI 只組裝、生成與驗證。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#2c3043" flood-opacity=".16"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#15a39a"/>
+    </marker>
+    <style>
+      text{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+      .h{font-size:26px;font-weight:900;fill:#2c3043}
+      .p{font-size:16px;fill:#5d6478}
+      .k{font-size:15px;font-weight:800;letter-spacing:.08em}
+      .title{font-size:22px;font-weight:850;fill:#2c3043}
+      .body{font-size:16px;fill:#5d6478}
+      .file{font-size:16px;font-weight:800}
+    </style>
+  </defs>
+  <rect width="1120" height="620" rx="28" fill="#fff"/>
+  <rect x="24" y="24" width="1072" height="572" rx="24" fill="#faf7ef" stroke="#ece5d8" stroke-width="2"/>
+  <text x="62" y="78" class="h">兩段式架構：不確定的理解交給 agent，可重現的組裝交給 CLI</text>
+  <text x="62" y="111" class="p">唯一交界是 JSON seam；只要 seam 格式正確，前段與後段可以獨立測試、替換與重跑。</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="156" width="372" height="344" rx="18" fill="#fff" stroke="#f5a524" stroke-width="3"/>
+    <rect x="64" y="156" width="372" height="58" rx="18" fill="#fdeccb"/>
+    <text x="94" y="192" class="k" fill="#b5791a">前段 · 不確定性</text>
+    <text x="94" y="248" class="title">Agent-native extraction</text>
+    <text x="94" y="282" class="body">主 agent 派出唯讀 subagent fan-out。</text>
+    <text x="94" y="314" class="body">每個 subagent 只讀來源、搜尋、抓 URL，</text>
+    <text x="94" y="346" class="body">回傳結構化 JSON，不寫檔。</text>
+    <g>
+      <rect x="94" y="384" width="94" height="52" rx="10" fill="#fdeccb"/>
+      <rect x="205" y="384" width="94" height="52" rx="10" fill="#fdeccb"/>
+      <rect x="316" y="384" width="94" height="52" rx="10" fill="#fdeccb"/>
+      <text x="141" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#b5791a">read</text>
+      <text x="252" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#b5791a">search</text>
+      <text x="363" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#b5791a">fetch</text>
+    </g>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="472" y="207" width="176" height="242" rx="18" fill="#2c3043"/>
+    <text x="560" y="246" text-anchor="middle" font-size="14" font-weight="800" letter-spacing=".12em" fill="#fff" opacity=".78">唯一交界</text>
+    <rect x="500" y="277" width="120" height="42" rx="8" fill="#fff" opacity=".12"/>
+    <text x="560" y="303" text-anchor="middle" class="mono file" fill="#ffd9a8">inventory.json</text>
+    <rect x="500" y="342" width="120" height="42" rx="8" fill="#fff" opacity=".12"/>
+    <text x="560" y="368" text-anchor="middle" class="mono file" fill="#ffd9a8">endpoints/*.json</text>
+    <text x="560" y="412" text-anchor="middle" font-size="14" fill="#fff" opacity=".74">Pydantic schema gate</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="684" y="156" width="372" height="344" rx="18" fill="#fff" stroke="#15a39a" stroke-width="3"/>
+    <rect x="684" y="156" width="372" height="58" rx="18" fill="#d8f3f0"/>
+    <text x="714" y="192" class="k" fill="#0f7a73">後段 · 確定性純函式</text>
+    <text x="714" y="248" class="title">assemble / validate / score / diff</text>
+    <text x="714" y="282" class="body">CLI 不擷取，不猜測來源內容。</text>
+    <text x="714" y="314" class="body">只讀 seam JSON，依序 plan、preparation、</text>
+    <text x="714" y="346" class="body">generate、validate，再輸出可重跑產物。</text>
+    <g>
+      <rect x="714" y="384" width="94" height="52" rx="10" fill="#d8f3f0"/>
+      <rect x="825" y="384" width="94" height="52" rx="10" fill="#d8f3f0"/>
+      <rect x="936" y="384" width="94" height="52" rx="10" fill="#d8f3f0"/>
+      <text x="761" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#0f7a73">openapi</text>
+      <text x="872" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#0f7a73">reports</text>
+      <text x="983" y="416" text-anchor="middle" class="mono" font-size="14" font-weight="800" fill="#0f7a73">handoff</text>
+    </g>
+  </g>
+  <path d="M436 328H472" stroke="#15a39a" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M648 328H684" stroke="#15a39a" stroke-width="5" marker-end="url(#arrow)"/>
+  <text x="560" y="538" text-anchor="middle" class="p">關鍵邊界：agent 可重讀來源並覆寫 seam；CLI 後段只接受 schema-valid JSON，讓結果可重現。</text>
+</svg>
