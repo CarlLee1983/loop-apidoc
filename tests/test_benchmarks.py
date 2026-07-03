@@ -33,7 +33,15 @@ from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifa
 from loop_apidoc.foundry.register import register_docset
 from loop_apidoc.preparation import PreparationReport, PreparationSeverity, PreparationStatus
 from loop_apidoc.run.models import RunResult
-from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs, write_reports as write_score_reports
+from loop_apidoc.score import (
+    LoopVerdict,
+    ScoreProfile,
+    classify_findings,
+    evaluate_score,
+    load_score_inputs,
+    loop_verdict,
+    write_reports as write_score_reports,
+)
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -476,4 +484,40 @@ def test_benchmark_preparation(case, assembled) -> None:
     if expect.get("current_status") == "PASS":
         assert report.status is not PreparationStatus.BLOCKED, (
             f"{case.name}: validation-PASS case must not be preparation-blocked"
+        )
+
+
+def test_benchmark_score_verdict(case, assembled) -> None:
+    """From the real ScoreReport: (a) classify_findings is a lossless, disjoint
+    partition; (b) loop_verdict returns a valid LoopVerdict, deterministic across
+    a second identical call; (c) coupling invariant — score >= min_score implies
+    CONVERGED (the loop must not ask for more correction once the target is met)."""
+    run_dir = Path(assembled.run_dir)
+    report = evaluate_score(load_score_inputs(run_dir), profile=ScoreProfile.CI)
+
+    # (a) lossless, disjoint partition
+    reducible, irreducible = classify_findings(report.findings)
+    assert len(reducible) + len(irreducible) == len(report.findings), (
+        f"{case.name}: classify_findings dropped or duplicated findings"
+    )
+    for finding in report.findings:
+        assert (finding in reducible) ^ (finding in irreducible), (
+            f"{case.name}: finding not in exactly one partition: {finding.code}"
+        )
+
+    # (b) valid + deterministic verdict
+    kwargs = dict(
+        prev_score=None, curr_score=report.score, target=report.min_score,
+        round_index=1, max_rounds=3, findings=report.findings,
+    )
+    first = loop_verdict(**kwargs)
+    again = loop_verdict(**kwargs)
+    assert first.verdict in set(LoopVerdict), f"{case.name}: invalid loop verdict"
+    assert first.verdict == again.verdict, f"{case.name}: loop verdict not deterministic"
+
+    # (c) coupling invariant
+    if report.score >= report.min_score:
+        assert first.verdict is LoopVerdict.CONVERGED, (
+            f"{case.name}: score {report.score} >= min {report.min_score} but verdict "
+            f"is {first.verdict.value}, not converged"
         )
