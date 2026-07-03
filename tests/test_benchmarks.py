@@ -14,6 +14,7 @@ the committed `extraction/` + `expected/` are enough to define the assertions.
 from __future__ import annotations
 
 import json
+import shutil
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,7 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
 from loop_apidoc.foundry.approve import approve_candidate
 from loop_apidoc.foundry.importer import import_run
 from loop_apidoc.foundry.models import Docset
@@ -263,3 +265,23 @@ def test_benchmark_harness_discovers_cases() -> None:
             "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
             "github-webhooks", "paypal-webhooks-incomplete",
             "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= names
+
+
+def test_benchmark_diff_identity(case, assembled, tmp_path) -> None:
+    """Diffing a run against a byte-identical copy of itself yields no semantic
+    change. `source_only` differences (provenance/manifest source paths) are
+    allowed and never asserted on; the breaking/additive/changed sets must be
+    empty. This is the spurious-diff regression net."""
+    run_dir = Path(assembled.run_dir)
+    copy = tmp_path / "identical" / run_dir.name
+    shutil.copytree(run_dir, copy)
+
+    report = build_diff_report(load_run_artifacts(run_dir), load_run_artifacts(copy))
+    semantic = [
+        f for f in report.findings
+        if f.impact in {DiffImpact.BREAKING, DiffImpact.ADDITIVE, DiffImpact.CHANGED}
+    ]
+    assert not semantic, (
+        f"{case.name}: self-diff produced spurious semantic findings — "
+        f"{[(f.impact.value, f.location, f.summary) for f in semantic]}"
+    )
