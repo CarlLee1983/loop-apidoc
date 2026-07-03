@@ -205,3 +205,46 @@ def test_assemble_score_exit_code_tracks_ok_not_verdict(tmp_path):
     ])
     payload = json.loads(res.stdout)
     assert res.exit_code == (0 if payload["ok"] else 1)
+
+
+def _coverage_payload() -> dict:
+    return {
+        "entry_url": "https://docs.example.com/api/",
+        "confirmed_by_user": True,
+        "expected": [
+            {"url": "https://docs.example.com/api/ping", "title": "Ping", "source": "nav"}
+        ],
+        "results": [
+            {"url": "https://docs.example.com/api/ping", "status": "fetched",
+             "file": "url_sources/ping.md", "method": "defuddle"}
+        ],
+    }
+
+
+def test_assemble_with_url_coverage_adds_phase(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    coverage = tmp_path / "coverage.json"
+    coverage.write_text(json.dumps(_coverage_payload()), encoding="utf-8")
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--url", "https://docs.example.com/api/",
+        "--url-coverage", str(coverage), "--json",
+    ])
+    assert res.exit_code in (0, 1)
+    run_dir = Path(json.loads(res.stdout)["run_dir"])
+    prep = json.loads((run_dir / "preparation-report.json").read_text(encoding="utf-8"))
+    assert any(phase["id"] == "url_coverage" for phase in prep["phases"])
+
+
+def test_assemble_malformed_coverage_exits_2_without_run_dir(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    coverage = tmp_path / "coverage.json"
+    coverage.write_text('{"results": [{"status": "bogus"}]}', encoding="utf-8")
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--url", "https://docs.example.com/api/",
+        "--url-coverage", str(coverage),
+    ])
+    assert res.exit_code == 2
+    # fail-loud before any run dir is created
+    assert not out.exists() or not any(out.iterdir())

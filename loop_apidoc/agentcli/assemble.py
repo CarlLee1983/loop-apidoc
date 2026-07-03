@@ -22,6 +22,7 @@ from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.preparation import assess_preparation
 from loop_apidoc.preparation import write_reports as write_preparation_reports
+from loop_apidoc.preparation.coverage import CoverageInputError, load_coverage
 from loop_apidoc.run.models import RunResult, RunStatus
 from loop_apidoc.run.persist import persist_plan
 from loop_apidoc.validate.report import write_reports as write_validation_reports
@@ -121,6 +122,7 @@ def run_assemble_pipeline(
     run_id: str,
     generated_at: datetime,
     urls: list[str] | None = None,
+    url_coverage_path: Path | None = None,
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
     → generate → validate。不做擷取、不 spawn 任何 agent;
@@ -128,6 +130,12 @@ def run_assemble_pipeline(
     # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
     # 不留下孤兒 run 目錄。
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
+    url_coverage = None
+    if url_coverage_path is not None:
+        try:
+            url_coverage = load_coverage(url_coverage_path)
+        except CoverageInputError as exc:
+            raise AssembleInputError(str(exc)) from exc
 
     run_dir = output_root / run_id
     output_root.mkdir(parents=True, exist_ok=True)
@@ -154,6 +162,7 @@ def run_assemble_pipeline(
         inventory=inventory,
         endpoint_texts=endpoint_texts,
         plan=plan,
+        url_coverage=url_coverage,
     )
     write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
