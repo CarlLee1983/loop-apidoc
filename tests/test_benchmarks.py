@@ -65,15 +65,20 @@ def case(request) -> Path:
     return request.param
 
 
-# Assemble each case at most once per session; the produced run dir is treated
-# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
-# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
-# survives for the whole session.
-_ASSEMBLED: dict[str, RunResult] = {}
+_STRIPE = "stripe-basic-rest"
 
 
-@pytest.fixture
-def assembled(case, tmp_path_factory):
+def _case_by_name(name: str) -> Path:
+    return _BENCH_ROOT / name
+
+
+def _assemble_case(case: Path, tmp_path_factory) -> RunResult:
+    """Assemble a case at most once per session and memoize the RunResult.
+
+    Skips when the case's operator-provided sources are absent. The produced run
+    dir is treated read-only by every consumer (score reads it; foundry/diff
+    copytree FROM it), so a single shared dir is safe. Non-parametrized tests
+    reuse this same helper via `_case_by_name` so they never re-assemble."""
     if not _has_sources(case):
         pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
     if case.name not in _ASSEMBLED:
@@ -86,6 +91,18 @@ def assembled(case, tmp_path_factory):
             generated_at=_FIXED_TS,
         )
     return _ASSEMBLED[case.name]
+
+
+# Assemble each case at most once per session; the produced run dir is treated
+# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
+# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
+# survives for the whole session.
+_ASSEMBLED: dict[str, RunResult] = {}
+
+
+@pytest.fixture
+def assembled(case, tmp_path_factory):
+    return _assemble_case(case, tmp_path_factory)
 
 
 def test_benchmark_case(case, assembled) -> None:
