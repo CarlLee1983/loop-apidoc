@@ -5,7 +5,7 @@ from typing import Any
 
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import NormalizationPlan
-from loop_apidoc.preparation.coverage import ResultStatus, UrlCoverage
+from loop_apidoc.preparation.coverage import ResultStatus, UrlCoverage, normalize_url
 from loop_apidoc.preparation.models import (
     PreparationFinding,
     PreparationPhase,
@@ -299,11 +299,6 @@ def _assess_integration(plan: NormalizationPlan) -> PreparationPhase:
     )
 
 
-def _normalize_url(url: str) -> str:
-    """比對用正規化:去除 fragment 與尾斜線,同頁異寫不誤報未爬取。"""
-    return url.split("#", 1)[0].rstrip("/")
-
-
 def _assess_url_coverage(
     manifest: Manifest, coverage: UrlCoverage | None
 ) -> PreparationPhase | None:
@@ -394,11 +389,11 @@ def _assess_url_coverage(
                 )
         # ResultStatus.SKIPPED_BY_USER → intentional drop, no finding.
 
-    fetched_urls = {_normalize_url(result.url) for result in coverage.results}
+    fetched_urls = {normalize_url(result.url) for result in coverage.results}
     not_fetched = 0
     seen_expected: set[str] = set()
     for expected in coverage.expected:
-        key = _normalize_url(expected.url)
+        key = normalize_url(expected.url)
         if key in seen_expected:
             continue
         seen_expected.add(key)
