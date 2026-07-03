@@ -28,6 +28,7 @@ from loop_apidoc.foundry.importer import import_run
 from loop_apidoc.foundry.models import Docset
 from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
 from loop_apidoc.foundry.register import register_docset
+from loop_apidoc.run.models import RunResult
 from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
@@ -68,7 +69,7 @@ def case(request) -> Path:
 # read-only by every consumer (score reads it; foundry copytrees FROM it), so a
 # single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
 # survives for the whole session.
-_ASSEMBLED: dict[str, object] = {}
+_ASSEMBLED: dict[str, RunResult] = {}
 
 
 @pytest.fixture
@@ -191,13 +192,20 @@ def test_benchmark_score(case, assembled) -> None:
     validation pass/fail (the CLAUDE.md invariant). No per-case score floor — a
     validation-PASS case can legitimately score low on completeness warnings."""
     expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
-    inputs = load_score_inputs(Path(assembled.run_dir))
+    run_dir = Path(assembled.run_dir)
+    inputs = load_score_inputs(run_dir)
 
     for profile in (ScoreProfile.CI, ScoreProfile.REVIEW):
         report = evaluate_score(inputs, profile=profile)
-        assert 0 <= report.score <= 100, f"{case.name}: score {report.score} out of band"
+        # The 0–100 band is guaranteed by ScoreReport.score = Field(ge=0, le=100):
+        # an out-of-band value raises inside evaluate_score before it returns, so a
+        # band assert here can never fire. Assert the things the model does NOT
+        # enforce instead — the profile echo and cross-load determinism.
         assert report.profile is profile, f"{case.name}: profile not echoed"
-        again = evaluate_score(inputs, profile=profile)
+        # Determinism across a FRESH load of the run dir, not just a second call on
+        # the same inputs object — this also catches nondeterminism leaking in from
+        # I/O / dict-or-set ordering during loading, not only from the pure scorer.
+        again = evaluate_score(load_score_inputs(run_dir), profile=profile)
         assert again.score == report.score, f"{case.name}: score not deterministic"
 
     # Core invariant: scoring does not change the validation verdict.
