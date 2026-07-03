@@ -236,6 +236,21 @@ def test_assemble_with_url_coverage_adds_phase(tmp_path):
     assert any(phase["id"] == "url_coverage" for phase in prep["phases"])
 
 
+def test_assemble_url_coverage_without_url_exits_2_without_run_dir(tmp_path):
+    # 明確傳入 --url-coverage 但 run 沒有任何 URL 來源:靜默丟棄違反
+    # fail-loud 原則,必須在建立 run 目錄前報錯。
+    sources, extraction, out = _setup(tmp_path)
+    coverage = tmp_path / "coverage.json"
+    coverage.write_text(json.dumps(_coverage_payload()), encoding="utf-8")
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--url-coverage", str(coverage),
+    ])
+    assert res.exit_code == 2
+    assert "--url" in res.output
+    assert not out.exists() or not any(out.iterdir())
+
+
 def test_assemble_malformed_coverage_exits_2_without_run_dir(tmp_path):
     sources, extraction, out = _setup(tmp_path)
     coverage = tmp_path / "coverage.json"

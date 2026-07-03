@@ -132,6 +132,13 @@ def run_assemble_pipeline(
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
     url_coverage = None
     if url_coverage_path is not None:
+        # 沒有 URL 來源時 coverage phase 不會產生,明確傳入的帳本會被
+        # 靜默丟棄——違反 fail-loud,直接拒絕。
+        if not urls:
+            raise AssembleInputError(
+                "--url-coverage 需要搭配至少一個 --url 來源;"
+                "沒有 URL 來源的 run 不會產生 url_coverage phase,"
+                "傳入的 coverage 檔會被忽略")
         try:
             url_coverage = load_coverage(url_coverage_path)
         except CoverageInputError as exc:

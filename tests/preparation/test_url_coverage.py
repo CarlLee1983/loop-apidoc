@@ -150,6 +150,42 @@ def test_unconfirmed_list_warns():
     assert any("confirm" in f.summary.lower() for f in phase.findings)
 
 
+def test_duplicate_expected_urls_warn_once():
+    coverage = UrlCoverage(
+        entry_url="https://docs.example.com/api/",
+        confirmed_by_user=True,
+        expected=[
+            {"url": "https://docs.example.com/api/ghost", "source": "nav"},
+            {"url": "https://docs.example.com/api/ghost", "source": "sitemap"},
+        ],
+        results=[],
+    )
+    phase = _url_phase(_assess(_manifest_with_urls(), coverage))
+    ghost_findings = [f for f in phase.findings if "ghost" in f.summary]
+    assert len(ghost_findings) == 1
+    assert phase.metrics["not_fetched"] == 1
+
+
+def test_url_matching_ignores_trailing_slash_and_fragment():
+    coverage = UrlCoverage(
+        entry_url="https://docs.example.com/api/",
+        confirmed_by_user=True,
+        expected=[
+            {"url": "https://docs.example.com/api/auth/", "source": "nav"},
+            {"url": "https://docs.example.com/api/pay#request", "source": "nav"},
+        ],
+        results=[
+            {"url": "https://docs.example.com/api/auth", "status": "fetched",
+             "file": "url_sources/auth.md", "method": "defuddle"},
+            {"url": "https://docs.example.com/api/pay", "status": "fetched",
+             "file": "url_sources/pay.md", "method": "defuddle"},
+        ],
+    )
+    phase = _url_phase(_assess(_manifest_with_urls(), coverage))
+    assert phase.findings == []
+    assert phase.metrics["not_fetched"] == 0
+
+
 def test_skipped_by_user_is_not_a_finding():
     coverage = UrlCoverage(
         entry_url="https://docs.example.com/api/",
