@@ -14,8 +14,9 @@ the committed `extraction/` + `expected/` are enough to define the assertions.
 from __future__ import annotations
 
 import json
+import shutil
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -23,13 +24,24 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
+from loop_apidoc.foundry import store as foundry_store
 from loop_apidoc.foundry.approve import approve_candidate
 from loop_apidoc.foundry.importer import import_run
-from loop_apidoc.foundry.models import Docset
+from loop_apidoc.foundry.models import AssetStatus, Docset, FoundryApprovalError
 from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
 from loop_apidoc.foundry.register import register_docset
+from loop_apidoc.preparation import PreparationReport, PreparationSeverity, PreparationStatus
 from loop_apidoc.run.models import RunResult
-from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs
+from loop_apidoc.score import (
+    LoopVerdict,
+    ScoreProfile,
+    classify_findings,
+    evaluate_score,
+    load_score_inputs,
+    loop_verdict,
+    write_reports as write_score_reports,
+)
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -65,15 +77,20 @@ def case(request) -> Path:
     return request.param
 
 
-# Assemble each case at most once per session; the produced run dir is treated
-# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
-# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
-# survives for the whole session.
-_ASSEMBLED: dict[str, RunResult] = {}
+_STRIPE = "stripe-basic-rest"
 
 
-@pytest.fixture
-def assembled(case, tmp_path_factory):
+def _case_by_name(name: str) -> Path:
+    return _BENCH_ROOT / name
+
+
+def _assemble_case(case: Path, tmp_path_factory) -> RunResult:
+    """Assemble a case at most once per session and memoize the RunResult.
+
+    Skips when the case's operator-provided sources are absent. The produced run
+    dir is treated read-only by every consumer (score reads it; foundry/diff
+    copytree FROM it), so a single shared dir is safe. Non-parametrized tests
+    reuse this same helper via `_case_by_name` so they never re-assemble."""
     if not _has_sources(case):
         pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
     if case.name not in _ASSEMBLED:
@@ -86,6 +103,18 @@ def assembled(case, tmp_path_factory):
             generated_at=_FIXED_TS,
         )
     return _ASSEMBLED[case.name]
+
+
+# Assemble each case at most once per session; the produced run dir is treated
+# read-only by every consumer (score reads it; foundry copytrees FROM it), so a
+# single shared run dir is safe. tmp_path_factory is session-scoped, so the dir
+# survives for the whole session.
+_ASSEMBLED: dict[str, RunResult] = {}
+
+
+@pytest.fixture
+def assembled(case, tmp_path_factory):
+    return _assemble_case(case, tmp_path_factory)
 
 
 def test_benchmark_case(case, assembled) -> None:
@@ -246,3 +275,249 @@ def test_benchmark_harness_discovers_cases() -> None:
             "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
             "github-webhooks", "paypal-webhooks-incomplete",
             "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= names
+
+
+def test_benchmark_diff_identity(case, assembled, tmp_path) -> None:
+    """Diffing a run against a byte-identical copy of itself yields no semantic
+    change. `source_only` differences (provenance/manifest source paths) are
+    allowed and never asserted on; the breaking/additive/changed sets must be
+    empty. This is the spurious-diff regression net."""
+    run_dir = Path(assembled.run_dir)
+    copy = tmp_path / "identical" / run_dir.name
+    shutil.copytree(run_dir, copy)
+
+    report = build_diff_report(load_run_artifacts(run_dir), load_run_artifacts(copy))
+    semantic = [
+        f for f in report.findings
+        if f.impact in {DiffImpact.BREAKING, DiffImpact.ADDITIVE, DiffImpact.CHANGED}
+    ]
+    assert not semantic, (
+        f"{case.name}: self-diff produced spurious semantic findings — "
+        f"{[(f.impact.value, f.location, f.summary) for f in semantic]}"
+    )
+
+
+def _mutate_stripe_extraction(src: Path, dst: Path) -> None:
+    """Copytree the stripe extraction dir `src` into `dst`, then apply three
+    known mutations that each produce exactly one diff finding:
+      (breaking) remove the /capture endpoint (ep5.json + inventory entry),
+      (additive) add a new increment_authorization endpoint (ep6.json + entry),
+      (changed)  flip PaymentIntent.description from required:true to false.
+    Proven against real stripe data before this plan was written."""
+    shutil.copytree(src, dst)
+    inv = json.loads((dst / "inventory.json").read_text("utf-8"))
+
+    # (breaking) remove the capture endpoint
+    inv["endpoints"] = [e for e in inv["endpoints"] if not e["path"].endswith("/capture")]
+    (dst / "endpoints" / "ep5.json").unlink()
+
+    # (additive) add a brand-new endpoint (inventory summary + full detail file)
+    inv["endpoints"].append({
+        "method": "POST",
+        "path": "/v1/payment_intents/{intent}/increment_authorization",
+        "summary": "Increment an authorization",
+        "source": "paths./v1/payment_intents/{intent}/increment_authorization.post",
+    })
+    ep6 = {
+        "method": "POST",
+        "path": "/v1/payment_intents/{intent}/increment_authorization",
+        "source": "paths./v1/payment_intents/{intent}/increment_authorization.post",
+        "parameters": [
+            {"name": "amount", "in": "body", "type": "integer", "required": True,
+             "description": "New total amount to authorize."},
+        ],
+        "request": {"content_type": "application/x-www-form-urlencoded",
+                    "schema": None, "required": True, "description": "Form body."},
+        "responses": [{"status": "200", "description": "Returns the PaymentIntent object.",
+                       "schema": None, "schema_ref": "PaymentIntent"}],
+        "tags": ["Payment Intents"],
+        "security": ["bearerAuth"],
+        "examples": [],
+        "missing": [],
+    }
+    (dst / "endpoints" / "ep6.json").write_text(json.dumps(ep6, indent=2), encoding="utf-8")
+
+    # (changed) loosen one required schema field to optional
+    for field in inv["schemas"][0]["fields"]:
+        if field["name"] == "description":
+            field["required"] = False
+    (dst / "inventory.json").write_text(json.dumps(inv, indent=2), encoding="utf-8")
+
+
+def test_benchmark_diff_detects_change(tmp_path_factory, tmp_path) -> None:
+    """stripe baseline vs a v2 built from three known extraction mutations must
+    surface one breaking, one additive, and one changed finding, each anchored to
+    the mutated operation/field. If the mutated extraction fails to assemble, that
+    is a real finding (mutation helper wrong, or assemble regressed) — investigate,
+    do not weaken."""
+    case = _case_by_name(_STRIPE)
+    baseline = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+
+    mutated_ext = tmp_path / "extraction2"
+    _mutate_stripe_extraction(case / "extraction", mutated_ext)
+    v2 = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=mutated_ext,
+        output_root=tmp_path / "v2_out",
+        run_id="v2",
+        generated_at=_FIXED_TS,
+    )
+
+    report = build_diff_report(
+        load_run_artifacts(Path(baseline.run_dir)),
+        load_run_artifacts(Path(v2.run_dir)),
+    )
+    by_impact: dict[DiffImpact, list] = {i: [] for i in DiffImpact}
+    for finding in report.findings:
+        by_impact[finding.impact].append(finding)
+
+    assert any(
+        "capture" in f.location and f.summary == "operation removed"
+        for f in by_impact[DiffImpact.BREAKING]
+    ), f"missing breaking (capture removed): {[(f.location, f.summary) for f in by_impact[DiffImpact.BREAKING]]}"
+    assert any(
+        "increment_authorization" in f.location and f.summary == "operation added"
+        for f in by_impact[DiffImpact.ADDITIVE]
+    ), f"missing additive (increment added): {[(f.location, f.summary) for f in by_impact[DiffImpact.ADDITIVE]]}"
+    assert any(
+        f.location == "components.schemas.PaymentIntent.description"
+        and f.summary == "property no longer required"
+        for f in by_impact[DiffImpact.CHANGED]
+    ), f"missing changed (description loosened): {[(f.location, f.summary) for f in by_impact[DiffImpact.CHANGED]]}"
+
+
+def _score_candidate(run_dir: Path) -> int:
+    """Compute the CI-profile score for a run dir, write it to <run_dir>/score/
+    (the path approve_candidate reads via _read_score), and return the score.
+    The assembled run dir has no score.json, so the min_score gate needs this."""
+    report = evaluate_score(load_score_inputs(run_dir), profile=ScoreProfile.CI)
+    write_score_reports(report, run_dir / "score")
+    return report.score
+
+
+def test_benchmark_foundry_supersession(tmp_path_factory, tmp_path) -> None:
+    """Approving a second asset for the same docset supersedes the first and
+    moves the `current` pointer. Two distinct timestamps are required because
+    make_asset_id is one-second-resolution; identical timestamps would collide."""
+    case = _case_by_name(_STRIPE)
+    run = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+    run_dir = Path(run.run_dir)
+
+    v1_dir = tmp_path / "runs" / "v1"
+    v2_dir = tmp_path / "runs" / "v2"
+    shutil.copytree(run_dir, v1_dir)
+    shutil.copytree(run_dir, v2_dir)
+
+    root = tmp_path / "project"  # fresh .foundry/, zero pollution
+    root.mkdir()
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    import_run(root, "bench", v1_dir)  # run_id == "v1" (run_dir.name)
+    import_run(root, "bench", v2_dir)  # run_id == "v2"
+
+    asset_v1 = approve_candidate(root, "bench", "v1", approved_by="bench", now=_FIXED_TS)
+    asset_v2 = approve_candidate(
+        root, "bench", "v2", approved_by="bench", now=_FIXED_TS + timedelta(seconds=1),
+    )
+
+    superseded = foundry_store.load_asset(root, "bench", asset_v1.asset_id)
+    assert superseded.status is AssetStatus.SUPERSEDED, (
+        f"v1 asset should be superseded, got {superseded.status.value}"
+    )
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset_v2.asset_id, "current pointer should resolve to v2"
+
+
+def test_benchmark_foundry_min_score_gate(tmp_path_factory, tmp_path) -> None:
+    """approve_candidate rejects a candidate whose score is below min_score and
+    accepts one that meets it. allow_failing does NOT bypass this gate (it only
+    bypasses the validation-ok gate), so the success path uses a met min_score.
+    The candidate needs a real score.json (the run dir has none) — see
+    _score_candidate."""
+    case = _case_by_name(_STRIPE)
+    run = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+
+    cand_dir = tmp_path / "runs" / "gate"
+    shutil.copytree(Path(run.run_dir), cand_dir)
+    score = _score_candidate(cand_dir)  # writes cand_dir/score/score.json
+
+    root = tmp_path / "project"
+    root.mkdir()
+    register_docset(root, Docset(
+        docset_id="bench", title=case.name, provider="bench", product="bench",
+    ))
+    import_run(root, "bench", cand_dir)  # run_id == "gate"
+
+    with pytest.raises(FoundryApprovalError):
+        approve_candidate(
+            root, "bench", "gate", approved_by="bench", now=_FIXED_TS,
+            min_score=score + 1,
+        )
+
+    asset = approve_candidate(
+        root, "bench", "gate", approved_by="bench", now=_FIXED_TS, min_score=score,
+    )
+    current = load_current_asset(root, "bench")
+    assert current.asset_id == asset.asset_id, "met-min_score approval should become current"
+
+
+def test_benchmark_preparation(case, assembled) -> None:
+    """preparation-report.json parses to a PreparationReport with a valid status,
+    a non-empty phases list, and only error/warning finding severities. Invariant:
+    a validation-PASS case cannot have been preparation-blocked. EXPECTED_FAIL
+    cases (e.g. paypal) may hold any status."""
+    run_dir = Path(assembled.run_dir)
+    report = PreparationReport.model_validate_json(
+        (run_dir / "preparation-report.json").read_text("utf-8")
+    )
+
+    assert report.status in set(PreparationStatus), f"{case.name}: invalid preparation status"
+    assert report.phases, f"{case.name}: preparation phases empty"
+    for phase in report.phases:
+        for finding in phase.findings:
+            assert finding.severity in {PreparationSeverity.ERROR, PreparationSeverity.WARNING}, (
+                f"{case.name}: unexpected preparation severity {finding.severity!r}"
+            )
+
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    if expect.get("current_status") == "PASS":
+        assert report.status is not PreparationStatus.BLOCKED, (
+            f"{case.name}: validation-PASS case must not be preparation-blocked"
+        )
+
+
+def test_benchmark_score_verdict(case, assembled) -> None:
+    """From the real ScoreReport: (a) classify_findings is a lossless, disjoint
+    partition; (b) loop_verdict returns a valid LoopVerdict, deterministic across
+    a second identical call; (c) coupling invariant — score >= min_score implies
+    CONVERGED (the loop must not ask for more correction once the target is met)."""
+    run_dir = Path(assembled.run_dir)
+    report = evaluate_score(load_score_inputs(run_dir), profile=ScoreProfile.CI)
+
+    # (a) lossless, disjoint partition
+    reducible, irreducible = classify_findings(report.findings)
+    assert len(reducible) + len(irreducible) == len(report.findings), (
+        f"{case.name}: classify_findings dropped or duplicated findings"
+    )
+    for finding in report.findings:
+        assert (finding in reducible) ^ (finding in irreducible), (
+            f"{case.name}: finding not in exactly one partition: {finding.code}"
+        )
+
+    # (b) valid + deterministic verdict
+    kwargs = dict(
+        prev_score=None, curr_score=report.score, target=report.min_score,
+        round_index=1, max_rounds=3, findings=report.findings,
+    )
+    first = loop_verdict(**kwargs)
+    again = loop_verdict(**kwargs)
+    assert first.verdict in set(LoopVerdict), f"{case.name}: invalid loop verdict"
+    assert first.verdict == again.verdict, f"{case.name}: loop verdict not deterministic"
+
+    # (c) coupling invariant
+    if report.score >= report.min_score:
+        assert first.verdict is LoopVerdict.CONVERGED, (
+            f"{case.name}: score {report.score} >= min {report.min_score} but verdict "
+            f"is {first.verdict.value}, not converged"
+        )
