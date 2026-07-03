@@ -7,7 +7,6 @@ from pathlib import Path
 import httpx
 import pytest
 
-from loop_apidoc import manifest as _manifest_pkg  # noqa: F401  (確保套件已載入)
 from loop_apidoc.agentcli.assemble import (
     AssembleInputError,
     backfill_snapshot_files,
@@ -216,6 +215,18 @@ def test_backfill_result_without_file_leaves_none():
     coverage = _coverage([
         CoverageResult(url="https://a.example/overview", status=ResultStatus.FETCH_FAILED,
                        file=None),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file is None
+
+
+def test_backfill_nonmapping_status_with_file_leaves_none():
+    # 狀態非「可映射」(EMPTY_SUSPECT)即使 file 非 None,也不應產生映射
+    # (獨立驗證狀態過濾與 file-None 防護是兩道各自獨立的關卡)
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/overview")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.EMPTY_SUSPECT,
+                       file="sources/overview.md"),
     ])
     out = backfill_snapshot_files(manifest, coverage)
     assert out.url_sources[0].snapshot_file is None

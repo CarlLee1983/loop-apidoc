@@ -231,6 +231,40 @@ def test_sole_source_snapshot_to_unusable_source_does_not_collapse():
     assert sole_source(manifest) == "https://a.example/overview"
 
 
+def test_sole_source_snapshot_to_unsupported_source_does_not_collapse():
+    # snapshot_file 指向不可用(UNSUPPORTED)本地來源 → 該 URL 不被摺疊,另計一份
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md", status=ProcessingStatus.UNSUPPORTED)],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    # 本地來源不可用(0 份)+ URL 不摺疊(1 份)→ 恰好 1 份 → 回傳 URL
+    assert sole_source(manifest) == "https://a.example/overview"
+
+
+def test_sole_source_snapshot_to_duplicate_source_does_not_collapse():
+    # snapshot_file 指向不可用(DUPLICATE)本地來源 → 該 URL 不被摺疊,另計一份
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md", status=ProcessingStatus.DUPLICATE)],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="overview.md")],
+    )
+    # 本地來源不可用(0 份)+ URL 不摺疊(1 份)→ 恰好 1 份 → 回傳 URL
+    assert sole_source(manifest) == "https://a.example/overview"
+
+
+def test_sole_source_dangling_snapshot_reference_does_not_collapse():
+    # snapshot_file 指向 manifest.local_sources 中根本不存在的 relative_path
+    # (懸空引用)→ URL 摺疊目標不在可用集合中 → 不摺疊 → 連同另一份可用本地來源
+    # 共 2 份文件 → None
+    manifest = Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[_local_src("overview.md")],
+        url_sources=[_url_src("https://a.example/overview", snapshot_file="missing.md")],
+    )
+    assert sole_source(manifest) is None
+
+
 def test_sole_source_multi_file_plus_url_still_none():
     manifest = Manifest(
         sources_root="/src", generated_at=_now(),
