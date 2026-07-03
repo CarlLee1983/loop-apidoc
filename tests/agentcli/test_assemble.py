@@ -8,11 +8,25 @@ import pytest
 
 from loop_apidoc.agentcli.assemble import (
     AssembleInputError,
+    backfill_snapshot_files,
     build_extraction_from_files,
     load_extraction_inputs,
     run_assemble_pipeline,
 )
 from loop_apidoc.extraction.store import ExtractionStore
+from loop_apidoc.manifest.models import (
+    LocalSource,
+    Manifest,
+    ProcessingStatus,
+    SourceFormat,
+    UrlSource,
+)
+from loop_apidoc.preparation.coverage import (
+    CoverageResult,
+    FetchMethod,
+    ResultStatus,
+    UrlCoverage,
+)
 from loop_apidoc.run.models import RunStatus
 
 _INVENTORY = {
@@ -135,3 +149,106 @@ def test_run_assemble_pipeline_bad_input_leaves_no_run_dir(tmp_path):
         )
 
     assert not (out / "run-test").exists()
+
+
+# ── Task 3: backfill_snapshot_files ────────────────────────────────────────────
+
+_NOW = datetime(2026, 7, 4, tzinfo=timezone.utc)
+
+
+def _local(rel: str) -> LocalSource:
+    return LocalSource(
+        relative_path=rel, mime_type="text/markdown", source_format=SourceFormat.MARKDOWN,
+        size_bytes=1, sha256="x", scanned_at=_NOW, supported=True,
+        status=ProcessingStatus.PENDING,
+    )
+
+
+def _url(url: str) -> UrlSource:
+    return UrlSource(url=url, fetched_at=_NOW, http_status=200)
+
+
+def _manifest(locals_, urls) -> Manifest:
+    return Manifest(sources_root="/src", generated_at=_NOW,
+                    local_sources=locals_, url_sources=urls)
+
+
+def _coverage(results) -> UrlCoverage:
+    return UrlCoverage(entry_url="https://a.example/", results=results)
+
+
+def test_backfill_unique_suffix_match_sets_snapshot_file():
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/overview")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview/", status=ResultStatus.FETCHED,
+                       file="sources/overview.md", method=FetchMethod.DEFUDDLE),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file == "overview.md"
+    # 純函式:原 manifest 不被就地修改
+    assert manifest.url_sources[0].snapshot_file is None
+
+
+def test_backfill_normalizes_url_before_match():
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/overview#top")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.FETCHED_RENDERED,
+                       file="sources/overview.md"),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file == "overview.md"
+
+
+def test_backfill_auth_required_with_file_maps():
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/overview")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.AUTH_REQUIRED,
+                       file="sources/overview.md"),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file == "overview.md"
+
+
+def test_backfill_result_without_file_leaves_none():
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/overview")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.FETCH_FAILED,
+                       file=None),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file is None
+
+
+def test_backfill_zero_match_leaves_none():
+    manifest = _manifest([_local("overview.md")], [_url("https://a.example/other")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.FETCHED,
+                       file="sources/overview.md"),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file is None
+
+
+def test_backfill_ambiguous_suffix_leaves_none():
+    # 帳本 file 後綴同時命中兩個本地檔 → 多重命中 → None
+    manifest = _manifest(
+        [_local("overview.md"), _local("docs/overview.md")],
+        [_url("https://a.example/overview")],
+    )
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/overview", status=ResultStatus.FETCHED,
+                       file="sources/docs/overview.md"),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    # "sources/docs/overview.md" 後綴命中 "docs/overview.md" 與 "overview.md" 兩者 → 模糊
+    assert out.url_sources[0].snapshot_file is None
+
+
+def test_backfill_multiple_results_to_different_files_leaves_none():
+    manifest = _manifest([_local("a.md"), _local("b.md")], [_url("https://a.example/p")])
+    coverage = _coverage([
+        CoverageResult(url="https://a.example/p", status=ResultStatus.FETCHED, file="sources/a.md"),
+        CoverageResult(url="https://a.example/p", status=ResultStatus.FETCHED, file="sources/b.md"),
+    ])
+    out = backfill_snapshot_files(manifest, coverage)
+    assert out.url_sources[0].snapshot_file is None
