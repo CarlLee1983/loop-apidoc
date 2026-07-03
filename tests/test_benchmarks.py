@@ -285,3 +285,92 @@ def test_benchmark_diff_identity(case, assembled, tmp_path) -> None:
         f"{case.name}: self-diff produced spurious semantic findings — "
         f"{[(f.impact.value, f.location, f.summary) for f in semantic]}"
     )
+
+
+def _mutate_stripe_extraction(src: Path, dst: Path) -> None:
+    """Copytree the stripe extraction dir `src` into `dst`, then apply three
+    known mutations that each produce exactly one diff finding:
+      (breaking) remove the /capture endpoint (ep5.json + inventory entry),
+      (additive) add a new increment_authorization endpoint (ep6.json + entry),
+      (changed)  flip PaymentIntent.description from required:true to false.
+    Proven against real stripe data before this plan was written."""
+    shutil.copytree(src, dst)
+    inv = json.loads((dst / "inventory.json").read_text("utf-8"))
+
+    # (breaking) remove the capture endpoint
+    inv["endpoints"] = [e for e in inv["endpoints"] if not e["path"].endswith("/capture")]
+    (dst / "endpoints" / "ep5.json").unlink()
+
+    # (additive) add a brand-new endpoint (inventory summary + full detail file)
+    inv["endpoints"].append({
+        "method": "POST",
+        "path": "/v1/payment_intents/{intent}/increment_authorization",
+        "summary": "Increment an authorization",
+        "source": "paths./v1/payment_intents/{intent}/increment_authorization.post",
+    })
+    ep6 = {
+        "method": "POST",
+        "path": "/v1/payment_intents/{intent}/increment_authorization",
+        "source": "paths./v1/payment_intents/{intent}/increment_authorization.post",
+        "parameters": [
+            {"name": "amount", "in": "body", "type": "integer", "required": True,
+             "description": "New total amount to authorize."},
+        ],
+        "request": {"content_type": "application/x-www-form-urlencoded",
+                    "schema": None, "required": True, "description": "Form body."},
+        "responses": [{"status": "200", "description": "Returns the PaymentIntent object.",
+                       "schema": None, "schema_ref": "PaymentIntent"}],
+        "tags": ["Payment Intents"],
+        "security": ["bearerAuth"],
+        "examples": [],
+        "missing": [],
+    }
+    (dst / "endpoints" / "ep6.json").write_text(json.dumps(ep6, indent=2), encoding="utf-8")
+
+    # (changed) loosen one required schema field to optional
+    for field in inv["schemas"][0]["fields"]:
+        if field["name"] == "description":
+            field["required"] = False
+    (dst / "inventory.json").write_text(json.dumps(inv, indent=2), encoding="utf-8")
+
+
+def test_benchmark_diff_detects_change(tmp_path_factory, tmp_path) -> None:
+    """stripe baseline vs a v2 built from three known extraction mutations must
+    surface one breaking, one additive, and one changed finding, each anchored to
+    the mutated operation/field. If the mutated extraction fails to assemble, that
+    is a real finding (mutation helper wrong, or assemble regressed) — investigate,
+    do not weaken."""
+    case = _case_by_name(_STRIPE)
+    baseline = _assemble_case(case, tmp_path_factory)  # skips if sources absent
+
+    mutated_ext = tmp_path / "extraction2"
+    _mutate_stripe_extraction(case / "extraction", mutated_ext)
+    v2 = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=mutated_ext,
+        output_root=tmp_path / "v2_out",
+        run_id="v2",
+        generated_at=_FIXED_TS,
+    )
+
+    report = build_diff_report(
+        load_run_artifacts(Path(baseline.run_dir)),
+        load_run_artifacts(Path(v2.run_dir)),
+    )
+    by_impact: dict[DiffImpact, list] = {i: [] for i in DiffImpact}
+    for finding in report.findings:
+        by_impact[finding.impact].append(finding)
+
+    assert any(
+        "capture" in f.location and f.summary == "operation removed"
+        for f in by_impact[DiffImpact.BREAKING]
+    ), f"missing breaking (capture removed): {[(f.location, f.summary) for f in by_impact[DiffImpact.BREAKING]]}"
+    assert any(
+        "increment_authorization" in f.location and f.summary == "operation added"
+        for f in by_impact[DiffImpact.ADDITIVE]
+    ), f"missing additive (increment added): {[(f.location, f.summary) for f in by_impact[DiffImpact.ADDITIVE]]}"
+    assert any(
+        f.location == "components.schemas.PaymentIntent.description"
+        and f.summary == "property no longer required"
+        for f in by_impact[DiffImpact.CHANGED]
+    ), f"missing changed (description loosened): {[(f.location, f.summary) for f in by_impact[DiffImpact.CHANGED]]}"
