@@ -31,6 +31,7 @@ from loop_apidoc.foundry.importer import import_run
 from loop_apidoc.foundry.models import AssetStatus, Docset, FoundryApprovalError
 from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifact
 from loop_apidoc.foundry.register import register_docset
+from loop_apidoc.preparation import PreparationReport, PreparationSeverity, PreparationStatus
 from loop_apidoc.run.models import RunResult
 from loop_apidoc.score import ScoreProfile, evaluate_score, load_score_inputs, write_reports as write_score_reports
 
@@ -451,3 +452,28 @@ def test_benchmark_foundry_min_score_gate(tmp_path_factory, tmp_path) -> None:
     )
     current = load_current_asset(root, "bench")
     assert current.asset_id == asset.asset_id, "met-min_score approval should become current"
+
+
+def test_benchmark_preparation(case, assembled) -> None:
+    """preparation-report.json parses to a PreparationReport with a valid status,
+    a non-empty phases list, and only error/warning finding severities. Invariant:
+    a validation-PASS case cannot have been preparation-blocked. EXPECTED_FAIL
+    cases (e.g. paypal) may hold any status."""
+    run_dir = Path(assembled.run_dir)
+    report = PreparationReport.model_validate_json(
+        (run_dir / "preparation-report.json").read_text("utf-8")
+    )
+
+    assert report.status in set(PreparationStatus), f"{case.name}: invalid preparation status"
+    assert report.phases, f"{case.name}: preparation phases empty"
+    for phase in report.phases:
+        for finding in phase.findings:
+            assert finding.severity in {PreparationSeverity.ERROR, PreparationSeverity.WARNING}, (
+                f"{case.name}: unexpected preparation severity {finding.severity!r}"
+            )
+
+    expect = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+    if expect.get("current_status") == "PASS":
+        assert report.status is not PreparationStatus.BLOCKED, (
+            f"{case.name}: validation-PASS case must not be preparation-blocked"
+        )
