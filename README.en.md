@@ -106,6 +106,22 @@ uv run loop-apidoc diff --base ./output/<old-run> --head ./output/<new-run>
 
 Compares two completed run directories and emits a diff report classified by downstream impact. Writes to `<new-run>/diff/report.{json,md}` by default; pass `--output` to choose another directory. Changes are classified as `breaking`, `additive`, `changed`, or `source_only`, and the comparison spans `openapi.yaml`, `integration-contract.json`, `provenance.json`, `validation/report.json`, and `manifest.json`. The first version does not diff the Markdown guide or generated examples. Exits `0` on completion, `2` when an input run-dir is missing files or malformed.
 
+### `score` — evaluate document quality of an existing run directory
+
+```bash
+uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min-score 85] [--json]
+```
+
+Reads the existing run directory and outputs `score/score.json` and `score/score.md`. The `ci` profile defaults to a threshold of `85`, and `review` defaults to `70`. Exit codes: `0` = pass, `1` = needs_attention / fail, `2` = run-dir input error.
+
+### `foundry` — local asset governance for API projects
+
+```bash
+uv run loop-apidoc foundry [init|import|approve|list|current] --help
+```
+
+Subcommands to manage docsets, import a run directory as a candidate, and approve an asset to update the `current` pointer. Ideal for scenarios requiring manual review and release management of API documentation versions.
+
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
 ```bash
@@ -197,6 +213,9 @@ uv run ruff check .
 | `loop_apidoc/validate/` | Structure / completeness / consistency / no-speculation validation and reports |
 | `loop_apidoc/run/` | run-id generation, result/status models, and persisting the plan into the run dir |
 | `loop_apidoc/diff/` | run-to-run version diff: load run artifacts, classify changes (`breaking` / `additive` / `changed` / `source_only`), render and write `diff/report.{json,md}` |
+| `loop_apidoc/preparation/` | preparation readiness reporting inside assemble |
+| `loop_apidoc/score/` | documentation quality scoring for completed run-dirs |
+| `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 

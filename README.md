@@ -115,6 +115,14 @@ uv run loop-apidoc diff --base ./output/<old-run> --head ./output/<new-run>
 `validation/report.json` 與 `manifest.json`。第一版不比較 Markdown guide 或
 generated examples。
 
+### `foundry` — API 專案本地資產治理
+
+```bash
+uv run loop-apidoc foundry [init|import|approve|list|current] --help
+```
+
+提供管理 docset、將 run 目錄匯入為 candidate、以及核准 asset 以更新 `current` 指標的子指令。適用於需要對文件版本進行人為審核與發布管理的場景。
+
 ### `preprocess` — PDF 轉高保真 markdown(可選)
 
 ```bash
@@ -217,7 +225,10 @@ uv run ruff check .
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口) |
 | `loop_apidoc/validate/` | 結構／完整性／一致性／禁止推測驗證與報告 |
 | `loop_apidoc/run/` | run-id 產生、結果／狀態 models、將計畫寫入 run 目錄 |
+| `loop_apidoc/diff/` | 比較兩個 run 目錄的版本差異，依 impact 分類並輸出報告 |
+| `loop_apidoc/preparation/` | 在 assemble 內把 manifest 與 plan 評成準備度報告 |
 | `loop_apidoc/score/` | 既有 run-dir 文件品質評分(JSON/Markdown report, CI gate 狀態) |
+| `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
 
 ---
 

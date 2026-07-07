@@ -717,7 +717,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer 入口，暴露 preprocess、manifest、assemble、validate、score、diff 六個命令。</div>
+          <div class="module-role">Typer 入口，暴露 preprocess、manifest、assemble、validate、score、diff 六個核心命令與 foundry 子群組。</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
@@ -726,6 +726,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
           <div class="command-chip">diff</div>
+          <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">foundry *</div>
         </div>
       </div>
 
@@ -776,6 +777,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">score/ <span class="pill io">File I/O</span></div>
             <div class="module-role">對完成 run-dir 做確定性文件品質評分，輸出 score/score.{json,md}。</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="foundry">
+            <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">API 專案本地資產治理，管理 docset、candidate 與 asset。</div>
+          </button>
         </div>
       </div>
     </div>
@@ -784,8 +789,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露五個指令：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）、<code>diff</code>（比較兩個 run-dir 的版本差異）。
-      <strong>檔案 I/O 出口</strong>：只有 <code>generate/</code>（<code>generate_outputs</code>）、<code>run/</code>（<code>persist.py</code> 將計畫寫入 run-dir）與 <code>diff/</code>（<code>report.py</code> 寫出 diff 報告）擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
+      <code>cli.py</code> 暴露七個主要操作：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）、<code>diff</code>（比較版本差異）、<code>score</code>（品質評分）與 <code>foundry</code>（本地資產治理）。
+      <strong>檔案 I/O 出口</strong>：只有 <code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code> 與 <code>foundry/</code> 擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
     </div>
   </div>
 
