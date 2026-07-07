@@ -344,6 +344,46 @@
     text-align: center;
   }
 
+  /* ---------- image placeholder slots (待補圖) ---------- */
+  .img-ph {
+    border: 2px dashed #c9cfdd;
+    border-radius: var(--radius);
+    background:
+      repeating-linear-gradient(45deg, transparent 0 14px, rgba(182,188,203,0.06) 14px 28px),
+      var(--bg-soft);
+    padding: 30px 26px;
+    text-align: center;
+  }
+  .alt .img-ph {
+    background:
+      repeating-linear-gradient(45deg, transparent 0 14px, rgba(182,188,203,0.06) 14px 28px),
+      var(--bg);
+  }
+  .img-ph .ph-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 0.86rem; letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 7px 16px; border-radius: 999px;
+  }
+  .alt .img-ph .ph-tag { background: var(--bg-soft); }
+  .img-ph .ph-ico { width: 18px; height: 18px; color: var(--purple-deep); flex: none; }
+  .img-ph .prompt {
+    max-width: 680px; margin: 16px auto 0;
+    text-align: left; font-size: 0.92rem; line-height: 1.72;
+    color: var(--ink-soft);
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 14px 18px;
+  }
+  .alt .img-ph .prompt { background: var(--bg-soft); }
+  .img-ph .prompt b { color: var(--ink); display: block; margin-bottom: 5px; }
+  .img-ph .prompt .label { color: var(--purple-deep); font-weight: 700; }
+  .img-ph .hint {
+    display: block; margin-top: 12px;
+    font-size: 0.78rem; color: var(--grey);
+  }
+  .img-ph .hint code { font-family: var(--mono); font-size: 0.92em; }
+
   /* ---------- classification (fixable vs not) ---------- */
   .cls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .cls-col { border-radius: var(--radius); padding: 26px 24px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
@@ -360,12 +400,13 @@
   .cls-col .item p { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.93rem; }
 
   /* ---------- diff lights ---------- */
-  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
   .light {
     display: flex; gap: 14px; align-items: flex-start;
     background: var(--bg-soft); border: 1px solid var(--line);
     border-radius: var(--radius-sm); padding: 18px 20px; box-shadow: var(--shadow-sm);
   }
+  .light > div { min-width: 0; }
   .alt .light { background: var(--bg); }
   .dot { width: 16px; height: 16px; border-radius: 50%; margin-top: 6px; flex: none; box-shadow: 0 0 0 5px rgba(0,0,0,0.04); }
   .dot.red { background: var(--red); } .dot.green { background: var(--green); }
@@ -373,6 +414,21 @@
   .light h3 { margin: 0 0 4px; font-size: 1rem; }
   .light .en { font-size: 0.76rem; color: var(--ink-soft); font-weight: 400; font-family: var(--mono); }
   .light p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+  .light .eg { margin: 9px 0 0; font-size: 0.82rem; line-height: 1.6; color: var(--ink); }
+  .light .eg b { color: var(--ink-soft); font-weight: 700; }
+  .light .eg code { font-family: var(--mono); font-size: 0.92em; color: var(--purple-deep); }
+  .light .act { margin: 8px 0 0; font-size: 0.84rem; font-weight: 700; }
+  .light.lv-red .act { color: var(--coral-deep); }
+  .light.lv-green .act { color: var(--teal-deep); }
+  .light.lv-amber .act { color: var(--amber-deep); }
+  .light.lv-grey .act { color: var(--ink-soft); }
+  .diff-note {
+    margin-top: 22px; background: var(--bg-soft); border: 1px solid var(--line);
+    border-left: 6px solid var(--purple); border-radius: var(--radius-sm);
+    padding: 16px 20px; color: var(--ink-soft); font-size: 0.92rem;
+  }
+  .alt .diff-note { background: var(--bg); }
+  .diff-note b { color: var(--ink); }
 
   /* ---------- package table ---------- */
   .pkg-table { width: 100%; border-collapse: collapse; background: var(--bg-soft); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
@@ -518,12 +574,12 @@
 <section class="alt" id="loops">
   <div class="wrap">
     <span class="eyebrow">Loop Engineering</span>
-    <h2 class="section-title">這不是一次性轉檔,而是四個閉環</h2>
-    <p class="section-lead">loop-apidoc 的工程重點不是「產一份文件」,而是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手。</p>
+    <h2 class="section-title">四個閉環:來源、品質、版本、交接</h2>
+    <p class="section-lead">loop-apidoc 的工程重點是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手,而不只是產一份文件。</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/loop-layers.svg" alt="四個閉環圍繞來源真實性核心的流層圖：source-grounded、quality、version、handoff。" loading="lazy" />
+        <img src="assets/onboarding/loop-layers.jpg" alt="四個閉環" loading="lazy" />
       </div>
       <figcaption>四個 loop 是同一條 pipeline 的四層保護，而不是四條互不相干的流程。</figcaption>
     </figure>
@@ -574,7 +630,7 @@
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/two-stage-architecture.svg" alt="兩段式架構圖：前段 agent-native extraction 經 inventory.json 與 endpoints JSON seam 交給 deterministic CLI。" loading="lazy" />
+        <img src="assets/onboarding/two-stage-architecture.jpg" alt="兩段式架構" loading="lazy" />
       </div>
       <figcaption>不確定性集中在擷取前段；確定性後段只讀 seam JSON 並產生可重跑產物。</figcaption>
     </figure>
@@ -624,7 +680,7 @@
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/end-to-end-flow.svg" alt="端到端資料流圖：preprocess、擷取、manifest、plan、preparation、generate、validate、score、diff。" loading="lazy" />
+        <img src="assets/onboarding/end-to-end-flow.jpg" alt="端到端資料流" loading="lazy" />
       </div>
       <figcaption>主幹流程產出 run-dir；score 與 diff 把完成品延伸成品質與版本判讀訊號。</figcaption>
     </figure>
@@ -820,30 +876,12 @@
     <h2 class="section-title">禁止推測,靠 target 逐一對齊來把關</h2>
     <p class="section-lead">這是「絕不臆測」如何被機器強制執行的關鍵機制:<code class="inline">provenance.json</code> 的 <code class="inline">target</code> 字串,與 OpenAPI 位置一對一對齊。</p>
 
-    <svg class="prov-art" viewBox="0 0 720 168" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="provenance target 與 OpenAPI 位置一對一對齊">
-      <g transform="translate(20 18)">
-        <rect x="0" y="0" width="300" height="132" rx="14" fill="#fff" stroke="#d6cffb" stroke-width="2.5"/>
-        <text x="20" y="30" font-size="13" fill="#5b4cc4" font-weight="700">provenance.json · target</text>
-        <rect x="20" y="48" width="260" height="22" rx="6" fill="#e7e3fd"/>
-        <text x="30" y="63" font-size="12" fill="#5b4cc4" font-family="monospace">paths./pay.post</text>
-        <rect x="20" y="78" width="260" height="22" rx="6" fill="#e7e3fd"/>
-        <text x="30" y="93" font-size="12" fill="#5b4cc4" font-family="monospace">components.schemas.Order</text>
-      </g>
-      <g stroke="#15a39a" stroke-width="2.2" stroke-dasharray="6 5">
-        <path d="M320 77 H400" fill="none"/>
-        <path d="M320 107 H400" fill="none"/>
-      </g>
-      <circle cx="400" cy="77" r="4" fill="#15a39a"/>
-      <circle cx="400" cy="107" r="4" fill="#15a39a"/>
-      <g transform="translate(400 18)">
-        <rect x="0" y="0" width="300" height="132" rx="14" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
-        <text x="20" y="30" font-size="13" fill="#0f7a73" font-weight="700">openapi.yaml · 位置</text>
-        <rect x="20" y="48" width="260" height="22" rx="6" fill="#d8f3f0"/>
-        <text x="30" y="63" font-size="12" fill="#0f7a73" font-family="monospace">paths./pay.post</text>
-        <rect x="20" y="78" width="260" height="22" rx="6" fill="#d8f3f0"/>
-        <text x="30" y="93" font-size="12" fill="#0f7a73" font-family="monospace">components.schemas.Order</text>
-      </g>
-    </svg>
+    <figure class="visual-figure">
+      <div class="visual-frame">
+        <img src="assets/onboarding/provenance-target-align.jpg" alt="target 一對一對齊" loading="lazy" />
+      </div>
+      <figcaption>provenance 的 target 字串與 OpenAPI 位置一對一對齊，是 no-speculation 檢查的比對基準。</figcaption>
+    </figure>
 
     <p class="section-lead" style="margin: 28px auto 0; text-align:center; max-width: 760px;">
       no-speculation 檢查就在這些 target 上交叉比對:<b>任何進入輸出的內容,都必須能追溯回一個具來源依據的計畫項目,否則視為違規。</b>對齊的位置包含 <code class="inline">paths.{path}.{method}</code>、<code class="inline">components.schemas.{name}</code>、<code class="inline">components.securitySchemes.{name}</code>。
@@ -860,7 +898,7 @@
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/validation-correction-loop.svg" alt="provenance target 對齊 OpenAPI 後進入 validate，錯誤分類為可修正或 fail-closed 的修正迴圈圖。" loading="lazy" />
+        <img src="assets/onboarding/validation-correction-loop.jpg" alt="修正迴圈" loading="lazy" />
       </div>
       <figcaption>target 對齊先決定輸出是否有來源依據；分類結果再決定是修 seam 還是 fail-closed。</figcaption>
     </figure>
@@ -899,13 +937,48 @@
   <div class="wrap">
     <span class="eyebrow">版本差異</span>
     <h2 class="section-title">換版本時,依 downstream impact 分四類</h2>
-    <p class="section-lead"><code class="inline">diff</code> 比較兩個已完成 run-dir,涵蓋 OpenAPI 路徑·方法·參數·schema·security·webhook、integration-contract、provenance、validation 摘要與 manifest(第一版不比 Markdown guide 與 examples)。</p>
+    <p class="section-lead"><code class="inline">diff</code> 拿同一支 API 的<b>新舊兩個已完成 run-dir</b> 相比,看的是「這次改版會不會害到下游串接」,而不是「來源改了哪幾個字」。每一筆差異都被歸到下面四種 impact 之一,並依嚴重度由高到低排序,讓你一眼看出該不該擋、該通知誰。</p>
     <div class="lights">
-      <div class="light"><span class="dot red"></span><div><h3>破壞性 <span class="en">breaking</span></h3><p>可能讓既有串接壞掉,需優先處理。</p></div></div>
-      <div class="light"><span class="dot green"></span><div><h3>新增 <span class="en">additive</span></h3><p>新功能 / 新欄位,通常向後相容。</p></div></div>
-      <div class="light"><span class="dot amber"></span><div><h3>內容調整 <span class="en">changed</span></h3><p>既有內容有改動,值得確認影響。</p></div></div>
-      <div class="light"><span class="dot grey"></span><div><h3>僅來源異動 <span class="en">source_only</span></h3><p>來源動了但最終規格沒變。</p></div></div>
+      <div class="light lv-red">
+        <span class="dot red"></span>
+        <div>
+          <h3>破壞性 <span class="en">breaking</span></h3>
+          <p>可能讓既有串接直接壞掉,風險最高。</p>
+          <p class="eg"><b>例如</b>:刪掉一個端點(<code>operation removed</code>)、既有欄位/參數改成必填(<code>became required</code>)、新增必填參數、拿掉某個 <code>response</code> 或 security scheme、schema 結構改變。</p>
+          <p class="act">→ 上線前先擋,主動通知所有串接方調整。</p>
+        </div>
+      </div>
+      <div class="light lv-green">
+        <span class="dot green"></span>
+        <div>
+          <h3>新增 <span class="en">additive</span></h3>
+          <p>純粹多了東西,通常向後相容。</p>
+          <p class="eg"><b>例如</b>:新增端點(<code>operation added</code>)、新增選填參數/欄位、新增 <code>response</code> 或 media type、新增 schema / security scheme。</p>
+          <p class="act">→ 可安心採用,下游要不要用新功能自己決定。</p>
+        </div>
+      </div>
+      <div class="light lv-amber">
+        <span class="dot amber"></span>
+        <div>
+          <h3>內容調整 <span class="en">changed</span></h3>
+          <p>既有內容改了,但不必然破壞相容性。</p>
+          <p class="eg"><b>例如</b>:參數/欄位的說明文字變更(<code>description changed</code>)、<code>servers</code> 位址更動、<code>info</code> 版本資訊更新、components 內未被引用的 schema 移除。</p>
+          <p class="act">→ 讀一下改了什麼,確認對自己這端沒有隱性影響。</p>
+        </div>
+      </div>
+      <div class="light lv-grey">
+        <span class="dot grey"></span>
+        <div>
+          <h3>僅來源異動 <span class="en">source_only</span></h3>
+          <p>來源或中繼資料動了,但最終 API 契約沒變。</p>
+          <p class="eg"><b>例如</b>:來源檔本身變更(<code>manifest source changed</code>)、provenance 追溯調整、validation / preparation 報告內容變動 —— OpenAPI 規格本身不受影響。</p>
+          <p class="act">→ 可放心,規格未變;若在意可回頭看來源為何動。</p>
+        </div>
+      </div>
     </div>
+    <p class="diff-note">
+      <b>比較範圍</b>:OpenAPI 路徑·方法·參數·schema·security·webhook、integration-contract、provenance、validation 摘要與 manifest(第一版<b>不比</b> Markdown guide 與 examples)。輸出寫到 <code class="inline">diff/report.{json,md}</code>;exit code <b>0</b> 完成、<b>2</b> 代表輸入 run-dir 缺檔或格式錯誤(<code class="inline">DiffInputError</code>)。
+    </p>
   </div>
 </section>
 
