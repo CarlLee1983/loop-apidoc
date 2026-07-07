@@ -290,6 +290,59 @@
   }
   .cmd .muted { color: var(--ink-soft); }
 
+  /* ---------- project entry ---------- */
+  .repo-cta {
+    display: flex; align-items: center; gap: 20px;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-left: 6px solid var(--teal);
+    border-radius: var(--radius); padding: 22px 26px;
+    box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    margin-bottom: 22px;
+  }
+  .repo-cta:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .repo-cta .repo-ico {
+    flex: none; width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: var(--teal-soft); color: var(--teal-deep);
+  }
+  .repo-cta .repo-txt { flex: 1 1 auto; min-width: 0; }
+  .repo-cta .repo-txt b { display: block; font-size: 1.06rem; margin-bottom: 3px; }
+  .repo-cta .repo-txt span { color: var(--ink-soft); font-size: 0.95rem; }
+  .repo-cta .repo-go { flex: none; font-weight: 700; color: var(--teal-deep); white-space: nowrap; }
+
+  .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .install {
+    display: flex; flex-direction: column;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 26px 24px; box-shadow: var(--shadow-sm);
+  }
+  .install .install-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .install .badge { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; }
+  .install h3 { margin: 0; font-size: 1.08rem; }
+  .install > p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+  .install .ic {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 0.82em; color: var(--teal-deep);
+    background: var(--teal-soft); padding: 1px 6px; border-radius: 5px;
+    overflow-wrap: anywhere;
+  }
+  .install .cmd { margin: 14px 0 0; }
+  .install .cmd code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .install .foot {
+    margin: 12px 0 0; font-size: 0.86rem; color: var(--ink-soft);
+  }
+  .install .foot code {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 0.82em; color: var(--teal-deep);
+    background: var(--teal-soft); padding: 1px 6px; border-radius: 5px;
+  }
+
+  @media (max-width: 640px) {
+    .repo-cta { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .install-grid { grid-template-columns: 1fr; }
+  }
+
   /* ---------- provenance ---------- */
   .prov-art { width: 100%; max-width: 700px; margin: 10px auto 0; display: block; }
 
@@ -349,6 +402,20 @@
   }
   .who .ico-wrap { flex: none; color: var(--purple-deep); display: grid; place-items: center; }
   .who b { color: var(--ink); }
+
+  /* ---------- deep-dive CTA ---------- */
+  .deep-cta { margin-top: 32px; }
+  .deep-link {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--purple-deep); color: #fff;
+    text-decoration: none; font-weight: 700; font-size: 1rem;
+    padding: 14px 26px; border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .deep-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .deep-link svg { width: 18px; height: 18px; flex: none; }
+  .deep-note { margin: 12px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
 
   /* ---------- image placeholder slots ---------- */
   .img-slot { margin: 36px auto 0; max-width: 780px; }
@@ -415,7 +482,7 @@
   <div class="wrap">
     <span class="eyebrow">認識 LOOP-APIDOC</span>
     <h1>把雜亂的技術文件,<br />變成人人看得懂、<span class="hl">可信賴</span>的說明書</h1>
-    <p class="sub">各家廠商的串接文件,格式亂、又常缺漏。loop-apidoc 像一座嚴謹的初步精煉爐,把混雜素材萃取成乾淨、查得到出處的標準說明 —— 而且絕不自己亂編。</p>
+    <p class="sub">各家廠商的串接文件,格式亂、又常缺漏。loop-apidoc 像一座初步精煉爐,把混雜素材萃取成乾淨、查得到出處的標準說明,而且絕不自己亂編。</p>
 
     <!-- hero illustration: raw docs -> alchemical refinement -> clean output -->
     <svg class="hero-art" viewBox="0 0 820 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="混雜來源文件經過初步精煉,萃取成乾淨統一且可追溯的說明書">
@@ -529,33 +596,39 @@
     <h2 class="section-title">先到 GitHub 首頁，或直接把 plugin 裝起來</h2>
     <p class="section-lead">如果你想看原始碼、追版本或提 issue，先去 GitHub repo；如果你要直接跑擷取流程，照下面的安裝方式把 plugin / CLI 接好就能開始。</p>
 
-    <div class="value-grid">
-      <div class="value">
-        <div class="badge tint-teal">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/><path d="M10 14 3 21"/></svg>
+    <a class="repo-cta" href="https://github.com/CarlLee1983/loop-apidoc" target="_blank" rel="noreferrer">
+      <span class="repo-ico">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/><path d="M10 14 3 21"/></svg>
+      </span>
+      <span class="repo-txt">
+        <b>專案 GitHub 首頁</b>
+        <span>原始碼、commit、issue 與 workflow 都在這裡，GitHub Pages 也從這個 repo 發佈。</span>
+      </span>
+      <span class="repo-go">前往 GitHub repo →</span>
+    </a>
+
+    <div class="install-grid">
+      <div class="install">
+        <div class="install-head">
+          <span class="badge tint-purple">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+          </span>
+          <h3>Claude Code plugin 安裝</h3>
         </div>
-        <h3>專案 GitHub 首頁</h3>
-        <p>原始碼、commit、issue 與 workflow 都在這裡。GitHub Pages 也從這個 repo 發佈。</p>
-        <a class="action" href="https://github.com/CarlLee1983/loop-apidoc" target="_blank" rel="noreferrer">前往 GitHub repo</a>
+        <p>在 Claude Code 裡把本專案加成 plugin，agent 就能直接讀來源、組裝、驗證。CLI 由 plugin 內含，不必另外裝。</p>
+        <div class="cmd"><code>/plugin marketplace add CarlLee1983/loop-apidoc
+/plugin install loop-apidoc@loop-apidoc-marketplace</code></div>
+        <p class="foot">更新到最新版：<code>/plugin marketplace update</code> → <code>/plugin update</code></p>
       </div>
 
-      <div class="value">
-        <div class="badge tint-purple">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+      <div class="install">
+        <div class="install-head">
+          <span class="badge tint-amber">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 16V8"/><path d="M12 16V5"/><path d="M16 16v-4"/></svg>
+          </span>
+          <h3>Codex CLI 安裝</h3>
         </div>
-        <h3>Claude Code plugin 安裝</h3>
-        <p>把這個專案裝成 Claude Code plugin，讓 agent 直接讀來源、組裝、驗證。</p>
-        <div class="cmd"><code>uv tool install --from /path/to/loop-apidoc loop-apidoc
-ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code></div>
-        <p class="section-lead" style="margin: 10px 0 0; font-size: 0.88rem;">這套方式會把 CLI 與 skill 連起來；在 Codex 與 Claude Code 都能用同一份專案內容。</p>
-      </div>
-
-      <div class="value">
-        <div class="badge tint-amber">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 16V8"/><path d="M12 16V5"/><path d="M16 16v-4"/></svg>
-        </div>
-        <h3>Codex CLI 安裝</h3>
-        <p>Codex 不會帶 `${CLAUDE_PLUGIN_ROOT}`，所以直接裝全域指令，再把 skill 掛到 Codex skills 目錄。</p>
+        <p>Codex 不會帶 <code class="ic">${CLAUDE_PLUGIN_ROOT}</code>，所以把 CLI 裝成全域指令，再把 skill 掛到 Codex 的 skills 目錄。</p>
         <div class="cmd"><code>uv tool install --from /path/to/loop-apidoc loop-apidoc
 ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code></div>
       </div>
@@ -568,7 +641,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">為什麼需要它</span>
     <h2 class="section-title">沒有它,日子有多難?</h2>
-    <p class="section-lead">當一個團隊要同時串接很多家外部服務時,光是「讀懂文件」就是一場硬仗 —— 而且藏著看不見的風險。</p>
+    <p class="section-lead">當一個團隊要同時串接很多家外部服務時,光是「讀懂文件」就是一場硬仗,還藏著看不見的風險。</p>
     <div class="cards">
       <div class="card">
         <div class="badge tint-coral">
@@ -636,7 +709,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.4-4.4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>逐段仔細閱讀</h3><p>一段一段擷取內容,像認真的讀者抄重點 —— 但只抄文件真的寫的,絕不腦補。</p></div>
+        <div><h3>逐段仔細閱讀</h3><p>一段一段擷取內容,像認真的讀者抄重點,但只抄文件真的寫的,絕不腦補。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -674,7 +747,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">你會拿到什麼</span>
     <h2 class="section-title">最後你會拿到這些成果</h2>
-    <p class="section-lead">從標準規格、中文說明書、來源追溯到品質報告,再加上一包能直接動工的開發者交付物 —— 每一份都對應明確用途,從工程師到主管都能各取所需。</p>
+    <p class="section-lead">從標準規格、中文說明書、來源追溯到品質報告,再加上一包能直接動工的開發者交付物,每一份都有明確用途,工程師到主管各取所需。</p>
     <div class="value-grid">
       <div class="value">
         <div class="badge tint-teal">
@@ -690,7 +763,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         </div>
         <h3>整合契約</h3>
         <span class="file">integration-contract.json</span>
-        <p>不只列出單一個端點,還把它們串成一條可執行的交易流程 —— 先呼叫誰、拿到什麼、再帶進下一步,讓工程師知道整套怎麼接。</p>
+        <p>不只列出單一個端點,還把它們串成一條可執行的交易流程:先呼叫誰、拿到什麼、再帶進下一步,讓工程師知道整套怎麼接。</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
@@ -730,7 +803,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         </div>
         <h3>開發者交付包</h3>
         <span class="file">examples/ · handoff/</span>
-        <p>附上三種語言的請求範例,以及可直接動工的交付包:整合任務清單、Postman 匯入檔、SDK 提示 —— 工程師拿了就能開工。</p>
+        <p>附上三種語言的請求範例,以及可直接動工的交付包:整合任務清單、Postman 匯入檔、SDK 提示,工程師拿了就能開工。</p>
       </div>
     </div>
   </div>
@@ -775,7 +848,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         <rect x="20" y="132" width="160" height="9" rx="4.5" fill="#f6e0dc"/>
       </g>
     </svg>
-    <p class="section-lead" style="margin: 30px auto 0; text-align:center;">有人質疑「這個設定是哪來的?」時,你能立刻指出證據 —— 這就是「可追溯」帶來的安心。</p>
+    <p class="section-lead" style="margin: 30px auto 0; text-align:center;">有人質疑「這個設定是哪來的?」時,你能立刻翻出對應的來源段落。</p>
   </div>
 </section>
 
@@ -815,14 +888,14 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">品質評分 · 新功能</span>
     <h2 class="section-title">不只「過或不過」,還給一個分數</h2>
-    <p class="section-lead">檢查報告告訴你「哪裡缺、能不能過」;評分再進一步,把文件品質換算成 0–100 分,方便長期追蹤、跨版本比較。分數只是儀表板 —— 它從不改變一份文件的通過與否。</p>
+    <p class="section-lead">檢查報告告訴你「哪裡缺、能不能過」;評分再進一步,把文件品質換算成 0–100 分,方便長期追蹤、跨版本比較。分數只是儀表板,從不改變一份文件的通過與否。</p>
     <div class="cards">
       <div class="card">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9 13l2 2 4-4"/></svg>
         </div>
         <h3>看五個面向打分</h3>
-        <p>規格正確性、完整度、一致性、來源依據、可複核性 —— 五個維度加權後,得出一個總分。</p>
+        <p>規格正確性、完整度、一致性、來源依據、可複核性,五個維度加權後得出一個總分。</p>
       </div>
       <div class="card">
         <div class="badge tint-amber">
@@ -851,7 +924,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">資產治理 · 新功能</span>
     <h2 class="section-title">好文件別散落,收進自己的資料庫</h2>
-    <p class="section-lead">跑出一份滿意的成果後,可以把它「收藏」進專案自己的文件資產庫,經過核准、標上版本,之後大家永遠取用同一份「現行版」—— 不再有人拿到過期的舊檔。</p>
+    <p class="section-lead">跑出一份滿意的成果後,可以把它「收藏」進專案自己的文件資產庫,經過核准、標上版本,之後大家永遠取用同一份「現行版」,不再有人拿到過期的舊檔。</p>
     <div class="steps">
       <div class="step">
         <div class="num tint-teal">
@@ -936,6 +1009,14 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><path d="M3.5 20c0-3.3 2.5-5.2 5.5-5.2s5.5 1.9 5.5 5.2"/><path d="M16 6.2A3 3 0 0 1 16 12"/><path d="M17.5 14.8c2 .6 3 2.3 3 5.2"/></svg>
       </span>
       <div><b>適合誰?</b>　需要串接多家外部服務(金流、物流、簡訊…),又重視文件正確與可追溯的團隊。</div>
+    </div>
+
+    <div class="deep-cta">
+      <a class="deep-link" href="onboarding.html">
+        想深入技術細節?看給工程師的完整導覽
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <p class="deep-note">兩段式架構、seam JSON、CLI 六指令、驗證與修正迴圈,一頁看懂整條 pipeline。</p>
     </div>
   </div>
 </section>

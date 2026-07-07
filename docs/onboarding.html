@@ -519,7 +519,7 @@
       <div>
         <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
         <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
-        <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計 —— 讀完你就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
+        <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計,讀完就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
 
         <div class="ladder">
           <span class="other">introduction.html<br>非技術 · 賣點</span>
@@ -544,7 +544,7 @@
       <b class="h">開始前,先對齊幾個會反覆出現的詞</b>
       <dl>
         <dt>OpenAPI</dt><dd>描述 REST API 的業界標準格式(本專案產出 OpenAPI 3.1 YAML),工具鏈與工程師都能直接吃。</dd>
-        <dt>agent</dt><dd>當前的 coding agent(Claude Code 或 Codex)本身 —— 在本專案裡,它就是擷取引擎。</dd>
+        <dt>agent</dt><dd>當前的 coding agent(Claude Code 或 Codex)本身;在本專案裡,它就是擷取引擎。</dd>
         <dt>subagent</dt><dd>由主 agent 派出的唯讀小幫手,只負責「讀來源、回傳 JSON」,不寫檔。</dd>
         <dt>run-dir</dt><dd>一次執行產出的輸出目錄,裝著該次跑出來的所有產物(OpenAPI、指南、provenance、報告)。</dd>
       </dl>
@@ -626,7 +626,7 @@
   <div class="wrap">
     <span class="eyebrow">關鍵架構</span>
     <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
-    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界 —— 兩邊各自可獨立測試、各自可獨立替換。</p>
+    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界,兩邊各自可獨立測試、獨立替換。</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
@@ -666,7 +666,7 @@
     </div>
 
     <div class="arch-note">
-      <b>為什麼這樣切?</b> 把「需要語意理解、本質不確定」的擷取交給 agent,把「組裝、生成、驗證」這些必須可重現的步驟交給確定性程式碼。曾經有過用子行程 <code class="inline">claude -p</code> 擷取的 <code class="inline">run-agent</code> 模式與 NotebookLM 後端,皆已於 2026-06 退役 —— 現在 <b>agent-native 是唯一擷取路徑</b>。
+      <b>為什麼這樣切?</b> 把「需要語意理解、本質不確定」的擷取交給 agent,把「組裝、生成、驗證」這些必須可重現的步驟交給確定性程式碼。曾經有過用子行程 <code class="inline">claude -p</code> 擷取的 <code class="inline">run-agent</code> 模式與 NotebookLM 後端,皆已於 2026-06 退役,現在 <b>agent-native 是唯一擷取路徑</b>。
     </div>
   </div>
 </section>
@@ -971,7 +971,7 @@
         <div>
           <h3>僅來源異動 <span class="en">source_only</span></h3>
           <p>來源或中繼資料動了,但最終 API 契約沒變。</p>
-          <p class="eg"><b>例如</b>:來源檔本身變更(<code>manifest source changed</code>)、provenance 追溯調整、validation / preparation 報告內容變動 —— OpenAPI 規格本身不受影響。</p>
+          <p class="eg"><b>例如</b>:來源檔本身變更(<code>manifest source changed</code>)、provenance 追溯調整、validation / preparation 報告內容變動,但 OpenAPI 規格本身不受影響。</p>
           <p class="act">→ 可放心,規格未變;若在意可回頭看來源為何動。</p>
         </div>
       </div>
