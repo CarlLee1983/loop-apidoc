@@ -263,6 +263,32 @@
     background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
   }
   .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.96rem; }
+  .value .action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    color: var(--teal-deep);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .value .action:hover { text-decoration: underline; }
+  .cmd {
+    margin: 12px 0 0;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: #fff;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .cmd code {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    white-space: pre;
+  }
+  .cmd .muted { color: var(--ink-soft); }
 
   /* ---------- provenance ---------- */
   .prov-art { width: 100%; max-width: 700px; margin: 10px auto 0; display: block; }
@@ -495,6 +521,47 @@
     </div>
   </div>
 </header>
+
+<!-- ===================== ENTRY ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">專案入口</span>
+    <h2 class="section-title">先到 GitHub 首頁，或直接把 plugin 裝起來</h2>
+    <p class="section-lead">如果你想看原始碼、追版本或提 issue，先去 GitHub repo；如果你要直接跑擷取流程，照下面的安裝方式把 plugin / CLI 接好就能開始。</p>
+
+    <div class="value-grid">
+      <div class="value">
+        <div class="badge tint-teal">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/><path d="M10 14 3 21"/></svg>
+        </div>
+        <h3>專案 GitHub 首頁</h3>
+        <p>原始碼、commit、issue 與 workflow 都在這裡。GitHub Pages 也從這個 repo 發佈。</p>
+        <a class="action" href="https://github.com/CarlLee1983/loop-apidoc" target="_blank" rel="noreferrer">前往 GitHub repo</a>
+      </div>
+
+      <div class="value">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+        </div>
+        <h3>Claude Code plugin 安裝</h3>
+        <p>把這個專案裝成 Claude Code plugin，讓 agent 直接讀來源、組裝、驗證。</p>
+        <div class="cmd"><code>uv tool install --from /path/to/loop-apidoc loop-apidoc
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code></div>
+        <p class="section-lead" style="margin: 10px 0 0; font-size: 0.88rem;">這套方式會把 CLI 與 skill 連起來；在 Codex 與 Claude Code 都能用同一份專案內容。</p>
+      </div>
+
+      <div class="value">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 16V8"/><path d="M12 16V5"/><path d="M16 16v-4"/></svg>
+        </div>
+        <h3>Codex CLI 安裝</h3>
+        <p>Codex 不會帶 `${CLAUDE_PLUGIN_ROOT}`，所以直接裝全域指令，再把 skill 掛到 Codex skills 目錄。</p>
+        <div class="cmd"><code>uv tool install --from /path/to/loop-apidoc loop-apidoc
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code></div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ===================== PAIN ===================== -->
 <section class="alt">
