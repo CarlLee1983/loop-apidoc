@@ -106,15 +106,30 @@ writing the same endpoint while a third endpoint goes unwritten. Invariants 1 an
 alone would let that pass only if counts coincidentally matched; together the three
 close it.
 
+Endpoints with `path: null` — the documented shape for a webhook/callback — are exempt
+from invariants 2 and 3. Nothing in an endpoint file distinguishes one null-path entry
+from another, so `(method, path)` collapses them to a single key and "the same endpoint
+twice" is not definable for them at this layer. Generation addresses webhooks by name
+rather than by path, so no data is lost by the exemption; invariant 1 remains their
+guard. Invariants 4 and 5 still apply to them.
+
 Parameter localized-key rejection is already covered by `input_schema.ParamEntry`
 and is not restated here.
 
 ### Empirical safety
 
 These five invariants were run against all 10 benchmark cases (55 endpoint files)
-before this design was accepted: **zero violations**. Making them blocking in
-`assemble` therefore breaks no existing case. The benchmark harness will assert this
-continuously (see [Testing](#testing)).
+before this design was accepted, and were reported as **zero violations**.
+
+**That measurement was wrong.** Wiring the invariants into `assemble` during
+implementation (2026-07-09) surfaced 18 failures across `github-webhooks`,
+`paypal-webhooks-incomplete`, and `newebpay-mpg`: every null-path webhook entry
+collapses to the key `POST ?` and invariant 3 read them as duplicates. The design
+now exempts null-path endpoints from invariants 2 and 3 (above), and with that
+exemption the zero-violation claim holds. The lesson stands on its own: the
+benchmark harness, not a design-time spot check, is what makes an invariant safe to
+make blocking (see [Testing](#testing)). Note that benchmark `sources/` directories
+are gitignored, so a green CI is not evidence — these cases only run locally.
 
 ## CLI
 
