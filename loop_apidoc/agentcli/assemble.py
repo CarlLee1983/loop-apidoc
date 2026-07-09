@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
-from loop_apidoc.agentcli.source_guard import check_extraction_inputs
+from loop_apidoc.agentcli.gate import check_extraction
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
     IntegrationInput,
@@ -144,7 +144,7 @@ def load_extraction_inputs(
     return inventory, endpoint_texts, integration
 
 
-def _named_endpoints(
+def named_endpoints(
     extraction_dir: Path, endpoint_texts: list[str]
 ) -> list[tuple[str, dict]]:
     """Pair each endpoint text with its filename, for guard messages that name
@@ -217,12 +217,12 @@ def run_assemble_pipeline(
         # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
         manifest = backfill_snapshot_files(manifest, url_coverage)
 
-    violations = check_extraction_inputs(
-        inventory, _named_endpoints(extraction_dir, endpoint_texts),
+    violations = check_extraction(
+        inventory, named_endpoints(extraction_dir, endpoint_texts),
         integration, manifest)
     if violations:
         raise AssembleInputError(
-            "擷取輸入不符 schema 契約(修正後重跑 assemble):\n"
+            "擷取輸入不符契約(修正後重跑 assemble):\n"
             + "\n".join(f"  - {v}" for v in violations))
 
     run_dir = output_root / run_id

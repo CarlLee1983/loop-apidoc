@@ -145,3 +145,16 @@ def test_excludes_are_passed_through_to_the_scan(tmp_path):
     statuses = {s["relative_path"]: s["status"] for s in manifest["local_sources"]}
     assert statuses["appendix.md"] == "ignored"
     assert result.run_id == "r1"
+
+
+def test_duplicate_endpoint_files_fail_before_any_run_dir_exists(tmp_path):
+    """兩個檔案寫同一個端點 → 跨檔不變式在建立 run 目錄前擋下。"""
+    sources, extraction, out = _setup(tmp_path)
+    (extraction / "endpoints" / "ep1.json").write_text(
+        json.dumps(_ENDPOINT, ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(AssembleInputError) as exc:
+        _run(sources, extraction, out)
+
+    assert "ep0.json" in str(exc.value) and "ep1.json" in str(exc.value)
+    assert not (out / "r1").exists(), "違規時不得留下孤兒 run 目錄"
