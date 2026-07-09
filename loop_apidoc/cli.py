@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated
 
@@ -22,8 +23,24 @@ from loop_apidoc.foundry.cli import foundry_app  # noqa: E402  (must follow `app
 app.add_typer(foundry_app, name="foundry")
 
 
+def _print_version(value: bool) -> None:
+    if value:
+        typer.echo(f"loop-apidoc {version('loop-apidoc')}")
+        raise typer.Exit()
+
+
 @app.callback()
-def _root() -> None:
+def _root(
+    version_: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="顯示版本後結束",
+            callback=_print_version,
+            is_eager=True,
+        ),
+    ] = False,
+) -> None:
     """Loop 來源依據式 API 文件 pipeline。"""
 
 
@@ -43,6 +60,11 @@ def manifest(
         "--url",
         help="公開來源 URL，可重複指定",
     ),
+    exclude: list[str] = typer.Option(
+        [],
+        "--exclude",
+        help="額外排除的 glob（可重複）；預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -55,6 +77,7 @@ def manifest(
         sources_root=sources,
         urls=list(url),
         generated_at=generated_at,
+        excludes=tuple(exclude),
     )
     payload = result.model_dump_json(indent=2)
     if output is None:
@@ -62,6 +85,59 @@ def manifest(
     else:
         output.write_text(payload, encoding="utf-8")
         typer.echo(f"manifest 已寫入 {output}")
+
+
+@app.command(name="verify-extraction")
+def verify_extraction(
+    sources: Path = typer.Option(
+        ..., "--sources", help="本機來源目錄（source 引用要比對 manifest）",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    extraction: Path = typer.Option(
+        ..., "--extraction",
+        help="agent 產出的擷取目錄(inventory.json + endpoints/*.json,選用 integration.json)",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
+    exclude: list[str] = typer.Option(
+        [], "--exclude",
+        help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
+    json_out: bool = typer.Option(
+        False, "--json", help="把違規以 JSON 陣列印到 stdout(供 agent 解析)"
+    ),
+) -> None:
+    """檢查 agent 產出的擷取 JSON 是否符合契約;不寫檔、不建立 run 目錄。
+
+    exit 0 乾淨;exit 2 有違規或硬 schema 錯誤（不會是 1——1 代表 validate FAIL）。
+    """
+    from loop_apidoc.agentcli.assemble import AssembleInputError
+    from loop_apidoc.agentcli.verify import verify_extraction_dir
+
+    try:
+        violations = verify_extraction_dir(
+            sources_root=sources,
+            extraction_dir=extraction,
+            generated_at=datetime.now(timezone.utc),
+            urls=list(url),
+            excludes=tuple(exclude),
+        )
+    except AssembleInputError as exc:
+        if json_out:
+            typer.echo(json.dumps([str(exc)], ensure_ascii=False, indent=2))
+        else:
+            typer.echo(f"擷取輸入錯誤:{exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    if json_out:
+        typer.echo(json.dumps(violations, ensure_ascii=False, indent=2))
+    elif violations:
+        typer.echo("擷取輸入不符契約(修正後重跑):", err=True)
+        for violation in violations:
+            typer.echo(f"  - {violation}", err=True)
+    else:
+        typer.echo("verify-extraction PASS:擷取輸入符合契約")
+    raise typer.Exit(code=2 if violations else 0)
 
 
 @app.command()
@@ -213,6 +289,10 @@ def assemble(
         ..., "--output", help="輸出根目錄(將建立 <run-id> 子目錄)"
     ),
     url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
+    exclude: list[str] = typer.Option(
+        [], "--exclude",
+        help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
     url_coverage: Path = typer.Option(
         None, "--url-coverage",
         help="agent 產出的 url_sources/coverage.json 路徑;有 URL 來源時檢核撈取涵蓋率",
@@ -263,6 +343,7 @@ def assemble(
             generated_at=now,
             urls=list(url),
             url_coverage_path=url_coverage,
+            excludes=tuple(exclude),
         )
     except AssembleInputError as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)

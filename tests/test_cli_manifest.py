@@ -44,3 +44,34 @@ def test_manifest_command_rejects_missing_sources_dir(tmp_path: Path):
     result = runner.invoke(app, ["manifest", "--sources", str(missing)])
 
     assert result.exit_code != 0
+
+
+def test_manifest_command_accepts_repeatable_exclude(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "guide.md").write_text("hello", encoding="utf-8")
+    (sources / "notes.md").write_text("scratch", encoding="utf-8")
+    (sources / "draft.md").write_text("wip", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources),
+         "--exclude", "notes.*", "--exclude", "draft.*"],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    statuses = {s["relative_path"]: s["status"] for s in json.loads(result.stdout)["local_sources"]}
+    assert statuses == {"guide.md": "pending", "notes.md": "ignored", "draft.md": "ignored"}
+
+
+def test_manifest_command_ignores_readme_by_default(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "README.md").write_text("dir description", encoding="utf-8")
+    (sources / "guide.md").write_text("hello", encoding="utf-8")
+
+    result = runner.invoke(app, ["manifest", "--sources", str(sources)])
+
+    assert result.exit_code == 0, result.stdout
+    statuses = {s["relative_path"]: s["status"] for s in json.loads(result.stdout)["local_sources"]}
+    assert statuses["README.md"] == "ignored"

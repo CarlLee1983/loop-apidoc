@@ -13,10 +13,10 @@ runner = CliRunner()
 _INVENTORY = {
     "overview": "Demo API",
     "environments": [{"name": "prod", "base_url": "https://api.example.com",
-                      "version": None, "source": "§1"}],
+                      "version": None, "source": "manual.md p.1"}],
     "security_schemes": [], "schemas": [], "errors": [], "operational": [],
     "endpoints": [{"method": "GET", "path": "/ping", "summary": "健康檢查",
-                   "source": "§2"}],
+                   "source": "manual.md p.2"}],
     "missing": [],
 }
 _ENDPOINT = {

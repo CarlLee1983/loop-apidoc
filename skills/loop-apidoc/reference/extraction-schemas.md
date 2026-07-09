@@ -1,10 +1,12 @@
 # Extraction schemas (loop-apidoc)
 
-On-demand reference for the three JSON files the orchestrator writes from subagent
-output: `inventory.json`, `endpoints/ep<N>.json`, and the optional `integration.json`.
-Load this while extracting (SKILL.md steps 2–4). The orchestration rules and the
-read-only **subagent contract + grounding rule** live in SKILL.md — they are not
-repeated here.
+On-demand reference for the extraction contract (see SKILL.md's "Subagent contract (extraction)" section): each
+**endpoint** subagent writes its own `endpoints/ep<N>.json` and returns one summary
+line; **inventory** and **integration** subagents write nothing and return their JSON
+object, which you (the orchestrator) write to `inventory.json` and `integration.json`
+(optional). Load this while extracting (SKILL.md steps 2–4). The orchestration rules
+and the read-only **subagent contract + grounding rule** live in SKILL.md — they are
+not repeated here.
 
 ## Universal rules
 
@@ -42,7 +44,31 @@ One object describing the whole API. **You** write what the single inventory sub
 - `version`: the source-stated document/API version, **verbatim** (e.g. `NDNF-1.2.2`);
   `null` if none → becomes OpenAPI `info.version`.
 - Include **every** endpoint and **every** error code.
-- Each `source` cites the source section / page / URL anchor.
+- `endpoints[].path` is the path **only**, always starting with `/`
+  (`/hrxt/loginGame`, `/users/{userId}/orders`). The host belongs in
+  `environments[].base_url` — never fold it, or a `{template}` placeholder standing for it,
+  into `path`. OpenAPI 3.1 requires `paths` keys to start with `/`; `assemble` rejects
+  anything else at the input boundary (`exit 2`).
+
+  ```
+  ✓ "/hrxt/loginGame"                 + environments[0].base_url = "https://api.example.com"
+  ✗ "{api_url}/hrxt/loginGame"
+  ✗ "https://api.example.com/hrxt/loginGame"
+  ```
+- Each `source` **must start with the manifest `relative_path` of the file it came from**,
+  followed by a page (`p.<N>`) or URL anchor (`#<anchor>`); anything after that is free text.
+  `assemble` matches this string against `manifest.json` — a file whose citations name no
+  manifest source at all is rejected at the input boundary (`exit 2`).
+
+  ```
+  ✓ "HRXT_transfer_wallet_v1.00.pdf p.10 — ## 2.4 钱包存款 注意事项"
+  ✓ "paypal-webhooks-overview.md#verifying-authenticity"
+  ✗ "## 2.4 钱包存款 注意事项 (line 331)"   ← names no source file
+  ✗ "第 3 節"                                ← names no source file
+  ```
+
+  Single-source runs are exempt (attribution is unambiguous), but write the full form
+  anyway — it stays correct when a second source is added.
 - `schemas[].fields[]` uses the **English** keys `name`/`type`/`required`/`description`
   (same shape as endpoint `parameters`). Nested fields use the dotted-path convention
   (see endpoints below).
@@ -172,7 +198,9 @@ read-only subagent over the relevant sections.
   (auto-fixable — correct the reference).
 - `verify.field`: when a crypto entry signs/encrypts a value that travels in a request field,
   name that field so the signature is wired into the request example.
-- `source`: required per entry.
+- `source`: required per entry, in the same `<relative_path> p.<N>` form as inventory
+  (see above). Each entry's `source` is carried through to `integration-contract.json`
+  alongside a `provenance_target` for reverse lookup.
 - **Omit-vs-empty:** if the sources describe **no** integration mechanics, **omit
   `integration.json` entirely** (do not write an empty file). If they mention
   encryption/signing/callbacks/conditions/test-cases but omit required details, **write the

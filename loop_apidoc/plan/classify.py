@@ -10,6 +10,7 @@ _UNUSABLE = (
     ProcessingStatus.UNREADABLE,
     ProcessingStatus.UNSUPPORTED,
     ProcessingStatus.DUPLICATE,
+    ProcessingStatus.IGNORED,
 )
 
 # A path/basename matches only when it appears bounded — not as a substring of

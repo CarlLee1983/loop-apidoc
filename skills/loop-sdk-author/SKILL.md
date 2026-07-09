@@ -17,7 +17,9 @@ Use only these contract artifacts from a completed run directory:
 
 - `openapi.yaml` for operations, parameters, schemas, security, servers, and tags.
 - `integration-contract.json` for signing, encryption, callbacks, field
-  conditions, and contract tests.
+  conditions, and contract tests. Every entry carries `source` (the cited
+  location in the original document) and `provenance_target` (its key in
+  `provenance.json`) — cite the `source` whenever a rule drives SDK behaviour.
 - `handoff/sdk-hints.json` for operation grouping, implementation order, gaps,
   and contract pointers.
 - `examples/` only as derived navigation aid; do not treat examples as source.

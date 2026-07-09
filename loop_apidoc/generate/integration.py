@@ -19,6 +19,23 @@ def _base_urls(plan: NormalizationPlan) -> list[dict]:
     ]
 
 
+_SECTIONS = ("crypto", "callbacks", "field_conditions", "test_cases")
+
+# field_conditions entries carry no name, so they are addressed by index.
+_INDEXED_SECTIONS = frozenset({"field_conditions"})
+
+
+def entry_target(section: str, idx: int, entry) -> str:
+    """The provenance `target` for one contract entry.
+
+    Single definition shared by the product file and provenance.json — a consumer
+    can only join the two while these agree.
+    """
+    if section in _INDEXED_SECTIONS:
+        return f"integration.{section}.{idx}"
+    return f"integration.{section}.{getattr(entry, 'name', None) or idx}"
+
+
 def build_integration_document(plan: NormalizationPlan) -> dict | None:
     """Serialize plan.integration into the integration-contract.json dict (pure).
 
@@ -34,12 +51,16 @@ def build_integration_document(plan: NormalizationPlan) -> dict | None:
     payload["base_urls"] = _base_urls(plan)
     payload["error_codes"] = _error_codes(plan)
     payload["missing"] = [m.model_dump() for m in contract.missing]
-    # Drop per-entry provenance bookkeeping from the product file; provenance.json
-    # carries the source mapping.
-    for section in ("crypto", "callbacks", "field_conditions", "test_cases"):
-        for entry in payload.get(section, []):
+    # Swap internal bookkeeping (status/citations) for the two fields a consumer
+    # needs to trace a rule back to its origin: the cited `source` string, and the
+    # provenance.json key the full citation list is filed under.
+    for section in _SECTIONS:
+        cited_entries = getattr(contract, section)
+        for idx, (entry, cited) in enumerate(zip(payload.get(section, []), cited_entries)):
             entry.pop("status", None)
             entry.pop("citations", None)
+            entry["source"] = cited.citations[0].locator if cited.citations else None
+            entry["provenance_target"] = entry_target(section, idx, cited)
     return payload
 
 
@@ -48,12 +69,7 @@ def integration_provenance_entries(
 ) -> list[ProvenanceEntry]:
     """One provenance group per contract leaf (error_codes excluded — reused)."""
     out: list[ProvenanceEntry] = []
-    for idx, scheme in enumerate(contract.crypto):
-        out += _entries(f"integration.crypto.{scheme.name or idx}", scheme)
-    for idx, cb in enumerate(contract.callbacks):
-        out += _entries(f"integration.callbacks.{cb.name or idx}", cb)
-    for idx, cond in enumerate(contract.field_conditions):
-        out += _entries(f"integration.field_conditions.{idx}", cond)
-    for idx, case in enumerate(contract.test_cases):
-        out += _entries(f"integration.test_cases.{case.name or idx}", case)
+    for section in _SECTIONS:
+        for idx, entry in enumerate(getattr(contract, section)):
+            out += _entries(entry_target(section, idx, entry), entry)
     return out

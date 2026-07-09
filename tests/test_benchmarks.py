@@ -24,6 +24,7 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.agentcli.verify import verify_extraction_dir
 from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
 from loop_apidoc.foundry import store as foundry_store
 from loop_apidoc.foundry.approve import approve_candidate
@@ -521,3 +522,21 @@ def test_benchmark_score_verdict(case, assembled) -> None:
             f"{case.name}: score {report.score} >= min {report.min_score} but verdict "
             f"is {first.verdict.value}, not converged"
         )
+
+
+def test_benchmark_extraction_passes_the_gate(case) -> None:
+    """每個 benchmark case 的 extraction/ 都必須通過 check_extraction。
+
+    這是擋下「過緊的不變式」的回歸網:設計期間 index-strict 對應就是被這條
+    測試否決的(apis-guru-baseline 的 ep3/ep4/ep5 順序本來就不對位)。
+    """
+    if not _has_sources(case):
+        pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
+
+    violations = verify_extraction_dir(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        generated_at=_FIXED_TS,
+    )
+
+    assert violations == [], f"{case.name}: {violations}"
