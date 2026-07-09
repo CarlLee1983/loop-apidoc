@@ -1,10 +1,12 @@
 # Extraction schemas (loop-apidoc)
 
-On-demand reference for the three JSON files the orchestrator writes from subagent
-output: `inventory.json`, `endpoints/ep<N>.json`, and the optional `integration.json`.
-Load this while extracting (SKILL.md steps 2–4). The orchestration rules and the
-read-only **subagent contract + grounding rule** live in SKILL.md — they are not
-repeated here.
+On-demand reference for the extraction contract (see SKILL.md lines 90–95): each
+**endpoint** subagent writes its own `endpoints/ep<N>.json` and returns one summary
+line; **inventory** and **integration** subagents write nothing and return their JSON
+object, which you (the orchestrator) write to `inventory.json` and `integration.json`
+(optional). Load this while extracting (SKILL.md steps 2–4). The orchestration rules
+and the read-only **subagent contract + grounding rule** live in SKILL.md — they are
+not repeated here.
 
 ## Universal rules
 
