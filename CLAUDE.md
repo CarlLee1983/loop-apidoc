@@ -39,7 +39,7 @@ The six generation/analysis CLI commands are `preprocess` (PDF→markdown), `man
 
 | Package | Responsibility |
 | --- | --- |
-| `loop_apidoc/manifest/` | scan local sources + build `manifest.json` |
+| `loop_apidoc/manifest/` | scan local sources + build `manifest.json` (`scanner.py` excludes non-spec furniture via `DEFAULT_EXCLUDES` + `--exclude` globs → `status: ignored`, never source evidence) |
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written JSON → plan→generate→validate, `AssembleInputError` / `RunDirectoryCollisionError`), `input_schema.py` (typed pydantic guards that validate agent-written extraction JSON at the assemble boundary, before any run dir is created), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/extraction/` | shared models + utilities (models, stages, questions, store, jsonblock) used by the agent extraction |
 | `loop_apidoc/plan/` | normalization plan + source-match classification |

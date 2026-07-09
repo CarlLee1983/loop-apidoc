@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated
 
@@ -22,8 +23,24 @@ from loop_apidoc.foundry.cli import foundry_app  # noqa: E402  (must follow `app
 app.add_typer(foundry_app, name="foundry")
 
 
+def _print_version(value: bool) -> None:
+    if value:
+        typer.echo(f"loop-apidoc {version('loop-apidoc')}")
+        raise typer.Exit()
+
+
 @app.callback()
-def _root() -> None:
+def _root(
+    version_: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="顯示版本後結束",
+            callback=_print_version,
+            is_eager=True,
+        ),
+    ] = False,
+) -> None:
     """Loop 來源依據式 API 文件 pipeline。"""
 
 
@@ -43,6 +60,11 @@ def manifest(
         "--url",
         help="公開來源 URL，可重複指定",
     ),
+    exclude: list[str] = typer.Option(
+        [],
+        "--exclude",
+        help="額外排除的 glob（可重複）；預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -55,6 +77,7 @@ def manifest(
         sources_root=sources,
         urls=list(url),
         generated_at=generated_at,
+        excludes=tuple(exclude),
     )
     payload = result.model_dump_json(indent=2)
     if output is None:

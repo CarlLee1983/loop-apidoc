@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -15,8 +16,9 @@ def build_manifest(
     urls: list[str],
     generated_at: datetime,
     client: httpx.Client | None = None,
+    excludes: Sequence[str] = (),
 ) -> Manifest:
-    local_sources = scan_sources(sources_root, scanned_at=generated_at)
+    local_sources = scan_sources(sources_root, scanned_at=generated_at, excludes=excludes)
 
     url_sources: list[UrlSource] = []
     if urls:

@@ -20,6 +20,9 @@ class ProcessingStatus(str, Enum):
     UNSUPPORTED = "unsupported"
     DUPLICATE = "duplicate"
     UNREADABLE = "unreadable"
+    # Matched an exclude glob: present in the manifest for visibility, but never
+    # treated as source evidence.
+    IGNORED = "ignored"
 
 
 class LocalSource(BaseModel):
