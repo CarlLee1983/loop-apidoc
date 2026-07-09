@@ -41,6 +41,9 @@ class EndpointEntry(_Cited):
     method: str | None = None
     path: str | None = None
     summary: str | None = None
+    # 來源明載此端點屬於哪個 environments[].name(多主機文件);
+    # generator 翻成 operation-level servers。缺席時沿用 root-level servers。
+    server: str | None = None
     parameters: list[dict] = Field(default_factory=list)
     request: dict | None = None
     responses: list[dict] = Field(default_factory=list)

@@ -240,3 +240,39 @@ def test_null_path_count_mismatch_is_still_caught_by_invariant_1():
     violations = cross_file_violations(inventory, endpoints)
 
     assert any("2" in v and "3" in v and "endpoints/*.json" in v for v in violations)
+
+
+# ── 不變式 6:endpoints[].server 必須指向 inventory.environments[].name ──
+
+def _inv_env(*endpoints: dict, environments=()) -> dict:
+    return {
+        "endpoints": list(endpoints),
+        "environments": [{"name": n, "base_url": f"https://{n}"} for n in environments],
+        "schemas": [],
+        "security_schemes": [],
+    }
+
+
+def test_unknown_server_name_is_a_violation():
+    inventory = _inv_env(_ep("GET", "/ping", server="reporting"),
+                         environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("endpoints[0].server" in v and "reporting" in v for v in violations)
+
+
+def test_known_server_name_passes():
+    inventory = _inv_env(_ep("GET", "/ping", server="production"),
+                         environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_absent_server_is_allowed():
+    inventory = _inv_env(_ep("GET", "/ping"), environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    assert cross_file_violations(inventory, endpoints) == []

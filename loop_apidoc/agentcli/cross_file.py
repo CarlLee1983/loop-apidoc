@@ -148,6 +148,24 @@ def _reference_violations(
     return out
 
 
+def _server_violations(inventory: dict) -> list[str]:
+    """不變式 6:`endpoints[].server` 若存在,必須指向某個 environments[].name。
+
+    迭代對象是 inventory 而非端點檔 —— `server` 住在 inventory 側,
+    是「這支端點在哪個主機」的事實,由 generator 翻成 operation-level servers。
+    """
+    env_names = _names(inventory, "environments")
+    out: list[str] = []
+    for idx, entry in enumerate(_entries(inventory, "endpoints")):
+        server = entry.get("server")
+        if isinstance(server, str) and server not in env_names:
+            out.append(
+                f"inventory.json: endpoints[{idx}].server 未指向任何 "
+                f"environments[].name:{server!r}"
+            )
+    return out
+
+
 def cross_file_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
@@ -157,4 +175,5 @@ def cross_file_violations(
         + _multiset_violations(inventory, endpoints)
         + _duplicate_violations(endpoints)
         + _reference_violations(inventory, endpoints)
+        + _server_violations(inventory)
     )
