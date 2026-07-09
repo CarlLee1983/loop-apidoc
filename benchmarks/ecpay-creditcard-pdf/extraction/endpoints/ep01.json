@@ -145,5 +145,6 @@
   "examples": [],
   "missing": [
     "回呼路徑由特店 ReturnURL 決定，來源未指定固定 path"
-  ]
+  ],
+  "summary": "付款結果通知 (Server 端 ReturnURL)：消費者付款完成後，綠界以背景 ServerPost 方式將付款結果參數回傳至訂單所設定的 ReturnURL；特店驗證檢查碼相符後須回應純字串 1|OK。此為非同步回呼 (callback/webhook)，路徑由特店的 ReturnURL 決定"
 }

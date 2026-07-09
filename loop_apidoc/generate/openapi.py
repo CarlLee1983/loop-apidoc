@@ -441,6 +441,7 @@ def _build_operation(
     endpoints: list,
     name_to_key: dict[str, str] | None = None,
     scheme_keys: dict[str, str] | None = None,
+    environments: list | None = None,
 ) -> dict:
     """Build one OpenAPI operation from one or more source endpoints that share
     the same method+path. OpenAPI permits only a single operation per path+method,
@@ -508,6 +509,22 @@ def _build_operation(
     for endpoint in endpoints:
         responses.extend(endpoint.responses)
     op["responses"] = _build_responses(responses, name_to_key)
+    # 來源明載的 per-endpoint 主機:翻成 operation-level servers,覆寫 root servers。
+    # 未解析到 environment 時靜默略過 —— cross_file 已在輸入邊界擋下不存在的名字,
+    # 這裡不臆測、不產出壞 URL。
+    server_name = next(
+        (e.server for e in endpoints if getattr(e, "server", None)), None
+    )
+    if server_name:
+        env = next(
+            (e for e in (environments or [])
+             if e.name == server_name and e.base_url), None
+        )
+        if env is not None:
+            entry: dict = {"url": env.base_url}
+            if env.name:
+                entry["description"] = env.name
+            op["servers"] = [entry]
     return op
 
 
@@ -540,7 +557,9 @@ def _build_paths(
         )
     paths: dict = {}
     for (path, method), endpoints in grouped.items():
-        op = _build_operation(endpoints, name_to_key, scheme_keys)
+        op = _build_operation(
+            endpoints, name_to_key, scheme_keys, environments=plan.environments
+        )
         declared_path = {
             param["name"]
             for param in op.get("parameters", [])

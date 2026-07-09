@@ -33,8 +33,24 @@ class Issue(BaseModel):
     requery_scope: str | None = None  # 有界的重讀提示(來源段落/endpoint ref/契約區塊)
 
 
+class RootCause(BaseModel):
+    """多筆同源 issue 收斂成的一次修完動作。
+
+    純加法:`issues[]` 一字不動,`ok` / exit code / score 全不受影響。
+    correction loop 應優先消費 root_causes,再處理未被分組的 issues。
+    """
+
+    code: IssueCode
+    severity: Severity
+    target_file: str
+    fix_once: str
+    affected_locations: list[str]
+
+
 class ValidationReport(BaseModel):
     issues: list[Issue] = Field(default_factory=list)
+    # 見 validate/root_cause.py;不參與 `ok` 的計算。
+    root_causes: list[RootCause] = Field(default_factory=list)
 
     @property
     def ok(self) -> bool:

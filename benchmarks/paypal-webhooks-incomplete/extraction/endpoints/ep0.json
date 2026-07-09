@@ -23,5 +23,6 @@
   "examples": [],
   "missing": [
     "The JSON payload fields of PAYMENT.SALE.COMPLETED are not documented on the provided pages; the body is left unspecified rather than inferred."
-  ]
+  ],
+  "summary": "PAYMENT.SALE.COMPLETED webhook. Delivered as an HTTPS POST to your subscribed listener URL when a sale completes."
 }

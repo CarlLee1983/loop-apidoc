@@ -53,5 +53,6 @@
   "examples": [],
   "missing": [
     "No full example payload body is provided in the source for this event; object-typed properties (repository, sender, hook, commits) are not expanded."
-  ]
+  ],
+  "summary": "ping webhook event. Sent when a new webhook is created, to confirm the configuration. Delivered as an HTTP POST to the configured webhook URL with X-GitHub-Event: ping."
 }

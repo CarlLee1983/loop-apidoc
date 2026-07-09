@@ -1,11 +1,13 @@
-"""Input-boundary guards for the two extraction-schema contracts a subagent can
-only satisfy if we state them: `source` citation format, and `path` rooting.
+"""Input-boundary guards for the three extraction-schema contracts a subagent can
+only satisfy if we state them: `source` citation format, `path` rooting, and
+`summary` on null-path (webhook/callback) endpoints.
 
-Both are structural properties of agent-written JSON, checkable before any run
-directory exists. Left unchecked they surface far downstream — a malformed
-`source` becomes a wall of `SOURCE_UNVERIFIED` at validate time, and an
-unrooted `path` becomes an opaque `OPENAPI_INVALID` after plan and generate
-have already run. Failing here costs one message instead of a correction loop.
+All three are structural properties of agent-written JSON, checkable before any
+run directory exists. Left unchecked they surface far downstream — a malformed
+`source` becomes a wall of `SOURCE_UNVERIFIED` at validate time, an unrooted
+`path` becomes an opaque `OPENAPI_INVALID` after plan and generate have already
+run, and a missing `summary` silently disables cross_file's null-path identity
+key (issue #7). Failing here costs one message instead of a correction loop.
 
 Pure: no file I/O. Callers turn the returned messages into `AssembleInputError`.
 """
@@ -63,6 +65,36 @@ def path_violations(
         violation = _path_violation(name, "path", endpoint.get("path"))
         if violation:
             out.append(violation)
+    return out
+
+
+def _has_summary(entry: dict) -> bool:
+    value = entry.get("summary")
+    return isinstance(value, str) and bool(value.strip())
+
+
+def summary_violations(
+    inventory: dict, endpoints: list[tuple[str, dict]]
+) -> list[str]:
+    """path 為 null 的 webhook/callback 端點，`summary` 是它唯一的身份。
+
+    沒有它，cross_file 的多重集合與重複檢查無法區分兩個 webhook，
+    subagent 把同一個 webhook 寫進兩個檔、另一個從沒被寫出，會靜默通過(issue #7)。
+    """
+    out: list[str] = []
+    for idx, entry in enumerate(_entries(inventory, "endpoints")):
+        if entry.get("path") is None and not _has_summary(entry):
+            out.append(
+                f"inventory.json: endpoints[{idx}].summary 為必填 —— "
+                "path 為 null 的 webhook/callback 端點以 summary 為身份鍵"
+            )
+    for name, endpoint in endpoints:
+        if endpoint.get("path") is None and not _has_summary(endpoint):
+            out.append(
+                f"{name}: summary 為必填 —— "
+                "path 為 null 的 webhook/callback 端點以 summary 為身份鍵，"
+                "且必須與 inventory.json 對應條目逐字相符"
+            )
     return out
 
 
@@ -147,6 +179,8 @@ def check_extraction_inputs(
 ) -> list[str]:
     """All violations at once — the fix is one rewrite of the extraction JSON,
     so reporting only the first would force a needless round trip."""
-    return path_violations(inventory, endpoints) + source_violations(
-        inventory, endpoints, integration, manifest
+    return (
+        path_violations(inventory, endpoints)
+        + summary_violations(inventory, endpoints)
+        + source_violations(inventory, endpoints, integration, manifest)
     )

@@ -143,42 +143,87 @@ def test_known_security_scheme_passes():
     assert cross_file_violations(inventory, endpoints) == []
 
 
-# ── null path 端點(webhook/callback)豁免多重集合與重複檢查 ──────────────
+# ── null path 端點(webhook/callback)以 summary 當身份鍵 ──────────────
 
-def _null_ep(**extra) -> dict:
-    return {"method": "POST", "path": None, **extra}
+def _null_ep(summary: str | None = None, **extra) -> dict:
+    return {"method": "POST", "path": None, "summary": summary, **extra}
 
 
-def test_multiple_null_path_endpoints_are_not_flagged():
-    """GitHub-webhooks 的形狀:多筆 path: null 端點,彼此無法用 (method, path) 區分。"""
-    inventory = _inv(_null_ep(), _null_ep(), _null_ep())
+def test_distinct_null_path_endpoints_pass():
+    """多筆 path: null 端點,靠 summary 彼此區分。"""
+    inventory = _inv(_null_ep("Notify"), _null_ep("Return"), _null_ep("Customer"))
     endpoints = [
-        ("ep0.json", _null_ep()),
-        ("ep1.json", _null_ep()),
-        ("ep2.json", _null_ep()),
+        ("ep0.json", _null_ep("Notify")),
+        ("ep1.json", _null_ep("Return")),
+        ("ep2.json", _null_ep("Customer")),
     ]
 
     assert cross_file_violations(inventory, endpoints) == []
 
 
-def test_mix_of_real_and_null_path_endpoints_is_not_flagged():
-    inventory = _inv(_ep("POST", "/orders"), _null_ep(), _null_ep())
+def test_two_files_writing_the_same_webhook_is_a_violation():
+    """issue #7 的失效模式:兩個檔寫同一個 webhook,第三個 webhook 沒人寫。
+    不變式 1(總數)看到 3 == 3 會通過 —— 必須靠不變式 2、3 抓到。"""
+    inventory = _inv(_null_ep("Notify"), _null_ep("Return"), _null_ep("Customer"))
+    endpoints = [
+        ("ep0.json", _null_ep("Notify")),
+        ("ep1.json", _null_ep("Notify")),
+        ("ep2.json", _null_ep("Customer")),
+    ]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("ep0.json" in v and "ep1.json" in v and "Notify" in v
+               and "被寫進多個檔案" in v for v in violations)
+    assert any("Return" in v and "沒有對應的 endpoints/*.json" in v
+               for v in violations)
+
+
+def test_webhook_summary_whitespace_is_normalized():
+    """長敘述跨行複製容易差一個空白;正規化後仍視為同一身份。"""
+    inventory = _inv(_null_ep("Notify  結果\n通知"))
+    endpoints = [("ep0.json", _null_ep("Notify 結果 通知"))]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_webhook_summary_mismatch_is_a_violation():
+    inventory = _inv(_null_ep("Notify"))
+    endpoints = [("ep0.json", _null_ep("Return"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("Return" in v and "不在 inventory.endpoints" in v for v in violations)
+    assert any("Notify" in v and "沒有對應的 endpoints/*.json" in v for v in violations)
+
+
+def test_null_path_without_summary_is_excluded_from_multiset_checks():
+    """缺 summary 時無法定出身份 —— 交給 source_guard 以 exit 2 報告,
+    這裡不得誤報「重複」。行為與加入 summary 之前相同。"""
+    inventory = _inv(_null_ep(), _null_ep())
+    endpoints = [("ep0.json", _null_ep()), ("ep1.json", _null_ep())]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_mix_of_real_and_null_path_endpoints_passes():
+    inventory = _inv(_ep("POST", "/orders"), _null_ep("Notify"), _null_ep("Return"))
     endpoints = [
         ("ep0.json", _ep("POST", "/orders")),
-        ("ep1.json", _null_ep()),
-        ("ep2.json", _null_ep()),
+        ("ep1.json", _null_ep("Notify")),
+        ("ep2.json", _null_ep("Return")),
     ]
 
     assert cross_file_violations(inventory, endpoints) == []
 
 
 def test_duplicate_real_path_endpoint_is_still_reported():
-    """迴歸守門:真實 path 的重複仍要被抓到,不因 null path 豁免而連帶失效。"""
-    inventory = _inv(_ep("GET", "/ping"), _null_ep())
+    """迴歸守門:真實 path 的重複仍要被抓到。"""
+    inventory = _inv(_ep("GET", "/ping"), _null_ep("Notify"))
     endpoints = [
         ("ep0.json", _ep("GET", "/ping")),
         ("ep1.json", _ep("GET", "/ping")),
-        ("ep2.json", _null_ep()),
+        ("ep2.json", _null_ep("Notify")),
     ]
 
     violations = cross_file_violations(inventory, endpoints)
@@ -188,11 +233,46 @@ def test_duplicate_real_path_endpoint_is_still_reported():
 
 
 def test_null_path_count_mismatch_is_still_caught_by_invariant_1():
-    """迴歸守門:null path 檔數與 inventory 筆數不符,仍要靠不變式 1(總數)抓到。"""
-    inventory = _inv(_null_ep(), _null_ep(), _null_ep())
-    endpoints = [("ep0.json", _null_ep()), ("ep1.json", _null_ep())]
+    """迴歸守門:檔數與 inventory 筆數不符,仍要靠不變式 1(總數)抓到。"""
+    inventory = _inv(_null_ep("A"), _null_ep("B"), _null_ep("C"))
+    endpoints = [("ep0.json", _null_ep("A")), ("ep1.json", _null_ep("B"))]
 
     violations = cross_file_violations(inventory, endpoints)
 
-    assert any("2" in v and "3" in v and "endpoints/*.json" in v
-               for v in violations)
+    assert any("2" in v and "3" in v and "endpoints/*.json" in v for v in violations)
+
+
+# ── 不變式 6:endpoints[].server 必須指向 inventory.environments[].name ──
+
+def _inv_env(*endpoints: dict, environments=()) -> dict:
+    return {
+        "endpoints": list(endpoints),
+        "environments": [{"name": n, "base_url": f"https://{n}"} for n in environments],
+        "schemas": [],
+        "security_schemes": [],
+    }
+
+
+def test_unknown_server_name_is_a_violation():
+    inventory = _inv_env(_ep("GET", "/ping", server="reporting"),
+                         environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("endpoints[0].server" in v and "reporting" in v for v in violations)
+
+
+def test_known_server_name_passes():
+    inventory = _inv_env(_ep("GET", "/ping", server="production"),
+                         environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_absent_server_is_allowed():
+    inventory = _inv_env(_ep("GET", "/ping"), environments=("production",))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    assert cross_file_violations(inventory, endpoints) == []

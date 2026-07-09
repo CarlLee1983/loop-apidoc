@@ -13,18 +13,29 @@ extraction JSON, writes nothing, creates no run directory.
 - `--json` prints a JSON array of violation strings (`[]` when clean).
 - `--sources` is required because `source` citations are checked against `manifest.json`.
 
+Before the cross-file invariants, `verify-extraction` also enforces three input-boundary
+schema contracts a subagent can only satisfy if we state them (`source_guard.py`):
+`endpoints[].path` must start with `/` (the host belongs in `environments[].base_url`,
+never in `path`); every `source` citation must name a manifest source; and a null-path
+(webhook/callback) endpoint must carry a non-blank `summary`. Violating any of these
+aborts before a run directory is created.
+
 Cross-file invariants (all `error`, all also enforced by `assemble`):
 
 1. `len(endpoints/*.json) == len(inventory.endpoints)`
-2. the `(method, path)` multiset of endpoint files equals inventory's
-3. no `(method, path)` appears in two endpoint files
+2. the identity multiset of endpoint files equals inventory's — identity is `(method, path)`
+   when `path` is a string, or `(method, summary)` for a null-path (webhook/callback)
+   endpoint (whitespace-normalized)
+3. no identity appears in two endpoint files
 4. every `schema_ref` resolves to an `inventory.schemas[].name`
 5. every `security[]` entry resolves to an `inventory.security_schemes[].name`
+6. every `endpoints[].server` resolves to an `environments[].name`
 
-Endpoints with `path: null` (webhooks/callbacks) are exempt from invariants 2 and 3 —
-nothing distinguishes one null-path entry from another, so "the same endpoint twice" is
-undefined for them. They still count toward invariant 1 and remain subject to invariants
-4 and 5.
+Null-path endpoints are **not** exempt from invariants 2–3: `summary` is their identity,
+and `source_guard`'s boundary check above guarantees every null-path entry has one before
+these invariants run. An endpoint whose `summary` resolves to `None` (neither a string
+`path` nor a usable `summary`) is excluded from the multiset/duplicate check itself — but
+that state cannot survive the boundary check, so it should never be observed here.
 
 Hard schema errors (malformed JSON, wrong types) abort on the first one — the remaining
 checks would be meaningless.
@@ -57,6 +68,27 @@ checks would be meaningless.
 
 The three structured-routing fields are emitted as `null` when the validator can't map the
 issue precisely; `auto_fixable` is always present (default `false`).
+
+### `root_causes` — fix once, not N times
+
+`validation/report.json` carries an additive `root_causes[]` alongside `issues[]`.
+Each entry groups issues sharing `(code, severity, target_file)` when there are two
+or more of them:
+
+```json
+{"code": "SOURCE_UNVERIFIED", "severity": "error",
+ "target_file": "integration.json",
+ "fix_once": "統一改寫該檔所有 source 為 '<relative_path> p.<N>' …",
+ "affected_locations": ["integration.crypto.0", "integration.crypto.1", "…"]}
+```
+
+**Consume `root_causes` first.** One rewrite of `target_file` clears every location in
+`affected_locations` — do not spawn one requery subagent per location. Then handle the
+`issues[]` entries that no root cause covers (those with `target_file: null`, and
+single-occurrence issues).
+
+`root_causes` never affects pass/fail: the gate remains "any `error`-severity issue in
+`issues[]`". A report can have root causes and still PASS if they are all warnings.
 
 ## The gate: severity, not code
 

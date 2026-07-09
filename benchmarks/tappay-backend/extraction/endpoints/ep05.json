@@ -194,5 +194,6 @@
   "missing": [
     "Merchant-hosted URL (https, port 443); path defined by merchant, not TapPay (path=null)",
     "No signature/verification on the callback; TapPay recommends re-querying via Record API"
-  ]
+  ],
+  "summary": "Backend Notify callback — after an e-payment or Direct Pay 3D transaction completes, TapPay sends a server-to-merchant JSON notification to the merchant's backend_notify_url. Merchant must respond HTTP 200; otherwise TapPay resends at 1, 2, 4, 8, 16 minutes, up to five times. Merchant-hosted URL (https, port 443); path not defined by TapPay."
 }

@@ -3,6 +3,7 @@ from __future__ import annotations
 from loop_apidoc.validate.models import (
     Issue,
     IssueCode,
+    RootCause,
     Severity,
     ValidationReport,
 )
@@ -36,3 +37,34 @@ def test_write_reports_emits_both_files(tmp_path):
     loaded = ValidationReport.model_validate_json((out / "report.json").read_text())
     assert loaded == _report()
     assert "FAIL" in (out / "report.md").read_text()
+
+
+def test_render_markdown_lists_root_causes_before_issues():
+    report = ValidationReport(
+        issues=[
+            Issue(code=IssueCode.SOURCE_UNVERIFIED, severity=Severity.ERROR,
+                  location="integration.crypto.0", evidence="缺 supported 依據",
+                  suggested_fix="確認來源", target_file="integration.json"),
+            Issue(code=IssueCode.SOURCE_UNVERIFIED, severity=Severity.ERROR,
+                  location="integration.crypto.1", evidence="缺 supported 依據",
+                  suggested_fix="確認來源", target_file="integration.json"),
+        ],
+        root_causes=[
+            RootCause(code=IssueCode.SOURCE_UNVERIFIED, severity=Severity.ERROR,
+                      target_file="integration.json", fix_once="統一改寫 source 格式",
+                      affected_locations=["integration.crypto.0",
+                                          "integration.crypto.1"]),
+        ],
+    )
+
+    md = render_markdown(report)
+
+    assert md.index("## 根因（優先處理）") < md.index("## 逐筆問題")
+    assert "統一改寫 source 格式" in md
+    assert "影響 2 處" in md
+
+
+def test_render_markdown_omits_root_cause_section_when_empty():
+    report = ValidationReport(issues=[])
+
+    assert "## 根因" not in render_markdown(report)

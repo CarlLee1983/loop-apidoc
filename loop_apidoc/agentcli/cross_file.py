@@ -2,13 +2,13 @@
 
 Endpoint subagents write their own file, so the orchestrator no longer sees each
 endpoint's JSON pass through its context. What it loses in carriage it must regain
-in verification: these five invariants catch every failure mode that *loses data* —
+in verification: these six invariants catch every failure mode that *loses data* —
 a subagent that died, one that wrote an endpoint nobody asked for, two that wrote
 the same endpoint, or one that invented a schema/security name.
 
-Deliberately set-based, never index-based: generation keys on `method`/`path` and
-never on the filename, so two files' contents being swapped has no downstream
-consequence and must not be rejected.
+Deliberately set-based, never index-based: generation keys on `method`/`path`(有
+path 時)或 `summary`(webhook/callback 的 path 為 null 時)而從不看檔名,所以兩個
+檔案的內容互換沒有下游後果,不得被判為違規。
 
 Pure: no file I/O. Callers turn the returned messages into `AssembleInputError`.
 """
@@ -24,13 +24,33 @@ def _entries(payload: dict | None, section: str) -> list[dict]:
     return [e for e in (payload.get(section) or []) if isinstance(e, dict)]
 
 
-def _key(entry: dict) -> str:
-    """`(method, path)` 正規化為一個可讀的比對鍵;method 大小寫不敏感。"""
+def _norm_summary(value: Any) -> str | None:
+    """空白正規化:長敘述跨行複製容易差一個空白,除此之外要求逐字相符。"""
+    if not isinstance(value, str):
+        return None
+    collapsed = " ".join(value.split())
+    return collapsed or None
+
+
+def _key(entry: dict) -> str | None:
+    """端點的跨檔身份鍵;method 大小寫不敏感。
+
+    有 path 用 `(method, path)`。webhook/callback 的 path 為 null,身份改用
+    `summary` —— generate/naming.py 的 webhook_items 早就用 summary 命名 webhook,
+    所以它本來就是 webhook 的身份。
+
+    兩者皆無時回 None:此時真正的問題是「缺 summary」,由 source_guard 以 exit 2
+    報告。在這裡把鍵塌成 `POST ?` 再報「重複」會給出錯誤訊息。
+    """
     method = entry.get("method")
     method = method.upper() if isinstance(method, str) else "?"
     path = entry.get("path")
-    path = path if isinstance(path, str) else "?"
-    return f"{method} {path}"
+    if isinstance(path, str):
+        return f"{method} {path}"
+    summary = _norm_summary(entry.get("summary"))
+    if summary is None:
+        return None
+    return f"{method} (webhook) {summary}"
 
 
 def _names(payload: dict, section: str) -> set[str]:
@@ -51,17 +71,16 @@ def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> lis
     ]
 
 
-def _keyed(entries: list[dict]) -> list[dict]:
-    """只有帶 path 的端點有可比對的鍵;webhook/callback 的 path 為 null,
-    彼此無法用 (method, path) 區分,交給不變式 1(總數)把關。"""
-    return [e for e in entries if isinstance(e.get("path"), str)]
-
-
 def _multiset_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
-    inventory_keys = {_key(e) for e in _keyed(_entries(inventory, "endpoints"))}
-    keyed_endpoints = [(name, ep) for name, ep in endpoints if isinstance(ep.get("path"), str)]
+    inventory_keys = {
+        key for key in (_key(e) for e in _entries(inventory, "endpoints"))
+        if key is not None
+    }
+    keyed_endpoints = [
+        (name, ep) for name, ep in endpoints if _key(ep) is not None
+    ]
     file_keys = {_key(ep) for _, ep in keyed_endpoints}
 
     out: list[str] = []
@@ -80,9 +99,10 @@ def _multiset_violations(
 def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     seen: dict[str, list[str]] = {}
     for name, endpoint in endpoints:
-        if not isinstance(endpoint.get("path"), str):
+        key = _key(endpoint)
+        if key is None:
             continue
-        seen.setdefault(_key(endpoint), []).append(name)
+        seen.setdefault(key, []).append(name)
     return [
         f"{', '.join(sorted(files))}: 同一端點 {key} 被寫進多個檔案"
         "(兩個 subagent 寫了同一個端點,另一個端點可能因此沒人寫)"
@@ -128,6 +148,24 @@ def _reference_violations(
     return out
 
 
+def _server_violations(inventory: dict) -> list[str]:
+    """不變式 6:`endpoints[].server` 若存在,必須指向某個 environments[].name。
+
+    迭代對象是 inventory 而非端點檔 —— `server` 住在 inventory 側,
+    是「這支端點在哪個主機」的事實,由 generator 翻成 operation-level servers。
+    """
+    env_names = _names(inventory, "environments")
+    out: list[str] = []
+    for idx, entry in enumerate(_entries(inventory, "endpoints")):
+        server = entry.get("server")
+        if isinstance(server, str) and server not in env_names:
+            out.append(
+                f"inventory.json: endpoints[{idx}].server 未指向任何 "
+                f"environments[].name:{server!r}"
+            )
+    return out
+
+
 def cross_file_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
@@ -137,4 +175,5 @@ def cross_file_violations(
         + _multiset_violations(inventory, endpoints)
         + _duplicate_violations(endpoints)
         + _reference_violations(inventory, endpoints)
+        + _server_violations(inventory)
     )

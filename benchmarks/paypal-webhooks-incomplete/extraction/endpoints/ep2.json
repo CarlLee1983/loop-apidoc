@@ -23,5 +23,6 @@
   "examples": [],
   "missing": [
     "The JSON payload fields of CHECKOUT.ORDER.APPROVED are not documented on the provided pages; the body is left unspecified rather than inferred."
-  ]
+  ],
+  "summary": "CHECKOUT.ORDER.APPROVED webhook. Delivered as an HTTPS POST to your subscribed listener URL when a buyer approved a checkout order."
 }

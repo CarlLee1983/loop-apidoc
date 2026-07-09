@@ -6,6 +6,7 @@ from loop_apidoc.agentcli.source_guard import (
     check_extraction_inputs,
     path_violations,
     source_violations,
+    summary_violations,
 )
 from loop_apidoc.manifest.models import (
     LocalSource,
@@ -209,3 +210,47 @@ def test_check_reports_every_violation_at_once():
     violations = check_extraction_inputs(inventory, [], None, manifest)
 
     assert len(violations) == 2
+
+
+# ── null path 端點必須有 summary(#7 的身份鍵) ────────────────────────
+
+def test_null_path_endpoint_file_without_summary_is_a_violation():
+    inventory = {"endpoints": [{"method": "POST", "path": None, "summary": "Notify"}]}
+    endpoints = [("ep7.json", {"method": "POST", "path": None})]
+
+    violations = summary_violations(inventory, endpoints)
+
+    assert any("ep7.json" in v and "summary" in v for v in violations)
+
+
+def test_null_path_inventory_entry_without_summary_is_a_violation():
+    inventory = {"endpoints": [{"method": "POST", "path": None}]}
+    endpoints = [("ep7.json", {"method": "POST", "path": None, "summary": "Notify"})]
+
+    violations = summary_violations(inventory, endpoints)
+
+    assert any("inventory.json" in v and "endpoints[0].summary" in v
+               for v in violations)
+
+
+def test_null_path_with_summary_passes():
+    inventory = {"endpoints": [{"method": "POST", "path": None, "summary": "Notify"}]}
+    endpoints = [("ep7.json", {"method": "POST", "path": None, "summary": "Notify"})]
+
+    assert summary_violations(inventory, endpoints) == []
+
+
+def test_blank_summary_counts_as_absent():
+    inventory = {"endpoints": [{"method": "POST", "path": None, "summary": "   "}]}
+    endpoints = [("ep7.json", {"method": "POST", "path": None, "summary": "Notify"})]
+
+    violations = summary_violations(inventory, endpoints)
+
+    assert any("inventory.json" in v for v in violations)
+
+
+def test_real_path_endpoint_needs_no_summary():
+    inventory = {"endpoints": [{"method": "GET", "path": "/ping"}]}
+    endpoints = [("ep0.json", {"method": "GET", "path": "/ping"})]
+
+    assert summary_violations(inventory, endpoints) == []
