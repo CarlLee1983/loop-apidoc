@@ -51,15 +51,22 @@ def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> lis
     ]
 
 
+def _keyed(entries: list[dict]) -> list[dict]:
+    """只有帶 path 的端點有可比對的鍵;webhook/callback 的 path 為 null,
+    彼此無法用 (method, path) 區分,交給不變式 1(總數)把關。"""
+    return [e for e in entries if isinstance(e.get("path"), str)]
+
+
 def _multiset_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
-    inventory_keys = {_key(e) for e in _entries(inventory, "endpoints")}
-    file_keys = {_key(ep) for _, ep in endpoints}
+    inventory_keys = {_key(e) for e in _keyed(_entries(inventory, "endpoints"))}
+    keyed_endpoints = [(name, ep) for name, ep in endpoints if isinstance(ep.get("path"), str)]
+    file_keys = {_key(ep) for _, ep in keyed_endpoints}
 
     out: list[str] = []
     for key in sorted(file_keys - inventory_keys):
-        files = sorted(name for name, ep in endpoints if _key(ep) == key)
+        files = sorted(name for name, ep in keyed_endpoints if _key(ep) == key)
         out.append(
             f"{', '.join(files)}: 端點 {key} 不在 inventory.endpoints 中"
         )
@@ -73,6 +80,8 @@ def _multiset_violations(
 def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     seen: dict[str, list[str]] = {}
     for name, endpoint in endpoints:
+        if not isinstance(endpoint.get("path"), str):
+            continue
         seen.setdefault(_key(endpoint), []).append(name)
     return [
         f"{', '.join(sorted(files))}: 同一端點 {key} 被寫進多個檔案"

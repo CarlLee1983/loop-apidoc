@@ -141,3 +141,58 @@ def test_known_security_scheme_passes():
     endpoints = [("ep0.json", _ep(security=["apiKey"]))]
 
     assert cross_file_violations(inventory, endpoints) == []
+
+
+# ── null path 端點(webhook/callback)豁免多重集合與重複檢查 ──────────────
+
+def _null_ep(**extra) -> dict:
+    return {"method": "POST", "path": None, **extra}
+
+
+def test_multiple_null_path_endpoints_are_not_flagged():
+    """GitHub-webhooks 的形狀:多筆 path: null 端點,彼此無法用 (method, path) 區分。"""
+    inventory = _inv(_null_ep(), _null_ep(), _null_ep())
+    endpoints = [
+        ("ep0.json", _null_ep()),
+        ("ep1.json", _null_ep()),
+        ("ep2.json", _null_ep()),
+    ]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_mix_of_real_and_null_path_endpoints_is_not_flagged():
+    inventory = _inv(_ep("POST", "/orders"), _null_ep(), _null_ep())
+    endpoints = [
+        ("ep0.json", _ep("POST", "/orders")),
+        ("ep1.json", _null_ep()),
+        ("ep2.json", _null_ep()),
+    ]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_duplicate_real_path_endpoint_is_still_reported():
+    """迴歸守門:真實 path 的重複仍要被抓到,不因 null path 豁免而連帶失效。"""
+    inventory = _inv(_ep("GET", "/ping"), _null_ep())
+    endpoints = [
+        ("ep0.json", _ep("GET", "/ping")),
+        ("ep1.json", _ep("GET", "/ping")),
+        ("ep2.json", _null_ep()),
+    ]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("ep0.json" in v and "ep1.json" in v and "GET /ping" in v
+               for v in violations)
+
+
+def test_null_path_count_mismatch_is_still_caught_by_invariant_1():
+    """迴歸守門:null path 檔數與 inventory 筆數不符,仍要靠不變式 1(總數)抓到。"""
+    inventory = _inv(_null_ep(), _null_ep(), _null_ep())
+    endpoints = [("ep0.json", _null_ep()), ("ep1.json", _null_ep())]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("2" in v and "3" in v and "endpoints/*.json" in v
+               for v in violations)
