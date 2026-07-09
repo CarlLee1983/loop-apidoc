@@ -442,3 +442,78 @@ def test_webhook_detail_joins_despite_method_case_mismatch():
     hooks = [e for e in plan.endpoints if e.path is None]
     assert len(hooks) == 1
     assert hooks[0].responses == [{"status": "200", "description": "ack"}]
+
+
+def _shared_path_extraction(server_a: str | None, server_b: str | None,
+                            request_a=None, request_b=None) -> ExtractionResult:
+    """Two stage-05 endpoints sharing POST /c, each optionally claiming a server."""
+    def _srv(v):
+        return "null" if v is None else f'"{v}"'
+    block05 = (
+        '```json\n{"endpoints": ['
+        f'{{"method":"POST","path":"/c","summary":"all","source":"api.pdf",'
+        f'"server":{_srv(server_a)}}},'
+        f'{{"method":"POST","path":"/c","summary":"atm","source":"api.pdf",'
+        f'"server":{_srv(server_b)}}}]}}\n```'
+    )
+    arts = [_art("05", QueryKind.INITIAL, block05)]
+    for i, req in enumerate((request_a, request_b)):
+        if req is None:
+            continue
+        body = ('```json\n{"method":"POST","path":"/c",'
+                f'"request":{req},"source":"api.pdf"}}\n```')
+        arts.append(AnswerArtifact(
+            query_id=f"06-ep{i}", stage_id="06", kind=QueryKind.INITIAL,
+            answer=body, answer_path=f"answers/06-ep{i}.txt", returncode=0))
+    return ExtractionResult(notebook_url="https://nb/x", artifacts=arts)
+
+
+def test_conflicting_servers_on_shared_endpoint_fail_closed():
+    # Two sources claim the SAME method+path but DIFFERENT hosts. The merge must
+    # not silently pick one: the endpoint goes CONFLICTING and the disagreement
+    # is surfaced as a source conflict so validation fails closed.
+    plan = build_normalization_plan(
+        _shared_path_extraction("production", "reporting"), _manifest())
+    eps = [e for e in plan.endpoints if e.path == "/c"]
+    assert len(eps) == 1
+    assert eps[0].status is PlanItemStatus.CONFLICTING
+    # the retained value stays deterministic (first wins), nothing is invented
+    assert eps[0].server == "production"
+    conflicts = [c for c in plan.source_conflicts if "server" in c.area]
+    assert len(conflicts) == 1
+    assert "production" in conflicts[0].detail and "reporting" in conflicts[0].detail
+    assert "POST" in conflicts[0].area and "/c" in conflicts[0].area
+
+
+def test_identical_servers_on_shared_endpoint_are_not_a_conflict():
+    plan = build_normalization_plan(
+        _shared_path_extraction("production", "production"), _manifest())
+    ep = [e for e in plan.endpoints if e.path == "/c"][0]
+    assert ep.server == "production"
+    assert ep.status is PlanItemStatus.SUPPORTED
+    assert plan.source_conflicts == []
+
+
+def test_one_sided_server_on_shared_endpoint_is_not_a_conflict():
+    # A states no host, B states one -> B's fact is adopted, no disagreement.
+    plan = build_normalization_plan(
+        _shared_path_extraction(None, "reporting"), _manifest())
+    ep = [e for e in plan.endpoints if e.path == "/c"][0]
+    assert ep.server == "reporting"
+    assert ep.status is PlanItemStatus.SUPPORTED
+    assert plan.source_conflicts == []
+
+
+def test_differing_requests_on_shared_endpoint_keep_first_and_do_not_conflict():
+    # Contract test, pinning deliberate behaviour: several products legitimately
+    # POST different bodies to one shared gateway endpoint (oneOf discriminator),
+    # so a differing `request` is a product variant, not a source conflict.
+    plan = build_normalization_plan(
+        _shared_path_extraction(None, None,
+                                request_a='{"content_type":"application/json"}',
+                                request_b='{"content_type":"application/xml"}'),
+        _manifest())
+    ep = [e for e in plan.endpoints if e.path == "/c"][0]
+    assert ep.request == {"content_type": "application/json"}
+    assert ep.status is not PlanItemStatus.CONFLICTING
+    assert plan.source_conflicts == []
