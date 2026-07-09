@@ -18,3 +18,4 @@ sources/
 extract_pdf_tmp.py
 pdf_text.txt
 .superpowers/
+.omx/

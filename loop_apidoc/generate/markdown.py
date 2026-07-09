@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from loop_apidoc.generate.naming import security_scheme_key, webhook_items
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
@@ -197,17 +199,28 @@ def _endpoints(plan: NormalizationPlan) -> list[str]:
     return out
 
 
+def _render_example_body(body: object) -> tuple[str, str]:
+    """Return the fence language and body text for one example."""
+    if isinstance(body, (dict, list)):
+        return "json", json.dumps(body, ensure_ascii=False, indent=2)
+    return "", str(body)
+
+
 def _examples(plan: NormalizationPlan) -> list[str]:
     out = []
     for e in plan.endpoints:
+        identity = f"{e.method or ''} {e.path or ''}".strip()
         for ex in e.examples:
             body = ex.get("body") or ex.get("value")
             if body is None:
                 continue
-            title = ex.get("title") or f"{e.method or ''} {e.path or ''}".strip()
+            # Sources routinely reuse one example title across every endpoint,
+            # so the identity prefix is what keeps the blocks distinguishable.
+            title = f"{identity} — {ex['title']}" if ex.get("title") else identity
+            lang, text = _render_example_body(body)
             out.append(f"**{title}**")
-            out.append("```")
-            out.append(str(body))
+            out.append(f"```{lang}")
+            out.append(text)
             out.append("```")
     return out or [_EMPTY]
 
