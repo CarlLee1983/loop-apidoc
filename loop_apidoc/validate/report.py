@@ -14,6 +14,15 @@ def _bullet(issue: Issue) -> str:
     )
 
 
+def _root_cause_bullet(cause) -> str:
+    return (
+        f"- **{cause.code.value}** ({cause.severity.value}) @ `{cause.target_file}`"
+        f" — 影響 {len(cause.affected_locations)} 處\n"
+        f"  - 一次修完：{cause.fix_once}\n"
+        f"  - 影響位置：{'、'.join(f'`{loc}`' for loc in cause.affected_locations)}"
+    )
+
+
 def render_markdown(report: ValidationReport) -> str:
     errors = report.errors()
     warnings = report.warnings()
@@ -24,6 +33,10 @@ def render_markdown(report: ValidationReport) -> str:
         f"結果：**{status}**（error：{len(errors)}，warning：{len(warnings)}）",
         "",
     ]
+    if report.root_causes:
+        lines += ["## 根因（優先處理）", ""]
+        lines += [_root_cause_bullet(c) for c in report.root_causes]
+        lines += ["", "## 逐筆問題", ""]
     ordered = errors + warnings
     if not ordered:
         lines.append("_未發現問題。_")
