@@ -15,7 +15,6 @@ Pure: no file I/O. Callers turn the returned messages into `AssembleInputError`.
 
 from __future__ import annotations
 
-from collections import Counter
 from typing import Any
 
 
@@ -55,8 +54,8 @@ def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> lis
 def _multiset_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
-    inventory_keys = Counter(_key(e) for e in _entries(inventory, "endpoints"))
-    file_keys = Counter(_key(ep) for _, ep in endpoints)
+    inventory_keys = {_key(e) for e in _entries(inventory, "endpoints")}
+    file_keys = {_key(ep) for _, ep in endpoints}
 
     out: list[str] = []
     for key in sorted(file_keys - inventory_keys):

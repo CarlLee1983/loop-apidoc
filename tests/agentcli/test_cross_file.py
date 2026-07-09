@@ -76,6 +76,18 @@ def test_two_files_writing_the_same_endpoint_is_a_violation():
                for v in violations)
 
 
+def test_duplicate_endpoint_is_not_reported_as_missing_from_inventory():
+    """重複寫入的端點確實在 inventory 中 —— 只能報「重複」,不可報「不在 inventory」。"""
+    inventory = _inv(_ep("GET", "/ping"), _ep("POST", "/orders"))
+    endpoints = [("ep0.json", _ep("GET", "/ping")), ("ep1.json", _ep("GET", "/ping"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert not any("不在 inventory.endpoints" in v for v in violations)
+    assert any("被寫進多個檔案" in v for v in violations)
+    assert any("POST /orders" in v for v in violations)
+
+
 # ── 不變式 4:schema_ref 必須指向 inventory.schemas[].name ─────────────
 
 def test_request_schema_ref_must_resolve():
