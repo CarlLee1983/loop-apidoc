@@ -61,3 +61,42 @@ def test_unnamed_crypto_target_does_not_contain_none():
     targets = [e.target for e in integration_provenance_entries(contract)]
     assert all(".None" not in t for t in targets), f"Found .None in targets: {targets}"
     assert any("integration.crypto." in t for t in targets)
+
+
+def test_document_entries_keep_source_and_provenance_target():
+    """integration-contract.json 的每筆條目保留 source 與可反查的 provenance_target。"""
+    doc = build_integration_document(_plan_with_contract())
+    crypto = doc["crypto"][0]
+    assert crypto["source"] == "p.12"
+    assert crypto["provenance_target"] == "integration.crypto.TradeInfo 加密"
+    # 無 citation 的條目 source 為 None（記錄缺漏，不臆測）
+    assert doc["callbacks"][0]["source"] is None
+    assert doc["callbacks"][0]["provenance_target"] == "integration.callbacks.NotifyURL"
+    # 內部簿記仍不外流
+    assert "citations" not in crypto and "status" not in crypto
+
+
+def test_document_provenance_target_matches_provenance_entries():
+    """product 檔的 provenance_target 必須與 provenance.json 的 target 完全一致。"""
+    plan = _plan_with_contract()
+    doc = build_integration_document(plan)
+    targets = {e.target for e in integration_provenance_entries(plan.integration)}
+    for section in ("crypto", "callbacks", "field_conditions", "test_cases"):
+        for entry in doc[section]:
+            assert entry["provenance_target"] in targets
+
+
+def test_field_condition_target_uses_index():
+    from loop_apidoc.plan.models import FieldCondition
+
+    contract = IntegrationContract(
+        field_conditions=[
+            FieldCondition(status=PlanItemStatus.SUPPORTED, rule="A",
+                           citations=[SourceCitation(query_id="i", answer_path="i",
+                                                     locator="doc.pdf p.10")]),
+        ]
+    )
+    plan = NormalizationPlan(notebook_url="x", integration=contract)
+    doc = build_integration_document(plan)
+    assert doc["field_conditions"][0]["source"] == "doc.pdf p.10"
+    assert doc["field_conditions"][0]["provenance_target"] == "integration.field_conditions.0"
