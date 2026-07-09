@@ -20,5 +20,6 @@
     "ReturnURL 是否加密/簽章（TradeInfo/TradeSha）未明確說明",
     "商店端對 ReturnURL 所需回應內容未說明",
     "content_type 未在來源以 HTTP header 形式明文標示"
-  ]
+  ],
+  "summary": "ReturnURL 支付完成返回商店 — 交易完成後以 Form Post 導回商店指定網址;只接受 80/443 Port(玉山Wallet/台灣Pay不支援導頁)"
 }

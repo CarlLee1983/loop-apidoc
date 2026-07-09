@@ -75,5 +75,6 @@
   "missing": [
     "商店端對 NotifyURL 通知所需回應的 response body 內容（來源僅以 Http=200 + Retry 機制描述，未列出 body 字串）",
     "content_type 未在來源以 HTTP header 形式明文標示（依 4.1.3 Form Post 與 Step5 之 key=value&… 範例推得為 form-urlencoded）"
-  ]
+  ],
+  "summary": "NotifyURL 幕後付款結果通知 — 藍新金流於消費者支付完成後以 Form Post 將加密結果(Status/MerchantID/Version/TradeInfo/TradeSha)POST 至商店設定之 NotifyURL;只接受 80/443 Port;Http=200 才視為成功並具 Retry(三次)機制。回應欄位見 4.2.2"
 }

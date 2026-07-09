@@ -116,5 +116,6 @@
   "examples": [],
   "missing": [
     "No full example payload body is provided in the source for this event; object-typed properties (repository, sender, hook, commits) are not expanded."
-  ]
+  ],
+  "summary": "push webhook event. Sent when one or more commits are pushed to a repository branch or tag. Delivered as an HTTP POST with X-GitHub-Event: push."
 }

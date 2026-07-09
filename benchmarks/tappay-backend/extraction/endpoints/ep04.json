@@ -48,5 +48,6 @@
   "missing": [
     "Merchant-hosted redirect URL; path defined by merchant, not TapPay (path=null)",
     "Source does not define what the merchant endpoint must reply (no receiver response documented)"
-  ]
+  ],
+  "summary": "Frontend Redirect callback — after an e-payment or Direct Pay 3D transaction completes, TapPay redirects the user to the merchant's frontend_redirect_url via web redirection, appending four transaction-result query-string parameters (rec_trade_id, order_number, bank_transaction_id, status). Merchant-hosted URL; path not defined by TapPay."
 }

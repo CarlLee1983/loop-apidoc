@@ -57,5 +57,6 @@
   "missing": [
     "商店端對 CustomerURL 取號通知所需回應的內容未說明",
     "content_type 未在來源以 HTTP header 形式明文標示（依 4.2.1「form post」描述推得為 form-urlencoded）"
-  ]
+  ],
+  "summary": "CustomerURL 取號結果通知 — 系統取號後以 Form Post 將取號結果(見 4.2.3)導回商店指定網址;為空值則顯示於藍新頁面"
 }

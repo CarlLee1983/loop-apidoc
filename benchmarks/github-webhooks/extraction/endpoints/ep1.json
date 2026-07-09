@@ -53,5 +53,6 @@
   "examples": [],
   "missing": [
     "No full example payload body is provided in the source for this event; object-typed properties (repository, sender, hook, commits) are not expanded."
-  ]
+  ],
+  "summary": "star webhook event. Sent when a repository is starred or unstarred (action = created | deleted). Delivered as an HTTP POST with X-GitHub-Event: star."
 }
