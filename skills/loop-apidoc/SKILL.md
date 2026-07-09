@@ -113,7 +113,8 @@ Open **`reference/extraction-schemas.md`** for the exact schemas and conventions
    concurrent, then batch). Tell each subagent the exact path to write:
    `<WORK>/endpoints/ep<N>.json` (zero-padded, inventory order). It writes that one file
    and returns one summary line. Filename order carries no meaning — the gate matches on
-   `method`/`path`, not on `<N>`.
+   `method`/`path`, not on `<N>`. When the source section shows a response (or request)
+   JSON example, include it in `examples[]` — see `reference/extraction-schemas.md`.
 4. **integration** (optional) — one subagent over the encryption/signing/callback/
    field-condition sections; it returns the JSON and **you** write `<WORK>/integration.json`.
    Omit the file entirely only when the sources describe no integration mechanics.

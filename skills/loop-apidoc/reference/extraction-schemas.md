@@ -124,6 +124,21 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 - **`schema_ref`**: when a response body equals a named `inventory.schemas` entry, set
   `schema_ref` to that schema's **exact `name`** (OpenAPI then links via `$ref` instead of
   restating fields). `null` when no such named schema; never invent a name.
+- **`examples`**: when the source shows a concrete request or response payload (JSON block,
+  `code`/`Response` table row, or formatted example under 「响应」/「请求」), copy it **verbatim**
+  into `examples[]`. Prefer one entry per stated example; parse JSON when the source gives
+  valid JSON, otherwise keep the source string. Use English keys:
+
+  ```json
+  {"title": "Response success (code=1000)", "content_type": "application/json",
+   "value": {"code": 1000, "msg": "Success.", "data": {}}}
+  ```
+
+  `title` is optional; `content_type` matches the endpoint's request/response format.
+  **Do not leave `examples` empty when the source section documents an example** — empty
+  `examples` with a documented response is an extraction gap (completeness warning). Only
+  leave `examples: []` and record the gap in `missing` when the source is genuinely silent
+  (no example body, no sample values). Never invent values to fill examples.
 
 ### Nested fields (dotted path)
 
