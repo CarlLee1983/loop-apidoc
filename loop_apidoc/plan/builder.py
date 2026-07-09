@@ -110,6 +110,9 @@ def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
     return EndpointEntry(
         status=_stricter(a.status, b.status), method=a.method, path=a.path,
         summary="；".join(dict.fromkeys(summaries)) or None,
+        # server 只可能來自 stage 05(inventory);兩筆合併時保留任一筆
+        # 已設定的值,不能讓 fields 沒帶到的欄位悄悄回退成 None。
+        server=a.server or b.server,
         citations=citations, **fields,
     )
 
@@ -153,7 +156,7 @@ _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
                       "location": i.get("location"), "details": i.get("details")}),
     "05": ("endpoints", "endpoints", EndpointEntry,
            lambda i: {"method": i.get("method"), "path": i.get("path"),
-                      "summary": i.get("summary")}),
+                      "summary": i.get("summary"), "server": i.get("server")}),
     "07": ("schemas", "schemas", SchemaEntry,
            lambda i: {"name": i.get("name"), "fields": i.get("fields") or [],
                       "enums": i.get("enums") or [], "constraints": i.get("constraints")}),
