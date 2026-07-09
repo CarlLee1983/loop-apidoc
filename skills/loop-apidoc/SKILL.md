@@ -15,7 +15,7 @@ Two reference files hold the heavy detail — load each when you reach that phas
 - **`reference/extraction-schemas.md`** — the exact JSON schemas + field conventions
   (load while extracting, steps 2–4).
 - **`reference/assemble-and-correction.md`** — the `assemble --json` contract, the issue
-  model, and the correction strategy (load when handling assemble results, steps 5–7).
+  model, and the correction strategy (load when handling assemble results, steps 6–8).
 - **`reference/url-fetching.md`** — the coverage-checked URL fetching SOP + `coverage.json`
   schema (load when any source is a public URL, before fetching).
 
@@ -43,8 +43,9 @@ word-splits it but zsh does not, so it breaks under zsh.)
 ## Flow
 
 `manifest` (preflight) → read sources via a read-only subagent fan-out → **you** write
-`inventory.json` + `endpoints/ep<N>.json` (+ optional `integration.json`) → `assemble`
-(deterministic plan→generate→validate) → correct on FAIL.
+`inventory.json` (+ optional `integration.json`); each endpoint subagent writes its own
+`endpoints/ep<N>.json` → `verify-extraction` → `assemble` (deterministic
+plan→generate→validate) → correct on FAIL.
 
 ### 1. Collect & prepare sources
 
@@ -86,6 +87,17 @@ scope, the exact schema (from `reference/extraction-schemas.md`), and the ground
 subagent **returns the JSON only** — no prose, no file writes. **You (the orchestrator) are
 the only writer.**
 
+Write permission is layered. An **endpoint** subagent writes exactly the one
+`endpoints/ep<N>.json` path you assign it and returns **one line** of summary
+(e.g. `ep05 OK 8 params 1 responses`) — never the JSON body, which would cost
+2–4k tokens of pure carriage per endpoint. The **inventory** and **integration**
+subagents write nothing and return their JSON object; **you** write those two files.
+No subagent may write another subagent's file, `inventory.json`, or `integration.json`.
+
+Grounding and the read-only posture toward *sources* are unchanged: a subagent only
+reads sources and never fetches the web. Control is regained by verification, not by
+carriage — `verify-extraction` (step 5) enforces the cross-file invariants.
+
 Grounding rule (include in every subagent prompt): *"Fill strictly from the sources. Anything
 the sources do not state → null and add a short label to `missing`. Never infer; never apply
 REST/OAuth conventions. Return only the JSON object."*
@@ -100,14 +112,28 @@ Open **`reference/extraction-schemas.md`** for the exact schemas and conventions
 2. **inventory** — one subagent reads every source and returns one object; **you** write
    `<WORK>/inventory.json`. Include every endpoint and every error code.
 3. **endpoints** — one subagent per `inventory.endpoints` entry, **in parallel** (≤6
-   concurrent, then batch); **you** write `<WORK>/endpoints/ep<N>.json` (zero-padded,
-   inventory order). Then verify `len(endpoints/*.json) == len(inventory.endpoints)` and that
-   each file's `method`/`path`/`source` matches its inventory entry.
+   concurrent, then batch). Tell each subagent the exact path to write:
+   `<WORK>/endpoints/ep<N>.json` (zero-padded, inventory order). It writes that one file
+   and returns one summary line. Filename order carries no meaning — the gate matches on
+   `method`/`path`, not on `<N>`.
 4. **integration** (optional) — one subagent over the encryption/signing/callback/
-   field-condition sections; **you** write `<WORK>/integration.json`. Omit the file entirely
-   only when the sources describe no integration mechanics.
+   field-condition sections; it returns the JSON and **you** write `<WORK>/integration.json`.
+   Omit the file entirely only when the sources describe no integration mechanics.
 
-### 5. Assemble + validate
+### 5. Verify the extraction
+
+```bash
+<APIDOC> verify-extraction \
+  --sources "<SOURCES>" --extraction "<WORK>" [--url "<URL>" ...] --json
+```
+
+Exit 0 → proceed. Exit 2 → the JSON array on stdout lists every violation (missing or
+duplicate endpoint file, an endpoint not in inventory, an unresolvable `schema_ref` or
+`security[]`, a localized key, an unrooted `path`, an uncited `source`). Fix the extraction
+JSON and re-run. `assemble` runs the same checks, so skipping this step is safe but wastes
+a round trip.
+
+### 6. Assemble + validate
 
 ```bash
 <APIDOC> assemble \
@@ -130,9 +156,9 @@ list + the 9-field issue shape are in `reference/assemble-and-correction.md`). E
 input-contract error **or** a run-dir collision, **not** a validation round — fix the named
 JSON file/field (or choose a fresh `--output`) and re-run.
 
-### 6. On the result
+### 7. On the result
 
-- **`ok == true`** → done. Confirm the product artifacts (step 7) and point the user at
+- **`ok == true`** → done. Confirm the product artifacts (step 8) and point the user at
   `review.html` for an offline, at-a-glance review of scope / sources / gaps.
 - **`ok == false`** → open **`reference/assemble-and-correction.md`** and drive correction.
   The gate is **severity** (only `error` issues fail; surface `warning`s as known gaps).
@@ -147,7 +173,7 @@ JSON file/field (or choose a fresh `--output`) and re-run.
   survive re-verification, and anything in `loop.irreducible`, → present the gaps
   to the user; **never fabricate.**
 
-### 7. Final evidence check
+### 8. Final evidence check
 
 Confirm `run_dir` holds the product artifacts: `openapi.yaml`, `api-guide.zh-TW.md`,
 `review.html`, `provenance.json`, `integration-contract.json` (always present — empty = no

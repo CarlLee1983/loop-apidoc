@@ -1,8 +1,33 @@
 # Assemble output & correction loop (loop-apidoc)
 
 On-demand reference for driving `<APIDOC> assemble` and correcting a validation FAIL.
-Load this once you've run assemble (SKILL.md step 5). The `assemble` command line and the
+Load this once you've run assemble (SKILL.md step 6). The `assemble` command line and the
 happy-path summary live in SKILL.md.
+
+## `verify-extraction`
+
+Runs `assemble`'s input boundary standalone: builds a manifest, checks the agent-written
+extraction JSON, writes nothing, creates no run directory.
+
+- `exit 0` clean; `exit 2` with every violation at once. Never `1` (that means validate FAIL).
+- `--json` prints a JSON array of violation strings (`[]` when clean).
+- `--sources` is required because `source` citations are checked against `manifest.json`.
+
+Cross-file invariants (all `error`, all also enforced by `assemble`):
+
+1. `len(endpoints/*.json) == len(inventory.endpoints)`
+2. the `(method, path)` multiset of endpoint files equals inventory's
+3. no `(method, path)` appears in two endpoint files
+4. every `schema_ref` resolves to an `inventory.schemas[].name`
+5. every `security[]` entry resolves to an `inventory.security_schemes[].name`
+
+Endpoints with `path: null` (webhooks/callbacks) are exempt from invariants 2 and 3 —
+nothing distinguishes one null-path entry from another, so "the same endpoint twice" is
+undefined for them. They still count toward invariant 1 and remain subject to invariants
+4 and 5.
+
+Hard schema errors (malformed JSON, wrong types) abort on the first one — the remaining
+checks would be meaningless.
 
 ## The `--json` payload
 
