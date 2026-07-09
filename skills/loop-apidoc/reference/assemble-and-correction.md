@@ -137,6 +137,7 @@ review.html.
 
 `0` = PASS · `1` = validation FAIL · `2` = either an **extraction input file error**
 (`inventory.json`/`endpoints/*.json`/`integration.json` malformed or schema-invalid — fix the
-named file/field) **or** a **run-dir collision** (the target `--output/<run_id>` already
+named file/field; this includes an unrooted `endpoints[].path` and a file whose `source`
+citations name no manifest source, both listed in one message) **or** a **run-dir collision** (the target `--output/<run_id>` already
 exists — assemble refuses to overwrite; choose a fresh output root). Exit 2 is **not** a
 validation round.

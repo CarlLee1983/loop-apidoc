@@ -294,9 +294,10 @@ def test_pipeline_backfills_snapshot_file_into_manifest(tmp_path, monkeypatch):
     # build_manifest 內部會探測 URL — 用 MockTransport 攔截,避免真網路。
     real_build = assemble_mod.build_manifest
 
-    def fake_build(*, sources_root, urls, generated_at):
+    def fake_build(*, sources_root, urls, generated_at, excludes=()):
         return real_build(sources_root=sources_root, urls=urls,
-                          generated_at=generated_at, client=_mock_client())
+                          generated_at=generated_at, client=_mock_client(),
+                          excludes=excludes)
 
     monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
 
@@ -320,15 +321,28 @@ def test_pipeline_without_coverage_leaves_snapshot_file_none(tmp_path, monkeypat
     from loop_apidoc.agentcli import assemble as assemble_mod
 
     _write_extraction(tmp_path / "extraction")
+    # 無帳本 → URL 不收合 → 本地檔 + URL 共兩份文件 → source 需指名檔案
+    (tmp_path / "extraction" / "inventory.json").write_text(
+        json.dumps({**_INVENTORY,
+                    "environments": [{"name": "prod",
+                                      "base_url": "https://api.example.com",
+                                      "version": None,
+                                      "source": "overview.md p.1"}],
+                    "endpoints": [{"method": "GET", "path": "/ping",
+                                   "summary": "健康檢查",
+                                   "source": "overview.md p.2"}]},
+                   ensure_ascii=False),
+        encoding="utf-8")
     sources = tmp_path / "sources"
     sources.mkdir()
     (sources / "overview.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
 
     real_build = assemble_mod.build_manifest
 
-    def fake_build(*, sources_root, urls, generated_at):
+    def fake_build(*, sources_root, urls, generated_at, excludes=()):
         return real_build(sources_root=sources_root, urls=urls,
-                          generated_at=generated_at, client=_mock_client())
+                          generated_at=generated_at, client=_mock_client(),
+                          excludes=excludes)
 
     monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
 

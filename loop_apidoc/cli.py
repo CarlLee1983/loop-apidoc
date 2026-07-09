@@ -236,6 +236,10 @@ def assemble(
         ..., "--output", help="輸出根目錄(將建立 <run-id> 子目錄)"
     ),
     url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
+    exclude: list[str] = typer.Option(
+        [], "--exclude",
+        help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
     url_coverage: Path = typer.Option(
         None, "--url-coverage",
         help="agent 產出的 url_sources/coverage.json 路徑;有 URL 來源時檢核撈取涵蓋率",
@@ -286,6 +290,7 @@ def assemble(
             generated_at=now,
             urls=list(url),
             url_coverage_path=url_coverage,
+            excludes=tuple(exclude),
         )
     except AssembleInputError as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
 
 from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
+from loop_apidoc.agentcli.source_guard import check_extraction_inputs
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
     IntegrationInput,
@@ -142,6 +144,19 @@ def load_extraction_inputs(
     return inventory, endpoint_texts, integration
 
 
+def _named_endpoints(
+    extraction_dir: Path, endpoint_texts: list[str]
+) -> list[tuple[str, dict]]:
+    """Pair each endpoint text with its filename, for guard messages that name
+    the file to fix. Same sorted order `load_extraction_inputs` read them in."""
+    endpoints_dir = extraction_dir / "endpoints"
+    names = (
+        [p.name for p in sorted(endpoints_dir.glob("*.json"))]
+        if endpoints_dir.is_dir() else []
+    )
+    return [(name, json.loads(text)) for name, text in zip(names, endpoint_texts)]
+
+
 def build_extraction_from_files(
     inventory: dict, endpoint_texts: list[str], store: ExtractionStore
 ) -> ExtractionResult:
@@ -171,6 +186,7 @@ def run_assemble_pipeline(
     generated_at: datetime,
     urls: list[str] | None = None,
     url_coverage_path: Path | None = None,
+    excludes: Sequence[str] = (),
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
     → generate → validate。不做擷取、不 spawn 任何 agent;
@@ -192,6 +208,23 @@ def run_assemble_pipeline(
         except CoverageInputError as exc:
             raise AssembleInputError(str(exc)) from exc
 
+    # manifest 必須先於 run 目錄建立:source 格式檢查要拿它比對,而檢查失敗時
+    # 不該留下孤兒 run 目錄。build_manifest 只掃描與探測,不寫檔。
+    manifest = build_manifest(
+        sources_root=sources_root, urls=urls or [], generated_at=generated_at,
+        excludes=excludes)
+    if url_coverage is not None:
+        # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
+        manifest = backfill_snapshot_files(manifest, url_coverage)
+
+    violations = check_extraction_inputs(
+        inventory, _named_endpoints(extraction_dir, endpoint_texts),
+        integration, manifest)
+    if violations:
+        raise AssembleInputError(
+            "擷取輸入不符 schema 契約(修正後重跑 assemble):\n"
+            + "\n".join(f"  - {v}" for v in violations))
+
     run_dir = output_root / run_id
     output_root.mkdir(parents=True, exist_ok=True)
     try:
@@ -200,11 +233,6 @@ def run_assemble_pipeline(
         raise RunDirectoryCollisionError(
             f"run 目錄已存在,拒絕覆寫:{run_dir}") from exc
 
-    manifest = build_manifest(
-        sources_root=sources_root, urls=urls or [], generated_at=generated_at)
-    if url_coverage is not None:
-        # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
-        manifest = backfill_snapshot_files(manifest, url_coverage)
     (run_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2), encoding="utf-8")
 
