@@ -1,6 +1,6 @@
 # Extraction schemas (loop-apidoc)
 
-On-demand reference for the extraction contract (see SKILL.md lines 90–95): each
+On-demand reference for the extraction contract (see SKILL.md's "Subagent contract (extraction)" section): each
 **endpoint** subagent writes its own `endpoints/ep<N>.json` and returns one summary
 line; **inventory** and **integration** subagents write nothing and return their JSON
 object, which you (the orchestrator) write to `inventory.json` and `integration.json`

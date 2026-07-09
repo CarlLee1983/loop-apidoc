@@ -83,9 +83,7 @@ You orchestrate; **read-only subagents extract**. For each extraction below, dis
 read-only subagent (file read + search only — **no web, no write**; for URLs the
 `<WORK>/url_sources/` cache is the evidence). Give it: the source location
 (`<EXTRACT_SOURCES>` + URL cache), the relevant manifest source ids, the endpoint/section
-scope, the exact schema (from `reference/extraction-schemas.md`), and the grounding rule. The
-subagent **returns the JSON only** — no prose, no file writes. **You (the orchestrator) are
-the only writer.**
+scope, the exact schema (from `reference/extraction-schemas.md`), and the grounding rule.
 
 Write permission is layered. An **endpoint** subagent writes exactly the one
 `endpoints/ep<N>.json` path you assign it and returns **one line** of summary
