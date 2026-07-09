@@ -87,6 +87,59 @@ def manifest(
         typer.echo(f"manifest 已寫入 {output}")
 
 
+@app.command(name="verify-extraction")
+def verify_extraction(
+    sources: Path = typer.Option(
+        ..., "--sources", help="本機來源目錄（source 引用要比對 manifest）",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    extraction: Path = typer.Option(
+        ..., "--extraction",
+        help="agent 產出的擷取目錄(inventory.json + endpoints/*.json,選用 integration.json)",
+        exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    url: list[str] = typer.Option([], "--url", help="公開來源 URL,可重複指定"),
+    exclude: list[str] = typer.Option(
+        [], "--exclude",
+        help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
+    ),
+    json_out: bool = typer.Option(
+        False, "--json", help="把違規以 JSON 陣列印到 stdout(供 agent 解析)"
+    ),
+) -> None:
+    """檢查 agent 產出的擷取 JSON 是否符合契約;不寫檔、不建立 run 目錄。
+
+    exit 0 乾淨;exit 2 有違規或硬 schema 錯誤（不會是 1——1 代表 validate FAIL）。
+    """
+    from loop_apidoc.agentcli.assemble import AssembleInputError
+    from loop_apidoc.agentcli.verify import verify_extraction_dir
+
+    try:
+        violations = verify_extraction_dir(
+            sources_root=sources,
+            extraction_dir=extraction,
+            generated_at=datetime.now(timezone.utc),
+            urls=list(url),
+            excludes=tuple(exclude),
+        )
+    except AssembleInputError as exc:
+        if json_out:
+            typer.echo(json.dumps([str(exc)], ensure_ascii=False, indent=2))
+        else:
+            typer.echo(f"擷取輸入錯誤:{exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    if json_out:
+        typer.echo(json.dumps(violations, ensure_ascii=False, indent=2))
+    elif violations:
+        typer.echo("擷取輸入不符契約(修正後重跑):", err=True)
+        for violation in violations:
+            typer.echo(f"  - {violation}", err=True)
+    else:
+        typer.echo("verify-extraction PASS:擷取輸入符合契約")
+    raise typer.Exit(code=2 if violations else 0)
+
+
 @app.command()
 def validate(
     output: Path = typer.Option(
