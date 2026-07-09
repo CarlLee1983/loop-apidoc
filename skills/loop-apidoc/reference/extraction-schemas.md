@@ -32,7 +32,7 @@ One object describing the whole API. **You** write what the single inventory sub
  "overview": "str",
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
- "endpoints": [{"method":"str","path":"str","summary":"str","source":"str"}],
+ "endpoints": [{"method":"str","path":"str|null","summary":"str","source":"str","server":"str|null"}],
  "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
  "errors": [{"code":"str","meaning":"str","http_status":"str|null","source":"str"}],
  "operational": [{"topic":"str","detail":"str","source":"str"}],
@@ -54,6 +54,30 @@ One object describing the whole API. **You** write what the single inventory sub
   ✓ "/hrxt/loginGame"                 + environments[0].base_url = "https://api.example.com"
   ✗ "{api_url}/hrxt/loginGame"
   ✗ "https://api.example.com/hrxt/loginGame"
+  ```
+- A webhook/callback endpoint has `method` but `path: null` (it is delivered to a
+  caller-defined URL, so it has no server path). For these, **`summary` is required**
+  and is the endpoint's identity: it is how `assemble` matches an `endpoints/ep<N>.json`
+  file to its `inventory.endpoints[]` entry, and how the OpenAPI `webhooks` key is named.
+  Two webhooks with no `summary` are indistinguishable, and a subagent writing one
+  webhook into two files would go undetected. Copy the `summary` **verbatim** from
+  inventory into the endpoint file (whitespace is normalized before comparison).
+
+  ```
+  ✓ inventory: {"method":"POST","path":null,"summary":"NotifyURL 幕後付款結果通知"}
+    ep7.json:  {"method":"POST","path":null,"summary":"NotifyURL 幕後付款結果通知"}
+  ✗ ep7.json:  {"method":"POST","path":null}          ← rejected at the input boundary
+  ```
+- `endpoints[].server` (optional): when the source documents **more than one** base URL
+  and states which endpoints live on which host, set `server` to the matching
+  `environments[].name`. `assemble` rejects a name that resolves to no environment.
+  The generator turns it into an operation-level OpenAPI `servers` entry. Omit the field
+  when the source states a single host — the endpoint then inherits the root `servers`.
+
+  ```
+  environments: [{"name":"api","base_url":"https://api.example.com"},
+                 {"name":"reporting","base_url":"https://report.example.com"}]
+  endpoints:    [{"method":"GET","path":"/bets","server":"reporting", ...}]
   ```
 - Each `source` **must start with the manifest `relative_path` of the file it came from**,
   followed by a page (`p.<N>`) or URL anchor (`#<anchor>`); anything after that is free text.
@@ -135,8 +159,10 @@ documents the field as **one of** several named member shapes:
 Server POSTs to a caller-supplied URL (e.g. payment-result notifications): keep `method`,
 set `path` to `null`. These become OpenAPI 3.1 top-level **`webhooks`** (named by summary),
 no fixed URL needed. `responses` holds what the receiver must reply (e.g. `1|OK`).
-**Multiple callbacks sharing the same `(method, null)` are distinguished only by their
-`source`** — give every callback detail the correct `source`.
+**`summary` is the identity for null-path endpoints** (see above) — two callbacks sharing
+`(method, null)` are only distinguished by `summary`, so give every callback a distinct,
+verbatim-matching `summary` in both `inventory.json` and its `endpoints/ep<N>.json`. Still
+give every callback detail the correct `source`.
 
 ### File naming & count check
 
