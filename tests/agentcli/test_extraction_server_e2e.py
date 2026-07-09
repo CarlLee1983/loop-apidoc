@@ -14,6 +14,8 @@ from loop_apidoc.manifest.models import (
 )
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.models import PlanItemStatus
+from loop_apidoc.validate.completeness import check_completeness
+from loop_apidoc.validate.models import IssueCode, Severity
 
 # 這個測試檔存在的理由:finding 1 指出 `server` 從沒真的走過真實管線
 # (inventory → plan → OpenAPI),只有直接建構 EndpointEntry(server=...) 的
@@ -145,3 +147,27 @@ def test_dedupe_of_shared_path_endpoints_does_not_clobber_server():
     assert op["servers"] == [
         {"url": "https://report.example.com", "description": "reporting"}
     ]
+
+def test_conflicting_servers_on_shared_path_fail_validation():
+    """同一 method+path 被兩個來源指到不同主機 —— 一個 operation 不可能同時
+    住在兩台主機上。合併時不得靜默選一個:端點降為 CONFLICTING,並經
+    check_completeness 以 SOURCE_CONFLICT ERROR 浮出來(fail-closed)。"""
+    inventory = _inventory_with_server()
+    inventory["endpoints"].append(
+        {"method": "GET", "path": "/bets", "summary": "查詢投注(正式站)",
+         "server": "production", "source": "api.pdf"},
+    )
+    extraction = ExtractionResult(
+        notebook_url="", artifacts=_artifacts_from_inventory(inventory))
+
+    plan = build_normalization_plan(extraction, _manifest())
+
+    assert len(plan.endpoints) == 1
+    assert plan.endpoints[0].status is PlanItemStatus.CONFLICTING
+
+    issues = check_completeness(plan)
+    conflicts = [i for i in issues if i.code is IssueCode.SOURCE_CONFLICT]
+    assert len(conflicts) == 1
+    assert conflicts[0].severity is Severity.ERROR
+    assert "reporting" in conflicts[0].evidence
+    assert "production" in conflicts[0].evidence

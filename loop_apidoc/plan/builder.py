@@ -88,6 +88,11 @@ def _union_endpoint_fields(existing: EndpointEntry, detail: dict) -> dict:
                                  lambda r: r.get("status")),
         "examples": [*existing.examples, *examples] if isinstance(examples, list)
         else examples,
+        # First non-null request wins, and a differing one is deliberately NOT a
+        # source conflict: several products legitimately POST different bodies to
+        # one shared gateway endpoint (a oneOf discriminator downstream). Contrast
+        # `server` in _combine_endpoints — a host is the endpoint's single fact, so
+        # two sources disagreeing about it IS a conflict.
         "request": existing.request if existing.request is not None
         else detail.get("request"),
         "tags": _union_str(existing.tags, detail.get("tags")),
@@ -95,8 +100,12 @@ def _union_endpoint_fields(existing: EndpointEntry, detail: dict) -> dict:
     }
 
 
-def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
-    """Collapse two endpoints sharing method+path into one canonical entry."""
+def _combine_endpoints(
+    a: EndpointEntry, b: EndpointEntry
+) -> tuple[EndpointEntry, list[SourceConflict]]:
+    """Collapse two endpoints sharing method+path into one canonical entry, plus
+    any source conflicts the collapse exposed. Callers must surface the conflicts
+    — silently resolving a source disagreement is what this returns them for."""
     fields = _union_endpoint_fields(a, {
         "parameters": list(b.parameters), "responses": list(b.responses),
         "examples": list(b.examples), "request": b.request,
@@ -107,14 +116,26 @@ def _combine_endpoints(a: EndpointEntry, b: EndpointEntry) -> EndpointEntry:
     for c in b.citations:
         if c not in citations:
             citations.append(c)
+
+    # server 只可能來自 stage 05(inventory)。兩筆都宣稱且相異時,一個 operation
+    # 不可能同時屬於兩台主機 —— 這是來源衝突,必須 fail-closed 浮出來,不能靠
+    # `a.server or b.server` 靜默選 A。保留的值仍取 A 以維持決定性(不憑空造值)。
+    status = _stricter(a.status, b.status)
+    conflicts: list[SourceConflict] = []
+    if a.server and b.server and a.server != b.server:
+        status = _stricter(status, PlanItemStatus.CONFLICTING)
+        conflicts.append(SourceConflict(
+            area=f"endpoints.{a.method} {a.path}.server",
+            detail=(f"共用同一端點的來源對主機宣稱不一致:'{a.server}' vs "
+                    f"'{b.server}';來源未說明何者適用此端點"),
+        ))
+
     return EndpointEntry(
-        status=_stricter(a.status, b.status), method=a.method, path=a.path,
+        status=status, method=a.method, path=a.path,
         summary="；".join(dict.fromkeys(summaries)) or None,
-        # server 只可能來自 stage 05(inventory);兩筆合併時保留任一筆
-        # 已設定的值,不能讓 fields 沒帶到的欄位悄悄回退成 None。
         server=a.server or b.server,
         citations=citations, **fields,
-    )
+    ), conflicts
 
 
 def _method_key(method: str | None) -> str | None:
@@ -130,14 +151,19 @@ def _dedupe_endpoints(plan: NormalizationPlan) -> None:
     """OpenAPI allows one operation per method+path and the validator checks
     plan.endpoints, so several source endpoints sharing one method+path (e.g.
     multiple payment products posting to one gateway URL) must collapse into a
-    single canonical endpoint. Endpoints missing method/path are left untouched."""
+    single canonical endpoint. Endpoints missing method/path are left untouched.
+
+    Collapsing can expose a source disagreement (two sources naming different
+    servers for one operation); those conflicts land in `plan.source_conflicts`
+    so validation reports them instead of one claim silently winning."""
     out: list[EndpointEntry] = []
     index: dict[tuple, int] = {}
     for ep in plan.endpoints:
         key = (_method_key(ep.method), ep.path) if ep.method and ep.path else None
         if key is not None and key in index:
             i = index[key]
-            out[i] = _combine_endpoints(out[i], ep)
+            out[i], conflicts = _combine_endpoints(out[i], ep)
+            plan.source_conflicts.extend(conflicts)
         else:
             if key is not None:
                 index[key] = len(out)

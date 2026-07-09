@@ -71,9 +71,14 @@ def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> lis
     ]
 
 
-def _multiset_violations(
+def _identity_set_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
+    """Symmetric difference between the endpoint identities inventory declares and
+    those the endpoint files carry. Deliberately set-based, not multiset: repeated
+    identities are caught by `_duplicate_violations` and a file/entry count mismatch
+    by `_count_violations`, so this only has to answer "which identity is on exactly
+    one side"."""
     inventory_keys = {
         key for key in (_key(e) for e in _entries(inventory, "endpoints"))
         if key is not None
@@ -172,7 +177,7 @@ def cross_file_violations(
     """一次列出所有跨檔違規——修正是一次重寫擷取 JSON,不是逐筆往返。"""
     return (
         _count_violations(inventory, endpoints)
-        + _multiset_violations(inventory, endpoints)
+        + _identity_set_violations(inventory, endpoints)
         + _duplicate_violations(endpoints)
         + _reference_violations(inventory, endpoints)
         + _server_violations(inventory)
