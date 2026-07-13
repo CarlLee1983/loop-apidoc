@@ -103,6 +103,24 @@ REST/OAuth conventions. Return only the JSON object."*
 After writing any extraction file, parse it as JSON before continuing. Use the **English
 keys** exactly as the schemas show — localized machine keys are rejected at assemble (exit 2).
 
+### 1.5 Source-quality gate (before extraction)
+
+After `manifest` and any required `preprocess`, dispatch one read-only quality-review
+subagent over the complete source package. It returns only JSON observations grounded in
+source filename + page/section/anchor. The controller writes
+`<WORK>/source-quality-observations.json`, then runs:
+
+```bash
+<APIDOC> assess-sources --sources "<SOURCES>" \
+  --manifest "<WORK>/manifest.preflight.json" \
+  --observations "<WORK>/source-quality-observations.json" \
+  --source-set "vN" --output "<WORK>/source-quality"
+```
+
+Exit `1` means `reject`: provide the generated supplement report and stop. Do not create
+`inventory.json` or endpoint extraction files. Exit `0` permits extraction; warnings remain
+visible and must not be filled with assumptions. See `reference/source-quality.md`.
+
 ### 2–4. Extract → write the JSON
 
 Open **`reference/extraction-schemas.md`** for the exact schemas and conventions, then:
