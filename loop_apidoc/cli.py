@@ -87,6 +87,41 @@ def manifest(
         typer.echo(f"manifest 已寫入 {output}")
 
 
+@app.command(name="assess-sources")
+def assess_sources(
+    sources: Path = typer.Option(..., "--sources", exists=True, file_okay=False),
+    manifest: Path = typer.Option(..., "--manifest", exists=True),
+    observations: Path = typer.Option(..., "--observations", exists=True),
+    source_set: str = typer.Option(..., "--source-set"),
+    output: Path = typer.Option(..., "--output"),
+) -> None:
+    """Assess source quality before extraction and write supplement reports."""
+    from loop_apidoc.source_quality.assess import assess_source_quality
+    from loop_apidoc.source_quality.loader import (
+        SourceQualityInputError,
+        load_manifest,
+        load_observations,
+    )
+    from loop_apidoc.source_quality.models import SourceDiffReport
+    from loop_apidoc.source_quality.report import write_reports as write_quality_reports
+
+    try:
+        parsed_manifest = load_manifest(manifest)
+        parsed_observations = load_observations(observations)
+    except SourceQualityInputError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    report = assess_source_quality(
+        manifest=parsed_manifest,
+        source_set=source_set,
+        observations=parsed_observations,
+        base_report=None,
+    )
+    write_quality_reports(report, SourceDiffReport(), output)
+    typer.echo(f"source quality {report.verdict.value}: reports written to {output}")
+    raise typer.Exit(code=0 if report.verdict.value == "pass" else 1)
+
+
 @app.command(name="verify-extraction")
 def verify_extraction(
     sources: Path = typer.Option(
