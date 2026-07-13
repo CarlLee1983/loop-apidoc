@@ -94,9 +94,11 @@ def assess_sources(
     observations: Path = typer.Option(..., "--observations", exists=True),
     source_set: str = typer.Option(..., "--source-set"),
     output: Path = typer.Option(..., "--output"),
+    base_manifest: Path | None = typer.Option(None, "--base-manifest", exists=True),
 ) -> None:
     """Assess source quality before extraction and write supplement reports."""
     from loop_apidoc.source_quality.assess import assess_source_quality
+    from loop_apidoc.source_quality.diff import build_source_diff
     from loop_apidoc.source_quality.loader import (
         SourceQualityInputError,
         load_manifest,
@@ -117,7 +119,8 @@ def assess_sources(
         observations=parsed_observations,
         base_report=None,
     )
-    write_quality_reports(report, SourceDiffReport(), output)
+    diff = build_source_diff(base=load_manifest(base_manifest), head=parsed_manifest) if base_manifest else SourceDiffReport()
+    write_quality_reports(report, diff, output)
     typer.echo(f"source quality {report.verdict.value}: reports written to {output}")
     raise typer.Exit(code=0 if report.verdict.value == "pass" else 1)
 
