@@ -63,3 +63,20 @@ class SourceQualityReport(BaseModel):
         return sum(
             finding.severity is FindingSeverity.WARNING for finding in self.findings
         )
+
+
+class SourceDiffEntry(BaseModel):
+    path: str
+    kind: str
+    summary: str
+
+
+class SourceDiffReport(BaseModel):
+    entries: list[SourceDiffEntry] = Field(default_factory=list)
+
+    @property
+    def summary(self) -> dict[str, int]:
+        counts = {"added": 0, "removed": 0, "changed": 0}
+        for entry in self.entries:
+            counts[entry.kind] = counts.get(entry.kind, 0) + 1
+        return counts

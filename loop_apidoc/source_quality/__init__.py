@@ -6,6 +6,8 @@ from loop_apidoc.source_quality.models import (
     QualityObservation,
     QualityVerdict,
     SourceQualityReport,
+    SourceDiffEntry,
+    SourceDiffReport,
 )
 
 __all__ = [
@@ -14,4 +16,6 @@ __all__ = [
     "QualityObservation",
     "QualityVerdict",
     "SourceQualityReport",
+    "SourceDiffEntry",
+    "SourceDiffReport",
 ]
