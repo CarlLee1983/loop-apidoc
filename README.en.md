@@ -50,7 +50,16 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
 
 `SKILL.md` resolves the environment via the `<APIDOC>` placeholder: with `$CLAUDE_PLUGIN_ROOT` it uses the bundled CLI, otherwise it falls back to the global `loop-apidoc`. The rest of the flow (extract → `assemble` → validate → correct) is identical on both.
 
-Release notes: [`0.7.0`](docs/RELEASE_NOTES_0.7.0.md).
+### Agent delivery levels
+
+Before reading sources, the skill explains and asks for `minimal` (the default), `review`,
+`handoff`, or `full`. `minimal` only has the agent deliver and pass along OpenAPI,
+provenance, validation results, and an integration contract when needed; unselected derived
+artifacts stay out of agent context and agent handoffs to reduce token use. This is an agent
+delivery policy and does not change CLI source grounding, validation, or the compatible run
+directory structure.
+
+Release notes: [`0.8.0`](docs/RELEASE_NOTES_0.8.0.md).
 
 ---
 

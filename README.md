@@ -50,7 +50,14 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
 
 SKILL.md 以 `<APIDOC>` 佔位符自動辨識環境:有 `$CLAUDE_PLUGIN_ROOT` 走 plugin 內含 CLI,否則退到全域 `loop-apidoc`。其餘流程(擷取 → `assemble` → 驗證 → 修正)兩邊一致。
 
-發行說明：[`0.7.0`](docs/RELEASE_NOTES_0.7.0.md)。
+### Agent 交付層級
+
+skill 在讀取來源前會先說明並詢問交付層級：`minimal`（預設）、`review`、`handoff` 或
+`full`。`minimal` 只讓 agent 交付與傳遞 OpenAPI、provenance、驗證結果及需要時的整合
+契約；未選取的衍生產物不會載入 agent context 或在 agent 間傳遞，以減少 token 消耗。
+這是 agent 交付策略，不改變 CLI 的來源依據、驗證或相容 run-dir 結構。
+
+發行說明：[`0.8.0`](docs/RELEASE_NOTES_0.8.0.md)。
 
 ---
 

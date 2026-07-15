@@ -14,14 +14,14 @@ def test_plugin_json_valid():
     assert "description" in data
 
 
-def test_release_versions_are_synced_at_0_7_0():
+def test_release_versions_are_synced_at_0_8_0():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text("utf-8"))
     init = (ROOT / "loop_apidoc" / "__init__.py").read_text("utf-8")
 
-    assert project["project"]["version"] == "0.7.0"
-    assert plugin["version"] == "0.7.0"
-    assert '__version__ = "0.7.0"' in init
+    assert project["project"]["version"] == "0.8.0"
+    assert plugin["version"] == "0.8.0"
+    assert '__version__ = "0.8.0"' in init
 
 
 def test_marketplace_lists_plugin():
@@ -56,3 +56,14 @@ def test_skill_has_model_neutral_orchestration_contract():
     assert "model-neutral" in text
     assert "reference/model-orchestration.md" in text
     assert (ROOT / "skills" / "loop-apidoc" / "reference" / "model-orchestration.md").is_file()
+
+
+def test_skill_requires_an_output_level_checkpoint_with_minimal_default():
+    text = (ROOT / "skills" / "loop-apidoc" / "SKILL.md").read_text("utf-8")
+
+    assert "Output-level checkpoint" in text
+    assert "minimal (default)" in text
+    assert "review" in text
+    assert "handoff" in text
+    assert "full" in text
+    assert "do not open, summarize, or pass" in text

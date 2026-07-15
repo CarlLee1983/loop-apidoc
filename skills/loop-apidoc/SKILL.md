@@ -42,6 +42,29 @@ RUN=(loop-apidoc); [ -n "$CLAUDE_PLUGIN_ROOT" ] && RUN=(uv run --project "$CLAUD
 (Do **not** use `${CLAUDE_PLUGIN_ROOT:+uv run --project "$CLAUDE_PLUGIN_ROOT"}` inline: bash
 word-splits it but zsh does not, so it breaks under zsh.)
 
+## Output-level checkpoint
+
+Before reading sources, dispatching subagents, or running `<APIDOC> manifest`, tell the user
+that the pipeline keeps its normal deterministic validation, then ask which **delivery level**
+they want for this run. Record the answer as `<OUTPUT_LEVEL>` and repeat it in the final
+summary. Use **minimal (default)** if the user explicitly asks to proceed without an answer or
+the host is non-interactive.
+
+| `<OUTPUT_LEVEL>` | Deliver and discuss | Do not load into agent context unless needed to fix validation |
+| --- | --- | --- |
+| `minimal (default)` | `openapi.yaml`, `provenance.json`, `validation/report.json`, and `integration-contract.json` when the source defines integration mechanics | Markdown guide, `review.html`, `examples/`, `handoff/`, preparation/source-quality/score/diff reports |
+| `review` | `minimal` plus `api-guide.zh-TW.md` and `review.html` | `examples/`, `handoff/`, and optional analysis reports |
+| `handoff` | `minimal` plus `examples/` and `handoff/` | Markdown guide, `review.html`, and optional analysis reports |
+| `full` | Every generated product and optional report that the user requested | Nothing selected by this table |
+
+Explain that this is a **delivery and agent-context policy**, not a reduction in source
+grounding or validation: the current CLI still builds the compatible run directory required by
+its validators. For every level, the agent must still parse `assemble --json`, inspect
+validation failures, and correct the extraction when necessary. To save tokens, for artifacts
+outside `<OUTPUT_LEVEL>` **do not open, summarize, or pass** their content between agents;
+refer only to their paths if a validation issue makes one relevant. `score`, `diff`, and
+source-quality reports remain opt-in commands/features, not an implication of `full`.
+
 ## Model-neutral orchestration
 
 The skill does **not** select a vendor or model. Let the host map the logical roles in
@@ -185,8 +208,8 @@ JSON file/field (or choose a fresh `--output`) and re-run.
 
 ### 7. On the result
 
-- **`ok == true`** → done. Confirm the product artifacts (step 8) and point the user at
-  `review.html` for an offline, at-a-glance review of scope / sources / gaps.
+- **`ok == true`** → done. Confirm the product artifacts selected by `<OUTPUT_LEVEL>`
+  (step 8); only point the user at `review.html` when the chosen level includes it.
 - **`ok == false`** → open **`reference/assemble-and-correction.md`** and drive correction.
   The gate is **severity** (only `error` issues fail; surface `warning`s as known gaps).
   Each issue carries `code`, `severity`, `location`, `evidence`, `suggested_fix`, and
@@ -202,13 +225,12 @@ JSON file/field (or choose a fresh `--output`) and re-run.
 
 ### 8. Final evidence check
 
-Confirm `run_dir` holds the product artifacts: `openapi.yaml`, `api-guide.zh-TW.md`,
-`review.html`, `provenance.json`, `integration-contract.json` (always present — empty = no
-mechanics), `examples/` (always present when ≥1 endpoint — `<placeholder>` when the source
-gives no value), `handoff/` (`integration-tasks.md`, `postman_collection.json`,
-`sdk-hints.json`), `validation/report.{json,md}`, and `preparation-report.{json,md}`. For
-PASS/FAIL detail read `validation/report.md` — the `review.html` page links to it but does
-**not** embed a validation summary.
+Confirm the selected artifacts in `run_dir` exist, plus `validation/report.json` for every
+level. The compatible run directory also contains the normal generated artifacts
+(`api-guide.zh-TW.md`, `review.html`, `examples/`, `handoff/`, and preparation reports), but
+outside the selected level do not load or describe them. For PASS/FAIL detail, read
+`validation/report.md` only when its JSON counterpart is insufficient to drive correction;
+the `review.html` page does **not** embed a validation summary.
 
 ## Other commands (outside the generate loop)
 
