@@ -50,6 +50,8 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
 
 SKILL.md 以 `<APIDOC>` 佔位符自動辨識環境:有 `$CLAUDE_PLUGIN_ROOT` 走 plugin 內含 CLI,否則退到全域 `loop-apidoc`。其餘流程(擷取 → `assemble` → 驗證 → 修正)兩邊一致。
 
+發行說明：[`0.7.0`](docs/RELEASE_NOTES_0.7.0.md)。
+
 ---
 
 ## 安裝
@@ -81,6 +83,52 @@ uv run loop-apidoc manifest --sources ./sources [--url <URL> ...] [--output mani
 ```
 
 掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 `--output` 時輸出至 stdout。
+
+### `catalog-url` / `select-url` — 先建立導航索引，再選取擷取範圍
+
+```bash
+# 只下載入口頁一次；它不會追蹤或下載側欄子頁。
+uv run loop-apidoc catalog-url \
+  --url "https://docs.example.com/api/introduction" \
+  --output ./work/url_sources/catalog.json
+
+# 選擇要擷取的文件分支與主題；此步驟同樣不下載正文。
+uv run loop-apidoc select-url \
+  --catalog ./work/url_sources/catalog.json \
+  --branch "轉帳錢包" --term "轉帳" \
+  --output ./work/url_sources/selection.json
+```
+
+`catalog.json` 是完整的導航 **coverage universe**，用於看見網站有哪些文件；
+`selection.json` 可作為人工指定的模型閱讀起點。它不必限制工具端的快取範圍。
+
+當網站擷取成本低、但模型 context 昂貴時，快取完整 catalog，然後只把候選卡片交給模型：
+
+```bash
+# 保存 raw HTML 與清除導覽後的正文；建立 heading、內部連結與實體索引。
+uv run loop-apidoc cache-url-pages \
+  --catalog ./work/url_sources/catalog.json \
+  --output ./work/url_corpus
+
+# 以正文內部連結、共享 Action／錯誤碼和導航層級產生小型候選卡片。
+uv run loop-apidoc related-url-pages \
+  --corpus ./work/url_corpus/corpus.json \
+  --url "https://docs.example.com/api/action19" \
+  --output ./work/action19-candidates.json
+```
+
+`cache-url-pages` 不呼叫模型；`corpus.json` 不嵌入正文，只指向本機 `raw/` 與 `body/`
+檔。`related-url-pages` 輸出標題、breadcrumb、分數和關聯理由，模型只在需要時才讀取
+候選頁的 `body_file`。這可保留完整來源與 coverage，又避免不相干分支、重複側欄和所有
+正文一起進入模型。
+
+### Codex 與 Claude Code 的模型分工
+
+skill 不綁定特定模型：由宿主將快速模型用於候選頁路由、一般模型用於受限的單頁擷取、
+高推理模型用於跨頁審核。CLI 持續負責抓取、解析、provenance、coverage 與驗證；角色間
+只傳遞 artifact 路徑與精簡摘要，不能因為模型 context 較大就把完整 corpus 放進去。詳見
+[`model-orchestration.md`](skills/loop-apidoc/reference/model-orchestration.md) 的角色矩陣、
+交接契約與 Codex／Claude 對應方式。
 
 ### `validate` — 驗證既有 run 目錄
 

@@ -50,6 +50,8 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
 
 `SKILL.md` resolves the environment via the `<APIDOC>` placeholder: with `$CLAUDE_PLUGIN_ROOT` it uses the bundled CLI, otherwise it falls back to the global `loop-apidoc`. The rest of the flow (extract → `assemble` → validate → correct) is identical on both.
 
+Release notes: [`0.7.0`](docs/RELEASE_NOTES_0.7.0.md).
+
 ---
 
 ## Install
@@ -89,6 +91,54 @@ uv run loop-apidoc manifest --sources ./sources [--url <URL> ...] [--output mani
 ```
 
 Scans local sources recording relative path, format, size, SHA-256, scan time, support status, duplicate detection, and processing status; public URLs also record fetch time, HTTP status, and content hash. Without `--output`, prints to stdout.
+
+### `catalog-url` / `select-url` — index navigation before fetching pages
+
+```bash
+# Downloads the entry page once; it never follows sidebar links.
+uv run loop-apidoc catalog-url \
+  --url "https://docs.example.com/api/introduction" \
+  --output ./work/url_sources/catalog.json
+
+# Select a document branch and topic. This also does not download page bodies.
+uv run loop-apidoc select-url \
+  --catalog ./work/url_sources/catalog.json \
+  --branch "Transfer wallet" --term "cash" \
+  --output ./work/url_sources/selection.json
+```
+
+`catalog.json` is the complete navigation **coverage universe**. `selection.json` can
+be a human-specified starting point for model review; it does not have to limit the
+tool-side cache.
+
+When page retrieval is cheap but model context is expensive, cache the catalog and
+give the model only candidate cards:
+
+```bash
+uv run loop-apidoc cache-url-pages \
+  --catalog ./work/url_sources/catalog.json \
+  --output ./work/url_corpus
+
+uv run loop-apidoc related-url-pages \
+  --corpus ./work/url_corpus/corpus.json \
+  --url "https://docs.example.com/api/action19" \
+  --output ./work/action19-candidates.json
+```
+
+`cache-url-pages` stores raw HTML and navigation-free body text while producing
+headings, internal-link, and entity metadata without calling a model. `corpus.json`
+does not embed bodies; `related-url-pages` returns compact cards with breadcrumb,
+score, and evidence reason. Load a candidate `body_file` only when the model needs it.
+
+### Model division in Codex and Claude Code
+
+The skill is model-neutral: the host maps a fast model to candidate routing, a standard
+model to bounded single-page extraction, and a high-reasoning model to cross-page review.
+The CLI remains responsible for fetching, parsing, provenance, coverage, and validation.
+Pass artifact paths and compact summaries between roles; never use a larger model context as a
+reason to send the whole corpus. See
+[`model-orchestration.md`](skills/loop-apidoc/reference/model-orchestration.md) for the role
+matrix, hand-off contract, and Codex/Claude mapping.
 
 ### `validate` — validate an existing run directory
 

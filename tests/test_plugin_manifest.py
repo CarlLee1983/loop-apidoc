@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -11,6 +12,16 @@ def test_plugin_json_valid():
     data = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text("utf-8"))
     assert data["name"] == "loop-apidoc"
     assert "description" in data
+
+
+def test_release_versions_are_synced_at_0_7_0():
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
+    plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text("utf-8"))
+    init = (ROOT / "loop_apidoc" / "__init__.py").read_text("utf-8")
+
+    assert project["project"]["version"] == "0.7.0"
+    assert plugin["version"] == "0.7.0"
+    assert '__version__ = "0.7.0"' in init
 
 
 def test_marketplace_lists_plugin():
@@ -38,3 +49,10 @@ def test_skill_references_real_issue_fields():
     assert "location" in text and "suggested_fix" in text
     # 不得引用不存在的 Issue 欄位(避免誤導修正迴圈)
     assert "`area`/`detail`" not in text
+
+
+def test_skill_has_model_neutral_orchestration_contract():
+    text = (ROOT / "skills" / "loop-apidoc" / "SKILL.md").read_text("utf-8")
+    assert "model-neutral" in text
+    assert "reference/model-orchestration.md" in text
+    assert (ROOT / "skills" / "loop-apidoc" / "reference" / "model-orchestration.md").is_file()

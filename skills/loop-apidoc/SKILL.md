@@ -18,6 +18,8 @@ Two reference files hold the heavy detail — load each when you reach that phas
   model, and the correction strategy (load when handling assemble results, steps 6–8).
 - **`reference/url-fetching.md`** — the coverage-checked URL fetching SOP + `coverage.json`
   schema (load when any source is a public URL, before fetching).
+- **`reference/model-orchestration.md`** — model-neutral role, artifact, escalation, and
+  runtime-mapping contract (load when splitting work across models or Codex/Claude agents).
 
 ## CLI invocation (`<APIDOC>`)
 
@@ -39,6 +41,14 @@ RUN=(loop-apidoc); [ -n "$CLAUDE_PLUGIN_ROOT" ] && RUN=(uv run --project "$CLAUD
 
 (Do **not** use `${CLAUDE_PLUGIN_ROOT:+uv run --project "$CLAUDE_PLUGIN_ROOT"}` inline: bash
 word-splits it but zsh does not, so it breaks under zsh.)
+
+## Model-neutral orchestration
+
+The skill does **not** select a vendor or model. Let the host map the logical roles in
+`reference/model-orchestration.md` to its available fast, standard, and high-reasoning
+models. Tools and validation remain the factual authority; models only route, extract, or
+review grounded local evidence. Never send a complete URL corpus or raw HTML merely because a
+larger-context model is available.
 
 ## Flow
 
@@ -71,8 +81,8 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   read it directly; preserve the original filename + headings so citations point back.
 - **OpenAPI JSON/YAML** → read as a source for endpoints/schemas/security/servers/examples;
   still go through `inventory.json` / `endpoints/*.json` (do not bypass).
-- **Public URLs** → follow **`reference/url-fetching.md`** (discover → confirm → fetch →
-  report). Save readable text/HTML/Markdown under `<WORK>/url_sources/`, point subagents
+- **Public URLs** → follow **`reference/url-fetching.md`** (catalog → cache → relate →
+  targeted model reading → report). Save readable text/HTML/Markdown under `<WORK>/url_sources/`, point subagents
   there (no re-fetching), and write `<WORK>/url_sources/coverage.json`. Pass the original
   URLs to `manifest`/`assemble` via `--url` and the coverage file via
   `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the original URL + anchor.

@@ -1,6 +1,6 @@
 {
   "name": "loop-apidoc",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Source-grounded API documentation pipeline: given doc sources, the agent drives extract → assemble → validate → correct, producing OpenAPI 3.1 / Traditional-Chinese Markdown / provenance.",
   "author": { "name": "carl" }
 }

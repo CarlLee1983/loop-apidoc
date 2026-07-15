@@ -87,6 +87,115 @@ def manifest(
         typer.echo(f"manifest 已寫入 {output}")
 
 
+@app.command(name="catalog-url")
+def catalog_url(
+    url: str = typer.Option(..., "--url", help="文件入口 URL；只會下載這一頁"),
+    output: Path = typer.Option(..., "--output", help="輸出的 navigation catalog JSON"),
+    max_bytes: Annotated[
+        int,
+        typer.Option("--max-bytes", min=1, help="入口 HTML 的最大下載位元組數"),
+    ] = 5 * 1024 * 1024,
+) -> None:
+    """下載入口頁一次，建立側欄索引；絕不自動擷取子頁。"""
+    from loop_apidoc.url_catalog import CatalogFetchError, fetch_catalog
+
+    try:
+        catalog = fetch_catalog(url, max_bytes=max_bytes)
+    except (CatalogFetchError, ValueError) as exc:
+        typer.echo(f"catalog-url error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    output.write_text(catalog.model_dump_json(indent=2), encoding="utf-8")
+    typer.echo(f"catalog 已寫入 {output}；發現 {len(catalog.nodes)} 個導航頁面，未擷取任何子頁")
+
+
+@app.command(name="select-url")
+def select_url(
+    catalog: Path = typer.Option(..., "--catalog", exists=True, readable=True),
+    output: Path = typer.Option(..., "--output", help="輸出的本次擷取 selection JSON"),
+    branch: list[str] = typer.Option([], "--branch", help="導航分支關鍵字；可重複指定"),
+    term: list[str] = typer.Option([], "--term", help="標題／breadcrumb／URL 關鍵字；可重複指定"),
+    url: list[str] = typer.Option([], "--url", help="明確選取的 URL；可重複指定"),
+) -> None:
+    """依明確範圍選取 catalog 節點；不下載任何 URL。"""
+    from pydantic import ValidationError
+
+    from loop_apidoc.url_catalog import UrlCatalog, select_catalog
+
+    try:
+        source = UrlCatalog.model_validate_json(catalog.read_text(encoding="utf-8"))
+        selection = select_catalog(source, branches=branch, terms=term, urls=url)
+    except (OSError, ValidationError, ValueError) as exc:
+        typer.echo(f"select-url error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    output.write_text(selection.model_dump_json(indent=2), encoding="utf-8")
+    typer.echo(
+        f"selection 已寫入 {output}；選取 {len(selection.selected)} / {len(source.nodes)} 頁，"
+        "尚未下載正文"
+    )
+
+
+@app.command(name="cache-url-pages")
+def cache_url_pages(
+    catalog: Path = typer.Option(..., "--catalog", exists=True, readable=True),
+    output: Path = typer.Option(..., "--output", help="本機原始 HTML、正文與 corpus.json 目錄"),
+    max_pages: Annotated[
+        int,
+        typer.Option("--max-pages", min=1, help="本次可快取的最大頁數"),
+    ] = 200,
+    max_bytes_per_page: Annotated[
+        int,
+        typer.Option("--max-bytes-per-page", min=1, help="每頁原始 HTML 最大位元組數"),
+    ] = 5 * 1024 * 1024,
+) -> None:
+    """快取 catalog 全部頁面並建立本機正文／連結／實體索引，不呼叫模型。"""
+    from pydantic import ValidationError
+
+    from loop_apidoc.url_catalog import UrlCatalog
+    from loop_apidoc.url_corpus import cache_catalog_pages
+
+    try:
+        source = UrlCatalog.model_validate_json(catalog.read_text(encoding="utf-8"))
+        output.mkdir(parents=True, exist_ok=True)
+        corpus = cache_catalog_pages(
+            source,
+            output,
+            max_pages=max_pages,
+            max_bytes_per_page=max_bytes_per_page,
+        )
+    except (OSError, ValidationError, ValueError) as exc:
+        typer.echo(f"cache-url-pages error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    corpus_path = output / "corpus.json"
+    corpus_path.write_text(corpus.model_dump_json(indent=2), encoding="utf-8")
+    fetched = sum(page.status == "fetched" for page in corpus.pages)
+    typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / {len(corpus.pages)} 頁，未送入模型")
+
+
+@app.command(name="related-url-pages")
+def related_url_pages(
+    corpus: Path = typer.Option(..., "--corpus", exists=True, readable=True),
+    url: str = typer.Option(..., "--url", help="作為關聯起點的已快取頁面 URL"),
+    output: Path = typer.Option(..., "--output", help="候選頁卡片 JSON"),
+    limit: Annotated[
+        int,
+        typer.Option("--limit", min=1, help="最多輸出的候選頁數"),
+    ] = 20,
+) -> None:
+    """依正文連結與共享實體輸出候選頁卡片，不載入正文給模型。"""
+    from pydantic import ValidationError
+
+    from loop_apidoc.url_corpus import UrlCorpus, find_related_pages
+
+    try:
+        source = UrlCorpus.model_validate_json(corpus.read_text(encoding="utf-8"))
+        related = find_related_pages(source, url, limit=limit)
+    except (OSError, ValidationError, ValueError) as exc:
+        typer.echo(f"related-url-pages error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    output.write_text(json.dumps([page.model_dump() for page in related], ensure_ascii=False, indent=2), encoding="utf-8")
+    typer.echo(f"related candidates 已寫入 {output}；{len(related)} 頁，未載入正文")
+
+
 @app.command(name="assess-sources")
 def assess_sources(
     sources: Path = typer.Option(..., "--sources", exists=True, file_okay=False),

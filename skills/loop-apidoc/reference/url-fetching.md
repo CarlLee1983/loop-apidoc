@@ -5,24 +5,75 @@ Use this when any source is a public URL. The goal is not "how to fetch" but
 findings, matching the pipeline's fail-closed spirit. Write the result to
 `<WORK>/url_sources/coverage.json` and pass it to assemble via `--url-coverage`.
 
-## 1. Discovery
+## 1. Catalog the navigation; do not crawl it
 
-1. Fetch the entry page. If it is a JS SPA shell (see §5), render it with the
-   Playwright MCP first, then parse.
-2. Treat the **navigation tree (sidebar / menu) as the authoritative "should-fetch"
-   list** — every page it lists should be fetched; do not chase links outside it
-   (avoids unbounded crawl).
-3. If the site exposes `sitemap.xml`, cross-check the entry-path subtree against the
-   nav tree to catch gaps. If there is none, do not force it.
+Run `catalog-url` against the entry page:
 
-## 2. Confirm (human in the loop)
+```bash
+<APIDOC> catalog-url --url "<ENTRY_URL>" --output "<WORK>/url_sources/catalog.json"
+```
 
-Before fetching, show the should-fetch list (page title + URL + level) to the user
-to add/remove. Pages the user removes are recorded as `skipped_by_user`. In
-non-interactive contexts (e.g. CI), skip confirmation, use the discovered list as-is,
-and set `confirmed_by_user: false` in coverage.json.
+It downloads **only** `<ENTRY_URL>` and writes every deduplicated same-origin sidebar
+node with its title, parent, and breadcrumb. The navigation tree is the authoritative
+**coverage universe**, not an automatic fetch list. If the raw entry page is a JS SPA
+shell (see §5), do not infer child URLs from it; obtain rendered entry-page evidence
+before selecting a scope.
 
-## 3. Fetch
+Optionally cross-check an entry-path sitemap subtree against this catalog. Do not chase
+ordinary body links, and do not fetch navigation children during cataloging.
+
+## 2. Cache the catalog with tools, not a model
+
+When the site is public and bounded by the catalog, cache every catalog node locally:
+
+```bash
+<APIDOC> cache-url-pages --catalog "<WORK>/url_sources/catalog.json" \
+  --output "<WORK>/url_corpus"
+```
+
+The command stores raw HTML under `raw/` and navigation-free body text under `body/`.
+Its `corpus.json` stores only compact cards: title, breadcrumb, headings, internal links,
+Action/error-code entities, hashes, sizes, and paths to the local evidence. It never
+passes page bodies to a model. `--max-pages` and `--max-bytes-per-page` bound the work.
+
+## 3. Relate pages before model reading
+
+For a task entry page, produce candidate cards from body evidence:
+
+```bash
+<APIDOC> related-url-pages --corpus "<WORK>/url_corpus/corpus.json" \
+  --url "<TASK_ENTRY_URL>" --output "<WORK>/url_sources/candidates.json"
+```
+
+Candidates are ranked by direct/reverse main-body links, shared Action/error-code
+entities, and common navigation branch. These are retrieval signals, **not claims that
+the pages are semantically required**. Give the model the task plus these compact cards;
+only after it selects a candidate may it read that page's local `body_file` (or a
+relevant section of it). Never send the complete corpus or raw HTML to the model.
+
+## 4. Select and confirm the model-reading scope
+
+Create an explicit scope before the model reads any page body:
+
+```bash
+<APIDOC> select-url --catalog "<WORK>/url_sources/catalog.json" \
+  --branch "<DOCUMENT_BRANCH>" --term "<TOPIC>" \
+  --output "<WORK>/url_sources/selection.json"
+```
+
+`--branch`, `--term`, and repeatable `--url` are optional review filters. At least one
+is required, so an agent cannot accidentally treat the complete sidebar as the model
+scope. The catalog remains the full inventory; `selection.json.selected` is a review
+seed, not a requirement to re-fetch pages. Show that selected list (title + URL +
+breadcrumb) to the user to add or remove pages. In non-interactive contexts, retain it
+as selected and set `confirmed_by_user: false` in coverage.json.
+
+For a complete corpus, derive `coverage.json.expected` from the catalog and record a
+result for every cached page. Preserve `catalog.json` and `selection.json` as the
+visible record of known pages and model-reading scope. Do not represent an unreviewed
+body as a failed fetch or source evidence.
+
+## 5. Fetch (when a full local corpus is not appropriate)
 
 - Fetch each page with defuddle-cli first (saves tokens). On an empty-shell hit or
   suspiciously short body → upgrade to Playwright rendering and re-fetch.
@@ -31,7 +82,7 @@ and set `confirmed_by_user: false` in coverage.json.
 - If it is still a shell after re-fetch → keep the `empty_suspect` status. **Never**
   fill it with inferred content.
 
-## 4. Report (coverage)
+## 6. Report (coverage)
 
 After fetching, write `<WORK>/url_sources/coverage.json` (schema in §7). Then run
 assemble with `--url-coverage "<WORK>/url_sources/coverage.json"`. The preparation
@@ -39,7 +90,7 @@ stage compares expected vs. results and emits `warning`-level findings for gaps
 (fetch failures, empty shells, unfetched expected pages, auth-required pages without
 a local alternative, an unconfirmed list, or a missing coverage.json).
 
-## 5. Empty-shell heuristics
+## 7. Empty-shell heuristics
 
 Any one hit → treat as a suspected shell and re-fetch with rendering:
 
@@ -47,7 +98,7 @@ Any one hit → treat as a suspected shell and re-fetch with rendering:
 - Page is only a loading/skeleton marker or an empty `<div id="root">`-style container.
 - Body length is wildly out of proportion to the `<title>` / nav-menu scale.
 
-## 6. Login-gated resources
+## 8. Login-gated resources
 
 Security red line: **the pipeline and the agent never handle or record credentials.**
 
@@ -60,7 +111,7 @@ Security red line: **the pipeline and the agent never handle or record credentia
   that saved file in `results[].file` so the coverage check counts it as covered.
 - No credential automation (env token / cookie injection) — YAGNI.
 
-## 7. coverage.json schema
+## 9. coverage.json schema
 
 ```json
 {
