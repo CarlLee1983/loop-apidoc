@@ -179,10 +179,10 @@ uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url <URL> ...] [--json]
+  [--url <URL> ...] [--source-quality ./work/source-quality] [--json]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
 
 ---
 
@@ -212,6 +212,11 @@ output/
     ├── validation/
     │   ├── report.json
     │   └── report.md
+    ├── source-quality/              # preserved when --source-quality is supplied
+    │   ├── source-quality-report.json
+    │   ├── source-quality-report.zh-TW.md
+    │   ├── source-diff.json
+    │   └── source-diff.md
     └── diff/                       # when diffed against another run (loop-apidoc diff)
         ├── report.json
         └── report.md
@@ -265,6 +270,8 @@ uv run ruff check .
 | `loop_apidoc/diff/` | run-to-run version diff: load run artifacts, classify changes (`breaking` / `additive` / `changed` / `source_only`), render and write `diff/report.{json,md}` |
 | `loop_apidoc/preparation/` | preparation readiness reporting inside assemble |
 | `loop_apidoc/score/` | documentation quality scoring for completed run-dirs |
+| `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; passing reports can be retained with a run-dir |
+| `loop_apidoc/url_catalog.py` / `url_corpus.py` | bounded URL navigation cataloging, page caching, and related-page candidates for local-evidence web reading |
 | `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.

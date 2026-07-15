@@ -186,10 +186,10 @@ uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url <URL> ...] [--json] [--score]
+  [--url <URL> ...] [--source-quality ./work/source-quality] [--json] [--score]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
 `score/score.md`；assemble 的退出碼仍維持既有驗證語意。
 
 ---
@@ -220,6 +220,11 @@ output/
     ├── validation/
     │   ├── report.json
     │   └── report.md
+    ├── source-quality/              # 傳入 --source-quality 時保留來源品質稽核
+    │   ├── source-quality-report.json
+    │   ├── source-quality-report.zh-TW.md
+    │   ├── source-diff.json
+    │   └── source-diff.md
     ├── score/                       # 文件品質評分（使用 loop-apidoc score 或 assemble --score）
     │   ├── score.json
     │   └── score.md
@@ -276,6 +281,8 @@ uv run ruff check .
 | `loop_apidoc/diff/` | 比較兩個 run 目錄的版本差異，依 impact 分類並輸出報告 |
 | `loop_apidoc/preparation/` | 在 assemble 內把 manifest 與 plan 評成準備度報告 |
 | `loop_apidoc/score/` | 既有 run-dir 文件品質評分(JSON/Markdown report, CI gate 狀態) |
+| `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；通過報告可隨 run-dir 稽核保存 |
+| `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
 | `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
 
 ---

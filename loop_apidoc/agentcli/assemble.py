@@ -34,6 +34,12 @@ from loop_apidoc.preparation.coverage import (
 )
 from loop_apidoc.run.models import RunResult, RunStatus
 from loop_apidoc.run.persist import persist_plan
+from loop_apidoc.source_quality.loader import (
+    SourceQualityInputError,
+    load_assessment_reports,
+)
+from loop_apidoc.source_quality.models import QualityVerdict
+from loop_apidoc.source_quality.report import write_reports as write_source_quality_reports
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 
@@ -186,6 +192,7 @@ def run_assemble_pipeline(
     generated_at: datetime,
     urls: list[str] | None = None,
     url_coverage_path: Path | None = None,
+    source_quality_dir: Path | None = None,
     excludes: Sequence[str] = (),
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
@@ -194,6 +201,19 @@ def run_assemble_pipeline(
     # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
     # 不留下孤兒 run 目錄。
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
+    source_quality_report = None
+    source_diff_report = None
+    if source_quality_dir is not None:
+        try:
+            source_quality_report, source_diff_report = load_assessment_reports(
+                source_quality_dir
+            )
+        except SourceQualityInputError as exc:
+            raise AssembleInputError(str(exc)) from exc
+        if source_quality_report.verdict is QualityVerdict.REJECT:
+            raise AssembleInputError(
+                "source quality report verdict is reject; resolve blockers before assemble"
+            )
     url_coverage = None
     if url_coverage_path is not None:
         # 沒有 URL 來源時 coverage phase 不會產生,明確傳入的帳本會被
@@ -235,6 +255,10 @@ def run_assemble_pipeline(
 
     (run_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2), encoding="utf-8")
+    if source_quality_report is not None and source_diff_report is not None:
+        write_source_quality_reports(
+            source_quality_report, source_diff_report, run_dir / "source-quality"
+        )
 
     store = ExtractionStore(run_dir / "extraction")
     extraction = build_extraction_from_files(inventory, endpoint_texts, store)

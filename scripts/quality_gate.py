@@ -259,7 +259,7 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
 def command_plan(*, strict_local: bool) -> list[tuple[str, list[str]]]:
     plan: list[tuple[str, list[str]]] = [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
-        ("pytest", ["uv", "run", "pytest"]),
+        ("pytest", ["uv", "run", "pytest", "--cov=loop_apidoc"]),
     ]
     if strict_local:
         plan.append(("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]))

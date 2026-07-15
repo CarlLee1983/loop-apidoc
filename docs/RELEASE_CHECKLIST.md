@@ -9,7 +9,7 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
 
 - [ ] `uv sync --dev` resolves cleanly.
 - [ ] `uv run ruff check .` passes.
-- [ ] `uv run pytest` passes — unit + integration + the benchmark discovery guard.
+- [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above 95% — unit + integration + the benchmark discovery guard.
   - CI fails on any test failure.
   - CI fails if benchmark case discovery becomes empty or loses a required case
     (`test_benchmark_harness_discovers_cases` asserts the 10 required cases are

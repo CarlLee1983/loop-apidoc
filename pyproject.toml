@@ -34,3 +34,6 @@ packages = ["loop_apidoc"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.report]
+fail_under = 95

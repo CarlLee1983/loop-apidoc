@@ -44,7 +44,7 @@ def test_command_plan_default_mode():
     plan = quality_gate.command_plan(strict_local=False)
     assert plan == [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
-        ("pytest", ["uv", "run", "pytest"]),
+        ("pytest", ["uv", "run", "pytest", "--cov=loop_apidoc"]),
     ]
 
 
@@ -52,7 +52,7 @@ def test_command_plan_strict_local_includes_benchmarks():
     plan = quality_gate.command_plan(strict_local=True)
     assert plan == [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
-        ("pytest", ["uv", "run", "pytest"]),
+        ("pytest", ["uv", "run", "pytest", "--cov=loop_apidoc"]),
         ("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]),
     ]
 

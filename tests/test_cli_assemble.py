@@ -39,6 +39,23 @@ def _setup(tmp_path: Path) -> tuple[Path, Path, Path]:
     return sources, extraction, tmp_path / "out"
 
 
+def _source_quality_dir(tmp_path: Path, *, verdict: str = "pass") -> Path:
+    quality = tmp_path / "source-quality"
+    quality.mkdir()
+    (quality / "source-quality-report.json").write_text(
+        json.dumps({
+            "verdict": verdict,
+            "source_set": "demo-v1",
+            "findings": [],
+        }),
+        encoding="utf-8",
+    )
+    (quality / "source-diff.json").write_text(
+        json.dumps({"entries": []}), encoding="utf-8"
+    )
+    return quality
+
+
 def test_assemble_json_emits_run_dir_and_report(tmp_path):
     sources, extraction, out = _setup(tmp_path)
     res = runner.invoke(app, [
@@ -69,6 +86,38 @@ def test_assemble_plain_output_mentions_status(tmp_path):
     assert res.exit_code in (0, 1)
     assert "狀態" in res.stdout
     assert "review.html" in res.stdout
+
+
+def test_assemble_persists_passing_source_quality_artifacts(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    quality = _source_quality_dir(tmp_path)
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--source-quality", str(quality), "--json",
+    ])
+
+    assert res.exit_code in (0, 1), res.output
+    run_dir = Path(json.loads(res.stdout)["run_dir"])
+    saved = json.loads(
+        (run_dir / "source-quality" / "source-quality-report.json").read_text(encoding="utf-8")
+    )
+    assert saved["source_set"] == "demo-v1"
+    assert (run_dir / "source-quality" / "source-diff.json").is_file()
+
+
+def test_assemble_rejects_source_quality_blocker_without_creating_run_dir(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    quality = _source_quality_dir(tmp_path, verdict="reject")
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--source-quality", str(quality),
+    ])
+
+    assert res.exit_code == 2
+    assert "reject" in res.output
+    assert not out.exists() or not any(out.iterdir())
 
 
 def test_assemble_missing_inventory_exits_2(tmp_path):

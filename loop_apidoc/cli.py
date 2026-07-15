@@ -444,6 +444,11 @@ def assemble(
         None, "--url-coverage",
         help="agent 產出的 url_sources/coverage.json 路徑;有 URL 來源時檢核撈取涵蓋率",
     ),
+    source_quality: Path = typer.Option(
+        None,
+        "--source-quality",
+        help="assess-sources 產出的報告目錄;reject 會阻止組裝並把通過報告存入 run-dir",
+    ),
     json_out: bool = typer.Option(
         False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
     ),
@@ -490,6 +495,7 @@ def assemble(
             generated_at=now,
             urls=list(url),
             url_coverage_path=url_coverage,
+            source_quality_dir=source_quality,
             excludes=tuple(exclude),
         )
     except AssembleInputError as exc:

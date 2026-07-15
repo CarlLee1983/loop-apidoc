@@ -717,11 +717,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer 入口，暴露 preprocess、manifest、assemble、validate、score、diff 六個核心命令與 foundry 子群組。</div>
+          <div class="module-role">Typer 入口，暴露來源、URL、品質評估與組裝命令，以及 foundry 子群組。</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
           <div class="command-chip">manifest</div>
+          <div class="command-chip">catalog-url</div>
+          <div class="command-chip">select-url</div>
+          <div class="command-chip">cache-url-pages</div>
+          <div class="command-chip">related-url-pages</div>
+          <div class="command-chip">assess-sources</div>
+          <div class="command-chip">verify-extraction</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -777,6 +783,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">score/ <span class="pill io">File I/O</span></div>
             <div class="module-role">對完成 run-dir 做確定性文件品質評分，輸出 score/score.{json,md}。</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="source-quality">
+            <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">擷取前來源品質評估與差異報告；通過報告可隨 run-dir 保存。</div>
+          </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
             <div class="module-role">API 專案本地資產治理，管理 docset、candidate 與 asset。</div>
@@ -789,8 +799,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露七個主要操作：<code>preprocess</code>（PDF→markdown）、<code>manifest</code>（掃描）、<code>assemble</code>（組裝 + 驗證）、<code>validate</code>（驗證既有 run-dir）、<code>diff</code>（比較版本差異）、<code>score</code>（品質評分）與 <code>foundry</code>（本地資產治理）。
-      <strong>檔案 I/O 出口</strong>：只有 <code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code> 與 <code>foundry/</code> 擁有寫入檔案權限；其餘模組均設計為無 Side-effects 的純函式，以簡化單元測試之複雜度。
+      <code>cli.py</code> 暴露十二個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入；其餘 domain 邏輯盡量保持純函式，以簡化單元測試。
     </div>
   </div>
 
@@ -885,10 +895,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 preprocess、manifest、assemble、validate、score、diff 六個命令，將使用者操作導向對應的 deterministic pipeline seam。",
+      description: "Typer CLI 入口，對外暴露 12 個頂層命令：來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分與版本差異。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to preprocess / manifest / assemble / validate / score / diff commands",
+      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -990,6 +1000,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",
       sideEffect: "File I/O: writes score report files; evaluation logic is pure"
+    },
+    "source-quality": {
+      title: "source_quality/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "在擷取前根據可追溯 observation 評估來源品質並輸出 pass/reject。若把 pass 報告目錄傳給 assemble 的 --source-quality，系統會將報告與來源差異保存在 run-dir；reject 則不建立 run-dir。",
+      seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
+      inputs: "manifest, grounded observations, optional base manifest",
+      outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
+      sideEffect: "File I/O: writes quality reports; assessment logic is pure"
     }
   };
 
