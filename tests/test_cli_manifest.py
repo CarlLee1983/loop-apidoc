@@ -75,3 +75,16 @@ def test_manifest_command_ignores_readme_by_default(tmp_path: Path):
     assert result.exit_code == 0, result.stdout
     statuses = {s["relative_path"]: s["status"] for s in json.loads(result.stdout)["local_sources"]}
     assert statuses["README.md"] == "ignored"
+
+
+def test_manifest_accepts_html_as_a_supported_snapshot_format(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "transfer.html").write_text("<main>Transfer</main>", encoding="utf-8")
+
+    result = runner.invoke(app, ["manifest", "--sources", str(sources)])
+
+    assert result.exit_code == 0, result.stdout
+    source = json.loads(result.stdout)["local_sources"][0]
+    assert source["source_format"] == "html"
+    assert source["supported"] is True

@@ -21,6 +21,11 @@ class CatalogNode(BaseModel):
     title: str
     breadcrumb: list[str] = Field(default_factory=list)
     parent_url: str | None = None
+    # A fragment identifies a section of a one-page document.  It is kept
+    # separately because the fetch/corpus identity is the document URL (without
+    # the fragment), while selection and coverage still need to see every
+    # documented section.
+    anchor: str | None = None
 
 
 class UrlCatalog(BaseModel):
@@ -124,7 +129,7 @@ def _navigation_roots(root: _Element) -> list[_Element]:
         if has_list(element)
         and any(
             marker in element.attrs.get("class", "").casefold()
-            for marker in ("menu", "navigation", "nav")
+            for marker in ("menu", "navigation", "nav", "toc")
         )
     ]
 
@@ -167,6 +172,8 @@ def _child_lists(element: _Element) -> list[_Element]:
 
 def _top_level_lists(element: _Element) -> list[_Element]:
     """Return lists not nested inside another list in one navigation root."""
+    if element.tag in {"ul", "ol"}:
+        return [element]
     found: list[_Element] = []
 
     def visit(node: _Element) -> None:
@@ -191,6 +198,24 @@ def _canonical_url(entry_url: str, href: str) -> str | None:
     return urlunsplit((resolved.scheme, resolved.netloc, path, resolved.query, ""))
 
 
+def _canonical_navigation_url(entry_url: str, href: str) -> tuple[str, str | None] | None:
+    """Return a same-origin navigation target and, when present, its fragment.
+
+    Ordinary corpus links intentionally discard fragments, but sidebar anchors
+    are meaningful coverage units in static single-page documentation.
+    """
+    canonical = _canonical_url(entry_url, href)
+    if canonical is None:
+        return None
+    # Only fragments on the entry document denote sections that we can expose
+    # without fetching another page.  A fragment on a child URL remains a
+    # normal child-page link, preserving historic URL de-duplication semantics.
+    entry = _canonical_url(entry_url, entry_url)
+    fragment = urlsplit(urljoin(entry_url, href)).fragment if canonical == entry else None
+    fragment = fragment or None
+    return canonical, fragment
+
+
 def build_catalog(entry_url: str, html: str) -> UrlCatalog:
     """Parse navigation only; no page links are fetched or otherwise followed."""
     parser = _TreeParser()
@@ -198,7 +223,7 @@ def build_catalog(entry_url: str, html: str) -> UrlCatalog:
     parser.close()
 
     nodes: list[CatalogNode] = []
-    seen: set[str] = set()
+    seen: set[tuple[str, str | None]] = set()
 
     def visit_list(list_element: _Element, breadcrumb: list[str], parent_url: str | None) -> None:
         for item in _direct_list_items(list_element):
@@ -209,18 +234,21 @@ def build_catalog(entry_url: str, html: str) -> UrlCatalog:
             child_parent = parent_url
 
             if anchor is not None:
-                canonical = _canonical_url(entry_url, anchor.attrs["href"])
-                if canonical is not None:
-                    if canonical not in seen:
+                navigation_target = _canonical_navigation_url(entry_url, anchor.attrs["href"])
+                if navigation_target is not None:
+                    canonical, fragment = navigation_target
+                    identity = (canonical, fragment)
+                    if identity not in seen:
                         nodes.append(
                             CatalogNode(
                                 url=canonical,
                                 title=title,
                                 breadcrumb=node_breadcrumb,
                                 parent_url=parent_url,
+                                anchor=fragment,
                             )
                         )
-                        seen.add(canonical)
+                        seen.add(identity)
                     child_parent = canonical
 
             for child_list in _child_lists(item):
@@ -283,7 +311,7 @@ def select_catalog(
     branch_values = tuple(branches)
     term_values = tuple(terms)
     requested_urls = {
-        _canonical_url(catalog.entry_url, url) or url
+        _canonical_navigation_url(catalog.entry_url, url) or (url, None)
         for url in urls
     }
     if not any(value.strip() for value in (*branch_values, *term_values)) and not requested_urls:
@@ -292,7 +320,7 @@ def select_catalog(
     selected = [
         node
         for node in catalog.nodes
-        if node.url in requested_urls
+        if (node.url, node.anchor) in requested_urls
         or (_matches(node, branch_values) and _matches(node, term_values))
     ]
     return UrlSelection(

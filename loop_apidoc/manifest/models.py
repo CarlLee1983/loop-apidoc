@@ -12,6 +12,7 @@ class SourceFormat(str, Enum):
     WORD = "word"
     OPENAPI_JSON = "openapi-json"
     OPENAPI_YAML = "openapi-yaml"
+    HTML = "html"
     UNKNOWN = "unknown"
 
 

@@ -79,3 +79,45 @@ def test_related_url_pages_writes_compact_candidate_cards(tmp_path: Path):
             "reasons": ["outbound_link"],
         }
     ]
+
+
+def test_cache_url_entry_is_supported_without_a_catalog(tmp_path: Path, monkeypatch):
+    output = tmp_path / "corpus"
+    calls: list[tuple[str, int]] = []
+
+    def fake_cache(catalog, output_dir, **kwargs):
+        calls.append((catalog.entry_url, len(catalog.nodes)))
+        return UrlCorpus(entry_url=catalog.entry_url, pages=[CorpusPage(url=catalog.entry_url, status="fetched")])
+
+    monkeypatch.setattr("loop_apidoc.url_corpus.cache_catalog_pages", fake_cache)
+    result = runner.invoke(app, ["cache-url-entry", "--url", "https://docs.example.com/intro", "--output", str(output)])
+
+    assert result.exit_code == 0, result.stdout
+    assert calls == [("https://docs.example.com/intro", 1)]
+    assert json.loads((output / "corpus.json").read_text(encoding="utf-8"))["pages"][0]["url"] == "https://docs.example.com/intro"
+
+
+def test_cache_catalog_fetches_one_document_for_multiple_anchor_sections(tmp_path: Path):
+    import httpx
+
+    from loop_apidoc.url_corpus import cache_catalog_pages
+
+    catalog = UrlCatalog(
+        entry_url="https://docs.example.com/transfer",
+        nodes=[
+            CatalogNode(url="https://docs.example.com/transfer", title="API", anchor="api"),
+            CatalogNode(url="https://docs.example.com/transfer", title="Errors", anchor="errors"),
+        ],
+    )
+    requests: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        return httpx.Response(200, text="<main><h1>Transfer</h1></main>")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(catalog, tmp_path, client=client)
+
+    assert requests == ["https://docs.example.com/transfer"]
+    assert len(corpus.pages) == 1
+    assert [section.anchor for section in corpus.pages[0].sections] == ["api", "errors"]

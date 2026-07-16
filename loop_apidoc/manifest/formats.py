@@ -14,6 +14,8 @@ _EXTENSION_FORMATS: dict[str, SourceFormat] = {
     ".json": SourceFormat.OPENAPI_JSON,
     ".yaml": SourceFormat.OPENAPI_YAML,
     ".yml": SourceFormat.OPENAPI_YAML,
+    ".html": SourceFormat.HTML,
+    ".htm": SourceFormat.HTML,
 }
 
 
