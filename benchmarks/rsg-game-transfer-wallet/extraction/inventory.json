@@ -146,70 +146,102 @@
       "code": "3005",
       "meaning": "餘額不足",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": ["POST /WithBalance/Player/Withdraw"],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3006",
       "meaning": "找不到交易結果",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": ["POST /WithBalance/Player/GetTransactionResult"],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3008",
       "meaning": "此玩家帳戶不存在",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/Deposit",
+        "POST /WithBalance/Player/Withdraw",
+        "POST /WithBalance/Player/GetBalance",
+        "POST /WithBalance/Player/GetURLToken"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3010",
       "meaning": "此玩家帳戶已存在",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": ["POST /WithBalance/Player/CreatePlayer"],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3011",
       "meaning": "系統商權限不足",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/CreatePlayer",
+        "POST /WithBalance/Player/Deposit",
+        "POST /WithBalance/Player/Withdraw",
+        "POST /WithBalance/Player/GetBalance",
+        "POST /WithBalance/Player/GetTransactionResult",
+        "POST /WithBalance/Player/GetTransactionHistory",
+        "POST /WithBalance/Player/GetURLToken",
+        "POST /WithBalance/Player/PlayerOnlineList",
+        "POST /WithBalance/Player/Kickout",
+        "POST /WithBalance/Game/GameList",
+        "POST /WithBalance/History/GetGameDetail"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3012",
       "meaning": "遊戲權限不足",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/GetURLToken",
+        "POST /WithBalance/Player/PlayerOnlineList",
+        "POST /WithBalance/Player/Kickout"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3014",
       "meaning": "重複的 TransactionID",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/Deposit",
+        "POST /WithBalance/Player/Withdraw"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3015",
       "meaning": "時間不在允許的範圍內",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/GetTransactionHistory",
+        "POST /WithBalance/History/GetGameDetail"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3016",
       "meaning": "拒絕提點，玩家正在遊戲中",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": ["POST /WithBalance/Player/Withdraw"],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     },
     {
       "code": "3018",
       "meaning": "此幣別不被允許",
       "http_status": null,
-      "applicable_to": [],
+      "applicable_to": [
+        "POST /WithBalance/Player/CreatePlayer",
+        "POST /WithBalance/Player/Deposit",
+        "POST /WithBalance/Player/Withdraw",
+        "POST /WithBalance/Player/GetURLToken"
+      ],
       "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
     }
   ],
