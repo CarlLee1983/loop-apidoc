@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from loop_apidoc.generate.provenance import build_provenance
 from loop_apidoc.plan.models import (
+    ErrorEntry,
     EndpointEntry,
     EnvironmentEntry,
     MissingItem,
@@ -133,3 +134,22 @@ def test_named_enum_provenance_emitted_with_parent_schema_citation():
     assert entry.status is PlanItemStatus.SUPPORTED
     assert entry.manifest_source == "schema.md"
     assert entry.query_id == "q1"
+
+
+def test_error_code_component_mapping_has_source_provenance():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        errors=[ErrorEntry(
+            status=PlanItemStatus.SUPPORTED,
+            code="1001",
+            meaning="Invalid token",
+            citations=[_cite(manifest_source="errors.md", locator="#1001")],
+        )],
+    )
+
+    targets = _targets(build_provenance(plan))
+
+    assert targets["components.schemas.ErrorCode"][0].manifest_source == "errors.md"
+    entry = targets["components.schemas.ErrorCode.1001"][0]
+    assert entry.manifest_source == "errors.md"
+    assert entry.locator == "#1001"

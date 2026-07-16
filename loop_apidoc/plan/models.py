@@ -69,6 +69,9 @@ class ErrorEntry(_Cited):
     code: str | None = None
     meaning: str | None = None
     http_status: str | None = None
+    # Optional exact operation identities (for example, ``POST /transfers``)
+    # documented by the provider as applicable to this error code.
+    applicable_to: list[str] = Field(default_factory=list)
 
 
 class OperationalEntry(_Cited):

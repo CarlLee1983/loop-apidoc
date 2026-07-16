@@ -34,7 +34,7 @@ One object describing the whole API. **You** write what the single inventory sub
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
  "endpoints": [{"method":"str","path":"str|null","summary":"str","source":"str","server":"str|null"}],
  "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
- "errors": [{"code":"str","meaning":"str","http_status":"str|null","source":"str"}],
+ "errors": [{"code":"str","meaning":"str","http_status":"str|null","applicable_to":["METHOD /path"],"source":"str"}],
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
 ```
@@ -96,6 +96,12 @@ One object describing the whole API. **You** write what the single inventory sub
 - `schemas[].fields[]` uses the **English** keys `name`/`type`/`required`/`description`
   (same shape as endpoint `parameters`). Nested fields use the dotted-path convention
   (see endpoints below).
+- `errors[]` records `code`, `meaning`, and `http_status`. When the source explicitly
+  limits an error to operations, add `applicable_to` as exact `METHOD /path` strings
+  (for example `"POST /transfers"`); otherwise leave it as `[]`. Generated OpenAPI
+  exposes the complete mapping as `components.schemas.ErrorCode` and only adds an
+  operation-level `x-loop-error-codes` extension when this source-stated applicability
+  is present.
 
 ## endpoints/ep<N>.json
 

@@ -377,7 +377,10 @@ def _build_responses(
             resp["content"] = {content_type: {"schema": schema}}
         out[key] = resp
     if folded or folded_schemas:
-        key = "200" if "200" not in out else "default"
+        # A named business outcome is not evidence of a 200 HTTP status.  OpenAPI
+        # `default` preserves a documented envelope when its transport status is
+        # absent, without silently inventing a success code.
+        key = "default"
         resp = out.get(key) or {
             "description": "；".join(d for d in folded if d) or "回應"
         }
@@ -442,6 +445,7 @@ def _build_operation(
     name_to_key: dict[str, str] | None = None,
     scheme_keys: dict[str, str] | None = None,
     environments: list | None = None,
+    errors: list | None = None,
 ) -> dict:
     """Build one OpenAPI operation from one or more source endpoints that share
     the same method+path. OpenAPI permits only a single operation per path+method,
@@ -509,6 +513,19 @@ def _build_operation(
     for endpoint in endpoints:
         responses.extend(endpoint.responses)
     op["responses"] = _build_responses(responses, name_to_key)
+    identities = {
+        f"{endpoint.method.upper()} {endpoint.path}".casefold()
+        for endpoint in endpoints
+        if endpoint.method and endpoint.path
+    }
+    applicable_codes = [
+        int(error.code) if error.code.isdecimal() else error.code
+        for error in (errors or [])
+        if error.code and error.code.strip()
+        and any(identity.casefold() in identities for identity in error.applicable_to)
+    ]
+    if applicable_codes:
+        op["x-loop-error-codes"] = list(dict.fromkeys(applicable_codes))
     # 來源明載的 per-endpoint 主機:翻成 operation-level servers,覆寫 root servers。
     # 未解析到 environment 時靜默略過 —— cross_file 已在輸入邊界擋下不存在的名字,
     # 這裡不臆測、不產出壞 URL。
@@ -558,7 +575,8 @@ def _build_paths(
     paths: dict = {}
     for (path, method), endpoints in grouped.items():
         op = _build_operation(
-            endpoints, name_to_key, scheme_keys, environments=plan.environments
+            endpoints, name_to_key, scheme_keys, environments=plan.environments,
+            errors=plan.errors,
         )
         declared_path = {
             param["name"]
@@ -587,7 +605,7 @@ def _build_webhooks(
     for name, endpoint in webhook_items(plan):
         out[name] = {
             endpoint.method.lower(): _build_operation(
-                [endpoint], name_to_key, scheme_keys
+                [endpoint], name_to_key, scheme_keys, errors=plan.errors
             )
         }
     return out
@@ -603,7 +621,23 @@ def _root_tags(plan: NormalizationPlan) -> list[dict]:
     return [{"name": name} for name in names]
 
 
-def _build_object_schema(entry, name_to_key: dict[str, str] | None = None) -> dict:
+def _replace_error_code_properties(schema: dict) -> None:
+    """Point conventional ErrorCode fields at the shared source mapping."""
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        for name, value in list(properties.items()):
+            if name.casefold().replace("_", "").replace("-", "") == "errorcode":
+                properties[name] = {"$ref": "#/components/schemas/ErrorCode"}
+            elif isinstance(value, dict):
+                _replace_error_code_properties(value)
+    items = schema.get("items")
+    if isinstance(items, dict):
+        _replace_error_code_properties(items)
+
+
+def _build_object_schema(
+    entry, name_to_key: dict[str, str] | None = None, *, has_error_codes: bool = False,
+) -> dict:
     properties, required = _nest_properties(entry.fields, name_to_key)
     schema: dict = {"type": "object", "properties": properties}
     if required:
@@ -616,6 +650,8 @@ def _build_object_schema(entry, name_to_key: dict[str, str] | None = None) -> di
     string_enums = [e for e in entry.enums if isinstance(e, str)]
     if string_enums:
         schema["x-enum-values"] = string_enums
+    if has_error_codes:
+        _replace_error_code_properties(schema)
     return schema
 
 
@@ -623,11 +659,16 @@ def _build_schemas(
     plan: NormalizationPlan, key_map: dict[int, str],
     name_to_key: dict[str, str] | None = None,
 ) -> dict:
+    error_entries = [entry for entry in plan.errors if entry.code and entry.code.strip()]
+    error_values: list[int | str] = [
+        int(entry.code) if entry.code.isdecimal() else entry.code
+        for entry in error_entries
+    ]
     out: dict = {}
     for idx, entry in enumerate(plan.schemas):
         if entry.name:
             key = key_map[idx]
-            obj = _build_object_schema(entry, name_to_key)
+            obj = _build_object_schema(entry, name_to_key, has_error_codes=bool(error_entries))
             # When the source name can't be a valid component key (CJK, slashes,
             # spaces) the key is sanitized/falls back to schema<idx>; keep the
             # original human-readable name in `title` so it isn't lost.
@@ -642,6 +683,23 @@ def _build_schemas(
             if enum_name and values:
                 key = component_key(enum_name, enum_idx, prefix="enum")
                 out[key] = {"type": "string", "enum": values}
+    if error_entries:
+        component: dict = {
+            "enum": error_values,
+            "x-loop-error-codes": [
+                {
+                    "code": value,
+                    "meaning": entry.meaning,
+                    "http_status": entry.http_status,
+                }
+                for entry, value in zip(error_entries, error_values)
+            ],
+        }
+        if all(isinstance(value, int) for value in error_values):
+            component["type"] = "integer"
+        elif all(isinstance(value, str) for value in error_values):
+            component["type"] = "string"
+        out["ErrorCode"] = component
     return out
 
 
