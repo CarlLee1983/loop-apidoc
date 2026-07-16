@@ -81,6 +81,8 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
     for error in plan.errors:
         if error.code:
             entries.extend(_entries(f"errors.{error.code}", error))
+            entries.extend(_entries("components.schemas.ErrorCode", error))
+            entries.extend(_entries(f"components.schemas.ErrorCode.{error.code}", error))
 
     for op in plan.operational:
         if op.topic:

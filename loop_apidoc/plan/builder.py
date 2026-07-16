@@ -188,7 +188,8 @@ _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
                       "enums": i.get("enums") or [], "constraints": i.get("constraints")}),
     "08": ("errors", "errors", ErrorEntry,
            lambda i: {"code": i.get("code"), "meaning": i.get("meaning"),
-                      "http_status": i.get("http_status")}),
+                      "http_status": i.get("http_status"),
+                      "applicable_to": i.get("applicable_to") or []}),
     "09": ("operational", "operational", OperationalEntry,
            lambda i: {"topic": i.get("topic"), "detail": i.get("detail")}),
 }

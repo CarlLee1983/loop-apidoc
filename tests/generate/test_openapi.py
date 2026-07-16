@@ -8,6 +8,7 @@ from loop_apidoc.generate.openapi import (
     build_openapi,
 )
 from loop_apidoc.plan.models import (
+    ErrorEntry,
     EndpointEntry,
     EnvironmentEntry,
     NormalizationPlan,
@@ -381,15 +382,68 @@ def test_build_openapi_does_not_mutate_plan_schema_dicts():
     assert result_id_prop is not id_schema
 
 
-def test_responses_fold_business_status_into_single_200():
+def test_responses_without_an_http_status_use_default_response():
     from loop_apidoc.generate.openapi import _build_responses
     out = _build_responses([
         {"status": "SUCCESS", "description": "ok"},
         {"status": "錯誤代碼 (參考 5.)", "description": "fail"},
     ])
-    assert set(out) == {"200"}
-    assert "SUCCESS" in out["200"]["description"]
-    assert "錯誤代碼" in out["200"]["description"]
+    assert set(out) == {"default"}
+    assert "SUCCESS" in out["default"]["description"]
+    assert "錯誤代碼" in out["default"]["description"]
+
+
+def test_error_codes_become_a_reusable_component_and_replace_error_code_fields():
+    plan = _plan(
+        schemas=[SchemaEntry(
+            status=PlanItemStatus.SUPPORTED,
+            name="ResponseEnvelope",
+            fields=[
+                {"name": "ErrorCode", "type": "integer", "description": "Provider error code"},
+                {"name": "Message", "type": "string"},
+            ],
+        )],
+        errors=[
+            ErrorEntry(status=PlanItemStatus.SUPPORTED, code="1001", meaning="Invalid token", http_status=None),
+            ErrorEntry(status=PlanItemStatus.SUPPORTED, code="1002", meaning="Insufficient balance", http_status="400"),
+        ],
+    )
+
+    doc = build_openapi(plan)
+    components = doc["components"]["schemas"]
+
+    assert components["ErrorCode"] == {
+        "type": "integer",
+        "enum": [1001, 1002],
+        "x-loop-error-codes": [
+            {"code": 1001, "meaning": "Invalid token", "http_status": None},
+            {"code": 1002, "meaning": "Insufficient balance", "http_status": "400"},
+        ],
+    }
+    assert components["ResponseEnvelope"]["properties"]["ErrorCode"] == {
+        "$ref": "#/components/schemas/ErrorCode"
+    }
+
+
+def test_source_documented_error_code_applicability_is_attached_to_operation():
+    plan = _plan(
+        endpoints=[EndpointEntry(
+            status=PlanItemStatus.SUPPORTED,
+            method="POST",
+            path="/transfers",
+            responses=[{"status": "default", "description": "Envelope"}],
+        )],
+        errors=[ErrorEntry(
+            status=PlanItemStatus.SUPPORTED,
+            code="1001",
+            meaning="Invalid token",
+            applicable_to=["POST /transfers"],
+        )],
+    )
+
+    operation = build_openapi(plan)["paths"]["/transfers"]["post"]
+
+    assert operation["x-loop-error-codes"] == [1001]
 
 
 def test_responses_keep_valid_codes_and_fold_business_status():
@@ -399,7 +453,7 @@ def test_responses_keep_valid_codes_and_fold_business_status():
         {"status": "SUCCESS", "description": "ok"},
     ])
     assert "201" in out          # valid HTTP code kept
-    assert "200" in out          # business status folded under 200
+    assert "default" in out      # business status has no transport status
 
 
 def test_body_params_become_request_body_not_parameters():
@@ -654,8 +708,8 @@ def test_response_schema_ref_resolves_to_component_ref():
     }
 
 
-def test_business_status_response_ref_folds_into_200_with_content():
-    # Business-status responses fold under 200 — but their $ref content must
+def test_business_status_response_ref_folds_into_default_with_content():
+    # Business-status responses use default — but their $ref content must
     # survive the fold (previously the schema was dropped entirely).
     plan = _plan(
         schemas=[SchemaEntry(status=PlanItemStatus.SUPPORTED, name="PayResult",
@@ -665,7 +719,7 @@ def test_business_status_response_ref_folds_into_200_with_content():
             responses=[{"status": "SUCCESS", "description": "paid", "schema_ref": "PayResult"}],
         )],
     )
-    resp = build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+    resp = build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["default"]
     assert "SUCCESS" in resp["description"]
     assert resp["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/PayResult"
@@ -688,7 +742,7 @@ def test_two_business_responses_fold_into_oneof():
             ],
         )],
     )
-    schema = (build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["200"]
+    schema = (build_openapi(plan)["paths"]["/pay"]["post"]["responses"]["default"]
               ["content"]["application/json"]["schema"])
     assert {x["$ref"] for x in schema["oneOf"]} == {
         "#/components/schemas/PayDone", "#/components/schemas/NumDone"

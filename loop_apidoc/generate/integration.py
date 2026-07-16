@@ -7,7 +7,12 @@ from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan
 
 def _error_codes(plan: NormalizationPlan) -> list[dict]:
     return [
-        {"code": e.code, "meaning": e.meaning, "http_status": e.http_status}
+        {
+            "code": e.code,
+            "meaning": e.meaning,
+            "http_status": e.http_status,
+            "applicable_to": e.applicable_to,
+        }
         for e in plan.errors
     ]
 
