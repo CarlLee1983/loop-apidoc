@@ -1,0 +1,100 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/Deposit",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt#5-2",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "Msg",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "傳送的參數(JSON 格式)進行 DES-CBC 加密後的結果"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "系統代碼(只限英數) 長度2~20"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "站台代碼(只限英數) 長度3~20"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數) 長度3~20"
+    },
+    {
+      "name": "TransactionID",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "交易惟一識別碼(只限英數) 長度8~20"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表) 長度2~5"
+    },
+    {
+      "name": "Balance",
+      "in": "body",
+      "type": "number",
+      "required": true,
+      "description": "存入點數(小數點兩位) (範圍0.01~9999999999.99)"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "回傳資訊",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "HTTP status code",
+    "Request payload example",
+    "Response payload example",
+    "Security scheme name"
+  ]
+}

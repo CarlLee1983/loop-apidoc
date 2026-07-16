@@ -1,0 +1,92 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/Withdraw",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-3 取出點數",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數)"
+    },
+    {
+      "name": "TransactionID",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "交易惟一識別碼(只限英數)"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "Balance",
+      "in": "body",
+      "type": "number",
+      "required": true,
+      "description": "取出點數(小數點兩位) (範圍0.01~9999999999.99)"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": "Msg=傳送的參數(JSON 格式)進行 DES-CBC 加密後的結果"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "取出點數回傳資訊說明",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No explicit HTTP status for response documented in 5-3",
+    "No explicit example for Withdraw documented",
+    "No schema provided for response body fields documented in 5-3"
+  ]
+}

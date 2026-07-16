@@ -1,0 +1,106 @@
+{
+  "name": "剔除遊戲中的會員",
+  "method": "POST",
+  "path": "/WithBalance/Player/Kickout",
+  "description": "當 KickType=1，會剔除系統下所有人，KickType=2，會剔除站台下所有人 ，KickType=3，會剔除正在該遊戲的所有人，KickType=4，會剔除特定會員\n當 KickType=1，WebId、UserId 請填空字串，GameId 請填 0 ，KickType=2，UserId 請填空字串，GameId請填 0 ，KickType=3，WebId、UserId 請填空字串 ，KickType=4，GameId 請填 0\n此API會回傳符合剔除條件的會員數量，符合條件者將於數秒內被剔除系統",
+  "request": {
+    "headers": [
+      {
+        "name": "X-API-ClientID",
+        "type": "String",
+        "required": true,
+        "description": "請求的連線端 ID"
+      },
+      {
+        "name": "X-API-Signature",
+        "type": "String",
+        "required": true,
+        "description": "請求的簽章"
+      },
+      {
+        "name": "X-API-Timestamp",
+        "type": "String",
+        "required": true,
+        "description": "請求的時間戳記，格式為 unix timestamp"
+      }
+    ],
+    "parameters": null,
+    "body": [
+      {
+        "name": "KickType",
+        "type": "Int",
+        "required": true,
+        "description": "剔除模式，有下列4種 1:System, 2:Web, 3:Game, 4:Player"
+      },
+      {
+        "name": "SystemCode",
+        "type": "String",
+        "required": true,
+        "description": "系統代碼(只限英數)"
+      },
+      {
+        "name": "WebId",
+        "type": "String",
+        "required": true,
+        "description": "站台代碼(只限英數)"
+      },
+      {
+        "name": "UserId",
+        "type": "String",
+        "required": true,
+        "description": "會員惟一識別碼(只限英數)"
+      },
+      {
+        "name": "GameId",
+        "type": "Int",
+        "required": true,
+        "description": "若KickType 不為3，則填0"
+      }
+    ]
+  },
+  "response": {
+    "success": [
+      {
+        "name": "ErrorCode",
+        "type": "Int",
+        "description": "錯誤代碼，詳細請參考 8-1 錯誤代碼表"
+      },
+      {
+        "name": "ErrorMessage",
+        "type": "String",
+        "description": "錯誤訊息，詳細請參考 8-1 錯誤代碼表"
+      },
+      {
+        "name": "Timestamp",
+        "type": "Long",
+        "description": "時間戳記"
+      },
+      {
+        "name": "Data/UserCount",
+        "type": "Int",
+        "description": "被剔除的會員數量"
+      }
+    ],
+    "errors": [
+      {
+        "code": "3011",
+        "message": "Deny permission for system.",
+        "description": "系統商權限不足"
+      },
+      {
+        "code": "3012",
+        "message": "Deny permission for game.",
+        "description": "遊戲權限不足"
+      }
+    ]
+  },
+  "missing_info": [
+    "request.parameters"
+  ],
+  "responses": [
+    {
+      "status": "default",
+      "description": "Response envelope"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/PlayerOnlineList",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "GameId",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "遊戲代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "Page",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "指定目前頁數(從1開始)"
+    },
+    {
+      "name": "Rows",
+      "in": "body",
+      "type": "integer",
+      "required": true,
+      "description": "每頁筆數(範圍：100~500)"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success or Error envelope",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No HTTP status documented",
+    "No examples documented for this endpoint",
+    "Response fields omitted as there is no named schema and schema does not support inline response fields"
+  ]
+}

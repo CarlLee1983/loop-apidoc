@@ -1,0 +1,57 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Game/GameList",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-11 取得遊戲列表",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "系統代碼(只限英數). Length: 2~20"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "成功或失敗回傳 (包含 ErrorCode, ErrorMessage, Timestamp, Data.GameList)",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No HTTP status documented",
+    "No example request payload provided for 5-11",
+    "No example response payload provided for 5-11"
+  ]
+}

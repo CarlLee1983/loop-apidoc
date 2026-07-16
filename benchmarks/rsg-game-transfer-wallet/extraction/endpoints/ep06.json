@@ -1,0 +1,104 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/GetURLToken",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt",
+  "parameters": [
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數)"
+    },
+    {
+      "name": "UserName",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "會員暱稱"
+    },
+    {
+      "name": "GameId",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "遊戲代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "Language",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "語系代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "ExitAction",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "離開遊戲時導向特定網址"
+    },
+    {
+      "name": "MinBetAmount",
+      "in": "body",
+      "type": "Decimal",
+      "required": false,
+      "description": "最小下注金額(小數點兩位) (範圍0.00~9999999999.99)"
+    },
+    {
+      "name": "MaxBetAmount",
+      "in": "body",
+      "type": "Decimal",
+      "required": false,
+      "description": "最大下注金額(小數點兩位) (範圍0.00~9999999999.99)"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": null,
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "request content type",
+    "request schema",
+    "response status",
+    "response description",
+    "response schema",
+    "tags",
+    "security",
+    "examples"
+  ]
+}

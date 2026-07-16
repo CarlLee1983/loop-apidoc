@@ -1,0 +1,224 @@
+{
+  "title": "皇家電子遊戲 整合轉帳錢包 API",
+  "version": "1.27.0",
+  "overview": "皇家電子遊戲 整合轉帳錢包 API",
+  "environments": [
+    {
+      "name": "default",
+      "base_url": "http://<server>",
+      "version": null,
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.4-1"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "RSG Signature",
+      "type": "apiKey",
+      "location": "header",
+      "details": "Headers X-API-ClientID, X-API-Signature (MD5), X-API-Timestamp. Request body encrypted via DES-CBC.",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.3-2"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/CreatePlayer",
+      "summary": "建立會員(幣別帳戶)",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-1",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/Deposit",
+      "summary": "存入點數",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-2",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/Withdraw",
+      "summary": "取出點數",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-3",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/GetBalance",
+      "summary": "查詢點數",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-4",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/GetTransactionResult",
+      "summary": "查詢點數交易結果",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-5",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/GetTransactionHistory",
+      "summary": "查詢點數交易歷程",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-6",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/GetURLToken",
+      "summary": "取得遊戲網址(進入遊戲)",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-7",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/PlayerOnlineList",
+      "summary": "取得遊戲中的會員",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-8",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/Kickout",
+      "summary": "剔除遊戲中的會員",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-9",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Player/GetUnwithdrawn",
+      "summary": "取得點數不為0的會員帳戶資訊(已離開遊戲)",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-10",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/Game/GameList",
+      "summary": "取得遊戲列表",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-11",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/WithBalance/History/GetGameDetail",
+      "summary": "取得遊戲詳細資訊",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.5-12",
+      "server": null
+    }
+  ],
+  "schemas": [],
+  "errors": [
+    {
+      "code": "0",
+      "meaning": "正常",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "1001",
+      "meaning": "執行失敗",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "1002",
+      "meaning": "系統維護中",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "2001",
+      "meaning": "無效的參數",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "2002",
+      "meaning": "解密失敗",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3005",
+      "meaning": "餘額不足",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3006",
+      "meaning": "找不到交易結果",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3008",
+      "meaning": "此玩家帳戶不存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3010",
+      "meaning": "此玩家帳戶已存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3011",
+      "meaning": "系統商權限不足",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3012",
+      "meaning": "遊戲權限不足",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3014",
+      "meaning": "重複的 TransactionID",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3015",
+      "meaning": "時間不在允許的範圍內",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3016",
+      "meaning": "拒絕提點，玩家正在遊戲中",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    },
+    {
+      "code": "3018",
+      "meaning": "此幣別不被允許",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.8-1"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "FTP 功能",
+      "detail": "FTP 方式提供遊戲詳細交易信息、遊戲每分鐘統計資訊、遊戲每日統計資訊",
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.6-1"
+    }
+  ],
+  "missing": []
+}
