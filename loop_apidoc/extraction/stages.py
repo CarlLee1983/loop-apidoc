@@ -104,7 +104,7 @@ STAGES: tuple[QueryStage, ...] = (
         "List every error code, its meaning and HTTP status stated by the sources.",
         "errors",
         '{"errors": [{"code": str|null, "meaning": str|null, "http_status": str|null, '
-        '"source": str|null}], "missing": [str]}',
+        '"applicable_to": [str], "source": str|null}], "missing": [str]}',
     ),
     _structured(
         "09", "Rate limits, timeouts, retry, idempotency and webhooks",
