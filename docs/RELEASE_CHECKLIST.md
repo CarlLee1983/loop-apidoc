@@ -16,11 +16,12 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
     still discovered).
 - [ ] `uv run python scripts/quality_gate.py` passes in CI-safe mode.
 
-## Requires local benchmark sources (local sources)
+## Deep local benchmark revalidation (when source snapshots are available)
 
 The benchmark *case* assertions in `tests/test_benchmarks.py`
 (`test_benchmark_case`) **SKIP** when `benchmarks/<case>/sources/` is absent, so
-CI does not exercise them. Run them where the sources exist:
+CI does not exercise them. Run these checks where the original, dated source
+snapshots are available:
 
 - [ ] `uv run pytest tests/test_benchmarks.py` with sources present — every
   committed case runs (no skips) and matches its `expected/` declaration.
@@ -28,6 +29,12 @@ CI does not exercise them. Run them where the sources exist:
   executed, not skipped.
 - [ ] `uv run python scripts/quality_gate.py --strict-local` passes — no
   benchmark source directory is missing and no benchmark case is skipped.
+
+These checks strengthen a release but do **not** block a patch release when a
+historical upstream source cannot be lawfully or reproducibly retrieved. Never
+substitute a newer document or an error page just to satisfy the gate. Record
+the unavailable source snapshot and perform the deterministic CI checks plus a
+targeted, source-backed spot-check for the changed behavior instead.
 
 ## Manual spot-check (local sources)
 
