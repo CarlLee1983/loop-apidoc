@@ -1,0 +1,26 @@
+{
+  "_note": "RSG 轉帳錢包公開文件的可重跑下限；error-code map 必須保留全部文件列出的 15 個代碼。",
+  "must_have": {
+    "base_urls": 1,
+    "endpoints_min": 12,
+    "schemas_min": 1,
+    "error_codes_min": 15,
+    "security_schemes_min": 1,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": false
+  },
+  "critical_operations": [
+    "paths./WithBalance/Player/CreatePlayer.post",
+    "paths./WithBalance/Player/Deposit.post",
+    "paths./WithBalance/Player/Withdraw.post",
+    "paths./WithBalance/Player/GetTransactionResult.post"
+  ],
+  "critical_security_schemes": [
+    "RSG Signature"
+  ]
+}

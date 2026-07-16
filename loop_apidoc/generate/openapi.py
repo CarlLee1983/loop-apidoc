@@ -694,6 +694,24 @@ def _build_schemas(
                 }
                 for entry, value in zip(error_entries, error_values)
             ],
+            # Keep a lossless, source-grounded code-to-meaning map in the
+            # OpenAPI document itself.  `enum` constrains the wire value;
+            # this extension gives consumers the documented interpretation
+            # without misrepresenting application codes as HTTP statuses.
+            "x-loop-error-code-map": [
+                {
+                    "code": value,
+                    "message": entry.meaning,
+                    "description": entry.meaning,
+                    "http_status": entry.http_status,
+                    "applicable_to": entry.applicable_to,
+                    "source": [
+                        citation.model_dump(exclude_none=True)
+                        for citation in entry.citations
+                    ],
+                }
+                for entry, value in zip(error_entries, error_values)
+            ],
         }
         if all(isinstance(value, int) for value in error_values):
             component["type"] = "integer"

@@ -1,0 +1,16 @@
+{
+  "_note": "公開 HTML 文件已完整列出 15 個錯誤碼；11 個 API 未提供 request/response 範例，忠實保留為 warning。",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": {
+    "REQUIRED_INFO_MISSING.warning": 11
+  },
+  "acceptable_warnings": "Deposit、Withdraw 與另外 9 個端點缺 request/response 範例；公開頁未提供足以生成範例的資料，維持 faithful missing。",
+  "validates": "錯誤碼 enum 與 x-loop-error-code-map 的 source-grounded 映射、DES-CBC + MD5 介接資訊，以及錯誤碼不被誤當成 HTTP response status。"
+}

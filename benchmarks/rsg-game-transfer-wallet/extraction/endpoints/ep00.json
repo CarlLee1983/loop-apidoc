@@ -1,0 +1,109 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/CreatePlayer",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt #5-1",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數)"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表 )"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [
+    {
+      "title": "Decrypted Request Example",
+      "content_type": "application/json",
+      "value": {
+        "SystemCode": "TestSystem",
+        "WebId": "Uy2m48TRCUo",
+        "UserId": "497OHx21A0gInxza7zJj",
+        "UserType": 1,
+        "Currency": "KRW"
+      }
+    },
+    {
+      "title": "Response Example",
+      "content_type": "application/json",
+      "value": {
+        "ErrorCode": 0,
+        "ErrorMessage": "OK",
+        "Timestamp": 1584512886,
+        "Data": {
+          "SystemCode": " TestSystem",
+          "WebId": "Uy2m48TRCUo",
+          "UserId": "497OHx21A0gInxza7zJj"
+        }
+      }
+    }
+  ],
+  "missing": [
+    "request.schema",
+    "request.required",
+    "request.description",
+    "responses[0].description",
+    "responses[0].schema",
+    "responses[0].schema_ref",
+    "tags",
+    "security"
+  ]
+}

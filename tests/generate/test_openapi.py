@@ -15,6 +15,7 @@ from loop_apidoc.plan.models import (
     PlanItemStatus,
     SchemaEntry,
     SecuritySchemeEntry,
+    SourceCitation,
     SystemGroup,
 )
 
@@ -412,17 +413,49 @@ def test_error_codes_become_a_reusable_component_and_replace_error_code_fields()
     doc = build_openapi(plan)
     components = doc["components"]["schemas"]
 
-    assert components["ErrorCode"] == {
-        "type": "integer",
-        "enum": [1001, 1002],
-        "x-loop-error-codes": [
-            {"code": 1001, "meaning": "Invalid token", "http_status": None},
-            {"code": 1002, "meaning": "Insufficient balance", "http_status": "400"},
-        ],
-    }
+    assert components["ErrorCode"]["type"] == "integer"
+    assert components["ErrorCode"]["enum"] == [1001, 1002]
+    assert components["ErrorCode"]["x-loop-error-codes"] == [
+        {"code": 1001, "meaning": "Invalid token", "http_status": None},
+        {"code": 1002, "meaning": "Insufficient balance", "http_status": "400"},
+    ]
     assert components["ResponseEnvelope"]["properties"]["ErrorCode"] == {
         "$ref": "#/components/schemas/ErrorCode"
     }
+
+
+def test_error_code_map_preserves_meaning_source_and_applicability():
+    plan = _plan(
+        errors=[ErrorEntry(
+            status=PlanItemStatus.SUPPORTED,
+            code="1001",
+            meaning="Invalid token",
+            http_status="400",
+            applicable_to=["POST /transfers"],
+            citations=[SourceCitation(
+                query_id="08-initial",
+                answer_path="answers/08-initial.txt",
+                manifest_source="errors.md",
+                locator="Error codes table",
+            )],
+        )],
+    )
+
+    error_code = build_openapi(plan)["components"]["schemas"]["ErrorCode"]
+
+    assert error_code["x-loop-error-code-map"] == [{
+        "code": 1001,
+        "message": "Invalid token",
+        "description": "Invalid token",
+        "http_status": "400",
+        "applicable_to": ["POST /transfers"],
+        "source": [{
+            "query_id": "08-initial",
+            "answer_path": "answers/08-initial.txt",
+            "manifest_source": "errors.md",
+            "locator": "Error codes table",
+        }],
+    }]
 
 
 def test_source_documented_error_code_applicability_is_attached_to_operation():

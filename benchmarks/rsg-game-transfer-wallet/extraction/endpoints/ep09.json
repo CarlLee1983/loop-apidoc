@@ -1,0 +1,19 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/GetUnwithdrawn",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-10 取得點數不為0的會員帳戶資訊(已離開遊戲)",
+  "parameters": [],
+  "request": null,
+  "responses": [
+    {
+      "status": "default",
+      "description": "Response envelope"
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "No parameters, request body, or responses documented because the API is no longer supported (此API已不再支持)"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "DES Encryption",
+      "purpose": "request",
+      "algorithm": "DES",
+      "mode": "CBC",
+      "padding": "PKCS7",
+      "encoding": "base64",
+      "key_source": {
+        "key": "Deskey",
+        "iv": "DesIV",
+        "note": "Provided by system"
+      },
+      "payload_assembly": [
+        {
+          "step": 1,
+          "desc": "JSON parameters",
+          "fields": []
+        }
+      ],
+      "verify": {
+        "field": "Msg",
+        "method": null,
+        "desc": "Put in request body as Msg={encrypted}"
+      },
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.1 — 3-2 發送請求"
+    },
+    {
+      "name": "MD5 Signature",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex",
+      "key_source": {
+        "key": "Client Secret",
+        "iv": null,
+        "note": "Provided by system"
+      },
+      "payload_assembly": [
+        {
+          "step": 1,
+          "desc": "Client ID",
+          "fields": ["X-API-ClientID"]
+        },
+        {
+          "step": 2,
+          "desc": "Client Secret",
+          "fields": []
+        },
+        {
+          "step": 3,
+          "desc": "Timestamp",
+          "fields": ["X-API-Timestamp"]
+        },
+        {
+          "step": 4,
+          "desc": "Encrypted payload",
+          "fields": ["Msg"]
+        }
+      ],
+      "verify": {
+        "field": "X-API-Signature",
+        "method": null,
+        "desc": "Put in X-API-Signature header"
+      },
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.1 — 3-2 發送請求"
+    },
+    {
+      "name": "DES Decryption",
+      "purpose": "response",
+      "algorithm": "DES",
+      "mode": "CBC",
+      "padding": "PKCS7",
+      "encoding": "base64",
+      "key_source": {
+        "key": "Deskey",
+        "iv": "DesIV",
+        "note": "Provided by system"
+      },
+      "payload_assembly": [
+        {
+          "step": 1,
+          "desc": "Response body",
+          "fields": []
+        }
+      ],
+      "verify": {
+        "field": null,
+        "method": null,
+        "desc": "Decrypt to UTF-8 JSON"
+      },
+      "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt p.1 — 4-4 回傳資訊說明"
+    }
+  ],
+  "callbacks": [],
+  "field_conditions": [],
+  "test_cases": [],
+  "missing": [
+    {
+      "area": "callbacks",
+      "detail": "No callbacks documented"
+    },
+    {
+      "area": "field_conditions",
+      "detail": "No cross-field conditions documented"
+    },
+    {
+      "area": "test_cases",
+      "detail": "No test cases documented"
+    }
+  ]
+}

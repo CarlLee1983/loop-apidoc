@@ -1,0 +1,93 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/GetTransactionHistory",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數)"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表 )"
+    },
+    {
+      "name": "DateStart",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "查詢開始日期(yyyy-MM-dd)"
+    },
+    {
+      "name": "DateEnd",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "查詢結束日期(yyyy-MM-dd)"
+    }
+  ],
+  "request": {
+    "content_type": null,
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "request.content_type",
+    "tags",
+    "security",
+    "examples"
+  ]
+}

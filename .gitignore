@@ -6,6 +6,8 @@ __pycache__/
 htmlcov/
 dist/
 output/
+/benchmark_out/
+/benchmark_work/
 
 # notebooklm-skill local state — never commit (spec §11)
 **/notebooklm-skill/data/

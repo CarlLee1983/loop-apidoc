@@ -1,0 +1,87 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/History/GetGameDetail",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-12 取得遊戲詳細資訊",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "String",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "系統代碼(只限英數)"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "站台代碼(只限英數)"
+    },
+    {
+      "name": "GameType",
+      "in": "body",
+      "type": "Int",
+      "required": true,
+      "description": "遊戲類型(1.老虎機 2.捕魚機)"
+    },
+    {
+      "name": "TimeStart",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "開始時間(yyyy-MM-dd HH:mm)"
+    },
+    {
+      "name": "TimeEnd",
+      "in": "body",
+      "type": "String",
+      "required": true,
+      "description": "結束時間(yyyy-MM-dd HH:mm)"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "遊戲系統"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "Response HTTP status code",
+    "Response schema",
+    "Endpoint-specific examples"
+  ]
+}

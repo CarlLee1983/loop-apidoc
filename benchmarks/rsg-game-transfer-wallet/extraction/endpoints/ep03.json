@@ -1,0 +1,79 @@
+{
+  "method": "POST",
+  "path": "/WithBalance/Player/GetBalance",
+  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-4 查詢點數",
+  "parameters": [
+    {
+      "name": "X-API-ClientID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的連線端 ID"
+    },
+    {
+      "name": "X-API-Signature",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的簽章"
+    },
+    {
+      "name": "X-API-Timestamp",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "請求的時間戳記，格式為 unix timestamp"
+    },
+    {
+      "name": "SystemCode",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "系統代碼(只限英數) 2~20"
+    },
+    {
+      "name": "WebId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "站台代碼(只限英數) 3~20"
+    },
+    {
+      "name": "UserId",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "會員惟一識別碼(只限英數) 3~20"
+    },
+    {
+      "name": "Currency",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "幣別代碼(請參照 代碼表 ) 2~5"
+    }
+  ],
+  "request": {
+    "content_type": "application/x-www-form-urlencoded",
+    "schema": null,
+    "required": true,
+    "description": "請求內文 (Request Body) Msg=傳送的參數(JSON 格式)進行 DES-CBC 加密後的結果"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Data/UserId (String) 會員惟一識別碼, Data/CurrentPlayerBalance (Decimal) 會員當前點數",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [],
+  "security": [],
+  "examples": [],
+  "missing": [
+    "tags",
+    "security",
+    "examples",
+    "response HTTP status"
+  ]
+}
