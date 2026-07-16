@@ -28,7 +28,10 @@ Every non-empty item has this shape:
 `severity` is `blocker` or `warning`; all string fields are required and non-blank.
 `affected_scope` is optional and defaults to `[]`.
 
-Run `assess-sources` after manifest/preprocess. A `reject` stops the run before
-`inventory.json`. Supplemental materials create a new immutable source-set version.
+Run `assess-sources` after manifest/preprocess. The verdict is `pass` (exit 0) or
+`reject` (exit 1); a `reject` stops the run before `inventory.json`. When the gate ran,
+pass the report directory to `assemble --source-quality` — a passing assessment is
+retained in `<run_dir>/source-quality/`, and a `reject` verdict aborts assemble
+(exit 2). Supplemental materials create a new immutable source-set version.
 When a development sandbox issue occurs, trace it through provenance, the source-quality
 report, source diff, and contract diff before requesting a supplement or rerunning.

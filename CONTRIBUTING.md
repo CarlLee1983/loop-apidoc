@@ -11,7 +11,7 @@ uv sync                      # 安裝相依(含 dev group)
 uv run loop-apidoc --help    # 確認 CLI 可執行
 ```
 
-擷取由**當前 agent** 擔任引擎(Claude Code plugin 或 OpenAI Codex CLI),依 `skills/loop-apidoc/SKILL.md` 以唯讀 subagent fan-out 讀來源、寫出 `inventory.json` + `endpoints/*.json`,再呼叫 `assemble` 跑後段。CLI 只暴露 `preprocess` / `manifest` / `assemble` / `validate` 四個指令。
+擷取由**當前 agent** 擔任引擎(Claude Code plugin 或 OpenAI Codex CLI),依 `skills/loop-apidoc/SKILL.md` 以唯讀 subagent fan-out 讀來源、寫出 `inventory.json` + `endpoints/*.json`,再呼叫 `assemble` 跑後段。CLI 指令分兩群:**來源取得與品質**(`preprocess` / `manifest` / `catalog-url` / `select-url` / `cache-url-pages` / `cache-url-entry` / `related-url-pages` / `normalize-html-snapshot` / `assess-sources`)與**組裝與分析**(`verify-extraction` / `assemble` / `validate` / `score` / `diff`),另有 `foundry` sub-app 管理專案本地資產;完整說明見 `uv run loop-apidoc --help` 與 `CLAUDE.md`。
 
 ### 跨 agent runtime 的 skill
 
@@ -29,7 +29,7 @@ Codex 端安裝步驟見 [`README.md`](README.md#在-openai-codex-cli-使用)。
 
 1. **以來源為唯一事實依據** —— 不得讓 pipeline 推測或以慣例補寫來源不存在的內容。缺漏必須顯性標記(`x-loop-status: missing-source` + provenance),而非靜默填補。
 2. **驗證 fail-closed** —— 無法確認的來源、缺漏的必要欄位、來源衝突一律使驗證失敗,不可放行。
-3. **生成層是唯一檔案 I/O 出口** —— `loop_apidoc/generate/` 與 `loop_apidoc/run/` 之外的模組應為純函式,便於測試。新增邏輯時優先設計成可注入 seam 的純函式。
+3. **檔案 I/O 集中在明確出口** —— 寫檔僅限 `generate/`、`run/`、各報告寫出點(`preparation/report.py`、`score/report.py`、`source_quality/report.py`、`diff/report.py`)、URL corpus 快取(`url_corpus.py`、`html_snapshot.py`)、`foundry/` 的治理寫入,與 CLI 層本身(完整清單見 `CLAUDE.md` 的 File-I/O exits)。其他模組應為純函式,便於測試;新增邏輯時優先設計成可注入 seam 的純函式。
 4. **擷取與後段解耦** —— agent 擷取收斂成 `inventory.json` + `endpoints/*.json`,作為與後段的唯一交界,再交給共用的 plan→generate→validate;`assemble` 只組裝 agent 寫出的 JSON,不在核心流程直接耦合任何 agent runtime。
 
 ## 程式風格

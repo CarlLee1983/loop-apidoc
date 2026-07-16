@@ -3,6 +3,12 @@
 Use this loop for every non-trivial `loop-apidoc` defect, benchmark drift, or
 pipeline quality issue.
 
+> Scope note: this is the **developer** correction loop for fixing the pipeline
+> itself. The **agent-runtime** correction loop (severity-gated validation,
+> issue-code routing via `target_file`/`field_path`/`requery_scope`, and the
+> `--score` loop verdict) is specified in
+> `skills/loop-apidoc/reference/assemble-and-correction.md`.
+
 ## Rule
 
 No correction is complete until the failure is captured as durable evidence:
@@ -14,10 +20,12 @@ follow-up explaining why executable coverage is not practical.
 1. Reproduce the failure with the smallest command that shows the wrong behavior.
 2. Classify the failure boundary:
    - extraction contract or skill prompt;
+   - source acquisition (URL catalog/corpus/html snapshot, coverage ledger);
+   - source-quality gate (`assess-sources`);
    - manifest/preprocess;
    - plan builder;
    - generator;
-   - validator;
+   - validator (severity gate, issue routing, score/loop verdict);
    - benchmark expectation;
    - release/operator documentation.
 3. Add the regression first:

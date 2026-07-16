@@ -80,10 +80,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-2" href="#_6">使用方式</a>
   <a class="lvl-3" href="#preprocess">preprocess — PDF 轉 markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
+  <a class="lvl-3" href="#url-corpus">URL 導航與快取（catalog / select / cache）</a>
+  <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
+  <a class="lvl-3" href="#verify-extraction">verify-extraction — 擷取契約檢查</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
   <a class="lvl-3" href="#score-run">score — 為完成的 run 評分</a>
   <a class="lvl-3" href="#diff-run">diff — 比較兩次 run 版本差異</a>
+  <a class="lvl-3" href="#foundry-cli">foundry — 專案本地資產治理</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
   <a class="lvl-2" href="#_9">開發</a>
@@ -114,7 +118,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <p>早期曾有以子行程 <code>claude -p</code> 擷取的 <code>run-agent</code> CLI 模式,已於 2026-06 退役(連同 NotebookLM 擷取後端一併移除);現在唯一擷取路徑是 agent-native。</p>
 </blockquote>
 <h3 id="_2">完整流程</h3>
-<pre><code>preprocess（可選） → 擷取（agent 唯讀 subagent fan-out） → manifest → 規格化計畫 → 生成（OpenAPI + Markdown） → 驗證 → 修正（agent 驅動，最多 3 輪）
+<pre><code>preprocess（可選） → URL 導航/快取（可選：catalog-url → select-url → cache-url-pages） → assess-sources 來源品質閘（可選） → 擷取（agent 唯讀 subagent fan-out） → verify-extraction → manifest → 規格化計畫 → 生成（OpenAPI + Markdown） → 驗證 → 修正（agent 驅動）
 </code></pre>
 <p>驗證失敗時,<code>assemble</code> 以 <code>--json</code> 回報分類後的問題;<strong>修正由 agent 自行驅動</strong>:依報告回頭重讀相關來源、覆寫對應的擷取 JSON,再重跑 <code>assemble</code>,最多 3 輪。三輪後仍失敗或遇到無法修正的缺漏／衝突,則以缺漏／衝突回報而不補寫。</p>
 <h3 id="_codex">在 OpenAI Codex CLI 使用</h3>
@@ -149,7 +153,7 @@ uv run loop-apidoc --help
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<p>CLI 暴露六個指令:<code>preprocess</code>、<code>manifest</code>、<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>。日常擷取流程由 skill 驅動(主要呼叫 <code>preprocess</code> 與 <code>assemble</code>);<code>manifest</code>、<code>validate</code>、<code>score</code> 與 <code>diff</code> 可獨立使用。</p>
+<p>CLI 暴露十四個頂層指令加 <code>foundry</code> 子群組(共十五個):來源處理(<code>preprocess</code>、<code>manifest</code>)、URL evidence(<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>)、品質與擷取(<code>assess-sources</code>、<code>verify-extraction</code>)、run 處理(<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>)與 <code>foundry</code> 資產治理。日常擷取流程由 skill 驅動;各指令也可獨立使用。</p>
 <h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -158,14 +162,37 @@ uv run loop-apidoc --help
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources [--url &lt;URL&gt; ...] [--output manifest.json]
 </code></pre>
 <p>掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 <code>--output</code> 時輸出至 stdout。</p>
+<h3 id="url-corpus">URL 導航與快取 — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
+<pre><code class="language-bash"># 只下載入口頁一次，建立側欄導航索引（不自動擷取子頁）
+uv run loop-apidoc catalog-url --url &lt;入口頁 URL&gt; --output ./work/url_sources/catalog.json
+
+# 依明確範圍選取 catalog 節點（不下載任何 URL）
+uv run loop-apidoc select-url --catalog ./work/url_sources/catalog.json --branch &lt;分支&gt; --term &lt;關鍵詞&gt; --output ./work/url_sources/selection.json
+
+# 快取 catalog 全部頁面，建立本機正文／連結／實體索引（不呼叫模型）
+uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --output ./work/url_corpus
+
+# 依正文連結與共享實體輸出候選頁卡片，模型只在需要時讀取候選頁正文
+uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;頁面 URL&gt; --output ./work/candidates.json
+</code></pre>
+<p>token 節約式的網頁文件讀取流程:<code>catalog.json</code> 是完整的導航 coverage universe;<code>corpus.json</code> 不嵌入正文,只指向本機 <code>raw/</code> 與 <code>body/</code> 檔。catalog 為空或單頁文件時,用 <code>cache-url-entry --url ... --output ...</code> 直接快取入口頁;已下載的 HTML 可用 <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code> 轉為受支援 Markdown,並寫出帶原始 URL 與 SHA-256 的 <code>.source.json</code> provenance sidecar。</p>
+<h3 id="assess-sources"><code>assess-sources</code> — 擷取前來源品質閘</h3>
+<pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
+  --observations &lt;observations.json&gt; --source-set &lt;名稱&gt; --output ./work/source-quality [--base-manifest &lt;舊 manifest&gt;]
+</code></pre>
+<p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
+<h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
+<pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
+</code></pre>
+<p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式),但<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
 <h3 id="assemble"><code>assemble</code> — 從 agent 產出的擷取 JSON 組裝 + 驗證</h3>
 <pre><code class="language-bash">uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--json] [--score]
+  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--json] [--score]
 </code></pre>
-<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>)組裝成輸出:manifest → plan → generate → validate。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
+<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>,選用 <code>integration.json</code>)組裝成輸出:manifest → plan → generate → validate。若傳入 <code>assess-sources</code> 產出的 <code>--source-quality</code> 目錄,reject 結論會在建立 run-dir 前中止,pass 報告則保存進 run-dir;<code>--url-coverage</code> 在有 URL 來源時檢核撈取涵蓋率(僅 warning)。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>review_html</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
 <h3 id="validate-run"><code>validate</code> — 驗證既有 run 目錄</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
@@ -178,34 +205,52 @@ uv run loop-apidoc --help
 <pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
 </code></pre>
 <p>比較兩個已完成 run directory,依 downstream impact 把差異分類為 <code>breaking</code>／<code>additive</code>／<code>changed</code>／<code>source_only</code>。預設寫入 <code>&lt;new-run&gt;/diff/report.{json,md}</code>,可用 <code>--output</code> 指定其他目錄。比較範圍涵蓋 <code>openapi.yaml</code>、<code>integration-contract.json</code>、<code>provenance.json</code>、<code>validation/report.json</code> 與 <code>manifest.json</code>;第一版不比較 Markdown guide 或 generated examples。退出碼:<code>0</code>=完成、<code>2</code>=輸入 run-dir 缺檔或格式錯誤。</p>
+<h3 id="foundry-cli"><code>foundry</code> — API 專案本地資產治理</h3>
+<pre><code class="language-bash">uv run loop-apidoc foundry [init|import|approve|list|current] --help
+</code></pre>
+<p>管理專案本地 <code>.foundry/api/</code> 資產層:把完成的 run 匯入為 docset candidate(<code>import</code>),核准為版本化、自足複本的正式 asset(<code>approve</code>,舊版自動退位),並以確定性的 <code>current</code> 指標讓下游永遠取用最新核准版(<code>current</code>／<code>list</code>)。</p>
 <hr />
 <h2 id="_7">輸出結構</h2>
 <p>每次執行使用獨立 run directory:</p>
 <pre><code class="language-text">output/
-└── &lt;run-id&gt;/                    # run-id 格式:%Y%m%dT%H%M%SZ
-    ├── manifest.json            # 來源 manifest
-    ├── extraction/
-    │   ├── inventory.json       # API 盤點（agent 擷取產出）
-    │   └── endpoints/           # 逐 endpoint 擷取 JSON
+└── &lt;run-id&gt;/                       # run-id 格式:%Y%m%dT%H%M%S.%fZ（含微秒，避免同秒衝突）
+    ├── manifest.json               # 來源 manifest
+    ├── extraction/                 # 擷取稽核軌跡（非可重跑的原始輸入）
+    │   ├── queries.jsonl           # 每輪查詢紀錄
+    │   └── answers/                # 各查詢回應 &lt;query_id&gt;.txt
     ├── plan/
-    │   └── normalization-plan.json   # 機器可讀規格化計畫
-    ├── openapi.yaml             # OpenAPI 3.1
-    ├── api-guide.zh-TW.md       # 繁體中文串接文件
-    ├── review.html              # 生成產物人工核對頁（離線 HTML）
-    ├── provenance.json          # 每個輸出項目的來源追溯
-    ├── preparation-report.json  # 產生前就緒度評估（assemble 產出）
+    │   └── normalization-plan.json      # 機器可讀規格化計畫
+    ├── openapi.yaml                # OpenAPI 3.1
+    ├── api-guide.zh-TW.md          # 繁體中文串接文件
+    ├── review.html                 # 生成產物人工核對頁（離線 HTML）
+    ├── provenance.json             # 每個輸出項目的來源追溯
+    ├── integration-contract.json   # 簽章/加密整合契約（來源有提供時）
+    ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例（產出時）
+    ├── handoff/                    # 開發交接輔助（衍生產物，非契約來源）
+    │   ├── integration-tasks.md    # 實作順序/執行設定/阻塞項檢查表
+    │   ├── postman_collection.json # Postman v2.1 請求形狀集合（可匯入）
+    │   └── sdk-hints.json          # 精簡 SDK/client 生成提示（不複製 schema）
+    ├── preparation-report.json     # 產生前就緒度評估（assemble 產出）
     ├── preparation-report.md
     ├── validation/
     │   ├── report.json
     │   └── report.md
-    ├── score/                   # 文件品質評分（assemble --score 或 loop-apidoc score）
+    ├── source-quality/             # 傳入 --source-quality 時保留來源品質稽核
+    │   ├── source-quality-report.json
+    │   ├── source-quality-report.zh-TW.md
+    │   ├── source-diff.json
+    │   └── source-diff.md
+    ├── score/                      # 文件品質評分（assemble --score 或 loop-apidoc score）
     │   ├── score.json
     │   └── score.md
-    └── diff/                    # 與另一個 run 比較版本差異時（loop-apidoc diff）
+    └── diff/                       # 與另一個 run 比較版本差異時（loop-apidoc diff）
         ├── report.json
         └── report.md
 </code></pre>
-<p>只有同時存在於計畫、且具來源依據的內容,才會進入 OpenAPI 與 Markdown。OpenAPI 必填但來源缺失的欄位,會以最小合法占位填入,並標記 <code>x-loop-status: missing-source</code> 與 provenance 缺漏紀錄;若該缺漏影響可串接性,完整性驗證仍會失敗。</p>
+<blockquote>
+<p>注意:agent 產出的擷取輸入(<code>inventory.json</code> + <code>endpoints/*.json</code> + 選填 <code>integration.json</code>)位於傳給 <code>--extraction</code> 的工作目錄,<strong>不在</strong> run-dir;run-dir 的 <code>extraction/</code> 只保留稽核軌跡。</p>
+</blockquote>
+<p>只有同時存在於計畫、且具來源依據的內容,才會進入 OpenAPI 與 Markdown。OpenAPI 必填但來源缺失的欄位,會以最小合法占位填入,並標記 <code>x-loop-status: missing-source</code> 與 provenance 缺漏紀錄;若該缺漏影響可串接性,完整性驗證仍會失敗。來源有錯誤碼對照表時,<code>openapi.yaml</code> 以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照(0.9.2 起)。</p>
 <hr />
 <h2 id="_8">驗證規則摘要</h2>
 <table>
@@ -261,7 +306,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
@@ -273,7 +318,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/generate/</code></td>
-<td>OpenAPI / Markdown / review.html / provenance 生成(檔案 I/O 出口之一)</td>
+<td>OpenAPI / Markdown / review.html / provenance / examples / handoff 生成(檔案 I/O 出口之一)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/validate/</code></td>
@@ -294,6 +339,18 @@ uv run ruff check .
 <tr>
 <td><code>loop_apidoc/score/</code></td>
 <td>對完成 run-dir 做確定性文件品質評分,五類加權算出 0–100,輸出 <code>score/score.{json,md}</code>(檔案 I/O 出口之一)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/source_quality/</code></td>
+<td>擷取前來源品質評估與來源版本差異報告(<code>assess-sources</code>);pass 報告可隨 run-dir 稽核保存</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/url_catalog.py</code> / <code>url_corpus.py</code></td>
+<td>受限 URL 導航索引、頁面快取與關聯候選(<code>catalog-url</code>／<code>select-url</code>／<code>cache-url-pages</code>／<code>cache-url-entry</code>／<code>normalize-html-snapshot</code>／<code>related-url-pages</code>),讓 agent 以本機證據讀取網頁文件</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/foundry/</code></td>
+<td>專案本地 <code>.foundry/api/</code> 資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標</td>
 </tr>
 </tbody>
 </table>
