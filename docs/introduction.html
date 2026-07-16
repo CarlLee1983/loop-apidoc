@@ -672,6 +672,67 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   </div>
 </section>
 
+<!-- ===================== VIBE CODING ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">AI 協作時代</span>
+    <h2 class="section-title">為什麼 vibe coding 更需要它?</h2>
+    <p class="section-lead">把實作交給 coding agent 之後,程式寫得再快,規格餵錯就全錯。agent 的產出品質,取決於你給它的規格品質。</p>
+    <div class="cards">
+      <div class="card">
+        <div class="badge tint-coral">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 1 7 7c0 2.5-1.5 4-2.5 5.5S15 18 15 19h-6c0-1-.5-2-1.5-3.5S5 12.5 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 22h5"/></svg>
+        </div>
+        <h3>原始文件是幻覺的溫床</h3>
+        <p>直接把 PDF 丟給 agent,遇到缺漏它會用「常見慣例」腦補:自動假設 OAuth、標準錯誤格式。串接金流時,這種貌似合理的猜測就是最貴的 bug。</p>
+      </div>
+      <div class="card">
+        <div class="badge tint-amber">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        </div>
+        <h3>agent 需要機器可讀的事實</h3>
+        <p>整理後的 OpenAPI 與整合契約是 agent 可直接消費的規格——比每個 session 重讀幾十頁 PDF 更省、更穩,而且每個 agent、每個專案讀到同一份事實。</p>
+      </div>
+      <div class="card">
+        <div class="badge tint-purple">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/></svg>
+        </div>
+        <h3>人負責驗收,不是放手不管</h3>
+        <p>vibe coding 把人的角色從「逐行寫碼」移到「驗收規格與產物」。每句話都查得到出處、離線核對頁隨附,你才敢在 agent 的產出上簽名。</p>
+      </div>
+    </div>
+    <div class="ba" style="margin-top: 36px;">
+      <div class="ba-col ba-before">
+        <span class="lbl">直接請 AI 整理</span>
+        <h3>快,但只能「信」它</h3>
+        <ul>
+          <li>零建置,一句話就有結果</li>
+          <li>結果對不對,只有模型自己說了算</li>
+          <li>缺漏會被「常見慣例」悄悄補上</li>
+          <li>每次問結果都不同,無法比對出處</li>
+          <li>適合:快速看懂、一次性低風險探索</li>
+        </ul>
+      </div>
+      <div class="ba-mid" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="ba-col ba-after">
+        <span class="lbl">經過 loop-apidoc</span>
+        <h3>用模型,但不信任模型</h3>
+        <ul>
+          <li>模型只負責讀,對不對由確定性程式碼把關</li>
+          <li>瞎掰會被驗證閘攔下,缺漏被明白點名</li>
+          <li>每句話都查得到出處,可離線人工核對</li>
+          <li>同樣的輸入永遠產出同樣的成品,改版可比對</li>
+          <li>適合:要上線的串接、金流等高風險場景</li>
+        </ul>
+      </div>
+    </div>
+    <p class="section-lead" style="margin-top: 28px;">代價說在前頭:它要走完整的擷取→驗證→修正流程,比「直接問」花更多前置成本。判斷準則很簡單——<strong>整理結果會被寫進正式程式碼,就值得過閘;只是要看懂,直接問就好。</strong></p>
+    <p class="section-lead" style="margin-top: 12px;">一句話:vibe coding 把「寫程式」變快了,「規格正確」就成了新的瓶頸——這個工具補的正是這個瓶頸。</p>
+  </div>
+</section>
+
 <!-- ===================== PROMISE ===================== -->
 <section>
   <div class="wrap">

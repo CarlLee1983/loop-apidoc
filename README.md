@@ -16,6 +16,49 @@
 
 ---
 
+## 為什麼需要 loop-apidoc
+
+### 串接文件的現實
+
+第三方 API(金流、遊戲、物流……)的串接文件形式極度分歧:掃描版 PDF、官網 HTML、Word 附件、半套的 OpenAPI。同一份規格常散落在多份文件、版本互不同步;人工整理耗時、易漏,而且整理完的結果回答不了「這個欄位是文件哪一頁說的?」——串接出錯時無從稽核,文件改版時無從比對。
+
+loop-apidoc 把這些異質來源整理成單一標準形:OpenAPI 3.1 + 繁中指南 + provenance(逐項回指來源位置)+ 驗證報告。缺什麼、哪裡互相衝突,報告明講;產物可 `diff`、可經 `foundry` 資產化、可隨時重建。
+
+### 在 vibe coding 中為什麼重要
+
+vibe coding 的本質是把實作交給 coding agent——而 agent 的產出品質,直接取決於餵給它的規格品質:
+
+- **原始文件是幻覺的溫床。** 直接把 PDF 或網頁丟給 agent,遇到缺漏它會用「常見慣例」腦補:自動假設 OAuth、REST 慣例、標準錯誤格式。串接金流時,這種貌似合理的臆測正是最貴的 bug。loop-apidoc 的 fail-closed 原則把「來源沒說」變成明確列出的缺項,而不是留給 agent 自由發揮的空間。
+- **agent 需要機器可讀的 ground truth。** `openapi.yaml`、`integration-contract.json` 與 `examples/` 是 agent 可直接消費的規格——比起每個 session 重讀幾十頁 PDF,token 更省、結果可重複,而且多個 agent、多個專案讀到的是**同一份事實**。
+- **人要能稽核 agent 的依據。** provenance 逐項回指來源,`review.html` 供離線人工核對——vibe coding 不是放手不管,而是把人的角色從「逐行寫碼」移到「驗收規格與產物」,這件事需要可追溯性才做得到。
+- **規格是資產,不是一次性 prompt。** `foundry` 把整理完成的 run 升級為版本化資產(`.foundry/api/` 的 `current` 指標),文件改版時 `diff` 按下游影響分類——每一次 vibe coding 迭代都站在同一份受治理的規格上,而不是每次重新理解一遍。
+
+### 與「直接請 AI agent 整理」有什麼不同?
+
+本工具的擷取引擎**同樣是模型**(agent-native:讀文件的正是當前 coding agent)。差別不在「用不用 AI」,而在模型外那一圈**確定性的工程**:
+
+| | 直接請 agent 整理 PDF/URL | loop-apidoc |
+| --- | --- | --- |
+| 產出正確性 | 模型自我宣稱,無人把關 | 模型產出只是輸入,須通過確定性驗證閘:`verify-extraction` 跨檔不變式 → structure/completeness/consistency/**no-speculation** 檢查,不過就 FAIL |
+| 幻覺 | 遇缺漏用 REST/OAuth 慣例腦補,且看起來合理 | fail-closed 機器強制:進入 OpenAPI 的內容必須回溯到來源依據的 plan item,否則 `UNSUPPORTED_ASSERTION`/`SOURCE_UNVERIFIED` 擋下 |
+| 可稽核性 | 一段散文,無法問「這句是哪頁說的」 | `provenance.json` 與 OpenAPI 位置一對一對齊;`review.html` 供人工核對 |
+| 可重複性 | 每個 session 結果不同 | 後半段是純確定性 CLI:同一份擷取 JSON 永遠產出同一份成品 |
+| 遺漏偵測 | 長文件讀到哪算哪,漏了不會說 | URL coverage 帳本(expected vs fetched)、preparation 就緒度、端點數量/identity 比對——漏抓會被點名 |
+| 修正方式 | 「再改一下」,不保證收斂 | typed issues(severity 閘 + `target_file`/`field_path`/`requery_scope` 路由)驅動修正迴圈,可判定收斂/停滯 |
+| 改版與治理 | 重問一次,無法比對 | `diff` 按下游影響分類、`score` 量化品質、`foundry` 版本化資產 |
+| 實證 | 無 | 真實廠商 benchmark 回歸 harness;早期實測第一輪 validate 就攔下 6 個「直接整理會犯的錯」 |
+
+**兩種做法各有適用場景,誠實地說:**
+
+- **直接請 agent 整理**:零建置、一句話就有結果。要**快速看懂**一份文件在講什麼、做一次性的低風險探索,這樣就夠了——用 loop-apidoc 反而是殺雞用牛刀。
+- **loop-apidoc**:要走完整 pipeline(擷取 JSON → 驗證 → 修正迴圈),初次成本與 token 花費較高。換到的是可驗證、可稽核、可重複、可治理。適用於**要上線的串接**(尤其金流等出錯代價高的場景)、多專案/多 agent 共用同一份規格、以及文件會持續改版需要追蹤差異的情境。
+
+判斷準則:**整理結果會被拿去寫進 production 程式碼,就值得過閘;只是要看懂,直接問就好。**
+
+一句話:**vibe coding 把「寫程式」變快了,「規格正確」就成了新的瓶頸——loop-apidoc 補的正是這個瓶頸。用模型,但不信任模型:模型負責讀,「對不對」交給不會腦補的確定性程式碼。**
+
+---
+
 ## 運作方式
 
 擷取引擎是**當前的 coding agent 自己**:在 Claude Code plugin 或 OpenAI Codex CLI 的 session 裡,agent 依 `loop-apidoc` skill 讀來源、以**對來源唯讀的 subagent fan-out** 擷取——主 agent 寫出 `inventory.json`(＋選填 `integration.json`),各端點 subagent 各自寫出 `endpoints/ep<N>.json`——先以 `verify-extraction` 檢查擷取契約,再呼叫確定性 CLI `assemble` 跑後段 plan → generate → validate。

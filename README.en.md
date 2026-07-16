@@ -16,6 +16,49 @@ Core principle: **source documents are the only source of truth**. Anything the 
 
 ---
 
+## Why loop-apidoc
+
+### The reality of integration docs
+
+Third-party API documentation (payments, gaming, logistics…) comes in wildly different shapes: scanned PDFs, marketing-site HTML, Word attachments, half-finished OpenAPI files. A single spec is often scattered across several documents with unsynchronized versions. Manual consolidation is slow and lossy — and the result cannot answer "which page of which document says this field exists?", so integration bugs cannot be audited and doc revisions cannot be compared.
+
+loop-apidoc consolidates these heterogeneous sources into one canonical form: OpenAPI 3.1 + a zh-TW guide + provenance (every statement points back to its source location) + a validation report. Whatever is missing or contradictory is stated explicitly; the artifacts can be `diff`ed, promoted into governed assets via `foundry`, and rebuilt at any time.
+
+### Why it matters for vibe coding
+
+Vibe coding hands implementation to a coding agent — and the agent's output quality is bounded by the quality of the spec you feed it:
+
+- **Raw documents breed hallucinations.** Feed a PDF or web page directly to an agent and it fills every gap with "common conventions": assuming OAuth, RESTful defaults, standard error envelopes. When the target is a payment API, these plausible-looking guesses are the most expensive bugs you can ship. loop-apidoc's fail-closed principle turns "the source doesn't say" into an explicitly listed gap instead of creative freedom for the agent.
+- **Agents need machine-readable ground truth.** `openapi.yaml`, `integration-contract.json`, and `examples/` are specs an agent can consume directly — cheaper in tokens than re-reading dozens of PDF pages every session, reproducible, and every agent in every project reads the **same facts**.
+- **Humans must be able to audit what the agent relied on.** Provenance points every statement back to its source, and `review.html` supports offline manual review — vibe coding is not hands-off; it moves the human role from "writing every line" to "reviewing the spec and the artifacts", which requires traceability.
+- **A spec is an asset, not a one-off prompt.** `foundry` promotes a completed run into a versioned asset (the `current` pointer under `.foundry/api/`), and `diff` classifies doc revisions by downstream impact — every vibe-coding iteration stands on the same governed spec instead of re-deriving it from scratch.
+
+### How is this different from just asking an AI agent to organize the PDF/URL?
+
+The extraction engine here **is also a model** (agent-native: the current coding agent does the reading). The difference is not "AI or no AI" — it is the ring of **deterministic engineering** around the model:
+
+| | Asking an agent directly | loop-apidoc |
+| --- | --- | --- |
+| Output correctness | Self-asserted by the model, unchecked | The model's output is only *input*; it must pass deterministic gates: `verify-extraction` cross-file invariants → structure/completeness/consistency/**no-speculation** checks, or the run FAILs |
+| Hallucination | Gaps get filled with REST/OAuth conventions that *look* right | Fail-closed is machine-enforced: anything entering the OpenAPI must trace back to a source-grounded plan item, or `UNSUPPORTED_ASSERTION`/`SOURCE_UNVERIFIED` blocks it |
+| Auditability | Prose; you cannot ask "which page says this?" | `provenance.json` aligns one-to-one with OpenAPI locations; `review.html` supports manual review |
+| Reproducibility | Different every session | The back half is a deterministic CLI: the same extraction JSON always produces the same artifacts |
+| Omission detection | Long documents get read as far as they get read; silent gaps | URL coverage ledger (expected vs fetched), preparation readiness, endpoint count/identity cross-checks — omissions get named |
+| Correction | "Try again", with no guarantee of convergence | Typed issues (severity gate + `target_file`/`field_path`/`requery_scope` routing) drive a correction loop with converged/plateau verdicts |
+| Revisions & governance | Ask again; nothing to compare against | `diff` classifies by downstream impact, `score` quantifies quality, `foundry` versions the asset |
+| Evidence | None | A regression harness of real-provider benchmarks; early runs caught 6 defects on the first validation pass — exactly the errors direct summarization ships silently |
+
+**Both approaches have their place — honestly:**
+
+- **Asking an agent directly**: zero setup, instant results. For **quickly understanding** what a document says, or one-off low-stakes exploration, it is entirely sufficient — using loop-apidoc there is overkill.
+- **loop-apidoc**: you run a full pipeline (extraction JSON → validation → correction loop), so the upfront cost and token spend are higher. In exchange you get verifiable, auditable, reproducible, governable output. Worth it for **integrations that ship to production** (especially payment-grade, where a wrong guess is expensive), specs shared across projects/agents, and documents that keep revising and need impact tracking.
+
+Rule of thumb: **if the result will be written into production code, gate it; if you just need to understand the document, just ask.**
+
+In one sentence: **vibe coding made "writing code" fast, so "getting the spec right" became the new bottleneck — loop-apidoc is built to remove exactly that bottleneck. It uses the model without trusting it: the model reads; whether it is *right* is decided by deterministic code that cannot hallucinate.**
+
+---
+
 ## How it works
 
 The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows the `loop-apidoc` skill to read sources via a **subagent fan-out that is read-only toward sources** — the main agent writes `inventory.json` (plus an optional `integration.json`) while each endpoint subagent writes its own `endpoints/ep<N>.json` — checks the extraction contract with `verify-extraction`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
