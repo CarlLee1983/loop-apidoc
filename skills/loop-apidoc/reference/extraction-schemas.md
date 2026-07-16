@@ -124,6 +124,12 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 - **`schema_ref`**: when a response body equals a named `inventory.schemas` entry, set
   `schema_ref` to that schema's **exact `name`** (OpenAPI then links via `$ref` instead of
   restating fields). `null` when no such named schema; never invent a name.
+- **Response status formalization**: `status` is an OpenAPI response key. Copy a documented
+  HTTP status when the provider states one. When the provider documents a universal
+  success/failure envelope but is silent about HTTP status, set `status: "default"` and
+  cite the envelope/schema; this is a faithful OpenAPI formalization, not a claim that the
+  provider returned a particular HTTP status. Do not leave `responses` empty merely because
+  no numeric status was published.
 - **`examples`**: when the source shows a concrete request or response payload (JSON block,
   `code`/`Response` table row, or formatted example under 「响应」/「请求」), copy it **verbatim**
   into `examples[]`. Prefer one entry per stated example; parse JSON when the source gives

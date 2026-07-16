@@ -68,7 +68,8 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
             severity = Severity.ERROR if endpoint.path else Severity.WARNING
             issues.append(_issue(
                 IssueCode.REQUIRED_INFO_MISSING, severity, location,
-                "endpoint 沒有任何 response 定義", "由來源補上 response status 與 schema",
+                "endpoint 沒有可轉為 OpenAPI 的 response 定義",
+                "記錄來源的 response envelope；若來源未指定 HTTP status，使用 status: default（不是要求臆測 HTTP status）",
                 target_file=target_file, field_path="responses",
                 requery_scope=location))
         if not endpoint.summary:

@@ -75,7 +75,11 @@ def _excerpt(text: str, limit: int = 1200) -> str:
     text = text.strip()
     if len(text) <= limit:
         return text
-    return text[:limit] + "\n...[truncated]"
+    # Test runners print progress before the useful traceback. Keep both ends
+    # so CI-only failures expose the assertion instead of only progress dots.
+    head = limit // 2
+    tail = limit - head
+    return text[:head] + "\n...[truncated]...\n" + text[-tail:]
 
 
 def required_benchmark_cases() -> tuple[str, ...]:

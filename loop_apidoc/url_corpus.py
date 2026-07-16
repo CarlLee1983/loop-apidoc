@@ -14,6 +14,12 @@ from pydantic import BaseModel, Field
 from loop_apidoc.url_catalog import _Element, _TreeParser, _canonical_url, _walk, UrlCatalog
 
 
+class PageSection(BaseModel):
+    anchor: str
+    title: str
+    breadcrumb: list[str] = Field(default_factory=list)
+
+
 class PageMetadata(BaseModel):
     url: str
     title: str | None = None
@@ -35,6 +41,7 @@ class CorpusPage(BaseModel):
     breadcrumb: list[str] = Field(default_factory=list)
     internal_links: list[str] = Field(default_factory=list)
     entities: list[str] = Field(default_factory=list)
+    sections: list[PageSection] = Field(default_factory=list)
     body_characters: int = 0
     note: str | None = None
 
@@ -149,9 +156,16 @@ def cache_catalog_pages(
     active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
     pages: list[CorpusPage] = []
     try:
+        # Several sidebar anchors can identify sections in one static document.
+        # Fetch that document once, but retain all anchors as local section
+        # metadata so selection and later model reading stay precise.
+        nodes_by_url: dict[str, list] = {}
         for node in catalog.nodes:
+            nodes_by_url.setdefault(node.url, []).append(node)
+        for url, nodes in nodes_by_url.items():
+            node = nodes[0]
             try:
-                with active_client.stream("GET", node.url, headers={"Accept": "text/html"}) as response:
+                with active_client.stream("GET", url, headers={"Accept": "text/html"}) as response:
                     response.raise_for_status()
                     chunks: list[bytes] = []
                     size = 0
@@ -163,7 +177,7 @@ def cache_catalog_pages(
                     raw = b"".join(chunks)
                     html = raw.decode(response.encoding or "utf-8", errors="replace")
             except (httpx.HTTPError, ValueError) as exc:
-                pages.append(CorpusPage(url=node.url, status="fetch_failed", note=exc.__class__.__name__))
+                pages.append(CorpusPage(url=url, status="fetch_failed", note=exc.__class__.__name__))
                 continue
 
             digest = hashlib.sha256(raw).hexdigest()
@@ -173,13 +187,13 @@ def cache_catalog_pages(
             if not raw_path.exists():
                 raw_path.write_bytes(raw)
 
-            metadata = extract_page_metadata(node.url, html)
+            metadata = extract_page_metadata(url, html)
             body_path = output_dir / body_relative
             if not body_path.exists():
                 body_path.write_text(metadata.body_text, encoding="utf-8")
             pages.append(
                 CorpusPage(
-                    url=node.url,
+                    url=url,
                     status="fetched",
                     raw_file=raw_relative.as_posix(),
                     body_file=body_relative.as_posix(),
@@ -190,6 +204,11 @@ def cache_catalog_pages(
                     breadcrumb=node.breadcrumb,
                     internal_links=metadata.internal_links,
                     entities=metadata.entities,
+                    sections=[
+                        PageSection(anchor=item.anchor, title=item.title, breadcrumb=item.breadcrumb)
+                        for item in nodes
+                        if item.anchor is not None
+                    ],
                     body_characters=len(metadata.body_text),
                 )
             )

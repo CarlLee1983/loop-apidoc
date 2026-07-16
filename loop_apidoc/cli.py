@@ -171,6 +171,51 @@ def cache_url_pages(
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / {len(corpus.pages)} 頁，未送入模型")
 
 
+@app.command(name="cache-url-entry")
+def cache_url_entry(
+    url: str = typer.Option(..., "--url", help="要直接快取的文件入口 URL"),
+    output: Path = typer.Option(..., "--output", help="本機原始 HTML、正文與 corpus.json 目錄"),
+    max_bytes: Annotated[int, typer.Option("--max-bytes", min=1)] = 5 * 1024 * 1024,
+) -> None:
+    """直接快取一個入口頁，供空 catalog 或單頁文件使用。"""
+    from loop_apidoc.url_catalog import CatalogNode, UrlCatalog, _canonical_url
+    from loop_apidoc.url_corpus import cache_catalog_pages
+
+    entry_url = _canonical_url(url, url) or url
+    try:
+        output.mkdir(parents=True, exist_ok=True)
+        corpus = cache_catalog_pages(
+            UrlCatalog(entry_url=entry_url, nodes=[CatalogNode(url=entry_url, title="Entry page")]),
+            output,
+            max_pages=1,
+            max_bytes_per_page=max_bytes,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"cache-url-entry error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    corpus_path = output / "corpus.json"
+    corpus_path.write_text(corpus.model_dump_json(indent=2), encoding="utf-8")
+    fetched = sum(page.status == "fetched" for page in corpus.pages)
+    typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / 1 個入口頁，未送入模型")
+
+
+@app.command(name="normalize-html-snapshot")
+def normalize_html_snapshot_command(
+    input: Path = typer.Option(..., "--input", exists=True, readable=True, help="已下載的 HTML 快照"),
+    url: str = typer.Option(..., "--url", help="快照的原始公開 URL"),
+    output: Path = typer.Option(..., "--output", help="輸出的 Markdown 快照"),
+) -> None:
+    """把靜態 HTML 快照正規化為受支援 Markdown，並保留 URL/hash provenance。"""
+    from loop_apidoc.html_snapshot import normalize_html_snapshot
+
+    try:
+        sidecar = normalize_html_snapshot(input, url, output)
+    except OSError as exc:
+        typer.echo(f"normalize-html-snapshot error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"normalized snapshot 已寫入 {output}；provenance 已寫入 {sidecar}")
+
+
 @app.command(name="related-url-pages")
 def related_url_pages(
     corpus: Path = typer.Option(..., "--corpus", exists=True, readable=True),
