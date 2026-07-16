@@ -40,6 +40,14 @@ def test_run_step_raises_with_output_excerpt_on_failure():
     assert "stderr text" in message
 
 
+def test_excerpt_keeps_the_failure_tail_when_output_is_long():
+    excerpt = quality_gate._excerpt("a" * 1_200 + " FAILURE DETAIL", limit=100)
+
+    assert excerpt.startswith("a" * 50)
+    assert "...[truncated]..." in excerpt
+    assert excerpt.endswith("FAILURE DETAIL")
+
+
 def test_command_plan_default_mode():
     plan = quality_gate.command_plan(strict_local=False)
     assert plan == [
