@@ -1,6 +1,6 @@
 ---
 name: loop-apidoc
-description: Use when the user wants to convert messy API integration sources (PDF, Markdown, Word, OpenAPI JSON/YAML, or public URLs) into source-grounded OpenAPI 3.1, Traditional-Chinese Markdown docs, provenance, examples, review HTML, and validation reports.
+description: Use when the user wants to convert messy API integration sources (PDF, Markdown, Word, HTML, OpenAPI JSON/YAML, or public URLs) into source-grounded OpenAPI 3.1, Traditional-Chinese Markdown docs, provenance, examples, review HTML, and validation reports.
 ---
 
 # loop-apidoc: source-grounded API doc generation
@@ -102,6 +102,10 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   `<!-- page N -->` marker.
 - **Word** → extract readable text/markdown into `<WORK>/sources_text` if the runtime can't
   read it directly; preserve the original filename + headings so citations point back.
+- **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
+  `<APIDOC> normalize-html-snapshot --input page.html --url "<ORIGINAL_URL>" --output
+  "<WORK>/sources_md/page.md"` — writes Markdown plus a URL/hash provenance sidecar; cite
+  the original URL + anchor.
 - **OpenAPI JSON/YAML** → read as a source for endpoints/schemas/security/servers/examples;
   still go through `inventory.json` / `endpoints/*.json` (do not bypass).
 - **Public URLs** → follow **`reference/url-fetching.md`** (catalog → cache → relate →
@@ -152,7 +156,10 @@ source filename + page/section/anchor. The controller writes
 
 Exit `1` means `reject`: provide the generated supplement report and stop. Do not create
 `inventory.json` or endpoint extraction files. Exit `0` permits extraction; warnings remain
-visible and must not be filled with assumptions. See `reference/source-quality.md`.
+visible and must not be filled with assumptions. When this gate ran, pass
+`--source-quality "<WORK>/source-quality"` to `assemble` (step 6) — the passing report is
+retained in `<run_dir>/source-quality/`, and a `reject` verdict aborts assemble (exit 2).
+See `reference/source-quality.md`.
 
 ### 2–4. Extract → write the JSON
 
@@ -187,7 +194,8 @@ a round trip.
 
 ```bash
 <APIDOC> assemble \
-  --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] --json
+  --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] \
+  [--source-quality "<WORK>/source-quality"] --json
 ```
 
 To iterate toward a **quality bar** (not just "no errors"), add the score-gated flags:

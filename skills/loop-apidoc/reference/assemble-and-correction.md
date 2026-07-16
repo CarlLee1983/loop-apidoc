@@ -175,6 +175,8 @@ user**. Never hard-code fill-ins; never fabricate to make validation pass.
   there is ≥1 endpoint. Values render as `<placeholder>` when the source states no example.
 - `validation/report.json` + `validation/report.md`
 - `preparation-report.json` + `preparation-report.md` — pre-generation readiness evidence.
+- `source-quality/` — only when assemble ran with `--source-quality`: the retained
+  pre-extraction assessment reports (a `reject` verdict aborts assemble at exit 2).
 
 **Scaffolding (present but not product):** `manifest.json`, `plan/normalization-plan.json`
 (also linked from review.html), `extraction/queries.jsonl`, `extraction/answers/*.txt`.
@@ -194,7 +196,9 @@ review.html.
 
 `0` = PASS · `1` = validation FAIL · `2` = either an **extraction input file error**
 (`inventory.json`/`endpoints/*.json`/`integration.json` malformed or schema-invalid — fix the
-named file/field; this includes an unrooted `endpoints[].path` and a file whose `source`
-citations name no manifest source, both listed in one message) **or** a **run-dir collision** (the target `--output/<run_id>` already
+named file/field; this includes an unrooted `endpoints[].path`, a file whose `source`
+citations name no manifest source (both listed in one message), a malformed or
+URL-less `--url-coverage` ledger, and a `reject`-verdict `--source-quality` report)
+**or** a **run-dir collision** (the target `--output/<run_id>` already
 exists — assemble refuses to overwrite; choose a fresh output root). Exit 2 is **not** a
 validation round.

@@ -725,6 +725,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">catalog-url</div>
           <div class="command-chip">select-url</div>
           <div class="command-chip">cache-url-pages</div>
+          <div class="command-chip">cache-url-entry</div>
+          <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
@@ -799,7 +801,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露十二個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
+      <code>cli.py</code> 暴露十四個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
       <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入；其餘 domain 邏輯盡量保持純函式，以簡化單元測試。
     </div>
   </div>
@@ -861,7 +863,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "io",
       pillLabel: "File Output",
       desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
-      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema／缺漏供人眼複核</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）；來源有錯誤碼對照時，以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照（0.9.2 起）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema／缺漏供人眼複核</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json"
@@ -895,7 +897,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 12 個頂層命令：來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分與版本差異。",
+      description: "Typer CLI 入口，對外暴露 14 個頂層命令（加上 foundry 子群組共 15 個命令）：來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分與版本差異。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
       outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",

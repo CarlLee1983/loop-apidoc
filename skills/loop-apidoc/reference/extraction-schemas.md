@@ -99,9 +99,12 @@ One object describing the whole API. **You** write what the single inventory sub
 - `errors[]` records `code`, `meaning`, and `http_status`. When the source explicitly
   limits an error to operations, add `applicable_to` as exact `METHOD /path` strings
   (for example `"POST /transfers"`); otherwise leave it as `[]`. Generated OpenAPI
-  exposes the complete mapping as `components.schemas.ErrorCode` and only adds an
-  operation-level `x-loop-error-codes` extension when this source-stated applicability
-  is present.
+  exposes the complete mapping as `components.schemas.ErrorCode`: `enum` constrains the
+  wire values, and its `x-loop-error-code-map` extension carries each code's `meaning`,
+  `http_status`, `applicable_to`, and `source` citations losslessly — fill `meaning` and
+  `source` per error, they flow verbatim into the OpenAPI document and `provenance.json`.
+  An operation-level `x-loop-error-codes` extension is added only when this
+  source-stated applicability is present.
 
 ## endpoints/ep<N>.json
 

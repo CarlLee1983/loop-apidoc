@@ -739,8 +739,8 @@
 <section class="alt" id="commands">
   <div class="wrap">
     <span class="eyebrow">CLI 介面</span>
-    <h2 class="section-title">六個指令,各司其職</h2>
-    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>)。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟。</p>
+    <h2 class="section-title">十五個指令,各司其職</h2>
+    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>),共 14 個頂層指令加 <code class="inline">foundry</code> 子群組。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理與資產治理)。</p>
 
     <div class="cmds">
       <div class="cmd">
@@ -752,9 +752,41 @@
         <div><p>掃描本地來源 + URL,建立 <code class="inline">manifest.json</code>。</p></div>
       </div>
       <div class="cmd">
+        <span class="name"><span class="kw">catalog-url</span></span>
+        <div><p>只下載入口頁一次,建立側欄導航索引(coverage universe);絕不自動擷取子頁。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">select-url</span></span>
+        <div><p>依明確範圍(分支/關鍵詞)選取 catalog 節點作為閱讀起點;不下載任何 URL。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">cache-url-pages</span></span>
+        <div><p>快取 catalog 全部頁面,建立本機正文/連結/實體索引(<code class="inline">corpus.json</code>);不呼叫模型。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">cache-url-entry</span></span>
+        <div><p>直接快取單一入口頁,供空 catalog 或單頁文件使用。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">normalize-html-snapshot</span></span>
+        <div><p>把靜態 HTML 快照正規化為受支援 Markdown,並保留 URL/SHA-256 provenance sidecar。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">related-url-pages</span></span>
+        <div><p>依正文連結與共享實體輸出候選頁卡片,模型只在需要時讀取候選頁正文。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">assess-sources</span></span>
+        <div><p>擷取前的來源品質閘:依可追溯 observation 評估來源並輸出 pass/reject 報告(可傳給 <code class="inline">assemble --source-quality</code>)。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">verify-extraction</span></span>
+        <div><p>檢查 agent 產出的擷取 JSON 是否符合 assemble 輸入契約;不寫檔、不建立 run-dir。</p></div>
+      </div>
+      <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
-          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報。</p>
+          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報;可加 <code class="inline">--score</code>、<code class="inline">--source-quality</code>、<code class="inline">--url-coverage</code>。</p>
           <p class="codes">退出碼:<b>0</b> 驗證 PASS · <b>1</b> 驗證 FAIL · <b>2</b> 擷取輸入檔錯誤(不留孤兒目錄)。</p>
         </div>
       </div>
@@ -775,6 +807,10 @@
           <p>比較兩個已完成 run-dir 的版本差異。</p>
           <p class="codes">退出碼:<b>0</b> 完成 · <b>2</b> 輸入 run-dir 缺檔或格式錯誤(<code class="inline">DiffInputError</code>)。</p>
         </div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">foundry</span></span>
+        <div><p>專案本地資產治理子群組(<code class="inline">init</code> / <code class="inline">import</code> / <code class="inline">approve</code> / <code class="inline">list</code> / <code class="inline">current</code>):把完成的 run 匯入為 candidate,核准成版本化 asset 並維護 <code class="inline">current</code> 指標。</p></div>
       </div>
     </div>
   </div>
@@ -993,7 +1029,7 @@
         <thead><tr><th>套件</th><th>職責</th></tr></thead>
         <tbody>
           <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
           <tr class="io"><td><code>preparation/</code></td><td>產生前就緒度評估 + preparation-report(report.py 寫檔)</td></tr>
@@ -1002,10 +1038,13 @@
           <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
           <tr class="io"><td><code>score/</code></td><td>讀取完成 run-dir,以五類權重產生 score/score.{json,md}(report.py 寫檔)</td></tr>
           <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
+          <tr class="io"><td><code>source_quality/</code></td><td>擷取前來源品質評估與來源版本差異報告;pass 報告可隨 run-dir 稽核保存(寫檔)</td></tr>
+          <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
+          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標(寫檔)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code> 與 <code class="inline">diff/report.py</code> 會寫檔,其餘維持純函式。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
   </div>
 </section>
 

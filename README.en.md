@@ -18,12 +18,12 @@ Core principle: **source documents are the only source of truth**. Anything the 
 
 ## How it works
 
-The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows the `loop-apidoc` skill to read sources via a **read-only subagent fan-out**, writes the results to `inventory.json` + `endpoints/*.json`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
+The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows the `loop-apidoc` skill to read sources via a **subagent fan-out that is read-only toward sources** — the main agent writes `inventory.json` (plus an optional `integration.json`) while each endpoint subagent writes its own `endpoints/ep<N>.json` — checks the extraction contract with `verify-extraction`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
 
 ### Full flow
 
 ```
-preprocess (optional) → extraction (agent read-only subagent fan-out) → manifest → normalization plan → generate (OpenAPI + Markdown) → validate
+preprocess (optional) → extraction (agent read-only subagent fan-out) → verify-extraction (contract check) → manifest → normalization plan → generate (OpenAPI + Markdown) → validate
 ```
 
 Validation emits a classified issue report. Correction is **agent-driven**: `assemble` reports results via `--json`, the agent re-reads the affected sources, overwrites the extraction JSON, and re-runs `assemble` — until it passes or an issue is deemed an unfixable gap/conflict.
@@ -32,7 +32,7 @@ Validation emits a classified issue report. Correction is **agent-driven**: `ass
 
 ## Run as a Claude Code plugin (agent-native)
 
-Besides the CLI, this project is also a Claude Code plugin: invoke the `loop-apidoc` skill inside a Claude session, give it one or more sources (local files or public URLs), and the agent extracts them itself, calls `loop-apidoc assemble` to assemble and validate, and re-fills missing fields automatically when validation fails (up to 3 rounds).
+Besides the CLI, this project is also a Claude Code plugin: invoke the `loop-apidoc` skill inside a Claude session, give it one or more sources (local files or public URLs), and the agent extracts them itself, calls `loop-apidoc assemble` to assemble and validate, and drives its own correction loop when validation fails — re-reading sources and re-filling missing fields.
 
 The current agent is the extraction engine (the only extraction path). After installing the plugin it is available in Claude Code; the bundled CLI is invoked via `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc assemble`.
 
@@ -79,19 +79,11 @@ uv run loop-apidoc --help
 
 ## Supported source formats
 
-PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.
+PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, static HTML snapshots, public URLs.
 
 ---
 
 ## Usage
-
-### `preprocess` — convert PDFs to high-fidelity markdown (optional)
-
-```bash
-uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
-```
-
-Uses pymupdf4llm to convert every PDF under `--sources` into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
 
 ### `manifest` — build source manifest
 
@@ -139,6 +131,15 @@ headings, internal-link, and entity metadata without calling a model. `corpus.js
 does not embed bodies; `related-url-pages` returns compact cards with breadcrumb,
 score, and evidence reason. Load a candidate `body_file` only when the model needs it.
 
+For static single-page docs, sidebar anchors are kept as catalog-node `anchor`s and
+listed as `sections` on the corpus's single entry-page card (the same HTML is downloaded
+once). When the catalog is empty or there is no sidebar, use
+`cache-url-entry --url ... --output ...` to cache the entry page directly. Already-downloaded
+HTML can be converted into supported Markdown with
+`normalize-html-snapshot --input page.html --url ... --output sources/page.md`; the command
+writes a `.source.json` provenance sidecar carrying the original URL and SHA-256. HTML
+itself is also listed as a supported format in the manifest.
+
 ### Model division in Codex and Claude Code
 
 The skill is model-neutral: the host maps a fast model to candidate routing, a standard
@@ -149,6 +150,18 @@ reason to send the whole corpus. See
 [`model-orchestration.md`](skills/loop-apidoc/reference/model-orchestration.md) for the role
 matrix, hand-off contract, and Codex/Claude mapping.
 
+### `assess-sources` — pre-extraction source-quality assessment
+
+```bash
+uv run loop-apidoc assess-sources \
+  --sources ./sources --manifest ./work/manifest.json \
+  --observations ./work/source-observations.json \
+  --source-set "<source set name>" \
+  --output ./work/source-quality [--base-manifest <old manifest>]
+```
+
+Before extraction, grades the manifest plus the agent-recorded source observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`, compared against an old manifest when `--base-manifest` is given). The verdict is `pass` or `reject`; exit codes: `0` = pass, `1` = reject, `2` = bad input file. The output directory can be passed to `assemble --source-quality`: a `reject` verdict stops before a run-dir is created, while a `pass` report is preserved with the run-dir for audit.
+
 ### `validate` — validate an existing run directory
 
 ```bash
@@ -156,6 +169,14 @@ uv run loop-apidoc validate --output ./output/<run-id>
 ```
 
 Runs structure / completeness / consistency / no-speculation validation over the run directory and writes reports to `<run-dir>/validation/`. Exits `0` on pass, `1` when there are ERROR-level issues.
+
+### `score` — evaluate document quality of an existing run directory
+
+```bash
+uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min-score 85] [--json]
+```
+
+Reads the existing run directory's `validation/report.json`, `openapi.yaml`, `provenance.json`, `manifest.json`, and optional `plan/normalization-plan.json`, and outputs `score/score.json` and `score/score.md`. The `ci` profile defaults to a threshold of `85`, and `review` defaults to `70`. Exit codes: `0` = pass, `1` = needs_attention / fail, `2` = run-dir input error.
 
 ### `diff` — compare two runs for a version delta
 
@@ -165,14 +186,6 @@ uv run loop-apidoc diff --base ./output/<old-run> --head ./output/<new-run>
 
 Compares two completed run directories and emits a diff report classified by downstream impact. Writes to `<new-run>/diff/report.{json,md}` by default; pass `--output` to choose another directory. Changes are classified as `breaking`, `additive`, `changed`, or `source_only`, and the comparison spans `openapi.yaml`, `integration-contract.json`, `provenance.json`, `validation/report.json`, and `manifest.json`. The first version does not diff the Markdown guide or generated examples. Exits `0` on completion, `2` when an input run-dir is missing files or malformed.
 
-### `score` — evaluate document quality of an existing run directory
-
-```bash
-uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min-score 85] [--json]
-```
-
-Reads the existing run directory and outputs `score/score.json` and `score/score.md`. The `ci` profile defaults to a threshold of `85`, and `review` defaults to `70`. Exit codes: `0` = pass, `1` = needs_attention / fail, `2` = run-dir input error.
-
 ### `foundry` — local asset governance for API projects
 
 ```bash
@@ -181,6 +194,23 @@ uv run loop-apidoc foundry [init|import|approve|list|current] --help
 
 Subcommands to manage docsets, import a run directory as a candidate, and approve an asset to update the `current` pointer. Ideal for scenarios requiring manual review and release management of API documentation versions.
 
+### `preprocess` — convert PDFs to high-fidelity markdown (optional)
+
+```bash
+uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
+```
+
+Uses pymupdf4llm to convert every PDF under `--sources` into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
+
+### `verify-extraction` — check the extraction JSON against the contract
+
+```bash
+uv run loop-apidoc verify-extraction \
+  --sources ./sources --extraction ./work [--url <URL> ...] [--json]
+```
+
+Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, and cross-file invariants. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
+
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
 ```bash
@@ -188,10 +218,11 @@ uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url <URL> ...] [--source-quality ./work/source-quality] [--json]
+  [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
+  [--source-quality ./work/source-quality] [--json] [--score]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
 
 ---
 
@@ -201,7 +232,7 @@ Each execution uses an isolated run directory:
 
 ```text
 output/
-└── <run-id>/                       # run-id format: %Y%m%dT%H%M%SZ
+└── <run-id>/                       # run-id format: %Y%m%dT%H%M%S.%fZ (microseconds avoid same-second collisions)
     ├── manifest.json               # source manifest
     ├── extraction/                 # extraction audit trail (not re-runnable input)
     │   ├── queries.jsonl           # per-round query records
@@ -226,6 +257,9 @@ output/
     │   ├── source-quality-report.zh-TW.md
     │   ├── source-diff.json
     │   └── source-diff.md
+    ├── score/                       # documentation quality score (loop-apidoc score or assemble --score)
+    │   ├── score.json
+    │   └── score.md
     └── diff/                       # when diffed against another run (loop-apidoc diff)
         ├── report.json
         └── report.md
@@ -236,6 +270,8 @@ output/
 > Note: the agent-produced extraction input (`inventory.json` + `endpoints/*.json` + optional `integration.json`) lives in the working directory passed to `--extraction`, **not** in the run-dir. The run-dir `extraction/` only holds the audit trail (`queries.jsonl` + `answers/`).
 
 Only content that is both present in the plan and source-grounded reaches the OpenAPI and Markdown outputs. OpenAPI fields that are required but missing from sources are filled with a minimal legal placeholder, marked `x-loop-status: missing-source` plus a provenance gap record; if the gap affects integrability, completeness validation still fails.
+
+When the sources provide an error-code table, `components.schemas.ErrorCode` — in addition to the existing enum and `x-loop-error-codes` — emits `x-loop-error-code-map`, preserving each code's message/description, HTTP-status metadata, source citations, and the source-stated applicable operations (since 0.9.2; purely additive and backward compatible).
 
 ---
 
@@ -270,7 +306,7 @@ uv run ruff check .
 | Package | Responsibility |
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
-| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation (a file-I/O exit) |
@@ -289,7 +325,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 
 ## Design docs
 
-Full design and per-phase implementation plans live under `docs/superpowers/`:
-
-- System design: [`specs/2026-06-25-loop-api-documentation-pipeline-design.md`](docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)
-- Implementation plans: `docs/superpowers/plans/`
+- Architecture overview and data flow (with diagrams): [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Contributing guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- System design spec: [`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)
+- Per-phase implementation plans: `docs/superpowers/plans/`
