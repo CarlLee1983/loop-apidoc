@@ -61,3 +61,39 @@ def test_select_url_writes_only_the_requested_scope(tmp_path: Path):
         "https://docs.example.com/transfer/cash"
     ]
     assert payload["unselected_count"] == 2
+
+
+def test_catalog_keeps_static_single_page_anchors_as_distinct_sections():
+    catalog = build_catalog(
+        "https://docs.example.com/transfer/zh-tw/",
+        '<aside class="sidebar"><ul><li><a href="#5-api-5-1">API 5.1</a></li><li><a href="#errors">Errors</a></li></ul></aside>',
+    )
+
+    assert [(node.url, node.anchor, node.title) for node in catalog.nodes] == [
+        ("https://docs.example.com/transfer/zh-tw", "5-api-5-1", "API 5.1"),
+        ("https://docs.example.com/transfer/zh-tw", "errors", "Errors"),
+    ]
+
+
+def test_select_url_can_select_one_static_page_anchor(tmp_path: Path):
+    catalog = build_catalog(
+        "https://docs.example.com/transfer/zh-tw/",
+        '<nav><ul><li><a href="#api">API</a></li></ul></nav>',
+    )
+    catalog_path = tmp_path / "catalog.json"
+    output = tmp_path / "selection.json"
+    catalog_path.write_text(catalog.model_dump_json(), encoding="utf-8")
+
+    result = runner.invoke(app, ["select-url", "--catalog", str(catalog_path), "--url", "#api", "--output", str(output)])
+
+    assert result.exit_code == 0, result.stdout
+    assert json.loads(output.read_text(encoding="utf-8"))["selected"][0]["anchor"] == "api"
+
+
+def test_catalog_recognizes_static_toc_list_without_nav_or_sidebar():
+    catalog = build_catalog(
+        "https://docs.example.com/transfer/",
+        '<ul id="toc" class="toc-list-h1"><li><a href="#api">API</a></li></ul>',
+    )
+
+    assert [(node.title, node.anchor) for node in catalog.nodes] == [("API", "api")]

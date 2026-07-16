@@ -14,7 +14,9 @@ Run `catalog-url` against the entry page:
 ```
 
 It downloads **only** `<ENTRY_URL>` and writes every deduplicated same-origin sidebar
-node with its title, parent, and breadcrumb. The navigation tree is the authoritative
+node with its title, parent, and breadcrumb. Static one-page anchors are retained as
+nodes with an `anchor` field: they are selectable sections of the entry document, not
+separate fetches. The navigation tree is the authoritative
 **coverage universe**, not an automatic fetch list. If the raw entry page is a JS SPA
 shell (see §5), do not infer child URLs from it; obtain rendered entry-page evidence
 before selecting a scope.
@@ -35,6 +37,12 @@ The command stores raw HTML under `raw/` and navigation-free body text under `bo
 Its `corpus.json` stores only compact cards: title, breadcrumb, headings, internal links,
 Action/error-code entities, hashes, sizes, and paths to the local evidence. It never
 passes page bodies to a model. `--max-pages` and `--max-bytes-per-page` bound the work.
+
+If the catalog has no navigation nodes (or the documentation is intentionally one
+page), use `cache-url-entry --url "<ENTRY_URL>" --output "<WORK>/url_corpus"` to cache
+the entry page directly. For an already downloaded static HTML file, use
+`normalize-html-snapshot --input page.html --url "<ENTRY_URL>" --output
+"<WORK>/sources/page.md"`; it creates Markdown and a URL/hash provenance sidecar.
 
 ## 3. Relate pages before model reading
 
