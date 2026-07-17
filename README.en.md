@@ -252,6 +252,25 @@ uv run loop-apidoc assess-sources \
 
 Before extraction, grades the manifest plus the agent-recorded source observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`, compared against an old manifest when `--base-manifest` is given). The verdict is `pass` or `reject`; exit codes: `0` = pass, `1` = reject, `2` = bad input file. The output directory can be passed to `assemble --source-quality`: a `reject` verdict stops before a run-dir is created, while a `pass` report is preserved with the run-dir for audit.
 
+### `record-fingerprint` / `check-freshness` — scheduled source-freshness gate
+
+```bash
+# Write a baseline fingerprint from a completed/adopted run directory (local sources' SHA-256, one fetch per URL source's version signal).
+uv run loop-apidoc record-fingerprint --run-dir ./output/<run-id> --output ./work/source-fingerprint.json
+
+# Cheap scheduled (e.g. cron) comparison of current source signals against the baseline; pass --sources when the fingerprint includes local sources.
+uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json --sources ./sources --json
+```
+
+`check-freshness` calls no model; it only recomputes each source's cheap signal and compares it
+to the baseline: OpenAPI-URL sources compare `info.version` (same version counts as unchanged
+even if the bytes differ), HTML sources compare ETag/Last-Modified first and fall back to a body
+SHA-256, and local files compare SHA-256. This is the scheduled-gate use case: run it on a cron
+schedule and skip re-parsing when the verdict is unchanged. Exit codes: `0` = unchanged (skip
+re-parse), `1` = changed (re-run extraction), `2` = inconclusive (a source could not be fetched or
+read). Pass `--report-dir` to also write `freshness-report.{json,md}`; without it nothing is
+written.
+
 ### `validate` — validate an existing run directory
 
 ```bash
