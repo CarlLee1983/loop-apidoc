@@ -271,6 +271,20 @@ re-parse), `1` = changed (re-run extraction), `2` = inconclusive (a source could
 read). Pass `--report-dir` to also write `freshness-report.{json,md}`; without it nothing is
 written.
 
+To sweep many docsets at once, use `check-freshness-batch`: it reads a `freshness-watchlist.json`
+(each entry lists a `label`, a relative path to its `fingerprint` sidecar, and optional
+`sources`/`run_dir`), runs the same freshness comparison per item, and rolls the results up into
+one report.
+
+```bash
+uv run loop-apidoc check-freshness-batch --watchlist ./work/freshness-watchlist.json --json [--report-dir ./work/freshness]
+```
+
+A single item's fetch failure does not abort the batch — that item is marked `error` and scanning
+continues; a malformed watchlist file itself fails loud. Aggregate exit codes: `0` = all unchanged,
+`1` = any changed, `2` = any inconclusive or errored. Pass `--report-dir` to also write
+`freshness-scan.{json,md}`; without it nothing is written.
+
 ### `validate` — validate an existing run directory
 
 ```bash
