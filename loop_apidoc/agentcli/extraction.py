@@ -14,12 +14,34 @@ _INVENTORY_STAGES: tuple[tuple[str, str], ...] = (
 )
 
 
+def _methods(entry: dict) -> list[str]:
+    raw = entry.get("methods")
+    if isinstance(raw, list):
+        return [value.upper() for value in raw
+                if isinstance(value, str) and value.strip()]
+    method = entry.get("method")
+    return [method] if isinstance(method, str) and method.strip() else []
+
+
+def _expand_methods(entries: list[dict]) -> list[dict]:
+    """Emit one canonical operation entry for each additive ``methods`` value."""
+    expanded: list[dict] = []
+    for entry in entries:
+        for method in _methods(entry):
+            expanded.append(
+                {key: value for key, value in entry.items() if key != "methods"}
+                | {"method": method}
+            )
+    return expanded
+
+
 def _block(key: str, inventory: dict) -> str:
     # The global `missing` list is surfaced once via stage 10; copying it into
     # every inventory stage block here would make the plan record each gap once
     # per stage and the guide repeat it N times.
     value = inventory.get(key)
-    payload = {key: value if isinstance(value, list) else []}
+    entries = value if isinstance(value, list) else []
+    payload = {key: _expand_methods(entries) if key == "endpoints" else entries}
     return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
 
 

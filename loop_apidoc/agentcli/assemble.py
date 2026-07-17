@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
+from loop_apidoc.agentcli.extraction import _expand_methods, inventory_to_stage_answers
 from loop_apidoc.agentcli.gate import check_extraction
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
@@ -176,10 +176,19 @@ def build_extraction_from_files(
             answer=answer, returncode=0,
         ))
     for idx, text in enumerate(endpoint_texts):
-        artifacts.append(store.record(
-            query_id=f"06-ep{idx}", stage_id="06", kind=QueryKind.INITIAL,
-            question="(agent endpoint detail)", answer=text, returncode=0,
-        ))
+        detail = json.loads(text)
+        expanded = _expand_methods([detail]) if isinstance(detail, dict) else []
+        if isinstance(detail, dict) and "methods" in detail:
+            answers = [json.dumps(entry, ensure_ascii=False)
+                       for entry in (expanded or [detail])]
+        else:
+            answers = [text]
+        for method_idx, answer in enumerate(answers):
+            suffix = f"-{method_idx}" if len(answers) > 1 else ""
+            artifacts.append(store.record(
+                query_id=f"06-ep{idx}{suffix}", stage_id="06", kind=QueryKind.INITIAL,
+                question="(agent endpoint detail)", answer=answer, returncode=0,
+            ))
     return ExtractionResult(notebook_url="", artifacts=artifacts)
 
 

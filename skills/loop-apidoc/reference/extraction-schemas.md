@@ -32,7 +32,7 @@ One object describing the whole API. **You** write what the single inventory sub
  "overview": "str",
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
- "endpoints": [{"method":"str","path":"str|null","summary":"str","source":"str","server":"str|null"}],
+ "endpoints": [{"method":"str","methods":["str"],"path":"str|null","summary":"str","source":"str","server":"str|null"}],
  "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
  "errors": [{"code":"str","meaning":"str","http_status":"str|null","applicable_to":["METHOD /path"],"source":"str"}],
  "operational": [{"topic":"str","detail":"str","source":"str"}],
@@ -44,6 +44,12 @@ One object describing the whole API. **You** write what the single inventory sub
 - `version`: the source-stated document/API version, **verbatim** (e.g. `NDNF-1.2.2`);
   `null` if none → becomes OpenAPI `info.version`.
 - Include **every** endpoint and **every** error code.
+- Use legacy `method` for one operation, or additive `methods` when the same
+  endpoint contract applies to multiple HTTP methods. `methods` is expanded into
+  one canonical operation per method before planning; every other field in that
+  entry therefore applies identically to every listed method. When methods have
+  different summaries, parameters, requests, responses, security, or source
+  detail, write separate single-`method` entries instead.
 - `endpoints[].path` is the path **only**, always starting with `/`
   (`/hrxt/loginGame`, `/users/{userId}/orders`). The host belongs in
   `environments[].base_url` — never fold it, or a `{template}` placeholder standing for it,
@@ -112,7 +118,7 @@ One object per endpoint in `inventory.endpoints`. Dispatch one read-only subagen
 endpoint **in parallel** (≤6 concurrent, then batch the rest).
 
 ```json
-{"method":"str","path":"str","source":"str",
+{"method":"str","methods":["str"],"path":"str","source":"str",
  "parameters":[{"name":"str","in":"query|header|path|body|null","type":"str|null","required":"bool|null","description":"str|null"}],
  "request":{"content_type":"str|null","schema":"str|null","required":"bool|null","description":"str|null"} ,
  "responses":[{"status":"str","description":"str|null","schema":"str|null","schema_ref":"str|null"}],
@@ -122,6 +128,9 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 
 - `request` is `null` when there is no body. Fields the source omits → `null` / empty
   array, and add them to `missing`.
+- `methods` is the additive multi-method form for a shared endpoint contract. It
+  has the same identical-contract constraint as `inventory.json`; use `method`
+  when a detail file represents only one operation.
 - **Top-level `source` is required** — cite where this endpoint's detail lives, consistent
   with its `inventory.endpoints` entry. With multiple sources **this is the only thing
   attributing detail to the right source**; omitting it triggers `SOURCE_UNVERIFIED`.

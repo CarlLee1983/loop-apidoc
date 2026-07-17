@@ -30,6 +30,21 @@ def test_method_case_is_normalized():
     assert cross_file_violations(inventory, endpoints) == []
 
 
+def test_multi_method_detail_satisfies_expanded_inventory_identities():
+    inventory = {"endpoints": [{"methods": ["GET", "POST"], "path": "/free-spin"}]}
+    endpoints = [("ep00.json", {"methods": ["GET", "POST"], "path": "/free-spin"})]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_multi_method_detail_rejects_missing_inventory_method():
+    inventory = {"endpoints": [{"methods": ["GET", "POST"], "path": "/free-spin"}]}
+    endpoints = [("ep00.json", {"methods": ["GET"], "path": "/free-spin"})]
+
+    assert any("POST /free-spin" in item
+               for item in cross_file_violations(inventory, endpoints))
+
+
 # ── 不變式 1:數量 ────────────────────────────────────────────────────
 
 def test_missing_endpoint_file_is_a_violation():
