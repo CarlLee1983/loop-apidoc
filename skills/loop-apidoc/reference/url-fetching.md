@@ -5,6 +5,25 @@ Use this when any source is a public URL. The goal is not "how to fetch" but
 findings, matching the pipeline's fail-closed spirit. Write the result to
 `<WORK>/url_sources/coverage.json` and pass it to assemble via `--url-coverage`.
 
+## Direct machine-readable OpenAPI URL
+
+When the entry URL itself returns OpenAPI JSON or YAML, it is a single immutable document,
+not a navigation entry point. Do **not** call `catalog-url`, `cache-url-pages`,
+`related-url-pages`, or `select-url` against it.
+
+1. Download the HTTP response once into `<SOURCES>/<stable-name>.json|yaml`; retain the
+   original bytes and record its SHA-256, content type, and fetch time in the run notes.
+2. Parse it before extraction. If it declares `swagger: "2.0"` or `openapi: "3.x"`, read it
+   as the source of endpoints, components, servers, security, and examples; do not copy it
+   directly to the final output or assume omitted integration details.
+3. Create a one-entry `coverage.json`: the entry URL is both `expected[]` and `results[]`,
+   with `status: "fetched"`, the local snapshot path, and `method: "direct"`. Set
+   `confirmed_by_user` from the explicit scope decision. Cite the local filename plus JSON
+   Pointer during extraction.
+
+The local snapshot is the only evidence subagents read. Re-fetch only when intentionally
+creating a new source-set version.
+
 ## 1. Catalog the navigation; do not crawl it
 
 Run `catalog-url` against the entry page:
@@ -142,7 +161,8 @@ Security red line: **the pipeline and the agent never handle or record credentia
 - `expected[].source`: `nav` | `sitemap` | `user`
 - `results[].status`: `fetched` | `fetched_rendered` | `empty_suspect` | `fetch_failed` |
   `auth_required` | `skipped_by_user`
-- `results[].method`: `defuddle` | `playwright`
+- `results[].method`: `defuddle` | `playwright` | `direct`; use `direct` only for a single
+  machine-readable JSON/YAML response saved unchanged as the local source snapshot
   (`auth_required` / `fetch_failed` / `skipped_by_user` may omit `file` / `method`).
 
 A malformed coverage.json (missing key, unknown status) fails assemble loudly (exit 2).

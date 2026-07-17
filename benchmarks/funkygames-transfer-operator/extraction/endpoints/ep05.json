@@ -1,0 +1,71 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/Wallet/GetBalanceByCurrency",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalanceByCurrency/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The URL for operator to call to get player’s latest balance."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": true,
+      "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***.",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderTFGetBalanceRequest",
+    "schema_ref": "FundProviderTFGetBalanceRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderGetBalanceResponse",
+      "schema_ref": "FundProviderGetBalanceResponse"
+    }
+  ],
+  "tags": [
+    "Transfer Wallet"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

@@ -108,11 +108,15 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   the original URL + anchor.
 - **OpenAPI JSON/YAML** → read as a source for endpoints/schemas/security/servers/examples;
   still go through `inventory.json` / `endpoints/*.json` (do not bypass).
-- **Public URLs** → follow **`reference/url-fetching.md`** (catalog → cache → relate →
-  targeted model reading → report). Save readable text/HTML/Markdown under `<WORK>/url_sources/`, point subagents
-  there (no re-fetching), and write `<WORK>/url_sources/coverage.json`. Pass the original
-  URLs to `manifest`/`assemble` via `--url` and the coverage file via
-  `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the original URL + anchor.
+- **Public URLs** → follow **`reference/url-fetching.md`**. For an HTML documentation
+  entry point, use catalog → cache → relate → targeted model reading → report. For a direct
+  OpenAPI JSON/YAML URL, use its direct-snapshot lane instead: download the response once to
+  `<SOURCES>/<stable-name>.json|yaml`, record its SHA-256 and one-entry coverage ledger with
+  `method: "direct"`, then read that immutable local file. Do not run HTML navigation cataloguing
+  against machine-readable JSON/YAML. In both cases, pass the original URLs to
+  `manifest`/`assemble` via `--url` and the coverage file via
+  `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the local filename plus JSON
+  Pointer (for example `openapi.json#/paths/~1payments/post`), not an inferred HTML anchor.
 
 ## Subagent contract (extraction)
 

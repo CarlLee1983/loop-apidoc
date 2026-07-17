@@ -1,0 +1,21 @@
+{
+  "_note": "FunkyGames Transfer Operator 的 machine-readable OpenAPI 基準；來源未給 server、security 或 payload example，必須忠實保留缺漏。",
+  "must_have": {
+    "base_urls": 0,
+    "endpoints_min": 27,
+    "webhooks_min": 0,
+    "schemas_min": 65,
+    "error_codes_min": 0,
+    "security_schemes_min": 0,
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": false
+  },
+  "critical_operations": [
+    "paths./{funkyUrl}/Funky/Game/GetGameList.post",
+    "paths./{funkyUrl}/Funky/Wallet/Deposit.post",
+    "paths./{funkyReportUrl}/Funky/Report/GetBetList.post"
+  ]
+}

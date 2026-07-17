@@ -1,0 +1,148 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/Game/LaunchGame",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "gameCode",
+      "type": "string",
+      "required": true,
+      "description": "Specify game code to identify game.",
+      "in": "body"
+    },
+    {
+      "name": "userName",
+      "type": "string",
+      "required": true,
+      "description": "The name that player prefers to show in game.",
+      "in": "body"
+    },
+    {
+      "name": "playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": true,
+      "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***.",
+      "in": "body"
+    },
+    {
+      "name": "language",
+      "type": "string",
+      "required": true,
+      "description": "The language of the player.<br/>Will return English if the specified language code is not supported or recognized.",
+      "in": "body"
+    },
+    {
+      "name": "playerIp",
+      "type": "string",
+      "required": true,
+      "description": "Player’s IP at the moment.<br/>This is for preventing players from betting through VPN.<br/>***(Please enter the correct country’s IP for real players due to regional restrictions, API testing is not subject to this requirement)***",
+      "in": "body"
+    },
+    {
+      "name": "sessionId",
+      "type": "string",
+      "required": true,
+      "description": "User session from platform, the unique ID when the player launch game. Max length is 300 characters.",
+      "in": "body"
+    },
+    {
+      "name": "redirectUrl",
+      "type": "string",
+      "required": true,
+      "description": "If your site need to redirect to a specified URL, the parameter redirectUrl is necessary for overwriting the original behavior of Home/Back button e.g. close window or go to the previous page.<br/>Calling without this parameter will keep the original behavior.",
+      "in": "body"
+    },
+    {
+      "name": "isTestAccount",
+      "type": "boolean",
+      "required": true,
+      "description": "A flag indicates if the account is for testing or not.Default value set to false",
+      "in": "body"
+    },
+    {
+      "name": "disablePromotion",
+      "type": "boolean",
+      "required": true,
+      "description": "DisablePromotion",
+      "in": "body"
+    },
+    {
+      "name": "maxBet",
+      "type": "number",
+      "required": false,
+      "description": "The maximum bet amount that player can place.",
+      "in": "body"
+    },
+    {
+      "name": "minBet",
+      "type": "number",
+      "required": false,
+      "description": "MinBet",
+      "in": "body"
+    },
+    {
+      "name": "eventId",
+      "type": "string",
+      "required": false,
+      "description": "EventId",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderLaunchGameRequest",
+    "schema_ref": "FundProviderLaunchGameRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderLaunchGameResponse",
+      "schema_ref": "FundProviderLaunchGameResponse"
+    }
+  ],
+  "tags": [
+    "Launch game"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

@@ -1,0 +1,71 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/User/GetVoucherStakes",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": true,
+      "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***.",
+      "in": "body"
+    },
+    {
+      "name": "gameCode",
+      "type": "string",
+      "required": true,
+      "description": "Specify game code to identify game.",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderGetVoucherStakesRequest",
+    "schema_ref": "FundProviderGetVoucherStakesRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderGetVoucherStakesResponse",
+      "schema_ref": "FundProviderGetVoucherStakesResponse"
+    }
+  ],
+  "tags": [
+    "Voucher"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

@@ -50,6 +50,18 @@ def test_load_valid_coverage_round_trips(tmp_path):
     assert coverage.results[0].status is ResultStatus.FETCHED
 
 
+def test_load_accepts_direct_machine_readable_snapshot(tmp_path):
+    payload = _valid_payload()
+    payload["results"][0].update({
+        "file": "sources/openapi.json",
+        "method": "direct",
+    })
+
+    coverage = load_coverage(_write(tmp_path, payload))
+
+    assert coverage.results[0].method.value == "direct"
+
+
 def test_confirmed_by_user_defaults_false_when_absent(tmp_path):
     payload = _valid_payload()
     del payload["confirmed_by_user"]

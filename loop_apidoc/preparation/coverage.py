@@ -38,6 +38,7 @@ class ResultStatus(str, Enum):
 class FetchMethod(str, Enum):
     DEFUDDLE = "defuddle"
     PLAYWRIGHT = "playwright"
+    DIRECT = "direct"
 
 
 class CoverageExpected(BaseModel):

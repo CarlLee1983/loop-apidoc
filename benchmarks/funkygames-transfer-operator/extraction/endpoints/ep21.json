@@ -1,0 +1,71 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/TrialPlay/CloseTrialPlayEvent",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "eventId",
+      "type": "string",
+      "required": true,
+      "description": "EventId",
+      "in": "body"
+    },
+    {
+      "name": "freezeAllMembers",
+      "type": "boolean",
+      "required": false,
+      "description": "When <code>true</code>, sets all members under the event to <code>Frozen</code> while closing the event. Defaults to <code>false</code>.",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderCloseTrialPlayEventRequest",
+    "schema_ref": "FundProviderCloseTrialPlayEventRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderCloseTrialPlayEventResponse",
+      "schema_ref": "FundProviderCloseTrialPlayEventResponse"
+    }
+  ],
+  "tags": [
+    "Trial Play (beta)"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

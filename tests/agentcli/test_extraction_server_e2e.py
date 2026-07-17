@@ -95,6 +95,28 @@ def test_inventory_server_reaches_operation_level_openapi_servers():
     ]
 
 
+def test_inventory_global_missing_reaches_completeness_gate():
+    """全域 missing 必須成為 plan 的缺漏項；否則來源已記錄的 auth 缺漏
+    會在 completeness gate 被當成未記錄而誤擋。"""
+    inventory = _inventory_with_server()
+    inventory["missing"] = ["authentication: source does not provide"]
+    extraction = ExtractionResult(
+        notebook_url="", artifacts=_artifacts_from_inventory(inventory))
+
+    plan = build_normalization_plan(extraction, _manifest())
+
+    assert any(
+        item.area == "10" and item.detail == "authentication: source does not provide"
+        for item in plan.missing_items
+    )
+    assert not any(
+        issue.code is IssueCode.REQUIRED_INFO_MISSING
+        and issue.location == "components.securitySchemes"
+        and issue.severity is Severity.ERROR
+        for issue in check_completeness(plan)
+    )
+
+
 def test_stage06_detail_merge_does_not_clobber_server():
     """server 只活在 stage 05(inventory);stage 06(endpoints/ep<N>.json)
     從不帶這個欄位。合併 detail 時不能把已設定的 server 蓋回 None。"""

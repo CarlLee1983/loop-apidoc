@@ -47,9 +47,13 @@ def inventory_to_stage_answers(inventory: dict) -> dict[str, str]:
         "01": "Source inventory: a single source manual was provided and read.",
         "02": str(inventory.get("overview") or "").strip()
         or "(no overview stated)",
-        "10": "Gaps/conflicts: " + "; ".join(
-            str(m) for m in (inventory.get("missing") or [])
-        ) if inventory.get("missing") else "(none reported)",
+        # Stage 10 is the one global gap/conflict stage. Keep its payload
+        # structured so `build_normalization_plan` can preserve these missing
+        # items for completeness validation without duplicating them into every
+        # inventory stage.
+        "10": "```json\n" + json.dumps(
+            {"missing": inventory.get("missing") or []}, ensure_ascii=False
+        ) + "\n```",
     }
     for stage_id, key in _INVENTORY_STAGES:
         answers[stage_id] = _block(key, inventory)

@@ -1,0 +1,71 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/Wallet/CheckTransaction",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1CheckTransaction/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The URL for operator to call for check transaction status."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "txId",
+      "type": "string",
+      "required": true,
+      "description": "TxId",
+      "in": "body"
+    },
+    {
+      "name": "playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "OperatorCheckTransactionRequest",
+    "schema_ref": "OperatorCheckTransactionRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "OperatorCheckTransactionResponse",
+      "schema_ref": "OperatorCheckTransactionResponse"
+    }
+  ],
+  "tags": [
+    "Transfer Wallet"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

@@ -1,0 +1,71 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/TrialPlay/SearchTrialPlayEvents",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1SearchTrialPlayEvents/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "startTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z",
+      "in": "body"
+    },
+    {
+      "name": "endTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderSearchTrialPlayEventsRequest",
+    "schema_ref": "FundProviderSearchTrialPlayEventsRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderSearchTrialPlayEventsResponse",
+      "schema_ref": "FundProviderSearchTrialPlayEventsResponse"
+    }
+  ],
+  "tags": [
+    "Trial Play (beta)"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}
