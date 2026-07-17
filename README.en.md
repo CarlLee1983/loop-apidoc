@@ -132,7 +132,7 @@ npm run release:prepare -- --version 0.11.0 --summary "Add release workflow"
 # Complete release notes, run validation, and commit the metadata.
 git add . && git commit -m "release: publish 0.11.0"
 
-# Read the committed package version, fetch origin tags, then create and push the matching tag.
+# Read the committed package version, push HEAD to origin/main, then create and push the matching tag.
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 
 # Preview the tag operation only.
@@ -147,8 +147,8 @@ npm run tag:next -- --level minor
 ```
 
 `release:tag` intentionally has no bump level, preventing the git tag from
-diverging from the package version; Tagsmith still validates format, ordering,
-duplicates, and push safety.
+diverging from the package version. A real run pushes `HEAD` to `origin/main`
+before Tagsmith validates format, ordering, duplicates, and tag push safety.
 
 ---
 

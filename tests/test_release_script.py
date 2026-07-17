@@ -84,3 +84,22 @@ def test_tag_release_fetches_then_uses_package_version(tmp_path: Path):
             "--message", "loop-apidoc 0.10.0", "--dry-run",
         ],
     ]
+
+
+def test_tag_release_pushes_main_before_publishing_tag(tmp_path: Path):
+    _copy_release_files(tmp_path)
+    calls: list[list[str]] = []
+
+    def run(command: list[str], _cwd: Path) -> None:
+        calls.append(command)
+
+    tag_release(tmp_path, "loop-apidoc 0.10.0", dry_run=False, run=run)
+
+    assert calls == [
+        ["git", "fetch", "--tags", "origin"],
+        ["git", "push", "origin", "HEAD:main"],
+        [
+            "npx", "tagsmith", "create", "--set-version", "0.10.0", "--push",
+            "--message", "loop-apidoc 0.10.0",
+        ],
+    ]

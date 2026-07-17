@@ -4,7 +4,7 @@
 
 **Goal:** Provide a single, repeatable release preparation and tag workflow that keeps version metadata and git tags aligned.
 
-**Architecture:** `scripts/release.py` owns local release preparation and delegates tag validation/creation to Tagsmith. `prepare` accepts the target version once and updates all owned metadata; `tag` reads the committed package version and creates exactly that tag after fetching `origin` tags.
+**Architecture:** `scripts/release.py` owns local release preparation and delegates tag validation/creation to Tagsmith. `prepare` accepts the target version once and updates all owned metadata; `tag` reads the committed package version, pushes the committed `HEAD` to `origin/main`, then creates exactly that tag after fetching `origin` tags.
 
 **Tech Stack:** Python 3.11 standard library, uv, npm, Tagsmith, pytest.
 
@@ -57,7 +57,8 @@ def main(argv: list[str] | None = None) -> int:
 
 `prepare` validates clean git state and strict SemVer before writing, updates the
 declared version locations, runs `uv lock`, then writes a new note. `tag` runs
-`git fetch --tags origin` and Tagsmith with `--set-version`.
+`git fetch --tags origin`, pushes `HEAD:main` on a real run, and calls Tagsmith
+with `--set-version`.
 
 - [ ] **Step 4: Re-run focused tests**
 

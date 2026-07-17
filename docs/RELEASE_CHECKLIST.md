@@ -72,8 +72,8 @@ Complete the notes, run the checks above, and commit the release metadata. Then
 use the package's committed version instead of manually choosing or checking a tag:
 
 ```bash
-# Fetches origin tags first, validates strict semver ordering and uniqueness,
-# creates an annotated tag for pyproject.toml's version, and pushes it.
+# Fetches origin tags first, pushes HEAD to origin/main, validates strict semver
+# ordering and uniqueness, then creates an annotated tag for pyproject.toml's version.
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 ```
 
