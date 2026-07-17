@@ -35,6 +35,17 @@ def test_default_ignores_cover_license_and_changelog(tmp_path: Path):
     assert sources["CHANGELOG.md"].status is ProcessingStatus.IGNORED
 
 
+def test_default_ignores_cover_normalize_html_snapshot_sidecar(tmp_path: Path):
+    """normalize-html-snapshot 自產的 .source.json provenance sidecar 不該成為來源。"""
+    (tmp_path / "page.md").write_text("# API", encoding="utf-8")
+    (tmp_path / "page.md.source.json").write_text('{"url": "x"}', encoding="utf-8")
+
+    sources = _scan(tmp_path)
+
+    assert sources["page.md"].status is ProcessingStatus.PENDING
+    assert sources["page.md.source.json"].status is ProcessingStatus.IGNORED
+
+
 def test_explicit_excludes_add_to_defaults(tmp_path: Path):
     (tmp_path / "notes.md").write_text("scratch", encoding="utf-8")
     (tmp_path / "spec.md").write_text("# API", encoding="utf-8")

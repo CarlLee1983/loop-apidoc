@@ -23,6 +23,9 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
     "CONTRIBUTING*",
     ".DS_Store",
     ".git/*",
+    # normalize-html-snapshot writes this provenance sidecar next to its .md output;
+    # it is the tool's own bookkeeping, never source evidence.
+    "*.source.json",
 )
 
 
