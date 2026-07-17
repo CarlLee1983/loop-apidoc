@@ -103,6 +103,7 @@ class ResponseEntry(_Lax):
 
 class EndpointDetailInput(_Lax):
     method: str | None = None
+    methods: list[str] | None = None
     path: str | None = None
     # null-path(webhook/callback)端點的跨檔身份鍵 —— 見 agentcli/cross_file.py。
     # 是否必填由 source_guard.summary_violations 依 path 是否為 null 決定。

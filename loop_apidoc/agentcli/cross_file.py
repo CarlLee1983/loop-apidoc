@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from loop_apidoc.agentcli.extraction import _expand_methods
+
 
 def _entries(payload: dict | None, section: str) -> list[dict]:
     if not isinstance(payload, dict):
@@ -61,8 +63,8 @@ def _names(payload: dict, section: str) -> set[str]:
 
 
 def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> list[str]:
-    expected = len(_entries(inventory, "endpoints"))
-    actual = len(endpoints)
+    expected = len(_expand_methods(_entries(inventory, "endpoints")))
+    actual = sum(len(_expand_methods([endpoint])) for _, endpoint in endpoints)
     if expected == actual:
         return []
     return [
@@ -80,11 +82,12 @@ def _identity_set_violations(
     by `_count_violations`, so this only has to answer "which identity is on exactly
     one side"."""
     inventory_keys = {
-        key for key in (_key(e) for e in _entries(inventory, "endpoints"))
+        key for key in (_key(e) for e in _expand_methods(_entries(inventory, "endpoints")))
         if key is not None
     }
     keyed_endpoints = [
-        (name, ep) for name, ep in endpoints if _key(ep) is not None
+        (name, ep) for name, endpoint in endpoints
+        for ep in _expand_methods([endpoint]) if _key(ep) is not None
     ]
     file_keys = {_key(ep) for _, ep in keyed_endpoints}
 
@@ -104,10 +107,11 @@ def _identity_set_violations(
 def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     seen: dict[str, list[str]] = {}
     for name, endpoint in endpoints:
-        key = _key(endpoint)
-        if key is None:
-            continue
-        seen.setdefault(key, []).append(name)
+        for expanded in _expand_methods([endpoint]):
+            key = _key(expanded)
+            if key is None:
+                continue
+            seen.setdefault(key, []).append(name)
     return [
         f"{', '.join(sorted(files))}: 同一端點 {key} 被寫進多個檔案"
         "(兩個 subagent 寫了同一個端點,另一個端點可能因此沒人寫)"

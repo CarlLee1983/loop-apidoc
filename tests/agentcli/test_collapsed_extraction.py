@@ -29,6 +29,16 @@ def test_inventory_split_maps_each_stage():
     assert "webhooks" in answers["10"]
 
 
+def test_inventory_to_stage_answers_expands_methods_to_single_method_entries():
+    answers = inventory_to_stage_answers({"endpoints": [
+        {"methods": ["GET", "POST"], "path": "/free-spin", "summary": "Free spin"}
+    ]})
+
+    payload = extract_json_block(answers["05"])
+    assert [entry["method"] for entry in payload["endpoints"]] == ["GET", "POST"]
+    assert all("methods" not in entry for entry in payload["endpoints"])
+
+
 def test_title_surfaced_in_stage_00():
     answers = inventory_to_stage_answers({**_INVENTORY, "title": "Acme Pay API"})
     assert answers["00"] == "Acme Pay API"

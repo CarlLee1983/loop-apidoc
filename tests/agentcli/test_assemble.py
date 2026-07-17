@@ -94,6 +94,19 @@ def test_build_extraction_from_files_produces_stage_and_endpoint_artifacts(tmp_p
     assert json.loads(ep06[0].answer)["path"] == "/ping"
 
 
+def test_build_extraction_from_files_expands_multi_method_endpoint_details(tmp_path):
+    store = ExtractionStore(tmp_path / "store")
+    detail = {**_ENDPOINT, "methods": ["GET", "POST"]}
+    detail.pop("method")
+
+    extraction = build_extraction_from_files(
+        _INVENTORY, [json.dumps(detail, ensure_ascii=False)], store)
+
+    ep06 = [a for a in extraction.artifacts if a.stage_id == "06"]
+    assert [json.loads(artifact.answer)["method"] for artifact in ep06] == ["GET", "POST"]
+    assert all("methods" not in json.loads(artifact.answer) for artifact in ep06)
+
+
 # ── Task 2: run_assemble_pipeline ───────────────────────────────────────────
 
 
