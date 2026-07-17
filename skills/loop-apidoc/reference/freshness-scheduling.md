@@ -1,7 +1,7 @@
 # Freshness scheduling gate
 
 A cheap gate so a scheduled re-check can skip extraction when sources are unchanged.
-Fingerprinting and comparison cost a hash and an HTTP HEAD/GET, not a model call —
+Fingerprinting and comparison cost a hash and a conditional HTTP GET, not a model call —
 pay for extraction only when something actually moved.
 
 ## Baseline: record a fingerprint after adoption
