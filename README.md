@@ -179,6 +179,20 @@ uv run loop-apidoc related-url-pages \
 Markdown；命令會寫出帶原始 URL 與 SHA-256 的 `.source.json` provenance sidecar。HTML
 本身也會在 manifest 中列為受支援格式。
 
+若 URL 本身就是 Swagger 2.0 或 OpenAPI 3.x JSON／YAML，請先把它固定為本機來源，而不是
+走 HTML 導覽流程：
+
+```bash
+uv run loop-apidoc snapshot-openapi-url \
+  --url "https://example.com/openapi.json" \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json \
+  --confirmed-by-user
+```
+
+此命令只下載一次，驗證規格宣告後寫入原始位元組、SHA-256 與 `method: direct` 的 coverage
+ledger；既有快照或 coverage 不會被覆寫。後續 `manifest` 與擷取工作一律讀取該本機檔案。
+
 ### Codex 與 Claude Code 的模型分工
 
 skill 不綁定特定模型：由宿主將快速模型用於候選頁路由、一般模型用於受限的單頁擷取、

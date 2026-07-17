@@ -199,6 +199,36 @@ def cache_url_entry(
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / 1 個入口頁，未送入模型")
 
 
+@app.command(name="snapshot-openapi-url")
+def snapshot_openapi_url_command(
+    url: str = typer.Option(..., "--url", help="直接回傳 OpenAPI JSON/YAML 的公開 URL"),
+    sources: Path = typer.Option(..., "--sources", help="不可變本機來源快照目錄"),
+    coverage: Path = typer.Option(..., "--coverage", help="輸出的單一 URL coverage.json"),
+    filename: str | None = typer.Option(None, "--filename", help="快照檔名；預設取 URL 檔名"),
+    confirmed_by_user: bool = typer.Option(False, "--confirmed-by-user", help="標記 URL scope 已由使用者確認"),
+    max_bytes: Annotated[int, typer.Option("--max-bytes", min=1)] = 5 * 1024 * 1024,
+) -> None:
+    """下載單一 OpenAPI JSON/YAML 為來源快照與 coverage ledger。"""
+    from loop_apidoc.openapi_snapshot import OpenApiSnapshotError, snapshot_openapi_url
+
+    try:
+        result = snapshot_openapi_url(
+            url,
+            sources=sources,
+            coverage_output=coverage,
+            filename=filename,
+            confirmed_by_user=confirmed_by_user,
+            max_bytes=max_bytes,
+        )
+    except OpenApiSnapshotError as exc:
+        typer.echo(f"snapshot-openapi-url error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        f"OpenAPI snapshot 已寫入 {result.snapshot_path}；SHA-256 {result.sha256}；"
+        f"coverage 已寫入 {result.coverage_path}"
+    )
+
+
 @app.command(name="normalize-html-snapshot")
 def normalize_html_snapshot_command(
     input: Path = typer.Option(..., "--input", exists=True, readable=True, help="已下載的 HTML 快照"),
