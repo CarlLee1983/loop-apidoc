@@ -36,6 +36,9 @@ from pydantic import (
 # They are legitimate English keys — not the localized-key mistake this guard
 # targets — so tolerate them rather than hard-rejecting before the run dir exists.
 _TOLERATED_KEYS = frozenset({"location", "schema", "enum"})
+_SUPPORTED_HTTP_METHODS = frozenset({
+    "GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE",
+})
 
 
 class _StrictEntry(BaseModel):
@@ -95,6 +98,15 @@ class _MethodBearingInput(_Lax):
     method: str | None = None
     methods: list[str] | None = None
 
+    @field_validator("method", mode="before")
+    @classmethod
+    def _validate_method(cls, value: Any) -> Any:
+        if value is None:
+            return value
+        if value not in _SUPPORTED_HTTP_METHODS:
+            raise ValueError("must be a canonical supported HTTP method")
+        return value
+
     @field_validator("methods", mode="before")
     @classmethod
     def _validate_methods(cls, value: Any) -> Any:
@@ -105,6 +117,8 @@ class _MethodBearingInput(_Lax):
             raise ValueError("must be a non-empty list of non-blank strings")
         if len({method.upper() for method in value}) != len(value):
             raise ValueError("must not contain duplicate methods")
+        if any(method not in _SUPPORTED_HTTP_METHODS for method in value):
+            raise ValueError("must contain only canonical supported HTTP methods")
         return value
 
 

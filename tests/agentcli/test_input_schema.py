@@ -104,6 +104,44 @@ def test_invalid_multi_method_inventory_entry_is_rejected(tmp_path):
     assert "endpoints[0].methods" in str(exc.value)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("method", "BOGUS"), ("method", " GET "),
+     ("methods", ["GET", "BOGUS"]), ("methods", ["GET", " POST "])],
+)
+def test_noncanonical_endpoint_http_methods_are_rejected(tmp_path, field, value):
+    bad = json.loads(json.dumps(_ENDPOINT))
+    bad.pop("method")
+    bad[field] = value
+    extraction = tmp_path / "x"
+    _write(extraction, endpoint=bad)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "ep0.json" in str(exc.value)
+    assert field in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("method", "BOGUS"), ("method", " GET "),
+     ("methods", ["GET", "BOGUS"]), ("methods", ["GET", " POST "])],
+)
+def test_noncanonical_inventory_http_methods_are_rejected(tmp_path, field, value):
+    bad = json.loads(json.dumps(_INVENTORY))
+    bad["endpoints"][0].pop("method")
+    bad["endpoints"][0][field] = value
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=bad)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "inventory.json" in str(exc.value)
+    assert field in str(exc.value)
+
+
 def test_generator_supported_param_field_keys_are_allowed(tmp_path):
     # 產生器(openapi.py)會讀 param/field 上的 enum/location/schema 作為 in/type 的
     # 後備鍵;這些是合法 English 鍵(非本地化錯誤),嚴格守門不可誤擋。
