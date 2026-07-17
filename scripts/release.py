@@ -119,6 +119,8 @@ def tag_release(root: Path, message: str, *, dry_run: bool, run: RunCommand = _r
     if dry_run:
         command.append("--dry-run")
     run(["git", "fetch", "--tags", "origin"], root)
+    if not dry_run:
+        run(["git", "push", "origin", "HEAD:main"], root)
     run(command, root)
 
 

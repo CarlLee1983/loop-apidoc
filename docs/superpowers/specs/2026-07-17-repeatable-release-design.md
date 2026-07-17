@@ -24,7 +24,8 @@ remote tag through Tagsmith without manually inspecting remote tags.
 2. The maintainer fills in the release notes as needed, runs validation, and
    commits the resulting release metadata.
 3. `tag --message TEXT [--dry-run]` reads the package version, requires a clean
-   worktree, fetches tags from `origin`, and invokes Tagsmith with
+   worktree, fetches tags from `origin`, pushes `HEAD` to `origin/main` on a
+   real run, and invokes Tagsmith with
    `--set-version X.Y.Z --push`. Tagsmith owns format, ordering, duplicate, and
    remote-push protection.
 

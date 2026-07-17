@@ -129,7 +129,7 @@ npm run release:prepare -- --version 0.11.0 --summary "新增發佈流程"
 # 補齊 release notes，執行完整驗證後，提交 metadata
 git add . && git commit -m "release: publish 0.11.0"
 
-# 讀取 pyproject.toml 的已提交版本，抓取 origin tags 後以 Tagsmith 建立並推送相同 tag
+# 讀取 pyproject.toml 的已提交版本，先推送 HEAD 到 origin/main，再以 Tagsmith 建立相同 tag
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 
 # 只預覽 tag 動作
@@ -143,8 +143,8 @@ npm ci
 npm run tag:next -- --level minor
 ```
 
-`release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；Tagsmith 負責 tag 格式、順序、
-重複與推送保護。
+`release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；正式執行會先推送
+`HEAD` 至 `origin/main`，再由 Tagsmith 負責 tag 格式、順序、重複與推送保護。
 
 ---
 
