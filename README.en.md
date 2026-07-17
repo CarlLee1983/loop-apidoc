@@ -102,7 +102,7 @@ artifacts stay out of agent context and agent handoffs to reduce token use. This
 delivery policy and does not change CLI source grounding, validation, or the compatible run
 directory structure.
 
-Release notes: [`0.9.3`](docs/RELEASE_NOTES_0.9.3.md).
+Release notes: [`0.10.0`](docs/RELEASE_NOTES_0.10.0.md).
 
 ---
 
@@ -182,6 +182,21 @@ HTML can be converted into supported Markdown with
 `normalize-html-snapshot --input page.html --url ... --output sources/page.md`; the command
 writes a `.source.json` provenance sidecar carrying the original URL and SHA-256. HTML
 itself is also listed as a supported format in the manifest.
+
+When a URL itself is a Swagger 2.0 or OpenAPI 3.x JSON/YAML document, snapshot it as a local
+source instead of using the HTML navigation flow:
+
+```bash
+uv run loop-apidoc snapshot-openapi-url \
+  --url "https://example.com/openapi.json" \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json \
+  --confirmed-by-user
+```
+
+The command downloads once, validates the declaration, then writes the original bytes, SHA-256,
+and a `method: direct` coverage ledger. Existing snapshots and coverage ledgers are never
+overwritten; subsequent manifest and extraction work reads only the local file.
 
 ### Model division in Codex and Claude Code
 
