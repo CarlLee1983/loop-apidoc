@@ -1,5 +1,5 @@
 {
-  "_note": "來源為 OpenAPI 3.0.4；27 個 operation 均未提供 request/response example，且未提供 operational 資訊，忠實保留為 warning。",
+  "_note": "來源為 OpenAPI 3.0.4；27 個 operation 均未提供 request/response example，且未提供 concrete server URL 與 operational 資訊，忠實保留為 warning。",
   "target_status": "PASS",
   "current_status": "PASS",
   "must_validate": {
@@ -9,7 +9,7 @@
     "examples_present": true
   },
   "current_issue_classes": {
-    "REQUIRED_INFO_MISSING.warning": 28
+    "REQUIRED_INFO_MISSING.warning": 29
   },
-  "acceptable_warnings": "27× endpoint 缺 request/response example，以及 1× 缺 rate limit/timeout/retry 等 operational 資訊；原始 OpenAPI 未提供 example/examples，產出的 curl/TypeScript/Python 範例保留 placeholder。"
+  "acceptable_warnings": "27× endpoint 缺 request/response example、1× 缺 concrete server URL，以及 1× 缺 rate limit/timeout/retry 等 operational 資訊；原始 OpenAPI 未提供 example/examples，產出的 curl/TypeScript/Python 範例保留 placeholder。"
 }
