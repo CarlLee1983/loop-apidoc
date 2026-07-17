@@ -1,0 +1,19 @@
+{
+  "_note": "Legacy PDF fixture. The documented absence of a concrete API URL and endpoint examples remains visible as completeness warnings; no server URL or examples are invented.",
+  "target_status": "PASS",
+  "current_status": "PASS",
+  "must_validate": {
+    "openapi_3_1_valid": true,
+    "provenance_covers_core": true,
+    "integration_contract_present": true,
+    "examples_present": true
+  },
+  "current_issue_classes": {
+    "REQUIRED_INFO_MISSING.warning": 19
+  },
+  "acceptable_warnings": "18 operations lack a complete request/response example in the source (including expanded GET/POST FreeSpin operations), plus one servers warning because the PDF supplies only <API URL> placeholders.",
+  "observations": [
+    "Five FreeSpin endpoint details use methods: [GET, POST], expanding 20 fixture files into 25 OpenAPI operations.",
+    "Key is a documented MD5 request-signing mechanism in integration.crypto; it is not represented as an OpenAPI securityScheme because the source omits its transport location and scheme type."
+  ]
+}

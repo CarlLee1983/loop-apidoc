@@ -1,0 +1,209 @@
+{
+  "title": "JiLi 吉利 API 規格書",
+  "version": "1.0.52",
+  "overview": "JiLi 吉利 API 規格書。",
+  "environments": [
+    {
+      "name": "API URL",
+      "base_url": null,
+      "version": null,
+      "source": "JiLi_zh-tw.pdf p.8, p.9"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "Key",
+      "type": null,
+      "location": null,
+      "details": "驗證參數；Key = {6 個任意字元} + MD5(所有請求參數串 + KeyG) + {6 個任意字元}，KeyG = MD5(DateTime.Now.ToString(\"yyMMd\") + AgentId + AgentKey)。",
+      "source": "JiLi_zh-tw.pdf p.6-p.8"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/Login",
+      "summary": "登入",
+      "source": "JiLi_zh-tw.pdf p.9",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/LoginWithoutRedirect",
+      "summary": "回傳登入網址",
+      "source": "JiLi_zh-tw.pdf p.10",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/CreateMember",
+      "summary": "建立帳號",
+      "source": "JiLi_zh-tw.pdf p.11",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/KickMember",
+      "summary": "登出遊戲",
+      "source": "JiLi_zh-tw.pdf p.11",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/KickMemberAll",
+      "summary": "登出遊戲 ( 全踢或依遊戲 )",
+      "source": "JiLi_zh-tw.pdf p.12",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/GetMemberInfo",
+      "summary": "查詢會員狀態",
+      "source": "JiLi_zh-tw.pdf p.13",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/GetOnlineMember",
+      "summary": "查詢所有線上玩家帳號",
+      "source": "JiLi_zh-tw.pdf p.15",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/CheckTransferByTransactionId",
+      "summary": "查詢一筆額度轉移紀錄",
+      "source": "JiLi_zh-tw.pdf p.16",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/GetTransferRecordByTime",
+      "summary": "查詢額度轉移紀錄",
+      "source": "JiLi_zh-tw.pdf p.18",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/GetBetRecordByTime",
+      "summary": "查詢遊戲紀錄 ( 依時間範圍 )",
+      "source": "JiLi_zh-tw.pdf p.20",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/GetGameList",
+      "summary": "查詢遊戲清單",
+      "source": "JiLi_zh-tw.pdf p.25",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/GetGameDetailUrl",
+      "summary": "取得注單詳細結果連結",
+      "source": "JiLi_zh-tw.pdf p.26",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/GetFishDetail",
+      "summary": "查詢魚機細單",
+      "source": "JiLi_zh-tw.pdf p.27",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/ExchangeTransferByAgentId",
+      "summary": "額度轉移 ( 比值綁定 AgentId)",
+      "source": "JiLi_zh-tw.pdf p.28",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/GetMustHitBy",
+      "summary": "查詢 MustHitBy",
+      "source": "JiLi_zh-tw.pdf p.31",
+      "server": null
+    },
+    {
+      "path": "/CreateFreeSpin",
+      "summary": "給予玩家免費遊戲局數",
+      "source": "JiLi_zh-tw.pdf p.34",
+      "server": null,
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/GetFreeSpinRecordSummary",
+      "summary": "查詢 總覽 FreeSpin",
+      "source": "JiLi_zh-tw.pdf p.36",
+      "server": null,
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/GetFreeSpinSendDetail",
+      "summary": "查詢 已派送細節 FreeSpin",
+      "source": "JiLi_zh-tw.pdf p.38",
+      "server": null,
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/GetFreeSpinRecordByTime",
+      "summary": "查詢 遊戲紀錄 FreeSpin",
+      "source": "JiLi_zh-tw.pdf p.40",
+      "server": null,
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/GetFreeSpinDashflow",
+      "summary": "查詢 已使用紀錄 FreeSpin",
+      "source": "JiLi_zh-tw.pdf p.43",
+      "server": null,
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    }
+  ],
+  "schemas": [],
+  "errors": [],
+  "operational": [
+    {
+      "topic": "所有請求必須參數",
+      "detail": "所有請求需要包含 AgentId（代理編號）與 Key（驗證參數）。",
+      "source": "JiLi_zh-tw.pdf p.6"
+    },
+    {
+      "topic": "POST 請求格式",
+      "detail": "若使用 HTTP POST 請求，請用 x-www-form-urlencoded 傳遞參數。",
+      "source": "JiLi_zh-tw.pdf p.6"
+    },
+    {
+      "topic": "回應格式",
+      "detail": "所有回應包含 ErrorCode、Message、Data；遊戲商回應皆為 JSON 格式。",
+      "source": "JiLi_zh-tw.pdf p.6"
+    },
+    {
+      "topic": "已棄用 API",
+      "detail": "GetBetRecordByUuid 與 GetBetRecordSummary 標示為已棄用，未列為 active endpoints。",
+      "source": "JiLi_zh-tw.pdf p.24, p.30"
+    }
+  ],
+  "missing": [
+    "實際 API base URL 未提供；文件僅使用 <API URL> 或 <API_URL> 佔位符",
+    "HTTP response status 未提供",
+    "安全機制的 type 與傳送位置未明示",
+    "可重用具名 request/response schema 名稱未提供"
+  ]
+}
