@@ -58,6 +58,52 @@ wrapper that branches on the exit code, runs a caller-supplied `REPARSE_CMD` on 
 and then refreshes the baseline with `record-fingerprint --force`. Point `REPARSE_CMD` at
 your own re-extraction step (the skill's steps 2–8).
 
+## Batch scan (many docsets)
+
+`check-freshness` above checks one docset per invocation. Once you're scheduling
+several docsets, `check-freshness-batch` collapses one scheduled pass over all of
+them into a single aggregated report instead of one cron line per docset.
+
+Point it at a watchlist file (default name `freshness-watchlist.json`):
+
+```json
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "label": "newebpay-mpg",
+      "fingerprint": "runs/newebpay/source-fingerprint.json",
+      "sources": "sources/newebpay",
+      "run_dir": "runs/newebpay/latest"
+    }
+  ]
+}
+```
+
+`label` and `fingerprint` are required; `sources` and `run_dir` are optional (mirroring
+`check-freshness`'s own `--sources`/`--run-dir` inputs). Relative paths in `fingerprint`,
+`sources`, and `run_dir` resolve against the watchlist file's own directory, not the
+current working directory.
+
+```bash
+<APIDOC> check-freshness-batch --watchlist "<path>" [--json] [--report-dir "<dir>"]
+```
+
+`--report-dir` writes `freshness-scan.{json,md}` — one file summarizing every item's
+result, instead of reading N separate `check-freshness` outputs.
+
+### Aggregate exit-code contract
+
+- **`0` all unchanged** → stop. Nothing to re-run.
+- **`1` any changed** → re-run extraction for the changed items (same as a single
+  `check-freshness` returning `1`).
+- **`2` any inconclusive/error** → alert a human for those items.
+
+A per-item failure (source unreachable, fingerprint unreadable, etc.) does **not**
+abort the batch — it is recorded as that item's `error` status and the scan continues
+through the rest of the watchlist. A malformed watchlist file itself, however, fails
+loud (exit `2`) before any item is scanned.
+
 ## v1 limits
 
 - HTML sources are fingerprinted by raw-body hash; there is no content normalization
