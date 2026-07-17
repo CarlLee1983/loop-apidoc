@@ -1,0 +1,30 @@
+{
+  "method": "GET",
+  "path": "/betDetailUrl",
+  "source": "transfer-operator.swagger.json#/paths/~1betDetailUrl/get",
+  "parameters": [
+    {
+      "name": "betDetailUrl",
+      "in": "query",
+      "type": "string",
+      "required": true,
+      "description": "The URL for the fund provider site to redirect the player to the detail page of the specific bet."
+    }
+  ],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "Bet Information"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

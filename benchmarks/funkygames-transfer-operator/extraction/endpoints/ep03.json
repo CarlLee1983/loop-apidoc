@@ -1,0 +1,44 @@
+{
+  "method": "GET",
+  "path": "/IngameUrl",
+  "source": "transfer-operator.swagger.json#/paths/~1IngameUrl/get",
+  "parameters": [
+    {
+      "name": "IngameUrl",
+      "in": "query",
+      "type": "string",
+      "required": true,
+      "description": "The destination for operator to redirect player to the game."
+    },
+    {
+      "name": "token",
+      "in": "query",
+      "type": "string",
+      "required": true,
+      "description": "The token for player to enter the game."
+    },
+    {
+      "name": "redirectUrl",
+      "in": "query",
+      "type": "string",
+      "required": null,
+      "description": "If your site need to redirect to a specified URL, the parameter redirectUrl is necessary for overwriting the original behavior of Home/Back button e.g. close window or go to the previous page. Calling without this parameter will keep the original behavior."
+    }
+  ],
+  "request": null,
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": null,
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "Launch game"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

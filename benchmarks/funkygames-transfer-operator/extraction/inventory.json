@@ -1,0 +1,3161 @@
+{
+  "title": "Funky API Document for Transfer Operator",
+  "version": null,
+  "overview": "",
+  "environments": [],
+  "security_schemes": [],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Game/GetGameList",
+      "summary": "Get Game List API",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1GetGameList/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Game/GetLobbyGameList",
+      "summary": "Get Lobby Game List API",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1GetLobbyGameList/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Game/LaunchGame",
+      "summary": "Launch Game API",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/IngameUrl",
+      "summary": "In Game",
+      "source": "transfer-operator.swagger.json#/paths/~1IngameUrl/get",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Wallet/GetBalance",
+      "summary": "Get Balance(Retired)",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Wallet/GetBalanceByCurrency",
+      "summary": "Get Balance by Currency",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalanceByCurrency/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Wallet/Deposit",
+      "summary": "Deposit",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Wallet/Withdraw",
+      "summary": "Withdraw",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1Withdraw/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Wallet/CheckTransaction",
+      "summary": "CheckTransaction",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1CheckTransaction/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/Bet/GetBetDetail",
+      "summary": "Get Bet Detail",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post",
+      "server": null
+    },
+    {
+      "method": "GET",
+      "path": "/betDetailUrl",
+      "summary": "Bet Detail",
+      "source": "transfer-operator.swagger.json#/paths/~1betDetailUrl/get",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyReportUrl}/Funky/Report/GetBetList",
+      "summary": "Betting List Report API",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyReportUrl}/Funky/Report/GetBetListByPlayer",
+      "summary": "Betting List Report API",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetListByPlayer/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/User/AddVoucher",
+      "summary": "Add Voucher",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1AddVoucher/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/User/AddVouchers",
+      "summary": "Add Vouchers",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/User/DeleteVoucher",
+      "summary": "Delete Voucher",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1DeleteVoucher/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/User/GetVouchers",
+      "summary": "Get Vouchers",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/User/GetVoucherStakes",
+      "summary": "Get Supported Voucher Stakes",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/GetSupportedTrialPlayLevels",
+      "summary": "Get Supported Trial Play Levels",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1GetSupportedTrialPlayLevels/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/CreateTrialPlayEvent",
+      "summary": "Create Trial Play Event",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/GetTrialPlayEvent",
+      "summary": "Get Trial Play Event",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1GetTrialPlayEvent/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/CloseTrialPlayEvent",
+      "summary": "Close Trial Play Event",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/BindTrialPlayMembers",
+      "summary": "Bind Trial Play Members",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1BindTrialPlayMembers/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/SearchTrialPlayMembers",
+      "summary": "Search Trial Play Members",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1SearchTrialPlayMembers/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/SearchTrialPlayInfoByPlayer",
+      "summary": "Search Trial Play Info By Player",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1SearchTrialPlayInfoByPlayer/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/SearchTrialPlayEvents",
+      "summary": "Search Trial Play Events",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1SearchTrialPlayEvents/post",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/{funkyUrl}/Funky/TrialPlay/FreezeTrialPlayMember",
+      "summary": "Freeze Trial Play Member",
+      "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1FreezeTrialPlayMember/post",
+      "server": null
+    }
+  ],
+  "schemas": [
+    {
+      "name": "BetsInfo",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "statementDate",
+          "type": "string",
+          "required": false,
+          "description": "Format: yyyy-MM-dd<br/>Statement date for settlement which includes date part only."
+        },
+        {
+          "name": "betTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss Default is PlaceBet time, if SearchTimeType is 1, then Settlement time."
+        },
+        {
+          "name": "settleTime",
+          "type": "string",
+          "required": false,
+          "description": "SettleTime"
+        },
+        {
+          "name": "refNo",
+          "type": "string",
+          "required": false,
+          "description": "The reference number of the bet which is always unique."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "R: Running<br/>W: Won<br/>L: Loss<br/>C: Canceled<br/>D: Draw<br/>V: Voided"
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "betAmount",
+          "type": "number",
+          "required": false,
+          "description": "Stake"
+        },
+        {
+          "name": "effectiveStake",
+          "type": "number",
+          "required": false,
+          "description": "Effective stake.<br/>For some games, game result might be TIE and the stake won’t equal to effective stake.<br/>In fishing games, player might play more than the initial stake."
+        },
+        {
+          "name": "winloss",
+          "type": "number",
+          "required": false,
+          "description": "winLoss = winAmount - stake<br/>PlayerA placed $10 to an bet option which odds was 1.95, and he wins then gets $19.5(winAmount), therefore his winloss was $19.5-$10=$9.5.<br/>PlayerB placed $10 to an bet option which odds was 1.95, and he loss then gets $0 (winAmount), therefore the winloss of the bet is $0-$10=$-10"
+        },
+        {
+          "name": "isTransferGame",
+          "type": "boolean",
+          "required": false,
+          "description": "IsTransferGame"
+        },
+        {
+          "name": "isVoucherBet",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the bet was placed using a voucher"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/BetsInfo"
+    },
+    {
+      "name": "BetsInfoByPlayer",
+      "fields": [
+        {
+          "name": "statementDate",
+          "type": "string",
+          "required": false,
+          "description": "Format: yyyy-MM-dd<br/>Statement date for settlement which includes date part only."
+        },
+        {
+          "name": "betTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss Default is PlaceBet time, if SearchTimeType is 1, then Settlement time."
+        },
+        {
+          "name": "settleTime",
+          "type": "string",
+          "required": false,
+          "description": "SettleTime"
+        },
+        {
+          "name": "refNo",
+          "type": "string",
+          "required": false,
+          "description": "The reference number of the bet which is always unique."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "R: Running<br/>W: Won<br/>L: Loss<br/>C: Canceled<br/>D: Draw<br/>V: Voided"
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "betAmount",
+          "type": "number",
+          "required": false,
+          "description": "Stake"
+        },
+        {
+          "name": "effectiveStake",
+          "type": "number",
+          "required": false,
+          "description": "Effective stake.<br/>For some games, game result might be TIE and the stake won’t equal to effective stake.<br/>In fishing games, player might play more than the initial stake."
+        },
+        {
+          "name": "winloss",
+          "type": "number",
+          "required": false,
+          "description": "winLoss = winAmount - stake<br/>PlayerA placed $10 to an bet option which odds was 1.95, and he wins then gets $19.5(winAmount), therefore his winloss was $19.5-$10=$9.5.<br/>PlayerB placed $10 to an bet option which odds was 1.95, and he loss then gets $0 (winAmount), therefore the winloss of the bet is $0-$10=$-10"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/BetsInfoByPlayer"
+    },
+    {
+      "name": "FundProviderAddVoucherRequest",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "voucherId",
+          "type": "string",
+          "required": true,
+          "description": "If player is using voucher, fill in the unique id of voucher."
+        },
+        {
+          "name": "fixStake",
+          "type": "number",
+          "required": true,
+          "description": "Fixed value of the voucher. If 0 or less is provided for certain types of vouchers, a minimum stake will be assigned by system. Please use GetVoucherStakes API to get supported stake values for the specified game and currency."
+        },
+        {
+          "name": "freeSpin",
+          "type": "integer",
+          "required": true,
+          "description": "Total available number of voucher."
+        },
+        {
+          "name": "effectiveDate",
+          "type": "string",
+          "required": true,
+          "description": "The voucher start effect time."
+        },
+        {
+          "name": "expiredDate",
+          "type": "string",
+          "required": true,
+          "description": "The voucher expire time."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "Currency"
+        },
+        {
+          "name": "gameCodes[]",
+          "type": "array",
+          "required": true,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "Please contact operation team to get your event id"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderAddVoucherRequest"
+    },
+    {
+      "name": "FundProviderAddVoucherResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;<code>601</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderAddVoucherResponse"
+    },
+    {
+      "name": "FundProviderAddVouchersRequest",
+      "fields": [
+        {
+          "name": "data[].playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data[].voucherId",
+          "type": "string",
+          "required": true,
+          "description": "If player is using voucher, fill in the unique id of voucher."
+        },
+        {
+          "name": "data[].fixStake",
+          "type": "number",
+          "required": true,
+          "description": "Fixed value of the voucher. If 0 or less is provided for certain types of vouchers, a minimum stake will be assigned by system. Please use GetVoucherStakes API to get supported stake values for the specified game and currency."
+        },
+        {
+          "name": "data[].freeSpin",
+          "type": "integer",
+          "required": true,
+          "description": "Total available number of voucher."
+        },
+        {
+          "name": "data[].effectiveDate",
+          "type": "string",
+          "required": true,
+          "description": "The voucher start effect time."
+        },
+        {
+          "name": "data[].expiredDate",
+          "type": "string",
+          "required": true,
+          "description": "The voucher expire time."
+        },
+        {
+          "name": "data[].currency",
+          "type": "string",
+          "required": true,
+          "description": "Currency"
+        },
+        {
+          "name": "data[].gameCodes[]",
+          "type": "array",
+          "required": true,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "data[].eventId",
+          "type": "string",
+          "required": true,
+          "description": "Please contact operation team to get your event id"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderAddVouchersRequest"
+    },
+    {
+      "name": "FundProviderAddVouchersResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "failVoucherIdList[]",
+          "type": "array",
+          "required": false,
+          "description": "FailList"
+        },
+        {
+          "name": "duplicateVoucherIdList[]",
+          "type": "array",
+          "required": false,
+          "description": "DuplicateList"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderAddVouchersResponse"
+    },
+    {
+      "name": "FundProviderBindTrialPlayMembersRequest",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "EventId"
+        },
+        {
+          "name": "memberList[]",
+          "type": "array",
+          "required": true,
+          "description": "List of <code>playerId</code> values to pre-register for the event."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderBindTrialPlayMembersRequest"
+    },
+    {
+      "name": "FundProviderBindTrialPlayMembersResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "failedList[]",
+          "type": "array",
+          "required": false,
+          "description": "FailedList"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderBindTrialPlayMembersResponse"
+    },
+    {
+      "name": "FundProviderCloseTrialPlayEventRequest",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "EventId"
+        },
+        {
+          "name": "freezeAllMembers",
+          "type": "boolean",
+          "required": false,
+          "description": "When <code>true</code>, sets all members under the event to <code>Frozen</code> while closing the event. Defaults to <code>false</code>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderCloseTrialPlayEventRequest"
+    },
+    {
+      "name": "FundProviderCloseTrialPlayEventResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderCloseTrialPlayEventResponse"
+    },
+    {
+      "name": "FundProviderCreateTrialPlayEventRequest",
+      "fields": [
+        {
+          "name": "eventName",
+          "type": "string",
+          "required": true,
+          "description": "EventName"
+        },
+        {
+          "name": "startTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "trialPlayTimes",
+          "type": "integer",
+          "required": true,
+          "description": "Number of granted Trial Play spins."
+        },
+        {
+          "name": "joinOption",
+          "type": "string",
+          "required": true,
+          "description": "How players join the Trial Play event.<br/><code>launch</code>: LaunchGame with eventId, players will automatically claim on first successful launch until it reaches maxMemberCount <br/><code>bind</code>: Call <code>BindTrialPlayMembers</code> to pre-register players before they can claim on launch."
+        },
+        {
+          "name": "maxMemberCount",
+          "type": "integer",
+          "required": true,
+          "description": "MaxMemberCount"
+        },
+        {
+          "name": "stakeOption",
+          "type": "string",
+          "required": true,
+          "description": "How stake is set on <code>CreateTrialPlayEvent</code>. <br/><code>Fixed</code>: send <code>currency</code> and <code>fixedStake</code>. <br/><code>Level</code>: send <code>stakeLevel</code> (<code>1</code>, <code>2</code>, or <code>3</code> only). Stake is resolved at claim from game and currency."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        },
+        {
+          "name": "stakeLevel",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderCreateTrialPlayEventRequest"
+    },
+    {
+      "name": "FundProviderCreateTrialPlayEventResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderCreateTrialPlayEventResponse"
+    },
+    {
+      "name": "FundProviderDeleteVoucherRequest",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "voucherId",
+          "type": "string",
+          "required": true,
+          "description": "If player is using voucher, fill in the unique id of voucher."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderDeleteVoucherRequest"
+    },
+    {
+      "name": "FundProviderDeleteVoucherResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderDeleteVoucherResponse"
+    },
+    {
+      "name": "FundProviderDepositRequest",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": true,
+          "description": "TxId"
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "isTestAccount",
+          "type": "boolean",
+          "required": true,
+          "description": "A flag indicates if the account is for testing or not.Default value set to false"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderDepositRequest"
+    },
+    {
+      "name": "FundProviderDepositResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "data.balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        },
+        {
+          "name": "data.playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data.currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "data.TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderDepositResponse"
+    },
+    {
+      "name": "FundProviderDepositResult",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderDepositResult"
+    },
+    {
+      "name": "FundProviderFreezeTrialPlayMemberRequest",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "EventId"
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderFreezeTrialPlayMemberRequest"
+    },
+    {
+      "name": "FundProviderFreezeTrialPlayMemberResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderFreezeTrialPlayMemberResponse"
+    },
+    {
+      "name": "FundProviderGameInfo",
+      "fields": [
+        {
+          "name": "gameProvider",
+          "type": "string",
+          "required": false,
+          "description": "Game provider."
+        },
+        {
+          "name": "gameType",
+          "type": "string",
+          "required": false,
+          "description": "Types of games.<br/>Default Value : 0 (all).<br/>View <a href='#tag/Game-Type-Table'>Game Type Table</a>."
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "regulations[]",
+          "type": "array",
+          "required": false,
+          "description": "Gambling license, e.g. \\\"IOM\\\", \\\"UK\\\"."
+        },
+        {
+          "name": "marginAdjustable",
+          "type": "boolean",
+          "required": false,
+          "description": "\"Indicates whether the margin/RTP is fixed or not.\""
+        },
+        {
+          "name": "suggestedViewWidth",
+          "type": "integer",
+          "required": false,
+          "description": "The suggested window/frame width."
+        },
+        {
+          "name": "suggestedViewHeight",
+          "type": "integer",
+          "required": false,
+          "description": "The suggested window/frame height."
+        },
+        {
+          "name": "supportedOrientation[]",
+          "type": "array",
+          "required": false,
+          "description": "Supported screen orientation, e.g. “Portrait”, “Landscape”."
+        },
+        {
+          "name": "responsive",
+          "type": "boolean",
+          "required": false,
+          "description": "RWD supported or not."
+        },
+        {
+          "name": "supportedLanguage[]",
+          "type": "array",
+          "required": false,
+          "description": "View <a href='#tag/Support-Language-List'>Support Language List</a>."
+        },
+        {
+          "name": "gameStatus",
+          "type": "string",
+          "required": false,
+          "description": "Ready<br/>Maintenance"
+        },
+        {
+          "name": "isNewGame",
+          "type": "boolean",
+          "required": false,
+          "description": "The game that operator has not integrated."
+        },
+        {
+          "name": "demoGameAvailable",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, a demo version of the game is available."
+        },
+        {
+          "name": "demoGameUrl",
+          "type": "string",
+          "required": false,
+          "description": "If DemoGameAvailable is true, it will have demoGameUrl."
+        },
+        {
+          "name": "supportVoucher",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, game support voucher."
+        },
+        {
+          "name": "supportNewVoucher",
+          "type": "boolean",
+          "required": false,
+          "description": "SupportNewVoucher"
+        },
+        {
+          "name": "supportTrialPlay",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, game supports Trial Play."
+        },
+        {
+          "name": "isTransferGame",
+          "type": "boolean",
+          "required": false,
+          "description": "IsTransferGame"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGameInfo"
+    },
+    {
+      "name": "FundProviderGetBalanceResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBalanceResponse"
+    },
+    {
+      "name": "FundProviderGetBalancecResult",
+      "fields": [
+        {
+          "name": "balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBalancecResult"
+    },
+    {
+      "name": "FundProviderGetBetDetailRequest",
+      "fields": [
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": true,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "refNo",
+          "type": "string",
+          "required": true,
+          "description": "The reference number of the bet which is always unique."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "lang",
+          "type": "string",
+          "required": true,
+          "description": "The language of the player.<br/>Will return English if the specified language code is not supported or recognized."
+        },
+        {
+          "name": "sourceIp",
+          "type": "string",
+          "required": false,
+          "description": "SourceIp"
+        },
+        {
+          "name": "location",
+          "type": "string",
+          "required": false,
+          "description": "SourceIp"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetDetailRequest"
+    },
+    {
+      "name": "FundProviderGetBetDetailResponse",
+      "fields": [
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>404</code>&nbsp;"
+        },
+        {
+          "name": "data.url",
+          "type": "string",
+          "required": false,
+          "description": "SourceIp"
+        },
+        {
+          "name": "data.beforeBalance",
+          "type": "number",
+          "required": false,
+          "description": "BeforeBalance"
+        },
+        {
+          "name": "data.afterBalance",
+          "type": "number",
+          "required": false,
+          "description": "AfterBalance"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetDetailResponse"
+    },
+    {
+      "name": "FundProviderGetBetListRequest",
+      "fields": [
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "If null, all currency's bet list will be returned."
+        },
+        {
+          "name": "startTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)"
+        },
+        {
+          "name": "searchTimeType",
+          "type": "integer",
+          "required": false,
+          "description": "0: Place bet time (default)<br/>1: Settlement time"
+        },
+        {
+          "name": "page",
+          "type": "integer",
+          "required": true,
+          "description": "Current page. \nPlease note that the page parameter starts from 1. If page = 0 is provided, the system will treat it the same as page = 1 and return identical results."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetListRequest"
+    },
+    {
+      "name": "FundProviderGetBetListResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "totalPage",
+          "type": "integer",
+          "required": false,
+          "description": "Total number of pages"
+        },
+        {
+          "name": "currentPage",
+          "type": "integer",
+          "required": false,
+          "description": "Current page. \nPlease note that the page parameter starts from 1. If page = 0 is provided, the system will treat it the same as page = 1 and return identical results."
+        },
+        {
+          "name": "pageSize",
+          "type": "integer",
+          "required": false,
+          "description": "PageSize"
+        },
+        {
+          "name": "rowCount",
+          "type": "integer",
+          "required": false,
+          "description": "RowCount"
+        },
+        {
+          "name": "data[].playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data[].statementDate",
+          "type": "string",
+          "required": false,
+          "description": "Format: yyyy-MM-dd<br/>Statement date for settlement which includes date part only."
+        },
+        {
+          "name": "data[].betTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss Default is PlaceBet time, if SearchTimeType is 1, then Settlement time."
+        },
+        {
+          "name": "data[].settleTime",
+          "type": "string",
+          "required": false,
+          "description": "SettleTime"
+        },
+        {
+          "name": "data[].refNo",
+          "type": "string",
+          "required": false,
+          "description": "The reference number of the bet which is always unique."
+        },
+        {
+          "name": "data[].status",
+          "type": "string",
+          "required": false,
+          "description": "R: Running<br/>W: Won<br/>L: Loss<br/>C: Canceled<br/>D: Draw<br/>V: Voided"
+        },
+        {
+          "name": "data[].gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "data[].gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "data[].currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "data[].betAmount",
+          "type": "number",
+          "required": false,
+          "description": "Stake"
+        },
+        {
+          "name": "data[].effectiveStake",
+          "type": "number",
+          "required": false,
+          "description": "Effective stake.<br/>For some games, game result might be TIE and the stake won’t equal to effective stake.<br/>In fishing games, player might play more than the initial stake."
+        },
+        {
+          "name": "data[].winloss",
+          "type": "number",
+          "required": false,
+          "description": "winLoss = winAmount - stake<br/>PlayerA placed $10 to an bet option which odds was 1.95, and he wins then gets $19.5(winAmount), therefore his winloss was $19.5-$10=$9.5.<br/>PlayerB placed $10 to an bet option which odds was 1.95, and he loss then gets $0 (winAmount), therefore the winloss of the bet is $0-$10=$-10"
+        },
+        {
+          "name": "data[].isTransferGame",
+          "type": "boolean",
+          "required": false,
+          "description": "IsTransferGame"
+        },
+        {
+          "name": "data[].isVoucherBet",
+          "type": "boolean",
+          "required": false,
+          "description": "Whether the bet was placed using a voucher"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetListResponse"
+    },
+    {
+      "name": "FundProviderGetBetsByPlayerRequest",
+      "fields": [
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "If null, all currency's bet list will be returned."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "startTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)"
+        },
+        {
+          "name": "searchTimeType",
+          "type": "integer",
+          "required": false,
+          "description": "0: Place bet time (default)<br/>1: Settlement time"
+        },
+        {
+          "name": "page",
+          "type": "integer",
+          "required": true,
+          "description": "Current page. \nPlease note that the page parameter starts from 1. If page = 0 is provided, the system will treat it the same as page = 1 and return identical results."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetsByPlayerRequest"
+    },
+    {
+      "name": "FundProviderGetBetsResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "totalPage",
+          "type": "integer",
+          "required": false,
+          "description": "Total number of pages"
+        },
+        {
+          "name": "currentPage",
+          "type": "integer",
+          "required": false,
+          "description": "Current page. \nPlease note that the page parameter starts from 1. If page = 0 is provided, the system will treat it the same as page = 1 and return identical results."
+        },
+        {
+          "name": "pageSize",
+          "type": "integer",
+          "required": false,
+          "description": "PageSize"
+        },
+        {
+          "name": "rowCount",
+          "type": "integer",
+          "required": false,
+          "description": "RowCount"
+        },
+        {
+          "name": "data[].statementDate",
+          "type": "string",
+          "required": false,
+          "description": "Format: yyyy-MM-dd<br/>Statement date for settlement which includes date part only."
+        },
+        {
+          "name": "data[].betTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss Default is PlaceBet time, if SearchTimeType is 1, then Settlement time."
+        },
+        {
+          "name": "data[].settleTime",
+          "type": "string",
+          "required": false,
+          "description": "SettleTime"
+        },
+        {
+          "name": "data[].refNo",
+          "type": "string",
+          "required": false,
+          "description": "The reference number of the bet which is always unique."
+        },
+        {
+          "name": "data[].status",
+          "type": "string",
+          "required": false,
+          "description": "R: Running<br/>W: Won<br/>L: Loss<br/>C: Canceled<br/>D: Draw<br/>V: Voided"
+        },
+        {
+          "name": "data[].gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "data[].gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "data[].currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "data[].betAmount",
+          "type": "number",
+          "required": false,
+          "description": "Stake"
+        },
+        {
+          "name": "data[].effectiveStake",
+          "type": "number",
+          "required": false,
+          "description": "Effective stake.<br/>For some games, game result might be TIE and the stake won’t equal to effective stake.<br/>In fishing games, player might play more than the initial stake."
+        },
+        {
+          "name": "data[].winloss",
+          "type": "number",
+          "required": false,
+          "description": "winLoss = winAmount - stake<br/>PlayerA placed $10 to an bet option which odds was 1.95, and he wins then gets $19.5(winAmount), therefore his winloss was $19.5-$10=$9.5.<br/>PlayerB placed $10 to an bet option which odds was 1.95, and he loss then gets $0 (winAmount), therefore the winloss of the bet is $0-$10=$-10"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetBetsResponse"
+    },
+    {
+      "name": "FundProviderGetGameListRequest",
+      "fields": [
+        {
+          "name": "gameType",
+          "type": "string",
+          "required": false,
+          "description": "Types of games.<br/>Default Value : 0 (all).<br/>View <a href='#tag/Game-Type-Table'>Game Type Table</a>."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetGameListRequest"
+    },
+    {
+      "name": "FundProviderGetGameListResponse",
+      "fields": [
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "gameList[].gameProvider",
+          "type": "string",
+          "required": false,
+          "description": "Game provider."
+        },
+        {
+          "name": "gameList[].gameType",
+          "type": "string",
+          "required": false,
+          "description": "Types of games.<br/>Default Value : 0 (all).<br/>View <a href='#tag/Game-Type-Table'>Game Type Table</a>."
+        },
+        {
+          "name": "gameList[].gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "gameList[].gameName",
+          "type": "string",
+          "required": false,
+          "description": "Will return the name in English if the no specified language translation for the game."
+        },
+        {
+          "name": "gameList[].regulations[]",
+          "type": "array",
+          "required": false,
+          "description": "Gambling license, e.g. \\\"IOM\\\", \\\"UK\\\"."
+        },
+        {
+          "name": "gameList[].marginAdjustable",
+          "type": "boolean",
+          "required": false,
+          "description": "\"Indicates whether the margin/RTP is fixed or not.\""
+        },
+        {
+          "name": "gameList[].suggestedViewWidth",
+          "type": "integer",
+          "required": false,
+          "description": "The suggested window/frame width."
+        },
+        {
+          "name": "gameList[].suggestedViewHeight",
+          "type": "integer",
+          "required": false,
+          "description": "The suggested window/frame height."
+        },
+        {
+          "name": "gameList[].supportedOrientation[]",
+          "type": "array",
+          "required": false,
+          "description": "Supported screen orientation, e.g. “Portrait”, “Landscape”."
+        },
+        {
+          "name": "gameList[].responsive",
+          "type": "boolean",
+          "required": false,
+          "description": "RWD supported or not."
+        },
+        {
+          "name": "gameList[].supportedLanguage[]",
+          "type": "array",
+          "required": false,
+          "description": "View <a href='#tag/Support-Language-List'>Support Language List</a>."
+        },
+        {
+          "name": "gameList[].gameStatus",
+          "type": "string",
+          "required": false,
+          "description": "Ready<br/>Maintenance"
+        },
+        {
+          "name": "gameList[].isNewGame",
+          "type": "boolean",
+          "required": false,
+          "description": "The game that operator has not integrated."
+        },
+        {
+          "name": "gameList[].demoGameAvailable",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, a demo version of the game is available."
+        },
+        {
+          "name": "gameList[].demoGameUrl",
+          "type": "string",
+          "required": false,
+          "description": "If DemoGameAvailable is true, it will have demoGameUrl."
+        },
+        {
+          "name": "gameList[].supportVoucher",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, game support voucher."
+        },
+        {
+          "name": "gameList[].supportNewVoucher",
+          "type": "boolean",
+          "required": false,
+          "description": "SupportNewVoucher"
+        },
+        {
+          "name": "gameList[].supportTrialPlay",
+          "type": "boolean",
+          "required": false,
+          "description": "If true, game supports Trial Play."
+        },
+        {
+          "name": "gameList[].isTransferGame",
+          "type": "boolean",
+          "required": false,
+          "description": "IsTransferGame"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetGameListResponse"
+    },
+    {
+      "name": "FundProviderGetLobbyGameListRequest",
+      "fields": [],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetLobbyGameListRequest"
+    },
+    {
+      "name": "FundProviderGetSupportedTrialPlayLevelsRequest",
+      "fields": [
+        {
+          "name": "gameCodes[]",
+          "type": "array",
+          "required": true,
+          "description": "One or more game codes to resolve supported stake levels for."
+        },
+        {
+          "name": "currencies[]",
+          "type": "array",
+          "required": true,
+          "description": "One or more currencies to resolve supported stake levels for (operator currency; mapped per fund provider rules)."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetSupportedTrialPlayLevelsRequest"
+    },
+    {
+      "name": "FundProviderGetSupportedTrialPlayLevelsResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "entries[].gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "entries[].currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "entries[].levels[].level",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "entries[].levels[].fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetSupportedTrialPlayLevelsResponse"
+    },
+    {
+      "name": "FundProviderGetTrialPlayEventRequest",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "EventId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetTrialPlayEventRequest"
+    },
+    {
+      "name": "FundProviderGetTrialPlayEventResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "data.eventName",
+          "type": "string",
+          "required": false,
+          "description": "EventName"
+        },
+        {
+          "name": "data.startTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "data.endTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "data.gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "data.trialPlayTimes",
+          "type": "integer",
+          "required": false,
+          "description": "Number of granted Trial Play spins."
+        },
+        {
+          "name": "data.joinOption",
+          "type": "string",
+          "required": false,
+          "description": "How players join the Trial Play event.<br/><code>launch</code>: LaunchGame with eventId, players will automatically claim on first successful launch until it reaches maxMemberCount <br/><code>bind</code>: Call <code>BindTrialPlayMembers</code> to pre-register players before they can claim on launch."
+        },
+        {
+          "name": "data.stakeOption",
+          "type": "string",
+          "required": false,
+          "description": "How stake is set on <code>CreateTrialPlayEvent</code>. <br/><code>Fixed</code>: send <code>currency</code> and <code>fixedStake</code>. <br/><code>Level</code>: send <code>stakeLevel</code> (<code>1</code>, <code>2</code>, or <code>3</code> only). Stake is resolved at claim from game and currency."
+        },
+        {
+          "name": "data.currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "data.fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        },
+        {
+          "name": "data.stakeLevel",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "data.maxMemberCount",
+          "type": "integer",
+          "required": false,
+          "description": "MaxMemberCount"
+        },
+        {
+          "name": "data.joinedCount",
+          "type": "integer",
+          "required": false,
+          "description": "JoinedCount"
+        },
+        {
+          "name": "data.eventStatus",
+          "type": "string",
+          "required": false,
+          "description": "Trial Play event state.<br/><code>Active</code>: event is open for claims within its schedule.<br/><code>Closed</code>: event was closed via <code>CloseTrialPlayEvent</code>; new claims are rejected."
+        },
+        {
+          "name": "data.createdOn",
+          "type": "string",
+          "required": false,
+          "description": "CreatedOn"
+        },
+        {
+          "name": "data.modifiedOn",
+          "type": "string",
+          "required": false,
+          "description": "ModifiedOn"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetTrialPlayEventResponse"
+    },
+    {
+      "name": "FundProviderGetVoucherStakesRequest",
+      "fields": [
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": true,
+          "description": "Specify game code to identify game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetVoucherStakesRequest"
+    },
+    {
+      "name": "FundProviderGetVoucherStakesResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;<code>605</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.supportedStakes[]",
+          "type": "array",
+          "required": false,
+          "description": "List of available voucher stake amounts supported for the specified game and currency."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetVoucherStakesResponse"
+    },
+    {
+      "name": "FundProviderGetVouchersRequest",
+      "fields": [
+        {
+          "name": "VoucherIdList[]",
+          "type": "array",
+          "required": true,
+          "description": "VoucherId list to query."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetVouchersRequest"
+    },
+    {
+      "name": "FundProviderGetVouchersResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data[].voucherId",
+          "type": "string",
+          "required": false,
+          "description": "The unique voucher Id in operator."
+        },
+        {
+          "name": "data[].playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data[].fixStake",
+          "type": "number",
+          "required": false,
+          "description": "Fixed value of the voucher. If 0 or less is provided for certain types of vouchers, a minimum stake will be assigned by system. Please use GetVoucherStakes API to get supported stake values for the specified game and currency."
+        },
+        {
+          "name": "data[].effectiveDate",
+          "type": "string",
+          "required": false,
+          "description": "The voucher start effect time."
+        },
+        {
+          "name": "data[].expireDate",
+          "type": "string",
+          "required": false,
+          "description": "ExpireDate"
+        },
+        {
+          "name": "data[].freeSpin",
+          "type": "integer",
+          "required": false,
+          "description": "Total available number of voucher."
+        },
+        {
+          "name": "data[].placedFreeSpin",
+          "type": "integer",
+          "required": false,
+          "description": "PlacedFreeSpin"
+        },
+        {
+          "name": "data[].status",
+          "type": "integer",
+          "required": false,
+          "description": "Active/Deactive voucher status."
+        },
+        {
+          "name": "data[].gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "data[].currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderGetVouchersResponse"
+    },
+    {
+      "name": "FundProviderLaunchGameRequest",
+      "fields": [
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": true,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "userName",
+          "type": "string",
+          "required": true,
+          "description": "The name that player prefers to show in game."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "required": true,
+          "description": "The language of the player.<br/>Will return English if the specified language code is not supported or recognized."
+        },
+        {
+          "name": "playerIp",
+          "type": "string",
+          "required": true,
+          "description": "Player’s IP at the moment.<br/>This is for preventing players from betting through VPN.<br/>***(Please enter the correct country’s IP for real players due to regional restrictions, API testing is not subject to this requirement)***"
+        },
+        {
+          "name": "sessionId",
+          "type": "string",
+          "required": true,
+          "description": "User session from platform, the unique ID when the player launch game. Max length is 300 characters."
+        },
+        {
+          "name": "redirectUrl",
+          "type": "string",
+          "required": true,
+          "description": "If your site need to redirect to a specified URL, the parameter redirectUrl is necessary for overwriting the original behavior of Home/Back button e.g. close window or go to the previous page.<br/>Calling without this parameter will keep the original behavior."
+        },
+        {
+          "name": "isTestAccount",
+          "type": "boolean",
+          "required": true,
+          "description": "A flag indicates if the account is for testing or not.Default value set to false"
+        },
+        {
+          "name": "disablePromotion",
+          "type": "boolean",
+          "required": true,
+          "description": "DisablePromotion"
+        },
+        {
+          "name": "maxBet",
+          "type": "number",
+          "required": false,
+          "description": "The maximum bet amount that player can place."
+        },
+        {
+          "name": "minBet",
+          "type": "number",
+          "required": false,
+          "description": "MinBet"
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderLaunchGameRequest"
+    },
+    {
+      "name": "FundProviderLaunchGameResponse",
+      "fields": [
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "data.gameUrl",
+          "type": "string",
+          "required": false,
+          "description": "The destination for operator to redirect player to the game."
+        },
+        {
+          "name": "data.token",
+          "type": "string",
+          "required": false,
+          "description": "The token for player to enter the game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderLaunchGameResponse"
+    },
+    {
+      "name": "FundProviderLaunchGameResult",
+      "fields": [
+        {
+          "name": "gameUrl",
+          "type": "string",
+          "required": false,
+          "description": "The destination for operator to redirect player to the game."
+        },
+        {
+          "name": "token",
+          "type": "string",
+          "required": false,
+          "description": "The token for player to enter the game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderLaunchGameResult"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayEventsRequest",
+      "fields": [
+        {
+          "name": "startTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayEventsRequest"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayEventsResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "eventList[].eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "eventList[].eventName",
+          "type": "string",
+          "required": false,
+          "description": "EventName"
+        },
+        {
+          "name": "eventList[].startTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "eventList[].endTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "eventList[].gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "eventList[].trialPlayTimes",
+          "type": "integer",
+          "required": false,
+          "description": "Number of granted Trial Play spins."
+        },
+        {
+          "name": "eventList[].joinOption",
+          "type": "string",
+          "required": false,
+          "description": "How players join the Trial Play event.<br/><code>launch</code>: LaunchGame with eventId, players will automatically claim on first successful launch until it reaches maxMemberCount <br/><code>bind</code>: Call <code>BindTrialPlayMembers</code> to pre-register players before they can claim on launch."
+        },
+        {
+          "name": "eventList[].stakeOption",
+          "type": "string",
+          "required": false,
+          "description": "How stake is set on <code>CreateTrialPlayEvent</code>. <br/><code>Fixed</code>: send <code>currency</code> and <code>fixedStake</code>. <br/><code>Level</code>: send <code>stakeLevel</code> (<code>1</code>, <code>2</code>, or <code>3</code> only). Stake is resolved at claim from game and currency."
+        },
+        {
+          "name": "eventList[].currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "eventList[].fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        },
+        {
+          "name": "eventList[].stakeLevel",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "eventList[].maxMemberCount",
+          "type": "integer",
+          "required": false,
+          "description": "MaxMemberCount"
+        },
+        {
+          "name": "eventList[].joinedCount",
+          "type": "integer",
+          "required": false,
+          "description": "JoinedCount"
+        },
+        {
+          "name": "eventList[].eventStatus",
+          "type": "string",
+          "required": false,
+          "description": "Trial Play event state.<br/><code>Active</code>: event is open for claims within its schedule.<br/><code>Closed</code>: event was closed via <code>CloseTrialPlayEvent</code>; new claims are rejected."
+        },
+        {
+          "name": "eventList[].createdOn",
+          "type": "string",
+          "required": false,
+          "description": "CreatedOn"
+        },
+        {
+          "name": "eventList[].modifiedOn",
+          "type": "string",
+          "required": false,
+          "description": "ModifiedOn"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayEventsResponse"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayInfoByPlayerRequest",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayInfoByPlayerRequest"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayInfoByPlayerResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "joinedEvents[].eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "joinedEvents[].eventName",
+          "type": "string",
+          "required": false,
+          "description": "EventName"
+        },
+        {
+          "name": "joinedEvents[].totalCount",
+          "type": "integer",
+          "required": false,
+          "description": "TotalCount"
+        },
+        {
+          "name": "joinedEvents[].usedCount",
+          "type": "integer",
+          "required": false,
+          "description": "UsedCount"
+        },
+        {
+          "name": "joinedEvents[].winAmount",
+          "type": "number",
+          "required": false,
+          "description": "Total win amount in wallet units (not converted to display balance)."
+        },
+        {
+          "name": "joinedEvents[].memberStatus",
+          "type": "string",
+          "required": false,
+          "description": "Member state.<br/><code>Unclaimed</code><br/><code>Claimed</code><br/><code>Finished</code><br/><code>Frozen</code>"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayInfoByPlayerResponse"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayMembersRequest",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": true,
+          "description": "EventId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayMembersRequest"
+    },
+    {
+      "name": "FundProviderSearchTrialPlayMembersResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;<code>400</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "memberList[].playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "memberList[].memberStatus",
+          "type": "string",
+          "required": false,
+          "description": "Member state.<br/><code>Unclaimed</code><br/><code>Claimed</code><br/><code>Finished</code><br/><code>Frozen</code>"
+        },
+        {
+          "name": "memberList[].totalCount",
+          "type": "integer",
+          "required": false,
+          "description": "TotalCount"
+        },
+        {
+          "name": "memberList[].usedCount",
+          "type": "integer",
+          "required": false,
+          "description": "UsedCount"
+        },
+        {
+          "name": "memberList[].winAmount",
+          "type": "number",
+          "required": false,
+          "description": "Total win amount in wallet units (not converted to display balance)."
+        },
+        {
+          "name": "memberList[].gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSearchTrialPlayMembersResponse"
+    },
+    {
+      "name": "FundProviderSupportedTrialPlayLevelsEntry",
+      "fields": [
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "levels[].level",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "levels[].fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderSupportedTrialPlayLevelsEntry"
+    },
+    {
+      "name": "FundProviderTFGetBalanceRequest",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderTFGetBalanceRequest"
+    },
+    {
+      "name": "FundProviderTrialPlayEvent",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "required": false,
+          "description": "EventName"
+        },
+        {
+          "name": "startTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": false,
+          "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z"
+        },
+        {
+          "name": "gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "trialPlayTimes",
+          "type": "integer",
+          "required": false,
+          "description": "Number of granted Trial Play spins."
+        },
+        {
+          "name": "joinOption",
+          "type": "string",
+          "required": false,
+          "description": "How players join the Trial Play event.<br/><code>launch</code>: LaunchGame with eventId, players will automatically claim on first successful launch until it reaches maxMemberCount <br/><code>bind</code>: Call <code>BindTrialPlayMembers</code> to pre-register players before they can claim on launch."
+        },
+        {
+          "name": "stakeOption",
+          "type": "string",
+          "required": false,
+          "description": "How stake is set on <code>CreateTrialPlayEvent</code>. <br/><code>Fixed</code>: send <code>currency</code> and <code>fixedStake</code>. <br/><code>Level</code>: send <code>stakeLevel</code> (<code>1</code>, <code>2</code>, or <code>3</code> only). Stake is resolved at claim from game and currency."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match."
+        },
+        {
+          "name": "fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        },
+        {
+          "name": "stakeLevel",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "maxMemberCount",
+          "type": "integer",
+          "required": false,
+          "description": "MaxMemberCount"
+        },
+        {
+          "name": "joinedCount",
+          "type": "integer",
+          "required": false,
+          "description": "JoinedCount"
+        },
+        {
+          "name": "eventStatus",
+          "type": "string",
+          "required": false,
+          "description": "Trial Play event state.<br/><code>Active</code>: event is open for claims within its schedule.<br/><code>Closed</code>: event was closed via <code>CloseTrialPlayEvent</code>; new claims are rejected."
+        },
+        {
+          "name": "createdOn",
+          "type": "string",
+          "required": false,
+          "description": "CreatedOn"
+        },
+        {
+          "name": "modifiedOn",
+          "type": "string",
+          "required": false,
+          "description": "ModifiedOn"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderTrialPlayEvent"
+    },
+    {
+      "name": "FundProviderTrialPlayJoinedEvent",
+      "fields": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "required": false,
+          "description": "EventId"
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "required": false,
+          "description": "EventName"
+        },
+        {
+          "name": "totalCount",
+          "type": "integer",
+          "required": false,
+          "description": "TotalCount"
+        },
+        {
+          "name": "usedCount",
+          "type": "integer",
+          "required": false,
+          "description": "UsedCount"
+        },
+        {
+          "name": "winAmount",
+          "type": "number",
+          "required": false,
+          "description": "Total win amount in wallet units (not converted to display balance)."
+        },
+        {
+          "name": "memberStatus",
+          "type": "string",
+          "required": false,
+          "description": "Member state.<br/><code>Unclaimed</code><br/><code>Claimed</code><br/><code>Finished</code><br/><code>Frozen</code>"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderTrialPlayJoinedEvent"
+    },
+    {
+      "name": "FundProviderTrialPlayMemberStatus",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "memberStatus",
+          "type": "string",
+          "required": false,
+          "description": "Member state.<br/><code>Unclaimed</code><br/><code>Claimed</code><br/><code>Finished</code><br/><code>Frozen</code>"
+        },
+        {
+          "name": "totalCount",
+          "type": "integer",
+          "required": false,
+          "description": "TotalCount"
+        },
+        {
+          "name": "usedCount",
+          "type": "integer",
+          "required": false,
+          "description": "UsedCount"
+        },
+        {
+          "name": "winAmount",
+          "type": "number",
+          "required": false,
+          "description": "Total win amount in wallet units (not converted to display balance)."
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": false,
+          "description": "Specify game code to identify game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderTrialPlayMemberStatus"
+    },
+    {
+      "name": "FundProviderTrialPlayStakeLevel",
+      "fields": [
+        {
+          "name": "level",
+          "type": "integer",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency."
+        },
+        {
+          "name": "fixedStake",
+          "type": "number",
+          "required": false,
+          "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderTrialPlayStakeLevel"
+    },
+    {
+      "name": "FundProviderVoucherModel",
+      "fields": [
+        {
+          "name": "voucherId",
+          "type": "string",
+          "required": false,
+          "description": "The unique voucher Id in operator."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "fixStake",
+          "type": "number",
+          "required": false,
+          "description": "Fixed value of the voucher. If 0 or less is provided for certain types of vouchers, a minimum stake will be assigned by system. Please use GetVoucherStakes API to get supported stake values for the specified game and currency."
+        },
+        {
+          "name": "effectiveDate",
+          "type": "string",
+          "required": false,
+          "description": "The voucher start effect time."
+        },
+        {
+          "name": "expireDate",
+          "type": "string",
+          "required": false,
+          "description": "ExpireDate"
+        },
+        {
+          "name": "freeSpin",
+          "type": "integer",
+          "required": false,
+          "description": "Total available number of voucher."
+        },
+        {
+          "name": "placedFreeSpin",
+          "type": "integer",
+          "required": false,
+          "description": "PlacedFreeSpin"
+        },
+        {
+          "name": "status",
+          "type": "integer",
+          "required": false,
+          "description": "Active/Deactive voucher status."
+        },
+        {
+          "name": "gameCodes[]",
+          "type": "array",
+          "required": false,
+          "description": "The list of game codes to identify games."
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderVoucherModel"
+    },
+    {
+      "name": "FundProviderWithdrawRequest",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": true,
+          "description": "TxId"
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": true,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "isTestAccount",
+          "type": "boolean",
+          "required": true,
+          "description": "A flag indicates if the account is for testing or not.Default value set to false"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderWithdrawRequest"
+    },
+    {
+      "name": "FundProviderWithdrawResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "data.balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        },
+        {
+          "name": "data.playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data.currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "data.TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderWithdrawResponse"
+    },
+    {
+      "name": "FundProviderWithdrawResult",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "balance",
+          "type": "number",
+          "required": false,
+          "description": "Player’s balance."
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FundProviderWithdrawResult"
+    },
+    {
+      "name": "FunkyErrorCode",
+      "fields": [],
+      "enums": [
+        0,
+        400,
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        500,
+        502,
+        503,
+        509,
+        510,
+        511,
+        512,
+        513,
+        514,
+        515,
+        516,
+        517,
+        601,
+        602,
+        603,
+        604,
+        605,
+        606,
+        607,
+        3002,
+        3003,
+        3004,
+        9001,
+        9999,
+        10001,
+        10002,
+        10003,
+        10004,
+        10005,
+        10006,
+        10007,
+        10008,
+        10009,
+        10010,
+        30000
+      ],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/FunkyErrorCode"
+    },
+    {
+      "name": "GameProviderGetBetDetailResultDataModel",
+      "fields": [
+        {
+          "name": "url",
+          "type": "string",
+          "required": false,
+          "description": "SourceIp"
+        },
+        {
+          "name": "beforeBalance",
+          "type": "number",
+          "required": false,
+          "description": "BeforeBalance"
+        },
+        {
+          "name": "afterBalance",
+          "type": "number",
+          "required": false,
+          "description": "AfterBalance"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/GameProviderGetBetDetailResultDataModel"
+    },
+    {
+      "name": "OperatorCheckTransactionData",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": false,
+          "description": "Amount"
+        },
+        {
+          "name": "txType",
+          "type": "string",
+          "required": false,
+          "description": "TxType"
+        },
+        {
+          "name": "txTime",
+          "type": "string",
+          "required": false,
+          "description": "TxTime"
+        },
+        {
+          "name": "currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "**Processing**<br/>**Completed**<br/>**Invalidated**"
+        },
+        {
+          "name": "beforeBalance",
+          "type": "number",
+          "required": false,
+          "description": "BeforeBalance"
+        },
+        {
+          "name": "afterBalance",
+          "type": "number",
+          "required": false,
+          "description": "AfterBalance"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/OperatorCheckTransactionData"
+    },
+    {
+      "name": "OperatorCheckTransactionRequest",
+      "fields": [
+        {
+          "name": "txId",
+          "type": "string",
+          "required": true,
+          "description": "TxId"
+        },
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/OperatorCheckTransactionRequest"
+    },
+    {
+      "name": "OperatorCheckTransactionResponse",
+      "fields": [
+        {
+          "name": "errorCode",
+          "type": "integer",
+          "required": false,
+          "description": "<code>0</code>&nbsp;"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "required": false,
+          "description": "Described in <a href='#tag/Error-Code-List'>Error Code List</a>."
+        },
+        {
+          "name": "data.txId",
+          "type": "string",
+          "required": false,
+          "description": "TxId"
+        },
+        {
+          "name": "data.playerId",
+          "type": "string",
+          "required": false,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "data.amount",
+          "type": "number",
+          "required": false,
+          "description": "Amount"
+        },
+        {
+          "name": "data.txType",
+          "type": "string",
+          "required": false,
+          "description": "TxType"
+        },
+        {
+          "name": "data.txTime",
+          "type": "string",
+          "required": false,
+          "description": "TxTime"
+        },
+        {
+          "name": "data.currency",
+          "type": "string",
+          "required": false,
+          "description": "User currency ***(if you want to use kcurrency please contact to FunkySupport)***."
+        },
+        {
+          "name": "data.TxSerialId",
+          "type": "integer",
+          "required": false,
+          "description": "TxSerialId"
+        },
+        {
+          "name": "data.status",
+          "type": "string",
+          "required": false,
+          "description": "**Processing**<br/>**Completed**<br/>**Invalidated**"
+        },
+        {
+          "name": "data.beforeBalance",
+          "type": "number",
+          "required": false,
+          "description": "BeforeBalance"
+        },
+        {
+          "name": "data.afterBalance",
+          "type": "number",
+          "required": false,
+          "description": "AfterBalance"
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/OperatorCheckTransactionResponse"
+    },
+    {
+      "name": "OperatorGetBalanceRequest",
+      "fields": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**"
+        },
+        {
+          "name": "sessionId",
+          "type": "string",
+          "required": true,
+          "description": "User session from platform, the unique ID when the player launch game. Max length is 300 characters."
+        },
+        {
+          "name": "gameCode",
+          "type": "string",
+          "required": true,
+          "description": "Specify game code to identify game."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/OperatorGetBalanceRequest"
+    },
+    {
+      "name": "VoucherStakeInfo",
+      "fields": [
+        {
+          "name": "supportedStakes[]",
+          "type": "array",
+          "required": false,
+          "description": "List of available voucher stake amounts supported for the specified game and currency."
+        }
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "transfer-operator.swagger.json#/components/schemas/VoucherStakeInfo"
+    }
+  ],
+  "errors": [],
+  "operational": [],
+  "missing": [
+    "server URL",
+    "authentication: source does not provide"
+  ]
+}

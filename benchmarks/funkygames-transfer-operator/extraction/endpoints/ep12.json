@@ -1,0 +1,99 @@
+{
+  "method": "POST",
+  "path": "/{funkyReportUrl}/Funky/Report/GetBetListByPlayer",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetListByPlayer/post",
+  "parameters": [
+    {
+      "name": "funkyReportUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": false,
+      "description": "If null, all currency's bet list will be returned.",
+      "in": "body"
+    },
+    {
+      "name": "playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    },
+    {
+      "name": "startTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)",
+      "in": "body"
+    },
+    {
+      "name": "endTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss<br/>Bet time (Default is PlaceBet time, if SearchTimeType is 1, then Settlement time.)",
+      "in": "body"
+    },
+    {
+      "name": "searchTimeType",
+      "type": "integer",
+      "required": false,
+      "description": "0: Place bet time (default)<br/>1: Settlement time",
+      "in": "body"
+    },
+    {
+      "name": "page",
+      "type": "integer",
+      "required": true,
+      "description": "Current page. \nPlease note that the page parameter starts from 1. If page = 0 is provided, the system will treat it the same as page = 1 and return identical results.",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderGetBetsByPlayerRequest",
+    "schema_ref": "FundProviderGetBetsByPlayerRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderGetBetsResponse",
+      "schema_ref": "FundProviderGetBetsResponse"
+    }
+  ],
+  "tags": [
+    "Consolidate Report"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

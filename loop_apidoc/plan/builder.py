@@ -327,6 +327,15 @@ def build_normalization_plan(
                 )
         _add_missing_and_conflicts(plan, stage_id, art, block)
 
+    # Agent-native assemble collapses inventory.json into staged answers. Its
+    # global `missing` list belongs to stage 10 so it is recorded once, not
+    # copied into every inventory stage. Carry the structured stage-10 gaps
+    # into the plan as MissingItems; otherwise completeness cannot distinguish
+    # a source-stated absence from an unrecorded omission.
+    art, block = _structured_block(extraction, "10")
+    if art is not None and block is not None:
+        _add_missing_and_conflicts(plan, "10", art, block)
+
     _merge_endpoint_details(plan, extraction, manifest)
     _dedupe_endpoints(plan)
     return plan

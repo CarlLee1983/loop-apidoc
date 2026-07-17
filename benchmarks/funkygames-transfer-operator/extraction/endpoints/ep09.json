@@ -1,0 +1,99 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/Bet/GetBetDetail",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "gameCode",
+      "type": "string",
+      "required": true,
+      "description": "Specify game code to identify game.",
+      "in": "body"
+    },
+    {
+      "name": "refNo",
+      "type": "string",
+      "required": true,
+      "description": "The reference number of the bet which is always unique.",
+      "in": "body"
+    },
+    {
+      "name": "playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    },
+    {
+      "name": "lang",
+      "type": "string",
+      "required": true,
+      "description": "The language of the player.<br/>Will return English if the specified language code is not supported or recognized.",
+      "in": "body"
+    },
+    {
+      "name": "sourceIp",
+      "type": "string",
+      "required": false,
+      "description": "SourceIp",
+      "in": "body"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "required": false,
+      "description": "SourceIp",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderGetBetDetailRequest",
+    "schema_ref": "FundProviderGetBetDetailRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderGetBetDetailResponse",
+      "schema_ref": "FundProviderGetBetDetailResponse"
+    }
+  ],
+  "tags": [
+    "Bet Information"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

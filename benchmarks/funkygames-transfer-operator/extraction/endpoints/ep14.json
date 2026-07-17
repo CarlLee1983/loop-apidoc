@@ -1,0 +1,120 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/User/AddVouchers",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "data[].playerId",
+      "type": "string",
+      "required": true,
+      "description": "The unique ID of the player. At least 3 characters are required. **Cannot exceed 64 characters.**",
+      "in": "body"
+    },
+    {
+      "name": "data[].voucherId",
+      "type": "string",
+      "required": true,
+      "description": "If player is using voucher, fill in the unique id of voucher.",
+      "in": "body"
+    },
+    {
+      "name": "data[].fixStake",
+      "type": "number",
+      "required": true,
+      "description": "Fixed value of the voucher. If 0 or less is provided for certain types of vouchers, a minimum stake will be assigned by system. Please use GetVoucherStakes API to get supported stake values for the specified game and currency.",
+      "in": "body"
+    },
+    {
+      "name": "data[].freeSpin",
+      "type": "integer",
+      "required": true,
+      "description": "Total available number of voucher.",
+      "in": "body"
+    },
+    {
+      "name": "data[].effectiveDate",
+      "type": "string",
+      "required": true,
+      "description": "The voucher start effect time.",
+      "in": "body"
+    },
+    {
+      "name": "data[].expiredDate",
+      "type": "string",
+      "required": true,
+      "description": "The voucher expire time.",
+      "in": "body"
+    },
+    {
+      "name": "data[].currency",
+      "type": "string",
+      "required": true,
+      "description": "Currency",
+      "in": "body"
+    },
+    {
+      "name": "data[].gameCodes[]",
+      "type": "array",
+      "required": true,
+      "description": "The list of game codes to identify games.",
+      "in": "body"
+    },
+    {
+      "name": "data[].eventId",
+      "type": "string",
+      "required": true,
+      "description": "Please contact operation team to get your event id",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderAddVouchersRequest",
+    "schema_ref": "FundProviderAddVouchersRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderAddVouchersResponse",
+      "schema_ref": "FundProviderAddVouchersResponse"
+    }
+  ],
+  "tags": [
+    "Voucher"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

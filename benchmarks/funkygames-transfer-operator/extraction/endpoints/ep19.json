@@ -1,0 +1,134 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/TrialPlay/CreateTrialPlayEvent",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    },
+    {
+      "name": "eventName",
+      "type": "string",
+      "required": true,
+      "description": "EventName",
+      "in": "body"
+    },
+    {
+      "name": "startTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z",
+      "in": "body"
+    },
+    {
+      "name": "endTime",
+      "type": "string",
+      "required": true,
+      "description": "yyyy-MM-dd hh:mm:ss.sss (Operator time zone) <br/> ex. 2023-08-31T10:02:00.002Z",
+      "in": "body"
+    },
+    {
+      "name": "gameCodes[]",
+      "type": "array",
+      "required": false,
+      "description": "The list of game codes to identify games.",
+      "in": "body"
+    },
+    {
+      "name": "trialPlayTimes",
+      "type": "integer",
+      "required": true,
+      "description": "Number of granted Trial Play spins.",
+      "in": "body"
+    },
+    {
+      "name": "joinOption",
+      "type": "string",
+      "required": true,
+      "description": "How players join the Trial Play event.<br/><code>launch</code>: LaunchGame with eventId, players will automatically claim on first successful launch until it reaches maxMemberCount <br/><code>bind</code>: Call <code>BindTrialPlayMembers</code> to pre-register players before they can claim on launch.",
+      "in": "body"
+    },
+    {
+      "name": "maxMemberCount",
+      "type": "integer",
+      "required": true,
+      "description": "MaxMemberCount",
+      "in": "body"
+    },
+    {
+      "name": "stakeOption",
+      "type": "string",
+      "required": true,
+      "description": "How stake is set on <code>CreateTrialPlayEvent</code>. <br/><code>Fixed</code>: send <code>currency</code> and <code>fixedStake</code>. <br/><code>Level</code>: send <code>stakeLevel</code> (<code>1</code>, <code>2</code>, or <code>3</code> only). Stake is resolved at claim from game and currency.",
+      "in": "body"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": false,
+      "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. Event currency; claim <code>currency</code> on launch must match.",
+      "in": "body"
+    },
+    {
+      "name": "fixedStake",
+      "type": "number",
+      "required": false,
+      "description": "Required when <code>stakeOption</code> is <code>Fixed</code>. On claim, if the game does not support this exact stake, the nearest smaller supported stake is used.",
+      "in": "body"
+    },
+    {
+      "name": "stakeLevel",
+      "type": "integer",
+      "required": false,
+      "description": "Required when <code>stakeOption</code> is <code>Level</code>. Tier <code>1</code>, <code>2</code>, or <code>3</code> only. Call <code>GetSupportedTrialPlayLevels</code> for resolved amounts per game and currency.",
+      "in": "body"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderCreateTrialPlayEventRequest",
+    "schema_ref": "FundProviderCreateTrialPlayEventRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderCreateTrialPlayEventResponse",
+      "schema_ref": "FundProviderCreateTrialPlayEventResponse"
+    }
+  ],
+  "tags": [
+    "Trial Play (beta)"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}

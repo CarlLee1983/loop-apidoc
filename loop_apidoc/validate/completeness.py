@@ -21,8 +21,11 @@ def _endpoint_location(endpoint, index: int) -> str:
 
 def _has_auth_marker(plan: NormalizationPlan) -> bool:
     for item in plan.missing_items:
-        area = (item.area or "").lower()
-        if "auth" in area or "security" in area:
+        # Stage-specific extraction gaps can name the area (for example
+        # ``authentication``), while agent-native inventory gaps are collected
+        # once under stage ``10`` and carry the topic in ``detail``.
+        marker = " ".join((item.area or "", item.detail or "")).lower()
+        if "auth" in marker or "security" in marker:
             return True
     # An explicit "no auth / public" statement recorded as an operational note
     # (topic naming authentication/security) also counts: the source addressed

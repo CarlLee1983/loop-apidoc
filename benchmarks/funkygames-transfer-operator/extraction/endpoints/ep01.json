@@ -1,0 +1,57 @@
+{
+  "method": "POST",
+  "path": "/{funkyUrl}/Funky/Game/GetLobbyGameList",
+  "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1GetLobbyGameList/post",
+  "parameters": [
+    {
+      "name": "funkyUrl",
+      "in": "path",
+      "type": "string",
+      "required": true,
+      "description": "The base URL for Operator to call."
+    },
+    {
+      "name": "User-Agent",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Operator’s identifiable name."
+    },
+    {
+      "name": "Authentication",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Authentication token."
+    },
+    {
+      "name": "X-Request-ID",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "Identifier for log tracing. Please use a mixed alphanumeric string in the form of a UUID, with a length of up to 64 characters."
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "FundProviderGetLobbyGameListRequest",
+    "schema_ref": "FundProviderGetLobbyGameListRequest",
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "OK",
+      "content_type": "application/json",
+      "schema": "FundProviderGetGameListResponse",
+      "schema_ref": "FundProviderGetGameListResponse"
+    }
+  ],
+  "tags": [
+    "Game Information"
+  ],
+  "security": [],
+  "examples": [],
+  "missing": []
+}
