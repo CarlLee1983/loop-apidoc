@@ -43,6 +43,15 @@ def _has_auth_marker(plan: NormalizationPlan) -> bool:
     return False
 
 
+def _has_path_operation(plan: NormalizationPlan) -> bool:
+    return any(endpoint.path for endpoint in plan.endpoints)
+
+
+def _has_base_url(plan: NormalizationPlan) -> bool:
+    return any((environment.base_url or "").strip()
+               for environment in plan.environments)
+
+
 def check_completeness(plan: NormalizationPlan) -> list[Issue]:
     issues: list[Issue] = []
     for index, endpoint in enumerate(plan.endpoints):
@@ -87,6 +96,12 @@ def check_completeness(plan: NormalizationPlan) -> list[Issue]:
                 "endpoint 缺少 request/response 範例", "由來源補上範例",
                 target_file=target_file, field_path="examples",
                 requery_scope=location))
+
+    if _has_path_operation(plan) and not _has_base_url(plan):
+        issues.append(_issue(
+            IssueCode.REQUIRED_INFO_MISSING, Severity.WARNING, "servers",
+            "來源未提供可供 path operation 使用的 concrete server URL",
+            "由來源補上 environment base_url；不可臆測 server URL"))
 
     if not plan.security_schemes and not _has_auth_marker(plan):
         issues.append(_issue(
