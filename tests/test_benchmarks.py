@@ -85,6 +85,14 @@ def _case_by_name(name: str) -> Path:
     return _BENCH_ROOT / name
 
 
+def test_jili_case_has_declared_legacy_pdf_minimums():
+    case = _case_by_name("jili-legacy-gaming-pdf")
+    minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
+    assert minimum["must_have"]["endpoints_min"] == 25
+    assert "paths./CreateFreeSpin.get" in minimum["critical_operations"]
+    assert "paths./CreateFreeSpin.post" in minimum["critical_operations"]
+
+
 def _assemble_case(case: Path, tmp_path_factory) -> RunResult:
     """Assemble a case at most once per session and memoize the RunResult.
 
