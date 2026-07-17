@@ -49,7 +49,8 @@ One object describing the whole API. **You** write what the single inventory sub
   one canonical operation per method before planning; every other field in that
   entry therefore applies identically to every listed method. When methods have
   different summaries, parameters, requests, responses, security, or source
-  detail, write separate single-`method` entries instead.
+  detail, write separate single-`method` entries instead. `methods` must be a
+  non-empty array of unique, non-blank strings (case-insensitive).
 - `endpoints[].path` is the path **only**, always starting with `/`
   (`/hrxt/loginGame`, `/users/{userId}/orders`). The host belongs in
   `environments[].base_url` — never fold it, or a `{template}` placeholder standing for it,
@@ -130,7 +131,9 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
   array, and add them to `missing`.
 - `methods` is the additive multi-method form for a shared endpoint contract. It
   has the same identical-contract constraint as `inventory.json`; use `method`
-  when a detail file represents only one operation.
+  when a detail file represents only one operation. One inventory `methods`
+  entry must match exactly one detail file with the same method set; do not split
+  it into separate GET/POST detail files.
 - **Top-level `source` is required** — cite where this endpoint's detail lives, consistent
   with its `inventory.endpoints` entry. With multiple sources **this is the only thing
   attributing detail to the right source**; omitting it triggers `SOURCE_UNVERIFIED`.

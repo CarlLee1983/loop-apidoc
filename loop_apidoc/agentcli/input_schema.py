@@ -21,7 +21,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 
 # Keys the generator (loop_apidoc/generate/openapi.py) defensively reads on a
@@ -85,6 +91,23 @@ class _Lax(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class _MethodBearingInput(_Lax):
+    method: str | None = None
+    methods: list[str] | None = None
+
+    @field_validator("methods", mode="before")
+    @classmethod
+    def _validate_methods(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            raise ValueError("must be a non-empty list of non-blank strings")
+        if not value or any(not isinstance(method, str) or not method.strip()
+                            for method in value):
+            raise ValueError("must be a non-empty list of non-blank strings")
+        if len({method.upper() for method in value}) != len(value):
+            raise ValueError("must not contain duplicate methods")
+        return value
+
+
 class SchemaEntry(_Lax):
     name: str | None = None
     fields: list[FieldEntry] = []
@@ -101,9 +124,7 @@ class ResponseEntry(_Lax):
     schema_ref: str | None = None
 
 
-class EndpointDetailInput(_Lax):
-    method: str | None = None
-    methods: list[str] | None = None
+class EndpointDetailInput(_MethodBearingInput):
     path: str | None = None
     # null-path(webhook/callback)端點的跨檔身份鍵 —— 見 agentcli/cross_file.py。
     # 是否必填由 source_guard.summary_violations 依 path 是否為 null 決定。
@@ -118,13 +139,17 @@ class EndpointDetailInput(_Lax):
     missing: list[Any] = []
 
 
+class InventoryEndpointInput(_MethodBearingInput):
+    pass
+
+
 class InventoryInput(_Lax):
     title: str | None = None
     version: str | None = None
     overview: str | None = None
     environments: list[dict[str, Any]] = []
     security_schemes: list[dict[str, Any]] = []
-    endpoints: list[dict[str, Any]] = []
+    endpoints: list[InventoryEndpointInput] = []
     schemas: list[SchemaEntry] = []
     errors: list[dict[str, Any]] = []
     operational: list[dict[str, Any]] = []

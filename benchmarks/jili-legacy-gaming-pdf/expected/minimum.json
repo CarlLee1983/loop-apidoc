@@ -3,6 +3,7 @@
   "must_have": {
     "base_urls": 0,
     "endpoints_min": 25,
+    "paths_min": 20,
     "webhooks_min": 0,
     "schemas_min": 0,
     "error_codes_min": 0,
