@@ -56,7 +56,7 @@ def _declared_example_gap(issue: Issue, plan: dict | None) -> bool:
     if issue.code is not IssueCode.REQUIRED_INFO_MISSING or issue.field_path != "examples":
         return False
     return any(
-        item.get("query_id") == issue.location
+        item.get("operation_location") == issue.location
         and "example" in str(item.get("detail", "")).lower()
         for item in (plan or {}).get("missing_items", [])
         if isinstance(item, dict)

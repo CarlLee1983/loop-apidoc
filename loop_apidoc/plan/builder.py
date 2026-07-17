@@ -259,12 +259,23 @@ def _structured_block(
     return art, block
 
 
-def _add_missing_and_conflicts(plan: NormalizationPlan, stage_id: str,
-                               art: AnswerArtifact, block: dict) -> None:
+def _add_missing_and_conflicts(
+    plan: NormalizationPlan,
+    stage_id: str,
+    art: AnswerArtifact,
+    block: dict,
+    *,
+    operation_location: str | None = None,
+) -> None:
     raw_missing = block.get("missing")
     for miss in raw_missing if isinstance(raw_missing, list) else []:
         plan.missing_items.append(
-            MissingItem(area=stage_id, detail=str(miss), query_id=art.query_id)
+            MissingItem(
+                area=stage_id,
+                detail=str(miss),
+                query_id=art.query_id,
+                operation_location=operation_location,
+            )
         )
     # forward-wiring: no current stage emits `conflicts`; populated by Plan 5 conflict detection
     raw_conflicts = block.get("conflicts")
@@ -480,4 +491,17 @@ def _merge_endpoint_details(
                             query_id=art.query_id))
             continue
         _merge_one_detail(plan, art, block, manifest, consumed)
-        _add_missing_and_conflicts(plan, "06", art, block)
+        method = block.get("method")
+        path = _detail_path(block)
+        operation_location = (
+            f"paths.{path}.{method.lower()}"
+            if isinstance(method, str) and isinstance(path, str)
+            else None
+        )
+        _add_missing_and_conflicts(
+            plan,
+            "06",
+            art,
+            block,
+            operation_location=operation_location,
+        )

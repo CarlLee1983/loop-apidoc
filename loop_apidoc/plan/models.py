@@ -157,6 +157,7 @@ class MissingItem(BaseModel):
     area: str
     detail: str
     query_id: str | None = None
+    operation_location: str | None = None
 
 
 class SourceConflict(BaseModel):

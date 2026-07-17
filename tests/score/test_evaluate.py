@@ -152,7 +152,8 @@ def test_declared_missing_examples_remain_visible_without_penalty() -> None:
                     {
                         "area": "06",
                         "detail": "examples",
-                        "query_id": "paths./ping.get",
+                        "query_id": "06-ep0",
+                        "operation_location": "paths./ping.get",
                     }
                 ]
             },
