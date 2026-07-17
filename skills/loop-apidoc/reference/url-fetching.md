@@ -11,15 +11,21 @@ When the entry URL itself returns OpenAPI JSON or YAML, it is a single immutable
 not a navigation entry point. Do **not** call `catalog-url`, `cache-url-pages`,
 `related-url-pages`, or `select-url` against it.
 
-1. Download the HTTP response once into `<SOURCES>/<stable-name>.json|yaml`; retain the
-   original bytes and record its SHA-256, content type, and fetch time in the run notes.
-2. Parse it before extraction. If it declares `swagger: "2.0"` or `openapi: "3.x"`, read it
-   as the source of endpoints, components, servers, security, and examples; do not copy it
-   directly to the final output or assume omitted integration details.
-3. Create a one-entry `coverage.json`: the entry URL is both `expected[]` and `results[]`,
-   with `status: "fetched"`, the local snapshot path, and `method: "direct"`. Set
-   `confirmed_by_user` from the explicit scope decision. Cite the local filename plus JSON
-   Pointer during extraction.
+1. Run:
+
+   ```bash
+   <APIDOC> snapshot-openapi-url --url "<ENTRY_URL>" --sources "<SOURCES>" \
+     --coverage "<WORK>/url_sources/coverage.json" [--filename "<stable-name>.json"] \
+     [--confirmed-by-user]
+   ```
+
+   The command downloads one response, verifies that it declares `swagger: "2.0"` or
+   `openapi: "3.x"`, writes the original bytes, prints their SHA-256, and creates the one-entry
+   ledger with `status: "fetched"` and `method: "direct"`. It fails rather than overwriting a
+   snapshot or coverage file.
+2. Read the local snapshot as the source of endpoints, components, servers, security, and
+   examples; do not copy it directly to the final output or assume omitted integration details.
+   Cite the local filename plus JSON Pointer during extraction.
 
 The local snapshot is the only evidence subagents read. Re-fetch only when intentionally
 creating a new source-set version.
