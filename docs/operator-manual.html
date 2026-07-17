@@ -82,6 +82,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#url-corpus">URL 導航與快取（catalog / select / cache）</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
+  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness — 來源新鮮度排程閘</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — 擷取契約檢查</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
@@ -153,7 +154,7 @@ uv run loop-apidoc --help
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<p>CLI 暴露十五個頂層指令加 <code>foundry</code> 子群組(共十六個):來源處理(<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>)、URL evidence(<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>)、品質與擷取(<code>assess-sources</code>、<code>verify-extraction</code>)、run 處理(<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>)與 <code>foundry</code> 資產治理。日常擷取流程由 skill 驅動;各指令也可獨立使用。</p>
+<p>CLI 暴露十七個頂層指令加 <code>foundry</code> 子群組(共十八個):來源處理(<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>)、URL evidence(<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>)、品質與擷取(<code>assess-sources</code>、<code>verify-extraction</code>)、來源新鮮度排程閘(<code>record-fingerprint</code>、<code>check-freshness</code>)、run 處理(<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>)與 <code>foundry</code> 資產治理。日常擷取流程由 skill 驅動;各指令也可獨立使用。</p>
 <h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -186,6 +187,19 @@ uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --ur
   --observations &lt;observations.json&gt; --source-set &lt;名稱&gt; --output ./work/source-quality [--base-manifest &lt;舊 manifest&gt;]
 </code></pre>
 <p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
+<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> — 來源新鮮度排程閘</h3>
+<pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
+
+uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json \
+  [--sources ./sources] [--json] [--report-dir ./work/freshness]
+</code></pre>
+<p>當一份 run 已完成或已核准為 Foundry 資產後,先用 <code>record-fingerprint</code> 從該 run 目錄寫出基準
+<code>source-fingerprint.json</code>(本機來源的 SHA-256、每個 URL 來源各抓一次的版本訊號);既有檔案不會被覆寫,除非加上 <code>--force</code>。之後排程(例如 cron)定期執行 <code>check-freshness</code>
+即可低成本判斷來源是否值得重新擷取,不需重新解析整份文件也不呼叫模型:OpenAPI URL 來源比較
+<code>info.version</code>(版本相同即使位元組不同也視為未變)、HTML 先比對 ETag／Last-Modified 再退回內文
+SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過重新解析)、<code>1</code>=已變(需重跑擷取)、
+<code>2</code>=無法判定(有來源抓取或讀取失敗)。加上 <code>--report-dir</code> 時另外寫出
+<code>freshness-report.{json,md}</code>;未帶則不寫檔。</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>
@@ -348,6 +362,10 @@ uv run ruff check .
 <tr>
 <td><code>loop_apidoc/source_quality/</code></td>
 <td>擷取前來源品質評估與來源版本差異報告(<code>assess-sources</code>);pass 報告可隨 run-dir 稽核保存</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/freshness/</code></td>
+<td>來源新鮮度排程閘(<code>record-fingerprint</code>／<code>check-freshness</code>):基準 fingerprint 寫出與比對,退出碼 0/1/2 判斷是否需重新擷取,選填 <code>freshness-report.{json,md}</code>(檔案 I/O 出口之一)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/url_catalog.py</code> / <code>url_corpus.py</code></td>

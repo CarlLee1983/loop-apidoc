@@ -20,6 +20,9 @@ Two reference files hold the heavy detail — load each when you reach that phas
   schema (load when any source is a public URL, before fetching).
 - **`reference/model-orchestration.md`** — model-neutral role, artifact, escalation, and
   runtime-mapping contract (load when splitting work across models or Codex/Claude agents).
+- **`reference/freshness-scheduling.md`** — the `record-fingerprint` / `check-freshness`
+  scheduled-freshness gate (load when setting up scheduled re-checks so they skip
+  extraction when sources are unchanged).
 
 ## CLI invocation (`<APIDOC>`)
 
