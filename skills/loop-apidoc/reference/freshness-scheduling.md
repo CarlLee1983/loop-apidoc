@@ -52,6 +52,12 @@ on schedule:
     alert human                            # source unreachable / auth / moved
 ```
 
+A ready-to-run implementation of this loop lives at
+`examples/freshness-scheduling/check-and-refresh.sh` (+ its `README.md`): a cron/CI-mountable
+wrapper that branches on the exit code, runs a caller-supplied `REPARSE_CMD` on `changed`,
+and then refreshes the baseline with `record-fingerprint --force`. Point `REPARSE_CMD` at
+your own re-extraction step (the skill's steps 2–8).
+
 ## v1 limits
 
 - HTML sources are fingerprinted by raw-body hash; there is no content normalization
