@@ -243,6 +243,22 @@ uv run loop-apidoc assess-sources \
 
 在擷取前把 manifest 與 agent 記錄的來源觀察評成來源品質報告（`source-quality-report.{json,zh-TW.md}`）與來源版本差異（`source-diff.{json,md}`，提供 `--base-manifest` 時比對舊 manifest）。結論為 `pass` 或 `reject`；退出碼：`0` = pass、`1` = reject、`2` = 輸入檔錯誤。產出的目錄可經 `assemble --source-quality` 傳入：`reject` 會在建立 run-dir 前中止，`pass` 報告則隨 run-dir 保存供稽核。
 
+### `record-fingerprint` / `check-freshness` — 來源新鮮度排程閘
+
+```bash
+# 從已完成/已核准的 run 目錄寫出基準 fingerprint（本機來源 SHA-256、URL 來源版本訊號各抓一次）。
+uv run loop-apidoc record-fingerprint --run-dir ./output/<run-id> --output ./work/source-fingerprint.json
+
+# 排程（如 cron）低成本比對目前來源訊號與基準；有本機來源時需帶 --sources。
+uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json --sources ./sources --json
+```
+
+`check-freshness` 不呼叫模型，只重算各來源的便宜訊號並與基準比較：OpenAPI URL 來源比較
+`info.version`（版本相同即使位元組不同也視為未變）、HTML 先比對 ETag／Last-Modified 再退回
+內文 SHA-256、本機檔案比對 SHA-256。退出碼：`0` = 未變（可跳過重新解析）、`1` = 已變（需重跑
+擷取）、`2` = 無法判定（有來源抓取或讀取失敗）。加上 `--report-dir` 時另存
+`freshness-report.{json,md}`；未帶則不寫檔。
+
 ### `validate` — 驗證既有 run 目錄
 
 ```bash
