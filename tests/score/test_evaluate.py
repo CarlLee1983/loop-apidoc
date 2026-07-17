@@ -178,6 +178,34 @@ def test_unclassified_missing_examples_keep_penalty() -> None:
     assert report.findings[0].score_impact == 12
 
 
+def test_declared_non_example_gap_keeps_penalty() -> None:
+    issue = _issue(
+        IssueCode.REQUIRED_INFO_MISSING,
+        Severity.WARNING,
+        "paths./ping.get",
+        field_path="examples",
+    )
+
+    report = evaluate_score(
+        _inputs(
+            [issue],
+            plan={
+                "missing_items": [
+                    {
+                        "area": "06",
+                        "detail": "response fields",
+                        "query_id": "06-ep0",
+                        "operation_location": "paths./ping.get",
+                    }
+                ]
+            },
+        ),
+        profile=ScoreProfile.CI,
+    )
+
+    assert report.findings[0].score_impact == 12
+
+
 def test_min_score_override_can_fail_without_blocking_findings() -> None:
     report = evaluate_score(
         _inputs([_issue(IssueCode.REQUIRED_INFO_MISSING, Severity.WARNING)]),

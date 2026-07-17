@@ -152,11 +152,11 @@ def test_assemble_score_writes_score_reports_and_preserves_exit_status(tmp_path)
     assert res.exit_code == (0 if payload["ok"] else 1)
 
 
-def test_assemble_score_waives_declared_endpoint_example_gap(tmp_path):
+def test_assemble_score_waives_declared_chinese_endpoint_example_gap(tmp_path):
     sources, extraction, out = _setup(tmp_path)
     endpoint_path = extraction / "endpoints" / "ep0.json"
     endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
-    endpoint["missing"] = ["source does not provide examples"]
+    endpoint["missing"] = ["來源未提供範例"]
     endpoint_path.write_text(json.dumps(endpoint, ensure_ascii=False), encoding="utf-8")
 
     res = runner.invoke(app, [
