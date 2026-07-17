@@ -78,3 +78,47 @@ EXIT_CODES: dict[FreshnessVerdict, int] = {
     FreshnessVerdict.CHANGED: 1,
     FreshnessVerdict.INCONCLUSIVE: 2,
 }
+
+
+class WatchlistItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    fingerprint: str
+    sources: str | None = None
+    run_dir: str | None = None
+
+
+class Watchlist(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: int = 1
+    items: list[WatchlistItem] = Field(default_factory=list)
+
+
+class BatchItemStatus(str, Enum):
+    UNCHANGED = "unchanged"
+    CHANGED = "changed"
+    INCONCLUSIVE = "inconclusive"
+    ERROR = "error"
+
+
+class BatchItemResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    status: BatchItemStatus
+    openapi_version: str | None = None
+    reason: str | None = None
+    run_dir: str | None = None
+
+
+class BatchReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verdict: FreshnessVerdict
+    total: int
+    changed_count: int
+    attention_count: int
+    unchanged_count: int
+    items: list[BatchItemResult] = Field(default_factory=list)
