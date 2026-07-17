@@ -44,6 +44,18 @@ def test_complete_plan_has_no_errors():
     assert _codes(issues, Severity.ERROR) == []
 
 
+def test_path_operations_without_base_url_report_server_warning():
+    plan = _plan(environments=[])
+    issue = next(i for i in check_completeness(plan) if i.location == "servers")
+    assert issue.severity is Severity.WARNING
+    assert issue.code is IssueCode.REQUIRED_INFO_MISSING
+
+
+def test_webhooks_without_base_url_do_not_report_server_warning():
+    plan = _plan(environments=[], endpoints=[_endpoint(path=None, method="POST")])
+    assert not any(i.location == "servers" for i in check_completeness(plan))
+
+
 def test_missing_method_is_error():
     issues = check_completeness(_plan(endpoints=[_endpoint(method=None)]))
     assert IssueCode.REQUIRED_INFO_MISSING in _codes(issues, Severity.ERROR)
