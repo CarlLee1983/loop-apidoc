@@ -739,8 +739,8 @@
 <section class="alt" id="commands">
   <div class="wrap">
     <span class="eyebrow">CLI 介面</span>
-    <h2 class="section-title">十五個指令,各司其職</h2>
-    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>),共 14 個頂層指令加 <code class="inline">foundry</code> 子群組。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理與資產治理)。</p>
+    <h2 class="section-title">十六個指令,各司其職</h2>
+    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>),共 15 個頂層指令加 <code class="inline">foundry</code> 子群組。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理與資產治理)。</p>
 
     <div class="cmds">
       <div class="cmd">
@@ -750,6 +750,10 @@
       <div class="cmd">
         <span class="name"><span class="kw">manifest</span></span>
         <div><p>掃描本地來源 + URL,建立 <code class="inline">manifest.json</code>。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">snapshot-openapi-url</span></span>
+        <div><p>固定單一 Swagger/OpenAPI JSON/YAML URL 為不可變本機來源，並建立 direct coverage ledger。</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">catalog-url</span></span>
