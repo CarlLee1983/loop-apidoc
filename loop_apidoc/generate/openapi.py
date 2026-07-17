@@ -113,8 +113,15 @@ def _build_security_scheme(scheme) -> dict:
             if "basic" in hint:
                 out["scheme"] = "basic"
                 return out
-        else:
+        elif raw == "mutualTLS":
+            # mutualTLS has no required sub-fields; a bare {"type": "mutualTLS"}
+            # is valid OpenAPI, so keep it native.
             return out
+        # oauth2 / openIdConnect require sub-objects (`flows` / `openIdConnectUrl`)
+        # that the source-grounded contract has no field for. Emitting a bare
+        # {"type": raw} yields an INVALID document, so fall through to the
+        # missing-source placeholder below rather than fabricate a flow/URL —
+        # the scheme identity + details are preserved in its description.
     # Unmapped source type: this is not a standard OpenAPI auth scheme (e.g. a
     # request-signing / body-encryption procedure). Emit a minimal legal apiKey
     # PLACEHOLDER flagged missing-source. The real header/param name is not
