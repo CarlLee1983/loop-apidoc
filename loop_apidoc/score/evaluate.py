@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from loop_apidoc.manifest.models import ProcessingStatus
 from loop_apidoc.score.models import (
     CATEGORY_WEIGHTS,
@@ -37,6 +39,8 @@ _REVIEW_BLOCKING_CODES = {
     IssueCode.UNSUPPORTED_ASSERTION,
 }
 
+_EXAMPLE_DETAIL_PATTERN = re.compile(r"\bexamples?\b", re.IGNORECASE)
+
 
 def _issue_penalty(issue: Issue) -> int:
     if issue.severity is Severity.WARNING:
@@ -57,10 +61,15 @@ def _declared_example_gap(issue: Issue, plan: dict | None) -> bool:
         return False
     return any(
         item.get("operation_location") == issue.location
-        and "example" in str(item.get("detail", "")).lower()
+        and _is_example_detail(item.get("detail", ""))
         for item in (plan or {}).get("missing_items", [])
         if isinstance(item, dict)
     )
+
+
+def _is_example_detail(detail: object) -> bool:
+    text = str(detail)
+    return "範例" in text or _EXAMPLE_DETAIL_PATTERN.search(text) is not None
 
 
 def _finding_from_issue(
