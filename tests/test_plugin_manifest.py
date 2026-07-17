@@ -31,6 +31,20 @@ def test_marketplace_lists_plugin():
     assert "loop-apidoc" in names
 
 
+def test_tagsmith_release_line_and_scripts_are_explicit():
+    tagsmith = json.loads((ROOT / ".tagsmith.json").read_text("utf-8"))
+    package = json.loads((ROOT / "package.json").read_text("utf-8"))
+
+    assert tagsmith["pattern"] == "v{version}"
+    assert tagsmith["model"] == {"type": "semver", "allowPrerelease": True}
+    assert tagsmith["push"] is False
+    assert package["devDependencies"]["@carllee1983/tagsmith"]
+    assert package["scripts"]["tag:next"].startswith("git fetch --tags origin &&")
+    assert package["scripts"]["tag:create"].endswith("tagsmith create --push")
+    assert package["scripts"]["release:prepare"] == "uv run python scripts/release.py prepare"
+    assert package["scripts"]["release:tag"] == "uv run python scripts/release.py tag"
+
+
 def test_skill_has_frontmatter_and_assemble_call():
     text = (ROOT / "skills" / "loop-apidoc" / "SKILL.md").read_text("utf-8")
     assert text.startswith("---")

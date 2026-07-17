@@ -118,6 +118,38 @@ uv sync
 uv run loop-apidoc --help
 ```
 
+### Release tags
+
+The project uses [Tagsmith](https://github.com/CarlLee1983/Tagsmith) and a
+release script to make versioning repeatable. Enter a version once: preparation
+synchronizes Python/plugin/documentation metadata, refreshes the lock file, and
+creates a non-overwritable release-note skeleton:
+
+```bash
+# Synchronize metadata and create docs/RELEASE_NOTES_0.11.0.md.
+npm run release:prepare -- --version 0.11.0 --summary "Add release workflow"
+
+# Complete release notes, run validation, and commit the metadata.
+git add . && git commit -m "release: publish 0.11.0"
+
+# Read the committed package version, fetch origin tags, then create and push the matching tag.
+npm run release:tag -- --message "loop-apidoc 0.11.0"
+
+# Preview the tag operation only.
+npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+```
+
+The lower-level Tagsmith commands remain available for independent inspection:
+
+```bash
+npm ci
+npm run tag:next -- --level minor
+```
+
+`release:tag` intentionally has no bump level, preventing the git tag from
+diverging from the package version; Tagsmith still validates format, ordering,
+duplicates, and push safety.
+
 ---
 
 ## Supported source formats

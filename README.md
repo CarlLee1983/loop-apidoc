@@ -116,6 +116,36 @@ uv sync
 uv run loop-apidoc --help
 ```
 
+### 發布 tag
+
+專案以 [Tagsmith](https://github.com/CarlLee1983/Tagsmith) 與 release script 固定版本化流程。版本
+只輸入一次；準備命令會同步 Python／plugin／文件版本、更新 lock，並建立不可覆寫的 release-note
+骨架：
+
+```bash
+# 同步版本 metadata 與建立 docs/RELEASE_NOTES_0.11.0.md
+npm run release:prepare -- --version 0.11.0 --summary "新增發佈流程"
+
+# 補齊 release notes，執行完整驗證後，提交 metadata
+git add . && git commit -m "release: publish 0.11.0"
+
+# 讀取 pyproject.toml 的已提交版本，抓取 origin tags 後以 Tagsmith 建立並推送相同 tag
+npm run release:tag -- --message "loop-apidoc 0.11.0"
+
+# 只預覽 tag 動作
+npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+```
+
+低階 Tagsmith 指令仍可用於單獨檢查與預覽：
+
+```bash
+npm ci
+npm run tag:next -- --level minor
+```
+
+`release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；Tagsmith 負責 tag 格式、順序、
+重複與推送保護。
+
 ---
 
 ## 支援的來源格式
