@@ -152,6 +152,42 @@ def test_assemble_score_writes_score_reports_and_preserves_exit_status(tmp_path)
     assert res.exit_code == (0 if payload["ok"] else 1)
 
 
+def test_assemble_score_waives_declared_endpoint_example_gap(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    endpoint_path = extraction / "endpoints" / "ep0.json"
+    endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+    endpoint["missing"] = ["source does not provide examples"]
+    endpoint_path.write_text(json.dumps(endpoint, ensure_ascii=False), encoding="utf-8")
+
+    res = runner.invoke(app, [
+        "assemble",
+        "--sources", str(sources),
+        "--extraction", str(extraction),
+        "--output", str(out),
+        "--score",
+        "--json",
+    ])
+
+    payload = json.loads(res.stdout)
+    plan = json.loads(
+        (Path(payload["run_dir"]) / "plan" / "normalization-plan.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert any(
+        item.get("query_id") == "06-ep0"
+        and item.get("operation_location") == "paths./ping.get"
+        for item in plan["missing_items"]
+    )
+    example_finding = next(
+        finding
+        for finding in payload["score"]["findings"]
+        if finding["code"] == "REQUIRED_INFO_MISSING"
+        and finding["location"] == "paths./ping.get"
+    )
+    assert example_finding["score_impact"] == 0
+
+
 def test_assemble_without_score_does_not_write_score_reports(tmp_path):
     sources, extraction, out = _setup(tmp_path)
 
