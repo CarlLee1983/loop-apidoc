@@ -5,6 +5,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
 import yaml
 
 from loop_apidoc.freshness.models import (
@@ -82,3 +83,39 @@ def classify(entry: FingerprintEntry, observed: ObservedSignal) -> tuple[SourceS
     if baseline.sha256 == current.sha256:
         return (SourceStatus.UNCHANGED, None)
     return (SourceStatus.CHANGED, "content hash changed")
+
+
+def fetch_url_signal(
+    url: str,
+    *,
+    client: httpx.Client,
+    prior_etag: str | None = None,
+    prior_last_modified: str | None = None,
+    max_bytes: int = 5 * 1024 * 1024,
+) -> ObservedSignal:
+    headers: dict[str, str] = {"accept": "application/json, application/yaml, text/yaml, text/html"}
+    if prior_etag:
+        headers["if-none-match"] = prior_etag
+    if prior_last_modified:
+        headers["if-modified-since"] = prior_last_modified
+    try:
+        response = client.get(url, headers=headers)
+    except httpx.HTTPError as exc:
+        return ObservedSignal(signal=None, failed=True, error=f"fetch failed: {exc}")
+    if response.status_code == 304:
+        return ObservedSignal(signal=None, not_modified=True)
+    if response.status_code >= 400:
+        return ObservedSignal(signal=None, failed=True, error=f"HTTP {response.status_code}")
+    raw = response.content
+    if len(raw) > max_bytes:
+        return ObservedSignal(signal=None, failed=True, error=f"response exceeded {max_bytes} byte cap")
+    content_type = response.headers.get("content-type", "")
+    is_openapi, version = detect_openapi(raw, content_type)
+    signal = SourceSignal(
+        version=version,
+        etag=response.headers.get("etag"),
+        last_modified=response.headers.get("last-modified"),
+        sha256=hash_bytes(raw),
+    )
+    kind = SourceKind.OPENAPI_URL if is_openapi else SourceKind.WEB_URL
+    return ObservedSignal(signal=signal, kind=kind)
