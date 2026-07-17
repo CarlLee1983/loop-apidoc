@@ -117,6 +117,65 @@ def test_security_scheme_unknown_type_is_placeholder():
     assert "X-Sig" in scheme["description"]
 
 
+def test_oauth2_without_flows_is_valid_placeholder():
+    # OpenAPI requires `flows` on an oauth2 scheme, but the source-grounded
+    # extraction contract carries no flows/tokenUrl field. Emitting a bare
+    # {"type": "oauth2"} yields an INVALID document, so it must fall through to
+    # the missing-source placeholder rather than fabricate a flow.
+    from openapi_spec_validator import validate as validate_openapi
+
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="OAuth2",
+            type="oauth2", location=None,
+            details="Bearer JWT via client_credentials; token endpoint https://sts/connect/token",
+        )
+    ])
+    doc = build_openapi(plan)
+    scheme = doc["components"]["securitySchemes"]["OAuth2"]
+    assert scheme["type"] == "apiKey"
+    assert scheme[X_LOOP_STATUS] == MISSING_STATUS
+    # the oauth2 identity + details survive in the description, unfabricated
+    assert "oauth2" in scheme["description"]
+    assert "client_credentials" in scheme["description"]
+    # and the whole document is valid OpenAPI
+    validate_openapi(doc)
+
+
+def test_openid_connect_without_url_is_valid_placeholder():
+    from openapi_spec_validator import validate as validate_openapi
+
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="OIDC",
+            type="openIdConnect", location=None, details="OpenID Connect",
+        )
+    ])
+    doc = build_openapi(plan)
+    scheme = doc["components"]["securitySchemes"]["OIDC"]
+    assert scheme["type"] == "apiKey"
+    assert scheme[X_LOOP_STATUS] == MISSING_STATUS
+    validate_openapi(doc)
+
+
+def test_mutual_tls_stays_native_and_valid():
+    # mutualTLS has no required sub-fields, so a bare {"type": "mutualTLS"} is
+    # valid OpenAPI and must be preserved (not downgraded to a placeholder).
+    from openapi_spec_validator import validate as validate_openapi
+
+    plan = _plan(security_schemes=[
+        SecuritySchemeEntry(
+            status=PlanItemStatus.SUPPORTED, name="MtlsAuth",
+            type="mutualTLS", location=None,
+        )
+    ])
+    doc = build_openapi(plan)
+    scheme = doc["components"]["securitySchemes"]["MtlsAuth"]
+    assert scheme["type"] == "mutualTLS"
+    assert X_LOOP_STATUS not in scheme
+    validate_openapi(doc)
+
+
 def test_signing_scheme_keeps_algorithm_in_description_not_name():
     # NewebPay's "schemes" are request-signing/body-encryption procedures, not
     # apiKey auth. The algorithm must live in `description`, never in `name`, and
