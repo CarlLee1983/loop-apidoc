@@ -7,6 +7,8 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
 
 ## Automated in CI
 
+- [ ] `npm run tag:check` passes after fetching remote tags; every tag matches
+  the committed SemVer `v{version}` policy and no ordering anomaly exists.
 - [ ] `uv sync --dev` resolves cleanly.
 - [ ] `uv run ruff check .` passes.
 - [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above 95% — unit + integration + the benchmark discovery guard.
@@ -55,3 +57,26 @@ Generate one representative run and eyeball the products (validation PASS does
   recorded in `missing`; fail-closed gaps are reported, never guessed.
 - [ ] Any defect fixed in this release has a regression test, benchmark fixture,
   quality-gate scenario, or documented follow-up in `docs/PIPELINE_FOLLOWUPS.md`.
+
+## Creating the release tag
+
+Prepare the release version before validation. The command requires a clean
+worktree, takes the version once, synchronizes every release metadata location,
+refreshes `uv.lock`, and creates a non-overwritable release-note skeleton:
+
+```bash
+npm run release:prepare -- --version 0.11.0 --summary "Describe the release"
+```
+
+Complete the notes, run the checks above, and commit the release metadata. Then
+use the package's committed version instead of manually choosing or checking a tag:
+
+```bash
+# Fetches origin tags first, validates strict semver ordering and uniqueness,
+# creates an annotated tag for pyproject.toml's version, and pushes it.
+npm run release:tag -- --message "loop-apidoc 0.11.0"
+```
+
+`release:tag --dry-run` previews without writing. It pushes only after Tagsmith
+accepts the local-and-fetched-remote tag history; a concurrent remote tag still
+makes `git push` fail safely, so fetch and retry instead of forcing a tag.
