@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import httpx
+
 from loop_apidoc.freshness.models import (
     FingerprintEntry,
     SourceKind,
@@ -10,6 +12,7 @@ from loop_apidoc.freshness.signals import (
     ObservedSignal,
     classify,
     detect_openapi,
+    fetch_url_signal,
     file_signal,
     hash_bytes,
 )
@@ -86,3 +89,67 @@ def test_classify_local_sha_mismatch_changed():
     observed = ObservedSignal(signal=SourceSignal(sha256="b"), kind=SourceKind.LOCAL_FILE)
     status, _ = classify(entry, observed)
     assert status is SourceStatus.CHANGED
+
+
+def _client(handler):
+    return httpx.Client(transport=httpx.MockTransport(handler), trust_env=False)
+
+
+def test_fetch_openapi_url_captures_version_and_kind():
+    def handler(request):
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json", "etag": 'W/"v1"'},
+            content=b'{"openapi":"3.1.0","info":{"version":"2.3.0"}}',
+        )
+
+    with _client(handler) as c:
+        obs = fetch_url_signal("https://api.example.com/openapi.json", client=c)
+    assert obs.kind is SourceKind.OPENAPI_URL
+    assert obs.signal.version == "2.3.0"
+    assert obs.signal.etag == 'W/"v1"'
+    assert obs.not_modified is False
+
+
+def test_fetch_web_url_is_web_kind_with_sha():
+    body = b"<html><body>docs</body></html>"
+
+    def handler(request):
+        return httpx.Response(200, headers={"content-type": "text/html"}, content=body)
+
+    with _client(handler) as c:
+        obs = fetch_url_signal("https://docs.example.com/webhooks", client=c)
+    assert obs.kind is SourceKind.WEB_URL
+    assert obs.signal.sha256 == hash_bytes(body)
+    assert obs.signal.version is None
+
+
+def test_fetch_304_is_not_modified():
+    seen = {}
+
+    def handler(request):
+        seen["inm"] = request.headers.get("if-none-match")
+        return httpx.Response(304)
+
+    with _client(handler) as c:
+        obs = fetch_url_signal("https://x", client=c, prior_etag='W/"v1"')
+    assert obs.not_modified is True and obs.signal is None
+    assert seen["inm"] == 'W/"v1"'
+
+
+def test_fetch_http_error_is_failed_not_raised():
+    def handler(request):
+        return httpx.Response(500)
+
+    with _client(handler) as c:
+        obs = fetch_url_signal("https://x", client=c)
+    assert obs.failed is True and obs.error
+
+
+def test_fetch_oversize_is_failed():
+    def handler(request):
+        return httpx.Response(200, headers={"content-type": "text/html"}, content=b"x" * 100)
+
+    with _client(handler) as c:
+        obs = fetch_url_signal("https://x", client=c, max_bytes=10)
+    assert obs.failed is True and "cap" in obs.error.lower()
