@@ -48,6 +48,16 @@ _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
+def _operation_count(paths: dict) -> int:
+    return sum(
+        1
+        for path_item in paths.values()
+        if isinstance(path_item, dict)
+        for method in path_item
+        if method.lower() in {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+    )
+
+
 def _cases() -> list[Path]:
     if not _BENCH_ROOT.is_dir():
         return []
@@ -89,8 +99,16 @@ def test_jili_case_has_declared_legacy_pdf_minimums():
     case = _case_by_name("jili-legacy-gaming-pdf")
     minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
     assert minimum["must_have"]["endpoints_min"] == 25
+    assert minimum["must_have"]["paths_min"] == 20
     assert "paths./CreateFreeSpin.get" in minimum["critical_operations"]
     assert "paths./CreateFreeSpin.post" in minimum["critical_operations"]
+
+
+def test_operation_floor_counts_methods_separately_from_paths():
+    paths = {"/free-spin": {"get": {}, "post": {}}}
+
+    assert len(paths) == 1
+    assert _operation_count(paths) == 2
 
 
 def _assemble_case(case: Path, tmp_path_factory) -> RunResult:
@@ -163,7 +181,10 @@ def test_benchmark_case(case, assembled) -> None:
     servers = doc.get("servers", []) or []
 
     # --- 4. structural minimums (>= floor; harness must not silently regress) ---
-    assert len(paths) >= must.get("endpoints_min", 0), f"{case.name}: too few paths"
+    assert _operation_count(paths) >= must.get("endpoints_min", 0), (
+        f"{case.name}: too few operations"
+    )
+    assert len(paths) >= must.get("paths_min", 0), f"{case.name}: too few paths"
     assert len(webhooks) >= must.get("webhooks_min", 0), f"{case.name}: too few webhooks"
     assert len(schemas) >= must.get("schemas_min", 0), f"{case.name}: too few schemas"
     assert len(sec) >= must.get("security_schemes_min", 0), f"{case.name}: too few securitySchemes"

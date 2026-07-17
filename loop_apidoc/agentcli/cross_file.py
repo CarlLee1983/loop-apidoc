@@ -119,6 +119,43 @@ def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     ]
 
 
+def _identity_keys(entry: dict) -> frozenset[str]:
+    return frozenset(
+        key for key in (_key(expanded) for expanded in _expand_methods([entry]))
+        if key is not None
+    )
+
+
+def _shared_methods_violations(
+    inventory: dict, endpoints: list[tuple[str, dict]]
+) -> list[str]:
+    """A shared inventory contract must remain one shared detail contract.
+
+    Expanding to individual operations is a pipeline implementation detail; it
+    must not let independently extracted method details masquerade as one source
+    stated, identical contract.
+    """
+    out: list[str] = []
+    for idx, entry in enumerate(_entries(inventory, "endpoints")):
+        if not isinstance(entry.get("methods"), list):
+            continue
+        expected_keys = _identity_keys(entry)
+        if not expected_keys:
+            continue  # schema validation reports malformed methods before this gate.
+        matched = [
+            name for name, detail in endpoints
+            if _identity_keys(detail) == expected_keys
+        ]
+        if len(matched) != 1:
+            operations = ", ".join(sorted(expected_keys))
+            out.append(
+                f"inventory.json: endpoints[{idx}].methods ({operations}) 必須由一個 "
+                "endpoints/*.json detail 以相同 methods 集合匹配 "
+                "(same methods set;不可拆成不同 method 檔案)"
+            )
+    return out
+
+
 def _schema_refs(endpoint: dict) -> list[tuple[str, Any]]:
     out: list[tuple[str, Any]] = []
     request = endpoint.get("request")
@@ -183,6 +220,7 @@ def cross_file_violations(
         _count_violations(inventory, endpoints)
         + _identity_set_violations(inventory, endpoints)
         + _duplicate_violations(endpoints)
+        + _shared_methods_violations(inventory, endpoints)
         + _reference_violations(inventory, endpoints)
         + _server_violations(inventory)
     )

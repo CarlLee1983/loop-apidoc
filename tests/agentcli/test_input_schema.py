@@ -75,6 +75,35 @@ def test_malformed_endpoint_detail_is_rejected(tmp_path):
     assert "parameters" in str(exc.value)
 
 
+@pytest.mark.parametrize("methods", [[], ["GET", "  "], ["GET", "get"], "GET"])
+def test_invalid_multi_method_endpoint_detail_is_rejected(tmp_path, methods):
+    bad = json.loads(json.dumps(_ENDPOINT))
+    bad.pop("method")
+    bad["methods"] = methods
+    extraction = tmp_path / "x"
+    _write(extraction, endpoint=bad)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "ep0.json" in str(exc.value)
+    assert "methods" in str(exc.value)
+
+
+def test_invalid_multi_method_inventory_entry_is_rejected(tmp_path):
+    bad = json.loads(json.dumps(_INVENTORY))
+    bad["endpoints"][0].pop("method")
+    bad["endpoints"][0]["methods"] = []
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=bad)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "inventory.json" in str(exc.value)
+    assert "endpoints[0].methods" in str(exc.value)
+
+
 def test_generator_supported_param_field_keys_are_allowed(tmp_path):
     # 產生器(openapi.py)會讀 param/field 上的 enum/location/schema 作為 in/type 的
     # 後備鍵;這些是合法 English 鍵(非本地化錯誤),嚴格守門不可誤擋。

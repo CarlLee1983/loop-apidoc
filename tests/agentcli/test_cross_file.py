@@ -45,6 +45,18 @@ def test_multi_method_detail_rejects_missing_inventory_method():
                for item in cross_file_violations(inventory, endpoints))
 
 
+def test_shared_method_inventory_requires_one_matching_detail_file():
+    inventory = {"endpoints": [{"methods": ["GET", "POST"], "path": "/free-spin"}]}
+    endpoints = [
+        ("ep00.json", {"method": "GET", "path": "/free-spin"}),
+        ("ep01.json", {"method": "POST", "path": "/free-spin"}),
+    ]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("same methods set" in item for item in violations)
+
+
 # ── 不變式 1:數量 ────────────────────────────────────────────────────
 
 def test_missing_endpoint_file_is_a_violation():
