@@ -51,8 +51,9 @@ One object describing the whole API. **You** write what the single inventory sub
   different summaries, parameters, requests, responses, security, or source
   detail, write separate single-`method` entries instead. `methods` must be a
   non-empty array of unique, non-blank canonical HTTP methods (uppercase
-  `GET`, `PUT`, `POST`, `DELETE`, `OPTIONS`, `HEAD`, `PATCH`, or `TRACE`);
-  the same canonical restriction applies to legacy `method`.
+  `GET`, `PUT`, `POST`, `DELETE`, `OPTIONS`, `HEAD`, `PATCH`, or `TRACE`).
+  Legacy `method` accepts these verbs case-insensitively and is normalized to
+  uppercase; it must not include leading or trailing whitespace.
 - `endpoints[].path` is the path **only**, always starting with `/`
   (`/hrxt/loginGame`, `/users/{userId}/orders`). The host belongs in
   `environments[].base_url` — never fold it, or a `{template}` placeholder standing for it,

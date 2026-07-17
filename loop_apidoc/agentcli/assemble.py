@@ -14,6 +14,7 @@ from loop_apidoc.agentcli.input_schema import (
     IntegrationInput,
     InventoryInput,
     first_error,
+    normalize_endpoint_method_fields,
 )
 from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.extraction.stages import QueryKind
@@ -112,6 +113,9 @@ def load_extraction_inputs(
     except ValidationError as exc:
         raise AssembleInputError(
             f"inventory.json 欄位 {first_error(exc)}") from exc
+    for endpoint in inventory.get("endpoints") or []:
+        if isinstance(endpoint, dict):
+            normalize_endpoint_method_fields(endpoint)
 
     endpoint_texts: list[str] = []
     endpoints_dir = extraction_dir / "endpoints"
@@ -128,7 +132,9 @@ def load_extraction_inputs(
             except ValidationError as exc:
                 raise AssembleInputError(
                     f"{path.name} 欄位 {first_error(exc)}") from exc
-            endpoint_texts.append(text)
+            if isinstance(obj, dict):
+                normalize_endpoint_method_fields(obj)
+            endpoint_texts.append(json.dumps(obj, ensure_ascii=False))
 
     integration: dict | None = None
     integration_path = extraction_dir / "integration.json"

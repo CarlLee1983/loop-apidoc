@@ -103,9 +103,10 @@ class _MethodBearingInput(_Lax):
     def _validate_method(cls, value: Any) -> Any:
         if value is None:
             return value
-        if value not in _SUPPORTED_HTTP_METHODS:
-            raise ValueError("must be a canonical supported HTTP method")
-        return value
+        if (not isinstance(value, str) or value != value.strip()
+                or value.upper() not in _SUPPORTED_HTTP_METHODS):
+            raise ValueError("must be an unpadded supported HTTP method")
+        return value.upper()
 
     @field_validator("methods", mode="before")
     @classmethod
@@ -120,6 +121,17 @@ class _MethodBearingInput(_Lax):
         if any(method not in _SUPPORTED_HTTP_METHODS for method in value):
             raise ValueError("must contain only canonical supported HTTP methods")
         return value
+
+
+def normalize_endpoint_method_fields(entry: dict[str, Any]) -> None:
+    """Canonicalize already-validated endpoint method fields in place."""
+    method = entry.get("method")
+    if isinstance(method, str):
+        entry["method"] = method.upper()
+    methods = entry.get("methods")
+    if isinstance(methods, list):
+        entry["methods"] = [method.upper() if isinstance(method, str) else method
+                            for method in methods]
 
 
 class SchemaEntry(_Lax):
