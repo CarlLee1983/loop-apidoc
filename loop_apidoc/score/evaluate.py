@@ -52,7 +52,23 @@ def _is_blocking(issue: Issue, profile: ScoreProfile) -> bool:
     return issue.code in _REVIEW_BLOCKING_CODES
 
 
-def _finding_from_issue(issue: Issue, profile: ScoreProfile) -> ScoreFinding:
+def _declared_example_gap(issue: Issue, plan: dict | None) -> bool:
+    if issue.code is not IssueCode.REQUIRED_INFO_MISSING or issue.field_path != "examples":
+        return False
+    return any(
+        item.get("query_id") == issue.location
+        and "example" in str(item.get("detail", "")).lower()
+        for item in (plan or {}).get("missing_items", [])
+        if isinstance(item, dict)
+    )
+
+
+def _finding_from_issue(
+    issue: Issue,
+    profile: ScoreProfile,
+    *,
+    score_impact: int | None = None,
+) -> ScoreFinding:
     return ScoreFinding(
         code=issue.code.value,
         severity=issue.severity.value,
@@ -61,7 +77,7 @@ def _finding_from_issue(issue: Issue, profile: ScoreProfile) -> ScoreFinding:
         suggested_fix=issue.suggested_fix,
         category=_ISSUE_CATEGORY[issue.code],
         blocking=_is_blocking(issue, profile),
-        score_impact=_issue_penalty(issue),
+        score_impact=_issue_penalty(issue) if score_impact is None else score_impact,
     )
 
 
@@ -175,7 +191,11 @@ def evaluate_score(
 ) -> ScoreReport:
     threshold = resolved_min_score(profile, min_score)
     findings = [
-        _finding_from_issue(issue, profile)
+        _finding_from_issue(
+            issue,
+            profile,
+            score_impact=0 if _declared_example_gap(issue, inputs.plan) else None,
+        )
         for issue in inputs.validation.issues
     ]
     findings.extend(_reviewability_findings(inputs))

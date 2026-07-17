@@ -40,6 +40,7 @@ def _inputs(
     issues: list[Issue] | None = None,
     *,
     run_dir: Path = Path("output/run"),
+    plan: dict | None = None,
     review_html_exists: bool = True,
     validation_markdown_exists: bool = True,
     manifest: Manifest | None = None,
@@ -50,6 +51,7 @@ def _inputs(
         validation=ValidationReport(issues=issues or []),
         provenance=ProvenanceDocument(notebook_url="", entries=[]),
         manifest=manifest or _manifest(),
+        plan=plan,
         review_html_exists=review_html_exists,
         validation_markdown_exists=validation_markdown_exists,
     )
@@ -59,6 +61,7 @@ def _issue(
     code: IssueCode,
     severity: Severity,
     location: str = "paths./ping.get",
+    field_path: str | None = None,
 ) -> Issue:
     return Issue(
         code=code,
@@ -66,6 +69,7 @@ def _issue(
         location=location,
         evidence=f"{code.value} evidence",
         suggested_fix=f"Fix {code.value}",
+        field_path=field_path,
     )
 
 
@@ -130,6 +134,47 @@ def test_warning_yields_needs_attention_and_nonblocking_penalty() -> None:
     assert report.blocking_findings == []
     assert report.category_scores["completeness"] == 88
     assert report.score == 96
+
+
+def test_declared_missing_examples_remain_visible_without_penalty() -> None:
+    issue = _issue(
+        IssueCode.REQUIRED_INFO_MISSING,
+        Severity.WARNING,
+        "paths./ping.get",
+        field_path="examples",
+    )
+
+    report = evaluate_score(
+        _inputs(
+            [issue],
+            plan={
+                "missing_items": [
+                    {
+                        "area": "06",
+                        "detail": "examples",
+                        "query_id": "paths./ping.get",
+                    }
+                ]
+            },
+        ),
+        profile=ScoreProfile.CI,
+    )
+
+    assert report.findings[0].score_impact == 0
+    assert report.category_scores["completeness"] == 100
+
+
+def test_unclassified_missing_examples_keep_penalty() -> None:
+    issue = _issue(
+        IssueCode.REQUIRED_INFO_MISSING,
+        Severity.WARNING,
+        "paths./ping.get",
+        field_path="examples",
+    )
+
+    report = evaluate_score(_inputs([issue]), profile=ScoreProfile.CI)
+
+    assert report.findings[0].score_impact == 12
 
 
 def test_min_score_override_can_fail_without_blocking_findings() -> None:
