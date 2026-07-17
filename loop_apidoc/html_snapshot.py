@@ -20,6 +20,7 @@ def html_to_markdown(html: str) -> str:
     ignored = {"aside", "footer", "nav", "script", "style", "template"}
 
     def text(item: _Element) -> str:
+        """Inline text with whitespace collapsed (headings, cells, paragraphs)."""
         parts: list[str] = []
         for child in item.children:
             if isinstance(child, str):
@@ -28,8 +29,55 @@ def html_to_markdown(html: str) -> str:
                 parts.append(text(child))
         return " ".join(" ".join(parts).split())
 
+    def raw_text(item: _Element) -> str:
+        """Descendant text with line breaks preserved (code blocks)."""
+        parts: list[str] = []
+        for child in item.children:
+            if isinstance(child, str):
+                parts.append(child)
+            elif child.tag not in ignored:
+                parts.append(raw_text(child))
+        return "".join(parts)
+
+    def render_table(table: _Element) -> str:
+        rows: list[list[str]] = []
+        for row in (e for e in _walk(table) if e.tag == "tr"):
+            cells = [
+                text(cell).replace("|", r"\|")
+                for cell in row.children
+                if isinstance(cell, _Element) and cell.tag in {"th", "td"}
+            ]
+            if cells:
+                rows.append(cells)
+        if not rows:
+            return ""
+        width = max(len(row) for row in rows)
+        rows = [row + [""] * (width - len(row)) for row in rows]
+        header, *body = rows
+        out = [
+            "| " + " | ".join(header) + " |",
+            "| " + " | ".join(["---"] * width) + " |",
+        ]
+        out += ["| " + " | ".join(row) + " |" for row in body]
+        return "\n".join(out)
+
+    consumed: set[int] = set()
     for item in _walk(root):
-        if item.tag in ignored:
+        if id(item) in consumed or item.tag in ignored:
+            continue
+        if item.tag == "table":
+            for descendant in _walk(item):
+                consumed.add(id(descendant))
+            rendered = render_table(item)
+            if rendered:
+                lines.append(rendered)
+            continue
+        if item.tag == "pre":
+            for descendant in _walk(item):
+                consumed.add(id(descendant))
+            code = raw_text(item).strip("\n")
+            if code:
+                lines.append(f"```\n{code}\n```")
             continue
         value = text(item)
         if not value:
@@ -38,9 +86,7 @@ def html_to_markdown(html: str) -> str:
             lines.append(f"{'#' * int(item.tag[1])} {value}")
         elif item.tag == "li":
             lines.append(f"- {value}")
-        elif item.tag == "pre":
-            lines.append(f"```\n{value}\n```")
-        elif item.tag in {"p", "table"}:
+        elif item.tag == "p":
             lines.append(value)
     return "\n\n".join(dict.fromkeys(line for line in lines if line)) + ("\n" if lines else "")
 
