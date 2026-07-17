@@ -142,6 +142,20 @@ def test_noncanonical_inventory_http_methods_are_rejected(tmp_path, field, value
     assert field in str(exc.value)
 
 
+def test_legacy_lowercase_methods_are_normalized_before_downstream_use(tmp_path):
+    inventory = json.loads(json.dumps(_INVENTORY))
+    inventory["endpoints"][0]["method"] = "get"
+    endpoint = json.loads(json.dumps(_ENDPOINT))
+    endpoint["method"] = "post"
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=inventory, endpoint=endpoint)
+
+    loaded_inventory, endpoint_texts, _ = load_extraction_inputs(extraction)
+
+    assert loaded_inventory["endpoints"][0]["method"] == "GET"
+    assert json.loads(endpoint_texts[0])["method"] == "POST"
+
+
 def test_generator_supported_param_field_keys_are_allowed(tmp_path):
     # 產生器(openapi.py)會讀 param/field 上的 enum/location/schema 作為 in/type 的
     # 後備鍵;這些是合法 English 鍵(非本地化錯誤),嚴格守門不可誤擋。
