@@ -39,7 +39,7 @@ def _load_manifest(run_dir: Path) -> Manifest:
     except OSError as exc:
         raise FreshnessInputError(f"cannot read {path}: {exc}") from exc
     except ValueError as exc:
-        raise FreshnessInputError(f"manifest.json schema error: {exc}") from exc
+        raise FreshnessInputError(f"manifest.json is invalid JSON or fails schema: {exc}") from exc
 
 
 def build_fingerprint(
