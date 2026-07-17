@@ -36,7 +36,11 @@ Covers all four source shapes the pipeline already accepts:
 Out of scope for v1 (documented as follow-ups): normalized-HTML signal (hashing the
 readable main text via `html_snapshot.html_to_markdown` instead of raw body) to reduce
 false "changed" from dynamic page noise; auto-triggering the re-parse from inside the
-CLI (kept as a scheduler/skill concern).
+CLI (kept as a scheduler/skill concern); **added/removed-source detection** — `check-freshness`
+re-checks only the sources recorded in the fingerprint, so a brand-new source page
+appearing (without an OpenAPI `info.version` bump) is not detected until the next
+`record-fingerprint`. Detecting it would require re-scanning/re-cataloguing sources at
+check time.
 
 ## Approach (chosen: A)
 
@@ -124,7 +128,7 @@ Cheapest-first, per `kind`:
 | Verdict | Meaning | Exit code |
 | --- | --- | --- |
 | `unchanged` | every source matches its baseline signal | `0` |
-| `changed` | any source's version/hash changed, or a source was added/removed vs the baseline | `1` |
+| `changed` | any recorded source's version/hash changed vs the baseline | `1` |
 | `inconclusive` | at least one source could not be fetched/read (and none was proven `changed`) | `2` |
 
 Rationale: a fetch failure must not read as "unchanged" (would silently skip a needed
@@ -132,8 +136,7 @@ re-parse) nor force a wasteful re-parse — it is its own state the scheduler/sk
 alert on. If any source is proven `changed`, that dominates an inconclusive one (the run
 already needs re-parsing).
 
-Per-source status in the report: `unchanged` | `changed` | `added` | `removed` |
-`fetch_failed`.
+Per-source status in the report: `unchanged` | `changed` | `fetch_failed`.
 
 ## CLI `--json` shape
 
