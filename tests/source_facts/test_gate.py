@@ -217,3 +217,72 @@ def test_a_dotted_path_whose_leaf_is_absent_still_fails() -> None:
         },
     )]
     assert "user.id" in source_fact_violations(_index(fact), endpoints)[0]
+
+
+def _facts_in(path: str, *facts: EndpointFact) -> SourceFacts:
+    return SourceFacts(relative_path=path, endpoints=list(facts))
+
+
+def test_conflicting_sources_for_one_endpoint_require_only_their_intersection() -> None:
+    """同一端點被兩處描述時(v1 已棄用 / 總覽索引頁 vs 細節頁),取「最豐富的」
+    會要求擷取去滿足它本來就該忽略的那一節。歧義時 fail open 才是對的偏誤。"""
+    index = FactIndex(sources=[
+        _facts_in("overview.md", EndpointFact(
+            relative_path="overview.md", heading="API list", method="POST",
+            path="/transfer", line=1, parameter_names=["oldA", "oldB", "amount"],
+            example_blocks=2)),
+        _facts_in("detail.md", EndpointFact(
+            relative_path="detail.md", heading="Transfer", method="POST",
+            path="/transfer", line=1, parameter_names=["amount"], example_blocks=0)),
+    ])
+    endpoints = [(
+        "ep1.json",
+        {"method": "POST", "path": "/transfer",
+         "parameters": [{"name": "amount"}], "examples": []},
+    )]
+    assert source_fact_violations(index, endpoints) == []
+
+
+def test_a_single_source_endpoint_keeps_its_full_requirement() -> None:
+    index = FactIndex(sources=[_facts_in("detail.md", EndpointFact(
+        relative_path="detail.md", heading="Transfer", method="POST", path="/transfer",
+        line=1, parameter_names=["amount", "currency"], example_blocks=0))])
+    endpoints = [(
+        "ep1.json",
+        {"method": "POST", "path": "/transfer", "parameters": [{"name": "amount"}]},
+    )]
+    assert "currency" in source_fact_violations(index, endpoints)[0]
+
+
+def test_error_fields_recorded_in_the_inventory_error_catalog_are_accounted_for() -> None:
+    """付款/遊戲類文件幾乎都把錯誤表在每個端點重複一次,而正確的擷取會把它
+    收在 inventory.errors[] 一處。看不到那裡就會逐個端點誤擋。"""
+    inventory = {"errors": [
+        {"code": "400", "fields": [{"name": "error_code"}, {"name": "error_msg"}]}
+    ]}
+    fact = _fact(parameter_names=["X-Token", "provider", "error_code", "error_msg"])
+    endpoints = [(
+        "ep1.json",
+        {
+            "method": "GET", "path": "/games",
+            "parameters": [{"name": "X-Token"}, {"name": "provider"}],
+            "responses": [{"status": "400", "description": "Error."}],
+            "examples": [{"body": "{}"}],
+        },
+    )]
+    assert source_fact_violations(_index(fact), endpoints, inventory) == []
+
+
+def test_a_schema_named_as_a_plain_string_resolves_like_a_ref() -> None:
+    """ResponseEntry.schema 依設計是自由格式,直接寫共用 schema 名是合法的。"""
+    inventory = {"schemas": [{"name": "Envelope", "fields": [{"name": "provider"}]}]}
+    endpoints = [(
+        "ep1.json",
+        {
+            "method": "GET", "path": "/games",
+            "parameters": [{"name": "X-Token"}],
+            "responses": [{"status": "200", "description": "ok", "schema": "Envelope"}],
+            "examples": [{"body": "{}"}],
+        },
+    )]
+    assert source_fact_violations(_index(_fact()), endpoints, inventory) == []
