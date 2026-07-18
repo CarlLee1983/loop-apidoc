@@ -1,3 +1,3 @@
 """Loop source-grounded API documentation pipeline."""
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
