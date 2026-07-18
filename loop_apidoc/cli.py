@@ -609,6 +609,11 @@ def assemble(
         "--source-quality",
         help="assess-sources 產出的報告目錄;reject 會阻止組裝並把通過報告存入 run-dir",
     ),
+    extractor_model: str = typer.Option(
+        None,
+        "--extractor-model",
+        help="執行擷取的模型名稱,由 agent 明確帶入並記入 run.json;省略即 null(CLI 不推測)",
+    ),
     json_out: bool = typer.Option(
         False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
     ),
@@ -657,6 +662,7 @@ def assemble(
             url_coverage_path=url_coverage,
             source_quality_dir=source_quality,
             excludes=tuple(exclude),
+            extractor_model=extractor_model,
         )
     except AssembleInputError as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)
@@ -707,6 +713,8 @@ def assemble(
             "status": result.status.value,
             "report": result.report.model_dump(mode="json"),
         }
+        if result.toolchain is not None:
+            payload["toolchain"] = result.toolchain.model_dump(mode="json")
         if score_payload is not None:
             payload["score"] = score_payload.model_dump(mode="json")
         if loop_payload is not None:

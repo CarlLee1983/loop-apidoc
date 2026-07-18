@@ -332,7 +332,7 @@ uv run loop-apidoc verify-extraction \
   --sources ./sources --extraction ./work [--url <URL> ...] [--json]
 ```
 
-Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, and cross-file invariants. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
+Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
 
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
@@ -342,10 +342,10 @@ uv run loop-apidoc assemble \
   --extraction ./work \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
-  [--source-quality ./work/source-quality] [--json] [--score]
+  [--source-quality ./work/source-quality] [--extractor-model <model-name>] [--json] [--score]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, and `report` to stdout for the agent to parse and drive the correction loop. Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, `report`, and `toolchain` to stdout for the agent to parse and drive the correction loop. The run directory also gets a `run.json` descriptor recording `toolchain` (`cli_version`, `extraction_contract_version`, `skill_version`, `model`) so a later regression can be attributed to a version from the artifacts alone; `--extractor-model` lets the agent state the extraction model explicitly — omitted means `null` (the CLI never guesses). Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
 
 ---
 
@@ -356,6 +356,7 @@ Each execution uses an isolated run directory:
 ```text
 output/
 └── <run-id>/                       # run-id format: %Y%m%dT%H%M%S.%fZ (microseconds avoid same-second collisions)
+    ├── run.json                    # run descriptor (status + toolchain versions)
     ├── manifest.json               # source manifest
     ├── extraction/                 # extraction audit trail (not re-runnable input)
     │   ├── queries.jsonl           # per-round query records
@@ -430,6 +431,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance generation (a file-I/O exit) |

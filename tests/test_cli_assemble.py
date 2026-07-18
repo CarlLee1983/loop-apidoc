@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from loop_apidoc import __version__
 from loop_apidoc.cli import app
+from loop_apidoc.run.toolchain import EXTRACTION_CONTRACT_VERSION
 
 runner = CliRunner()
 
@@ -348,3 +350,59 @@ def test_assemble_malformed_coverage_exits_2_without_run_dir(tmp_path):
     assert res.exit_code == 2
     # fail-loud before any run dir is created
     assert not out.exists() or not any(out.iterdir())
+
+
+def test_assemble_writes_toolchain_into_run_descriptor(tmp_path):
+    """run.json 要能單靠產物回答「哪個版本產生了這次 run」(issue #14 歸因)。"""
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json",
+    ])
+    assert res.exit_code in (0, 1)
+    run_dir = Path(json.loads(res.stdout)["run_dir"])
+    descriptor = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    assert descriptor["run_id"] == run_dir.name
+    assert descriptor["status"] in {"passed", "failed"}
+    toolchain = descriptor["toolchain"]
+    assert toolchain["cli_version"] == __version__
+    assert toolchain["extraction_contract_version"] == EXTRACTION_CONTRACT_VERSION
+    assert set(toolchain) == {
+        "cli_version", "extraction_contract_version", "skill_version", "model",
+    }
+
+
+def test_assemble_json_surfaces_toolchain(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json",
+    ])
+    payload = json.loads(res.stdout)
+    assert payload["toolchain"]["cli_version"] == __version__
+    assert payload["toolchain"]["model"] is None
+
+
+def test_assemble_extractor_model_is_recorded_verbatim(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json", "--extractor-model", "claude-opus-4-8",
+    ])
+    payload = json.loads(res.stdout)
+    assert payload["toolchain"]["model"] == "claude-opus-4-8"
+    run_dir = Path(payload["run_dir"])
+    descriptor = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    assert descriptor["toolchain"]["model"] == "claude-opus-4-8"
+
+
+def test_assemble_without_extractor_model_leaves_model_null(tmp_path):
+    """CLI 不得推測模型名稱——沒給就是 null。"""
+    sources, extraction, out = _setup(tmp_path)
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--json",
+    ])
+    run_dir = Path(json.loads(res.stdout)["run_dir"])
+    descriptor = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    assert descriptor["toolchain"]["model"] is None

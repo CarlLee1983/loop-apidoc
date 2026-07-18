@@ -15,6 +15,8 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 import httpx
 from pydantic import BaseModel, Field
 
+from loop_apidoc.url_adapters import resolve_fetch_url
+
 
 class CatalogNode(BaseModel):
     url: str
@@ -138,11 +140,25 @@ def _direct_list_items(list_element: _Element) -> list[_Element]:
     return [child for child in list_element.children if isinstance(child, _Element) and child.tag == "li"]
 
 
+# 純 UI 控制項（收合、分享、下拉）也是側欄的 <a>，但沒有文件目標；
+# 讓它們成為 catalog 節點會把 UI 標籤當成待擷取的來源頁。
+_UI_CONTROL_ATTRS = ("data-toggle", "data-bs-toggle", "aria-haspopup")
+
+
+def _is_ui_control(anchor: _Element) -> bool:
+    href = anchor.attrs.get("href", "").strip()
+    if href in {"", "#"}:
+        return True
+    if anchor.attrs.get("role", "").casefold() == "button":
+        return True
+    return any(attr in anchor.attrs for attr in _UI_CONTROL_ATTRS)
+
+
 def _first_anchor(element: _Element) -> _Element | None:
     def visit(node: _Element) -> _Element | None:
         if node.tag in {"ul", "ol"}:
             return None
-        if node.tag == "a" and node.attrs.get("href"):
+        if node.tag == "a" and node.attrs.get("href") and not _is_ui_control(node):
             return node
         for child in node.children:
             if isinstance(child, _Element):
@@ -261,6 +277,19 @@ def build_catalog(entry_url: str, html: str) -> UrlCatalog:
     return UrlCatalog(entry_url=_canonical_url(entry_url, entry_url) or entry_url, nodes=nodes)
 
 
+def build_document_catalog(entry_url: str, markdown: str) -> UrlCatalog:
+    """A raw Markdown source has no navigation; it is its own single catalog node."""
+    canonical = _canonical_url(entry_url, entry_url) or entry_url
+    title = next(
+        (line.lstrip("#").strip() for line in markdown.splitlines() if line.startswith("# ")),
+        None,
+    )
+    return UrlCatalog(
+        entry_url=canonical,
+        nodes=[CatalogNode(url=canonical, title=title or "Entry document")],
+    )
+
+
 def fetch_catalog(
     entry_url: str,
     *,
@@ -270,10 +299,11 @@ def fetch_catalog(
     """Fetch one bounded entry page and turn only its navigation into a catalog."""
     if max_bytes < 1:
         raise ValueError("max_bytes must be positive")
+    target = resolve_fetch_url(entry_url)
     own_client = client is None
     active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
     try:
-        with active_client.stream("GET", entry_url, headers={"Accept": "text/html"}) as response:
+        with active_client.stream("GET", target.url, headers={"Accept": target.accept}) as response:
             response.raise_for_status()
             chunks: list[bytes] = []
             size = 0
@@ -283,8 +313,10 @@ def fetch_catalog(
                     raise CatalogFetchError(f"entry page exceeds {max_bytes} byte cap")
                 chunks.append(chunk)
             encoding = response.encoding or "utf-8"
-            html = b"".join(chunks).decode(encoding, errors="replace")
-            return build_catalog(str(response.url), html)
+            text = b"".join(chunks).decode(encoding, errors="replace")
+            if target.representation == "markdown":
+                return build_document_catalog(entry_url, text)
+            return build_catalog(str(response.url), text)
     except httpx.HTTPError as exc:
         raise CatalogFetchError(f"cannot fetch entry page: {exc.__class__.__name__}") from exc
     finally:
@@ -314,14 +346,17 @@ def select_catalog(
         _canonical_navigation_url(catalog.entry_url, url) or (url, None)
         for url in urls
     }
-    if not any(value.strip() for value in (*branch_values, *term_values)) and not requested_urls:
+    has_keywords = any(value.strip() for value in (*branch_values, *term_values))
+    if not has_keywords and not requested_urls:
         raise ValueError("at least one branch, term, or URL is required")
 
+    # 沒有關鍵字時 `_matches` 對任何節點都成立，所以只給 URL 的選取必須是純 URL 比對，
+    # 否則明確指定來源反而會選到整份 catalog。
     selected = [
         node
         for node in catalog.nodes
         if (node.url, node.anchor) in requested_urls
-        or (_matches(node, branch_values) and _matches(node, term_values))
+        or (has_keywords and _matches(node, branch_values) and _matches(node, term_values))
     ]
     return UrlSelection(
         entry_url=catalog.entry_url,

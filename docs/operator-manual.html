@@ -214,15 +214,18 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>
-<p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式),但<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
+<p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式、來源事實、延後語句),但<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
+<p><strong>來源事實閘</strong>會機械掃描 manifest 中的 Markdown 來源,取出端點宣告、參數表與圍籬範例區塊,再以 <code>(METHOD, path)</code> 與擷取結果對照。一旦對上的來源小節寫了欄位或範例、擷取卻交回空的,就 fail closed——靜默遺漏不等於「來源沒寫」。要主張來源沒寫,在 <code>missing</code> 裡具名該欄位即可通過,所以這道閘只會逼出有據可查的缺口,不會逼出捏造。欄位名會沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,因此把共用 request body 抽成共用型別算去重複,不算遺漏。</p>
+<p>另一道檢查攔下佔位式延後答案,並分兩層以避免誤判。明確指涉「擷取這件事」的說法(<em>further extraction</em>、<em>not yet extracted</em>、「需進一步擷取」)出現在值的任何位置都算,因為真實 API 描述不會提到自己的擷取流程;泛用佔位字(<em>TBD</em>、<em>to be determined</em>、「待補」)則只有在<strong>整個欄位就只有這句</strong>時才算,因為「amount to be determined at capture」是合法的 API 描述。英文片語以詞界比對,CJK 沒有詞界可言,維持子字串比對。少了這道檢查,run 會以 <em>passed</em> 收場而產物是空的。</p>
+<p><strong>請注意適用範圍。</strong>這道掃描只認得結構良好的 Markdown:標題、含分隔列的 GFM 表格、圍籬程式碼區塊。若來源被壓成一行行超長文字(例如 HTML 轉純文字的傾印檔),掃描結果為零筆事實,這道閘就靜默失效。因此<em>閘門乾淨通過本身並不等於擷取完整</em>,它只證明「機械讀得到的事實」沒有被違反。面對非結構化來源,仍要靠 <code>review.html</code> 與人工核對。</p>
 <h3 id="assemble"><code>assemble</code> — 從 agent 產出的擷取 JSON 組裝 + 驗證</h3>
 <pre><code class="language-bash">uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--json] [--score]
+  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;模型名稱&gt;] [--json] [--score]
 </code></pre>
-<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>,選用 <code>integration.json</code>)組裝成輸出:manifest → plan → generate → validate。若傳入 <code>assess-sources</code> 產出的 <code>--source-quality</code> 目錄,reject 結論會在建立 run-dir 前中止,pass 報告則保存進 run-dir;<code>--url-coverage</code> 在有 URL 來源時檢核撈取涵蓋率(僅 warning)。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>review_html</code>、<code>ok</code>、<code>status</code>、<code>report</code> 印到 stdout,供 agent 解析並驅動修正迴圈。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
+<p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>,選用 <code>integration.json</code>)組裝成輸出:manifest → plan → generate → validate。若傳入 <code>assess-sources</code> 產出的 <code>--source-quality</code> 目錄,reject 結論會在建立 run-dir 前中止,pass 報告則保存進 run-dir;<code>--url-coverage</code> 在有 URL 來源時檢核撈取涵蓋率(僅 warning)。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>review_html</code>、<code>ok</code>、<code>status</code>、<code>report</code>、<code>toolchain</code> 印到 stdout,供 agent 解析並驅動修正迴圈。run 目錄另寫出 <code>run.json</code>,記錄 <code>toolchain</code>(<code>cli_version</code>、<code>extraction_contract_version</code>、<code>skill_version</code>、<code>model</code>)以便日後歸因;<code>--extractor-model</code> 由 agent 明確帶入擷取模型名稱,省略即 <code>null</code>(CLI 不推測)。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
 <h3 id="validate-run"><code>validate</code> — 驗證既有 run 目錄</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
@@ -244,6 +247,7 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <p>每次執行使用獨立 run directory:</p>
 <pre><code class="language-text">output/
 └── &lt;run-id&gt;/                       # run-id 格式:%Y%m%dT%H%M%S.%fZ（含微秒，避免同秒衝突）
+    ├── run.json                    # run 描述子（狀態 + toolchain 版本）
     ├── manifest.json               # 來源 manifest
     ├── extraction/                 # 擷取稽核軌跡（非可重跑的原始輸入）
     │   ├── queries.jsonl           # 每輪查詢紀錄
@@ -336,7 +340,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
@@ -380,7 +384,15 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/url_catalog.py</code> / <code>url_corpus.py</code></td>
-<td>受限 URL 導航索引、頁面快取與關聯候選(<code>catalog-url</code>／<code>select-url</code>／<code>cache-url-pages</code>／<code>cache-url-entry</code>／<code>normalize-html-snapshot</code>／<code>related-url-pages</code>),讓 agent 以本機證據讀取網頁文件</td>
+<td>受限 URL 導航索引、頁面快取與關聯候選(<code>catalog-url</code>／<code>select-url</code>／<code>cache-url-pages</code>／<code>cache-url-entry</code>／<code>normalize-html-snapshot</code>／<code>related-url-pages</code>),讓 agent 以本機證據讀取網頁文件。導航解析會略過純 UI 控制項(無目標的錨點、<code>role="button"</code>、下拉開關),避免把 UI 標籤當成待擷取的來源頁</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/url_adapters.py</code></td>
+<td><code>resolve_fetch_url</code>(純函式、不做 I/O):在發出請求前,先把文件 URL 對應到真正承載內文的表示形式。HackMD 筆記 URL 會解析成其 <code>/download</code> 原始 Markdown 端點,避免抓到 JavaScript 外殼而靜默失去來源;其餘一律維持 HTML 撈取</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/source_facts/</code></td>
+<td>擷取閘背後的確定性來源事實盤點:<code>markdown.py</code>(純掃描端點宣告、參數表與圍籬範例區塊)、<code>collect.py</code>(讀取 manifest 指名的 Markdown 來源,本套件唯一讀檔出口)、<code>gate.py</code>(以事實對照擷取 JSON,並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>)、<code>deferral.py</code>(攔截佔位式答案;分兩層,英文以詞界比對)。已接進 <code>agentcli/gate.py</code>,因此 <code>verify-extraction</code> 與 <code>assemble</code> 都會對靜默遺漏 fail closed</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/foundry/</code></td>

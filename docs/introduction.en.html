@@ -731,6 +731,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         <ul>
           <li>The model only reads; deterministic code decides what's correct</li>
           <li>Made-up content is stopped at the validation gate; gaps are named outright</li>
+          <li>Silent omissions are stopped too: if the source has a parameter table and the extraction came back empty, it is sent back to re-read</li>
           <li>Every statement is traceable to its source and can be reviewed offline by a human</li>
           <li>The same input always produces the same result, so revisions are diffable</li>
           <li>Good for: integrations headed to production, payments, and other high-risk scenarios</li>
