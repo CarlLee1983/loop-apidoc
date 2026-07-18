@@ -187,6 +187,14 @@ Open **`reference/extraction-schemas.md`** for the exact schemas and conventions
    and returns one summary line. Filename order carries no meaning — the gate matches on
    `method`/`path`, not on `<N>`. When the source section shows a response (or request)
    JSON example, include it in `examples[]` — see `reference/extraction-schemas.md`.
+
+   Keep each subagent's scope **bounded to its own endpoint's source section**, and never
+   collapse several endpoints into one pass: a single wide read is exactly the shape that
+   produced silent omissions. Every row of every parameter/field table in that section
+   must come back as a `parameters[]` entry or a schema field. If a documented field
+   genuinely cannot be extracted, name it in `missing[]` and say what the source does not
+   state — never "requires further extraction" or any other placeholder. Step 5 rejects
+   both the omission and the placeholder.
 4. **integration** (optional) — one subagent over the encryption/signing/callback/
    field-condition sections; it returns the JSON and **you** write `<WORK>/integration.json`.
    Omit the file entirely only when the sources describe no integration mechanics.
@@ -201,7 +209,21 @@ Open **`reference/extraction-schemas.md`** for the exact schemas and conventions
 Exit 0 → proceed. Exit 2 → the JSON array on stdout lists every violation (missing or
 duplicate endpoint file, an endpoint not in inventory, an unresolvable `schema_ref` or
 `security[]`, a localized key, an unrooted `path`, an uncited `source`). Fix the extraction
-JSON and re-run. `assemble` runs the same checks, so skipping this step is safe but wastes
+JSON and re-run.
+
+This step also runs a **source-fact** check: Markdown sources are mechanically scanned for
+endpoint declarations, parameter tables, and example blocks, and any endpoint whose source
+section documents fields or examples that the extraction dropped is a violation naming the
+exact fields. Two rules follow. Re-read the cited section and fill the fields — do **not**
+invent them; if the source truly does not state something, record a concrete gap in
+`missing[]` naming the field, which satisfies the check. And never answer with deferral
+text ("requires further extraction", "TBD", 「需進一步擷取」) — it is rejected on sight.
+
+The check only sees **well-structured Markdown** (headings, GFM tables, fenced blocks). A
+source flattened into long single lines yields no facts and the gate stays silent on it, so
+a clean exit there is *not* evidence the extraction is complete — prefer `preprocess` or a
+structure-preserving snapshot so the source keeps its tables, and still read every section
+yourself. `assemble` runs the same checks, so skipping this step is safe but wastes
 a round trip.
 
 ### 6. Assemble + validate
