@@ -23,3 +23,7 @@ pdf_text.txt
 .superpowers/
 .omx/
 .worktrees/
+# 本機執行產物 / 暫存
+.loop-apidoc/
+runs/
+tmp/

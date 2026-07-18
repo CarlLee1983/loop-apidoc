@@ -33,8 +33,10 @@ from loop_apidoc.preparation.coverage import (
     load_coverage,
     normalize_url,
 )
-from loop_apidoc.run.models import RunResult, RunStatus
-from loop_apidoc.run.persist import persist_plan
+from loop_apidoc.run.models import RunDescriptor, RunResult, RunStatus
+from loop_apidoc.run.persist import persist_plan, persist_run_descriptor
+from loop_apidoc.run.toolchain import build_toolchain
+from loop_apidoc.source_facts.collect import collect_facts
 from loop_apidoc.source_quality.loader import (
     SourceQualityInputError,
     load_assessment_reports,
@@ -209,6 +211,7 @@ def run_assemble_pipeline(
     url_coverage_path: Path | None = None,
     source_quality_dir: Path | None = None,
     excludes: Sequence[str] = (),
+    extractor_model: str | None = None,
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
     → generate → validate。不做擷取、不 spawn 任何 agent;
@@ -254,7 +257,7 @@ def run_assemble_pipeline(
 
     violations = check_extraction(
         inventory, named_endpoints(extraction_dir, endpoint_texts),
-        integration, manifest)
+        integration, manifest, collect_facts(sources_root, manifest))
     if violations:
         raise AssembleInputError(
             "擷取輸入不符契約(修正後重跑 assemble):\n"
@@ -294,10 +297,18 @@ def run_assemble_pipeline(
     report = validate_outputs(plan, result, manifest)
     write_validation_reports(report, run_dir / "validation")
 
+    status = RunStatus.PASSED if report.ok else RunStatus.FAILED
+    toolchain = build_toolchain(model=extractor_model)
+    persist_run_descriptor(run_dir, RunDescriptor(
+        run_id=run_id, status=status, generated_at=generated_at,
+        toolchain=toolchain,
+    ))
+
     return RunResult(
         run_id=run_id,
         run_dir=str(run_dir),
         report=report,
         rounds=0,
-        status=RunStatus.PASSED if report.ok else RunStatus.FAILED,
+        status=status,
+        toolchain=toolchain,
     )

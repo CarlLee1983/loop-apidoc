@@ -11,6 +11,7 @@ from typing import Literal
 import httpx
 from pydantic import BaseModel, Field
 
+from loop_apidoc.url_adapters import resolve_fetch_url
 from loop_apidoc.url_catalog import _Element, _TreeParser, _canonical_url, _walk, UrlCatalog
 
 
@@ -133,6 +134,28 @@ def extract_page_metadata(url: str, html: str) -> PageMetadata:
     )
 
 
+def extract_markdown_metadata(url: str, markdown: str) -> PageMetadata:
+    """Read a raw Markdown source as-is; its body text is the document itself."""
+    headings = [
+        stripped.lstrip("#").strip()
+        for line in markdown.splitlines()
+        if (stripped := line.strip()).startswith("#")
+        if stripped.lstrip("#").strip()
+    ]
+    title = next(
+        (line.lstrip("#").strip() for line in markdown.splitlines() if line.startswith("# ")),
+        None,
+    )
+    return PageMetadata(
+        url=url,
+        title=title,
+        headings=headings,
+        body_text=markdown,
+        internal_links=[],
+        entities=_entities(markdown),
+    )
+
+
 def cache_catalog_pages(
     catalog: UrlCatalog,
     output_dir: Path,
@@ -164,8 +187,11 @@ def cache_catalog_pages(
             nodes_by_url.setdefault(node.url, []).append(node)
         for url, nodes in nodes_by_url.items():
             node = nodes[0]
+            target = resolve_fetch_url(url)
             try:
-                with active_client.stream("GET", url, headers={"Accept": "text/html"}) as response:
+                with active_client.stream(
+                    "GET", target.url, headers={"Accept": target.accept}
+                ) as response:
                     response.raise_for_status()
                     chunks: list[bytes] = []
                     size = 0
@@ -175,19 +201,24 @@ def cache_catalog_pages(
                             raise ValueError(f"response exceeds {max_bytes_per_page} byte cap")
                         chunks.append(chunk)
                     raw = b"".join(chunks)
-                    html = raw.decode(response.encoding or "utf-8", errors="replace")
+                    text = raw.decode(response.encoding or "utf-8", errors="replace")
             except (httpx.HTTPError, ValueError) as exc:
                 pages.append(CorpusPage(url=url, status="fetch_failed", note=exc.__class__.__name__))
                 continue
 
+            is_markdown = target.representation == "markdown"
             digest = hashlib.sha256(raw).hexdigest()
-            raw_relative = Path("raw") / f"{digest}.html"
+            raw_relative = Path("raw") / f"{digest}.{'md' if is_markdown else 'html'}"
             body_relative = Path("body") / f"{digest}.txt"
             raw_path = output_dir / raw_relative
             if not raw_path.exists():
                 raw_path.write_bytes(raw)
 
-            metadata = extract_page_metadata(url, html)
+            metadata = (
+                extract_markdown_metadata(url, text)
+                if is_markdown
+                else extract_page_metadata(url, text)
+            )
             body_path = output_dir / body_relative
             if not body_path.exists():
                 body_path.write_text(metadata.body_text, encoding="utf-8")
