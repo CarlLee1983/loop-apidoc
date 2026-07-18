@@ -102,7 +102,7 @@ artifacts stay out of agent context and agent handoffs to reduce token use. This
 delivery policy and does not change CLI source grounding, validation, or the compatible run
 directory structure.
 
-Release notes: [`0.13.0`](docs/RELEASE_NOTES_0.13.0.md).
+Release notes: [`0.14.0`](docs/RELEASE_NOTES_0.14.0.md).
 
 ---
 
@@ -430,7 +430,7 @@ uv run ruff check .
 | Package | Responsibility |
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
-| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `gate.py` (`check_extraction`: the single gate aggregator shared by `assemble` and `verify-extraction`, including the source-facts semantic completeness check), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
 | `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
