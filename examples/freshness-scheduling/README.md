@@ -40,3 +40,18 @@ loop-apidoc record-fingerprint \
 `REPARSE_CMD` 指向你自己的重新解析腳本——由 headless agent（Claude Code / Codex）依 skill
 的正常步驟 2–8 重讀來源、`assemble` 產出新 run-dir。腳本會在重跑後自動 `record-fingerprint --force`，
 讓下一次排程以新版本為基準。
+
+## 多份 docset：改用 batch scan
+
+上面的腳本一次只顧一個 docset，一個 docset 要掛一行 cron。docset 一多，改用
+`check-freshness-batch` 讀一份 `freshness-watchlist.json`（列出每個 docset 的
+`label`/`fingerprint`，可選 `sources`/`run_dir`），單次排程就能掃完全部並輸出一份
+彙總報告，取代逐一 cron：
+
+```bash
+loop-apidoc check-freshness-batch --watchlist ./freshness-watchlist.json --report-dir ./work
+```
+
+退出碼是彙總結果（`0` 全部未變、`1` 有變動需重跑、`2` 有無法判定/錯誤需告警）；
+細節與 exit-code 對照見 `skills/loop-apidoc/reference/freshness-scheduling.md` 的
+「Batch scan (many docsets)」一節。

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loop_apidoc.freshness.models import FreshnessReport, SourceResult
+from loop_apidoc.freshness.models import (
+    BatchItemResult,
+    BatchReport,
+    FreshnessReport,
+    SourceResult,
+)
 
 
 def _rows(results: list[SourceResult]) -> list[str]:
@@ -30,4 +35,38 @@ def write_reports(report: FreshnessReport, report_dir: Path) -> tuple[Path, Path
     md_path = report_dir / "freshness-report.md"
     json_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     md_path.write_text(render_markdown(report), encoding="utf-8")
+    return (json_path, md_path)
+
+
+def _batch_rows(items: list[BatchItemResult]) -> list[str]:
+    return [
+        f"| {i.label} | {i.status.value} | `{i.openapi_version or '-'}` | {i.reason or '-'} |"
+        for i in items
+    ]
+
+
+def render_batch_markdown(report: BatchReport) -> str:
+    lines = [
+        "# 來源新鮮度批次巡檢",
+        "",
+        f"- 判定:**{report.verdict.value}**",
+        f"- 來源總數:{report.total};變動:{report.changed_count};"
+        f"需注意(無法判定/錯誤):{report.attention_count};未變:{report.unchanged_count}",
+    ]
+    if report.items:
+        lines += [
+            "",
+            "| 項目 | 判定 | OpenAPI 版本 | 摘要/原因 |",
+            "| --- | --- | --- | --- |",
+            *_batch_rows(report.items),
+        ]
+    return "\n".join(lines) + "\n"
+
+
+def write_batch_reports(report: BatchReport, report_dir: Path) -> tuple[Path, Path]:
+    report_dir.mkdir(parents=True, exist_ok=True)
+    json_path = report_dir / "freshness-scan.json"
+    md_path = report_dir / "freshness-scan.md"
+    json_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    md_path.write_text(render_batch_markdown(report), encoding="utf-8")
     return (json_path, md_path)

@@ -259,6 +259,18 @@ uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json 
 擷取）、`2` = 無法判定（有來源抓取或讀取失敗）。加上 `--report-dir` 時另存
 `freshness-report.{json,md}`；未帶則不寫檔。
 
+要一次巡檢多份 docset，改用 `check-freshness-batch`：讀取 `freshness-watchlist.json`（每筆列出
+`label`、`fingerprint` 側檔相對路徑、選填 `sources`/`run_dir`），逐項執行同一個新鮮度比對，彙總成
+單一份報表。
+
+```bash
+uv run loop-apidoc check-freshness-batch --watchlist ./work/freshness-watchlist.json --json [--report-dir ./work/freshness]
+```
+
+單一項目抓取失敗不會中止整批巡檢，只會把該項標記為 `error`；watchlist 檔案本身格式錯誤則直接失敗。
+彙總退出碼：`0` = 全部未變、`1` = 有任一已變、`2` = 有任一無法判定或發生錯誤。加上 `--report-dir` 時
+另存 `freshness-scan.{json,md}`；未帶則不寫檔。
+
 ### `validate` — 驗證既有 run 目錄
 
 ```bash
