@@ -13,6 +13,7 @@ from pathlib import Path
 from loop_apidoc.agentcli.assemble import load_extraction_inputs, named_endpoints
 from loop_apidoc.agentcli.gate import check_extraction
 from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.source_facts.collect import collect_facts
 
 
 def verify_extraction_dir(
@@ -31,4 +32,4 @@ def verify_extraction_dir(
         generated_at=generated_at, excludes=excludes)
     return check_extraction(
         inventory, named_endpoints(extraction_dir, endpoint_texts),
-        integration, manifest)
+        integration, manifest, collect_facts(sources_root, manifest))

@@ -327,7 +327,7 @@ uv run loop-apidoc verify-extraction \
   --sources ./sources --extraction ./work [--url <URL> ...] [--json]
 ```
 
-在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用與跨檔不變式。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
+在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用、跨檔不變式,以及**語意完整性閘門**。後者會機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,當某端點的來源小節明明寫了欄位或範例、擷取卻交回空清單時直接 fail closed 並指名缺了哪些欄位,同時拒絕「需進一步擷取」這類佔位答案。來源真的沒寫的東西仍然只是缺口:在 `missing[]` 具名記下即可通過,閘門不會逼出捏造。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
 
 ### `assemble` — 從 agent 產出的擷取 JSON 組裝(由 skill 呼叫)
 
@@ -337,10 +337,10 @@ uv run loop-apidoc assemble \
   --extraction ./work \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
-  [--source-quality ./work/source-quality] [--json] [--score]
+  [--source-quality ./work/source-quality] [--extractor-model <模型名稱>] [--json] [--score]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report` 印到 stdout 供 agent 解析並驅動修正迴圈。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
 `score/score.md`；assemble 的退出碼仍維持既有驗證語意。有 URL 來源時，可用 `--url-coverage` 傳入 agent 記錄的 `url_sources/coverage.json` 撈取帳本，`assemble` 會做 warning-only 的 URL 涵蓋檢核（不影響驗證嚴重度閘）。搭配 `--score` 的自循環旗標 `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` 可讓 agent 依回報的 loop verdict 決定是否再跑一輪修正。
 
 ---
@@ -352,6 +352,7 @@ uv run loop-apidoc assemble \
 ```text
 output/
 └── <run-id>/                       # run-id 格式:%Y%m%dT%H%M%S.%fZ(含微秒,避免同秒衝突)
+    ├── run.json                    # run 描述子（狀態 + toolchain 版本）
     ├── manifest.json               # 來源 manifest
     ├── extraction/                 # 擷取稽核軌跡(非可重跑的原始輸入)
     │   ├── queries.jsonl           # 每輪查詢紀錄
@@ -426,6 +427,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
 | `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
+| `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |
 | `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口) |

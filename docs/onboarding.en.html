@@ -563,6 +563,8 @@
       <h2>The source documents are the only source of truth.</h2>
       <p>Anything a source does not state is left as <code>null</code> and recorded in <code>missing</code> — <b>never inferred, never filled in with REST/OAuth conventions</b>.</p>
       <p>When validation hits something missing, it fails loudly rather than using guesses to make the docs "look complete." Every design decision in this project exists to hold this line.</p>
+      <p>The converse also has to be evidenced: <b>"the source does not state it" is a claim that must be earned</b>. <code>source_facts/</code> mechanically scans Markdown sources for parameter tables and example blocks, and blocks the run when a source plainly documents them but the extraction came back empty; placeholder answers such as "requires further extraction" are blocked the same way. To claim a field genuinely is not in the source, name it in <code>missing</code> — so this gate only ever forces a named gap, never a fabrication.</p>
+      <p>Be clear about its limits, though: the scan only recognises <b>well-structured Markdown</b> (headings, GFM tables, fenced blocks). If a source is flattened into long single lines it yields zero facts and the gate does nothing. <b>A clean gate exit does not mean the extraction is complete</b> — it catches omissions that can be mechanically proven; everything else still needs human review.</p>
       <span class="pill">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
         Better to flag "missing" than to fabricate content
@@ -786,7 +788,7 @@
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">verify-extraction</span></span>
-        <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir.</p></div>
+        <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir. The contract includes the <b>source-fact inventory</b>: when a source section plainly lists a parameter table or example blocks and the extraction left them empty, that is a silent omission rather than "the source does not say" — to claim the latter, name the field in <code class="inline">missing</code>.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
@@ -1034,7 +1036,7 @@
         <thead><tr><th>Package</th><th>Responsibility</th></tr></thead>
         <tbody>
           <tr><td><code>manifest/</code></td><td>Scan local sources + build manifest.json</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
           <tr><td><code>extraction/</code></td><td>Shared models + utilities (stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>Normalization plan + source-match classification</td></tr>
           <tr class="io"><td><code>preparation/</code></td><td>Pre-generation readiness assessment + preparation-report (report.py writes files)</td></tr>
@@ -1043,13 +1045,15 @@
           <tr class="io"><td><code>run/</code></td><td>run-id generation, result/status models, writing the plan into the run-dir (writes files)</td></tr>
           <tr class="io"><td><code>score/</code></td><td>Read a completed run-dir and produce score/score.{json,md} with five weighted categories (report.py writes files)</td></tr>
           <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py (report.py writes files)</td></tr>
+          <tr class="io"><td><code>freshness/</code></td><td>A cheap scheduled freshness gate: record.py writes a baseline fingerprint from a completed run-dir (sha256 for local sources, one version signal per URL source; refuses to overwrite without <code>--force</code>), signals.py recomputes and classifies the current signal (network reads, writes nothing), check.py aggregates one docset, batch.py fans the gate across a watchlist (a per-item error is captured in that item's result rather than aborting the batch), report.py writes the reports. The exit codes are the contract: 0 unchanged, 1 changed, 2 inconclusive</td></tr>
           <tr class="io"><td><code>source_quality/</code></td><td>Pre-extraction source quality assessment and source version diff report; a pass report can be retained with the run-dir for audit (writes files)</td></tr>
+          <tr><td><code>source_facts/</code></td><td>Source-fact inventory: markdown.py mechanically scans Markdown sources for endpoint declarations, parameter tables and example blocks; collect.py reads the manifest-named sources (this package's only file-reading exit); gate.py compares them against the extraction JSON (resolving <code>schema_ref</code> into <code>inventory.schemas</code> transitively, so a shared body type is deduplication rather than an omission) and deferral.py rejects placeholder answers</td></tr>
           <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>Bounded URL navigation index, page caching, and related candidates, letting the agent read web docs from local evidence (writes files)</td></tr>
           <tr class="io"><td><code>foundry/</code></td><td>Project-local asset governance: docsets, candidate import, and asset approval, maintaining the <code>current</code> pointer (writes files)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
+    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, <code class="inline">freshness/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
   </div>
 </section>
 

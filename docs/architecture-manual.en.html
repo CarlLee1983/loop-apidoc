@@ -589,6 +589,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   margin-bottom: 1rem;
 }
 </style>
+</head>
 <body>
 <div class="layout">
   <div class="lang-switch">English (current) · <a href="architecture-manual.html">繁體中文</a></div>
@@ -737,6 +738,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
+          <div class="command-chip">snapshot-openapi-url</div>
+          <div class="command-chip">record-fingerprint</div>
+          <div class="command-chip">check-freshness</div>
+          <div class="command-chip">check-freshness-batch</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -796,6 +801,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
             <div class="module-role">Pre-extraction source-quality assessment and diff report; a passing report can be retained alongside the run-dir.</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="freshness">
+            <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">A cheap scheduled freshness gate: compares each source's current signal against a baseline fingerprint to decide whether a re-run is warranted.</div>
+          </button>
+          <button type="button" class="module-card" data-module="source-facts">
+            <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
+            <div class="module-role">Mechanically scans Markdown sources for parameter tables and examples, catching silent omissions in the extraction.</div>
+          </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
             <div class="module-role">Project-local asset governance for the API, managing docsets, candidates and assets.</div>
@@ -808,7 +821,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> exposes fourteen top-level operations: source handling (<code>preprocess</code>, <code>manifest</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), run handling (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>) and the <code>foundry</code> sub-group.
+      <code>cli.py</code> exposes eighteen top-level operations: source handling (<code>preprocess</code>, <code>manifest</code>, <code>snapshot-openapi-url</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), the scheduled source freshness gate (<code>record-fingerprint</code>, <code>check-freshness</code>, <code>check-freshness-batch</code>), run handling (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>) and the <code>foundry</code> sub-group.
       <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, the URL corpus cache and <code>foundry/</code> are responsible for writing; the remaining domain logic stays as pure functions wherever possible to keep unit testing simple.
     </div>
   </div>
@@ -904,7 +917,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "The Typer CLI entry point, publicly exposing 14 top-level commands (15 including the foundry sub-group): source / URL evidence, source quality, extraction verification, assemble, validate, score and version diff.",
+      description: "The Typer CLI entry point, publicly exposing 18 top-level commands (19 including the foundry sub-group): source / URL evidence, source quality, extraction verification, the scheduled source freshness gate, assemble, validate, score and version diff.",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
       outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
@@ -1019,6 +1032,26 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "manifest, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "freshness": {
+      title: "freshness/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "A cheap scheduled freshness gate, so \"did the source change?\" can be answered without re-running the whole pipeline. record-fingerprint writes a baseline from a completed or adopted run-dir: sha256 for local sources, one version signal per URL source (OpenAPI compares info.version; HTML uses ETag/Last-Modified, then falls back to a body sha256). It refuses to overwrite without --force. check-freshness recomputes each source's current signal and compares it to the baseline; check-freshness-batch fans the same gate across many docsets listed in a freshness-watchlist.json and aggregates one freshness-scan report. The exit codes are the contract: 0 unchanged (skip the re-parse), 1 changed (re-run extraction), 2 inconclusive (a source could not be fetched or read). The batch keeps the same aggregate semantics; a per-item error is captured in that item's result rather than aborting the batch, but a malformed watchlist fails loud.",
+      seam: "build_fingerprint(run_dir) / check_freshness(fingerprint) / load_watchlist(path) / scan_watchlist(watchlist)",
+      inputs: "manifest and URL coverage of a completed run-dir, the source-fingerprint.json baseline, freshness-watchlist.json",
+      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}",
+      sideEffect: "File I/O: record.py and report.py write files; signals.py does network reads but writes nothing, and check.py / batch.py are pure orchestration"
+    },
+    "source-facts": {
+      title: "source_facts/",
+      badgeClass: "pure",
+      badgeLabel: "Pure Logic",
+      description: "A deterministic source-fact inventory: it mechanically scans Markdown sources for endpoint declarations, parameter tables and fenced example blocks, then matches them to the agent-written extraction JSON by (METHOD, path). Where the source documents fields or examples the extraction left empty, that is a silent omission and the run fails closed; naming the field in missing satisfies the gate, so it only ever forces a source-grounded gap. Field names are resolved through schema_ref into inventory.schemas transitively, so factoring a shared body type out is deduplication rather than an omission. A companion check rejects placeholder answers that defer the work. Scope limit: only well-structured Markdown (headings, GFM tables, fenced blocks) yields facts — a source flattened into long single lines yields none and the gate becomes a no-op, so a clean exit is not by itself evidence of a complete extraction.",
+      seam: "collect_facts(sources_root, manifest) / source_fact_violations(index, endpoints, inventory) / deferral_violations(endpoints)",
+      inputs: "manifest-named Markdown sources, extraction endpoint JSON, inventory.schemas for schema_ref resolution",
+      outputs: "violation messages aggregated by agentcli/gate.py",
+      sideEffect: "collect.py reads sources; scanning and comparison are pure"
     }
   };
 

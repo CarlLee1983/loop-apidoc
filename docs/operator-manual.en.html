@@ -214,15 +214,18 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
 <h3 id="verify-extraction"><code>verify-extraction</code> — check that the extraction JSON meets the contract</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>
-<p>Applies to the agent-produced extraction directory the same input gate as <code>assemble</code> (schema, source citations, cross-file invariants), but <strong>writes nothing and creates no run directory</strong>, making it a fast way to validate the extraction JSON before assembly.</p>
+<p>Applies to the agent-produced extraction directory the same input gate as <code>assemble</code> (schema, source citations, cross-file invariants, source facts, deferral phrases), but <strong>writes nothing and creates no run directory</strong>, making it a fast way to validate the extraction JSON before assembly.</p>
+<p>The <strong>source-fact gate</strong> mechanically scans the manifest's Markdown sources for endpoint declarations, parameter tables and fenced example blocks, then matches them to the extraction by <code>(METHOD, path)</code>. When a matched source section documents fields or examples that the extraction dropped, the run fails closed — a silent omission is not the same as "the source does not say so." Naming the field in <code>missing</code> satisfies the gate, so it only ever forces a source-grounded gap, never an invention. Field names are resolved through <code>schema_ref</code> into <code>inventory.schemas</code> transitively, so factoring a shared request body out into a common type counts as deduplication, not an omission.</p>
+<p>A companion check rejects placeholder answers that defer the work, and it does so in two layers to avoid false positives. Phrases that explicitly name the extraction itself ("further extraction", "not yet extracted", 「需進一步擷取」) count anywhere in a value, since a real API description never discusses its own extraction. Generic placeholders ("TBD", "to be determined", 「待補」) count only when they are the <em>entire</em> field, because "amount to be determined at capture" is legitimate API prose. ASCII phrases match on word boundaries — CJK has none, so those stay substring matches. Without this check a run could finish as <em>passed</em> with empty artifacts.</p>
+<p><strong>Know the scope limit.</strong> The scan only recognises well-structured Markdown: headings, GFM tables with a separator row, and fenced code blocks. A source flattened into long single lines — an HTML-to-text dump, for instance — yields zero facts, and the gate is a silent no-op on it. So <em>a clean gate exit is not by itself evidence of a complete extraction</em>; it only proves nothing contradicted the facts that could be mechanically read. On unstructured sources, keep relying on <code>review.html</code> and human review.</p>
 <h3 id="assemble"><code>assemble</code> — assemble + validate from the agent-produced extraction JSON</h3>
 <pre><code class="language-bash">uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--json] [--score]
+  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;model name&gt;] [--json] [--score]
 </code></pre>
-<p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally <code>integration.json</code>) into outputs: manifest → plan → generate → validate. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, a reject verdict aborts before the run-dir is created, while a passing report is retained in the run-dir; <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, and <code>report</code> to stdout for the agent to parse and drive the correction loop. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
+<p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally <code>integration.json</code>) into outputs: manifest → plan → generate → validate. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, a reject verdict aborts before the run-dir is created, while a passing report is retained in the run-dir; <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, <code>report</code>, and <code>toolchain</code> to stdout for the agent to parse and drive the correction loop. The run directory also gets a <code>run.json</code> descriptor recording the <code>toolchain</code> (<code>cli_version</code>, <code>extraction_contract_version</code>, <code>skill_version</code>, <code>model</code>) so a run can later be attributed to the versions that produced it; <code>--extractor-model</code> is the extraction model name, passed explicitly by the agent — omit it and the field stays <code>null</code>, because the CLI never guesses it. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
 <h3 id="validate-run"><code>validate</code> — validate an existing run directory</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
@@ -244,6 +247,7 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
 <p>Each run uses its own run directory:</p>
 <pre><code class="language-text">output/
 └── &lt;run-id&gt;/                       # run-id format: %Y%m%dT%H%M%S.%fZ (includes microseconds to avoid same-second collisions)
+    ├── run.json                    # run descriptor (status + toolchain versions)
     ├── manifest.json               # source manifest
     ├── extraction/                 # extraction audit trail (not re-runnable raw input)
     │   ├── queries.jsonl           # per-round query log
@@ -336,7 +340,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code> (assemble the agent-written extraction JSON → plan→generate→validate), <code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code> (extraction input contract checks, i.e. <code>verify-extraction</code>), <code>extraction.py</code> (convert <code>inventory.json</code> into per-stage plan answers), <code>preprocess.py</code> (PDF→md preprocessing, pymupdf4llm)</td>
+<td><code>assemble.py</code> (assemble the agent-written extraction JSON → plan→generate→validate), <code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code> (extraction input contract checks, i.e. <code>verify-extraction</code>; <code>gate.py</code> also aggregates the source-fact and deferral violations from <code>source_facts/</code>), <code>extraction.py</code> (convert <code>inventory.json</code> into per-stage plan answers), <code>preprocess.py</code> (PDF→md preprocessing, pymupdf4llm)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
@@ -380,7 +384,15 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/url_catalog.py</code> / <code>url_corpus.py</code></td>
-<td>bounded URL navigation index, page caching, and related candidates (<code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>cache-url-entry</code> / <code>normalize-html-snapshot</code> / <code>related-url-pages</code>), letting the agent read web docs from local evidence</td>
+<td>bounded URL navigation index, page caching, and related candidates (<code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>cache-url-entry</code> / <code>normalize-html-snapshot</code> / <code>related-url-pages</code>), letting the agent read web docs from local evidence. Navigation parsing skips pure UI controls (anchors with no target, <code>role="button"</code>, dropdown toggles) so a UI label never becomes a source page</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/url_adapters.py</code></td>
+<td><code>resolve_fetch_url</code> (pure, no I/O): maps a documentation URL to the representation that actually carries its body before any request is made. A HackMD note URL resolves to its <code>/download</code> raw-Markdown endpoint, so fetching the JavaScript shell never silently loses the source; everything else stays an HTML fetch</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/source_facts/</code></td>
+<td>deterministic source-fact inventory behind the extraction gate: <code>markdown.py</code> (pure scan of endpoint declarations, parameter tables and fenced example blocks), <code>collect.py</code> (reads the manifest-named Markdown sources — this package's only read exit), <code>gate.py</code> (compares facts against the extraction JSON, resolving <code>schema_ref</code> into <code>inventory.schemas</code> transitively), <code>deferral.py</code> (rejects placeholder answers; two layers, word-boundary matching for ASCII). Wired into <code>agentcli/gate.py</code>, so both <code>verify-extraction</code> and <code>assemble</code> fail closed on a silent omission</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/foundry/</code></td>

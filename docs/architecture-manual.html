@@ -583,6 +583,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   }
 }
 </style>
+</head>
 <body>
 <div class="layout">
   <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">繁體中文（目前） · <a href="architecture-manual.en.html">English</a></div>
@@ -731,6 +732,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
+          <div class="command-chip">snapshot-openapi-url</div>
+          <div class="command-chip">record-fingerprint</div>
+          <div class="command-chip">check-freshness</div>
+          <div class="command-chip">check-freshness-batch</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -790,6 +795,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
             <div class="module-role">擷取前來源品質評估與差異報告；通過報告可隨 run-dir 保存。</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="freshness">
+            <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">排程用的便宜新鮮度閘：比對來源當下訊號與基準 fingerprint，判斷是否值得重跑。</div>
+          </button>
+          <button type="button" class="module-card" data-module="source-facts">
+            <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
+            <div class="module-role">機械掃描 Markdown 來源的參數表與範例，對照擷取結果攔下靜默遺漏。</div>
+          </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
             <div class="module-role">API 專案本地資產治理，管理 docset、candidate 與 asset。</div>
@@ -802,7 +815,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露十四個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
+      <code>cli.py</code> 暴露十八個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、來源新鮮度閘（<code>record-fingerprint</code>、<code>check-freshness</code>、<code>check-freshness-batch</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
       <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入；其餘 domain 邏輯盡量保持純函式，以簡化單元測試。
     </div>
   </div>
@@ -898,7 +911,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 14 個頂層命令（加上 foundry 子群組共 15 個命令）：來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分與版本差異。",
+      description: "Typer CLI 入口，對外暴露 18 個頂層命令（加上 foundry 子群組共 19 個命令）：來源／URL evidence、來源品質、擷取驗證、來源新鮮度閘、組裝、驗證、評分與版本差異。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
       outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
@@ -1013,6 +1026,26 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "manifest, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "freshness": {
+      title: "freshness/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "排程用的便宜新鮮度閘，讓「來源變了嗎」不必重跑整條管線就能回答。record-fingerprint 從已完成／已採用的 run-dir 寫出基準：本地來源取 sha256，每個 URL 來源取一次版本訊號（OpenAPI 比 info.version，HTML 先看 ETag/Last-Modified 再退回正文 sha256）；沒有 --force 就拒絕覆寫。check-freshness 重算各來源當下訊號並與基準比對，check-freshness-batch 則依 freshness-watchlist.json 把同一道閘扇出到多個 docset，彙總成一份 freshness-scan 報告。退出碼即契約：0 未變動（可略過重新解析）、1 已變動（該重跑擷取）、2 無法判定（某個來源抓不到或讀不到）。批次沿用同一組聚合語意；單項錯誤收進該項結果不中斷整批，但清單本身格式錯誤則 fail loud。",
+      seam: "build_fingerprint(run_dir) / check_freshness(fingerprint) / load_watchlist(path) / scan_watchlist(watchlist)",
+      inputs: "已完成 run-dir 的 manifest 與 URL coverage、source-fingerprint.json 基準、freshness-watchlist.json",
+      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}",
+      sideEffect: "File I/O: record.py 與 report.py 寫檔；signals.py 做網路讀取但不寫檔，check.py／batch.py 純協調不寫檔"
+    },
+    "source-facts": {
+      title: "source_facts/",
+      badgeClass: "pure",
+      badgeLabel: "Pure Logic",
+      description: "確定性的來源事實盤點：機械掃描 Markdown 來源的端點宣告、參數表與圍籬範例區塊，再以 (METHOD, path) 對照 agent 寫出的擷取 JSON。來源寫了、擷取卻空著就是靜默遺漏，fail closed；在 missing 具名該欄位即可通過，所以只逼出有據可查的缺口。欄位名會沿 schema_ref 遞迴解析進 inventory.schemas，因此把共用 body 抽成型別是去重複而非遺漏。另攔下「需進一步擷取」這類佔位式延後答案。適用範圍：只有結構良好的 Markdown（標題、GFM 表格、圍籬區塊）掃得出事實；來源若被壓成超長單行則掃出零筆，這道閘等同無作用，故閘門乾淨通過本身不足以證明擷取完整。",
+      seam: "collect_facts(sources_root, manifest) / source_fact_violations(index, endpoints, inventory) / deferral_violations(endpoints)",
+      inputs: "manifest-named Markdown sources, extraction endpoint JSON, inventory.schemas for schema_ref resolution",
+      outputs: "violation messages aggregated by agentcli/gate.py",
+      sideEffect: "collect.py reads sources; scanning and comparison are pure"
     }
   };
 
