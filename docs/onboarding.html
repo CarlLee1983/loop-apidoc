@@ -1045,6 +1045,7 @@
           <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
           <tr class="io"><td><code>score/</code></td><td>讀取完成 run-dir,以五類權重產生 score/score.{json,md}(report.py 寫檔)</td></tr>
           <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
+          <tr class="io"><td><code>freshness/</code></td><td>排程用的便宜新鮮度閘:record.py 從已完成 run-dir 寫出基準 fingerprint(本地取 sha256、每個 URL 取一次版本訊號,無 <code>--force</code> 拒絕覆寫)、signals.py 重算當下訊號並分類(網路讀取但不寫檔)、check.py 彙總單一 docset、batch.py 依 watchlist 扇出多個 docset(單項錯誤收進該項結果不中斷整批)、report.py 輸出報告。退出碼即契約:0 未變動、1 已變動、2 無法判定</td></tr>
           <tr class="io"><td><code>source_quality/</code></td><td>擷取前來源品質評估與來源版本差異報告;pass 報告可隨 run-dir 稽核保存(寫檔)</td></tr>
           <tr><td><code>source_facts/</code></td><td>來源事實盤點:markdown.py 機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,collect.py 讀取 manifest 指名的來源(本套件唯一讀檔出口),gate.py 比對擷取 JSON(並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,讓共用型別算去重複而非遺漏)、deferral.py 攔截佔位式延後答案</td></tr>
           <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
@@ -1052,7 +1053,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
   </div>
 </section>
 

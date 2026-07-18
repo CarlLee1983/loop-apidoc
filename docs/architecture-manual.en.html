@@ -800,6 +800,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
             <div class="module-role">Pre-extraction source-quality assessment and diff report; a passing report can be retained alongside the run-dir.</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="freshness">
+            <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">A cheap scheduled freshness gate: compares each source's current signal against a baseline fingerprint to decide whether a re-run is warranted.</div>
+          </button>
           <button type="button" class="module-card" data-module="source-facts">
             <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
             <div class="module-role">Mechanically scans Markdown sources for parameter tables and examples, catching silent omissions in the extraction.</div>
@@ -1027,6 +1031,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "manifest, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "freshness": {
+      title: "freshness/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "A cheap scheduled freshness gate, so \"did the source change?\" can be answered without re-running the whole pipeline. record-fingerprint writes a baseline from a completed or adopted run-dir: sha256 for local sources, one version signal per URL source (OpenAPI compares info.version; HTML uses ETag/Last-Modified, then falls back to a body sha256). It refuses to overwrite without --force. check-freshness recomputes each source's current signal and compares it to the baseline; check-freshness-batch fans the same gate across many docsets listed in a freshness-watchlist.json and aggregates one freshness-scan report. The exit codes are the contract: 0 unchanged (skip the re-parse), 1 changed (re-run extraction), 2 inconclusive (a source could not be fetched or read). The batch keeps the same aggregate semantics; a per-item error is captured in that item's result rather than aborting the batch, but a malformed watchlist fails loud.",
+      seam: "build_fingerprint(run_dir) / check_freshness(fingerprint) / load_watchlist(path) / scan_watchlist(watchlist)",
+      inputs: "manifest and URL coverage of a completed run-dir, the source-fingerprint.json baseline, freshness-watchlist.json",
+      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}",
+      sideEffect: "File I/O: record.py and report.py write files; signals.py does network reads but writes nothing, and check.py / batch.py are pure orchestration"
     },
     "source-facts": {
       title: "source_facts/",

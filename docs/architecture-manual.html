@@ -794,6 +794,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
             <div class="module-role">擷取前來源品質評估與差異報告；通過報告可隨 run-dir 保存。</div>
           </button>
+          <button type="button" class="module-card io-boundary" data-module="freshness">
+            <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">排程用的便宜新鮮度閘：比對來源當下訊號與基準 fingerprint，判斷是否值得重跑。</div>
+          </button>
           <button type="button" class="module-card" data-module="source-facts">
             <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
             <div class="module-role">機械掃描 Markdown 來源的參數表與範例，對照擷取結果攔下靜默遺漏。</div>
@@ -1021,6 +1025,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "manifest, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "freshness": {
+      title: "freshness/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "排程用的便宜新鮮度閘，讓「來源變了嗎」不必重跑整條管線就能回答。record-fingerprint 從已完成／已採用的 run-dir 寫出基準：本地來源取 sha256，每個 URL 來源取一次版本訊號（OpenAPI 比 info.version，HTML 先看 ETag/Last-Modified 再退回正文 sha256）；沒有 --force 就拒絕覆寫。check-freshness 重算各來源當下訊號並與基準比對，check-freshness-batch 則依 freshness-watchlist.json 把同一道閘扇出到多個 docset，彙總成一份 freshness-scan 報告。退出碼即契約：0 未變動（可略過重新解析）、1 已變動（該重跑擷取）、2 無法判定（某個來源抓不到或讀不到）。批次沿用同一組聚合語意；單項錯誤收進該項結果不中斷整批，但清單本身格式錯誤則 fail loud。",
+      seam: "build_fingerprint(run_dir) / check_freshness(fingerprint) / load_watchlist(path) / scan_watchlist(watchlist)",
+      inputs: "已完成 run-dir 的 manifest 與 URL coverage、source-fingerprint.json 基準、freshness-watchlist.json",
+      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}",
+      sideEffect: "File I/O: record.py 與 report.py 寫檔；signals.py 做網路讀取但不寫檔，check.py／batch.py 純協調不寫檔"
     },
     "source-facts": {
       title: "source_facts/",
