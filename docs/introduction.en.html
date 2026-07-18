@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-Hant-TW">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>認識 loop-apidoc — 把雜亂的技術文件變成人人看得懂的說明書</title>
+<meta name="description" content="loop-apidoc turns messy, unreliable API integration docs into clean, trustworthy, source-traceable manuals — and never makes anything up." />
+<title>Meet loop-apidoc — turn messy technical docs into a manual anyone can trust</title>
 <style>
   :root {
     --bg: #fdfaf4;
@@ -487,13 +488,13 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero">
   <div class="wrap">
-    <p class="lang-switch">繁體中文(目前) · <a href="introduction.en.html">English</a></p>
-    <span class="eyebrow">認識 LOOP-APIDOC</span>
-    <h1>把雜亂的技術文件,<br />變成人人看得懂、<span class="hl">可信賴</span>的說明書</h1>
-    <p class="sub">各家廠商的串接文件,格式亂、又常缺漏。loop-apidoc 像一座初步精煉爐,把混雜素材萃取成乾淨、查得到出處的標準說明,而且絕不自己亂編。</p>
+    <p class="lang-switch">English (current) · <a href="introduction.html">繁體中文</a></p>
+    <span class="eyebrow">MEET LOOP-APIDOC</span>
+    <h1>Turn messy technical docs into a manual anyone can read and <span class="hl">trust</span></h1>
+    <p class="sub">Vendor integration docs come in a mess of formats, and they're often incomplete. loop-apidoc works like a first-stage refinery: it distills tangled material into a clean, source-traceable standard spec — and never makes anything up.</p>
 
     <!-- hero illustration: raw docs -> alchemical refinement -> clean output -->
-    <svg class="hero-art" viewBox="0 0 820 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="混雜來源文件經過初步精煉,萃取成乾淨統一且可追溯的說明書">
+    <svg class="hero-art" viewBox="0 0 820 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mixed source documents pass through a first-stage refinery and are distilled into a clean, unified, traceable manual">
       <defs>
         <linearGradient id="aquaGlass" x1="294" y1="34" x2="526" y2="238" gradientUnits="userSpaceOnUse">
           <stop stop-color="#effffb"/>
@@ -579,9 +580,9 @@
 
       <!-- captions on a shared baseline, centred under each element -->
       <g font-size="13" text-anchor="middle">
-        <text x="110" y="302" fill="#5d6478">原料:PDF · 網頁 · 程式檔 · 網址</text>
-        <text x="410" y="302" fill="#0f7a73">初步精煉:萃取 · 對照 · 不臆測</text>
-        <text x="711" y="302" fill="#0f7a73">結晶:統一 · 可追溯 · 已檢查</text>
+        <text x="110" y="302" fill="#5d6478">Raw material: PDF · web pages · code files · URLs</text>
+        <text x="410" y="302" fill="#0f7a73">First-stage refining: extract · cross-check · no guessing</text>
+        <text x="711" y="302" fill="#0f7a73">Crystallized: unified · traceable · validated</text>
       </g>
     </svg>
 
@@ -590,8 +591,8 @@
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>
       </span>
       <div>
-        <b>先解釋一個詞:API 是什麼?</b><br />
-        <span>簡單說,API 就是兩套軟體互相溝通的「接口」;而 <b>API 文件</b>,就是教你怎麼跟對方系統「對接」的操作手冊。例如要串接金流、物流、簡訊服務時,對方都會給你一份這樣的文件。</span>
+        <b>First, one quick definition: what is an API?</b><br />
+        <span>Put simply, an API is the "interface" through which two pieces of software talk to each other; and <b>API documentation</b> is the manual that teaches you how to "connect" to the other system. When you integrate with a payment, logistics, or SMS service, for example, the provider hands you exactly this kind of document.</span>
       </div>
     </div>
   </div>
@@ -600,19 +601,19 @@
 <!-- ===================== ENTRY ===================== -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">專案入口</span>
-    <h2 class="section-title">先到 GitHub 首頁，或直接把 plugin 裝起來</h2>
-    <p class="section-lead">如果你想看原始碼、追版本或提 issue，先去 GitHub repo；如果你要直接跑擷取流程，照下面的安裝方式把 plugin / CLI 接好就能開始。</p>
+    <span class="eyebrow">GETTING STARTED</span>
+    <h2 class="section-title">Head to the GitHub home page, or just install the plugin</h2>
+    <p class="section-lead">If you want to browse the source, track releases, or file an issue, start at the GitHub repo. If you'd rather run the extraction pipeline right away, wire up the plugin / CLI using the install steps below and you're ready to go.</p>
 
     <a class="repo-cta" href="https://github.com/CarlLee1983/loop-apidoc" target="_blank" rel="noreferrer">
       <span class="repo-ico">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v7h-7"/><path d="M3 10V3h7"/><path d="M10 14 3 21"/></svg>
       </span>
       <span class="repo-txt">
-        <b>專案 GitHub 首頁</b>
-        <span>原始碼、commit、issue 與 workflow 都在這裡，GitHub Pages 也從這個 repo 發佈。</span>
+        <b>Project GitHub home</b>
+        <span>Source, commits, issues, and workflows all live here, and GitHub Pages is published from this repo too.</span>
       </span>
-      <span class="repo-go">前往 GitHub repo →</span>
+      <span class="repo-go">Go to the GitHub repo →</span>
     </a>
 
     <div class="install-grid">
@@ -621,12 +622,12 @@
           <span class="badge tint-purple">
             <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
           </span>
-          <h3>Claude Code plugin 安裝</h3>
+          <h3>Install as a Claude Code plugin</h3>
         </div>
-        <p>在 Claude Code 裡把本專案加成 plugin，agent 就能直接讀來源、組裝、驗證。CLI 由 plugin 內含，不必另外裝。</p>
+        <p>Add this project as a plugin inside Claude Code, and the agent can read sources, assemble, and validate directly. The CLI is bundled with the plugin — no separate install needed.</p>
         <div class="cmd"><code>/plugin marketplace add CarlLee1983/loop-apidoc
 /plugin install loop-apidoc@loop-apidoc-marketplace</code></div>
-        <p class="foot">更新到最新版：<code>/plugin marketplace update</code> → <code>/plugin update</code></p>
+        <p class="foot">Update to the latest version: <code>/plugin marketplace update</code> → <code>/plugin update</code></p>
       </div>
 
       <div class="install">
@@ -634,9 +635,9 @@
           <span class="badge tint-amber">
             <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 16V8"/><path d="M12 16V5"/><path d="M16 16v-4"/></svg>
           </span>
-          <h3>Codex CLI 安裝</h3>
+          <h3>Install for the Codex CLI</h3>
         </div>
-        <p>Codex 不會帶 <code class="ic">${CLAUDE_PLUGIN_ROOT}</code>，所以把 CLI 裝成全域指令，再把 skill 掛到 Codex 的 skills 目錄。</p>
+        <p>Codex doesn't set <code class="ic">${CLAUDE_PLUGIN_ROOT}</code>, so install the CLI as a global command and then link the skill into Codex's skills directory.</p>
         <div class="cmd"><code>uv tool install --from /path/to/loop-apidoc loop-apidoc
 ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code></div>
       </div>
@@ -647,35 +648,35 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== PAIN ===================== -->
 <section class="alt">
   <div class="wrap">
-    <span class="eyebrow">為什麼需要它</span>
-    <h2 class="section-title">沒有它,日子有多難?</h2>
-    <p class="section-lead">當一個團隊要同時串接很多家外部服務時,光是「讀懂文件」就是一場硬仗,還藏著看不見的風險。</p>
+    <span class="eyebrow">WHY YOU NEED IT</span>
+    <h2 class="section-title">How hard is life without it?</h2>
+    <p class="section-lead">When a team has to integrate with many external services at once, just "understanding the docs" is a battle in itself — and it hides risks you can't see.</p>
     <div class="cards">
       <div class="card">
         <div class="badge tint-coral">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9h10v10H9z"/><path d="M5 15V5h10"/></svg>
         </div>
-        <h3>十家廠商,十種格式</h3>
-        <p>有的給你一份 PDF、有的丟一個網頁、有的是一堆程式碼檔。光是把它們「讀懂」就耗掉大把時間與耐心。</p>
+        <h3>Ten vendors, ten formats</h3>
+        <p>One hands you a PDF, another drops a web page on you, another a pile of code files. Just "reading" them eats up huge amounts of time and patience.</p>
       </div>
       <div class="card">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke-dasharray="3.5 3"/><path d="M8.5 12h7"/></svg>
         </div>
-        <h3>文件常常缺東缺西</h3>
-        <p>漏了關鍵欄位、沒寫清楚失敗時會怎樣。最危險的是 —— 有人為了趕進度,乾脆「用猜的」把空白補上去。</p>
+        <h3>The docs are often missing pieces</h3>
+        <p>A key field is left out, or what happens on failure is never spelled out. The most dangerous part: to hit a deadline, someone just "fills in the blanks by guessing."</p>
       </div>
       <div class="card">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4"/><path d="M12 17.5h.01"/></svg>
         </div>
-        <h3>猜錯就出包</h3>
-        <p>一個猜錯的小細節,上線後可能變成付款失敗、訂單遺失這種真實事故,事後才發現「原來文件根本沒這樣寫」。</p>
+        <h3>A wrong guess means an incident</h3>
+        <p>One small wrong guess can turn into a real production incident after launch — failed payments, lost orders — and only then do you find out "the docs never actually said that."</p>
       </div>
     </div>
 
     <figure class="img-slot">
-      <img src="images/pain-messy-docs.jpg" alt="工程師被格式雜亂、缺漏的串接文件淹沒" />
+      <img src="images/pain-messy-docs.jpg" alt="An engineer buried under messy, incomplete integration docs" />
     </figure>
   </div>
 </section>
@@ -683,61 +684,61 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== VIBE CODING ===================== -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">AI 協作時代</span>
-    <h2 class="section-title">為什麼 vibe coding 更需要它?</h2>
-    <p class="section-lead">把實作交給 coding agent 之後,程式寫得再快,規格餵錯就全錯。agent 的產出品質,取決於你給它的規格品質。</p>
+    <span class="eyebrow">THE AI-COLLABORATION ERA</span>
+    <h2 class="section-title">Why does vibe coding need it even more?</h2>
+    <p class="section-lead">Once you hand the implementation to a coding agent, it doesn't matter how fast the code is written — feed it the wrong spec and everything is wrong. The quality of the agent's output depends on the quality of the spec you give it.</p>
     <div class="cards">
       <div class="card">
         <div class="badge tint-coral">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 1 7 7c0 2.5-1.5 4-2.5 5.5S15 18 15 19h-6c0-1-.5-2-1.5-3.5S5 12.5 5 10a7 7 0 0 1 7-7z"/><path d="M9.5 22h5"/></svg>
         </div>
-        <h3>原始文件是幻覺的溫床</h3>
-        <p>直接把 PDF 丟給 agent,遇到缺漏它會用「常見慣例」腦補:自動假設 OAuth、標準錯誤格式。串接金流時,這種貌似合理的猜測就是最貴的 bug。</p>
+        <h3>Raw docs are a breeding ground for hallucination</h3>
+        <p>Hand a PDF straight to an agent and, when something's missing, it fills the gap with "common conventions" — silently assuming OAuth or a standard error format. When you're integrating payments, that plausible-looking guess is the most expensive kind of bug.</p>
       </div>
       <div class="card">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         </div>
-        <h3>agent 需要機器可讀的事實</h3>
-        <p>整理後的 OpenAPI 與整合契約是 agent 可直接消費的規格——比每個 session 重讀幾十頁 PDF 更省、更穩,而且每個 agent、每個專案讀到同一份事實。</p>
+        <h3>Agents need machine-readable facts</h3>
+        <p>The refined OpenAPI and integration contract are specs an agent can consume directly — cheaper and steadier than re-reading dozens of PDF pages every session, and every agent and every project reads the same single source of truth.</p>
       </div>
       <div class="card">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/></svg>
         </div>
-        <h3>人負責驗收,不是放手不管</h3>
-        <p>vibe coding 把人的角色從「逐行寫碼」移到「驗收規格與產物」。每句話都查得到出處、離線核對頁隨附,你才敢在 agent 的產出上簽名。</p>
+        <h3>People sign off — they don't walk away</h3>
+        <p>Vibe coding shifts the human role from "writing code line by line" to "signing off on specs and outputs." Only when every statement is traceable to its source and an offline review page ships alongside it can you dare to put your name on the agent's output.</p>
       </div>
     </div>
     <div class="ba" style="margin-top: 36px;">
       <div class="ba-col ba-before">
-        <span class="lbl">直接請 AI 整理</span>
-        <h3>快,但只能「信」它</h3>
+        <span class="lbl">Just ask AI to tidy it up</span>
+        <h3>Fast, but you can only "trust" it</h3>
         <ul>
-          <li>零建置,一句話就有結果</li>
-          <li>結果對不對,只有模型自己說了算</li>
-          <li>缺漏會被「常見慣例」悄悄補上</li>
-          <li>每次問結果都不同,無法比對出處</li>
-          <li>適合:快速看懂、一次性低風險探索</li>
+          <li>Zero setup — one sentence gets a result</li>
+          <li>Whether the result is right is entirely the model's call</li>
+          <li>Gaps get quietly filled with "common conventions"</li>
+          <li>You get a different answer each time, with no source to check</li>
+          <li>Good for: quickly getting the gist, one-off low-risk exploration</li>
         </ul>
       </div>
       <div class="ba-mid" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </div>
       <div class="ba-col ba-after">
-        <span class="lbl">經過 loop-apidoc</span>
-        <h3>用模型,但不信任模型</h3>
+        <span class="lbl">Run through loop-apidoc</span>
+        <h3>Use the model, but don't trust the model</h3>
         <ul>
-          <li>模型只負責讀,對不對由確定性程式碼把關</li>
-          <li>瞎掰會被驗證閘攔下,缺漏被明白點名</li>
-          <li>每句話都查得到出處,可離線人工核對</li>
-          <li>同樣的輸入永遠產出同樣的成品,改版可比對</li>
-          <li>適合:要上線的串接、金流等高風險場景</li>
+          <li>The model only reads; deterministic code decides what's correct</li>
+          <li>Made-up content is stopped at the validation gate; gaps are named outright</li>
+          <li>Every statement is traceable to its source and can be reviewed offline by a human</li>
+          <li>The same input always produces the same result, so revisions are diffable</li>
+          <li>Good for: integrations headed to production, payments, and other high-risk scenarios</li>
         </ul>
       </div>
     </div>
-    <p class="section-lead" style="margin-top: 28px;">代價說在前頭:它要走完整的擷取→驗證→修正流程,比「直接問」花更多前置成本。判斷準則很簡單——<strong>整理結果會被寫進正式程式碼,就值得過閘;只是要看懂,直接問就好。</strong></p>
-    <p class="section-lead" style="margin-top: 12px;">一句話:vibe coding 把「寫程式」變快了,「規格正確」就成了新的瓶頸——這個工具補的正是這個瓶頸。</p>
+    <p class="section-lead" style="margin-top: 28px;">To be upfront about the cost: it runs the full extract → validate → correct pipeline, so it carries more upfront cost than just "asking." The rule of thumb is simple — <strong>if the result will be written into production code, it's worth passing the gate; if you just need to understand something, just ask.</strong></p>
+    <p class="section-lead" style="margin-top: 12px;">In one line: vibe coding made "writing code" fast, so "getting the spec right" became the new bottleneck — and that bottleneck is exactly what this tool fixes.</p>
   </div>
 </section>
 
@@ -745,12 +746,12 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <section>
   <div class="wrap">
     <div class="promise">
-      <span class="tag">最重要的一件事</span>
-      <h2>它只寫「文件真正講到的」,<br />絕不自己編。</h2>
-      <p>文件沒寫的,它一律留白、並老實標記為「缺漏」,永遠不會用慣例或猜測來填。寧可明白告訴你「這裡缺了」,也不給你一份看起來完整、其實是編出來的文件。</p>
+      <span class="tag">The single most important thing</span>
+      <h2>It only writes down what the docs actually say —<br />it never makes things up.</h2>
+      <p>Whatever the docs don't state, it leaves blank and honestly marks as "missing." It will never fill the gap with conventions or guesses. It would rather tell you plainly "this is missing" than hand you a doc that looks complete but is actually fabricated.</p>
       <span class="pill">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
-        你可以信任它的每一句話
+        You can trust every statement it makes
       </span>
     </div>
   </div>
@@ -759,9 +760,9 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== HOW IT WORKS ===================== -->
 <section class="alt">
   <div class="wrap">
-    <span class="eyebrow">它怎麼運作</span>
-    <h2 class="section-title">它是怎麼做到的?</h2>
-    <p class="section-lead">整個過程就像一位認真的整理師,把雜亂的資料一步步變成乾淨的成果。</p>
+    <span class="eyebrow">HOW IT WORKS</span>
+    <h2 class="section-title">How does it pull that off?</h2>
+    <p class="section-lead">The whole process is like a diligent organizer, turning messy material into a clean result step by step.</p>
 
     <div class="steps">
       <div class="step">
@@ -769,7 +770,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>收集來源</h3><p>把各種格式的文件餵給它 —— PDF、網頁、現成的規格檔,甚至一個公開網址都行。</p></div>
+        <div><h3>Collect the sources</h3><p>Feed it documents in any format — PDFs, web pages, ready-made spec files, even a single public URL will do.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -778,7 +779,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.4-4.4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>逐段仔細閱讀</h3><p>一段一段擷取內容,像認真的讀者抄重點,但只抄文件真的寫的,絕不腦補。</p></div>
+        <div><h3>Read it closely, section by section</h3><p>It extracts the content one section at a time, like a diligent reader taking notes — but it only copies what the docs really say, never filling in from imagination.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -787,7 +788,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>整理成標準格式</h3><p>把零散資訊重新拼組成一份統一、機器與人都能讀懂的標準規格。</p></div>
+        <div><h3>Assemble it into a standard format</h3><p>It reassembles the scattered information into a single, unified standard spec that both machines and people can read.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -796,7 +797,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">4</span>
         </div>
-        <div><h3>自我檢查</h3><p>自動驗證成果:有缺漏就回頭重讀補齊;真的查不到,就誠實標成「缺漏／衝突」,不硬填。</p></div>
+        <div><h3>Check its own work</h3><p>It automatically validates the result: if something's missing, it goes back and re-reads to fill it in; if it truly can't find it, it honestly marks it "missing / conflict" rather than forcing a fill.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -805,7 +806,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.2L12 12l8.7-4.8"/><path d="M12 12v10"/></svg>
           <span class="n">5</span>
         </div>
-        <div><h3>交付成果</h3><p>產出標準規格、看得懂的中文說明書、來源追溯,以及一份品質檢查報告。</p></div>
+        <div><h3>Deliver the results</h3><p>It produces a standard spec, a readable Traditional-Chinese manual, source traceability, and a quality-check report.</p></div>
       </div>
     </div>
   </div>
@@ -814,65 +815,65 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== VALUE ===================== -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">你會拿到什麼</span>
-    <h2 class="section-title">最後你會拿到這些成果</h2>
-    <p class="section-lead">從標準規格、中文說明書、來源追溯到品質報告,再加上一包能直接動工的開發者交付物,每一份都有明確用途,工程師到主管各取所需。</p>
+    <span class="eyebrow">WHAT YOU GET</span>
+    <h2 class="section-title">In the end, here's what you get</h2>
+    <p class="section-lead">From a standard spec, a Traditional-Chinese manual, and source traceability to a quality report — plus a developer handoff pack you can start building from right away. Each artifact has a clear purpose, so engineers and managers alike get what they need.</p>
     <div class="value-grid">
       <div class="value">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9.5 13 8 14.5 9.5 16"/><path d="M13.5 13 15 14.5 13.5 16"/></svg>
         </div>
-        <h3>標準規格藍圖</h3>
+        <h3>Standard spec blueprint</h3>
         <span class="file">openapi.yaml</span>
-        <p>業界通用的標準格式,各種工具與工程師都能直接拿去使用,不必再各自解讀。</p>
+        <p>An industry-standard format that any tool or engineer can pick up and use directly, with no need to reinterpret it each time.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v6"/><circle cx="6" cy="3" r="1.6"/><circle cx="18" cy="21" r="1.6"/><path d="M9.5 12H12"/></svg>
         </div>
-        <h3>整合契約</h3>
+        <h3>Integration contract</h3>
         <span class="file">integration-contract.json</span>
-        <p>不只列出單一個端點,還把它們串成一條可執行的交易流程:先呼叫誰、拿到什麼、再帶進下一步,讓工程師知道整套怎麼接。</p>
+        <p>More than a list of individual endpoints, it strings them into an executable transaction flow: call this first, get that back, then carry it into the next step — so engineers understand how the whole thing connects.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
         </div>
-        <h3>看得懂的中文說明書</h3>
+        <h3>A readable Traditional-Chinese manual</h3>
         <span class="file">api-guide.zh-TW.md</span>
-        <p>用繁體中文整理好的串接指南,不必再硬啃原文文件。</p>
+        <p>An integration guide written up in Traditional Chinese, so you don't have to grind through the original docs.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 12h5"/><path d="M10.5 8H8a4 4 0 0 0 0 8h2.5"/><path d="M13.5 8H16a4 4 0 0 1 0 8h-2.5"/></svg>
         </div>
-        <h3>來源追溯</h3>
+        <h3>Source traceability</h3>
         <span class="file">provenance.json</span>
-        <p>每一項內容都標明出自哪份文件、哪一段,經得起「這資訊哪來的?」的追問。</p>
+        <p>Every item is labeled with which document and which section it came from, so it holds up to the question "where did this information come from?"</p>
       </div>
       <div class="value">
         <div class="badge tint-coral">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><path d="M15 5.5h2.5a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1H9"/><path d="M9 14l2 2 4-4"/></svg>
         </div>
-        <h3>品質檢查報告</h3>
+        <h3>Quality-check report</h3>
         <span class="file">validation/report</span>
-        <p>清楚列出哪裡完整、哪裡還缺,文件品質一目了然,不用憑感覺。</p>
+        <p>It clearly lists what's complete and what's still missing, so document quality is plain to see — no guesswork.</p>
       </div>
       <div class="value">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <h3>一頁核對清單</h3>
+        <h3>A one-page checklist</h3>
         <span class="file">review.html</span>
-        <p>用瀏覽器就能離線打開的單頁,把範圍、來源、缺漏和 API 結構攤在一起,方便人眼快速複核。</p>
+        <p>A single page you can open offline in a browser, laying out scope, sources, gaps, and API structure side by side for a quick human review.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="M13.5 6.5 10.5 17.5"/></svg>
         </div>
-        <h3>開發者交付包</h3>
+        <h3>Developer handoff pack</h3>
         <span class="file">examples/ · handoff/</span>
-        <p>附上三種語言的請求範例,以及可直接動工的交付包:整合任務清單、Postman 匯入檔、SDK 提示,工程師拿了就能開工。</p>
+        <p>It ships request examples in three languages, plus a ready-to-build handoff pack: an integration task list, a Postman import file, and SDK hints — engineers can grab it and start work.</p>
       </div>
     </div>
   </div>
@@ -881,15 +882,15 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== PROVENANCE / TRUST ===================== -->
 <section class="alt">
   <div class="wrap">
-    <span class="eyebrow">為什麼可以信任</span>
-    <h2 class="section-title">每一句話,都查得到出處</h2>
-    <p class="section-lead">就像論文會標注引用來源,loop-apidoc 產出的每個欄位、每條規則,都能追回是哪份來源文件、哪個段落寫的。</p>
+    <span class="eyebrow">WHY YOU CAN TRUST IT</span>
+    <h2 class="section-title">Every statement is traceable to its source</h2>
+    <p class="section-lead">Just as a paper cites its references, every field and every rule loop-apidoc produces can be traced back to which source document and which passage stated it.</p>
 
-    <svg class="prov-art" viewBox="0 0 700 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="產出文件中的一條內容,用一條線追溯回原始來源文件的對應段落">
+    <svg class="prov-art" viewBox="0 0 700 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A line in the output document is traced back along a line to the matching passage in the original source document">
       <!-- output doc (left) -->
       <g transform="translate(20 20)">
         <rect x="0" y="0" width="250" height="160" rx="14" fill="#fff" stroke="#bce8e3" stroke-width="2.5"/>
-        <text x="20" y="32" font-size="13" fill="#0f7a73" font-weight="700">產出的說明書</text>
+        <text x="20" y="32" font-size="13" fill="#0f7a73" font-weight="700">The generated manual</text>
         <rect x="20" y="50" width="160" height="9" rx="4.5" fill="#cfeae7"/>
         <rect x="20" y="70" width="120" height="9" rx="4.5" fill="#cfeae7"/>
         <!-- highlighted line -->
@@ -906,7 +907,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
       <!-- source doc (right) -->
       <g transform="translate(430 20)">
         <rect x="0" y="0" width="250" height="160" rx="14" fill="#fff" stroke="#f6cfc8" stroke-width="2.5"/>
-        <text x="20" y="32" font-size="13" fill="#c2493d" font-weight="700">原始來源文件</text>
+        <text x="20" y="32" font-size="13" fill="#c2493d" font-weight="700">The original source document</text>
         <rect x="20" y="50" width="120" height="9" rx="4.5" fill="#f3d6d0"/>
         <!-- matched line -->
         <rect x="14" y="62" width="222" height="22" rx="8" fill="#ffe2dd" stroke="#ff6f61" stroke-width="2"/>
@@ -917,37 +918,37 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         <rect x="20" y="132" width="160" height="9" rx="4.5" fill="#f6e0dc"/>
       </g>
     </svg>
-    <p class="section-lead" style="margin: 30px auto 0; text-align:center;">有人質疑「這個設定是哪來的?」時,你能立刻翻出對應的來源段落。</p>
+    <p class="section-lead" style="margin: 30px auto 0; text-align:center;">When someone asks "where did this setting come from?", you can pull up the matching source passage right away.</p>
   </div>
 </section>
 
 <!-- ===================== DIFF ===================== -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">版本比對 · 新功能</span>
-    <h2 class="section-title">換版本了?一眼看出差在哪</h2>
-    <p class="section-lead">廠商更新了文件,新版到底改了什麼?loop-apidoc 能比較新舊兩版,把每一處變化標上四種「燈號」,讓你一眼判斷風險高低。</p>
+    <span class="eyebrow">VERSION DIFF · NEW FEATURE</span>
+    <h2 class="section-title">New version? See at a glance what changed</h2>
+    <p class="section-lead">The vendor updated the docs — but what actually changed in the new version? loop-apidoc can compare the old and new versions and tag every change with one of four "signal lights," so you can gauge the risk at a glance.</p>
     <div class="lights">
       <div class="light">
         <span class="dot red"></span>
-        <div><h3>破壞性變更 <span class="en">breaking</span></h3><p>可能讓你既有的串接「壞掉」,要特別小心、優先處理。</p></div>
+        <div><h3>Breaking change <span class="en">breaking</span></h3><p>Could "break" your existing integration — handle with special care and prioritize it.</p></div>
       </div>
       <div class="light">
         <span class="dot green"></span>
-        <div><h3>新增 <span class="en">additive</span></h3><p>多了新功能或新欄位,通常是安全的,不影響現有串接。</p></div>
+        <div><h3>Additive <span class="en">additive</span></h3><p>A new feature or field was added, usually safe and not affecting existing integrations.</p></div>
       </div>
       <div class="light">
         <span class="dot amber"></span>
-        <div><h3>內容調整 <span class="en">changed</span></h3><p>既有內容有改動,不一定危險,但值得花一分鐘看一下。</p></div>
+        <div><h3>Content adjustment <span class="en">changed</span></h3><p>Existing content was modified — not necessarily dangerous, but worth a minute to look at.</p></div>
       </div>
       <div class="light">
         <span class="dot grey"></span>
-        <div><h3>僅來源異動 <span class="en">source_only</span></h3><p>只是來源文件本身動了,最終規格其實沒變,可放心。</p></div>
+        <div><h3>Source-only change <span class="en">source_only</span></h3><p>Only the source document itself moved; the final spec didn't actually change, so you can relax.</p></div>
       </div>
     </div>
 
     <figure class="img-slot">
-      <img src="images/diff-version-lights.jpg" alt="新舊兩版文件比對,變動處以紅綠琥珀灰四色燈號標記" />
+      <img src="images/diff-version-lights.jpg" alt="Comparing an old and new version, with changes marked by red, green, amber, and grey signal lights" />
     </figure>
   </div>
 </section>
@@ -955,35 +956,35 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== SCORE ===================== -->
 <section class="alt">
   <div class="wrap">
-    <span class="eyebrow">品質評分 · 新功能</span>
-    <h2 class="section-title">不只「過或不過」,還給一個分數</h2>
-    <p class="section-lead">檢查報告告訴你「哪裡缺、能不能過」;評分再進一步,把文件品質換算成 0–100 分,方便長期追蹤、跨版本比較。分數只是儀表板,從不改變一份文件的通過與否。</p>
+    <span class="eyebrow">QUALITY SCORE · NEW FEATURE</span>
+    <h2 class="section-title">Not just "pass or fail" — it gives you a score</h2>
+    <p class="section-lead">The check report tells you "what's missing and whether it passes"; the score goes a step further, converting document quality into a 0–100 number that's handy for tracking over time and comparing across versions. The score is only a dashboard — it never changes whether a document passes.</p>
     <div class="cards">
       <div class="card">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9 13l2 2 4-4"/></svg>
         </div>
-        <h3>看五個面向打分</h3>
-        <p>規格正確性、完整度、一致性、來源依據、可複核性,五個維度加權後得出一個總分。</p>
+        <h3>Scored across five dimensions</h3>
+        <p>Spec validity, completeness, consistency, source grounding, and reviewability — five dimensions weighted together into one total score.</p>
       </div>
       <div class="card">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
         </div>
-        <h3>兩種評分角度</h3>
-        <p>「上線把關」偏嚴格、適合自動化流程;「人工複核」較寬鬆、適合送審前自評。同一份文件,兩種視角。</p>
+        <h3>Two scoring perspectives</h3>
+        <p>"Ship gate" is stricter and suited to automated pipelines; "manual review" is more lenient and suited to a self-check before submission. Same document, two viewpoints.</p>
       </div>
       <div class="card">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
         </div>
-        <h3>看得見的進步</h3>
-        <p>每次修正都能看到分數往上走,團隊有明確的努力目標,不再靠感覺說「應該還不錯」。</p>
+        <h3>Visible progress</h3>
+        <p>Every correction shows the score climbing, giving the team a clear target to work toward instead of vaguely saying "it's probably fine."</p>
       </div>
     </div>
 
     <figure class="img-slot">
-      <img src="images/score-dashboard.jpg" alt="把文件品質量化成 0 到 100 分的品質儀表板" />
+      <img src="images/score-dashboard.jpg" alt="A quality dashboard that quantifies document quality into a score from 0 to 100" />
     </figure>
   </div>
 </section>
@@ -991,16 +992,16 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== FOUNDRY ===================== -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">資產治理 · 新功能</span>
-    <h2 class="section-title">好文件別散落,收進自己的資料庫</h2>
-    <p class="section-lead">跑出一份滿意的成果後,可以把它「收藏」進專案自己的文件資產庫,經過核准、標上版本,之後大家永遠取用同一份「現行版」,不再有人拿到過期的舊檔。</p>
+    <span class="eyebrow">ASSET GOVERNANCE · NEW FEATURE</span>
+    <h2 class="section-title">Don't let good docs scatter — file them in your own library</h2>
+    <p class="section-lead">Once you've produced a result you're happy with, you can "shelve" it in the project's own document-asset library — approved and versioned — so everyone always uses the same "current version" and no one ever ends up with a stale old file.</p>
     <div class="steps">
       <div class="step">
         <div class="num tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>收進候選</h3><p>把一份跑完的成果匯入資產庫,先放在「候選」區,還沒正式生效。</p></div>
+        <div><h3>Shelve it as a candidate</h3><p>Import a finished result into the asset library, where it sits in the "candidate" area — not yet live.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -1009,7 +1010,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>核准並標版</h3><p>確認沒問題就核准,系統把它複製成一份自足、標上版本號的正式資產,並讓舊版自動退位。</p></div>
+        <div><h3>Approve and version it</h3><p>Once you've confirmed it's good, approve it, and the system copies it into a self-contained, version-numbered official asset — automatically retiring the previous version.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -1018,12 +1019,12 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>永遠取用現行版</h3><p>下游只要問「現在該用哪一份?」,系統就穩定指向最新核准的版本,大家永遠對齊同一份。</p></div>
+        <div><h3>Always use the current version</h3><p>Downstream just asks "which one should I use now?" and the system steadily points to the latest approved version, so everyone stays aligned on the same document.</p></div>
       </div>
     </div>
 
     <figure class="img-slot">
-      <img src="images/foundry-asset-shelf.jpg" alt="核准、版本化的文件資產櫃,書籤指向現行版" />
+      <img src="images/foundry-asset-shelf.jpg" alt="An approved, versioned document-asset shelf with a bookmark pointing to the current version" />
     </figure>
   </div>
 </section>
@@ -1031,31 +1032,31 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== BEFORE / AFTER ===================== -->
 <section class="alt">
   <div class="wrap">
-    <span class="eyebrow">前後對照</span>
-    <h2 class="section-title">一張圖看懂前後差別</h2>
-    <p class="section-lead">同樣一批來源文件,有沒有經過 loop-apidoc,差別非常明顯。</p>
+    <span class="eyebrow">BEFORE / AFTER</span>
+    <h2 class="section-title">See the before-and-after difference in one picture</h2>
+    <p class="section-lead">Take the same batch of source docs: whether or not they've been through loop-apidoc makes an unmistakable difference.</p>
     <div class="ba">
       <div class="ba-col ba-before">
-        <span class="lbl">使用前</span>
-        <h3>一疊看不懂的文件</h3>
+        <span class="lbl">Before</span>
+        <h3>A stack of docs you can't make sense of</h3>
         <ul>
-          <li>格式各家不同,讀起來費力</li>
-          <li>缺頁、漏欄位,不知道完不完整</li>
-          <li>不確定的地方只能用猜的</li>
-          <li>出處難查,很難對帳追責</li>
+          <li>Every vendor's format differs, making them a slog to read</li>
+          <li>Missing pages and fields, with no idea if it's complete</li>
+          <li>Where you're unsure, all you can do is guess</li>
+          <li>Sources are hard to trace, making it hard to reconcile and hold anyone accountable</li>
         </ul>
       </div>
       <div class="ba-mid" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </div>
       <div class="ba-col ba-after">
-        <span class="lbl">使用後</span>
-        <h3>一份乾淨的說明書</h3>
+        <span class="lbl">After</span>
+        <h3>One clean manual</h3>
         <ul>
-          <li>統一標準格式,人與工具都好讀</li>
-          <li>缺漏明白標出,品質有報告佐證</li>
-          <li>只寫文件真有的,絕不臆測</li>
-          <li>每句話都查得到來源出處</li>
+          <li>A unified standard format that's easy for people and tools to read</li>
+          <li>Gaps clearly marked, with a report backing up the quality</li>
+          <li>Only what the docs actually say — never speculation</li>
+          <li>Every statement is traceable to its source</li>
         </ul>
       </div>
     </div>
@@ -1065,33 +1066,33 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 <!-- ===================== CLOSING ===================== -->
 <section class="closing">
   <div class="wrap">
-    <span class="eyebrow">一句話總結</span>
-    <h2 class="section-title">該有的整理好,沒有的老實說,絕不瞎掰。</h2>
-    <p class="big">loop-apidoc 把「雜亂、不可靠的技術文件」,變成「乾淨、可信賴、查得到出處的說明書」。</p>
+    <span class="eyebrow">IN ONE SENTENCE</span>
+    <h2 class="section-title">Tidy up what's there, be honest about what isn't, and never make things up.</h2>
+    <p class="big">loop-apidoc turns "messy, unreliable technical docs" into "a clean, trustworthy, source-traceable manual."</p>
 
     <figure class="img-slot">
-      <img src="images/closing-trusted-team.jpg" alt="團隊安心自信地使用一份乾淨、可追溯的說明書" />
+      <img src="images/closing-trusted-team.jpg" alt="A team confidently and comfortably using a clean, traceable manual" />
     </figure>
 
     <div class="who">
       <span class="ico-wrap">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><path d="M3.5 20c0-3.3 2.5-5.2 5.5-5.2s5.5 1.9 5.5 5.2"/><path d="M16 6.2A3 3 0 0 1 16 12"/><path d="M17.5 14.8c2 .6 3 2.3 3 5.2"/></svg>
       </span>
-      <div><b>適合誰?</b>　需要串接多家外部服務(金流、物流、簡訊…),又重視文件正確與可追溯的團隊。</div>
+      <div><b>Who is it for?</b>　Teams that integrate with many external services (payments, logistics, SMS…) and care about document correctness and traceability.</div>
     </div>
 
     <div class="deep-cta">
-      <a class="deep-link" href="onboarding.html">
-        想深入技術細節?看給工程師的完整導覽
+      <a class="deep-link" href="onboarding.en.html">
+        Want the technical deep dive? Read the full tour for engineers
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
-      <p class="deep-note">兩段式架構、seam JSON、CLI 十六指令、驗證與修正迴圈,一頁看懂整條 pipeline。</p>
+      <p class="deep-note">The two-stage architecture, the seam JSON, the sixteen CLI commands, and the validation-and-correction loop — the whole pipeline on one page.</p>
     </div>
   </div>
 </section>
 
 <footer>
-  由專案文件產生 · loop-apidoc v0.13.0 · 來源依據式 API 文件 pipeline
+  Generated from the project docs · loop-apidoc v0.13.0 · a source-grounded API documentation pipeline
 </footer>
 
 </body>
