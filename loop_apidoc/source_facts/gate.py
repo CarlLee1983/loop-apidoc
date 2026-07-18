@@ -28,7 +28,11 @@ def source_fact_violations(
     if not facts:
         return []
 
-    schemas = _schema_fields(inventory or {})
+    inventory = inventory or {}
+    schemas = _schema_fields(inventory)
+    # 錯誤目錄是共用的:文件把錯誤表在每個端點重複一次,擷取卻(正確地)
+    # 只收在 inventory.errors[]。看不到那裡就會逐個端點誤擋。
+    catalog = _extracted_names(inventory.get("errors") or [], in_container=True)
     violations: list[str] = []
     for filename, endpoint in endpoints:
         path = endpoint.get("path")
@@ -38,7 +42,7 @@ def source_fact_violations(
         fact = facts.get((method.upper(), path))
         if fact is None:
             continue
-        violations += _judge(filename, endpoint, fact, schemas)
+        violations += _judge(filename, endpoint, fact, schemas, catalog)
     return violations
 
 
@@ -52,10 +56,14 @@ def _schema_fields(inventory: dict) -> dict[str, dict]:
 
 
 def _judge(
-    filename: str, endpoint: dict, fact: EndpointFact, schemas: dict[str, dict]
+    filename: str,
+    endpoint: dict,
+    fact: EndpointFact,
+    schemas: dict[str, dict],
+    catalog: set[str],
 ) -> list[str]:
     violations: list[str] = []
-    missing = _unaccounted_names(endpoint, fact, schemas)
+    missing = _unaccounted_names(endpoint, fact, schemas, catalog)
     if missing:
         violations.append(
             f"{filename}: the source section {_where(fact)} documents "
@@ -79,11 +87,11 @@ def _where(fact: EndpointFact) -> str:
 
 
 def _unaccounted_names(
-    endpoint: dict, fact: EndpointFact, schemas: dict[str, dict]
+    endpoint: dict, fact: EndpointFact, schemas: dict[str, dict], catalog: set[str]
 ) -> list[str]:
     if not fact.parameter_names:
         return []
-    known = _extracted_names(endpoint) | _referenced_names(endpoint, schemas)
+    known = _extracted_names(endpoint) | _referenced_names(endpoint, schemas) | catalog
     declared = " ".join(str(item) for item in endpoint.get("missing") or []).lower()
     return [
         name for name in fact.parameter_names if not _accounted(name, known, declared)
@@ -121,10 +129,15 @@ def _referenced_names(endpoint: dict, schemas: dict[str, dict]) -> set[str]:
 
 
 def _collect_refs(node: Any) -> set[str]:
+    """`schema_ref`,以及自由格式的 `schema` 直接寫共用 schema 名的情況。
+
+    `ResponseEntry.schema` 依設計是自由格式(見 input_schema.py),所以在那裡
+    寫一個共用 schema 名是合法擷取,不是遺漏。
+    """
     refs: set[str] = set()
     if isinstance(node, dict):
         for key, value in node.items():
-            if key == "schema_ref" and isinstance(value, str):
+            if key in ("schema_ref", "schema") and isinstance(value, str):
                 refs.add(value)
             else:
                 refs |= _collect_refs(value)

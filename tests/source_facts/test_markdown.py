@@ -128,7 +128,8 @@ GET /not-an-endpoint
     facts = scan_markdown("doc.md", text)
     assert [f.path for f in facts.endpoints] == ["/real"]
     assert facts.endpoints[0].parameter_names == []
-    assert facts.endpoints[0].example_blocks == 1
+    # 圍籬內是虛擬碼而非 payload,依 payload-only 規則不計為範例。
+    assert facts.endpoints[0].example_blocks == 0
 
 
 def test_records_the_source_relative_path_and_section_heading() -> None:
@@ -227,3 +228,191 @@ def test_a_table_followed_by_a_fence_still_belongs_to_its_own_endpoint() -> None
     a, b = scan_markdown("doc.md", text).endpoints
     assert (a.parameter_names, a.example_blocks) == (["alpha"], 1)
     assert (b.parameter_names, b.example_blocks) == (["beta"], 0)
+
+
+# --- 以下皆為 code review 實證回報的缺陷回歸(issue #14 後續) ---
+
+def test_a_deeper_subheading_does_not_disarm_the_endpoint() -> None:
+    """最常見的版面是端點標題下再開「### 請求參數」;若被當成換段,
+    整張參數表就不會歸屬任何端點,閘門對這種文件等於沒開火。"""
+    text = """
+## GET /games
+
+### Request Parameters
+
+| Name | Type |
+| --- | --- |
+| provider | string |
+
+### 回應參數
+
+| Name | Type |
+| --- | --- |
+| code | int |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert [(e.method, e.path) for e in facts.endpoints] == [("GET", "/games")]
+    assert facts.endpoints[0].parameter_names == ["provider", "code"]
+
+
+def test_a_sibling_heading_still_ends_the_endpoint_section() -> None:
+    text = """
+## GET /games
+
+### Request Parameters
+
+| Name | Type |
+| --- | --- |
+| provider | string |
+
+## Error codes
+
+| Name | Meaning |
+| --- | --- |
+| E001 | bad |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["provider"]
+
+
+def test_a_setext_heading_ends_the_endpoint_section() -> None:
+    """setext 標題(底線式)不帶 #,漏認就會把下一節的錯誤碼表併進端點。"""
+    text = """
+## Games
+
+`GET /games`
+
+| Name | Type |
+| --- | --- |
+| provider | string |
+
+Error codes
+-----------
+
+| Name | Meaning |
+| --- | --- |
+| E001 | bad |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["provider"]
+
+
+def test_a_fence_between_two_tables_keeps_them_separate() -> None:
+    """圍籬前後各一張表時,未結算的表會跨過圍籬與下一張合併,
+    把第二張的表頭列(`Name`)變成一個無人能滿足的必要欄位。"""
+    text = """
+## Games
+
+`GET /games`
+
+| Name | Type |
+| --- | --- |
+| provider | string |
+```json
+{"a": 1}
+```
+| Name | Type |
+| --- | --- |
+| page | int |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["provider", "page"]
+
+
+def test_a_label_first_table_uses_the_wire_name_column() -> None:
+    """中文文件常把第一欄寫成人看的標籤、第二欄才是實際欄位名。
+    照第一欄要求,正確的擷取永遠過不了。"""
+    text = """
+## POST /pay
+
+| 參數名稱 | 英文名稱 | 型態 |
+| --- | --- | --- |
+| 商店代號 | MerchantID | string |
+| 交易金額 | Amount | int |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["MerchantID", "Amount"]
+
+
+def test_a_cjk_only_table_keeps_its_own_names() -> None:
+    """沒有英文欄可選時,中文鍵就是真的鍵,不能因為非 ASCII 就丟掉。"""
+    text = """
+## POST /pay
+
+| 參數名稱 | 型態 |
+| --- | --- |
+| 商店代號 | string |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["商店代號"]
+
+
+def test_annotations_and_links_are_stripped_from_the_name_cell() -> None:
+    text = """
+## Games
+
+`GET /games`
+
+| Name | Type |
+| --- | --- |
+| username(必填) | string |
+| X-Token (required) | string |
+| amount<br>金額 | int |
+| [provider](#provider) | string |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == [
+        "username", "X-Token", "amount", "provider",
+    ]
+
+
+def test_a_constant_value_table_is_not_a_parameter_table() -> None:
+    """`Content-Type: application/json` 是常數對照表;正確的擷取會把它
+    模型成 media type,而不是一個參數。"""
+    text = """
+## Games
+
+`GET /games`
+
+| Header Name | Value |
+| --- | --- |
+| Content-Type | application/json |
+| X-Sign | abc |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == []
+
+
+def test_only_payload_like_fences_count_as_examples() -> None:
+    """簽章章節滿是虛擬碼圍籬;把它們當範例會逼出一個來源沒有的 examples。"""
+    text = """
+## Sign
+
+`POST /pay`
+
+```
+sha256(a + b)
+```
+
+```text
+hex encode
+```
+"""
+    assert scan_markdown("doc.md", text).endpoints[0].example_blocks == 0
+
+
+def test_json_and_xml_fences_still_count_as_examples() -> None:
+    text = """
+## Pay
+
+`POST /pay`
+
+```json
+{"a": 1}
+```
+
+```
+<root/>
+```
+"""
+    assert scan_markdown("doc.md", text).endpoints[0].example_blocks == 2

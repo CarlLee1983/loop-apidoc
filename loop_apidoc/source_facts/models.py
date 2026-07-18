@@ -40,19 +40,24 @@ class FactIndex(BaseModel):
         return [ep for source in self.sources for ep in source.endpoints]
 
     def by_identity(self) -> dict[tuple[str, str], EndpointFact]:
-        """以 (METHOD, path) 索引。
+        """以 (METHOD, path) 索引;同一 identity 出現多次時只保留**交集**。
 
-        同一 identity 在多個來源重複出現時,保留事實最豐富的那一筆:
-        來源常把同一端點在總覽頁與細節頁各寫一次,細節頁才是完整的。
+        來源常把同一端點寫兩次:總覽索引頁與細節頁,或 v1(已棄用)與 v2。
+        挑「最豐富的那一筆」會反過來要求擷取去滿足它本來就該忽略的那一節——
+        索引表看起來豐富,正是因為它根本不是參數表。歧義時 fail open,
+        對一道 fail-closed 閘門而言才是對的偏誤。
         """
-        best: dict[tuple[str, str], EndpointFact] = {}
+        merged: dict[tuple[str, str], EndpointFact] = {}
         for ep in self.all_endpoints():
             key = (ep.method, ep.path)
-            current = best.get(key)
-            if current is None or _richness(ep) > _richness(current):
-                best[key] = ep
-        return best
+            current = merged.get(key)
+            merged[key] = ep if current is None else _intersect(current, ep)
+        return merged
 
 
-def _richness(fact: EndpointFact) -> tuple[int, int]:
-    return (len(fact.parameter_names), fact.example_blocks)
+def _intersect(left: EndpointFact, right: EndpointFact) -> EndpointFact:
+    shared = [name for name in left.parameter_names if name in right.parameter_names]
+    return left.model_copy(update={
+        "parameter_names": shared,
+        "example_blocks": min(left.example_blocks, right.example_blocks),
+    })
