@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operator Manual · loop-apidoc</title>
+<style>
+:root {
+  --bg: #0f1117; --panel: #171a23; --fg: #e6e8ee; --muted: #9aa3b2;
+  --accent: #6ea8fe; --border: #262b38; --code-bg: #11141c; --kbd: #222838;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f8fa; --panel: #ffffff; --fg: #1b1f27; --muted: #5b6472;
+    --accent: #2563eb; --border: #e4e7ee; --code-bg: #f1f3f7; --kbd: #eef1f6;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.75 -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.layout { display: grid; grid-template-columns: 280px 1fr; max-width: 1180px; margin: 0 auto; }
+nav {
+  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  padding: 28px 18px; border-right: 1px solid var(--border); background: var(--bg);
+}
+nav .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; margin-bottom: 4px; }
+nav .sub { color: var(--muted); font-size: 12px; margin-bottom: 18px; }
+nav a { display: block; color: var(--muted); text-decoration: none; padding: 3px 0; font-size: 13.5px; }
+nav a:hover { color: var(--accent); }
+nav a.lvl-3 { padding-left: 14px; font-size: 12.5px; }
+main { padding: 40px 48px 96px; min-width: 0; }
+.toplinks { margin-bottom: 24px; font-size: 13px; color: var(--muted); }
+.toplinks a { color: var(--accent); text-decoration: none; }
+h1, h2, h3 { line-height: 1.3; scroll-margin-top: 24px; }
+h1 { font-size: 30px; margin: 0 0 8px; }
+h2 { font-size: 22px; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 17px; margin: 26px 0 10px; }
+p, li { color: var(--fg); }
+a { color: var(--accent); }
+blockquote {
+  margin: 16px 0; padding: 8px 16px; border-left: 3px solid var(--accent);
+  background: var(--panel); border-radius: 0 8px 8px 0; color: var(--muted);
+}
+code { font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace; font-size: 13.5px; }
+:not(pre) > code { background: var(--kbd); padding: 2px 6px; border-radius: 5px; }
+pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; overflow-x: auto; line-height: 1.6;
+}
+pre code { background: none; padding: 0; }
+pre.mermaid { background: var(--panel); border: 1px solid var(--border); text-align: center; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14.5px; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--panel); }
+tr:nth-child(even) td { background: color-mix(in srgb, var(--panel) 50%, transparent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  main { padding: 24px 20px 64px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">loop-apidoc</div>
+  <div class="sub">Operator Manual</div>
+  <a class="lvl-2" href="#_1">How it works</a>
+  <a class="lvl-3" href="#_2">Full pipeline</a>
+  <a class="lvl-3" href="#_codex">Using it with Codex</a>
+  <a class="lvl-2" href="#_3">Installation</a>
+  <a class="lvl-2" href="#_4">Providing sources</a>
+  <a class="lvl-3" href="#_5">Supported source formats</a>
+  <a class="lvl-2" href="#_6">Usage</a>
+  <a class="lvl-3" href="#preprocess">preprocess — PDF to markdown</a>
+  <a class="lvl-3" href="#manifest-manifest">manifest — build the source manifest</a>
+  <a class="lvl-3" href="#url-corpus">URL navigation and caching (catalog / select / cache)</a>
+  <a class="lvl-3" href="#assess-sources">assess-sources — source quality gate</a>
+  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — scheduled source freshness gate</a>
+  <a class="lvl-3" href="#verify-extraction">verify-extraction — extraction contract check</a>
+  <a class="lvl-3" href="#assemble">assemble — assemble + validate</a>
+  <a class="lvl-3" href="#validate-run">validate — validate an existing run directory</a>
+  <a class="lvl-3" href="#score-run">score — grade a completed run</a>
+  <a class="lvl-3" href="#diff-run">diff — compare two run versions</a>
+  <a class="lvl-3" href="#foundry-cli">foundry — project-local asset governance</a>
+  <a class="lvl-2" href="#_7">Output structure</a>
+  <a class="lvl-2" href="#_8">Validation rules summary</a>
+  <a class="lvl-2" href="#_9">Development</a>
+  <a class="lvl-3" href="#_10">Package structure</a>
+  <a class="lvl-2" href="#_11">Design documents</a>
+</nav>
+<main>
+  <div class="toplinks">English (current) · <a href="operator-manual.html">繁體中文</a></div>
+  <div class="toplinks"><a href="architecture-manual.en.html">Architecture Manual →</a></div>
+  <h1 id="loop-apidoc">loop-apidoc</h1>
+<blockquote>
+<p>Loop Engineering's <strong>source-grounded API documentation pipeline</strong></p>
+</blockquote>
+<p><em>繁體中文版見 <a href="../README.md">README.md</a>。</em></p>
+<p><code>loop-apidoc</code> is a repeatable CLI that turns API integration docs of varying format and completeness into consistent, traceable, standardized artifacts:</p>
+<ul>
+<li><strong>OpenAPI 3.1 YAML</strong> (<code>openapi.yaml</code>)</li>
+<li><strong>Traditional-Chinese Markdown integration guide</strong> (<code>api-guide.zh-TW.md</code>)</li>
+<li><strong>Offline manual review page</strong> (<code>review.html</code>)</li>
+<li><strong>Source provenance data</strong> (<code>provenance.json</code>)</li>
+<li><strong>Validation and gap report</strong> (<code>validation/report.{json,md}</code>)</li>
+</ul>
+<p>Core principle: <strong>the source documents are the only source of truth</strong>. Anything a source does not state is never inferred; when required information is missing, validation fails and lists the gaps explicitly rather than filling them with conventions.</p>
+<hr />
+<h2 id="_1">How it works</h2>
+<p>The extraction engine is <strong>the current coding agent itself</strong>. Inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows <code>skills/loop-apidoc/SKILL.md</code> to read the sources and extract via a <strong>read-only subagent fan-out</strong> (each subagent only reads files and searches, returning JSON without writing files); the orchestrating agent writes the results into <code>inventory.json</code> + <code>endpoints/*.json</code>, then calls the deterministic CLI <code>assemble</code> to run the back half of plan → generate → validate.</p>
+<p>The CLI itself does <strong>not</strong> create sessions, log in to private sites, or drive a browser — it only assembles and validates after the agent has written the extraction JSON.</p>
+<blockquote>
+<p>An earlier <code>run-agent</code> CLI mode that extracted via the <code>claude -p</code> subprocess was retired in 2026-06 (together with the NotebookLM extraction backend); agent-native is now the only extraction path.</p>
+</blockquote>
+<h3 id="_2">Full pipeline</h3>
+<pre><code>preprocess (optional) → URL navigation/caching (optional: catalog-url → select-url → cache-url-pages) → assess-sources quality gate (optional) → extraction (agent read-only subagent fan-out) → verify-extraction → manifest → normalization plan → generate (OpenAPI + Markdown) → validate → correction (agent-driven)
+</code></pre>
+<p>When validation fails, <code>assemble</code> reports the classified issues via <code>--json</code>; <strong>correction is agent-driven</strong>: guided by the report, the agent re-reads the relevant sources, overwrites the corresponding extraction JSON, and re-runs <code>assemble</code>, for up to 3 rounds. If it still fails after three rounds, or it hits a gap/conflict that cannot be fixed, it reports the gap/conflict instead of filling it in.</p>
+<h3 id="_codex">Using it with the OpenAI Codex CLI</h3>
+<p>The same skill can also run under Codex. Codex does not set <code>${CLAUDE_PLUGIN_ROOT}</code>, so install the CLI as a global command and mount the skill into Codex's skills directory:</p>
+<pre><code class="language-bash"># 1. Install the CLI as a global loop-apidoc command
+uv tool install --from /path/to/loop-apidoc loop-apidoc
+
+# 2. Mount the skill into Codex (a symlink is enough; edits sync automatically)
+ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc
+</code></pre>
+<p>SKILL.md auto-detects the environment via the <code>&lt;APIDOC&gt;</code> placeholder: with <code>$CLAUDE_PLUGIN_ROOT</code> it uses the plugin's bundled CLI, otherwise it falls back to the global <code>loop-apidoc</code>. The rest of the flow (extraction → <code>assemble</code> → validate → correct) is identical on both sides.</p>
+<hr />
+<h2 id="_3">Installation</h2>
+<p>Requirements: Python <code>&gt;=3.11</code>, with environments managed by <a href="https://docs.astral.sh/uv/"><code>uv</code></a>.</p>
+<pre><code class="language-bash"># Install dependencies
+uv sync
+
+# Confirm the CLI runs
+uv run loop-apidoc --help
+</code></pre>
+<p>Once installed as a Claude Code plugin, it is usable inside a Claude session with the CLI bundled in the plugin; for Codex, see "Using it with the OpenAI Codex CLI" above.</p>
+<hr />
+<h2 id="_4">Providing sources</h2>
+<p>Before the agent extracts, the operator only needs to have the sources ready:</p>
+<ol>
+<li>Put local source files into a source directory (referred to as <code>&lt;SOURCES&gt;</code>).</li>
+<li>Pass public URLs directly with <code>--url</code>; the agent fetches them as text.</li>
+<li>For table-heavy or large PDFs, first convert them to high-fidelity markdown with <code>preprocess</code> (see below), then point the extraction at the output directory.</li>
+</ol>
+<p>No external Notebook to create, no browser login needed — source reading is done by the current agent within the session.</p>
+<h3 id="_5">Supported source formats</h3>
+<p>PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.</p>
+<hr />
+<h2 id="_6">Usage</h2>
+<p>The CLI exposes eighteen top-level commands plus the <code>foundry</code> sub-group (nineteen in total): source processing (<code>preprocess</code>, <code>manifest</code>, <code>snapshot-openapi-url</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), the scheduled source freshness gate (<code>record-fingerprint</code>, <code>check-freshness</code>, <code>check-freshness-batch</code>), run processing (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>), and <code>foundry</code> asset governance. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
+<h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (optional)</h3>
+<pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
+</code></pre>
+<p>Uses pymupdf4llm to convert each PDF under <code>--sources</code> into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
+<h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
+<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources [--url &lt;URL&gt; ...] [--output manifest.json]
+</code></pre>
+<p>Scans local sources, recording relative path, format, size, SHA-256, scan time, whether supported, duplicate determination, and processing status; public URLs additionally record fetch time, HTTP status, and content hash. When <code>--output</code> is omitted, output goes to stdout.</p>
+<h3 id="url-corpus">URL navigation and caching — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
+<pre><code class="language-bash"># Download the entry page only once and build a sidebar navigation index (does not auto-fetch child pages)
+uv run loop-apidoc catalog-url --url &lt;entry page URL&gt; --output ./work/url_sources/catalog.json
+
+# Select catalog nodes by explicit scope (downloads no URLs)
+uv run loop-apidoc select-url --catalog ./work/url_sources/catalog.json --branch &lt;branch&gt; --term &lt;keyword&gt; --output ./work/url_sources/selection.json
+
+# Cache all catalog pages and build local body/link/entity indexes (no model involved)
+uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --output ./work/url_corpus
+
+# Emit candidate page cards from body links and shared entities; the model only reads a candidate's body when needed
+uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;page URL&gt; --output ./work/candidates.json
+</code></pre>
+<p>A token-efficient web-doc reading flow: <code>catalog.json</code> is the complete navigation coverage universe; <code>corpus.json</code> embeds no body text, only pointing at the local <code>raw/</code> and <code>body/</code> files. When the catalog is empty or the document is a single page, use <code>cache-url-entry --url ... --output ...</code> to cache the entry page directly; already-downloaded HTML can be converted to supported Markdown with <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code>, which also writes a <code>.source.json</code> provenance sidecar carrying the original URL and SHA-256.</p>
+<h3 id="snapshot-openapi-url"><code>snapshot-openapi-url</code> — pin a directly-linked OpenAPI source</h3>
+<pre><code class="language-bash">uv run loop-apidoc snapshot-openapi-url --url &lt;OpenAPI JSON/YAML URL&gt; \\
+  --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
+</code></pre>
+<p>For cases where a URL already returns Swagger 2.0 or OpenAPI 3.x JSON/YAML directly. The command validates the spec declaration, pins the raw bytes as a local source, outputs the SHA-256, and writes a coverage ledger with <code>method: direct</code>. An existing snapshot and coverage are never overwritten; subsequent manifest and extraction must use the local snapshot.</p>
+<h3 id="assess-sources"><code>assess-sources</code> — pre-extraction source quality gate</h3>
+<pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
+  --observations &lt;observations.json&gt; --source-set &lt;name&gt; --output ./work/source-quality [--base-manifest &lt;old manifest&gt;]
+</code></pre>
+<p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
+<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> — scheduled source freshness gate</h3>
+<pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
+
+uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json \
+  [--sources ./sources] [--json] [--report-dir ./work/freshness]
+</code></pre>
+<p>Once a run has completed or been approved as a Foundry asset, first use <code>record-fingerprint</code> to write a baseline
+<code>source-fingerprint.json</code> from that run directory (SHA-256 of local sources, plus one version-signal fetch per URL source); an existing file is not overwritten unless <code>--force</code> is given. Afterwards, running <code>check-freshness</code> on a schedule (e.g. cron)
+cheaply determines whether the sources are worth re-extracting, without re-parsing the whole document or calling any model: OpenAPI URL sources compare
+<code>info.version</code> (an identical version is treated as unchanged even if the bytes differ), HTML compares ETag/Last-Modified first then falls back to body
+SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged (re-parse can be skipped), <code>1</code> = changed (re-run extraction),
+<code>2</code> = inconclusive (a source could not be fetched or read). With <code>--report-dir</code> it additionally writes
+<code>freshness-report.{json,md}</code>; without it, no file is written.</p>
+<p>To sweep many docsets at once, use <code>check-freshness-batch</code> instead:</p>
+<pre><code class="language-bash">uv run loop-apidoc check-freshness-batch --watchlist ./work/freshness-watchlist.json \
+  [--json] [--report-dir ./work/freshness]
+</code></pre>
+<p><code>freshness-watchlist.json</code> lists multiple watch items, each with a <code>label</code> (identifying name),
+<code>fingerprint</code> (the <code>source-fingerprint.json</code> path relative to the watchlist file's directory), an optional
+<code>sources</code> (local source root, likewise relative to the watchlist file), and an optional <code>run_dir</code> (display only). The command runs the same comparison as
+<code>check-freshness</code> for every item; a fetch or read failure on a single item only marks that item as <code>error</code> and records the reason, without aborting the whole batch; but a malformed watchlist file (invalid JSON or off-schema) fails outright. Aggregate exit codes:
+<code>0</code> = all unchanged, <code>1</code> = any changed, <code>2</code> = any inconclusive or errored. With <code>--report-dir</code> it additionally writes
+<code>freshness-scan.{json,md}</code>; without it, no file is written.</p>
+<h3 id="verify-extraction"><code>verify-extraction</code> — check that the extraction JSON meets the contract</h3>
+<pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
+</code></pre>
+<p>Applies to the agent-produced extraction directory the same input gate as <code>assemble</code> (schema, source citations, cross-file invariants), but <strong>writes nothing and creates no run directory</strong>, making it a fast way to validate the extraction JSON before assembly.</p>
+<h3 id="assemble"><code>assemble</code> — assemble + validate from the agent-produced extraction JSON</h3>
+<pre><code class="language-bash">uv run loop-apidoc assemble \
+  --sources ./sources \
+  --extraction ./work \
+  --output ./output \
+  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--json] [--score]
+</code></pre>
+<p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally <code>integration.json</code>) into outputs: manifest → plan → generate → validate. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, a reject verdict aborts before the run-dir is created, while a passing report is retained in the run-dir; <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, and <code>report</code> to stdout for the agent to parse and drive the correction loop. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
+<h3 id="validate-run"><code>validate</code> — validate an existing run directory</h3>
+<pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
+</code></pre>
+<p>Runs the four validation categories — structure / completeness / consistency / no-speculation — over the run directory's outputs, and writes the report into <code>&lt;run-dir&gt;/validation/</code>. Returns <code>0</code> on pass, <code>1</code> when there are ERROR-severity issues.</p>
+<h3 id="score-run"><code>score</code> — grade a completed run directory</h3>
+<pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
+</code></pre>
+<p>Performs a deterministic documentation-quality score on a completed run directory, computing 0–100 from five weighted categories (<code>openapi_validity</code> / <code>completeness</code> / <code>consistency</code> / <code>source_grounding</code> / <code>reviewability</code>), written to <code>&lt;run-id&gt;/score/score.{json,md}</code>. <code>--profile</code> sets the score threshold (<code>ci</code> = 85, <code>review</code> = 70), which <code>--min-score</code> can override. Exit codes: <code>0</code> = meets threshold, <code>1</code> = below, <code>2</code> = input file missing or malformed. <code>assemble --score</code> produces the same report as a side effect, but <strong>does not affect</strong> assemble's exit code (still decided by validation).</p>
+<h3 id="diff-run"><code>diff</code> — compare the version difference between two runs</h3>
+<pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
+</code></pre>
+<p>Compares two completed run directories, classifying differences by downstream impact into <code>breaking</code> / <code>additive</code> / <code>changed</code> / <code>source_only</code>. By default it writes to <code>&lt;new-run&gt;/diff/report.{json,md}</code>; <code>--output</code> can target another directory. The comparison scope covers <code>openapi.yaml</code>, <code>integration-contract.json</code>, <code>provenance.json</code>, <code>validation/report.json</code>, and <code>manifest.json</code>; the first version does not compare the Markdown guide or generated examples. Exit codes: <code>0</code> = complete, <code>2</code> = input run-dir missing files or malformed.</p>
+<h3 id="foundry-cli"><code>foundry</code> — project-local asset governance for an API project</h3>
+<pre><code class="language-bash">uv run loop-apidoc foundry [init|import|approve|list|current] --help
+</code></pre>
+<p>Manages the project-local <code>.foundry/api/</code> asset layer: import a completed run as a docset candidate (<code>import</code>), approve it into a versioned, self-contained official asset (<code>approve</code>, with the prior version auto-retired), and use a deterministic <code>current</code> pointer so downstream always uses the latest approved version (<code>current</code> / <code>list</code>).</p>
+<hr />
+<h2 id="_7">Output structure</h2>
+<p>Each run uses its own run directory:</p>
+<pre><code class="language-text">output/
+└── &lt;run-id&gt;/                       # run-id format: %Y%m%dT%H%M%S.%fZ (includes microseconds to avoid same-second collisions)
+    ├── manifest.json               # source manifest
+    ├── extraction/                 # extraction audit trail (not re-runnable raw input)
+    │   ├── queries.jsonl           # per-round query log
+    │   └── answers/                # per-query responses &lt;query_id&gt;.txt
+    ├── plan/
+    │   └── normalization-plan.json      # machine-readable normalization plan
+    ├── openapi.yaml                # OpenAPI 3.1
+    ├── api-guide.zh-TW.md          # Traditional-Chinese integration guide
+    ├── review.html                 # manual review page for generated artifacts (offline HTML)
+    ├── provenance.json             # source traceability for each output item
+    ├── integration-contract.json   # signature/encryption integration contract (when the source provides it)
+    ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
+    ├── handoff/                    # developer handoff aids (derived artifacts, not the contract source)
+    │   ├── integration-tasks.md    # implementation order / execution config / blocker checklist
+    │   ├── postman_collection.json # Postman v2.1 request-shape collection (importable)
+    │   └── sdk-hints.json          # concise SDK/client generation hints (does not duplicate the schema)
+    ├── preparation-report.json     # pre-generation readiness assessment (produced by assemble)
+    ├── preparation-report.md
+    ├── validation/
+    │   ├── report.json
+    │   └── report.md
+    ├── source-quality/             # source quality audit retained when --source-quality is passed
+    │   ├── source-quality-report.json
+    │   ├── source-quality-report.zh-TW.md
+    │   ├── source-diff.json
+    │   └── source-diff.md
+    ├── score/                      # documentation quality score (assemble --score or loop-apidoc score)
+    │   ├── score.json
+    │   └── score.md
+    └── diff/                       # version difference when compared against another run (loop-apidoc diff)
+        ├── report.json
+        └── report.md
+</code></pre>
+<blockquote>
+<p>Note: the agent-produced extraction input (<code>inventory.json</code> + <code>endpoints/*.json</code> + optional <code>integration.json</code>) lives in the working directory passed to <code>--extraction</code>, <strong>not</strong> in the run-dir; the run-dir's <code>extraction/</code> holds only the audit trail.</p>
+</blockquote>
+<p>Only content that both exists in the plan and is source-grounded makes it into the OpenAPI and Markdown. OpenAPI fields that are required but missing from the source are filled with a minimal legal placeholder and marked with <code>x-loop-status: missing-source</code> plus a provenance gap record; if that gap affects integrability, completeness validation still fails. When the source provides an error-code lookup table, <code>openapi.yaml</code> preserves the source-grounded error-code→meaning mapping losslessly via the <code>x-loop-error-code-map</code> extension field (since 0.9.2).</p>
+<hr />
+<h2 id="_8">Validation rules summary</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structure</strong></td>
+<td>OpenAPI 3.1 validity; every endpoint must have a method, a path, and at least one response</td>
+</tr>
+<tr>
+<td><strong>Completeness</strong></td>
+<td>Sources marked <code>unverified</code>, missing required fields, and manifest coverage gaps (unreadable sources, etc.) fail validation</td>
+</tr>
+<tr>
+<td><strong>Consistency</strong></td>
+<td>The endpoint set and security names must agree across OpenAPI, Markdown, and provenance</td>
+</tr>
+<tr>
+<td><strong>No speculation</strong></td>
+<td>Every output item must map to a provenance source; content with no source support is a violation</td>
+</tr>
+</tbody>
+</table>
+<p>Validation classifies issues: <code>OPENAPI_INVALID</code> / <code>OUTPUT_MISMATCH</code> → fixable by regeneration; <code>REQUIRED_INFO_MISSING</code> → the agent re-reads the relevant sources to fill the gap; <code>SOURCE_UNVERIFIED</code> / <code>SOURCE_CONFLICT</code> / <code>UNSUPPORTED_ASSERTION</code> → unfixable (fail-closed, reported as a gap/conflict). Correction is agent-driven based on the <code>assemble --json</code> report (re-read sources, overwrite the extraction JSON, then re-run) rather than a loop built into the CLI.</p>
+<hr />
+<h2 id="_9">Development</h2>
+<pre><code class="language-bash"># Run tests
+uv run pytest
+
+# With coverage
+uv run pytest --cov=loop_apidoc
+
+# Lint
+uv run ruff check .
+</code></pre>
+<h3 id="_10">Package structure</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>loop_apidoc/manifest/</code></td>
+<td>source scanning and manifest building</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/agentcli/</code></td>
+<td><code>assemble.py</code> (assemble the agent-written extraction JSON → plan→generate→validate), <code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code> (extraction input contract checks, i.e. <code>verify-extraction</code>), <code>extraction.py</code> (convert <code>inventory.json</code> into per-stage plan answers), <code>preprocess.py</code> (PDF→md preprocessing, pymupdf4llm)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/extraction/</code></td>
+<td>models and utilities shared by the agent extraction (models, stages, questions, store, jsonblock)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/plan/</code></td>
+<td>normalization plan construction and source-match classification</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/generate/</code></td>
+<td>OpenAPI / Markdown / review.html / provenance / examples / handoff generation (one of the file-I/O exits)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/validate/</code></td>
+<td>structure / completeness / consistency / no-speculation validation and reporting</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/run/</code></td>
+<td>run-id generation, result/status models, writing the plan into the run directory</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/diff/</code></td>
+<td>run-to-run version diff: read the artifacts, classify differences (<code>breaking</code> / <code>additive</code> / <code>changed</code> / <code>source_only</code>), write <code>diff/report.{json,md}</code></td>
+</tr>
+<tr>
+<td><code>loop_apidoc/preparation/</code></td>
+<td>pre-generation readiness assessment; inside <code>assemble</code>, grades manifest / inventory / endpoints / plan into <code>preparation-report.{json,md}</code> (one of the file-I/O exits)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/score/</code></td>
+<td>deterministic documentation-quality score for a completed run-dir, computing 0–100 from five weighted categories, output to <code>score/score.{json,md}</code> (one of the file-I/O exits)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/source_quality/</code></td>
+<td>pre-extraction source quality assessment and source version-diff report (<code>assess-sources</code>); a passing report can be retained with the run-dir for audit</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/freshness/</code></td>
+<td>scheduled source freshness gate (<code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code>): baseline fingerprint writing and comparison, exit codes 0/1/2 to decide whether re-extraction is needed, optional <code>freshness-report.{json,md}</code>; <code>check-freshness-batch</code> compares each watchlist item and aggregates into <code>freshness-scan.{json,md}</code> (one of the file-I/O exits)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/url_catalog.py</code> / <code>url_corpus.py</code></td>
+<td>bounded URL navigation index, page caching, and related candidates (<code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>cache-url-entry</code> / <code>normalize-html-snapshot</code> / <code>related-url-pages</code>), letting the agent read web docs from local evidence</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/foundry/</code></td>
+<td>project-local <code>.foundry/api/</code> asset governance: docsets, candidate import and asset approval, maintaining the <code>current</code> pointer</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_11">Design documents</h2>
+<ul>
+<li>Architecture overview and data flow (with diagrams): <a href="ARCHITECTURE.md"><code>docs/ARCHITECTURE.md</code></a></li>
+<li>Contributing guide: <a href="../CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a></li>
+<li>System design spec: <a href="superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md"><code>docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md</code></a></li>
+<li>Per-stage implementation plans: <code>docs/superpowers/plans/</code></li>
+</ul>
+  <div class="footer">Generated from the project docs · loop-apidoc · source-grounded API documentation pipeline</div>
+</main>
+</div>
+
+</body>
+</html>

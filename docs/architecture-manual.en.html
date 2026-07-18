@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>架構手冊 · loop-apidoc</title>
-<meta name="description" content="loop-apidoc API文件自動化管線架構與模組設計手冊">
+<title>Architecture Manual · loop-apidoc</title>
+<meta name="description" content="Architecture and module design manual for the loop-apidoc API documentation automation pipeline">
 <style>
   :root {
     --bg-base: #f8fafc;
@@ -582,13 +582,19 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     grid-template-columns: 1fr;
   }
 }
+
+.lang-switch {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
 </style>
 <body>
 <div class="layout">
-  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">繁體中文（目前） · <a href="architecture-manual.en.html">English</a></div>
+  <div class="lang-switch">English (current) · <a href="architecture-manual.html">繁體中文</a></div>
   <header class="top-bar">
-    <h1>loop-apidoc 架構說明手冊</h1>
-    <a href="operator-manual.html" class="back-link">← 操作者手冊</a>
+    <h1>loop-apidoc Architecture Manual</h1>
+    <a href="operator-manual.en.html" class="back-link">← Operator Manual</a>
   </header>
 
   <div class="dashboard">
@@ -605,7 +611,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Prep</div>
-            <div class="step-card-title">提供來源與前處理</div>
+            <div class="step-card-title">Provide Sources &amp; Preprocess</div>
           </div>
         </div>
 
@@ -618,7 +624,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 01</div>
-            <div class="step-card-title">資料擷取 (Extract)</div>
+            <div class="step-card-title">Extraction</div>
           </div>
         </div>
 
@@ -631,7 +637,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 02</div>
-            <div class="step-card-title">來源掃描 (Manifest)</div>
+            <div class="step-card-title">Source Scan (Manifest)</div>
           </div>
         </div>
 
@@ -644,7 +650,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 03</div>
-            <div class="step-card-title">規格化計畫 (Plan)</div>
+            <div class="step-card-title">Normalization Plan</div>
           </div>
         </div>
 
@@ -657,7 +663,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 04</div>
-            <div class="step-card-title">生成產物 (Generate)</div>
+            <div class="step-card-title">Generate Artifacts</div>
           </div>
         </div>
 
@@ -670,7 +676,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 05</div>
-            <div class="step-card-title">產物驗證 (Validate)</div>
+            <div class="step-card-title">Validate Artifacts</div>
           </div>
         </div>
 
@@ -683,7 +689,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </div>
           <div class="step-card-content">
             <div class="step-card-num">Step 06</div>
-            <div class="step-card-title">修正迴圈 (Loop)</div>
+            <div class="step-card-title">Correction Loop</div>
           </div>
         </div>
       </div>
@@ -692,8 +698,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     <!-- Right Detail Panel -->
     <div class="detail-panel">
       <div class="tab-header">
-        <div class="tab-btn active" id="tab-overview">詳細說明</div>
-        <div class="tab-btn" id="tab-technical">系統對照</div>
+        <div class="tab-btn active" id="tab-overview">Details</div>
+        <div class="tab-btn" id="tab-technical">System Mapping</div>
       </div>
       <div id="detail-content-area">
         <!-- Rendered dynamically -->
@@ -703,7 +709,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
   <!-- Bottom Section: Package Boundaries -->
   <div class="panel-bottom">
-    <h2>套件邊界與模組架構</h2>
+    <h2>Package Boundaries &amp; Module Architecture</h2>
     <div class="architecture-map" aria-label="loop-apidoc module architecture map">
       <svg class="architecture-connectors" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
         <path d="M 235 70 C 300 70, 300 80, 365 80" />
@@ -718,7 +724,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer 入口，暴露來源、URL、品質評估與組裝命令，以及 foundry 子群組。</div>
+          <div class="module-role">Typer entry point exposing the source, URL, quality-assessment and assembly commands, plus the foundry sub-group.</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
@@ -743,7 +749,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Controller</div>
         <button type="button" class="module-card active" data-module="agentcli">
           <div class="module-name">agentcli/ <span class="pill agent">Controller</span></div>
-          <div class="module-role">組裝 agent 擷取 JSON，串接後段 deterministic pipeline。</div>
+          <div class="module-role">Assembles the agent-extracted JSON and wires it into the deterministic back-half pipeline.</div>
         </button>
       </div>
 
@@ -752,47 +758,47 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="module-group">
           <button type="button" class="module-card" data-module="manifest">
             <div class="module-name">manifest/ <span class="pill io">Scan</span></div>
-            <div class="module-role">掃描來源、URL 與雜湊，建立 provenance 基礎。</div>
+            <div class="module-role">Scans sources, URLs and hashes to establish the provenance foundation.</div>
           </button>
           <button type="button" class="module-card" data-module="extraction">
             <div class="module-name">extraction/ <span class="pill agent">Data</span></div>
-            <div class="module-role">共用擷取 models、stage 與問題結構。</div>
+            <div class="module-role">Shared extraction models, stages and question structures.</div>
           </button>
           <button type="button" class="module-card" data-module="plan">
             <div class="module-name">plan/ <span class="pill pure">Pure</span></div>
-            <div class="module-role">把擷取結果規格化為 normalization plan。</div>
+            <div class="module-role">Normalizes the extraction results into a normalization plan.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="generate">
             <div class="module-name">generate/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">輸出 OpenAPI、Markdown 與 provenance。</div>
+            <div class="module-role">Emits OpenAPI, Markdown and provenance.</div>
           </button>
           <button type="button" class="module-card" data-module="validate">
             <div class="module-name">validate/ <span class="pill pure">Pure</span></div>
-            <div class="module-role">檢查結構、完整性、一致性與禁止推測。</div>
+            <div class="module-role">Checks structure, completeness, consistency and no-speculation.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="run">
             <div class="module-name">run/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">管理 run-id 並將計畫與產物落到 run-dir。</div>
+            <div class="module-role">Manages the run-id and persists the plan and artifacts into the run-dir.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="diff">
             <div class="module-name">diff/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">比較兩個 run-dir，依 impact 分類並輸出差異報告。</div>
+            <div class="module-role">Compares two run-dirs, classifies by impact and writes a diff report.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="preparation">
             <div class="module-name">preparation/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">產生前就緒度評估，於 assemble 內把 manifest 與 plan 評成 preparation-report。</div>
+            <div class="module-role">Pre-generation readiness assessment; inside assemble it grades the manifest and plan into a preparation-report.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="score">
             <div class="module-name">score/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">對完成 run-dir 做確定性文件品質評分，輸出 score/score.{json,md}。</div>
+            <div class="module-role">Deterministic documentation-quality score for a completed run-dir, writing score/score.{json,md}.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="source-quality">
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">擷取前來源品質評估與差異報告；通過報告可隨 run-dir 保存。</div>
+            <div class="module-role">Pre-extraction source-quality assessment and diff report; a passing report can be retained alongside the run-dir.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">API 專案本地資產治理，管理 docset、candidate 與 asset。</div>
+            <div class="module-role">Project-local asset governance for the API, managing docsets, candidates and assets.</div>
           </button>
         </div>
       </div>
@@ -802,13 +808,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露十四個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入；其餘 domain 邏輯盡量保持純函式，以簡化單元測試。
+      <code>cli.py</code> exposes fourteen top-level operations: source handling (<code>preprocess</code>, <code>manifest</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), run handling (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>) and the <code>foundry</code> sub-group.
+      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, the URL corpus cache and <code>foundry/</code> are responsible for writing; the remaining domain logic stays as pure functions wherever possible to keep unit testing simple.
     </div>
   </div>
 
   <footer class="footer">
-    由專案文件產生 · loop-apidoc · 來源依據式 API 文件 pipeline
+    Generated from the project documentation · loop-apidoc · source-grounded API documentation pipeline
   </footer>
 </div>
 
@@ -816,80 +822,80 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   const dataset = {
     prep: {
       num: "PREP",
-      title: "提供來源與前處理",
+      title: "Provide Sources & Preprocess",
       pillClass: "prep",
       pillLabel: "Manual / Optional",
-      desc: "啟動擷取前，操作者把來源備妥：本機檔案放進一個來源目錄（<code>&lt;SOURCES&gt;</code>），公開 URL 以 <code>--url</code> 傳入。表格密集或大型 PDF 建議先用 <code>preprocess</code> 轉成高保真 markdown（pymupdf4llm 保留表格與標題結構），避免原始 PDF 讀取扭曲表格。無需建立任何外部 Notebook 或瀏覽器登入。",
-      details: "<p>第一版支援的來源格式：PDF、Markdown、Word、OpenAPI JSON/YAML 及公開網頁 URL。</p><p><code>preprocess</code> 是<b>可選</b>的本機 I/O 步驟；非 PDF 文字來源會原樣複製到輸出目錄，之後把擷取 subagent 指向轉出的 <code>sources_md</code> 目錄即可。</p>",
+      desc: "Before extraction starts, the operator prepares the sources: local files go into a source directory (<code>&lt;SOURCES&gt;</code>), and public URLs are passed with <code>--url</code>. For table-heavy or large PDFs, it is best to first run <code>preprocess</code> to convert them into high-fidelity markdown (pymupdf4llm preserves tables and heading structure), avoiding the table distortion of raw PDF reads. No external notebook or browser login is required.",
+      details: "<p>Source formats supported in the first release: PDF, Markdown, Word, OpenAPI JSON/YAML, and public web-page URLs.</p><p><code>preprocess</code> is an <b>optional</b> local I/O step; non-PDF text sources are copied verbatim into the output directory, after which you simply point the extraction subagents at the converted <code>sources_md</code> directory.</p>",
       seam: "prepare_markdown(sources_dir, dest_dir) / pdf_to_markdown(pdf_path)",
-      inputs: "API 原始文件來源 (本機目錄), 公開 URL",
-      outputs: "&lt;SOURCES&gt;, &lt;WORK&gt;/sources_md (可選)"
+      inputs: "Raw API documentation sources (local directory), public URLs",
+      outputs: "&lt;SOURCES&gt;, &lt;WORK&gt;/sources_md (optional)"
     },
     extract: {
       num: "STEP 01",
-      title: "資料擷取 (Extraction)",
+      title: "Extraction",
       pillClass: "agent",
       pillLabel: "Agent",
-      desc: "擷取引擎是<b>當前的 coding agent 自己</b>（Claude Code plugin 或 OpenAI Codex CLI）。agent 依 <code>skills/loop-apidoc/SKILL.md</code>，以<b>唯讀 subagent fan-out</b> 分段擷取：每個 subagent 只讀檔與搜尋、回傳 JSON（不寫檔、不連網），由主 agent 把回傳結果寫成 <code>inventory.json</code> 與逐 endpoint 的 <code>endpoints/*.json</code>。",
-      details: "<h4>10 大擷取分段主題</h4><ul><li>01 來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 rate limit / timeout / retry / idempotency / webhook</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>分段避免單一回答承載全部內容而漏失欄位；唯一 grounding 規則：來源未述者一律 null 並記入 <code>missing</code>，不推測、不套 REST/OAuth 慣例。</p>",
-      seam: "skills/loop-apidoc/SKILL.md（agent 寫出 inventory.json + endpoints/*.json）",
-      inputs: "&lt;SOURCES&gt; 或 &lt;WORK&gt;/sources_md, 目標 JSON schema",
+      desc: "The extraction engine is <b>the current coding agent itself</b> (the Claude Code plugin or the OpenAI Codex CLI). Following <code>skills/loop-apidoc/SKILL.md</code>, the agent extracts in segments via a <b>read-only subagent fan-out</b>: each subagent only reads files and searches, returning JSON (no file writes, no network), and the orchestrating agent writes those results into <code>inventory.json</code> and per-endpoint <code>endpoints/*.json</code>.",
+      details: "<h4>10 extraction segment topics</h4><ul><li>01 Source inventory</li><li>02 API system overview and terminology</li><li>03 Environments / base URL / versions</li><li>04 Authentication / authorization / signing</li><li>05 Endpoint list</li><li>06 Per-endpoint details (method/path/params/req/resp/examples)</li><li>07 Shared schemas / enums / data constraints</li><li>08 Error codes and failure behavior</li><li>09 Rate limit / timeout / retry / idempotency / webhook</li><li>10 Source conflicts, gaps, and items that cannot be confirmed</li></ul><p>Segmenting keeps a single answer from carrying everything and dropping fields; the sole grounding rule: anything a source does not state is left null and recorded in <code>missing</code> — never inferred, never filled with REST/OAuth conventions.</p>",
+      seam: "skills/loop-apidoc/SKILL.md (agent writes inventory.json + endpoints/*.json)",
+      inputs: "&lt;SOURCES&gt; or &lt;WORK&gt;/sources_md, target JSON schema",
       outputs: "inventory.json, endpoints/*.json"
     },
     scan: {
       num: "STEP 02",
-      title: "來源掃描 (Manifest)",
+      title: "Source Scan (Manifest)",
       pillClass: "io",
       pillLabel: "Local I/O",
-      desc: "<code>assemble</code> 內第一步：掃描指定之本機來源目錄與公開 URL，詳細記錄各檔案的相對路徑、格式、大小、SHA-256 雜湊值與掃描時間。生成一份標準的來源清單檔案，作為後續所有 API 輸出項目追溯來源 (Provenance) 的依據。",
-      details: "<p>在此階段，系統會過濾出不受支援的格式，自動偵測重複檔案，若發現檔案不可讀即觸發警告。此過程為純本機磁碟讀取。亦可用 <code>loop-apidoc manifest</code> 獨立執行。</p>",
+      desc: "The first step inside <code>assemble</code>: scan the specified local source directory and public URLs, recording each file's relative path, format, size, SHA-256 hash and scan time in detail. It produces a standardized source manifest that serves as the provenance basis for tracing every subsequent API output item.",
+      details: "<p>In this stage the system filters out unsupported formats, automatically detects duplicate files, and raises a warning if a file is found to be unreadable. The process is a pure local disk read. It can also be run standalone with <code>loop-apidoc manifest</code>.</p>",
       seam: "build_manifest(sources_root, urls, generated_at)",
-      inputs: "--sources <目錄路徑>, --url <URL清單>",
+      inputs: "--sources <directory path>, --url <URL list>",
       outputs: "manifest.json"
     },
     plan: {
       num: "STEP 03",
-      title: "規格化計畫 (Build Plan)",
+      title: "Normalization Plan (Build Plan)",
       pillClass: "pure",
       pillLabel: "Pure Logic",
-      desc: "先以 <code>inventory_to_stage_answers</code> 把 <code>inventory.json</code> 對映回各擷取 stage 的初始答案，再與 sources 的 <code>manifest.json</code> 雜湊交叉比對來源，將碎片化的資訊重構為單一結構的 <code>normalization-plan.json</code>。本階段屬於純函數轉譯邏輯，完全沒有檔案或網路 I/O，便於單元測試。",
-      details: "<p>規格化計畫中會詳細指出哪些 API 欄位來源充足，哪些必要欄位在來源中缺失（需以預設值占位）或來源衝突（列入需重新擷取的清單）。</p>",
+      desc: "First, <code>inventory_to_stage_answers</code> maps <code>inventory.json</code> back to the initial answers of each extraction stage; then, by cross-referencing sources against the <code>manifest.json</code> hashes, the fragmented information is restructured into a single, well-structured <code>normalization-plan.json</code>. This stage is pure functional transformation logic with no file or network I/O, which makes it easy to unit test.",
+      details: "<p>The normalization plan spells out which API fields have sufficient source coverage and which required fields are missing from the sources (needing a placeholder default) or conflict across sources (added to the list to be re-extracted).</p>",
       seam: "inventory_to_stage_answers(inventory) → build_normalization_plan(extraction, manifest)",
       inputs: "inventory.json & endpoints/*.json & manifest.json",
       outputs: "plan/normalization-plan.json"
     },
     generate: {
       num: "STEP 04",
-      title: "生成產物 (Generate)",
+      title: "Generate Artifacts",
       pillClass: "io",
       pillLabel: "File Output",
-      desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
-      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）；來源有錯誤碼對照時，以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照（0.9.2 起）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema／缺漏供人眼複核</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      desc: "Converts the normalization plan into the actual deliverable artifact files. This module and run are the only two exits with file-write (I/O) responsibility. If an OpenAPI-required field is missing from the sources, it is filled with a minimal legal placeholder value, and the custom field <code>x-loop-status: missing-source</code> is added automatically along with a corresponding log entry.",
+      details: "<p>Exported artifacts include:</p><ul><li><b>openapi.yaml</b>: a standard OpenAPI 3.1 spec file (including 3.1 structures such as webhooks); when the sources provide an error-code mapping, the <code>x-loop-error-code-map</code> extension losslessly preserves the source-grounded error-code → meaning mapping (since 0.9.2)</li><li><b>api-guide.zh-TW.md</b>: a Traditional-Chinese API integration guide</li><li><b>review.html</b>: a self-styled, offline-openable manual review page that gathers sources / endpoints / schemas / gaps for human cross-checking</li><li><b>provenance.json</b>: records the detailed source-tracing mapping for every OpenAPI and Markdown field</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json"
     },
     validate: {
       num: "STEP 05",
-      title: "產物驗證 (Validate)",
+      title: "Validate Artifacts",
       pillClass: "pure",
       pillLabel: "Pure Logic",
-      desc: "對生成的 OpenAPI/Markdown/Provenance 執行四類嚴格驗證檢查。特別是<b>「禁止推測」</b>：任何進入輸出的內容都必須對應到 <code>provenance.json</code> 的 target 上，交叉比對是否有來源依據，嚴格阻絕推測與幻覺。",
-      details: "<h4>四大驗證維度</h4><ul><li><b>結構驗證</b>：檢查 OpenAPI 規格合法性，端點必須包含 method、path 與至少一個 response</li><li><b>完整度驗證</b>：標記為 unverified 的來源、必要欄位缺失、不可讀來源皆會使驗證失敗</li><li><b>一致性驗證</b>：OpenAPI 與 Markdown / Provenance 的端點集合與 security 名稱必須完全一致</li><li><b>禁止推測驗證</b>：任何輸出項目必須對應 provenance 來源；無來源支持的內容視為違規</li></ul>",
+      desc: "Runs four categories of strict validation checks over the generated OpenAPI/Markdown/Provenance. In particular <b>“no speculation”</b>: anything entering the output must map to a target in <code>provenance.json</code> and be cross-checked for source grounding, strictly blocking speculation and hallucination.",
+      details: "<h4>Four validation dimensions</h4><ul><li><b>Structure validation</b>: checks OpenAPI spec legality; each endpoint must include a method, a path and at least one response</li><li><b>Completeness validation</b>: sources marked unverified, missing required fields, and unreadable sources all fail validation</li><li><b>Consistency validation</b>: the endpoint set and security names must match exactly across OpenAPI and Markdown / Provenance</li><li><b>No-speculation validation</b>: every output item must map to a provenance source; content with no source support is treated as a violation</li></ul>",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
       outputs: "validation/report.json, validation/report.md"
     },
     loop: {
       num: "STEP 06",
-      title: "修正迴圈 (Correction Loop)",
+      title: "Correction Loop",
       pillClass: "agent",
       pillLabel: "Agent-driven",
-      desc: "修正<b>由 agent 自行驅動</b>，CLI 內<b>沒有</b>確定性修正迴圈。<code>assemble</code> 以 <code>--json</code> 回報分類後的問題；agent 依報告回頭重讀相關來源、覆寫對應的 <code>inventory.json</code> 或 <code>endpoints/&lt;NN&gt;.json</code>，再重跑 <code>assemble</code>，最多 3 輪。",
-      details: "<h4>錯誤分類與修正策略</h4><ul><li><b>OPENAPI_INVALID / OUTPUT_MISMATCH</b>: 可由重新生成修正（agent 修好 JSON 後重跑）</li><li><b>REQUIRED_INFO_MISSING</b>: agent 鎖定受影響來源重讀並補齊</li><li><b>SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</b>: 無法修正 (UNFIXABLE, fail-closed)，以缺漏／衝突回報而不補寫</li></ul>",
-      seam: "run_assemble_pipeline(...) → --json report；agent 重讀來源、覆寫 JSON 後重跑",
-      inputs: "assemble 的 --json report (report.issues)",
-      outputs: "修正後重跑的產物，或最終缺漏／衝突報告"
+      desc: "Correction is <b>driven by the agent itself</b>; the CLI has <b>no</b> deterministic correction loop. <code>assemble</code> reports the classified issues via <code>--json</code>; guided by the report, the agent goes back to re-read the affected sources, overwrites the corresponding <code>inventory.json</code> or <code>endpoints/&lt;NN&gt;.json</code>, and re-runs <code>assemble</code>, for at most 3 rounds.",
+      details: "<h4>Error classification and correction strategy</h4><ul><li><b>OPENAPI_INVALID / OUTPUT_MISMATCH</b>: fixable by regeneration (the agent fixes the JSON and re-runs)</li><li><b>REQUIRED_INFO_MISSING</b>: the agent locks onto the affected source, re-reads it and fills the gap</li><li><b>SOURCE_UNVERIFIED / SOURCE_CONFLICT / UNSUPPORTED_ASSERTION</b>: not fixable (UNFIXABLE, fail-closed) — reported as gaps/conflicts rather than filled in</li></ul>",
+      seam: "run_assemble_pipeline(...) → --json report; agent re-reads sources, overwrites JSON, re-runs",
+      inputs: "assemble's --json report (report.issues)",
+      outputs: "Re-run artifacts after correction, or a final gaps/conflicts report"
     }
   };
 
@@ -898,7 +904,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 14 個頂層命令（加上 foundry 子群組共 15 個命令）：來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分與版本差異。",
+      description: "The Typer CLI entry point, publicly exposing 14 top-level commands (15 including the foundry sub-group): source / URL evidence, source quality, extraction verification, assemble, validate, score and version diff.",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
       outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
@@ -908,7 +914,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "agentcli/",
       badgeClass: "agent",
       badgeLabel: "Controller",
-      description: "後段組裝入口，讀取 agent 寫出的 inventory.json 與 endpoints/*.json，串接 manifest、plan、generate、validate，並以 --json 回報 ok、run_dir 與 report。",
+      description: "The back-half assembly entry point: it reads the agent-written inventory.json and endpoints/*.json, wires up manifest, plan, generate and validate, and reports ok, run_dir and report via --json.",
       seam: "run_assemble_pipeline(...)",
       inputs: "inventory.json, endpoints/*.json, sources root, urls",
       outputs: "run-dir plus JSON status report",
@@ -918,7 +924,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "manifest/",
       badgeClass: "io",
       badgeLabel: "Source Scan",
-      description: "掃描本機來源與公開 URL，記錄格式、大小、雜湊與掃描時間，作為後續 provenance 對齊基礎。",
+      description: "Scans local sources and public URLs, recording format, size, hash and scan time as the basis for later provenance alignment.",
       seam: "build_manifest(sources_root, urls, generated_at)",
       inputs: "sources root, URL list",
       outputs: "manifest.json data structure",
@@ -928,7 +934,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "extraction/",
       badgeClass: "agent",
       badgeLabel: "Agent Data",
-      description: "定義擷取階段、問題與共用資料模型，讓 agent-native 擷取結果可被 deterministic CLI 後段理解。",
+      description: "Defines the extraction stages, questions and shared data models so that agent-native extraction results can be understood by the deterministic CLI back-half.",
       seam: "inventory_to_stage_answers(inventory)",
       inputs: "inventory.json and endpoint extraction JSON",
       outputs: "stage-shaped answers for plan construction",
@@ -938,7 +944,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "plan/",
       badgeClass: "pure",
       badgeLabel: "Pure Logic",
-      description: "把碎片化擷取結果與 manifest 來源資訊重構成 normalization-plan.json 的結構化計畫。",
+      description: "Restructures the fragmented extraction results and manifest source information into the structured normalization-plan.json.",
       seam: "build_normalization_plan(extraction, manifest)",
       inputs: "stage answers, endpoints, manifest",
       outputs: "normalization plan data",
@@ -948,7 +954,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "generate/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "把 normalization plan 轉成實際交付產物，包含 OpenAPI、Markdown guide、人工核對頁與 provenance mapping。",
+      description: "Turns the normalization plan into the actual deliverable artifacts, including OpenAPI, the Markdown guide, the manual review page and the provenance mapping.",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization plan, manifest, run-dir path",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json",
@@ -958,7 +964,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "validate/",
       badgeClass: "pure",
       badgeLabel: "Pure Logic",
-      description: "驗證 OpenAPI、Markdown 與 provenance 的結構、完整度、一致性與禁止推測規則。",
+      description: "Validates the structure, completeness, consistency and no-speculation rules across OpenAPI, Markdown and provenance.",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "generated outputs, plan, manifest",
       outputs: "validation report data and report files through run-dir flow",
@@ -968,7 +974,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "run/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "管理 run-id 與 run-dir persistence，保存 normalization plan、產物與驗證報告。",
+      description: "Manages run-id and run-dir persistence, saving the normalization plan, artifacts and validation reports.",
       seam: "persist.py / runid.py",
       inputs: "run id, output root, generated artifacts, reports",
       outputs: "stable run directory layout",
@@ -978,7 +984,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "diff/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "比較兩個已完成 run-dir，依 downstream impact 把 OpenAPI、integration-contract、provenance、validation 與 manifest 的差異分類為 breaking／additive／changed／source_only。",
+      description: "Compares two completed run-dirs and, by downstream impact, classifies the differences in OpenAPI, integration-contract, provenance, validation and manifest into breaking / additive / changed / source_only.",
       seam: "load_run_artifacts(run_dir) / build_diff_report(base, head) / write_reports(report, out_dir)",
       inputs: "two completed run directories (base, head)",
       outputs: "diff/report.json, diff/report.md",
@@ -988,7 +994,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "preparation/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "產生前就緒度評估：在 assemble 內於 plan 之後、generate 之前，把 manifest、inventory、endpoints 與 plan 評成 phase／finding，狀態為 blocked／needs_attention／ready，並被 diff/ 讀回比較。",
+      description: "Pre-generation readiness assessment: inside assemble, after plan and before generate, it grades the manifest, inventory, endpoints and plan into phases / findings with status blocked / needs_attention / ready, and is read back by diff/ for comparison.",
       seam: "assess_preparation(manifest, inventory, endpoint_texts, plan) / write_reports(report, run_dir)",
       inputs: "manifest, inventory.json, endpoints/*.json, normalization plan",
       outputs: "preparation-report.json, preparation-report.md",
@@ -998,7 +1004,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "score/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "對已完成 run-dir 做確定性文件品質評分，五類加權（openapi_validity／completeness／consistency／source_grounding／reviewability）算出 0–100，支援 ci／review profile；不改變 validation pass/fail。",
+      description: "Deterministic documentation-quality score for a completed run-dir: five weighted categories (openapi_validity / completeness / consistency / source_grounding / reviewability) produce a 0–100 score, supporting the ci / review profiles; it does not change validation pass/fail.",
       seam: "load_score_inputs(run_dir) / evaluate_score(inputs, profile, min_score) / write_reports(report, score_dir)",
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",
@@ -1008,7 +1014,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_quality/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "在擷取前根據可追溯 observation 評估來源品質並輸出 pass/reject。若把 pass 報告目錄傳給 assemble 的 --source-quality，系統會將報告與來源差異保存在 run-dir；reject 則不建立 run-dir。",
+      description: "Assesses source quality before extraction based on traceable observations and emits pass/reject. If you pass the pass-report directory to assemble's --source-quality, the system retains the report and source diff in the run-dir; a reject builds no run-dir.",
       seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
       inputs: "manifest, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
@@ -1033,7 +1039,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         </div>
         <div class="detail-desc">${data.desc}</div>
 
-        <div class="section-label">核心機制說明</div>
+        <div class="section-label">Core Mechanism</div>
         <div class="info-card">
           ${data.details}
         </div>
@@ -1046,15 +1052,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <span class="pill ${data.pillClass}">${data.pillLabel}</span>
         </div>
 
-        <div class="section-label">Pipeline 對照參數</div>
+        <div class="section-label">Pipeline Mapping Parameters</div>
         <div class="specs-list">
-          <div class="specs-label">公開 Seam 介面</div>
+          <div class="specs-label">Public Seam Interface</div>
           <div class="specs-value"><code>${data.seam}</code></div>
 
-          <div class="specs-label">輸入參數 / 檔案</div>
+          <div class="specs-label">Input Parameters / Files</div>
           <div class="specs-value"><code>${data.inputs}</code></div>
 
-          <div class="specs-label">生成產物 / 輸出</div>
+          <div class="specs-label">Generated Artifacts / Outputs</div>
           <div class="specs-value" style="font-weight: 600;"><code>${data.outputs}</code></div>
         </div>
       `;
@@ -1104,11 +1110,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       </div>
       <div class="detail-desc">${data.description}</div>
       <div class="module-detail-grid">
-        <div class="module-detail-label">公開 seam</div>
+        <div class="module-detail-label">Public seam</div>
         <div class="module-detail-value"><code>${data.seam}</code></div>
-        <div class="module-detail-label">輸入</div>
+        <div class="module-detail-label">Inputs</div>
         <div class="module-detail-value">${data.inputs}</div>
-        <div class="module-detail-label">輸出</div>
+        <div class="module-detail-label">Outputs</div>
         <div class="module-detail-value">${data.outputs}</div>
         <div class="module-detail-label">Side effect</div>
         <div class="module-detail-value">${data.sideEffect}</div>

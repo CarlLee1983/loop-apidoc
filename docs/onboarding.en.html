@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant-TW">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>loop-apidoc 技術導覽 — 給新進工程同仁</title>
+<title>loop-apidoc Technical Tour — For New Engineering Teammates</title>
 <style>
   :root {
     --bg: #faf7ef;
@@ -491,23 +491,23 @@
 </style>
 </head>
 <body>
-<a class="skip-link" href="#main">跳到主要內容</a>
+<a class="skip-link" href="#main">Skip to main content</a>
 
-<nav class="page-nav" aria-label="頁面章節">
+<nav class="page-nav" aria-label="Page sections">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="回到頁首">
+    <a class="brand" href="#top" aria-label="Back to top">
       <span class="brand-mark">API</span>
-      <span>loop-apidoc 導覽</span>
+      <span>loop-apidoc Tour</span>
     </a>
     <div class="nav-links">
       <a href="#loops">Loops</a>
-      <a href="#architecture">架構</a>
-      <a href="#flow">流程</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#flow">Flow</a>
       <a href="#commands">CLI</a>
-      <a href="#artifacts">產物</a>
-      <a href="#validation">驗證</a>
-      <a href="#packages">分包</a>
-      <a href="#next">速查</a>
+      <a href="#artifacts">Artifacts</a>
+      <a href="#validation">Validation</a>
+      <a href="#packages">Packages</a>
+      <a href="#next">Quick ref</a>
     </div>
   </div>
 </nav>
@@ -515,39 +515,39 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero" id="top">
   <div class="wrap">
-    <p style="font-size:0.86rem; color:var(--ink-soft); margin:0 0 18px;">繁體中文(目前) · <a href="onboarding.en.html" style="color:var(--teal-deep); font-weight:600;">English</a></p>
+    <p style="font-size:0.86rem; color:var(--ink-soft); margin:0 0 18px;">English (current) · <a href="onboarding.html" style="color:var(--teal-deep); font-weight:600;">繁體中文</a></p>
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
-        <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
-        <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計,讀完就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
+        <span class="eyebrow">Technical Tour · For New Engineering Teammates</span>
+        <h1>loop-apidoc is a <span class="hl">source-grounded</span> API documentation pipeline</h1>
+        <p class="sub">It turns each vendor's messy integration docs (PDF / Markdown / HTML / OpenAPI JSON / public URLs) into a standardized, traceable set of artifacts. This page walks you through how the whole pipeline runs and why it's designed this way, so that by the end you're ready to move on to <code class="inline">ARCHITECTURE.md</code> and <code class="inline">SKILL.md</code>.</p>
 
         <div class="ladder">
-          <span class="other">introduction.html<br>非技術 · 賣點</span>
+          <span class="other">introduction.html<br>Non-technical · Value</span>
           <span class="sep">→</span>
-          <span class="here">你在這裡<br>新人 · 技術全貌</span>
+          <span class="here">You are here<br>New hire · Full technical picture</span>
           <span class="sep">→</span>
-          <span class="other">ARCHITECTURE.md<br>維護者 · seam 細節</span>
+          <span class="other">ARCHITECTURE.md<br>Maintainer · seam details</span>
         </div>
       </div>
 
-      <aside class="hero-summary" aria-label="閱讀重點">
-        <h2>讀完要掌握</h2>
+      <aside class="hero-summary" aria-label="Key takeaways">
+        <h2>What to take away</h2>
         <ul>
-          <li>來源文件是唯一真實來源,缺漏就標記缺漏。</li>
-          <li>agent 只負責擷取,CLI 後段負責可重現組裝。</li>
-          <li>每次 run 都留下驗證、評分、差異與交接證據。</li>
+          <li>The source documents are the only source of truth; whatever is missing gets flagged as missing.</li>
+          <li>The agent only extracts; the CLI back half handles reproducible assembly.</li>
+          <li>Every run leaves behind validation, scoring, diff, and handoff evidence.</li>
         </ul>
       </aside>
     </div>
 
     <div class="vocab">
-      <b class="h">開始前,先對齊幾個會反覆出現的詞</b>
+      <b class="h">Before we start, let's align on a few terms that come up repeatedly</b>
       <dl>
-        <dt>OpenAPI</dt><dd>描述 REST API 的業界標準格式(本專案產出 OpenAPI 3.1 YAML),工具鏈與工程師都能直接吃。</dd>
-        <dt>agent</dt><dd>當前的 coding agent(Claude Code 或 Codex)本身;在本專案裡,它就是擷取引擎。</dd>
-        <dt>subagent</dt><dd>由主 agent 派出的唯讀小幫手,只負責「讀來源、回傳 JSON」,不寫檔。</dd>
-        <dt>run-dir</dt><dd>一次執行產出的輸出目錄,裝著該次跑出來的所有產物(OpenAPI、指南、provenance、報告)。</dd>
+        <dt>OpenAPI</dt><dd>The industry-standard format for describing REST APIs (this project outputs OpenAPI 3.1 YAML); both toolchains and engineers can consume it directly.</dd>
+        <dt>agent</dt><dd>The current coding agent itself (Claude Code or Codex); in this project, it is the extraction engine.</dd>
+        <dt>subagent</dt><dd>A read-only helper dispatched by the main agent, responsible only for "read the sources, return JSON" — it never writes files.</dd>
+        <dt>run-dir</dt><dd>The output directory produced by a single run, holding all the artifacts from that run (OpenAPI, guide, provenance, reports).</dd>
       </dl>
     </div>
   </div>
@@ -559,13 +559,13 @@
 <section id="invariant">
   <div class="wrap">
     <div class="invariant">
-      <span class="tag">不可協商的核心不變式</span>
-      <h2>來源文件是唯一的真實來源。</h2>
-      <p>來源沒寫的東西,一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
-      <p>驗證遇到缺漏會大聲失敗(fail loudly),而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策,都是為了守住這條線。</p>
+      <span class="tag">The non-negotiable core invariant</span>
+      <h2>The source documents are the only source of truth.</h2>
+      <p>Anything a source does not state is left as <code>null</code> and recorded in <code>missing</code> — <b>never inferred, never filled in with REST/OAuth conventions</b>.</p>
+      <p>When validation hits something missing, it fails loudly rather than using guesses to make the docs "look complete." Every design decision in this project exists to hold this line.</p>
       <span class="pill">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
-        寧可標記「缺漏」,也不編造內容
+        Better to flag "missing" than to fabricate content
       </span>
     </div>
   </div>
@@ -575,14 +575,14 @@
 <section class="alt" id="loops">
   <div class="wrap">
     <span class="eyebrow">Loop Engineering</span>
-    <h2 class="section-title">四個閉環:來源、品質、版本、交接</h2>
-    <p class="section-lead">loop-apidoc 的工程重點是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手,而不只是產一份文件。</p>
+    <h2 class="section-title">Four closed loops: source, quality, version, handoff</h2>
+    <p class="section-lead">loop-apidoc's engineering focus is to make source, quality, version, and handoff all machine-reproducible, human-verifiable, and pickup-ready for downstream users — not just to produce a document.</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/loop-layers.jpg" alt="四個閉環" loading="lazy" />
+        <img src="assets/onboarding/loop-layers.jpg" alt="Four closed loops" loading="lazy" />
       </div>
-      <figcaption>四個 loop 是同一條 pipeline 的四層保護，而不是四條互不相干的流程。</figcaption>
+      <figcaption>The four loops are four protective layers of the same pipeline, not four unrelated processes.</figcaption>
     </figure>
 
     <div class="value-grid">
@@ -592,7 +592,7 @@
         </div>
         <h3>Source-grounded loop</h3>
         <span class="file">sources → extraction → provenance</span>
-        <p>所有輸出必須回到來源引用;來源沒寫的資訊留缺漏,不靠慣例補齊。</p>
+        <p>Every output must trace back to a source citation; information a source doesn't state is left as missing, not filled in by convention.</p>
       </div>
       <div class="value">
         <div class="badge tint-coral">
@@ -600,7 +600,7 @@
         </div>
         <h3>Quality loop</h3>
         <span class="file">preparation · validate · score</span>
-        <p>preparation 在生成前標出風險,驗證阻擋錯誤,score 把完成品轉成可比較的品質訊號。</p>
+        <p>preparation flags risks before generation, validation blocks errors, and score turns the finished product into a comparable quality signal.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
@@ -608,7 +608,7 @@
         </div>
         <h3>Version loop</h3>
         <span class="file">run-dir → diff/report</span>
-        <p>兩次 run 能依 breaking/additive/changed/source_only 分類,讓版本更新有 downstream impact 判讀。</p>
+        <p>Two runs can be classified into breaking/additive/changed/source_only, giving version updates a downstream-impact reading.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
@@ -616,7 +616,7 @@
         </div>
         <h3>Handoff loop</h3>
         <span class="file">integration-contract · examples · handoff/</span>
-        <p>OpenAPI 是契約,衍生的 Postman、SDK hints、任務清單與 examples 幫下一位工程師接手。</p>
+        <p>OpenAPI is the contract; the derived Postman collection, SDK hints, task list, and examples help the next engineer pick it up.</p>
       </div>
     </div>
   </div>
@@ -625,49 +625,49 @@
 <!-- ===================== ARCHITECTURE: agent-native ===================== -->
 <section id="architecture">
   <div class="wrap">
-    <span class="eyebrow">關鍵架構</span>
-    <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
-    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界,兩邊各自可獨立測試、獨立替換。</p>
+    <span class="eyebrow">Key architecture</span>
+    <h2 class="section-title">Two stages: agent extraction ‖ deterministic CLI back half</h2>
+    <p class="section-lead">This is the mental model you most need to build first. The whole pipeline is split in two, with two JSON files as the only boundary in between; each side can be tested and swapped independently.</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/two-stage-architecture.jpg" alt="兩段式架構" loading="lazy" />
+        <img src="assets/onboarding/two-stage-architecture.jpg" alt="Two-stage architecture" loading="lazy" />
       </div>
-      <figcaption>不確定性集中在擷取前段；確定性後段只讀 seam JSON 並產生可重跑產物。</figcaption>
+      <figcaption>The uncertainty is concentrated in the extraction front half; the deterministic back half only reads the seam JSON and produces re-runnable artifacts.</figcaption>
     </figure>
 
     <div class="arch">
       <div class="arch-col arch-agent">
-        <span class="lbl">前段 · 不確定性</span>
-        <h3>agent 擷取(Claude Code / Codex)</h3>
+        <span class="lbl">Front half · Uncertainty</span>
+        <h3>agent extraction (Claude Code / Codex)</h3>
         <ol>
-          <li><b>唯讀 subagent fan-out</b>:主 agent 派出多個 subagent,每個只讀檔 / 搜尋 / 抓 URL,回傳結構化 JSON,<b>從不寫檔</b>。</li>
-          <li>主 agent 把回傳的 JSON 彙整、<b>寫成交界檔</b>。</li>
-          <li>依 <code class="inline">SKILL.md</code> 分段擷取(見下方十段),確保只記錄來源真正寫的內容。</li>
+          <li><b>Read-only subagent fan-out</b>: the main agent dispatches multiple subagents, each of which only reads files / searches / fetches URLs and returns structured JSON, <b>never writing files</b>.</li>
+          <li>The main agent consolidates the returned JSON and <b>writes it into the seam files</b>.</li>
+          <li>Extraction is staged per <code class="inline">SKILL.md</code> (see the ten stages below), ensuring only what the sources actually state gets recorded.</li>
         </ol>
       </div>
 
       <div class="arch-seam">
         <div class="seam-box">
-          <span class="t">唯一交界 (seam)</span>
+          <span class="t">The only seam</span>
           <code>inventory.json</code>
           <code>endpoints/*.json</code>
         </div>
       </div>
 
       <div class="arch-col arch-cli">
-        <span class="lbl">後段 · 確定性純函式</span>
-        <h3>assemble(deterministic CLI)</h3>
+        <span class="lbl">Back half · Deterministic pure functions</span>
+        <h3>assemble (deterministic CLI)</h3>
         <ol>
-          <li><b>不擷取</b>,只組裝 agent 寫出的 JSON。</li>
-          <li>依序跑 <code class="inline">manifest → plan → preparation → generate → validate</code>。</li>
-          <li>以 <code class="inline">--json</code> 回報 <code class="inline">ok</code> / <code class="inline">run_dir</code> / <code class="inline">report</code>,讓 agent 自行驅動修正。</li>
+          <li><b>Does not extract</b>; it only assembles the JSON the agent wrote.</li>
+          <li>Runs <code class="inline">manifest → plan → preparation → generate → validate</code> in order.</li>
+          <li>Reports <code class="inline">ok</code> / <code class="inline">run_dir</code> / <code class="inline">report</code> via <code class="inline">--json</code>, letting the agent drive corrections itself.</li>
         </ol>
       </div>
     </div>
 
     <div class="arch-note">
-      <b>為什麼這樣切?</b> 把「需要語意理解、本質不確定」的擷取交給 agent,把「組裝、生成、驗證」這些必須可重現的步驟交給確定性程式碼。曾經有過用子行程 <code class="inline">claude -p</code> 擷取的 <code class="inline">run-agent</code> 模式與 NotebookLM 後端,皆已於 2026-06 退役,現在 <b>agent-native 是唯一擷取路徑</b>。
+      <b>Why split it this way?</b> Extraction — which requires semantic understanding and is inherently uncertain — is handed to the agent, while assembly, generation, and validation — which must be reproducible — are handed to deterministic code. There used to be a <code class="inline">run-agent</code> mode that extracted via the <code class="inline">claude -p</code> subprocess, and a NotebookLM backend; both were retired in 2026-06, and now <b>agent-native is the only extraction path</b>.
     </div>
   </div>
 </section>
@@ -675,62 +675,62 @@
 <!-- ===================== END-TO-END FLOW ===================== -->
 <section id="flow">
   <div class="wrap">
-    <span class="eyebrow">端到端資料流</span>
-    <h2 class="section-title">一次完整執行,經過哪些階段</h2>
-    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段;preparation、score、diff 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
+    <span class="eyebrow">End-to-end data flow</span>
+    <h2 class="section-title">What stages a full run passes through</h2>
+    <p class="section-lead">Every stage has explicit inputs / outputs (artifacts). The ones marked in grey are optional; preparation, score, diff, and handoff extend a run from mere "generation" into a reviewable, comparable, handoff-ready engineering asset.</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/end-to-end-flow.jpg" alt="端到端資料流" loading="lazy" />
+        <img src="assets/onboarding/end-to-end-flow.jpg" alt="End-to-end data flow" loading="lazy" />
       </div>
-      <figcaption>主幹流程產出 run-dir；score 與 diff 把完成品延伸成品質與版本判讀訊號。</figcaption>
+      <figcaption>The main pipeline produces the run-dir; score and diff extend the finished product into quality and version reading signals.</figcaption>
     </figure>
 
     <div class="flow">
       <div class="flow-row">
         <span class="stage"><span class="n tint-purple">0</span>preprocess</span>
-        <span class="desc">把 PDF 轉成高保真 markdown(pymupdf4llm),保留表格與巢狀結構。</span>
-        <span class="out"><span class="opt">可選 →</span> sources_md/</span>
+        <span class="desc">Convert PDF into high-fidelity markdown (pymupdf4llm), preserving tables and nested structure.</span>
+        <span class="out"><span class="opt">optional →</span> sources_md/</span>
       </div>
       <div class="flow-row">
-        <span class="stage"><span class="n tint-amber">1</span>擷取</span>
-        <span class="desc">agent 唯讀 fan-out 讀來源、主 agent 寫出交界 JSON。</span>
+        <span class="stage"><span class="n tint-amber">1</span>extraction</span>
+        <span class="desc">The agent's read-only fan-out reads the sources; the main agent writes out the seam JSON.</span>
         <span class="out">inventory.json · endpoints/*.json</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">2</span>manifest</span>
-        <span class="desc">掃描本地來源與 URL,建立來源盤點。</span>
+        <span class="desc">Scan local sources and URLs to build a source inventory.</span>
         <span class="out">manifest.json</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">3</span>plan</span>
-        <span class="desc">把擷取結果規格化成計畫,並做來源比對分類。</span>
+        <span class="desc">Normalize the extraction results into a plan and perform source-match classification.</span>
         <span class="out">plan/normalization-plan.json</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">4</span>preparation</span>
-        <span class="desc">生成前評估 manifest、inventory、endpoint JSON 與 plan 的就緒度。</span>
+        <span class="desc">Assess the readiness of the manifest, inventory, endpoint JSON, and plan before generation.</span>
         <span class="out">preparation-report.{json,md}</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">5</span>generate</span>
-        <span class="desc">生成 OpenAPI、中文指南、人工核對頁、來源追溯與交接輔助產物。</span>
+        <span class="desc">Generate OpenAPI, the Chinese guide, the manual review page, provenance, and handoff helper artifacts.</span>
         <span class="out">openapi.yaml · api-guide.zh-TW.md · review.html · provenance.json · handoff/</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">6</span>validate</span>
-        <span class="desc">結構 / 完整性 / 一致性 / 禁止推測四類檢查並出報告。</span>
+        <span class="desc">Run the four check categories — structure / completeness / consistency / no-speculation — and produce a report.</span>
         <span class="out">validation/report.{json,md}</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-purple">7</span>score</span>
-        <span class="desc">對完成的 run-dir 做品質評分,不改變 validate 的 pass/fail 語意。</span>
-        <span class="out"><span class="opt">可選 →</span> score/score.{json,md}</span>
+        <span class="desc">Grade the documentation quality of a completed run-dir, without changing validate's pass/fail semantics.</span>
+        <span class="out"><span class="opt">optional →</span> score/score.{json,md}</span>
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-purple">8</span>diff</span>
-        <span class="desc">比較兩個已完成 run-dir,依 downstream impact 分類差異。</span>
-        <span class="out"><span class="opt">可選 →</span> diff/report.{json,md}</span>
+        <span class="desc">Compare two completed run-dirs, classifying differences by downstream impact.</span>
+        <span class="out"><span class="opt">optional →</span> diff/report.{json,md}</span>
       </div>
     </div>
   </div>
@@ -739,83 +739,83 @@
 <!-- ===================== SIX CLI COMMANDS ===================== -->
 <section class="alt" id="commands">
   <div class="wrap">
-    <span class="eyebrow">CLI 介面</span>
-    <h2 class="section-title">十六個指令,各司其職</h2>
-    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>),共 15 個頂層指令加 <code class="inline">foundry</code> 子群組。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理與資產治理)。</p>
+    <span class="eyebrow">CLI interface</span>
+    <h2 class="section-title">Sixteen commands, each with its own job</h2>
+    <p class="section-lead">The CLI entry point is Typer (<code class="inline">cli.py</code>), with 15 top-level commands plus the <code class="inline">foundry</code> sub-group. Note: <b>extraction is not in the CLI</b> — that's the agent's job; the CLI only handles the back half and tooling steps (source processing, URL evidence, source quality, run handling, and asset governance).</p>
 
     <div class="cmds">
       <div class="cmd">
         <span class="name"><span class="kw">preprocess</span></span>
-        <div><p>PDF → markdown 前處理(可選),供 agent 更易讀取。</p></div>
+        <div><p>PDF → markdown preprocessing (optional), making sources easier for the agent to read.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">manifest</span></span>
-        <div><p>掃描本地來源 + URL,建立 <code class="inline">manifest.json</code>。</p></div>
+        <div><p>Scan local sources + URLs and build <code class="inline">manifest.json</code>.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">snapshot-openapi-url</span></span>
-        <div><p>固定單一 Swagger/OpenAPI JSON/YAML URL 為不可變本機來源，並建立 direct coverage ledger。</p></div>
+        <div><p>Pin a single Swagger/OpenAPI JSON/YAML URL as an immutable local source and build a direct coverage ledger.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">catalog-url</span></span>
-        <div><p>只下載入口頁一次,建立側欄導航索引(coverage universe);絕不自動擷取子頁。</p></div>
+        <div><p>Download the entry page just once to build a sidebar navigation index (coverage universe); never auto-fetches child pages.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">select-url</span></span>
-        <div><p>依明確範圍(分支/關鍵詞)選取 catalog 節點作為閱讀起點;不下載任何 URL。</p></div>
+        <div><p>Select catalog nodes by explicit scope (branch/keyword) as reading starting points; downloads no URLs.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">cache-url-pages</span></span>
-        <div><p>快取 catalog 全部頁面,建立本機正文/連結/實體索引(<code class="inline">corpus.json</code>);不呼叫模型。</p></div>
+        <div><p>Cache all catalog pages and build local body/link/entity indexes (<code class="inline">corpus.json</code>); no model involved.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">cache-url-entry</span></span>
-        <div><p>直接快取單一入口頁,供空 catalog 或單頁文件使用。</p></div>
+        <div><p>Directly cache a single entry page, for an empty catalog or a single-page document.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">normalize-html-snapshot</span></span>
-        <div><p>把靜態 HTML 快照正規化為受支援 Markdown,並保留 URL/SHA-256 provenance sidecar。</p></div>
+        <div><p>Normalize a static HTML snapshot into supported Markdown, keeping a URL/SHA-256 provenance sidecar.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">related-url-pages</span></span>
-        <div><p>依正文連結與共享實體輸出候選頁卡片,模型只在需要時讀取候選頁正文。</p></div>
+        <div><p>Output candidate page cards from body links and shared entities; the model reads candidate page bodies only when needed.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">assess-sources</span></span>
-        <div><p>擷取前的來源品質閘:依可追溯 observation 評估來源並輸出 pass/reject 報告(可傳給 <code class="inline">assemble --source-quality</code>)。</p></div>
+        <div><p>Pre-extraction source quality gate: assess sources from traceable observations and output a pass/reject report (which can be passed to <code class="inline">assemble --source-quality</code>).</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">verify-extraction</span></span>
-        <div><p>檢查 agent 產出的擷取 JSON 是否符合 assemble 輸入契約;不寫檔、不建立 run-dir。</p></div>
+        <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
-          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報;可加 <code class="inline">--score</code>、<code class="inline">--source-quality</code>、<code class="inline">--url-coverage</code>。</p>
-          <p class="codes">退出碼:<b>0</b> 驗證 PASS · <b>1</b> 驗證 FAIL · <b>2</b> 擷取輸入檔錯誤(不留孤兒目錄)。</p>
+          <p>Assemble the JSON the agent wrote → plan → preparation → generate → validate, reporting via <code class="inline">--json</code>; optional <code class="inline">--score</code>, <code class="inline">--source-quality</code>, <code class="inline">--url-coverage</code>.</p>
+          <p class="codes">Exit codes: <b>0</b> validation PASS · <b>1</b> validation FAIL · <b>2</b> extraction input file error (leaves no orphan directory).</p>
         </div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">validate</span></span>
-        <div><p>對既有 run-dir 重跑驗證並出報告(不重新生成)。</p></div>
+        <div><p>Re-run validation on an existing run-dir and produce a report (without regenerating).</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">score</span></span>
         <div>
-          <p>讀取既有 run-dir 的 OpenAPI、provenance、manifest 與 validation report,產出品質評分。</p>
-          <p class="codes">退出碼:<b>0</b> pass · <b>1</b> needs_attention / fail · <b>2</b> run-dir 輸入錯誤。</p>
+          <p>Read an existing run-dir's OpenAPI, provenance, manifest, and validation report, and produce a quality score.</p>
+          <p class="codes">Exit codes: <b>0</b> pass · <b>1</b> needs_attention / fail · <b>2</b> run-dir input error.</p>
         </div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">diff</span></span>
         <div>
-          <p>比較兩個已完成 run-dir 的版本差異。</p>
-          <p class="codes">退出碼:<b>0</b> 完成 · <b>2</b> 輸入 run-dir 缺檔或格式錯誤(<code class="inline">DiffInputError</code>)。</p>
+          <p>Compare the version differences between two completed run-dirs.</p>
+          <p class="codes">Exit codes: <b>0</b> done · <b>2</b> input run-dir has a missing file or bad format (<code class="inline">DiffInputError</code>).</p>
         </div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">foundry</span></span>
-        <div><p>專案本地資產治理子群組(<code class="inline">init</code> / <code class="inline">import</code> / <code class="inline">approve</code> / <code class="inline">list</code> / <code class="inline">current</code>):把完成的 run 匯入為 candidate,核准成版本化 asset 並維護 <code class="inline">current</code> 指標。</p></div>
+        <div><p>The project-local asset governance sub-group (<code class="inline">init</code> / <code class="inline">import</code> / <code class="inline">approve</code> / <code class="inline">list</code> / <code class="inline">current</code>): import a completed run as a candidate, approve it into a versioned asset, and maintain the <code class="inline">current</code> pointer.</p></div>
       </div>
     </div>
   </div>
@@ -824,21 +824,21 @@
 <!-- ===================== EXTRACTION STAGES ===================== -->
 <section id="extraction">
   <div class="wrap">
-    <span class="eyebrow">擷取分段</span>
-    <h2 class="section-title">擷取拆成十段</h2>
-    <p class="section-lead">為什麼分段?避免單一回答承載全部內容而失真。agent 依這十段逐步擷取,收斂成 <code class="inline">inventory.json</code> 與逐 endpoint 的 <code class="inline">endpoints/*.json</code>。</p>
+    <span class="eyebrow">Extraction stages</span>
+    <h2 class="section-title">Extraction is split into ten stages</h2>
+    <p class="section-lead">Why stage it? To avoid a single answer carrying all the content and losing fidelity. The agent extracts step by step across these ten stages, converging into <code class="inline">inventory.json</code> and per-endpoint <code class="inline">endpoints/*.json</code>.</p>
 
     <div class="stages">
-      <div class="stage-cell"><span class="sn">01</span><span>來源盤點</span></div>
-      <div class="stage-cell"><span class="sn">02</span><span>API 系統概覽與術語</span></div>
-      <div class="stage-cell"><span class="sn">03</span><span>環境 / base URL / 版本</span></div>
-      <div class="stage-cell"><span class="sn">04</span><span>驗證 / 授權 / 簽章</span></div>
-      <div class="stage-cell"><span class="sn">05</span><span>Endpoint 清單</span></div>
-      <div class="stage-cell"><span class="sn">06</span><span>逐 endpoint 細節(method / path / 參數 / req / resp / 範例)</span></div>
-      <div class="stage-cell"><span class="sn">07</span><span>共用 schema / enum / 資料限制</span></div>
-      <div class="stage-cell"><span class="sn">08</span><span>錯誤碼與失敗行為</span></div>
+      <div class="stage-cell"><span class="sn">01</span><span>Source inventory</span></div>
+      <div class="stage-cell"><span class="sn">02</span><span>API system overview and terminology</span></div>
+      <div class="stage-cell"><span class="sn">03</span><span>Environments / base URL / version</span></div>
+      <div class="stage-cell"><span class="sn">04</span><span>Authentication / authorization / signing</span></div>
+      <div class="stage-cell"><span class="sn">05</span><span>Endpoint list</span></div>
+      <div class="stage-cell"><span class="sn">06</span><span>Per-endpoint detail (method / path / parameters / req / resp / examples)</span></div>
+      <div class="stage-cell"><span class="sn">07</span><span>Shared schemas / enums / data constraints</span></div>
+      <div class="stage-cell"><span class="sn">08</span><span>Error codes and failure behavior</span></div>
       <div class="stage-cell"><span class="sn">09</span><span>rate limit / timeout / retry / idempotency / webhook</span></div>
-      <div class="stage-cell"><span class="sn">10</span><span>來源衝突、缺漏、無法確認事項</span></div>
+      <div class="stage-cell"><span class="sn">10</span><span>Source conflicts, gaps, and items that cannot be confirmed</span></div>
     </div>
   </div>
 </section>
@@ -846,65 +846,65 @@
 <!-- ===================== ARTIFACTS ===================== -->
 <section class="alt" id="artifacts">
   <div class="wrap">
-    <span class="eyebrow">產物</span>
-    <h2 class="section-title">一次 run 交付契約、證據與交接資產</h2>
-    <p class="section-lead">核心產物提供 API 契約與來源依據;衍生產物提供品質判讀、版本比較與 downstream 工程交接。</p>
+    <span class="eyebrow">Artifacts</span>
+    <h2 class="section-title">One run delivers the contract, the evidence, and the handoff assets</h2>
+    <p class="section-lead">The core artifacts provide the API contract and source grounding; the derived artifacts provide quality reading, version comparison, and downstream engineering handoff.</p>
     <div class="value-grid">
       <div class="value">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9.5 13 8 14.5 9.5 16"/><path d="M13.5 13 15 14.5 13.5 16"/></svg>
         </div>
-        <h3>標準規格</h3>
+        <h3>Standard spec</h3>
         <span class="file">openapi.yaml</span>
-        <p>OpenAPI 3.1,工具鏈與工程師可直接取用,不必各自解讀來源。</p>
+        <p>OpenAPI 3.1, ready for toolchains and engineers to consume directly without each interpreting the sources themselves.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
         </div>
-        <h3>繁中串接指南</h3>
+        <h3>Traditional Chinese integration guide</h3>
         <span class="file">api-guide.zh-TW.md</span>
-        <p>給人讀的 Traditional Chinese 指南,不必硬啃原文。</p>
+        <p>A human-readable Traditional Chinese guide, so you don't have to slog through the original.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 12h5"/><path d="M10.5 8H8a4 4 0 0 0 0 8h2.5"/><path d="M13.5 8H16a4 4 0 0 1 0 8h-2.5"/></svg>
         </div>
-        <h3>來源追溯</h3>
+        <h3>Source provenance</h3>
         <span class="file">provenance.json</span>
-        <p>每項輸出都標明出自哪份來源、哪一段,可逐一交叉比對。</p>
+        <p>Every output states which source and which section it came from, so each can be cross-checked one by one.</p>
       </div>
       <div class="value">
         <div class="badge tint-coral">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><path d="M15 5.5h2.5a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1H9"/><path d="M9 14l2 2 4-4"/></svg>
         </div>
-        <h3>驗證報告</h3>
+        <h3>Validation report</h3>
         <span class="file">validation/report</span>
-        <p>列出哪裡完整、哪裡缺漏 / 衝突,品質有憑據可查。</p>
+        <p>Lists where things are complete and where there are gaps / conflicts, giving quality an auditable basis.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M7 16V8"/><path d="M12 16V5"/><path d="M17 16v-6"/></svg>
         </div>
-        <h3>品質評分</h3>
+        <h3>Quality score</h3>
         <span class="file">score/score.{json,md}</span>
-        <p>把 openapi_validity、completeness、consistency、source_grounding、reviewability 轉成可比較分數。</p>
+        <p>Turns openapi_validity, completeness, consistency, source_grounding, and reviewability into comparable scores.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18H6z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M9 15h4"/></svg>
         </div>
-        <h3>交接包</h3>
+        <h3>Handoff pack</h3>
         <span class="file">handoff/ · examples/</span>
-        <p>任務清單、Postman collection、SDK hints 與請求範例,協助串接工程師接手。</p>
+        <p>A task list, Postman collection, SDK hints, and request examples to help the integrating engineer take over.</p>
       </div>
       <div class="value">
         <div class="badge tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <h3>人工核對頁</h3>
+        <h3>Manual review page</h3>
         <span class="file">review.html</span>
-        <p>離線可開的單檔 HTML,把範圍、來源、缺漏與 API 結構彙整成一頁,供人眼快速核對。</p>
+        <p>A single-file HTML you can open offline, gathering scope, sources, gaps, and API structure onto one page for a quick human check.</p>
       </div>
     </div>
   </div>
@@ -913,19 +913,19 @@
 <!-- ===================== PROVENANCE <-> VALIDATION ===================== -->
 <section id="validation">
   <div class="wrap">
-    <span class="eyebrow">可追溯 ↔ 驗證對齊</span>
-    <h2 class="section-title">禁止推測,靠 target 逐一對齊來把關</h2>
-    <p class="section-lead">這是「絕不臆測」如何被機器強制執行的關鍵機制:<code class="inline">provenance.json</code> 的 <code class="inline">target</code> 字串,與 OpenAPI 位置一對一對齊。</p>
+    <span class="eyebrow">Provenance ↔ validation alignment</span>
+    <h2 class="section-title">No speculation, enforced by aligning targets one by one</h2>
+    <p class="section-lead">This is the key mechanism by which "never guess" is machine-enforced: the <code class="inline">target</code> strings in <code class="inline">provenance.json</code> align one-to-one with OpenAPI locations.</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/provenance-target-align.jpg" alt="target 一對一對齊" loading="lazy" />
+        <img src="assets/onboarding/provenance-target-align.jpg" alt="one-to-one target alignment" loading="lazy" />
       </div>
-      <figcaption>provenance 的 target 字串與 OpenAPI 位置一對一對齊，是 no-speculation 檢查的比對基準。</figcaption>
+      <figcaption>The provenance target strings align one-to-one with OpenAPI locations, serving as the reference for the no-speculation check.</figcaption>
     </figure>
 
     <p class="section-lead" style="margin: 28px auto 0; text-align:center; max-width: 760px;">
-      no-speculation 檢查就在這些 target 上交叉比對:<b>任何進入輸出的內容,都必須能追溯回一個具來源依據的計畫項目,否則視為違規。</b>對齊的位置包含 <code class="inline">paths.{path}.{method}</code>、<code class="inline">components.schemas.{name}</code>、<code class="inline">components.securitySchemes.{name}</code>。
+      The no-speculation check cross-references exactly these targets: <b>anything entering the output must trace back to a source-grounded plan item, or it counts as a violation.</b> The aligned locations include <code class="inline">paths.{path}.{method}</code>, <code class="inline">components.schemas.{name}</code>, and <code class="inline">components.securitySchemes.{name}</code>.
     </p>
   </div>
 </section>
@@ -933,40 +933,40 @@
 <!-- ===================== CORRECTION LOOP ===================== -->
 <section class="alt" id="correction">
   <div class="wrap">
-    <span class="eyebrow">修正迴圈</span>
-    <h2 class="section-title">驗證問題會被分類,而不是盲目重試</h2>
-    <p class="section-lead">沒有 CLI 內建的修正迴圈。<code class="inline">assemble</code> 回報分類結果,修正由 <b>agent 自行驅動</b>:回頭重讀來源、覆寫對應 JSON、再跑一次,最多 3 輪。問題分兩類:</p>
+    <span class="eyebrow">Correction loop</span>
+    <h2 class="section-title">Validation issues get classified, not blindly retried</h2>
+    <p class="section-lead">There is no CLI built-in correction loop. <code class="inline">assemble</code> reports the classification result, and correction is <b>driven by the agent itself</b>: go back and re-read the sources, overwrite the corresponding JSON, and run again, for up to 3 rounds. Issues fall into two categories:</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
-        <img src="assets/onboarding/validation-correction-loop.jpg" alt="修正迴圈" loading="lazy" />
+        <img src="assets/onboarding/validation-correction-loop.jpg" alt="Correction loop" loading="lazy" />
       </div>
-      <figcaption>target 對齊先決定輸出是否有來源依據；分類結果再決定是修 seam 還是 fail-closed。</figcaption>
+      <figcaption>Target alignment first decides whether an output is source-grounded; the classification result then decides whether to fix the seam or fail-closed.</figcaption>
     </figure>
 
     <div class="cls">
       <div class="cls-col cls-fix">
         <h3>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          可修正(FIXABLE)
+          Fixable (FIXABLE)
         </h3>
         <div class="item">
           <span class="code">OPENAPI_INVALID · OUTPUT_MISMATCH</span>
-          <p>產物本身有誤 → agent 修正 JSON 後重新生成即可。</p>
+          <p>The artifact itself is wrong → the agent corrects the JSON and regenerates.</p>
         </div>
         <div class="item">
           <span class="code">REQUIRED_INFO_MISSING</span>
-          <p>必要資訊缺漏 → agent 回頭重讀受影響來源,補齊那一塊。</p>
+          <p>Required information is missing → the agent goes back to re-read the affected source and fills in that piece.</p>
         </div>
       </div>
       <div class="cls-col cls-stop">
         <h3>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-          不可修正(fail-closed)
+          Not fixable (fail-closed)
         </h3>
         <div class="item">
           <span class="code">SOURCE_UNVERIFIED · SOURCE_CONFLICT · UNSUPPORTED_ASSERTION</span>
-          <p>來源無法確認 / 彼此衝突 / 不被支援的斷言 → <b>不補寫</b>,如實回報為缺漏或衝突。這正是核心不變式落地的地方。</p>
+          <p>The source can't be confirmed / sources conflict / an unsupported assertion → <b>do not fill it in</b>; report it faithfully as a gap or conflict. This is exactly where the core invariant is enforced.</p>
         </div>
       </div>
     </div>
@@ -976,49 +976,49 @@
 <!-- ===================== VERSION DIFF ===================== -->
 <section id="diff">
   <div class="wrap">
-    <span class="eyebrow">版本差異</span>
-    <h2 class="section-title">換版本時,依 downstream impact 分四類</h2>
-    <p class="section-lead"><code class="inline">diff</code> 拿同一支 API 的<b>新舊兩個已完成 run-dir</b> 相比,看的是「這次改版會不會害到下游串接」,而不是「來源改了哪幾個字」。每一筆差異都被歸到下面四種 impact 之一,並依嚴重度由高到低排序,讓你一眼看出該不該擋、該通知誰。</p>
+    <span class="eyebrow">Version diff</span>
+    <h2 class="section-title">On version change, classify by downstream impact into four buckets</h2>
+    <p class="section-lead"><code class="inline">diff</code> compares the <b>old and new completed run-dirs</b> of the same API, looking at "will this revision break downstream integrations" rather than "which words in the source changed." Each difference is assigned to one of the four impacts below and sorted by severity from high to low, so you can see at a glance whether to block it and whom to notify.</p>
     <div class="lights">
       <div class="light lv-red">
         <span class="dot red"></span>
         <div>
-          <h3>破壞性 <span class="en">breaking</span></h3>
-          <p>可能讓既有串接直接壞掉,風險最高。</p>
-          <p class="eg"><b>例如</b>:刪掉一個端點(<code>operation removed</code>)、既有欄位/參數改成必填(<code>became required</code>)、新增必填參數、拿掉某個 <code>response</code> 或 security scheme、schema 結構改變。</p>
-          <p class="act">→ 上線前先擋,主動通知所有串接方調整。</p>
+          <h3>Breaking <span class="en">breaking</span></h3>
+          <p>Could break existing integrations outright; highest risk.</p>
+          <p class="eg"><b>For example</b>: removing an endpoint (<code>operation removed</code>), making an existing field/parameter required (<code>became required</code>), adding a required parameter, dropping a <code>response</code> or security scheme, or a schema structure change.</p>
+          <p class="act">→ Block before release; proactively notify all integrators to adjust.</p>
         </div>
       </div>
       <div class="light lv-green">
         <span class="dot green"></span>
         <div>
-          <h3>新增 <span class="en">additive</span></h3>
-          <p>純粹多了東西,通常向後相容。</p>
-          <p class="eg"><b>例如</b>:新增端點(<code>operation added</code>)、新增選填參數/欄位、新增 <code>response</code> 或 media type、新增 schema / security scheme。</p>
-          <p class="act">→ 可安心採用,下游要不要用新功能自己決定。</p>
+          <h3>Additive <span class="en">additive</span></h3>
+          <p>Purely adds things, usually backward-compatible.</p>
+          <p class="eg"><b>For example</b>: adding an endpoint (<code>operation added</code>), adding an optional parameter/field, adding a <code>response</code> or media type, or adding a schema / security scheme.</p>
+          <p class="act">→ Safe to adopt; downstream decides for itself whether to use the new features.</p>
         </div>
       </div>
       <div class="light lv-amber">
         <span class="dot amber"></span>
         <div>
-          <h3>內容調整 <span class="en">changed</span></h3>
-          <p>既有內容改了,但不必然破壞相容性。</p>
-          <p class="eg"><b>例如</b>:參數/欄位的說明文字變更(<code>description changed</code>)、<code>servers</code> 位址更動、<code>info</code> 版本資訊更新、components 內未被引用的 schema 移除。</p>
-          <p class="act">→ 讀一下改了什麼,確認對自己這端沒有隱性影響。</p>
+          <h3>Changed <span class="en">changed</span></h3>
+          <p>Existing content changed, but not necessarily breaking compatibility.</p>
+          <p class="eg"><b>For example</b>: a parameter/field's description text changed (<code>description changed</code>), a <code>servers</code> address updated, <code>info</code> version metadata updated, or an unreferenced schema in components removed.</p>
+          <p class="act">→ Read what changed and confirm there's no hidden impact on your side.</p>
         </div>
       </div>
       <div class="light lv-grey">
         <span class="dot grey"></span>
         <div>
-          <h3>僅來源異動 <span class="en">source_only</span></h3>
-          <p>來源或中繼資料動了,但最終 API 契約沒變。</p>
-          <p class="eg"><b>例如</b>:來源檔本身變更(<code>manifest source changed</code>)、provenance 追溯調整、validation / preparation 報告內容變動,但 OpenAPI 規格本身不受影響。</p>
-          <p class="act">→ 可放心,規格未變;若在意可回頭看來源為何動。</p>
+          <h3>Source only <span class="en">source_only</span></h3>
+          <p>The source or metadata moved, but the final API contract didn't change.</p>
+          <p class="eg"><b>For example</b>: the source file itself changed (<code>manifest source changed</code>), provenance tracing adjusted, or validation / preparation report contents changed, but the OpenAPI spec itself is unaffected.</p>
+          <p class="act">→ Rest easy, the spec is unchanged; if you care, go back and see why the source moved.</p>
         </div>
       </div>
     </div>
     <p class="diff-note">
-      <b>比較範圍</b>:OpenAPI 路徑·方法·參數·schema·security·webhook、integration-contract、provenance、validation 摘要與 manifest(第一版<b>不比</b> Markdown guide 與 examples)。輸出寫到 <code class="inline">diff/report.{json,md}</code>;exit code <b>0</b> 完成、<b>2</b> 代表輸入 run-dir 缺檔或格式錯誤(<code class="inline">DiffInputError</code>)。
+      <b>Comparison scope</b>: OpenAPI paths · methods · parameters · schemas · security · webhooks, integration-contract, provenance, the validation summary, and manifest (the first version <b>does not compare</b> the Markdown guide or examples). Output is written to <code class="inline">diff/report.{json,md}</code>; exit code <b>0</b> done, <b>2</b> means the input run-dir has a missing file or bad format (<code class="inline">DiffInputError</code>).
     </p>
   </div>
 </section>
@@ -1026,60 +1026,60 @@
 <!-- ===================== PACKAGE BOUNDARIES ===================== -->
 <section class="alt" id="packages">
   <div class="wrap">
-    <span class="eyebrow">套件邊界</span>
-    <h2 class="section-title">程式碼怎麼分包</h2>
-    <p class="section-lead">原則:除了少數 I/O 出口,其餘模組皆為純函式,便於單元測試。修改時請守住這個邊界,讓每個 loop 都能獨立驗證。</p>
-    <div class="table-scroll" tabindex="0" aria-label="套件邊界表格">
+    <span class="eyebrow">Package boundaries</span>
+    <h2 class="section-title">How the code is split into packages</h2>
+    <p class="section-lead">Principle: apart from a few I/O exits, all other modules are pure functions, which makes them easy to unit-test. When making changes, hold this boundary so every loop can be verified independently.</p>
+    <div class="table-scroll" tabindex="0" aria-label="Package boundaries table">
       <table class="pkg-table">
-        <thead><tr><th>套件</th><th>職責</th></tr></thead>
+        <thead><tr><th>Package</th><th>Responsibility</th></tr></thead>
         <tbody>
-          <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
-          <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
-          <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
-          <tr class="io"><td><code>preparation/</code></td><td>產生前就緒度評估 + preparation-report(report.py 寫檔)</td></tr>
-          <tr class="io"><td><code>generate/</code></td><td>生成 OpenAPI / Markdown / review.html / provenance / examples / handoff(寫檔)</td></tr>
-          <tr><td><code>validate/</code></td><td>結構 / 完整性 / 一致性 / 禁止推測檢查 + 報告</td></tr>
-          <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
-          <tr class="io"><td><code>score/</code></td><td>讀取完成 run-dir,以五類權重產生 score/score.{json,md}(report.py 寫檔)</td></tr>
-          <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
-          <tr class="io"><td><code>source_quality/</code></td><td>擷取前來源品質評估與來源版本差異報告;pass 報告可隨 run-dir 稽核保存(寫檔)</td></tr>
-          <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
-          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標(寫檔)</td></tr>
+          <tr><td><code>manifest/</code></td><td>Scan local sources + build manifest.json</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
+          <tr><td><code>extraction/</code></td><td>Shared models + utilities (stages / questions / store / jsonblock)</td></tr>
+          <tr><td><code>plan/</code></td><td>Normalization plan + source-match classification</td></tr>
+          <tr class="io"><td><code>preparation/</code></td><td>Pre-generation readiness assessment + preparation-report (report.py writes files)</td></tr>
+          <tr class="io"><td><code>generate/</code></td><td>Generate OpenAPI / Markdown / review.html / provenance / examples / handoff (writes files)</td></tr>
+          <tr><td><code>validate/</code></td><td>Structure / completeness / consistency / no-speculation checks + report</td></tr>
+          <tr class="io"><td><code>run/</code></td><td>run-id generation, result/status models, writing the plan into the run-dir (writes files)</td></tr>
+          <tr class="io"><td><code>score/</code></td><td>Read a completed run-dir and produce score/score.{json,md} with five weighted categories (report.py writes files)</td></tr>
+          <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py (report.py writes files)</td></tr>
+          <tr class="io"><td><code>source_quality/</code></td><td>Pre-extraction source quality assessment and source version diff report; a pass report can be retained with the run-dir for audit (writes files)</td></tr>
+          <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>Bounded URL navigation index, page caching, and related candidates, letting the agent read web docs from local evidence (writes files)</td></tr>
+          <tr class="io"><td><code>foundry/</code></td><td>Project-local asset governance: docsets, candidate import, and asset approval, maintaining the <code>current</code> pointer (writes files)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
+    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
   </div>
 </section>
 
 <!-- ===================== GLOSSARY + NEXT READS ===================== -->
 <section id="next">
   <div class="wrap">
-    <span class="eyebrow">收尾</span>
-    <h2 class="section-title">名詞速查 · 接下來讀什麼</h2>
+    <span class="eyebrow">Wrapping up</span>
+    <h2 class="section-title">Glossary · What to read next</h2>
     <div class="two-col">
       <div class="gloss">
-        <h3>名詞速查</h3>
+        <h3>Glossary</h3>
         <dl>
-          <dt>seam</dt><dd>前後兩段的唯一交界(inventory.json + endpoints/*.json),也是測試的切點。</dd>
-          <dt>manifest</dt><dd>來源盤點檔,記錄掃到哪些來源與 URL。</dd>
-          <dt>normalization-plan</dt><dd>把擷取結果規格化後的計畫,generate 與 validate 的共同輸入。</dd>
-          <dt>provenance</dt><dd>來源追溯;target 與 OpenAPI 位置逐一對齊。</dd>
-          <dt>preparation</dt><dd>生成前就緒度評估,在品質 loop 裡先標出阻塞與注意事項。</dd>
-          <dt>score</dt><dd>完成 run-dir 的品質分數,用於 CI 或 review profile 的後段判讀。</dd>
-          <dt>handoff</dt><dd>從 OpenAPI 與 integration-contract 衍生的工程交接包,不是新的契約來源。</dd>
-          <dt>fail-closed</dt><dd>遇到無法確認 / 衝突時,選擇「不輸出」而非「猜一個」。</dd>
-          <dt>run-dir</dt><dd>單次執行的輸出目錄,裝著該次全部產物。</dd>
+          <dt>seam</dt><dd>The only boundary between the two stages (inventory.json + endpoints/*.json), and also the cut point for testing.</dd>
+          <dt>manifest</dt><dd>The source inventory file, recording which sources and URLs were scanned.</dd>
+          <dt>normalization-plan</dt><dd>The plan after normalizing the extraction results; the shared input for generate and validate.</dd>
+          <dt>provenance</dt><dd>Source provenance; target aligns one-to-one with OpenAPI locations.</dd>
+          <dt>preparation</dt><dd>Pre-generation readiness assessment; in the quality loop, it flags blockers and things to watch first.</dd>
+          <dt>score</dt><dd>The quality score of a completed run-dir, used for back-half reading in the CI or review profile.</dd>
+          <dt>handoff</dt><dd>The engineering handoff pack derived from OpenAPI and the integration-contract; not a new contract source.</dd>
+          <dt>fail-closed</dt><dd>When something can't be confirmed / conflicts, choose "don't output" rather than "guess one."</dd>
+          <dt>run-dir</dt><dd>The output directory of a single run, holding all of that run's artifacts.</dd>
         </dl>
       </div>
       <div class="reads">
-        <h3>接下來讀什麼</h3>
+        <h3>What to read next</h3>
         <ul>
-          <li><b>跑一次看看</b> — 依 <code>README.md</code> 安裝(<code>uv sync</code>),用 <code>benchmarks/</code> 的樣本走一遍。</li>
-          <li><b>架構細節</b> — <code>docs/ARCHITECTURE.md</code>:seam、套件圖、資料流表。</li>
-          <li><b>擷取行為</b> — <code>skills/loop-apidoc/SKILL.md</code>:agent 實際怎麼讀來源、怎麼分段。</li>
-          <li><b>設計依據</b> — <code>docs/superpowers/specs/</code> 內的設計規格與 plan。</li>
+          <li><b>Run it once</b> — install per <code>README.md</code> (<code>uv sync</code>) and walk through with a sample from <code>benchmarks/</code>.</li>
+          <li><b>Architecture details</b> — <code>docs/ARCHITECTURE.md</code>: the seam, package map, data flow tables.</li>
+          <li><b>Extraction behavior</b> — <code>skills/loop-apidoc/SKILL.md</code>: how the agent actually reads sources and stages the work.</li>
+          <li><b>Design basis</b> — the design specs and plans under <code>docs/superpowers/specs/</code>.</li>
         </ul>
       </div>
     </div>
@@ -1088,7 +1088,7 @@
 </main>
 
 <footer>
-  loop-apidoc 技術導覽 · 給新進工程同仁 · 來源依據式 API 文件 pipeline
+  loop-apidoc Technical Tour · For New Engineering Teammates · Source-grounded API documentation pipeline
 </footer>
 
 </body>
