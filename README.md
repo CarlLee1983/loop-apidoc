@@ -363,6 +363,15 @@ canonical contract、policy decision、workflow/events 與 legacy/Core compariso
 legacy validation、score、approval、Foundry、`ok`/`status` 或 assemble 退出碼。
 預設仍為 `legacy`，不會建立 `core/`。
 
+Shadow mode 的 evidence 是 claim-level，而不是文件級引用。每個 material claim
+path 會透過 `explicit_support`、`derived_support`、`contradicts` 或
+`insufficient` relationship，連到 exact fragment，再連到 source artifact。
+Exact fragment 使用 page、line range、section、table cell、JSON Pointer、CSS 或
+XPath 等 typed locator，digest 則以 normalized fragment content 計算。Core 只用
+確定性的值比對、表格儲存格、structured path、enum 與 source-fact 檢查決定
+support；runtime confidence 不具權威。只有檔名或整份文件的 legacy citation
+會降級為 `insufficient`，claim 維持 unverified。
+
 ---
 
 ## 輸出結構
@@ -405,11 +414,16 @@ output/
     │   ├── evidence.json
     │   ├── runtime-result.json
     │   ├── claims.json
+    │   ├── relationships.json
     │   ├── contract.json
     │   ├── decision.json
     │   ├── workflow.json
     │   ├── events.json
-    │   └── comparison.json
+    │   ├── comparison.json
+    │   └── projections/
+    │       ├── openapi.json
+    │       ├── review-data.json
+    │       └── provenance.json
     └── diff/                       # 與另一個 run 比較版本差異時(loop-apidoc diff)
         ├── report.json
         └── report.md

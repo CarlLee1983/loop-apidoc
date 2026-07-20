@@ -79,3 +79,28 @@ def test_output_tree_lists_score_and_complete_core_artifacts(path: str):
 )
 def test_architecture_file_io_inventory_names_shadow_report(path: str):
     assert "shadow/report.py" in Path(path).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "README.en.md",
+        "README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/operator-manual.en.html",
+        "docs/operator-manual.html",
+    ],
+)
+def test_shadow_docs_explain_semantic_support_and_degraded_legacy_refs(path: str):
+    text = Path(path).read_text(encoding="utf-8")
+    assert "explicit_support" in text
+    assert "insufficient" in text
+    assert "relationships.json" in text
+    assert "legacy" in text.lower()
+
+
+def test_agent_guides_keep_fragment_io_inventory_aligned():
+    for path in ("AGENTS.md", "CLAUDE.md"):
+        text = Path(path).read_text(encoding="utf-8")
+        assert "adapters/fragments.py" in text
+        assert "shadow/report.py" in text

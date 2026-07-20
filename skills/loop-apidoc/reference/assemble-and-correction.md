@@ -9,8 +9,17 @@ happy-path summary live in SKILL.md.
 Add `--architecture-mode shadow` only when the user explicitly wants the current legacy
 run compared with the model-independent Core. The default `legacy` mode creates no
 `core/` directory. Shadow runs after the legacy validation report is written and records
-its evidence, claims, contract, decision, workflow/events, and comparison under
+its evidence, claims, claim-level relationships, contract, decision, workflow/events,
+comparison, and evidence-aware projections under
 `<run-dir>/core/` (or `core/error.json` on shadow failure).
+
+`core/relationships.json` binds claim identity/path to an exact fragment with
+`explicit_support`, `derived_support`, `contradicts`, or `insufficient`.
+`core/projections/provenance.json` continues that trace to the source artifact; sibling
+`openapi.json` and `review-data.json` are observational projections. Core uses
+deterministic value, table-cell, structured-path, enum, and source-fact checks. A
+filename-only or whole-document legacy citation is degraded `insufficient` evidence and
+cannot make a claim supported; runtime/model confidence never decides claim status.
 
 Treat every shadow artifact as observational. It never changes the legacy `ok`, `status`,
 validation report, score, approval, Foundry state, correction routing, or exit code. A

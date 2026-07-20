@@ -370,6 +370,15 @@ legacy/Core comparison under `<run-dir>/core/`; a shadow failure writes
 Foundry state, `ok`/`status`, or the assemble exit code. The default remains `legacy` and
 creates no `core/` directory.
 
+In shadow mode, evidence is claim-level rather than document-level. Each material claim
+path is linked through an `explicit_support`, `derived_support`, `contradicts`, or
+`insufficient` relationship to an exact fragment and then to its source artifact. Exact
+fragments use typed locators (page, line range, section, table cell, JSON Pointer, CSS, or
+XPath) and a digest of the normalized fragment content. Core decides support with
+deterministic value, table-cell, structured-path, enum, and source-fact checks; runtime
+confidence is never authoritative. A filename-only or whole-document legacy citation
+degrades to `insufficient` and leaves the claim unverified.
+
 ---
 
 ## Output layout
@@ -412,11 +421,16 @@ output/
     │   ├── evidence.json
     │   ├── runtime-result.json
     │   ├── claims.json
+    │   ├── relationships.json
     │   ├── contract.json
     │   ├── decision.json
     │   ├── workflow.json
     │   ├── events.json
-    │   └── comparison.json
+    │   ├── comparison.json
+    │   └── projections/
+    │       ├── openapi.json
+    │       ├── review-data.json
+    │       └── provenance.json
     └── diff/                       # when diffed against another run (loop-apidoc diff)
         ├── report.json
         └── report.md

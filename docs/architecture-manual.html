@@ -817,10 +817,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <code>cli.py</code> 暴露十八個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、來源新鮮度閘（<code>record-fingerprint</code>、<code>check-freshness</code>、<code>check-freshness-batch</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入；其餘 domain 邏輯盡量保持純函式，以簡化單元測試。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入。<code>adapters/fragments.py</code> 是把來源內容 materialize 成 exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>：<code>assemble --architecture-mode shadow</code> 會在 legacy validation 後呼叫 compatibility-only 的 <code>shadow/</code> 套件。Pure bridge 把 manifest/plan 映成 Core evidence 與 claims，in-memory runner 只執行到 Core validation，且只有 <code>shadow/report.py</code> 會寫入觀測性的 <code>&lt;run-dir&gt;/core/</code> 產物或 <code>core/error.json</code>。Legacy validation、score、approval、Foundry、status 與退出碼仍具權威。
+      Claim path 以 <code>explicit_support</code>、<code>derived_support</code>、<code>contradicts</code> 或 <code>insufficient</code> relationship 連到 exact typed fragment。整份文件級 legacy citation 維持 unverified。<code>relationships.json</code> 與 <code>projections/provenance.json</code> 保存 claim → relationship → fragment → artifact 鏈。
     </div>
   </div>
 

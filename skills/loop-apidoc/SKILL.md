@@ -149,7 +149,12 @@ carriage — `verify-extraction` (step 5) enforces the cross-file invariants.
 
 Grounding rule (include in every subagent prompt): *"Fill strictly from the sources. Anything
 the sources do not state → null and add a short label to `missing`. Never infer; never apply
-REST/OAuth conventions. Return only the JSON object."*
+REST/OAuth conventions. Cite the manifest filename plus the most precise deterministic
+locator available. Return only the JSON object."* Prefer `p.12` / `page 12`,
+`lines 10-14` / `L10-L14`, `§2.1` / an exact heading / `#anchor`, RFC 6901 `#/...` or
+`/...`, `css:<selector>`, or `xpath:<expression>`. A filename-only citation remains valid
+for legacy validation compatibility, but semantic shadow treats it as degraded
+`insufficient` evidence and leaves the claim unverified.
 
 After writing any extraction file, parse it as JSON before continuing. Use the **English
 keys** exactly as the schemas show — localized machine keys are rejected at assemble (exit 2).

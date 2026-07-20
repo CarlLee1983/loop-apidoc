@@ -674,6 +674,7 @@
     </div>
     <div class="arch-note">
       <b>Core shadow seam。</b>以 <code class="inline">assemble --architecture-mode shadow</code> 明確啟用。Legacy report 寫出後，<code class="inline">shadow/</code> 把記憶體中的 manifest 與 plan 映成 Core evidence/claims，只執行到 Core validation，並把觀測性產物寫入 <code class="inline">&lt;run-dir&gt;/core/</code>。它不會 approval、publish、更新 Foundry，也不改 legacy status 或退出碼。
+      Claim path 會以 <code class="inline">explicit_support</code>、<code class="inline">derived_support</code>、<code class="inline">contradicts</code> 或 <code class="inline">insufficient</code> 綁定 exact fragment。整份文件級的 legacy citation 不會變成 supported；請檢查 <code class="inline">relationships.json</code> 與 <code class="inline">projections/provenance.json</code>。
     </div>
   </div>
 </section>
@@ -1058,7 +1059,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔。<code class="inline">adapters/fragments.py</code> 是 materialize exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。</p>
   </div>
 </section>
 
