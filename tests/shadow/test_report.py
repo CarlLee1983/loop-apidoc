@@ -4,6 +4,7 @@ import json
 
 import loop_apidoc.shadow.report as report_mod
 import loop_apidoc.shadow.runner as runner_mod
+import pytest
 from loop_apidoc.run.models import RunStatus
 from loop_apidoc.shadow.report import run_shadow_safely, write_shadow_artifacts
 from loop_apidoc.shadow.runner import execute_shadow
@@ -214,3 +215,48 @@ def test_safe_entry_point_classifies_projection_failure(tmp_path, monkeypatch):
 
     assert summary.status == "error"
     assert summary.stage.value == "projection"
+
+
+@pytest.mark.parametrize(
+    ("target", "attribute", "expected_stage"),
+    [
+        (runner_mod, "build_source_set", "bridge"),
+        (
+            runner_mod.EvidenceToContractService,
+            "register_source_set",
+            "service",
+        ),
+        (
+            runner_mod.EvidenceToContractService,
+            "build_contract",
+            "service",
+        ),
+        (runner_mod, "compare_results", "comparison"),
+    ],
+)
+def test_safe_entry_point_isolates_remaining_shadow_stage_failures(
+    tmp_path,
+    monkeypatch,
+    target,
+    attribute,
+    expected_stage,
+):
+    def fail_stage(*_args, **_kwargs):
+        raise RuntimeError("injected shadow failure")
+
+    monkeypatch.setattr(target, attribute, fail_stage)
+
+    summary = run_shadow_safely(
+        manifest=_manifest(),
+        plan=_plan(),
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+        run_dir=tmp_path,
+    )
+
+    assert summary.status == "error"
+    assert summary.stage.value == expected_stage
+    assert json.loads(
+        (tmp_path / "core" / "error.json").read_text(encoding="utf-8")
+    )["stage"] == expected_stage

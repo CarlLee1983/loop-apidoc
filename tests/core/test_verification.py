@@ -11,9 +11,11 @@ from loop_apidoc.core.verification import (
 )
 from loop_apidoc.domain.evidence import (
     ClaimSupportProposal,
+    DerivationStep,
     EvidenceBundle,
     EvidenceFragment,
     FragmentPrecision,
+    FragmentReconstructionRef,
     JsonPointerLocator,
     LineRangeLocator,
     PageLocator,
@@ -22,6 +24,7 @@ from loop_apidoc.domain.evidence import (
     TableCellLocator,
     VerificationMethod,
     WholeDocumentLocator,
+    canonical_json,
     fragment_digest,
 )
 
@@ -234,6 +237,202 @@ def test_invalid_fragment_digest_is_insufficient():
 
     assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
     assert relationship.reason_code == "FRAGMENT_DIGEST_MISMATCH"
+
+
+def test_bundle_validation_reports_duplicate_unknown_and_bad_digest():
+    first = _exact_fragment("duplicate", "USD")
+    second = _exact_fragment(
+        "duplicate",
+        "TWD",
+        artifact_id="missing-artifact",
+        digest="0" * 64,
+    )
+
+    violations = validate_evidence_bundle(_bundle(first, second))
+
+    assert {violation.code for violation in violations} == {
+        "DUPLICATE_FRAGMENT_ID",
+        "SOURCE_ARTIFACT_NOT_FOUND",
+        "FRAGMENT_DIGEST_MISMATCH",
+    }
+
+
+def test_missing_fragment_and_unknown_claim_path_are_insufficient():
+    missing = verify_claim_support(
+        _proposal("USD", _support("missing")),
+        _bundle(),
+    )[0]
+    unknown_path = verify_claim_support(
+        _proposal(
+            {"method": "GET", "path": "/health"},
+            _support("fragment", "/not-a-material-path"),
+            claim_kind="operation",
+        ),
+        _bundle(_exact_fragment("fragment", "GET")),
+    )[0]
+
+    assert missing.reason_code == "FRAGMENT_NOT_FOUND"
+    assert unknown_path.reason_code == "CLAIM_PATH_UNKNOWN"
+
+
+def test_reconstructable_but_unmaterialized_fragment_is_insufficient():
+    locator = LineRangeLocator(start_line=1, end_line=1)
+    fragment = EvidenceFragment(
+        id="fragment-reconstructable",
+        source_artifact_id="artifact-1",
+        locator=locator,
+        fragment_digest=fragment_digest("USD"),
+        reconstruction_ref=FragmentReconstructionRef(
+            source_artifact_id="artifact-1",
+            locator=locator,
+            expected_digest=fragment_digest("USD"),
+        ),
+        precision=FragmentPrecision.EXACT,
+    )
+
+    relationship = verify_claim_support(
+        _proposal("USD", _support(fragment.id)),
+        _bundle(fragment),
+    )[0]
+
+    assert relationship.reason_code == "FRAGMENT_NOT_MATERIALIZED"
+
+
+@pytest.mark.parametrize(
+    ("steps", "reason"),
+    [
+        ((), "DERIVATION_STEPS_REQUIRED"),
+        (
+            (
+                DerivationStep(
+                    name="model_guess",
+                    version="1",
+                    input_digests=("a" * 64,),
+                    output_digest=fragment_digest(canonical_json("USD")),
+                ),
+            ),
+            "DERIVATION_NOT_ALLOWED",
+        ),
+        (
+            (
+                DerivationStep(
+                    name="canonical_json",
+                    version="1",
+                    input_digests=("a" * 64,),
+                    output_digest="0" * 64,
+                ),
+            ),
+            "DERIVATION_OUTPUT_MISMATCH",
+        ),
+    ],
+)
+def test_derived_support_requires_allowlisted_digest_chain(steps, reason):
+    support = ClaimSupportProposal(
+        fragment_id="fragment",
+        claim_path="",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.EXACT_NORMALIZED_VALUE,
+        derivation_steps=steps,
+    )
+
+    relationship = verify_claim_support(
+        _proposal("USD", support),
+        _bundle(
+            _exact_fragment(
+                "fragment",
+                "USD",
+                semantic_value="USD",
+                semantic_role="field.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
+    assert relationship.reason_code == reason
+
+
+def test_allowlisted_derived_support_can_be_verified():
+    support = ClaimSupportProposal(
+        fragment_id="fragment",
+        claim_path="",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.EXACT_NORMALIZED_VALUE,
+        derivation_steps=(
+            DerivationStep(
+                name="canonical_json",
+                version="1",
+                input_digests=("a" * 64,),
+                output_digest=fragment_digest(canonical_json("USD")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal("USD", support),
+        _bundle(
+            _exact_fragment(
+                "fragment",
+                "USD",
+                semantic_value="USD",
+                semantic_role="field.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+
+
+@pytest.mark.parametrize(
+    ("method", "value", "fragment", "expected_reason"),
+    [
+        (
+            VerificationMethod.TABLE_CELL_MAPPING,
+            "USD",
+            _exact_fragment("plain-table", "USD"),
+            "VERIFIER_INAPPLICABLE",
+        ),
+        (
+            VerificationMethod.STRUCTURED_FIELD_PATH,
+            "USD",
+            _exact_fragment("plain-structured", "USD"),
+            "VERIFIER_INAPPLICABLE",
+        ),
+        (
+            VerificationMethod.ENUM_VALUE,
+            1,
+            _exact_fragment("plain-enum", "1"),
+            "VERIFIER_INAPPLICABLE",
+        ),
+    ],
+)
+def test_specialized_verifiers_fail_closed_when_fragment_shape_is_wrong(
+    method,
+    value,
+    fragment,
+    expected_reason,
+):
+    relationship = verify_claim_support(
+        _proposal(value, _support(fragment.id, method=method)),
+        _bundle(fragment),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
+    assert relationship.reason_code == expected_reason
+
+
+def test_enum_verifier_matches_normalized_excerpt_without_semantic_value():
+    fragment = _exact_fragment("enum", "USD")
+
+    relationship = verify_claim_support(
+        _proposal(
+            "USD",
+            _support("enum", method=VerificationMethod.ENUM_VALUE),
+        ),
+        _bundle(fragment),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.EXPLICIT_SUPPORT
+    assert relationship.reason_code == "ENUM_VALUE_MATCH"
 
 
 @pytest.mark.parametrize(
