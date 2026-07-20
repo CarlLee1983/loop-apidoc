@@ -36,6 +36,7 @@ class GroundedClaim(FrozenModel):
     claim_kind: str
     value: Any = None
     evidence_refs: tuple[str, ...] = ()
+    support_relationships: tuple[ClaimEvidenceRelationship, ...] = ()
     status: ClaimStatus
     lineage: tuple[str, ...] = ()
 
