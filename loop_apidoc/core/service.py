@@ -34,7 +34,7 @@ from loop_apidoc.core.ports import (
 from loop_apidoc.core.reconciliation import reconcile_claims
 from loop_apidoc.domain.builder import ContractClaimInput, build_grounded_contract
 from loop_apidoc.domain.models import ContractMetadata
-from loop_apidoc.domain.projections import ProjectionCompiler
+from loop_apidoc.domain.projections import ProjectionCompiler, ProjectionInput
 from loop_apidoc.domain.rules import ApiDomainRulePack
 
 
@@ -186,7 +186,14 @@ class EvidenceToContractService:
                 frozenset({"validation_decision"}),
             )
             return decision
-        projections = tuple(compiler.compile(contract) for compiler in compilers)
+        projection_input = ProjectionInput(
+            contract=contract,
+            source_set=self.evidence_store.get_source_set(source_set_id),
+            evidence=self.evidence_store.get_bundle(source_set_id),
+        )
+        projections = tuple(
+            compiler.compile(projection_input) for compiler in compilers
+        )
         self.contract_store.put_projections(source_set_id, projections)
         record = self.contract_store.get_workflow(source_set_id)
         candidate = make_candidate_release(
