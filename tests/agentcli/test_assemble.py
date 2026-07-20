@@ -206,11 +206,20 @@ def test_shadow_assemble_writes_complete_core_artifacts(tmp_path):
         "evidence.json",
         "runtime-result.json",
         "claims.json",
+        "relationships.json",
         "contract.json",
         "decision.json",
         "workflow.json",
         "events.json",
         "comparison.json",
+        "projections",
+    }
+    assert {
+        path.name for path in (core_dir / "projections").iterdir()
+    } == {
+        "openapi.json",
+        "review-data.json",
+        "provenance.json",
     }
 
 

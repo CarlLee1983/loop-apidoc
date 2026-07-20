@@ -19,6 +19,7 @@ from loop_apidoc.shadow.models import (
     ShadowStage,
 )
 from loop_apidoc.shadow.runner import ShadowExecutionFailure, execute_shadow
+from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.models import ValidationReport
 
 
@@ -32,6 +33,7 @@ def write_shadow_artifacts(
         ("evidence.json", artifacts.evidence),
         ("runtime-result.json", artifacts.runtime_result),
         ("claims.json", artifacts.claims),
+        ("relationships.json", artifacts.relationships),
         ("contract.json", artifacts.contract),
         ("decision.json", artifacts.decision),
         ("workflow.json", artifacts.workflow),
@@ -44,6 +46,13 @@ def write_shadow_artifacts(
     try:
         for filename, payload in payloads:
             _write_json(staging_dir / filename, payload)
+        projection_dir = staging_dir / "projections"
+        projection_dir.mkdir()
+        for projection in artifacts.projections:
+            _write_json(
+                projection_dir / f"{projection.name}.json",
+                projection.payload,
+            )
         staging_dir.replace(core_dir)
     except Exception:
         shutil.rmtree(staging_dir, ignore_errors=True)
@@ -59,6 +68,8 @@ def run_shadow_safely(
     *,
     manifest: Manifest,
     plan: NormalizationPlan,
+    facts: FactIndex | None = None,
+    sources_root: Path | None = None,
     legacy_report: ValidationReport,
     legacy_status: RunStatus,
     generated_at: datetime,
@@ -69,6 +80,8 @@ def run_shadow_safely(
         artifacts = execute_shadow(
             manifest=manifest,
             plan=plan,
+            facts=facts,
+            sources_root=sources_root,
             legacy_report=legacy_report,
             legacy_status=legacy_status,
             generated_at=generated_at,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -15,6 +16,11 @@ from loop_apidoc.adapters.memory import (
 from loop_apidoc.adapters.runtime import CallableRuntimeAdapter
 from loop_apidoc.core.models import ContractRelease, PolicyProfile
 from loop_apidoc.core.service import EvidenceToContractService
+from loop_apidoc.domain.projections import (
+    OpenApiProjectionCompiler,
+    ProvenanceProjectionCompiler,
+    ReviewProjectionCompiler,
+)
 from loop_apidoc.domain.rules import ApiDomainRulePack
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
@@ -32,6 +38,7 @@ from loop_apidoc.shadow.bridge import (
 )
 from loop_apidoc.shadow.models import (
     ShadowArtifacts,
+    ShadowProjection,
     ShadowStage,
     compare_results,
 )
@@ -68,7 +75,11 @@ def execute_shadow(
 ) -> ShadowArtifacts:
     try:
         bridge = build_source_set(manifest, generated_at)
-        if facts is not None and sources_root is not None:
+    except Exception as exc:
+        raise ShadowExecutionFailure(ShadowStage.BRIDGE, exc) from exc
+
+    if facts is not None and sources_root is not None:
+        try:
             materialized_manifest = manifest.model_copy(
                 update={"sources_root": str(sources_root)}
             )
@@ -80,6 +91,10 @@ def execute_shadow(
                 generated_at,
             )
             bridge = with_materialized_evidence(bridge, evidence)
+        except Exception as exc:
+            raise ShadowExecutionFailure(ShadowStage.ACQUISITION, exc) from exc
+
+    try:
         runtime_result = build_runtime_result(plan, bridge)
         metadata = build_contract_metadata(plan, bridge)
     except Exception as exc:
@@ -121,15 +136,55 @@ def execute_shadow(
                 )
             ),
         )
+    except Exception as exc:
+        raise ShadowExecutionFailure(ShadowStage.SERVICE, exc) from exc
+
+    try:
         service.reconcile(source_set_id)
+    except Exception as exc:
+        raise ShadowExecutionFailure(ShadowStage.VERIFICATION, exc) from exc
+
+    try:
         service.build_contract(source_set_id, metadata)
-        decision = service.validate(source_set_id)
+    except Exception as exc:
+        raise ShadowExecutionFailure(ShadowStage.SERVICE, exc) from exc
+
+    try:
+        decision = service.validate(
+            source_set_id,
+            (
+                OpenApiProjectionCompiler(version="2"),
+                ReviewProjectionCompiler(version="2"),
+                ProvenanceProjectionCompiler(version="1"),
+            ),
+        )
+    except Exception as exc:
+        raise ShadowExecutionFailure(ShadowStage.PROJECTION, exc) from exc
+
+    try:
         claims = contract_store.get_claims(source_set_id)
         contract = contract_store.get_contract(source_set_id)
         workflow = contract_store.get_workflow(source_set_id)
     except Exception as exc:
         raise ShadowExecutionFailure(ShadowStage.SERVICE, exc) from exc
 
+    relationships_by_id = {
+        relationship.id: relationship
+        for claim in claims
+        for relationship in claim.support_relationships
+    }
+    relationships = tuple(
+        relationships_by_id[key] for key in sorted(relationships_by_id)
+    )
+    projections = tuple(
+        ShadowProjection(
+            name=projection.name,
+            version=projection.version,
+            media_type=projection.media_type,
+            payload=json.loads(projection.content),
+        )
+        for projection in contract_store.projections.get(source_set_id, ())
+    )
     diagnostics = (
         *bridge.diagnostics,
         *(parse_bridge_diagnostic(message) for message in runtime_result.diagnostics),
@@ -150,11 +205,13 @@ def execute_shadow(
         evidence=bridge.evidence,
         runtime_result=runtime_result,
         claims=claims,
+        relationships=relationships,
         contract=contract,
         decision=decision,
         workflow=workflow,
         events=tuple(event_sink.events),
         comparison=comparison,
+        projections=projections,
         artifact_publications=len(artifact_sink.publications),
         approval_requests=approval.requests,
     )
