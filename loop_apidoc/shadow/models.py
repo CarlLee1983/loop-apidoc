@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loop_apidoc.core.models import (
+    ClaimEvidenceRelationship,
     DomainEvent,
     EvidenceBundle,
     GroundedClaim,
@@ -30,8 +31,11 @@ class ArchitectureMode(str, Enum):
 
 
 class ShadowStage(str, Enum):
+    ACQUISITION = "acquisition"
     BRIDGE = "bridge"
+    VERIFICATION = "verification"
     SERVICE = "service"
+    PROJECTION = "projection"
     COMPARISON = "comparison"
     REPORT = "report"
 
@@ -78,16 +82,25 @@ class ShadowExecutionSummary(FrozenModel):
     message: str | None = None
 
 
+class ShadowProjection(FrozenModel):
+    name: str
+    version: str
+    media_type: str
+    payload: Any
+
+
 class ShadowArtifacts(FrozenModel):
     source_set: SourceSet
     evidence: EvidenceBundle
     runtime_result: RuntimeResult
     claims: tuple[GroundedClaim, ...]
+    relationships: tuple[ClaimEvidenceRelationship, ...] = ()
     contract: GroundedApiContract
     decision: ValidationDecision
     workflow: WorkflowRecord
     events: tuple[DomainEvent, ...]
     comparison: ShadowComparison
+    projections: tuple[ShadowProjection, ...] = ()
     artifact_publications: int = 0
     approval_requests: int = 0
 

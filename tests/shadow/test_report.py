@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 
 import loop_apidoc.shadow.report as report_mod
+import loop_apidoc.shadow.runner as runner_mod
 from loop_apidoc.run.models import RunStatus
 from loop_apidoc.shadow.report import run_shadow_safely, write_shadow_artifacts
 from loop_apidoc.shadow.runner import execute_shadow
+from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.models import ValidationReport
 from tests.shadow.test_runner import NOW, _manifest, _plan
 
@@ -15,11 +17,19 @@ EXPECTED_FILES = {
     "evidence.json",
     "runtime-result.json",
     "claims.json",
+    "relationships.json",
     "contract.json",
     "decision.json",
     "workflow.json",
     "events.json",
     "comparison.json",
+    "projections",
+}
+
+EXPECTED_PROJECTIONS = {
+    "openapi.json",
+    "review-data.json",
+    "provenance.json",
 }
 
 
@@ -37,10 +47,25 @@ def test_report_writes_complete_stable_artifact_set(tmp_path):
     assert summary.status == "ok"
     assert summary.comparison_path == str(tmp_path / "core" / "comparison.json")
     assert {path.name for path in (tmp_path / "core").iterdir()} == EXPECTED_FILES
+    assert {
+        path.name for path in (tmp_path / "core" / "projections").iterdir()
+    } == EXPECTED_PROJECTIONS
     comparison = json.loads(
         (tmp_path / "core" / "comparison.json").read_text(encoding="utf-8")
     )
     assert comparison["core_verdict"] == "accept"
+    relationships = json.loads(
+        (tmp_path / "core" / "relationships.json").read_text(encoding="utf-8")
+    )
+    assert relationships
+    assert {
+        relationship["relationship"] for relationship in relationships
+    } == {"insufficient"}
+    assert "entries" in json.loads(
+        (tmp_path / "core" / "projections" / "provenance.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert (
         (tmp_path / "core" / "source-set.json").read_text(encoding="utf-8")
         .endswith("\n")
@@ -118,3 +143,74 @@ def test_report_failure_leaves_only_error_json(tmp_path, monkeypatch):
     assert summary.status == "error"
     assert summary.stage.value == "report"
     assert {path.name for path in (tmp_path / "core").iterdir()} == {"error.json"}
+
+
+def test_safe_entry_point_classifies_acquisition_failure(tmp_path, monkeypatch):
+    def fail_acquisition(*_args, **_kwargs):
+        raise OSError("source read failed")
+
+    monkeypatch.setattr(
+        runner_mod,
+        "acquire_fragment_bundle",
+        fail_acquisition,
+    )
+
+    summary = run_shadow_safely(
+        manifest=_manifest(),
+        plan=_plan(),
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+        run_dir=tmp_path,
+    )
+
+    assert summary.status == "error"
+    assert summary.stage.value == "acquisition"
+
+
+def test_safe_entry_point_classifies_verification_failure(tmp_path, monkeypatch):
+    def fail_verification(*_args, **_kwargs):
+        raise ValueError("verification failed")
+
+    monkeypatch.setattr(
+        runner_mod.EvidenceToContractService,
+        "reconcile",
+        fail_verification,
+    )
+
+    summary = run_shadow_safely(
+        manifest=_manifest(),
+        plan=_plan(),
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+        run_dir=tmp_path,
+    )
+
+    assert summary.status == "error"
+    assert summary.stage.value == "verification"
+
+
+def test_safe_entry_point_classifies_projection_failure(tmp_path, monkeypatch):
+    def fail_projection(*_args, **_kwargs):
+        raise ValueError("projection failed")
+
+    monkeypatch.setattr(
+        runner_mod.OpenApiProjectionCompiler,
+        "compile",
+        fail_projection,
+    )
+
+    summary = run_shadow_safely(
+        manifest=_manifest(),
+        plan=_plan(),
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+        run_dir=tmp_path,
+    )
+
+    assert summary.status == "error"
+    assert summary.stage.value == "projection"

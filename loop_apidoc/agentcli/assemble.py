@@ -258,9 +258,10 @@ def run_assemble_pipeline(
         # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
         manifest = backfill_snapshot_files(manifest, url_coverage)
 
+    facts = collect_facts(sources_root, manifest)
     violations = check_extraction(
         inventory, named_endpoints(extraction_dir, endpoint_texts),
-        integration, manifest, collect_facts(sources_root, manifest))
+        integration, manifest, facts)
     if violations:
         raise AssembleInputError(
             "擷取輸入不符契約(修正後重跑 assemble):\n"
@@ -306,6 +307,8 @@ def run_assemble_pipeline(
         shadow = run_shadow_safely(
             manifest=manifest,
             plan=plan,
+            facts=facts,
+            sources_root=sources_root,
             legacy_report=report,
             legacy_status=status,
             generated_at=generated_at,
