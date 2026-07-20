@@ -4,46 +4,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from loop_apidoc.domain.evidence import (
+    ClaimEvidenceRelationship as ClaimEvidenceRelationship,
+    ClaimSupportProposal as ClaimSupportProposal,
+    EvidenceBundle as EvidenceBundle,
+    EvidenceFragment as EvidenceFragment,
+    SourceArtifact as SourceArtifact,
+    SourceDescriptor as SourceDescriptor,
+    SourceSet as SourceSet,
+)
 from loop_apidoc.domain.models import ClaimStatus, FrozenModel, GroundedApiContract
 from loop_apidoc.domain.projections import Projection
-
-
-class SourceDescriptor(FrozenModel):
-    id: str
-    kind: str
-    locator: str
-    media_type: str | None = None
-
-
-class SourceSet(FrozenModel):
-    id: str
-    version: str
-    sources: tuple[SourceDescriptor, ...]
-    lineage: tuple[str, ...] = ()
-
-
-class SourceArtifact(FrozenModel):
-    id: str
-    source_id: str
-    media_type: str
-    content_digest: str
-    acquired_at: datetime
-    acquisition_metadata: tuple[tuple[str, str], ...] = ()
-
-
-class EvidenceFragment(FrozenModel):
-    id: str
-    source_artifact_id: str
-    locator: str
-    fragment_digest: str
-    normalized_view_refs: tuple[str, ...] = ()
-
-
-class EvidenceBundle(FrozenModel):
-    source_set_id: str
-    source_set_version: str
-    artifacts: tuple[SourceArtifact, ...]
-    fragments: tuple[EvidenceFragment, ...]
 
 
 class ClaimProposal(FrozenModel):
