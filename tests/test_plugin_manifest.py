@@ -19,9 +19,9 @@ def test_release_versions_are_synced_at_0_10_0():
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text("utf-8"))
     init = (ROOT / "loop_apidoc" / "__init__.py").read_text("utf-8")
 
-    assert project["project"]["version"] == "0.14.0"
-    assert plugin["version"] == "0.14.0"
-    assert '__version__ = "0.14.0"' in init
+    assert project["project"]["version"] == "0.15.0"
+    assert plugin["version"] == "0.15.0"
+    assert '__version__ = "0.15.0"' in init
 
 
 def test_marketplace_lists_plugin():
