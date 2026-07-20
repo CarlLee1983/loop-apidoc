@@ -543,6 +543,94 @@ def _shape(**over):
     return base
 
 
+def _des_cbc_scheme() -> CryptoScheme:
+    return CryptoScheme(
+        status="supported",
+        name="Data",
+        purpose="request",
+        algorithm="DES-CBC",
+        mode="CBC",
+        payload_assembly=[
+            {"step": 1, "desc": "encrypt", "fields": ["account"]}
+        ],
+        verify=CryptoVerify(field="Data"),
+    )
+
+
+def test_render_py_des_cbc_is_gap_without_aes_or_request_wiring():
+    from loop_apidoc.generate.examples import _render_py
+
+    out = _render_py(
+        _shape(body=[("Data", "placeholder", "<data>")]),
+        [_des_cbc_scheme()],
+    )
+
+    assert "DES-CBC" in out and "# gap:" in out
+    assert "NotImplementedError" in out
+    assert "from Crypto.Cipher import AES" not in out
+    assert "AES.new(" not in out
+    assert 'payload["Data"] = sign(' not in out
+
+
+def test_render_ts_des_cbc_is_gap_without_cipher_or_request_wiring():
+    from loop_apidoc.generate.examples import _render_ts
+
+    out = _render_ts(
+        _shape(body=[("Data", "placeholder", "<data>")]),
+        [_des_cbc_scheme()],
+    )
+
+    assert "DES-CBC" in out and "// gap:" in out
+    assert "throw new Error" in out
+    assert "createCipheriv" not in out
+    assert '(body as any)["Data"] = sign(' not in out
+
+
+def test_des_cbc_shell_and_readme_do_not_claim_request_scripts_generate_value():
+    from loop_apidoc.generate.examples import _render_curl, _render_readme
+
+    shell = _render_curl(
+        _shape(body=[("Data", "placeholder", "<data>")]),
+        [_des_cbc_scheme()],
+    )
+    readme = _render_readme(["Transfer"], [_des_cbc_scheme()])
+
+    assert "請先跑 request.py / request.ts 取得簽章值" not in shell
+    assert "簽章值請先跑 request.py / request.ts 取得" not in readme
+    assert "不支援" in shell
+    assert "不支援" in readme
+
+
+def test_partial_crypto_guidance_names_source_information_gap():
+    from loop_apidoc.generate.examples import _render_curl, _render_readme
+
+    partial = CryptoScheme(
+        status="supported",
+        name="Partial AES",
+        algorithm="AES-256-CBC",
+    )
+
+    shell = _render_curl(_shape(), [partial])
+    readme = _render_readme(["Transfer"], [partial])
+
+    assert "來源資訊不足" in shell
+    assert "來源資訊不足" in readme
+
+
+def test_unsupported_crypto_gap_names_declared_algorithm():
+    from loop_apidoc.generate.examples import _py_signature, _ts_signature
+
+    scheme = CryptoScheme(
+        status="supported",
+        name="Digest",
+        algorithm="MD5",
+        payload_assembly=[{"step": 1, "desc": "digest payload"}],
+    )
+
+    assert "MD5" in _py_signature([scheme])
+    assert "MD5" in _ts_signature([scheme])
+
+
 # --- #1 三語 body 編碼一致 ---
 
 def test_encoding_consistent_json_across_languages():

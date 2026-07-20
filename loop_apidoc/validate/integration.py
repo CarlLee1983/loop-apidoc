@@ -3,9 +3,8 @@ from __future__ import annotations
 import re
 
 from loop_apidoc.generate.examples import (
-    _is_cbc,
+    _is_runnable_crypto,
     _request_signing_schemes,
-    _signature_explicit,
 )
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.generate.naming import component_key
@@ -149,7 +148,7 @@ def _signature_wiring(plan: NormalizationPlan, result: GenerateResult) -> list[I
     issues: list[Issue] = []
     examples = result.examples or {}
     for idx, s in enumerate(_request_signing_schemes(plan)):
-        if not (_signature_explicit(s) and _is_cbc(s)):
+        if not _is_runnable_crypto(s):
             continue
         label = s.name or str(idx)
         target = s.verify.field if s.verify else None

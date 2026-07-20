@@ -36,6 +36,9 @@ REQUIRED_BENCHMARK_CASES = (
     "paypal-webhooks-incomplete",
     "ecpay-creditcard-pdf",
     "adyen-payments-multimethod",
+    "jili-legacy-gaming-pdf",
+    "funkygames-transfer-operator",
+    "rsg-game-transfer-wallet",
 )
 
 
