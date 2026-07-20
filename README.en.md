@@ -2,6 +2,20 @@
 
 > Loop Engineering's **source-grounded API documentation pipeline**
 
+## Architecture direction
+
+The stable product is an evidence-to-contract platform: **Evidence Ledger → Grounded Claim
+Graph → Canonical API Contract IR → deterministic assurance → governed releases**. Models,
+agents, prompts, CLI commands, storage, and artifact destinations implement typed ports and
+remain replaceable. Runtime output is a claim proposal, never source truth or an approval
+decision; OpenAPI is a deterministic projection, not the canonical representation.
+
+The new `domain/`, `core/`, `adapters/`, and `evaluation/` packages implement this
+model-independent boundary. The agent-native workflow documented below remains the current
+CLI compatibility adapter. See the
+[architecture overview](docs/ARCHITECTURE.md) and
+[design](docs/superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md).
+
 *繁體中文版見 [README.md](README.md)。*
 
 `loop-apidoc` is a repeatable CLI that turns API integration documents of varying formats and completeness into consistent, traceable standardized artifacts:

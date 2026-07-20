@@ -1,7 +1,7 @@
 # Model-Independent loop-apidoc Architecture
 
 **Date:** 2026-07-20
-**Status:** Design direction approved; written specification pending review
+**Status:** Implemented as the model-independent foundation; existing CLI retained as a compatibility adapter
 
 ## 1. Purpose
 

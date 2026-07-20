@@ -2,6 +2,18 @@
 
 > Loop Engineering 的**來源依據式（source-grounded）API 文件 pipeline**
 
+## 架構方向
+
+穩定的產品核心是 evidence-to-contract 平台：**Evidence Ledger → Grounded Claim Graph →
+Canonical API Contract IR → 確定性 assurance → 受治理 release**。模型、agent、prompt、CLI
+命令、儲存與產物目的地都只實作 typed port，可隨時替換。Runtime Adapter 的輸出只是 claim
+proposal，不是來源真相或批准決策；OpenAPI 是確定性 projection，不是 canonical truth。
+
+新的 `domain/`、`core/`、`adapters/`、`evaluation/` package 已實作這條
+model-independent 邊界。下方 agent-native 流程仍是現行 CLI 的相容 adapter。詳見
+[架構總覽](docs/ARCHITECTURE.md)與
+[設計規格](docs/superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md)。
+
 *English version: [README.en.md](README.en.md)*
 
 `loop-apidoc` 是一套可重複執行的 CLI，將格式與完整度不一的 API 串接文件，整理成一致、可追溯的標準化產物：

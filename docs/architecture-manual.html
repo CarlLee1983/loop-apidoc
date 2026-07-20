@@ -591,6 +591,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     <h1>loop-apidoc 架構說明手冊</h1>
     <a href="operator-manual.html" class="back-link">← 操作者手冊</a>
   </header>
+  <p><strong>Canonical 架構：</strong><code>domain/</code> + <code>core/</code> 定義 model-independent evidence-to-contract 產品；<code>adapters/</code> 放可替換 runtime/platform 細節，<code>evaluation/</code> 與 production mutation 隔離。下方 pipeline dashboard 記錄現行 CLI 相容 adapter。</p>
 
   <div class="dashboard">
     <!-- Left Timeline Navigation -->

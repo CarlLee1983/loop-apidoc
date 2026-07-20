@@ -27,6 +27,14 @@ When invoked from inside the installed plugin, the CLI is called as
 
 ## Execution model: agent-native (key architecture)
 
+The stable product architecture now lives in `loop_apidoc/domain/`,
+`loop_apidoc/core/`, `loop_apidoc/adapters/`, and `loop_apidoc/evaluation/`.
+It is model/platform independent: runtime output is a claim proposal, Core reconciles and
+governs it, Domain owns the Canonical API Contract IR and deterministic rules/projections,
+and Evaluation is isolated from production mutation. The agent-native flow below remains
+the current CLI compatibility adapter, not a product invariant. See
+`docs/superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md`.
+
 There is **one** extraction path: the current coding agent (Claude Code or Codex) is the extraction engine. Driven by `skills/loop-apidoc/SKILL.md`, it reads the sources via a subagent fan-out that is **read-only toward sources**: each **endpoint** subagent writes its own `endpoints/ep<N>.json` and returns a one-line summary, while the **inventory**/**integration** subagents return JSON that the orchestrating agent writes to `inventory.json` (+ optional `integration.json`). The orchestrator then verifies the extraction (`verify-extraction`, the same input gate `assemble` applies) before calling the deterministic CLI `assemble` for the shared **plan → generate → validate** back half.
 
 `assemble` does **not** extract — it only assembles agent-written JSON (`manifest → plan → generate → validate`) and reports results via `--json` so the agent can drive the correction loop itself (re-reading sources and overwriting the JSON, then re-running `assemble`).

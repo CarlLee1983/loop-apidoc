@@ -597,6 +597,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     <h1>loop-apidoc Architecture Manual</h1>
     <a href="operator-manual.en.html" class="back-link">← Operator Manual</a>
   </header>
+  <p><strong>Canonical architecture:</strong> <code>domain/</code> + <code>core/</code> define the model-independent evidence-to-contract product; <code>adapters/</code> contains replaceable runtime/platform details and <code>evaluation/</code> is isolated from production mutation. The pipeline dashboard below documents the current CLI compatibility adapter.</p>
 
   <div class="dashboard">
     <!-- Left Timeline Navigation -->
