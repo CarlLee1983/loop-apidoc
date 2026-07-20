@@ -674,6 +674,7 @@
     </div>
     <div class="arch-note">
       <b>Core shadow seam.</b> Opt in with <code class="inline">assemble --architecture-mode shadow</code>. After the legacy report is written, <code class="inline">shadow/</code> maps the in-memory manifest and plan into Core evidence and claims, runs through Core validation only, and writes observational artifacts under <code class="inline">&lt;run-dir&gt;/core/</code>. It never approves, publishes, updates Foundry, or changes the legacy status or exit code.
+      Claim paths are bound to exact fragments by <code class="inline">explicit_support</code>, <code class="inline">derived_support</code>, <code class="inline">contradicts</code>, or <code class="inline">insufficient</code>. A whole-document legacy citation cannot become supported; inspect <code class="inline">relationships.json</code> and <code class="inline">projections/provenance.json</code>.
     </div>
   </div>
 </section>
@@ -1058,7 +1059,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">shadow/report.py</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, <code class="inline">freshness/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
+    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">shadow/report.py</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, <code class="inline">freshness/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files. <code class="inline">adapters/fragments.py</code> is a read-side I/O exit that materializes exact fragments; Core and Domain remain pure.</p>
   </div>
 </section>
 

@@ -90,19 +90,27 @@ One object describing the whole API. **You** write what the single inventory sub
   endpoints:    [{"method":"GET","path":"/bets","server":"reporting", ...}]
   ```
 - Each `source` **must start with the manifest `relative_path` of the file it came from**,
-  followed by a page (`p.<N>`) or URL anchor (`#<anchor>`); anything after that is free text.
+  followed by the most precise deterministic locator available. Accepted semantic-shadow
+  grammars are: `p.12` / `page 12` / `頁 12`; `line 10` / `lines 10-14` / `L10-L14`;
+  `§2.1`, an exact Markdown heading path, or exact `#anchor`; RFC 6901 `#/...` or `/...`;
+  `css:<selector>`; and `xpath:<expression>`.
   `assemble` matches this string against `manifest.json` — a file whose citations name no
   manifest source at all is rejected at the input boundary (`exit 2`).
 
   ```
   ✓ "HRXT_transfer_wallet_v1.00.pdf p.10 — ## 2.4 钱包存款 注意事项"
   ✓ "paypal-webhooks-overview.md#verifying-authenticity"
+  ✓ "openapi.json#/paths/~1payments/post"
+  ✓ "manual.md lines 42-48"
   ✗ "## 2.4 钱包存款 注意事项 (line 331)"   ← names no source file
   ✗ "第 3 節"                                ← names no source file
   ```
 
   Single-source runs are exempt (attribution is unambiguous), but write the full form
-  anyway — it stays correct when a second source is added.
+  anyway — it stays correct when a second source is added. Filename-only citations remain
+  compatible with legacy validation, but Core shadow cannot locate an exact fragment from
+  them: the relationship becomes `insufficient` and the claim remains unverified rather
+  than being treated as `explicit_support`.
 - `schemas[].fields[]` uses the **English** keys `name`/`type`/`required`/`description`
   (same shape as endpoint `parameters`). Nested fields use the dotted-path convention
   (see endpoints below).

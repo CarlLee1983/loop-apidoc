@@ -1070,6 +1070,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
     <span class="eyebrow">安全導入 CORE</span>
     <h2 class="section-title">在不改變既有權威的前提下比較 Core</h2>
     <p class="section-lead"><code>assemble --architecture-mode shadow</code> 會在 legacy validation 後執行觀測性 Core 旁路，將 evidence、claims、canonical contract、policy decision、workflow/events 與 comparison 寫入 <code>&lt;run-dir&gt;/core/</code>。Legacy 結果、score、approval、Foundry 與退出碼仍具權威；預設模式不建立 <code>core/</code>。</p>
+    <p class="section-lead">Claim-level ledger 會把每個 material claim path 以 <code>explicit_support</code>、<code>derived_support</code>、<code>contradicts</code> 或 <code>insufficient</code> 連到 exact typed fragment 與 source artifact。Support 由 deterministic Core verification 決定，不看 runtime confidence；整份文件級的 legacy citation 維持 unverified。精確追蹤請看 <code>relationships.json</code> 與 <code>projections/provenance.json</code>。</p>
   </div>
 </section>
 
