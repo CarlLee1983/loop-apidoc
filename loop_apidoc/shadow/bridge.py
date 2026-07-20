@@ -6,7 +6,9 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
+from loop_apidoc.adapters.fragments import FragmentRequest, parse_legacy_locator
 from loop_apidoc.core.models import (
+    ClaimSupportProposal,
     ClaimProposal,
     EvidenceBundle,
     EvidenceFragment,
@@ -14,6 +16,22 @@ from loop_apidoc.core.models import (
     SourceArtifact,
     SourceDescriptor,
     SourceSet,
+)
+from loop_apidoc.domain.claim_paths import (
+    claim_value_at,
+    material_claim_paths,
+)
+from loop_apidoc.domain.evidence import (
+    FragmentPrecision,
+    JsonPointerLocator,
+    LineRangeLocator,
+    PageLocator,
+    SupportRelationshipType,
+    TableCellLocator,
+    VerificationMethod,
+    WholeDocumentLocator,
+    XPathLocator,
+    CssSelectorLocator,
 )
 from loop_apidoc.domain.identity import (
     DomainIdentityError,
@@ -63,6 +81,15 @@ class BridgeInputs(FrozenModel):
         if manifest_source is None:
             return ()
         return dict(self.citation_fragments).get(manifest_source, ())
+
+    def fragments_for_citation(
+        self,
+        manifest_source: str | None,
+    ) -> tuple[EvidenceFragment, ...]:
+        ids = set(self.resolve_citation(manifest_source))
+        return tuple(
+            fragment for fragment in self.evidence.fragments if fragment.id in ids
+        )
 
 
 def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
@@ -170,6 +197,57 @@ def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
     )
 
 
+def build_source_set(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
+    """Build deterministic logical source identity before adapter acquisition."""
+    return build_evidence(manifest, generated_at)
+
+
+def with_materialized_evidence(
+    bridge: BridgeInputs,
+    evidence: EvidenceBundle,
+) -> BridgeInputs:
+    descriptors = {source.id: source for source in bridge.source_set.sources}
+    source_by_artifact = {
+        artifact.id: artifact.source_id for artifact in evidence.artifacts
+    }
+    citations: dict[str, set[str]] = {}
+    for fragment in evidence.fragments:
+        source_id = source_by_artifact.get(fragment.source_artifact_id)
+        descriptor = descriptors.get(source_id) if source_id is not None else None
+        if descriptor is not None:
+            citations.setdefault(descriptor.locator, set()).add(fragment.id)
+    return bridge.model_copy(
+        update={
+            "evidence": evidence,
+            "citation_fragments": tuple(
+                (source, tuple(sorted(fragment_ids)))
+                for source, fragment_ids in sorted(citations.items())
+            ),
+        }
+    )
+
+
+def build_fragment_requests(
+    plan: NormalizationPlan,
+    bridge: BridgeInputs,
+) -> tuple[FragmentRequest, ...]:
+    source_ids = {
+        source.locator: source.id for source in bridge.source_set.sources
+    }
+    requests: dict[str, FragmentRequest] = {}
+    for citation in _all_citations(plan):
+        source_id = source_ids.get(citation.manifest_source or "")
+        if source_id is None or citation.locator is None:
+            continue
+        locator = _citation_locator(citation)
+        if locator.kind == "unresolved":
+            continue
+        request = FragmentRequest(source_id=source_id, locator=locator)
+        key = _canonical_json(request.model_dump(mode="json"))
+        requests[key] = request
+    return tuple(requests[key] for key in sorted(requests))
+
+
 def build_runtime_result(
     plan: NormalizationPlan,
     bridge: BridgeInputs,
@@ -204,7 +282,12 @@ def build_runtime_result(
                 )
             )
             emitted.append(
-                replace(group[0], evidence_refs=(), diagnostics=())
+                replace(
+                    group[0],
+                    evidence_refs=(),
+                    support_proposals=(),
+                    diagnostics=(),
+                )
             )
             continue
         emitted.extend(distinct[key] for key in sorted(distinct))
@@ -250,6 +333,7 @@ class _ProposalCandidate:
     predicate: str
     value: Any
     evidence_refs: tuple[str, ...]
+    support_proposals: tuple[ClaimSupportProposal, ...]
     diagnostics: tuple[BridgeDiagnostic, ...]
 
     @property
@@ -324,10 +408,21 @@ def _candidate(
         in {PlanItemStatus.SUPPORTED, PlanItemStatus.CONFLICTING},
     )
     status = entry.status
+    support_proposals: tuple[ClaimSupportProposal, ...] = ()
+    support_diagnostics: tuple[BridgeDiagnostic, ...] = ()
+    if status in {PlanItemStatus.SUPPORTED, PlanItemStatus.CONFLICTING}:
+        support_proposals, support_diagnostics = _semantic_support_proposals(
+            citations=entry.citations,
+            plan_location=plan_location,
+            claim_kind=claim_kind,
+            value=value,
+            bridge=bridge,
+        )
     if status is PlanItemStatus.MISSING:
         value = None
     elif status is PlanItemStatus.UNVERIFIED:
         evidence_refs = ()
+        support_proposals = ()
     return _ProposalCandidate(
         plan_location=plan_location,
         status=status,
@@ -336,7 +431,8 @@ def _candidate(
         predicate="definition",
         value=value,
         evidence_refs=evidence_refs,
-        diagnostics=diagnostics,
+        support_proposals=support_proposals,
+        diagnostics=(*diagnostics, *support_diagnostics),
     )
 
 
@@ -394,7 +490,10 @@ def _to_claim_proposal(candidate: _ProposalCandidate) -> ClaimProposal:
         "subject": candidate.subject,
         "predicate": candidate.predicate,
         "value": candidate.value,
-        "evidence_refs": sorted(candidate.evidence_refs),
+        "support_proposals": [
+            proposal.model_dump(mode="json")
+            for proposal in candidate.support_proposals
+        ],
     }
     digest = hashlib.sha256(_canonical_json(stable_input).encode()).hexdigest()[:20]
     return ClaimProposal(
@@ -404,6 +503,7 @@ def _to_claim_proposal(candidate: _ProposalCandidate) -> ClaimProposal:
         predicate=candidate.predicate,
         value=candidate.value,
         evidence_refs=candidate.evidence_refs,
+        support_proposals=candidate.support_proposals,
         runtime_identity=SHADOW_RUNTIME_IDENTITY,
         runtime_observation=candidate.plan_location,
     )
@@ -579,6 +679,252 @@ def _diagnostic_text(diagnostic: BridgeDiagnostic) -> str:
 
 def parse_bridge_diagnostic(value: str) -> BridgeDiagnostic:
     return BridgeDiagnostic.model_validate_json(value)
+
+
+def _semantic_support_proposals(
+    *,
+    citations: list[SourceCitation],
+    plan_location: str,
+    claim_kind: str,
+    value: Any,
+    bridge: BridgeInputs,
+) -> tuple[
+    tuple[ClaimSupportProposal, ...],
+    tuple[BridgeDiagnostic, ...],
+]:
+    proposals: dict[str, ClaimSupportProposal] = {}
+    diagnostics: list[BridgeDiagnostic] = []
+    paths = material_claim_paths(claim_kind, value)
+    for path in paths:
+        exact: list[tuple[EvidenceFragment, VerificationMethod]] = []
+        degraded: list[EvidenceFragment] = []
+        for citation in citations:
+            fragments = bridge.fragments_for_citation(citation.manifest_source)
+            document = [
+                fragment
+                for fragment in fragments
+                if isinstance(fragment.locator, WholeDocumentLocator)
+            ]
+            if citation.locator is not None:
+                locator = _citation_locator(citation)
+                if locator.kind == "unresolved":
+                    diagnostics.append(
+                        BridgeDiagnostic(
+                            code="LOCATOR_UNRESOLVED",
+                            message="legacy citation locator is ambiguous",
+                            plan_location=plan_location,
+                            manifest_source=citation.manifest_source,
+                            query_id=citation.query_id,
+                            answer_path=citation.answer_path,
+                        )
+                    )
+                    degraded.extend(document)
+                    continue
+                selected = [
+                    fragment
+                    for fragment in fragments
+                    if fragment.locator == locator
+                    and fragment.precision is FragmentPrecision.EXACT
+                    and _fragment_is_applicable(
+                        fragment,
+                        claim_kind,
+                        value,
+                        path,
+                    )
+                ]
+                exact.extend(
+                    (fragment, _verification_method(fragment))
+                    for fragment in selected
+                )
+                if not selected:
+                    degraded.extend(document)
+                continue
+            selected = _source_fact_fragments_for_path(fragments, path)
+            exact.extend(
+                (fragment, _verification_method(fragment))
+                for fragment in selected
+            )
+            if not selected:
+                degraded.extend(document)
+
+        if exact:
+            for fragment, method in exact:
+                proposal = ClaimSupportProposal(
+                    fragment_id=fragment.id,
+                    claim_path=path,
+                    proposed_relationship=(
+                        SupportRelationshipType.EXPLICIT_SUPPORT
+                    ),
+                    verification_method=method,
+                    runtime_observation=plan_location,
+                )
+                proposals[_canonical_json(proposal.model_dump(mode="json"))] = proposal
+            continue
+
+        if degraded:
+            fragment = sorted(degraded, key=lambda item: item.id)[0]
+            proposal = ClaimSupportProposal(
+                fragment_id=fragment.id,
+                claim_path=path,
+                proposed_relationship=SupportRelationshipType.EXPLICIT_SUPPORT,
+                verification_method=VerificationMethod.EXACT_NORMALIZED_VALUE,
+                runtime_observation=plan_location,
+            )
+            proposals[_canonical_json(proposal.model_dump(mode="json"))] = proposal
+        diagnostics.append(
+            BridgeDiagnostic(
+                code="CLAIM_PATH_UNSUPPORTED",
+                message=f"no exact deterministic fragment supports claim path {path}",
+                plan_location=plan_location,
+            )
+        )
+
+    if paths and not all(
+        any(proposal.claim_path == path for proposal in proposals.values())
+        and any(
+            proposal.claim_path == path
+            and bridge.evidence.fragments[
+                _fragment_index(bridge.evidence, proposal.fragment_id)
+            ].precision
+            is FragmentPrecision.EXACT
+            for proposal in proposals.values()
+        )
+        for path in paths
+    ):
+        diagnostics.append(
+            BridgeDiagnostic(
+                code="LEGACY_CITATION_DEGRADED",
+                message=(
+                    "legacy citation could not be mapped to exact fragments "
+                    "for every material claim path"
+                ),
+                plan_location=plan_location,
+            )
+        )
+    return (
+        tuple(proposals[key] for key in sorted(proposals)),
+        tuple(_unique_diagnostics(diagnostics)),
+    )
+
+
+def _fragment_index(evidence: EvidenceBundle, fragment_id: str) -> int:
+    for index, fragment in enumerate(evidence.fragments):
+        if fragment.id == fragment_id:
+            return index
+    raise KeyError(fragment_id)
+
+
+def _source_fact_fragments_for_path(
+    fragments: tuple[EvidenceFragment, ...],
+    claim_path: str,
+) -> tuple[EvidenceFragment, ...]:
+    parts = claim_path.strip("/").split("/")
+    if len(parts) == 4 and parts[0] == "parameters":
+        _, _location, name, field = parts
+        cells = [
+            fragment
+            for fragment in fragments
+            if isinstance(fragment.locator, TableCellLocator)
+            and fragment.precision is FragmentPrecision.EXACT
+        ]
+        rows_with_name = {
+            (cell.locator.table_index, cell.locator.row_index)
+            for cell in cells
+            if _column_role(cell.locator.column_name) == "name"
+            and str(cell.semantic_value) == _unescape_segment(name)
+        }
+        return tuple(
+            cell
+            for cell in cells
+            if (cell.locator.table_index, cell.locator.row_index) in rows_with_name
+            and _column_role(cell.locator.column_name) == field
+        )
+    return ()
+
+
+def _column_role(column_name: str | None) -> str | None:
+    lowered = (column_name or "").strip().lower()
+    if any(token in lowered for token in ("name", "field", "參數", "欄位", "名稱")):
+        return "name"
+    if any(token in lowered for token in ("required", "mandatory", "必填")):
+        return "required"
+    return None
+
+
+def _verification_method(fragment: EvidenceFragment) -> VerificationMethod:
+    if isinstance(fragment.locator, TableCellLocator):
+        return VerificationMethod.TABLE_CELL_MAPPING
+    if isinstance(fragment.locator, JsonPointerLocator):
+        return VerificationMethod.STRUCTURED_FIELD_PATH
+    if fragment.semantic_role and fragment.semantic_role.startswith("endpoint."):
+        return VerificationMethod.SOURCE_FACT_COVERAGE
+    return VerificationMethod.EXACT_NORMALIZED_VALUE
+
+
+def _fragment_is_applicable(
+    fragment: EvidenceFragment,
+    claim_kind: str,
+    claim_value: Any,
+    claim_path: str,
+) -> bool:
+    if isinstance(fragment.locator, JsonPointerLocator):
+        expected = claim_value_at(claim_kind, claim_value, claim_path)
+        observed = fragment.semantic_value
+        if isinstance(observed, dict):
+            try:
+                observed = claim_value_at(claim_kind, observed, claim_path)
+            except Exception:
+                return False
+        return _canonical_json(expected) == _canonical_json(observed)
+    if isinstance(fragment.locator, TableCellLocator):
+        return _column_role(fragment.locator.column_name) == claim_path.rsplit("/", 1)[-1]
+    return isinstance(
+        fragment.locator,
+        (LineRangeLocator, PageLocator, CssSelectorLocator, XPathLocator),
+    )
+
+
+def _citation_locator(citation: SourceCitation):
+    raw = citation.locator
+    if raw is None:
+        return parse_legacy_locator(None)
+    if raw.startswith(("css:", "xpath:", "section:")) or "#" in raw:
+        return parse_legacy_locator(raw)
+    source = citation.manifest_source or ""
+    return parse_legacy_locator(f"{source} {raw}".strip())
+
+
+def _all_citations(plan: NormalizationPlan) -> tuple[SourceCitation, ...]:
+    entries: list[Any] = [
+        *plan.environments,
+        *plan.endpoints,
+        *plan.schemas,
+        *plan.security_schemes,
+        *plan.errors,
+        *plan.operational,
+    ]
+    if plan.integration is not None:
+        entries.extend(plan.integration.crypto)
+        entries.extend(plan.integration.callbacks)
+        entries.extend(plan.integration.field_conditions)
+        entries.extend(plan.integration.test_cases)
+    return tuple(
+        citation for entry in entries for citation in entry.citations
+    )
+
+
+def _unescape_segment(value: str) -> str:
+    return value.replace("~1", "/").replace("~0", "~")
+
+
+def _unique_diagnostics(
+    diagnostics: list[BridgeDiagnostic],
+) -> tuple[BridgeDiagnostic, ...]:
+    unique = {
+        _canonical_json(item.model_dump(mode="json")): item
+        for item in diagnostics
+    }
+    return tuple(unique[key] for key in sorted(unique))
 
 
 def _canonical_source_metadata(manifest: Manifest) -> list[dict[str, str | None]]:
