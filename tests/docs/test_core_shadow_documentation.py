@@ -104,3 +104,20 @@ def test_agent_guides_keep_fragment_io_inventory_aligned():
         text = Path(path).read_text(encoding="utf-8")
         assert "adapters/fragments.py" in text
         assert "shadow/report.py" in text
+
+
+def test_semantic_evidence_design_status_matches_implementation():
+    semantic = Path(
+        "docs/superpowers/specs/"
+        "2026-07-20-claim-level-semantic-support-design.md"
+    ).read_text(encoding="utf-8")
+    shadow = Path(
+        "docs/superpowers/specs/"
+        "2026-07-20-core-shadow-integration-design.md"
+    ).read_text(encoding="utf-8")
+    checklist = Path("docs/RELEASE_CHECKLIST.md").read_text(encoding="utf-8")
+
+    assert "**Status:** Implemented" in semantic
+    assert "Superseded by the claim-level semantic evidence design" in shadow
+    assert "13 required cases" in checklist
+    assert "13 benchmark cases" in checklist

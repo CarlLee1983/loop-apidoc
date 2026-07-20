@@ -4,6 +4,11 @@
 **Status:** Approved for implementation  
 **Scope:** Opt-in shadow execution inside the existing `assemble` compatibility adapter
 
+> **Evidence-granularity note:** The whole-document fragment model in this historical
+> design was superseded by the claim-level semantic evidence design after this integration
+> seam shipped. Current shadow behavior uses exact typed fragments and deterministic
+> support relationships.
+
 ## 1. Goal
 
 Connect the model-independent `domain/` and `core/` foundation to the current
@@ -29,8 +34,9 @@ exit code remain authoritative during this phase.
    Foundry, or update a current pointer.
 6. Source material remains the only factual authority. Bridge code never supplies missing
    values or inferred conventions.
-7. The first evidence granularity is one whole-source fragment per immutable source
-   artifact. Finer Markdown-section, PDF-page, and URL-section fragments are future work.
+7. **Superseded by the claim-level semantic evidence design:** the first implementation
+   used one whole-source fragment per immutable source artifact. Current shadow behavior
+   materializes exact typed fragments; see the evidence-granularity note above.
 
 ## 3. Non-goals
 
