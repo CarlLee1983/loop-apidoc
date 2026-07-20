@@ -1,8 +1,45 @@
-# 架構
+# Architecture / 架構
+
+## Product architecture (canonical)
+
+`loop-apidoc` is an evidence-to-contract system. Its stable product boundary is:
+
+```text
+Evidence Ledger
++ Grounded Claim Graph
++ Canonical API Contract IR
++ Deterministic Assurance Engine
++ Governed Contract Registry
+```
+
+The implementation mirrors the
+[model-independent architecture design](superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md):
+
+- `domain/` owns the API ontology, canonical identities, immutable contract IR,
+  deterministic rule packs, and pure projection compilers.
+- `core/` owns immutable evidence, claim reconciliation, lifecycle, policy, governance,
+  intent-oriented use cases, and typed ports.
+- `adapters/` owns runtime and platform details. Models, parsers, humans, local files,
+  databases, registries, and future agent runtimes are replaceable adapters.
+- `evaluation/` owns immutable cases, replay, and quality/cost/latency metrics. It cannot
+  approve or mutate production assets.
+
+Core and Domain perform no filesystem, network, process, browser, model, or database I/O.
+Runtime output is always a proposal; deterministic reconciliation and policy decide whether
+the claim is supported, missing, conflicting, unverified, waived, or superseded.
+OpenAPI and the review payload are projections of the Canonical API Contract IR, not its
+source of truth.
+
+## Current CLI compatibility architecture / 現行 CLI 相容架構
+
+The agent-native pipeline described below remains the shipping CLI workflow in v0.14 and is
+preserved as a compatibility adapter. Agent topology, prompt strategy, command layout,
+filesystem run directories, and the exact artifact set are replaceable implementation
+choices; they are no longer the product's architectural center.
 
 本文件說明 `loop-apidoc` 的整體流程、資料流與套件邊界。完整設計依據見 [`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)。
 
-## 執行模式:agent-native
+## 現行 CLI 執行模式:agent-native
 
 `loop-apidoc` 的擷取引擎是**當前的 coding agent 自己**。在 Claude Code plugin 或 OpenAI Codex CLI 的 session 內,agent 依 [`skills/loop-apidoc/SKILL.md`](../skills/loop-apidoc/SKILL.md) 讀來源、以**唯讀 subagent fan-out** 擷取(每個 subagent 只讀檔與搜尋、回傳 JSON,**不寫檔**),主 agent 把回傳的 JSON 寫成 `inventory.json` + `endpoints/*.json`,再呼叫確定性 CLI `assemble` 跑後段 plan→generate→validate,並以 `--json` 回報結果供 agent 自行驅動修正。
 
