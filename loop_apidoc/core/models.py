@@ -24,6 +24,7 @@ class ClaimProposal(FrozenModel):
     predicate: str
     value: Any = None
     evidence_refs: tuple[str, ...] = ()
+    support_proposals: tuple[ClaimSupportProposal, ...] = ()
     runtime_identity: str
     runtime_observation: str | None = None
     confidence: float | None = None

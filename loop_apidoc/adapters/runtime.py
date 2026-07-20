@@ -34,7 +34,9 @@ class CallableRuntimeAdapter:
                 raise RuntimeContractError("claim proposal runtime identity mismatch")
             if proposal.claim_kind not in requested:
                 raise RuntimeContractError("runtime returned an unrequested claim kind")
-            outside = set(proposal.evidence_refs) - scope
+            refs = set(proposal.evidence_refs)
+            refs.update(item.fragment_id for item in proposal.support_proposals)
+            outside = refs - scope
             if outside:
                 raise RuntimeContractError(
                     f"runtime referenced evidence outside authorized scope: {sorted(outside)}"
