@@ -19,6 +19,7 @@ from loop_apidoc.domain.evidence import (
     JsonPointerLocator,
     LineRangeLocator,
     PageLocator,
+    SectionLocator,
     SourceDescriptor,
     SourceSet,
     TableCellLocator,
@@ -67,6 +68,13 @@ def test_ambiguous_legacy_locator_is_unresolved():
     locator = parse_legacy_locator("see the payment section")
 
     assert isinstance(locator, UnresolvedLocator)
+
+
+def test_legacy_locator_parser_handles_absent_and_section_locators():
+    assert isinstance(parse_legacy_locator(None), UnresolvedLocator)
+    assert parse_legacy_locator(
+        "section:Payments > Request fields"
+    ) == SectionLocator(heading_path=("Payments", "Request fields"))
 
 
 def _local_source(
@@ -287,3 +295,193 @@ def test_url_without_local_snapshot_is_never_fetched(monkeypatch):
         fragment.precision is not FragmentPrecision.EXACT
         for fragment in bundle.fragments
     )
+
+
+def test_url_snapshot_materializes_json_pointer_without_network(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        httpx,
+        "get",
+        lambda *_args, **_kwargs: pytest.fail("network used"),
+    )
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text('{"items":[{"name":"amount"}]}', encoding="utf-8")
+    source_set = SourceSet(
+        id="sources",
+        version="1",
+        sources=(
+            SourceDescriptor(
+                id="remote",
+                kind="url",
+                locator="https://example.test/openapi.json",
+                media_type="application/json",
+            ),
+        ),
+    )
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        url_sources=[
+            UrlSource(
+                url="https://example.test/openapi.json",
+                fetched_at=NOW,
+                http_status=200,
+                snapshot_file="snapshot.json",
+            )
+        ],
+    )
+
+    bundle = acquire_fragment_bundle(
+        source_set,
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(
+                source_id="remote",
+                locator=JsonPointerLocator(pointer="/items/0/name"),
+            ),
+        ),
+        NOW,
+    )
+
+    fragment = next(
+        item
+        for item in bundle.fragments
+        if isinstance(item.locator, JsonPointerLocator)
+    )
+    assert fragment.semantic_value == "amount"
+    assert fragment.precision is FragmentPrecision.EXACT
+    assert bundle.artifacts[0].acquisition_metadata == (
+        ("filename", "snapshot.json"),
+    )
+
+
+def test_preprocessed_markdown_page_marker_materializes_exact_page(tmp_path):
+    source = tmp_path / "manual.md"
+    source.write_text(
+        "<!-- page: 1 -->\nfirst\n<!-- page: 2 -->\nsecond\n",
+        encoding="utf-8",
+    )
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            _local_source("manual.md", SourceFormat.MARKDOWN, source.read_bytes())
+        ],
+    )
+
+    bundle = acquire_fragment_bundle(
+        _source_set("manual", "manual.md", "text/markdown"),
+        manifest,
+        FactIndex(),
+        (FragmentRequest(source_id="manual", locator=PageLocator(page=2)),),
+        NOW,
+    )
+
+    page = next(
+        fragment
+        for fragment in bundle.fragments
+        if isinstance(fragment.locator, PageLocator)
+    )
+    assert page.normalized_excerpt == "second"
+    assert page.precision is FragmentPrecision.EXACT
+
+
+def test_unmaterializable_request_degrades_instead_of_guessing(tmp_path):
+    source = tmp_path / "manual.md"
+    source.write_text("one\n", encoding="utf-8")
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            _local_source("manual.md", SourceFormat.MARKDOWN, source.read_bytes())
+        ],
+    )
+
+    bundle = acquire_fragment_bundle(
+        _source_set("manual", "manual.md", "text/markdown"),
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(
+                source_id="manual",
+                locator=LineRangeLocator(start_line=1, end_line=2),
+            ),
+        ),
+        NOW,
+    )
+
+    fragment = next(
+        item
+        for item in bundle.fragments
+        if isinstance(item.locator, LineRangeLocator)
+    )
+    assert fragment.precision is FragmentPrecision.UNRESOLVED
+    assert fragment.normalized_excerpt is None
+
+
+@pytest.mark.parametrize(
+    ("suffix", "text"),
+    [
+        ("yaml", "items:\n  - amount\n"),
+        ("yml", "items:\n  - amount\n"),
+    ],
+)
+def test_url_yaml_snapshot_materializes_root_and_list_pointer(
+    tmp_path,
+    suffix,
+    text,
+):
+    snapshot_name = f"snapshot.{suffix}"
+    (tmp_path / snapshot_name).write_text(text, encoding="utf-8")
+    url = f"https://example.test/openapi.{suffix}"
+    source_set = SourceSet(
+        id="sources",
+        version="1",
+        sources=(
+            SourceDescriptor(
+                id="remote",
+                kind="url",
+                locator=url,
+                media_type="application/yaml",
+            ),
+        ),
+    )
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        url_sources=[
+            UrlSource(
+                url=url,
+                fetched_at=NOW,
+                http_status=200,
+                snapshot_file=snapshot_name,
+            )
+        ],
+    )
+
+    bundle = acquire_fragment_bundle(
+        source_set,
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(
+                source_id="remote",
+                locator=JsonPointerLocator(pointer=""),
+            ),
+            FragmentRequest(
+                source_id="remote",
+                locator=JsonPointerLocator(pointer="/items/0"),
+            ),
+        ),
+        NOW,
+    )
+
+    pointers = {
+        fragment.locator.pointer: fragment.semantic_value
+        for fragment in bundle.fragments
+        if isinstance(fragment.locator, JsonPointerLocator)
+    }
+    assert pointers == {"": {"items": ["amount"]}, "/items/0": "amount"}
