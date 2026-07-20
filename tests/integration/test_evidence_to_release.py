@@ -26,7 +26,17 @@ from loop_apidoc.core.models import (
     SourceSet,
 )
 from loop_apidoc.core.service import EvidenceToContractService
-from loop_apidoc.domain.models import ContractMetadata, EvidenceBinding
+from loop_apidoc.domain.claim_paths import claim_value_at, material_claim_paths
+from loop_apidoc.domain.evidence import (
+    ClaimSupportProposal,
+    FragmentPrecision,
+    LineRangeLocator,
+    SupportRelationshipType,
+    VerificationMethod,
+    canonical_json,
+    fragment_digest,
+)
+from loop_apidoc.domain.models import ContractMetadata
 from loop_apidoc.domain.projections import OpenApiProjectionCompiler
 from loop_apidoc.domain.rules import ApiDomainRulePack
 
@@ -35,6 +45,12 @@ NOW = datetime(2026, 7, 20, tzinfo=timezone.utc)
 
 
 def test_source_to_published_release_is_a_governed_sequence():
+    operation = {
+        "method": "GET",
+        "path": "/health",
+        "responses": [{"status_code": "200", "description": "OK"}],
+    }
+    paths = material_claim_paths("operation", operation)
     source_set = SourceSet(
         id="sources",
         version="1",
@@ -52,13 +68,22 @@ def test_source_to_published_release_is_a_governed_sequence():
                 acquired_at=NOW,
             ),
         ),
-        fragments=(
+        fragments=tuple(
             EvidenceFragment(
-                id="fragment-1",
+                id=f"fragment-{index}",
                 source_artifact_id="artifact-1",
-                locator="whole",
-                fragment_digest="b" * 64,
-            ),
+                locator=LineRangeLocator(start_line=index + 1, end_line=index + 1),
+                fragment_digest=fragment_digest(
+                    canonical_json(claim_value_at("operation", operation, path))
+                ),
+                normalized_excerpt=canonical_json(
+                    claim_value_at("operation", operation, path)
+                ),
+                semantic_value=claim_value_at("operation", operation, path),
+                semantic_role="field.value",
+                precision=FragmentPrecision.EXACT,
+            )
+            for index, path in enumerate(paths)
         ),
     )
     runtime_result = RuntimeResult(
@@ -68,13 +93,20 @@ def test_source_to_published_release_is_a_governed_sequence():
                 claim_kind="operation",
                 subject="GET /health",
                 predicate="definition",
-                value={
-                    "method": "GET",
-                    "path": "/health",
-                    "responses": [{"status_code": "200", "description": "OK"}],
-                    "evidence": [{"fragment_id": "fragment-1"}],
-                },
-                evidence_refs=("fragment-1",),
+                value=operation,
+                support_proposals=tuple(
+                    ClaimSupportProposal(
+                        fragment_id=f"fragment-{index}",
+                        claim_path=path,
+                        proposed_relationship=(
+                            SupportRelationshipType.EXPLICIT_SUPPORT
+                        ),
+                        verification_method=(
+                            VerificationMethod.EXACT_NORMALIZED_VALUE
+                        ),
+                    )
+                    for index, path in enumerate(paths)
+                ),
                 runtime_identity="parser",
             ),
         ),
@@ -124,7 +156,7 @@ def test_source_to_published_release_is_a_governed_sequence():
     assert release.projection_versions == (("openapi", "1"),)
     assert artifacts.publications[release.release_id][0].name == "openapi"
     assert release.artifact_refs == (f"memory://{release.release_id}/openapi",)
-    assert (
-        EvidenceBinding(fragment_id="fragment-1")
-        in contract_store.get_contract("sources").operations[0].evidence
+    assert all(
+        binding.relationship_id is not None
+        for binding in contract_store.get_contract("sources").operations[0].evidence
     )

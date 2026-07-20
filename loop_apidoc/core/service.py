@@ -130,9 +130,7 @@ class EvidenceToContractService:
         bundle = self.evidence_store.get_bundle(source_set_id)
         claims = reconcile_claims(
             result.claim_proposals,
-            evidence_fragment_ids=frozenset(
-                fragment.id for fragment in bundle.fragments
-            ),
+            evidence_bundle=bundle,
         )
         self.contract_store.put_claims(source_set_id, claims)
         self._transition(
@@ -154,6 +152,7 @@ class EvidenceToContractService:
                     value=claim.value,
                     status=claim.status,
                     evidence_refs=claim.evidence_refs,
+                    support_relationships=claim.support_relationships,
                 )
                 for claim in claims
             ),

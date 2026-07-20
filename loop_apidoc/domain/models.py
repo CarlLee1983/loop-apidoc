@@ -4,11 +4,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-
-
-class FrozenModel(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+from loop_apidoc.domain.base import FrozenModel as FrozenModel
+from loop_apidoc.domain.evidence import SupportRelationshipType
 
 
 class ClaimStatus(str, Enum):
@@ -22,6 +19,10 @@ class ClaimStatus(str, Enum):
 
 class EvidenceBinding(FrozenModel):
     fragment_id: str
+    relationship_id: str | None = None
+    claim_identity: str | None = None
+    claim_path: str | None = None
+    relationship: SupportRelationshipType | None = None
     locator: str | None = None
 
 
@@ -119,6 +120,7 @@ class OperationalConstraint(FrozenModel):
 
 class ContractClaim(FrozenModel):
     identity: str
+    claim_kind: str | None = None
     status: ClaimStatus
     value: Any = None
     evidence: tuple[EvidenceBinding, ...] = ()
