@@ -14,7 +14,14 @@ from __future__ import annotations
 
 import re
 
-from loop_apidoc.source_facts.models import EndpointFact, SourceFacts
+from loop_apidoc.domain.evidence import normalize_excerpt
+from loop_apidoc.source_facts.models import (
+    EndpointFact,
+    PayloadFenceFact,
+    SourceFacts,
+    TableCellFact,
+    TableFact,
+)
 
 _HTTP_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
 
@@ -51,6 +58,9 @@ _PAYLOAD_INFO = {
     "json", "xml", "http", "curl", "yaml", "yml", "javascript", "js",
     "response", "request", "jsonc", "html",
 }
+_REQUIRED_HEADERS = ("required", "mandatory", "必填", "是否必填")
+_REQUIRED_TRUE = {"y", "yes", "true", "required", "必填", "是"}
+_REQUIRED_FALSE = {"n", "no", "false", "optional", "非必填", "否"}
 
 
 def scan_markdown(relative_path: str, text: str) -> SourceFacts:
@@ -68,28 +78,38 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
             continue
 
         if raw.lstrip().startswith("|"):
-            state.table.append(raw)
+            state.table.append((index, raw))
             continue
         state.flush_table()
 
         heading = _HEADING.match(raw)
         if heading:
-            state.open_heading(heading.group(2).strip(), len(heading.group(1)), index)
+            state.open_heading(
+                heading.group(2).strip(),
+                len(heading.group(1)),
+                index,
+                raw,
+            )
             continue
 
         if _SETEXT.match(raw) and state.previous.strip():
             # setext 標題的文字在上一行,遇到底線時才知道那是標題。
             state.open_heading(
-                state.previous.strip(), 1 if raw.strip().startswith("=") else 2, index)
+                state.previous.strip(),
+                1 if raw.strip().startswith("=") else 2,
+                index,
+                state.previous,
+            )
             state.previous = raw
             continue
 
         declared = _declared_endpoint(raw)
         if declared:
-            state.declare(declared, index)
+            state.declare(declared, index, excerpt=raw)
         state.previous = raw
 
     state.flush_table()
+    state.finish_section(len(lines))
     return SourceFacts(relative_path=relative_path, endpoints=state.endpoints)
 
 
@@ -106,29 +126,47 @@ class _ScanState:
         # 端點的內文,不是換段;把它當換段,參數表就不會歸屬任何端點。
         self.declaring_level = 0
         self.in_fence = False
-        self.table: list[str] = []
+        self.table: list[tuple[int, str]] = []
         self.previous = ""
 
     def toggle_fence(self, info: str, lines: list[str], index: int) -> None:
         if not self.in_fence and self.current is not None:
             if _is_payload_fence(info, lines, index):
                 self.current.example_blocks += 1
+                self.current.payload_fences += (
+                    _payload_fence(info, lines, index),
+                )
         self.in_fence = not self.in_fence
         self.previous = ""
 
     def flush_table(self) -> None:
         if self.table:
-            _absorb_table(self.current, self.table)
+            fact = _absorb_table(self.current, self.table)
+            if self.current is not None and fact is not None:
+                self.current.tables += (fact,)
             self.table = []
 
-    def open_heading(self, title: str, level: int, index: int) -> None:
+    def open_heading(
+        self,
+        title: str,
+        level: int,
+        index: int,
+        excerpt: str,
+    ) -> None:
         self.last_heading = title
         self.last_heading_level = level
         declared = _declared_endpoint(title)
         if declared:
-            self.declare(declared, index, level=level, heading=title)
+            self.declare(
+                declared,
+                index,
+                level=level,
+                heading=title,
+                excerpt=excerpt,
+            )
             return
         if self.current is not None and level <= self.declaring_level:
+            self.finish_section(index - 1)
             self.current = None
 
     def declare(
@@ -138,7 +176,10 @@ class _ScanState:
         *,
         level: int | None = None,
         heading: str | None = None,
+        excerpt: str,
     ) -> None:
+        if self.current is not None:
+            self.finish_section(line - 1)
         method, path = declared
         self.current = EndpointFact(
             relative_path=self.relative_path,
@@ -146,11 +187,22 @@ class _ScanState:
             method=method,
             path=path,
             line=line,
+            declaration_start_line=line,
+            declaration_end_line=line,
+            declaration_excerpt=normalize_excerpt(excerpt),
+            section_start_line=line,
         )
         self.endpoints.append(self.current)
         # 由獨立行宣告的端點,其「所在層級」是包住它的那個標題——
         # 少了這個,後續的同級標題就無法結束這一節。
         self.declaring_level = level if level is not None else self.last_heading_level
+
+    def finish_section(self, line: int) -> None:
+        if self.current is not None and self.current.section_end_line is None:
+            self.current.section_end_line = max(
+                self.current.section_start_line or line,
+                line,
+            )
 
 
 def _is_payload_fence(info: str, lines: list[str], index: int) -> bool:
@@ -166,6 +218,30 @@ def _is_payload_fence(info: str, lines: list[str], index: int) -> bool:
     return False
 
 
+def _payload_fence(
+    info: str,
+    lines: list[str],
+    opening_line: int,
+) -> PayloadFenceFact:
+    content: list[str] = []
+    closing_line = opening_line
+    for line_number, line in enumerate(
+        lines[opening_line:],
+        start=opening_line + 1,
+    ):
+        if _FENCE.match(line):
+            closing_line = line_number
+            break
+        content.append(line)
+        closing_line = line_number
+    return PayloadFenceFact(
+        info=info.strip().lower(),
+        start_line=opening_line,
+        end_line=closing_line,
+        normalized_excerpt=normalize_excerpt("\n".join(content)),
+    )
+
+
 def _declared_endpoint(line: str) -> tuple[str, str] | None:
     """從一行文字辨識 `METHOD /path`,允許 backtick / 粗體 / 清單符號包裝。"""
     cleaned = line.strip().lstrip("-*+ \t").strip("`* \t")
@@ -177,21 +253,31 @@ def _declared_endpoint(line: str) -> tuple[str, str] | None:
     return method, path
 
 
-def _absorb_table(current: EndpointFact | None, rows: list[str]) -> None:
+def _absorb_table(
+    current: EndpointFact | None,
+    rows: list[tuple[int, str]],
+) -> TableFact | None:
     """把一張 GFM 表格的「名稱欄」併入目前端點的參數名清單。"""
     if current is None or len(rows) < 3:
-        return
-    header = _cells(rows[0])
-    if not header or not _TABLE_SEPARATOR.match(rows[1]):
-        return
+        return None
+    header = _cells(rows[0][1])
+    if not header or not _TABLE_SEPARATOR.match(rows[1][1]):
+        return None
     if not _is_name_header(header[0]):
-        return
+        return None
     if len(header) > 1 and _is_constant_header(header[1]):
-        return
+        return None
 
-    body = [cells for row in rows[2:] if (cells := _cells(row))]
-    column = _name_column(header, body)
-    for cells in body:
+    body = [
+        (line, cells)
+        for line, row in rows[2:]
+        if (cells := _cells(row))
+    ]
+    column = _name_column(header, [cells for _, cells in body])
+    fact_rows: list[tuple[TableCellFact, ...]] = []
+    table_index = len(current.tables)
+    clean_headers = tuple(normalize_excerpt(_field_name(cell)) for cell in header)
+    for row_index, (line, cells) in enumerate(body):
         # 其餘欄位全空的列是分組標題(「Header」「Query」),不是欄位。
         # 單欄表沒有「其餘欄位」可判,不套這條規則。
         if len(cells) > 1 and not any(cell.strip() for cell in cells[1:]):
@@ -203,6 +289,56 @@ def _absorb_table(current: EndpointFact | None, rows: list[str]) -> None:
             continue
         if name not in current.parameter_names:
             current.parameter_names.append(name)
+        cell_facts: list[TableCellFact] = []
+        for column_index, cell in enumerate(cells):
+            column_name = (
+                clean_headers[column_index]
+                if column_index < len(clean_headers)
+                else str(column_index)
+            )
+            excerpt = normalize_excerpt(cell.strip().strip("`*_ "))
+            semantic_value: object = excerpt
+            if column_index == column:
+                excerpt = name
+                semantic_value = name
+            elif _is_required_header(column_name):
+                semantic_value = _requiredness_value(excerpt)
+            cell_facts.append(
+                TableCellFact(
+                    locator={
+                        "table_index": table_index,
+                        "row_index": row_index,
+                        "column_index": column_index,
+                        "column_name": column_name,
+                    },
+                    line=line,
+                    normalized_excerpt=excerpt,
+                    semantic_value=semantic_value,
+                )
+            )
+        fact_rows.append(tuple(cell_facts))
+    return TableFact(
+        table_index=table_index,
+        start_line=rows[0][0],
+        end_line=rows[-1][0],
+        headers=clean_headers,
+        rows=tuple(fact_rows),
+    )
+
+
+def _is_required_header(value: str) -> bool:
+    lowered = value.strip().lower()
+    return any(token in lowered for token in _REQUIRED_HEADERS)
+
+
+def _requiredness_value(value: str) -> bool | str:
+    normalized = value.strip()
+    lowered = normalized.lower()
+    if lowered in _REQUIRED_TRUE:
+        return True
+    if lowered in _REQUIRED_FALSE:
+        return False
+    return normalized
 
 
 def _name_column(header: list[str], body: list[list[str]]) -> int:

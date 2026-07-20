@@ -7,7 +7,31 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
+
+
+class TableCellFact(BaseModel):
+    locator: dict[str, int | str]
+    line: int
+    normalized_excerpt: str
+    semantic_value: Any = None
+
+
+class TableFact(BaseModel):
+    table_index: int
+    start_line: int
+    end_line: int
+    headers: tuple[str, ...]
+    rows: tuple[tuple[TableCellFact, ...], ...] = ()
+
+
+class PayloadFenceFact(BaseModel):
+    info: str
+    start_line: int
+    end_line: int
+    normalized_excerpt: str
 
 
 class EndpointFact(BaseModel):
@@ -18,6 +42,13 @@ class EndpointFact(BaseModel):
     method: str
     path: str
     line: int
+    declaration_start_line: int | None = None
+    declaration_end_line: int | None = None
+    declaration_excerpt: str | None = None
+    section_start_line: int | None = None
+    section_end_line: int | None = None
+    tables: tuple[TableFact, ...] = ()
+    payload_fences: tuple[PayloadFenceFact, ...] = ()
     #: 小節內所有「參數表」第一欄的值,依出現順序、去重後保留。
     parameter_names: list[str] = Field(default_factory=list)
     #: 小節內圍籬程式碼區塊(```)的數量,作為「來源有範例」的證據。
@@ -57,7 +88,46 @@ class FactIndex(BaseModel):
 
 def _intersect(left: EndpointFact, right: EndpointFact) -> EndpointFact:
     shared = [name for name in left.parameter_names if name in right.parameter_names]
-    return left.model_copy(update={
-        "parameter_names": shared,
-        "example_blocks": min(left.example_blocks, right.example_blocks),
-    })
+    right_cells = {
+        _cell_identity(cell)
+        for table in right.tables
+        for row in table.rows
+        for cell in row
+    }
+    tables: list[TableFact] = []
+    for table in left.tables:
+        rows = tuple(
+            shared_row
+            for row in table.rows
+            if (
+                shared_row := tuple(
+                    cell for cell in row if _cell_identity(cell) in right_cells
+                )
+            )
+        )
+        if rows:
+            tables.append(table.model_copy(update={"rows": rows}))
+    right_fences = {
+        fence.normalized_excerpt for fence in right.payload_fences
+    }
+    return left.model_copy(
+        update={
+            "parameter_names": shared,
+            "example_blocks": min(left.example_blocks, right.example_blocks),
+            "tables": tuple(tables),
+            "payload_fences": tuple(
+                fence
+                for fence in left.payload_fences
+                if fence.normalized_excerpt in right_fences
+            ),
+        }
+    )
+
+
+def _cell_identity(cell: TableCellFact) -> tuple[str, str]:
+    from loop_apidoc.domain.evidence import canonical_json
+
+    return (
+        str(cell.locator.get("column_name", "")),
+        canonical_json(cell.semantic_value),
+    )
