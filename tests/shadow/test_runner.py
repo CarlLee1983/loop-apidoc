@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timezone
+from pathlib import Path
 
 from loop_apidoc.core.models import LifecycleState
+from loop_apidoc.domain.evidence import SupportRelationshipType
+from loop_apidoc.domain.models import ClaimStatus
 from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
@@ -16,6 +20,7 @@ from loop_apidoc.plan.models import (
     FieldCondition,
     IntegrationContract,
     NormalizationPlan,
+    OperationalEntry,
     PlanItemStatus,
     SchemaEntry,
     SourceCitation,
@@ -23,6 +28,8 @@ from loop_apidoc.plan.models import (
 )
 from loop_apidoc.run.models import RunStatus
 from loop_apidoc.shadow.runner import execute_shadow
+from loop_apidoc.source_facts.markdown import scan_markdown
+from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.models import (
     Issue,
     IssueCode,
@@ -88,7 +95,8 @@ def test_runner_executes_through_core_validation_without_approval_or_publication
     assert artifacts.artifact_publications == 0
     assert artifacts.approval_requests == 0
     assert artifacts.events[-1].kind == "lifecycle.approval_ready"
-    assert artifacts.contract.operations[0].path == "/ping"
+    assert artifacts.contract.operations == ()
+    assert artifacts.claims[0].status is ClaimStatus.UNVERIFIED
     assert artifacts.decision.verdict.value == "accept"
     assert artifacts.comparison.verdict_match is True
 
@@ -175,11 +183,22 @@ def test_runner_preserves_unknown_nested_and_integration_values():
         generated_at=NOW,
     )
 
-    assert artifacts.contract.operations[0].parameters[0].required is None
-    assert artifacts.contract.schemas[0].fields[0].required is None
+    operation = next(
+        proposal
+        for proposal in artifacts.runtime_result.claim_proposals
+        if proposal.claim_kind == "operation"
+    )
+    schema = next(
+        proposal
+        for proposal in artifacts.runtime_result.claim_proposals
+        if proposal.claim_kind == "schema"
+    )
+    assert operation.value["parameters"][0].get("required") is None
+    assert schema.value["fields"][0].get("required") is None
     assert all(
-        mechanic.kind is None
-        for mechanic in artifacts.contract.integration_mechanics
+        proposal.value.get("kind") is None
+        for proposal in artifacts.runtime_result.claim_proposals
+        if proposal.claim_kind == "integration_mechanic"
     )
 
 
@@ -246,3 +265,244 @@ def test_runner_keeps_single_value_conflict_as_unverified_claim():
 
     assert len(artifacts.claims) == 1
     assert artifacts.claims[0].status.value == "unverified"
+
+
+def _write_manifest(root: Path, text: str) -> tuple[Manifest, FactIndex]:
+    source = root / "manual.md"
+    source.write_text(text, encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(root),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="manual.md",
+                mime_type="text/markdown",
+                source_format=SourceFormat.MARKDOWN,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    return (
+        manifest,
+        FactIndex(sources=[scan_markdown("manual.md", text)]),
+    )
+
+
+def _table_plan(required: bool) -> NormalizationPlan:
+    return NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="manual.md",
+                    )
+                ],
+                method="POST",
+                path="/payments",
+                parameters=[
+                    {
+                        "name": "amount",
+                        "in": "query",
+                        "required": required,
+                    }
+                ],
+                responses=[{"status": "200", "description": "OK"}],
+            )
+        ],
+    )
+
+
+def test_filename_only_legacy_citation_is_not_supported(tmp_path):
+    manifest, facts = _write_manifest(
+        tmp_path,
+        "# Payments\n\nThis document contains general API prose.\n",
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=_table_plan(required=True),
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    assert artifacts.claims[0].status is ClaimStatus.UNVERIFIED
+    assert any(
+        item.code == "LEGACY_CITATION_DEGRADED"
+        for item in artifacts.comparison.diagnostics
+    )
+
+
+def test_shadow_table_cell_supports_matching_parameter_field(tmp_path):
+    manifest, facts = _write_manifest(
+        tmp_path,
+        """## POST /payments
+
+| Name | Type | Required |
+| --- | --- | --- |
+| amount | integer | Y |
+""",
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=_table_plan(required=True),
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    claim = artifacts.claims[0]
+    assert any(
+        relationship.claim_path == "/parameters/query/amount/required"
+        and relationship.relationship
+        is SupportRelationshipType.EXPLICIT_SUPPORT
+        for relationship in claim.support_relationships
+    )
+
+
+def test_shadow_table_cell_mismatch_is_conflicting(tmp_path):
+    manifest, facts = _write_manifest(
+        tmp_path,
+        """## POST /payments
+
+| Name | Type | Required |
+| --- | --- | --- |
+| amount | integer | Y |
+""",
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=_table_plan(required=False),
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    claim = artifacts.claims[0]
+    assert claim.status is ClaimStatus.CONFLICTING
+    assert any(
+        relationship.relationship is SupportRelationshipType.CONTRADICTS
+        for relationship in claim.support_relationships
+    )
+
+
+def test_precise_line_citation_supports_matching_claim_path(tmp_path):
+    manifest, facts = _write_manifest(tmp_path, "10 requests/s\n")
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        operational=[
+            OperationalEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="08-op0",
+                        answer_path="answer.json",
+                        manifest_source="manual.md",
+                        locator="lines 1-1",
+                    )
+                ],
+                topic="rate limit",
+                detail="10 requests/s",
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    assert any(
+        relationship.claim_path == "/detail"
+        and relationship.relationship
+        is SupportRelationshipType.EXPLICIT_SUPPORT
+        for relationship in artifacts.claims[0].support_relationships
+    )
+
+
+def test_json_pointer_citation_supports_matching_scalar_path(tmp_path):
+    source = tmp_path / "openapi.json"
+    source.write_text('{"detail":"10 requests/s"}', encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        operational=[
+            OperationalEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="08-op0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        locator="openapi.json#/detail",
+                    )
+                ],
+                topic="rate limit",
+                detail="10 requests/s",
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    claim = artifacts.claims[0]
+    assert claim.status is ClaimStatus.UNVERIFIED
+    assert any(
+        relationship.claim_path == "/detail"
+        and relationship.relationship
+        is SupportRelationshipType.EXPLICIT_SUPPORT
+        for relationship in claim.support_relationships
+    )
+    assert not any(
+        relationship.relationship is SupportRelationshipType.CONTRADICTS
+        for relationship in claim.support_relationships
+    )

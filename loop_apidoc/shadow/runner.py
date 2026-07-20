@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
+from loop_apidoc.adapters.fragments import acquire_fragment_bundle
 from loop_apidoc.adapters.memory import (
     FixedClock,
     InMemoryArtifactSink,
@@ -22,15 +24,18 @@ from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
     SHADOW_RUNTIME_VERSION,
     build_contract_metadata,
-    build_evidence,
+    build_fragment_requests,
     build_runtime_result,
+    build_source_set,
     parse_bridge_diagnostic,
+    with_materialized_evidence,
 )
 from loop_apidoc.shadow.models import (
     ShadowArtifacts,
     ShadowStage,
     compare_results,
 )
+from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.models import ValidationReport
 
 
@@ -55,12 +60,26 @@ def execute_shadow(
     *,
     manifest: Manifest,
     plan: NormalizationPlan,
+    facts: FactIndex | None = None,
+    sources_root: Path | None = None,
     legacy_report: ValidationReport,
     legacy_status: RunStatus,
     generated_at: datetime,
 ) -> ShadowArtifacts:
     try:
-        bridge = build_evidence(manifest, generated_at)
+        bridge = build_source_set(manifest, generated_at)
+        if facts is not None and sources_root is not None:
+            materialized_manifest = manifest.model_copy(
+                update={"sources_root": str(sources_root)}
+            )
+            evidence = acquire_fragment_bundle(
+                bridge.source_set,
+                materialized_manifest,
+                facts,
+                build_fragment_requests(plan, bridge),
+                generated_at,
+            )
+            bridge = with_materialized_evidence(bridge, evidence)
         runtime_result = build_runtime_result(plan, bridge)
         metadata = build_contract_metadata(plan, bridge)
     except Exception as exc:

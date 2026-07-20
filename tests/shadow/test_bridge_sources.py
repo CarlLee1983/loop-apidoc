@@ -11,7 +11,7 @@ from loop_apidoc.manifest.models import (
     SourceFormat,
     UrlSource,
 )
-from loop_apidoc.shadow.bridge import build_evidence
+from loop_apidoc.shadow.bridge import build_evidence, build_source_set
 
 
 NOW = datetime(2026, 7, 20, 8, 0, tzinfo=timezone.utc)
@@ -82,6 +82,15 @@ def test_source_set_identity_ignores_absolute_root_and_manifest_order():
     assert [source.locator for source in first.source_set.sources] == ["a.md", "b.md"]
 
 
+def test_build_source_set_is_the_pure_pre_acquisition_boundary():
+    manifest = _manifest(local_sources=[_local()])
+
+    built = build_source_set(manifest, NOW)
+
+    assert built.source_set.sources[0].locator == "manual.md"
+    assert built.source_set_digest
+
+
 def test_usable_local_source_maps_to_one_whole_fragment():
     source = _local()
 
@@ -98,7 +107,7 @@ def test_usable_local_source_maps_to_one_whole_fragment():
     assert artifact.acquired_at == NOW
     assert fragment.source_artifact_id == artifact.id
     assert fragment.fragment_digest == source.sha256
-    assert fragment.locator == "whole"
+    assert fragment.locator.kind == "whole_document"
     assert built.resolve_citation("manual.md") == (fragment.id,)
 
 
