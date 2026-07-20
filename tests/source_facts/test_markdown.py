@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from loop_apidoc.source_facts.markdown import scan_markdown
 
+MARKDOWN_TABLE = """## POST /payments
+
+| Name | Type | Required |
+| --- | --- | --- |
+| amount | integer | Y |
+"""
+
 ATG_LIKE = """
 # ATG Game API
 
@@ -77,6 +84,59 @@ def test_records_fenced_example_blocks_per_section() -> None:
     facts = scan_markdown("doc.md", ATG_LIKE)
     assert facts.endpoints[0].example_blocks == 1
     assert facts.endpoints[1].example_blocks == 0
+
+
+def test_scanner_preserves_exact_table_cell_coordinates_and_content() -> None:
+    endpoint = scan_markdown("doc.md", MARKDOWN_TABLE).endpoints[0]
+    name_cell = endpoint.tables[0].rows[0][0]
+    required_cell = endpoint.tables[0].rows[0][2]
+
+    assert name_cell.locator == {
+        "table_index": 0,
+        "row_index": 0,
+        "column_index": 0,
+        "column_name": "Name",
+    }
+    assert name_cell.normalized_excerpt == "amount"
+    assert name_cell.semantic_value == "amount"
+    assert required_cell.normalized_excerpt == "Y"
+    assert required_cell.semantic_value is True
+
+
+def test_endpoint_declaration_retains_exact_line_fragment() -> None:
+    endpoint = scan_markdown("doc.md", "## POST /payments\n").endpoints[0]
+
+    assert endpoint.declaration_start_line == 1
+    assert endpoint.declaration_end_line == 1
+    assert endpoint.declaration_excerpt == "## POST /payments"
+
+
+def test_unknown_requiredness_token_is_not_coerced() -> None:
+    text = """## POST /payments
+
+| Name | Type | Required |
+| --- | --- | --- |
+| amount | integer | conditional |
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.tables[0].rows[0][2].semantic_value == "conditional"
+
+
+def test_payload_fence_retains_exact_lines_and_excerpt() -> None:
+    text = """## POST /payments
+
+```json
+{"ok":true}
+```
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+    fence = endpoint.payload_fences[0]
+
+    assert fence.start_line < fence.end_line
+    assert fence.normalized_excerpt == '{"ok":true}'
 
 
 def test_sections_without_an_endpoint_are_not_facts() -> None:
