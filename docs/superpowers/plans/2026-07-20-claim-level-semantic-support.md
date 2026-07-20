@@ -16,6 +16,28 @@ provenance only as observational shadow projections.
 from the standard library, PyYAML, PyMuPDF, existing Markdown source-fact scanner, pytest,
 pytest-cov, and Ruff.
 
+## Execution Record — 2026-07-20
+
+- Full suite with coverage: **1178 passed, 95 skipped**, total coverage **95.04%**;
+  `--cov-fail-under=95` passed.
+- Focused domain/Core/adapter/source-fact/shadow/evaluation/assemble acceptance matrix:
+  passed.
+- Ruff: `All checks passed!`
+- Project quality gate: passed Ruff, coverage pytest, and all 6 adversarial CLI smoke
+  scenarios.
+- Architecture/compatibility matrix: 59 focused tests passed, including the AST boundary
+  that prohibits direct Core/Domain filesystem, network, model, process, and database I/O.
+- Shadow failure isolation: acquisition, bridge, verification, service, projection,
+  comparison, and report failures all produced observational error summaries without
+  changing legacy status or exit behavior.
+- Trace inspection passed:
+  OpenAPI `x-loop-claim-map` → provenance claim identity/path →
+  `relationships.json` relationship → exact fragment/artifact → logical source locator.
+  The same focused matrix confirms filename-only legacy citations remain
+  `insufficient`/unverified.
+- `git diff --check` passed; only intentional implementation, test, and documentation
+  commits are present.
+
 ## Global Constraints
 
 - Source documents are the only source of truth; absent facts remain null/missing.
@@ -1798,7 +1820,7 @@ git commit -m "docs: explain claim-level semantic evidence"
 **Interfaces:**
 - Produces final test, coverage, lint, architecture, compatibility, and diff-check evidence.
 
-- [ ] **Step 1: Run the complete focused acceptance matrix**
+- [x] **Step 1: Run the complete focused acceptance matrix**
 
 ```bash
 uv run pytest tests/domain tests/core tests/adapters tests/source_facts \
@@ -1808,7 +1830,7 @@ uv run pytest tests/domain tests/core tests/adapters tests/source_facts \
 
 Expected: PASS.
 
-- [ ] **Step 2: Run Ruff**
+- [x] **Step 2: Run Ruff**
 
 ```bash
 uv run ruff check .
@@ -1816,7 +1838,7 @@ uv run ruff check .
 
 Expected: `All checks passed!`
 
-- [ ] **Step 3: Run the full suite with coverage**
+- [x] **Step 3: Run the full suite with coverage**
 
 ```bash
 uv run pytest --cov=loop_apidoc
@@ -1829,7 +1851,7 @@ Expected:
 - total coverage is at least 95.00%;
 - no coverage fail-under error.
 
-- [ ] **Step 4: Run project quality and diff checks**
+- [x] **Step 4: Run project quality and diff checks**
 
 ```bash
 uv run python scripts/quality_gate.py
@@ -1843,7 +1865,7 @@ Expected:
 - `git diff --check` emits no output;
 - status lists only intentional files.
 
-- [ ] **Step 5: Inspect one shadow artifact chain**
+- [x] **Step 5: Inspect one shadow artifact chain**
 
 Run one representative shadow assemble fixture and verify:
 
@@ -1858,7 +1880,7 @@ OpenAPI x-loop-claim-map target
 
 Confirm a filename-only citation is `insufficient/unverified` in the same run.
 
-- [ ] **Step 6: Record exact verification results**
+- [x] **Step 6: Record exact verification results**
 
 Append an execution record below the plan header with:
 
@@ -1869,7 +1891,7 @@ Append an execution record below the plan header with:
 - architecture-boundary result;
 - shadow failure-isolation result.
 
-- [ ] **Step 7: Commit the verification record**
+- [x] **Step 7: Commit the verification record**
 
 If Step 1–5 exposes a defect, return to the owning task's red/green cycle and use that
 task's exact file/commit list first. After every check is green, commit the execution
