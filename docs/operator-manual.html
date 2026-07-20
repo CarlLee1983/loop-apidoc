@@ -91,6 +91,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#foundry-cli">foundry — 專案本地資產治理</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
+  <a class="lvl-2" href="#benchmark-quality-gate">Benchmark 品質閘</a>
   <a class="lvl-2" href="#_9">開發</a>
   <a class="lvl-3" href="#_10">套件結構</a>
   <a class="lvl-2" href="#_11">設計文件</a>
@@ -334,6 +335,18 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 </tbody>
 </table>
 <p>驗證會將問題分類:<code>OPENAPI_INVALID</code> / <code>OUTPUT_MISMATCH</code> → 可由重新生成修正;<code>REQUIRED_INFO_MISSING</code> → agent 重讀相關來源補齊;<code>SOURCE_UNVERIFIED</code> / <code>SOURCE_CONFLICT</code> / <code>UNSUPPORTED_ASSERTION</code> → 無法修正(fail-closed,回報為缺漏／衝突)。修正由 agent 依 <code>assemble --json</code> 回報自行驅動(重讀來源、覆寫擷取 JSON 後重跑),而非由 CLI 內建迴圈。</p>
+<hr />
+<h2 id="benchmark-quality-gate">Benchmark 品質閘：CI-safe 與 strict-local</h2>
+<p>Benchmark harness 有四層保證：已提交 fixture 清單、discovery 守門、來源支撐執行、strict-local 預檢。目前的 13 是唯一 case 目錄數，不是 pytest test item 數；同一 case 會供多個參數化測試使用。完整 contract 見 <a href="BENCHMARK_VALIDATION_PLAN.md"><code>docs/BENCHMARK_VALIDATION_PLAN.md</code></a>。</p>
+<h3>CI-safe 操作</h3>
+<pre><code class="language-bash">uv run python scripts/quality_gate.py
+</code></pre>
+<p>CI-safe 模式不要求 operator 本機持有 gitignored <code>benchmarks/&lt;case&gt;/sources/</code>。它會執行 lint 與完整 pytest，因此會驗證 fixture discovery，以及 <code>REQUIRED_BENCHMARK_CASES</code> 和 committed fixture 的 exact parity。缺來源時，source-backed case assertions 會標成 SKIP；這只證明 case 已提交且可探索，<strong>不是 benchmark PASS</strong>。</p>
+<h3>Strict-local 操作</h3>
+<pre><code class="language-bash">uv run python scripts/quality_gate.py --strict-local
+</code></pre>
+<p>只在同一台機器持有全部 13 份原始、具日期的來源快照時執行。預檢會先拒絕任何缺少或內容為空的 required <code>sources/</code>，再跑 source-backed benchmark module；只要 pytest 回報任一 skip，整個 quality gate 就失敗。通過表示 required/committed 完全一致、所有來源支撐斷言都實際執行，且零 skip。</p>
+<p>若歷史來源無法合法或可重現地取得，請記錄缺少的快照，完成確定性 CI-safe 檢查，並對本次改動做合法的來源支撐 spot-check。不得用新版文件、合成 fixture 或 upstream error page 代替歷史證據，也不得宣稱 strict-local passed。</p>
 <hr />
 <h2 id="_9">開發</h2>
 <pre><code class="language-bash"># 執行測試

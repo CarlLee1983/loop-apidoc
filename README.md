@@ -58,7 +58,13 @@ vibe coding 的本質是把實作交給 coding agent——而 agent 的產出品
 | 遺漏偵測 | 長文件讀到哪算哪,漏了不會說 | URL coverage 帳本(expected vs fetched)、preparation 就緒度、端點數量/identity 比對——漏抓會被點名 |
 | 修正方式 | 「再改一下」,不保證收斂 | typed issues(severity 閘 + `target_file`/`field_path`/`requery_scope` 路由)驅動修正迴圈,可判定收斂/停滯 |
 | 改版與治理 | 重問一次,無法比對 | `diff` 按下游影響分類、`score` 量化品質、`foundry` 版本化資產 |
-| 實證 | 無 | 真實廠商 benchmark 回歸 harness;早期實測第一輪 validate 就攔下 6 個「直接整理會犯的錯」 |
+| 實證 | 無 | 十三個真實廠商 case 的 benchmark 回歸 harness;早期實測第一輪 validate 就攔下 6 個「直接整理會犯的錯」 |
+
+Benchmark 證據分兩個層級：CI 在沒有 gitignored 來源快照時，仍能確定所有已提交 fixture
+可被探索，且與 required inventory 完全一致；source-backed PASS 則必須持有原始來源快照，
+只有 `scripts/quality_gate.py --strict-local` 能證明所有 required case 都實際執行且零
+skip。已探索或被 skip 的 case，並未通過來源支撐的重新驗證。詳見
+[benchmark harness canonical contract](docs/BENCHMARK_VALIDATION_PLAN.md)。
 
 **兩種做法各有適用場景,誠實地說:**
 
