@@ -23,6 +23,16 @@ provenance to the opt-in Core shadow architecture while preserving legacy author
   evidence-aware Core OpenAPI, review-data, and provenance projections.
 - Added observational `core/relationships.json` plus
   `core/projections/{openapi,review-data,provenance}.json` artifacts to shadow runs.
+- Fixed request-example crypto capability checks so only explicit AES-CBC schemes produce
+  runnable Python/TypeScript code or request wiring. DES-CBC, MD5, GCM, and other
+  unsupported algorithms now remain visible as algorithm-specific runtime gaps, without
+  importing or approximating AES.
+- Fixed `review.html` Schema metrics and rows to project the generated
+  `components.schemas` map. OpenAPI-derived components such as `ErrorCode` now appear
+  with generated field counts and matching provenance.
+- Locked strict-local preflight parity to all 13 committed benchmark cases, including
+  JiLi, FunkyGames, and RSG, so fixture additions cannot silently drift from the required
+  source-snapshot inventory.
 - Extended source-fact scanning to retain exact Markdown endpoint, table-cell, and example
   coordinates without widening the conservative extraction gate.
 - Kept filename-only, ambiguous, whole-document, reconstruction-only, invalid-digest, and
@@ -60,6 +70,13 @@ provenance to the opt-in Core shadow architecture while preserving legacy author
 - 新增 `core/relationships.json` 與 evidence-aware OpenAPI、review-data、
   provenance projections；legacy pipeline 仍是 validation、score、Foundry、
   approval、status 與退出碼的唯一權威。
+- 請求範例只在來源明確支援 AES-CBC 時產生可執行加密與欄位接回；DES-CBC、
+  MD5、GCM 等未支援演算法改為保留演算法名稱的 fail-closed gap，不再誤產生
+  AES 程式碼。
+- `review.html` 的 Schema 指標與表格改以實際生成的 `components.schemas`
+  為準，`ErrorCode` 等衍生 component 會連同 provenance 顯示。
+- strict-local preflight 與 13 組 committed benchmark 完全對齊，JiLi、
+  FunkyGames、RSG 都納入必要 source snapshot 清單。
 - 本工作區有 2 組 source-backed benchmark 可執行，另 11 組缺少
   operator-provided sources；正式發版前仍需由 release operator 執行完整
   strict-local benchmark 與人工 artifact spot-check，不以替代文件製造通過結果。
@@ -69,10 +86,18 @@ provenance to the opt-in Core shadow architecture while preserving legacy author
 - `uv sync --dev` — resolved and audited successfully.
 - `npm run tag:check` — all existing release tags passed the committed SemVer policy.
 - `uv run ruff check .` — passed.
-- `uv run pytest --cov=loop_apidoc` — 1,193 passed, 81 skipped, 95.21% coverage.
+- `uv run pytest --cov=loop_apidoc` — 1,200 passed, 81 skipped, 95.20% coverage.
 - `uv run python scripts/quality_gate.py` — passed Ruff, coverage pytest, and 6
   adversarial CLI smoke scenarios.
-- Focused release/semantic-evidence matrix — 129 passed.
+- Focused release-blocker matrix — 93 passed.
 - Benchmark harness — 13 cases discovered; 2 source-backed cases executed, 17 checks
   passed, and 80 checks skipped because the remaining operator-provided snapshots were
   unavailable.
+- Fresh RSG shadow assemble — validation passed with 0 errors and 11 source-faithful
+  warnings; DES/MD5 examples remained non-runnable gaps and `review.html` included the
+  generated `ErrorCode` component.
+- `uv build` plus isolated wheel install/CLI smoke — built and installed
+  `loop-apidoc 0.16.0` successfully.
+- `npm run release:tag -- --message "loop-apidoc 0.16.0" --dry-run` — passed from
+  a clean temporary clone carrying the release-blocker fix tree; would create and push
+  annotated tag `v0.16.0`.

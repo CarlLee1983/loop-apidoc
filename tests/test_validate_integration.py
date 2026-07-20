@@ -201,6 +201,26 @@ def test_example_uses_target_but_not_wired_is_output_mismatch():
     assert mism and mism[0].location == "examples/Pay/request.py"
 
 
+def test_unsupported_des_cbc_does_not_require_request_wiring():
+    des = _runnable_crypto(field="Msg").model_copy(
+        update={"algorithm": "DES", "name": "DES Encryption"}
+    )
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(crypto=[des]),
+    )
+    examples = {
+        "examples/Deposit/request.py": 'payload = {\n    "Msg": "<msg>",\n}\n'
+    }
+
+    codes = [
+        issue.code
+        for issue in check_integration(plan, _result_with_examples(examples))
+    ]
+
+    assert IssueCode.OUTPUT_MISMATCH not in codes
+
+
 def test_example_properly_wired_is_clean():
     plan = NormalizationPlan(
         notebook_url="x",

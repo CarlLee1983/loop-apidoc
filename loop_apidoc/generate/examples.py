@@ -126,6 +126,17 @@ def _is_cbc(scheme: CryptoScheme) -> bool:
     return "CBC" in algo
 
 
+def _is_aes(scheme: CryptoScheme) -> bool:
+    """True only when the stated algorithm belongs to the AES family."""
+    algorithm = (scheme.algorithm or "").upper()
+    return bool(re.search(r"(^|[^A-Z0-9])AES([^A-Z0-9]|$)", algorithm))
+
+
+def _is_runnable_crypto(scheme: CryptoScheme) -> bool:
+    """Whether this generator can safely emit executable crypto for a scheme."""
+    return _signature_explicit(scheme) and _is_cbc(scheme) and _is_aes(scheme)
+
+
 _PAYLOAD_NOTE = "簽章 payload：來源指定下列欄位進入簽章（確切串接/排序為示意，請依 payload_assembly 核對 source）"
 _PAYLOAD_GAP = "<payload：來源未列出簽章欄位，請依 payload_assembly 組裝>"
 
@@ -143,9 +154,9 @@ def _wire_target(scheme: CryptoScheme, shape: dict) -> tuple[str, str] | None:
     request, return (location, field_name); else None.
 
     location is 'body' or 'header'. Wiring happens only when the scheme is runnable
-    (explicit + CBC) AND verify.field names a body field or header present in this
+    (explicit + AES-CBC) AND verify.field names a body field or header present in this
     request — otherwise keep comment-only / gap behavior (no fabrication)."""
-    if not (_signature_explicit(scheme) and _is_cbc(scheme)):
+    if not _is_runnable_crypto(scheme):
         return None
     target = scheme.verify.field if scheme.verify else None
     if not target:
@@ -252,7 +263,20 @@ def _comment(text: str, prefix: str = "# ") -> str:
 def _signature_comment_steps(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
-    lines = ["# 簽章步驟（shell 無法內嵌加密，請先跑 request.py / request.ts 取得簽章值）"]
+    runnable = [scheme for scheme in schemes if _is_runnable_crypto(scheme)]
+    unsupported = [scheme for scheme in schemes if not _is_runnable_crypto(scheme)]
+    if runnable:
+        lines = [
+            "# 簽章步驟（shell 無法內嵌加密；支援的 AES-CBC 可先跑 request.py / request.ts 取得簽章值）"
+        ]
+    else:
+        lines = [
+            "# 簽章步驟（演算法不支援或來源資訊不足；request.py / request.ts 只顯示缺漏，不會產生簽章值）"
+        ]
+    if runnable and unsupported:
+        lines.append(
+            "#   非 AES-CBC 或來源資訊不足的機制不會由 request.py / request.ts 產生值"
+        )
     for s in schemes:
         algo = s.algorithm or "<來源未指明演算法>"
         lines.append(f"#   {s.name or 'signature'}：{algo}")
@@ -297,10 +321,9 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
 
-    # Import is only needed when at least one scheme renders runnable CBC code.
-    # An explicit-but-non-CBC scheme (e.g. GCM) becomes a gap and uses none of
-    # these imports, so it must NOT trigger them — mirroring the Python path.
-    has_runnable = any(_signature_explicit(s) and _is_cbc(s) for s in schemes)
+    # Import is only needed when at least one scheme renders runnable AES-CBC code.
+    # Unsupported algorithms and modes become gaps and must not trigger it.
+    has_runnable = any(_is_runnable_crypto(s) for s in schemes)
 
     # Determine if we need unique function names (multiple schemes)
     need_unique_names = len(schemes) > 1
@@ -319,7 +342,7 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
         else:
             func_name = "sign"
 
-        if _signature_explicit(s) and _is_cbc(s):
+        if _is_runnable_crypto(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
             algo = (s.algorithm or "").lower()
@@ -335,14 +358,22 @@ def _ts_signature(schemes: list[CryptoScheme]) -> str:
             )
         else:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
-            # If explicit but not CBC, the gap is the unsupported crypto mode —
+            if _signature_explicit(s) and _is_cbc(s) and not _is_aes(s):
+                algorithm = s.algorithm or "unspecified"
+                blocks.append(
+                    f"// gap: 簽章 {s.name or ''} 聲明為 {algorithm}，但本範例僅支援 AES-CBC；無法生成可跑函式\n"
+                    f"function {func_name}(payload: string): string {{\n"
+                    f"  throw new Error('來源聲明的加密演算法 {algorithm} 不支援，請參考 integration-contract.json 手動實作')\n"
+                    "}\n"
+                )
             # GCM etc. need auth-tag/AAD handling this template can't fabricate.
-            if _signature_explicit(s) and not _is_cbc(s):
+            elif _signature_explicit(s) and not _is_cbc(s):
+                algorithm = s.algorithm or "unspecified"
                 mode = (s.mode or "").upper() or "unspecified"
                 blocks.append(
-                    f"// gap: 簽章 {s.name or ''} 聲明為 {mode} 模式，但本範例僅支援 CBC；無法生成可跑函式\n"
+                    f"// gap: 簽章 {s.name or ''} 聲明演算法 {algorithm}（{mode} 模式），但本範例僅支援 AES-CBC；無法生成可跑函式\n"
                     f"function {func_name}(payload: string): string {{\n"
-                    "  throw new Error('來源聲明的加密模式不支援，請參考 integration-contract.json 手動實作')\n"
+                    f"  throw new Error('來源聲明的加密演算法 {algorithm}／模式 {mode} 不支援，請參考 integration-contract.json 手動實作')\n"
                     "}\n"
                 )
             else:
@@ -409,10 +440,9 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
     if not schemes:
         return ""
 
-    # Import is only needed when at least one scheme renders runnable CBC code.
-    # An explicit-but-non-CBC scheme (e.g. GCM) becomes a gap and uses none of
-    # these imports, so it must NOT trigger them.
-    has_runnable = any(_signature_explicit(s) and _is_cbc(s) for s in schemes)
+    # Import is only needed when at least one scheme renders runnable AES-CBC code.
+    # Unsupported algorithms and modes become gaps and must not trigger it.
+    has_runnable = any(_is_runnable_crypto(s) for s in schemes)
 
     # Determine if we need unique function names (multiple schemes)
     need_unique_names = len(schemes) > 1
@@ -435,7 +465,7 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
         else:
             func_name = "sign"
 
-        if _signature_explicit(s) and _is_cbc(s):
+        if _is_runnable_crypto(s):
             key = (s.key_source.key if s.key_source else None) or "<hash_key>"
             iv = (s.key_source.iv if s.key_source else None) or "<hash_iv>"
             blocks.append(
@@ -449,13 +479,20 @@ def _py_signature(schemes: list[CryptoScheme]) -> str:
             )
         else:
             missing = [f for f in ("algorithm", "mode", "payload_assembly") if not getattr(s, f, None)]
-            # If explicit but not CBC, replace "mode" in missing with a note about the crypto mode
-            if _signature_explicit(s) and not _is_cbc(s):
+            if _signature_explicit(s) and _is_cbc(s) and not _is_aes(s):
+                algorithm = s.algorithm or "unspecified"
+                blocks.append(
+                    f"# gap: 簽章 {s.name or ''} 聲明為 {algorithm}，但本範例僅支援 AES-CBC；無法生成可跑函式\n"
+                    f"def {func_name}(payload: str) -> str:\n"
+                    f"    raise NotImplementedError('來源聲明的加密演算法 {algorithm} 不支援，請參考 integration-contract.json 手動實作')\n"
+                )
+            elif _signature_explicit(s) and not _is_cbc(s):
+                algorithm = s.algorithm or "unspecified"
                 mode = (s.mode or "").upper() or "unspecified"
                 blocks.append(
-                    f"# gap: 簽章 {s.name or ''} 聲明為 {mode} 模式，但本範例僅支援 CBC；無法生成可跑函式\n"
+                    f"# gap: 簽章 {s.name or ''} 聲明演算法 {algorithm}（{mode} 模式），但本範例僅支援 AES-CBC；無法生成可跑函式\n"
                     f"def {func_name}(payload: str) -> str:\n"
-                    "    raise NotImplementedError('來源聲明的加密模式不支援，請參考 integration-contract.json 手動實作')\n"
+                    f"    raise NotImplementedError('來源聲明的加密演算法 {algorithm}／模式 {mode} 不支援，請參考 integration-contract.json 手動實作')\n"
                 )
             else:
                 blocks.append(
@@ -511,10 +548,22 @@ def _render_readme(operation_ids: list[str], schemes: list[CryptoScheme]) -> str
         HEADER_NOTE,
         "",
         "每個端點一資料夾，含 curl / TypeScript / Python 三語版本。",
-        "`<...>` 為來源未提供的值，請自行填入。簽章值請先跑 request.py / request.ts 取得。",
+        "`<...>` 為來源未提供的值，請自行填入。",
         "",
         "## 端點",
     ]
+    runnable = [scheme for scheme in schemes if _is_runnable_crypto(scheme)]
+    unsupported = [scheme for scheme in schemes if not _is_runnable_crypto(scheme)]
+    if runnable:
+        lines.insert(
+            6,
+            "支援的 AES-CBC 簽章值可先跑 request.py / request.ts 取得。",
+        )
+    if unsupported:
+        lines.insert(
+            7 if runnable else 6,
+            "演算法不支援或來源資訊不足的簽章機制只會顯示缺漏並拋錯，request.py / request.ts 不會產生該值。",
+        )
     lines += [f"- `{oid}/`" for oid in operation_ids]
     if schemes:
         lines += ["", "## 通用簽章機制"]

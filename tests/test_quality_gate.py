@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -65,12 +66,18 @@ def test_command_plan_strict_local_includes_benchmarks():
     ]
 
 
-def test_required_benchmark_cases_lists_committed_cases():
+def test_required_benchmark_cases_match_committed_cases():
     cases = quality_gate.required_benchmark_cases()
-    assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
-            "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
-            "github-webhooks", "paypal-webhooks-incomplete",
-            "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= set(cases)
+    benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
+    committed = {
+        case.name
+        for case in benchmark_root.iterdir()
+        if (case / "extraction" / "inventory.json").is_file()
+        and (case / "expected" / "validation.expect.json").is_file()
+    }
+
+    assert set(cases) == committed
+    assert len(cases) == len(committed)
 
 
 def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):

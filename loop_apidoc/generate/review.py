@@ -164,19 +164,61 @@ def _endpoint_rows(plan: NormalizationPlan) -> str:
     return "\n".join(rows)
 
 
-def _schema_rows(plan: NormalizationPlan) -> str:
+def _generated_schemas(result: GenerateResult) -> dict:
+    components = result.openapi.get("components")
+    if not isinstance(components, dict):
+        return {}
+    schemas = components.get("schemas")
+    return schemas if isinstance(schemas, dict) else {}
+
+
+def _provenance_status(entries: list) -> object | None:
+    if not entries:
+        return None
+    priority = {
+        "supported": 0,
+        "unverified": 1,
+        "missing": 2,
+        "conflicting": 3,
+    }
+    return max(entries, key=lambda entry: priority[_status_value(entry.status)]).status
+
+
+def _schema_rows(plan: NormalizationPlan, result: GenerateResult) -> str:
     rows: list[str] = []
     key_map = schema_key_map(plan.schemas)
-    for idx, schema in enumerate(plan.schemas):
-        required = sum(1 for field in schema.fields if field.get("required"))
+    plan_schemas = {
+        key_map[idx]: schema
+        for idx, schema in enumerate(plan.schemas)
+        if schema.name
+    }
+    for component_key, generated in _generated_schemas(result).items():
+        schema = plan_schemas.get(component_key)
+        target = f"components.schemas.{component_key}"
+        provenance = [
+            entry for entry in result.provenance.entries
+            if entry.target == target
+        ]
+        properties = generated.get("properties")
+        required = generated.get("required")
+        field_count = len(properties) if isinstance(properties, dict) else 0
+        required_count = len(required) if isinstance(required, list) else 0
+        if schema is not None:
+            source_name = schema.name
+            status = schema.status
+            citations = schema.citations
+        else:
+            source_name = generated.get("title") or component_key
+            status = _provenance_status(provenance)
+            citations = provenance
         rows.append(
             "<tr>"
-            f"<td><code>{_h(key_map[idx])}</code></td>"
-            f"<td>{_h(schema.name)}</td>"
-            f"<td>{_h(_status_label(schema.status))}</td>"
-            f"<td>{_h(len(schema.fields))}</td>"
-            f"<td>{_h(required)}</td>"
-            f"<td>{_source_refs(schema.citations)}</td>"
+            f"<td><code>{_h(component_key)}</code></td>"
+            f"<td>{_h(source_name)}</td>"
+            f"<td>{_h(_status_label(status))}</td>"
+            f"<td>{_h(field_count)}</td>"
+            f"<td>{_h(required_count)}</td>"
+            f"<td>{_source_refs(citations)}</td>"
             "</tr>"
         )
     if not rows:
@@ -438,7 +480,7 @@ def build_review_html(
             _metric("來源", source_count, "manifest.json"),
             _metric("Endpoint", endpoint_count, "OpenAPI paths"),
             _metric("Webhook", webhook_count, "OpenAPI webhooks"),
-            _metric("Schema", len(plan.schemas), "components.schemas"),
+            _metric("Schema", len(_generated_schemas(result)), "components.schemas"),
             _metric("Auth", len(plan.security_schemes), "securitySchemes"),
             _metric("範例", example_count, "request examples"),
             _metric("核對風險", gap_count, "缺漏／衝突／未確認"),
@@ -509,7 +551,7 @@ def build_review_html(
         <thead>
           <tr><th>Component</th><th>來源名稱</th><th>狀態</th><th>欄位</th><th>必填</th><th>來源</th></tr>
         </thead>
-        <tbody>{_schema_rows(plan)}</tbody>
+        <tbody>{_schema_rows(plan, result)}</tbody>
       </table>
     </div>
   </section>

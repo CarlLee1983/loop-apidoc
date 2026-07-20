@@ -13,6 +13,7 @@ from loop_apidoc.manifest.models import (
 from loop_apidoc.plan.models import (
     EndpointEntry,
     EnvironmentEntry,
+    ErrorEntry,
     MissingItem,
     NormalizationPlan,
     PlanItemStatus,
@@ -173,3 +174,25 @@ def test_review_html_links_handoff(tmp_path):
     generate_outputs(plan, _manifest(), tmp_path)
     html = (tmp_path / "review.html").read_text(encoding="utf-8")
     assert "handoff/integration-tasks.md" in html
+
+
+def test_review_html_includes_openapi_derived_error_code_schema(tmp_path):
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        errors=[
+            ErrorEntry(
+                status=PlanItemStatus.SUPPORTED,
+                code="1001",
+                meaning="Invalid token",
+                citations=[_cite()],
+            )
+        ],
+    )
+
+    generate_outputs(plan, _manifest(), tmp_path)
+    html = (tmp_path / "review.html").read_text(encoding="utf-8")
+
+    assert "<span>Schema</span><strong>1</strong>" in html
+    assert "<code>ErrorCode</code>" in html
+    assert "有來源" in html
+    assert "manual.md" in html
