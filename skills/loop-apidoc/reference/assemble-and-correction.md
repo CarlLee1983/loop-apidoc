@@ -4,6 +4,18 @@ On-demand reference for driving `<APIDOC> assemble` and correcting a validation 
 Load this once you've run assemble (SKILL.md step 6). The `assemble` command line and the
 happy-path summary live in SKILL.md.
 
+## Optional Core shadow observation
+
+Add `--architecture-mode shadow` only when the user explicitly wants the current legacy
+run compared with the model-independent Core. The default `legacy` mode creates no
+`core/` directory. Shadow runs after the legacy validation report is written and records
+its evidence, claims, contract, decision, workflow/events, and comparison under
+`<run-dir>/core/` (or `core/error.json` on shadow failure).
+
+Treat every shadow artifact as observational. It never changes the legacy `ok`, `status`,
+validation report, score, approval, Foundry state, correction routing, or exit code. A
+`shadow error` warning is not a validation round and must not cause source-silent fixes.
+
 ## `verify-extraction`
 
 Runs `assemble`'s input boundary standalone: builds a manifest, checks the agent-written

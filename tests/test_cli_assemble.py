@@ -41,6 +41,15 @@ def _setup(tmp_path: Path) -> tuple[Path, Path, Path]:
     return sources, extraction, tmp_path / "out"
 
 
+def _enable_shadow_metadata(extraction: Path) -> None:
+    inventory_path = extraction / "inventory.json"
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    inventory.update({"title": "Demo API", "version": "1"})
+    inventory_path.write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8"
+    )
+
+
 def _source_quality_dir(tmp_path: Path, *, verdict: str = "pass") -> Path:
     quality = tmp_path / "source-quality"
     quality.mkdir()
@@ -88,6 +97,62 @@ def test_assemble_plain_output_mentions_status(tmp_path):
     assert res.exit_code in (0, 1)
     assert "狀態" in res.stdout
     assert "review.html" in res.stdout
+
+
+def test_assemble_shadow_json_adds_documented_shadow_object(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    _enable_shadow_metadata(extraction)
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "shadow", "--json",
+    ])
+
+    payload = json.loads(res.stdout)
+    assert res.exit_code == (0 if payload["ok"] else 1)
+    assert payload["shadow"]["status"] == "ok"
+    assert Path(payload["shadow"]["core_dir"]).is_dir()
+    assert Path(payload["shadow"]["comparison_path"]).is_file()
+    assert "error_path" in payload["shadow"]
+
+
+def test_assemble_shadow_plain_output_appends_status(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    _enable_shadow_metadata(extraction)
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "shadow",
+    ])
+
+    assert res.exit_code in (0, 1)
+    assert "shadow ok" in res.stdout
+
+
+def test_assemble_shadow_error_does_not_change_legacy_exit_code(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "shadow", "--json",
+    ])
+
+    payload = json.loads(res.stdout)
+    assert payload["shadow"]["status"] == "error"
+    assert res.exit_code == (0 if payload["ok"] else 1)
+    assert "shadow error" in res.stderr
+
+
+def test_assemble_rejects_invalid_architecture_mode(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "invalid",
+    ])
+
+    assert res.exit_code == 2
+    assert not out.exists()
 
 
 def test_assemble_persists_passing_source_quality_artifacts(tmp_path):

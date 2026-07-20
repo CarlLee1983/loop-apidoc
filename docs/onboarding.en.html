@@ -672,6 +672,9 @@
     <div class="arch-note">
       <b>Why split it this way?</b> Extraction — which requires semantic understanding and is inherently uncertain — is handed to the agent, while assembly, generation, and validation — which must be reproducible — are handed to deterministic code. There used to be a <code class="inline">run-agent</code> mode that extracted via the <code class="inline">claude -p</code> subprocess, and a NotebookLM backend; both were retired in 2026-06, and now <b>agent-native is the only extraction path</b>.
     </div>
+    <div class="arch-note">
+      <b>Core shadow seam.</b> Opt in with <code class="inline">assemble --architecture-mode shadow</code>. After the legacy report is written, <code class="inline">shadow/</code> maps the in-memory manifest and plan into Core evidence and claims, runs through Core validation only, and writes observational artifacts under <code class="inline">&lt;run-dir&gt;/core/</code>. It never approves, publishes, updates Foundry, or changes the legacy status or exit code.
+    </div>
   </div>
 </section>
 
@@ -1038,6 +1041,7 @@
         <tbody>
           <tr><td><code>manifest/</code></td><td>Scan local sources + build manifest.json</td></tr>
           <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
+          <tr class="io"><td><code>shadow/</code></td><td>Opt-in legacy/Core bridge and in-memory runner; only <code>shadow/report.py</code> writes the observational <code>core/</code> artifact set or a safe error report.</td></tr>
           <tr><td><code>extraction/</code></td><td>Shared models + utilities (stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>Normalization plan + source-match classification</td></tr>
           <tr class="io"><td><code>preparation/</code></td><td>Pre-generation readiness assessment + preparation-report (report.py writes files)</td></tr>
@@ -1054,7 +1058,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, <code class="inline">freshness/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
+    <p class="io-note"><span class="swatch"></span> Marked rows contain <b>file I/O exits</b>: <code class="inline">generate/</code>, <code class="inline">run/</code>, <code class="inline">shadow/report.py</code>, <code class="inline">preparation/report.py</code>, <code class="inline">score/report.py</code>, <code class="inline">diff/report.py</code>, <code class="inline">source_quality/</code>, <code class="inline">freshness/</code>, the URL corpus cache, and <code class="inline">foundry/</code> write files; everything else stays pure functions.</p>
   </div>
 </section>
 

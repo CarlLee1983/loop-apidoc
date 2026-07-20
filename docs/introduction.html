@@ -1064,6 +1064,15 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   </div>
 </section>
 
+<!-- ===================== CORE SHADOW ===================== -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">安全導入 CORE</span>
+    <h2 class="section-title">在不改變既有權威的前提下比較 Core</h2>
+    <p class="section-lead"><code>assemble --architecture-mode shadow</code> 會在 legacy validation 後執行觀測性 Core 旁路，將 evidence、claims、canonical contract、policy decision、workflow/events 與 comparison 寫入 <code>&lt;run-dir&gt;/core/</code>。Legacy 結果、score、approval、Foundry 與退出碼仍具權威；預設模式不建立 <code>core/</code>。</p>
+  </div>
+</section>
+
 <!-- ===================== CLOSING ===================== -->
 <section class="closing">
   <div class="wrap">

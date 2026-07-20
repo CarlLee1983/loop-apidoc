@@ -672,6 +672,9 @@
     <div class="arch-note">
       <b>為什麼這樣切?</b> 把「需要語意理解、本質不確定」的擷取交給 agent,把「組裝、生成、驗證」這些必須可重現的步驟交給確定性程式碼。曾經有過用子行程 <code class="inline">claude -p</code> 擷取的 <code class="inline">run-agent</code> 模式與 NotebookLM 後端,皆已於 2026-06 退役,現在 <b>agent-native 是唯一擷取路徑</b>。
     </div>
+    <div class="arch-note">
+      <b>Core shadow seam。</b>以 <code class="inline">assemble --architecture-mode shadow</code> 明確啟用。Legacy report 寫出後，<code class="inline">shadow/</code> 把記憶體中的 manifest 與 plan 映成 Core evidence/claims，只執行到 Core validation，並把觀測性產物寫入 <code class="inline">&lt;run-dir&gt;/core/</code>。它不會 approval、publish、更新 Foundry，也不改 legacy status 或退出碼。
+    </div>
   </div>
 </section>
 
@@ -1038,6 +1041,7 @@
         <tbody>
           <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
           <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+          <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
           <tr class="io"><td><code>preparation/</code></td><td>產生前就緒度評估 + preparation-report(report.py 寫檔)</td></tr>
@@ -1054,7 +1058,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔,其餘維持純函式。</p>
   </div>
 </section>
 

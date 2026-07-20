@@ -43,6 +43,8 @@ from loop_apidoc.source_quality.loader import (
 )
 from loop_apidoc.source_quality.models import QualityVerdict
 from loop_apidoc.source_quality.report import write_reports as write_source_quality_reports
+from loop_apidoc.shadow.models import ArchitectureMode
+from loop_apidoc.shadow.report import run_shadow_safely
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 
@@ -212,6 +214,7 @@ def run_assemble_pipeline(
     source_quality_dir: Path | None = None,
     excludes: Sequence[str] = (),
     extractor_model: str | None = None,
+    architecture_mode: ArchitectureMode = ArchitectureMode.LEGACY,
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
     → generate → validate。不做擷取、不 spawn 任何 agent;
@@ -298,6 +301,16 @@ def run_assemble_pipeline(
     write_validation_reports(report, run_dir / "validation")
 
     status = RunStatus.PASSED if report.ok else RunStatus.FAILED
+    shadow = None
+    if architecture_mode is ArchitectureMode.SHADOW:
+        shadow = run_shadow_safely(
+            manifest=manifest,
+            plan=plan,
+            legacy_report=report,
+            legacy_status=status,
+            generated_at=generated_at,
+            run_dir=run_dir,
+        )
     toolchain = build_toolchain(model=extractor_model)
     persist_run_descriptor(run_dir, RunDescriptor(
         run_id=run_id, status=status, generated_at=generated_at,
@@ -311,4 +324,5 @@ def run_assemble_pipeline(
         rounds=0,
         status=status,
         toolchain=toolchain,
+        shadow=shadow,
     )

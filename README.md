@@ -349,11 +349,19 @@ uv run loop-apidoc assemble \
   --extraction ./work \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
-  [--source-quality ./work/source-quality] [--extractor-model <模型名稱>] [--json] [--score]
+  [--source-quality ./work/source-quality] [--extractor-model <模型名稱>] \
+  [--architecture-mode legacy|shadow] [--json] [--score]
 ```
 
 **不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
 `score/score.md`；assemble 的退出碼仍維持既有驗證語意。有 URL 來源時，可用 `--url-coverage` 傳入 agent 記錄的 `url_sources/coverage.json` 撈取帳本，`assemble` 會做 warning-only 的 URL 涵蓋檢核（不影響驗證嚴重度閘）。搭配 `--score` 的自循環旗標 `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` 可讓 agent 依回報的 loop verdict 決定是否再跑一輪修正。
+
+可用 `--architecture-mode shadow` 明確啟用觀測性的 model-independent Core
+旁路；它在 legacy validation report 寫出後執行。成功時把 evidence、claims、
+canonical contract、policy decision、workflow/events 與 legacy/Core comparison
+寫入 `<run-dir>/core/`，失敗時寫入 `core/error.json`。Shadow 結果不會改變
+legacy validation、score、approval、Foundry、`ok`/`status` 或 assemble 退出碼。
+預設仍為 `legacy`，不會建立 `core/`。
 
 ---
 
@@ -392,6 +400,16 @@ output/
     ├── score/                       # 文件品質評分（使用 loop-apidoc score 或 assemble --score）
     │   ├── score.json
     │   └── score.md
+    ├── core/                        # 選用的觀測性 Core 產物（--architecture-mode shadow）
+    │   ├── source-set.json
+    │   ├── evidence.json
+    │   ├── runtime-result.json
+    │   ├── claims.json
+    │   ├── contract.json
+    │   ├── decision.json
+    │   ├── workflow.json
+    │   ├── events.json
+    │   └── comparison.json
     └── diff/                       # 與另一個 run 比較版本差異時(loop-apidoc diff)
         ├── report.json
         └── report.md

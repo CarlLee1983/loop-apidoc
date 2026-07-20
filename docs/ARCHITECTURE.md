@@ -83,6 +83,15 @@ flowchart LR
 
 `assemble` 不擷取,只組裝 agent 已寫出的 JSON:`manifest → plan → generate → validate`,再以 `--json` 回報 `run_id`/`run_dir`/`review_html`/`ok`/`status`/`report`(帶 `--score` 時另有 `score` 與 `loop`)。修正由 **agent 自行驅動**(無 CLI 內建迴圈):agent 依報告回頭重讀相關來源、覆寫對應的 `inventory.json` 或 `endpoints/<NN>.json`,再重跑 `assemble`,預設最多 3 輪;帶 `--score` 走分數自循環時改由 `--max-rounds`(預設 6)控制。`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
 
+`assemble --architecture-mode shadow` 是 opt-in compatibility sidecar：legacy
+validation report 寫出後，同一份 manifest 與 normalization plan 會經
+`shadow/bridge.py` 映成 immutable evidence 與 claim proposals，再由
+`EvidenceToContractService` 以 in-memory adapters 執行到 Core validation。
+結果寫入 `<run-dir>/core/`；任何 shadow failure 只寫 `core/error.json`，不會改變
+legacy validation、score、approval、Foundry、run status 或 exit code。預設
+`legacy` 不建立 `core/`。`shadow/report.py` 是這個 compatibility package
+唯一的 file-I/O exit；Core 與 Domain 仍不依賴 CLI 或 run directory。
+
 `assemble --score` 在驗證報告寫出後讀取同一個 run-dir artifact 集合並產生
 `score/score.{json,md}`；這是後段品質摘要，不會回頭擷取來源，也不改變
 validation pass/fail 的語意。配合 `--target-score`/`--prev-score`/`--round-index`/`--max-rounds`,
@@ -131,7 +140,7 @@ URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`sk
 
 `manifest/scanner.py` 以 `DEFAULT_EXCLUDES`(`README*`/`LICENSE*`/`CHANGELOG*`/`CONTRIBUTING*`/`.DS_Store`/`.git/*`)加上 `--exclude` 傳入的 glob 排除非規格檔:命中者仍列在 `manifest.json` 但 `status: ignored`、不雜湊、不可作為來源證據(`plan/classify.py` 的 `_UNUSABLE` 含 `IGNORED`,故單一文件的 `sole_source` 歸因不會被一份 README 打斷)。
 
-**檔案 I/O 出口**:`generate/`、`run/`、`preparation/report.py`、`diff/report.py`、`score/report.py`、`source_quality/report.py`及 URL corpus 快取(`url_corpus.cache_catalog_pages` 寫 `raw/`+`body/`、`html_snapshot.normalize_html_snapshot` 寫 Markdown+sidecar)會寫檔；讀檔側例外是 `preparation/coverage.py`(讀 `url_sources/coverage.json`,不寫)與 `agentcli/verify.py`(讀來源與擷取目錄,不寫);其餘 domain 模組保持為純函式,便於單元測試。
+**檔案 I/O 出口**:`generate/`、`run/`、`preparation/report.py`、`diff/report.py`、`score/report.py`、`source_quality/report.py`、`shadow/report.py`及 URL corpus 快取(`url_corpus.cache_catalog_pages` 寫 `raw/`+`body/`、`html_snapshot.normalize_html_snapshot` 寫 Markdown+sidecar)會寫檔；讀檔側例外是 `preparation/coverage.py`(讀 `url_sources/coverage.json`,不寫)與 `agentcli/verify.py`(讀來源與擷取目錄,不寫);其餘 domain 模組保持為純函式,便於單元測試。
 
 ## 資料流與關鍵 seam
 
