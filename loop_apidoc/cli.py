@@ -11,6 +11,7 @@ import typer
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.score.models import ScoreProfile
+from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.validate import validate_run_dir, write_reports
 
 app = typer.Typer(
@@ -614,6 +615,12 @@ def assemble(
         "--extractor-model",
         help="執行擷取的模型名稱,由 agent 明確帶入並記入 run.json;省略即 null(CLI 不推測)",
     ),
+    architecture_mode: ArchitectureMode = typer.Option(
+        ArchitectureMode.LEGACY,
+        "--architecture-mode",
+        case_sensitive=False,
+        help="架構執行模式:legacy 或非阻斷的 Core shadow",
+    ),
     json_out: bool = typer.Option(
         False, "--json", help="把結果以 JSON 印到 stdout(供 agent 解析)"
     ),
@@ -663,6 +670,7 @@ def assemble(
             source_quality_dir=source_quality,
             excludes=tuple(exclude),
             extractor_model=extractor_model,
+            architecture_mode=architecture_mode,
         )
     except AssembleInputError as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)
@@ -703,6 +711,12 @@ def assemble(
             findings=score_payload.findings,
         )
 
+    if result.shadow is not None and result.shadow.status == "error":
+        typer.echo(
+            f"shadow error:{result.shadow.message or 'shadow execution failed'}",
+            err=True,
+        )
+
     if json_out:
         review_html = str(Path(result.run_dir) / "review.html")
         payload = {
@@ -721,6 +735,8 @@ def assemble(
             payload["loop"] = loop_payload.model_dump(mode="json")
         if score_error is not None:
             payload["score_error"] = score_error
+        if result.shadow is not None:
+            payload["shadow"] = result.shadow.model_dump(mode="json")
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         suffix = ""
@@ -731,6 +747,8 @@ def assemble(
             )
         elif score_error is not None:
             suffix = f"；score input error: {score_error}"
+        if result.shadow is not None:
+            suffix += f"；shadow {result.shadow.status}"
         typer.echo(
             f"狀態 {result.status.value}:error {len(result.report.errors())}，"
             f"warning {len(result.report.warnings())}；輸出於 {result.run_dir}；"

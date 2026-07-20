@@ -356,10 +356,19 @@ uv run loop-apidoc assemble \
   --extraction ./work \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
-  [--source-quality ./work/source-quality] [--extractor-model <model-name>] [--json] [--score]
+  [--source-quality ./work/source-quality] [--extractor-model <model-name>] \
+  [--architecture-mode legacy|shadow] [--json] [--score]
 ```
 
 Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, `report`, and `toolchain` to stdout for the agent to parse and drive the correction loop. The run directory also gets a `run.json` descriptor recording `toolchain` (`cli_version`, `extraction_contract_version`, `skill_version`, `model`) so a later regression can be attributed to a version from the artifacts alone; `--extractor-model` lets the agent state the extraction model explicitly — omitted means `null` (the CLI never guesses). Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
+
+Use `--architecture-mode shadow` to opt into an observational pass through the
+model-independent Core after the legacy validation report is written. A successful pass
+writes evidence, claims, the canonical contract, policy decision, workflow/events, and a
+legacy/Core comparison under `<run-dir>/core/`; a shadow failure writes
+`core/error.json`. Shadow output never changes legacy validation, score, approval,
+Foundry state, `ok`/`status`, or the assemble exit code. The default remains `legacy` and
+creates no `core/` directory.
 
 ---
 
@@ -398,6 +407,16 @@ output/
     ├── score/                       # documentation quality score (loop-apidoc score or assemble --score)
     │   ├── score.json
     │   └── score.md
+    ├── core/                        # optional observational Core artifacts (--architecture-mode shadow)
+    │   ├── source-set.json
+    │   ├── evidence.json
+    │   ├── runtime-result.json
+    │   ├── claims.json
+    │   ├── contract.json
+    │   ├── decision.json
+    │   ├── workflow.json
+    │   ├── events.json
+    │   └── comparison.json
     └── diff/                       # when diffed against another run (loop-apidoc diff)
         ├── report.json
         └── report.md

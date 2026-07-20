@@ -37,12 +37,13 @@ class ContractMetadata(FrozenModel):
 class Environment(FrozenModel):
     name: str
     servers: tuple[str, ...] = ()
+    evidence: tuple[EvidenceBinding, ...] = ()
 
 
 class Parameter(FrozenModel):
     name: str
     location: str
-    required: bool = False
+    required: bool | None = None
     schema_ref: str | None = None
     evidence: tuple[EvidenceBinding, ...] = ()
 
@@ -78,7 +79,7 @@ class SchemaField(FrozenModel):
     name: str
     type: str | None = None
     schema_ref: str | None = None
-    required: bool = False
+    required: bool | None = None
     condition: str | None = None
     evidence: tuple[EvidenceBinding, ...] = ()
 
@@ -104,7 +105,7 @@ class ApiError(FrozenModel):
 
 class IntegrationMechanic(FrozenModel):
     name: str
-    kind: str
+    kind: str | None = None
     operation_refs: tuple[str, ...] = ()
     steps: tuple[str, ...] = ()
     evidence: tuple[EvidenceBinding, ...] = ()

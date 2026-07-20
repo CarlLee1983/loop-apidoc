@@ -226,9 +226,10 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;model name&gt;] [--json] [--score]
+  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;model name&gt;] [--architecture-mode legacy|shadow] [--json] [--score]
 </code></pre>
 <p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally <code>integration.json</code>) into outputs: manifest → plan → generate → validate. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, a reject verdict aborts before the run-dir is created, while a passing report is retained in the run-dir; <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, <code>report</code>, and <code>toolchain</code> to stdout for the agent to parse and drive the correction loop. The run directory also gets a <code>run.json</code> descriptor recording the <code>toolchain</code> (<code>cli_version</code>, <code>extraction_contract_version</code>, <code>skill_version</code>, <code>model</code>) so a run can later be attributed to the versions that produced it; <code>--extractor-model</code> is the extraction model name, passed explicitly by the agent — omit it and the field stays <code>null</code>, because the CLI never guesses it. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
+<p><code>--architecture-mode shadow</code> opts into a non-authoritative Core observation after the legacy validation report is written. Success writes source-set, evidence, runtime result, claims, contract, decision, workflow, events, and comparison JSON under <code>&lt;run-dir&gt;/core/</code>; failure writes <code>core/error.json</code> and a warning. Neither result changes legacy validation, score, approval, Foundry, <code>ok</code>/<code>status</code>, or exit codes. The default is <code>legacy</code> and creates no <code>core/</code>.</p>
 <h3 id="validate-run"><code>validate</code> — validate an existing run directory</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
@@ -280,6 +281,16 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
     ├── score/                      # documentation quality score (assemble --score or loop-apidoc score)
     │   ├── score.json
     │   └── score.md
+    ├── core/                       # optional observational Core artifacts (--architecture-mode shadow)
+    │   ├── source-set.json
+    │   ├── evidence.json
+    │   ├── runtime-result.json
+    │   ├── claims.json
+    │   ├── contract.json
+    │   ├── decision.json
+    │   ├── workflow.json
+    │   ├── events.json
+    │   └── comparison.json
     └── diff/                       # version difference when compared against another run (loop-apidoc diff)
         ├── report.json
         └── report.md

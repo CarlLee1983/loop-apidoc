@@ -29,6 +29,17 @@ from loop_apidoc.preparation.coverage import (
     UrlCoverage,
 )
 from loop_apidoc.run.models import RunStatus
+from loop_apidoc.shadow.models import (
+    ArchitectureMode,
+    ShadowExecutionSummary,
+    ShadowStage,
+)
+from loop_apidoc.validate.models import (
+    Issue,
+    IssueCode,
+    Severity,
+    ValidationReport,
+)
 
 _INVENTORY = {
     "overview": "Demo API",
@@ -58,6 +69,15 @@ def _write_extraction(extraction_dir: Path) -> None:
     eps.mkdir()
     (eps / "ep0.json").write_text(
         json.dumps(_ENDPOINT, ensure_ascii=False), encoding="utf-8")
+
+
+def _add_title_version(extraction_dir: Path) -> None:
+    inventory_path = extraction_dir / "inventory.json"
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    inventory.update({"title": "Demo API", "version": "1"})
+    inventory_path.write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def test_load_extraction_inputs_reads_inventory_and_endpoints(tmp_path):
@@ -142,6 +162,129 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     assert prep_payload["summary"]["ready"] == 4
     assert result.status in (RunStatus.PASSED, RunStatus.FAILED)
     assert result.run_dir == str(run_dir)
+
+
+def test_default_assemble_creates_no_core_directory(tmp_path):
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-legacy",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+    )
+
+    assert result.shadow is None
+    assert not (Path(result.run_dir) / "core").exists()
+
+
+def test_shadow_assemble_writes_complete_core_artifacts(tmp_path):
+    _write_extraction(tmp_path / "extraction")
+    _add_title_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-shadow",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+
+    assert result.shadow is not None
+    assert result.shadow.status == "ok"
+    core_dir = Path(result.run_dir) / "core"
+    assert {path.name for path in core_dir.iterdir()} == {
+        "source-set.json",
+        "evidence.json",
+        "runtime-result.json",
+        "claims.json",
+        "contract.json",
+        "decision.json",
+        "workflow.json",
+        "events.json",
+        "comparison.json",
+    }
+
+
+def test_shadow_runs_after_failed_legacy_validation(tmp_path, monkeypatch):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    _add_title_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    failed_report = ValidationReport(
+        issues=[
+            Issue(
+                code=IssueCode.REQUIRED_INFO_MISSING,
+                severity=Severity.ERROR,
+                location="paths./ping.get",
+                evidence="source",
+                suggested_fix="fill",
+            )
+        ]
+    )
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: failed_report)
+
+    result = assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-shadow-fail",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+
+    assert result.status is RunStatus.FAILED
+    assert result.report == failed_report
+    assert result.shadow is not None
+    assert result.shadow.status == "ok"
+    assert (Path(result.run_dir) / "core" / "comparison.json").is_file()
+
+
+def test_shadow_error_preserves_legacy_run_result(tmp_path, monkeypatch):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    shadow_error = ShadowExecutionSummary(
+        status="error",
+        core_dir=str(tmp_path / "out" / "run-shadow-error" / "core"),
+        stage=ShadowStage.BRIDGE,
+        exception_type="ShadowMetadataError",
+        message="safe",
+    )
+    monkeypatch.setattr(
+        assemble_mod,
+        "run_shadow_safely",
+        lambda **_kwargs: shadow_error,
+        raising=False,
+    )
+
+    result = assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-shadow-error",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+
+    assert result.status is (
+        RunStatus.PASSED if result.report.ok else RunStatus.FAILED
+    )
+    assert result.shadow == shadow_error
 
 
 def test_run_assemble_pipeline_bad_input_leaves_no_run_dir(tmp_path):

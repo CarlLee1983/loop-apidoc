@@ -823,7 +823,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <code>cli.py</code> exposes eighteen top-level operations: source handling (<code>preprocess</code>, <code>manifest</code>, <code>snapshot-openapi-url</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), the scheduled source freshness gate (<code>record-fingerprint</code>, <code>check-freshness</code>, <code>check-freshness-batch</code>), run handling (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>) and the <code>foundry</code> sub-group.
-      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, the URL corpus cache and <code>foundry/</code> are responsible for writing; the remaining domain logic stays as pure functions wherever possible to keep unit testing simple.
+      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, the URL corpus cache and <code>foundry/</code> are responsible for writing; the remaining domain logic stays as pure functions wherever possible to keep unit testing simple.
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
+      <strong>Core shadow integration</strong>: <code>assemble --architecture-mode shadow</code> invokes the compatibility-only <code>shadow/</code> package after legacy validation. Its pure bridge maps manifest/plan values into Core evidence and claims, the in-memory runner stops after Core validation, and only <code>shadow/report.py</code> writes the observational <code>&lt;run-dir&gt;/core/</code> artifacts or <code>core/error.json</code>. Legacy validation, score, approval, Foundry, status, and exit codes remain authoritative.
     </div>
   </div>
 

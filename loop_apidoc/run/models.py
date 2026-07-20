@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.plan.models import NormalizationPlan
+from loop_apidoc.shadow.models import ShadowExecutionSummary
 from loop_apidoc.validate.models import ValidationReport
 
 
@@ -56,6 +57,7 @@ class RunResult(BaseModel):
     rounds: int
     status: RunStatus
     toolchain: Toolchain | None = None
+    shadow: ShadowExecutionSummary | None = None
 
     @property
     def ok(self) -> bool:
