@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import ConfigDict
 
+from loop_apidoc.domain.claim_paths import material_claim_paths
+from loop_apidoc.domain.evidence import SupportRelationshipType
 from loop_apidoc.domain.identity import (
     DomainIdentityError,
     canonical_operation_identity,
@@ -169,15 +171,65 @@ class ApiDomainRulePack(FrozenModel):
                     )
 
         for index, claim in enumerate(contract.claims):
-            if (
-                claim.status in {ClaimStatus.SUPPORTED, ClaimStatus.WAIVED}
-                and not claim.evidence
+            location = f"claims[{index}]"
+            if claim.status in {ClaimStatus.SUPPORTED, ClaimStatus.WAIVED} and not (
+                claim.evidence
             ):
                 findings.append(
                     _finding(
                         "CLAIM_EVIDENCE_REQUIRED",
                         claim.identity,
-                        f"claims[{index}]",
+                        location,
+                        claim.identity,
+                    )
+                )
+            semantic = tuple(
+                binding
+                for binding in claim.evidence
+                if binding.relationship_id is not None
+                and binding.relationship
+                in {
+                    SupportRelationshipType.EXPLICIT_SUPPORT,
+                    SupportRelationshipType.DERIVED_SUPPORT,
+                }
+            )
+            if claim.status in {ClaimStatus.SUPPORTED, ClaimStatus.WAIVED}:
+                if not semantic:
+                    findings.append(
+                        _finding(
+                            "CLAIM_SEMANTIC_SUPPORT_REQUIRED",
+                            claim.identity,
+                            location,
+                            claim.identity,
+                        )
+                    )
+                elif claim.claim_kind is not None:
+                    required = set(
+                        material_claim_paths(claim.claim_kind, claim.value)
+                    )
+                    covered = {
+                        binding.claim_path
+                        for binding in semantic
+                        if binding.claim_path is not None
+                    }
+                    if required - covered:
+                        findings.append(
+                            _finding(
+                                "CLAIM_SUPPORT_COVERAGE_INCOMPLETE",
+                                claim.identity,
+                                location,
+                                claim.identity,
+                            )
+                        )
+            if any(
+                binding.relationship is SupportRelationshipType.CONTRADICTS
+                for binding in claim.evidence
+            ):
+                findings.append(
+                    _finding(
+                        "CLAIM_EVIDENCE_CONTRADICTS",
+                        claim.identity,
+                        location,
                         claim.identity,
                     )
                 )

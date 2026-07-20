@@ -9,7 +9,7 @@ from typing import Annotated, Any, Literal, Mapping
 
 from pydantic import Field, model_validator
 
-from loop_apidoc.domain.models import FrozenModel
+from loop_apidoc.domain.base import FrozenModel
 
 
 class WholeDocumentLocator(FrozenModel):
@@ -302,4 +302,3 @@ def make_relationship_id(
         payload = {key: value for key, value in relationship.items() if key != "id"}
     digest = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()[:24]
     return f"relationship-{digest}"
-
