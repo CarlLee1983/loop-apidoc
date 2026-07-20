@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from loop_apidoc.core.ports import RuntimePort
+from loop_apidoc.core.verification import verify_claim_support
 from loop_apidoc.domain.identity import canonical_claim_identity
 from loop_apidoc.domain.rules import ApiDomainRulePack
-from loop_apidoc.evaluation.metrics import evaluate_claims
+from loop_apidoc.evaluation.metrics import evaluate_claims, evaluate_relationships
 from loop_apidoc.evaluation.models import (
     EvaluationCase,
     ExpectedClaim,
+    ExpectedRelationship,
     ReplayComparison,
     ReplayReport,
 )
@@ -31,7 +33,28 @@ class ReplayRunner:
             )
             for proposal in result.claim_proposals
         )
-        metrics = evaluate_claims(case.expected_claims, observed)
+        observed_relationships = (
+            tuple(
+                ExpectedRelationship(
+                    claim_identity=relationship.claim_identity,
+                    claim_path=relationship.claim_path,
+                    fragment_id=relationship.fragment_id,
+                    relationship=relationship.relationship,
+                )
+                for proposal in result.claim_proposals
+                for relationship in verify_claim_support(
+                    proposal,
+                    case.evidence_bundle,
+                )
+            )
+            if case.evidence_bundle is not None
+            else ()
+        )
+        metrics = evaluate_relationships(
+            case.expected_relationships,
+            observed_relationships,
+            base_report=evaluate_claims(case.expected_claims, observed),
+        )
         return ReplayReport(
             case_id=case.id,
             case_version=case.version,

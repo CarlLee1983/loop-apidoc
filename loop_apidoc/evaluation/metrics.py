@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import json
 
-from loop_apidoc.evaluation.models import ExpectedClaim, MetricReport
+from loop_apidoc.domain.evidence import SupportRelationshipType
+from loop_apidoc.evaluation.models import (
+    ExpectedClaim,
+    ExpectedRelationship,
+    MetricReport,
+)
 
 
 def evaluate_claims(
@@ -46,8 +51,100 @@ def evaluate_claims(
     )
 
 
+def evaluate_relationships(
+    expected: tuple[ExpectedRelationship, ...],
+    observed: tuple[ExpectedRelationship, ...],
+    *,
+    base_report: MetricReport | None = None,
+) -> MetricReport:
+    support_kinds = {
+        SupportRelationshipType.EXPLICIT_SUPPORT,
+        SupportRelationshipType.DERIVED_SUPPORT,
+    }
+    expected_support = {
+        _relationship_key(item)
+        for item in expected
+        if item.relationship in support_kinds
+    }
+    observed_support = {
+        _relationship_key(item)
+        for item in observed
+        if item.relationship in support_kinds
+    }
+    matches = expected_support & observed_support
+    support_precision = (
+        len(matches) / len(observed_support)
+        if observed_support
+        else (1.0 if not expected_support else 0.0)
+    )
+    support_recall = (
+        len(matches) / len(expected_support) if expected_support else 1.0
+    )
+
+    expected_paths = {
+        (item.claim_identity, item.claim_path)
+        for item in expected
+        if item.relationship in support_kinds
+    }
+    observed_paths = {
+        (item.claim_identity, item.claim_path)
+        for item in observed
+        if item.relationship in support_kinds
+    }
+    path_coverage = (
+        len(expected_paths & observed_paths) / len(expected_paths)
+        if expected_paths
+        else 1.0
+    )
+
+    expected_contradictions = {
+        _relationship_key(item)
+        for item in expected
+        if item.relationship is SupportRelationshipType.CONTRADICTS
+    }
+    observed_contradictions = {
+        _relationship_key(item)
+        for item in observed
+        if item.relationship is SupportRelationshipType.CONTRADICTS
+    }
+    contradiction_recall = (
+        len(expected_contradictions & observed_contradictions)
+        / len(expected_contradictions)
+        if expected_contradictions
+        else 1.0
+    )
+
+    report = base_report or MetricReport(
+        claim_precision=1.0,
+        claim_recall=1.0,
+        unsupported_assertion_rate=0.0,
+        evidence_reference_correctness=1.0,
+        field_omission_rate=0.0,
+        conflict_detection_recall=1.0,
+    )
+    return report.model_copy(
+        update={
+            "semantic_support_precision": support_precision,
+            "semantic_support_recall": support_recall,
+            "claim_path_coverage": path_coverage,
+            "contradiction_detection_recall": contradiction_recall,
+        }
+    )
+
+
 def _key(claim: ExpectedClaim) -> tuple[str, str]:
     value = json.dumps(
         claim.value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     )
     return claim.identity, value
+
+
+def _relationship_key(
+    relationship: ExpectedRelationship,
+) -> tuple[str, str, str, str]:
+    return (
+        relationship.claim_identity,
+        relationship.claim_path,
+        relationship.fragment_id,
+        relationship.relationship.value,
+    )
