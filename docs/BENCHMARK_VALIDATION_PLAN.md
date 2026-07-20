@@ -1,318 +1,231 @@
-# Benchmark Validation Plan
+# Benchmark Harness Validation
 
-本計劃用來建立 `loop-apidoc` 的文件樣本驗證集。目標不是「訓練模型」,而是用可重跑的公開文件樣本檢查整條流程是否能穩定產出足夠後續開發使用的 OpenAPI、整合契約、範例程式與來源追溯。
+This document is the canonical contract for the `loop-apidoc` benchmark
+harness. It explains what the committed fixtures prove, what CI can verify
+without private or redistributability-limited source snapshots, and what must
+run locally before claiming source-backed benchmark success.
 
-## 目標
+The harness currently contains **thirteen unique cases**. That number counts
+fixture directories, not pytest test items: one case can feed several
+parametrized assertions.
 
-- 建立 5-8 組官方或可公開取得的 API 文件樣本。
-- 每組樣本都能重跑 `preprocess`(需要時)、agent 擷取、`assemble`、`validate`。
-- 用固定驗收標準判斷產物是否足以支援後續生成 SDK、client package、server stub、integration module 或測試骨架。
-- 找出流程盲點:擷取 prompt、`integration.json` schema、OpenAPI 生成、範例程式、驗證規則或文件說明。
+## The four harness layers
 
-## 樣本來源優先順序
+The layers are cumulative, but they are not interchangeable. Report the
+strongest layer that actually completed.
 
-### 第一輪:最小有效樣本集
+### 1. Committed fixture inventory
 
-先收 5 份,每份代表一種風險面。
-
-| 順序 | 文件類型 | 建議來源 | 驗證目的 |
-| --- | --- | --- | --- |
-| 1 | 台灣金流簽章文件 | NewebPay API 文件下載: `https://www.newebpay.com/website/Page/content/download_api` | AES / SHA / HashKey / HashIV / callback / 交易查詢 |
-| 2 | 標準支付 REST 文件 | LINE Pay Online API: `https://developers-pay.line.me/online-api-v3` | REST payment flow、confirm、refund、callback |
-| 3 | Backend payment API | TapPay Backend API: `https://docs.tappaysdk.com/tutorial/en/back.html` | backend payment request/response、付款方式差異 |
-| 4 | 高品質國際 REST 文件 | Stripe API Reference: `https://docs.stripe.com/api` | 標準 REST、auth、request/response、error handling |
-| 5 | Machine-readable baseline | APIs.guru OpenAPI Directory: `https://github.com/APIs-guru/openapi-directory` | 對照既有 OpenAPI 規格,檢查 schema/operation 基準 |
-
-### 第二輪:擴充覆蓋 — ✅ 完成(5/5 類,2026-06-29)
-
-第一輪穩定後再補 3-5 份。五類覆蓋全數完成。
-
-| 類型 | 對應 case | 驗證目的 | 狀態 |
-| --- | --- | --- | --- |
-| 表格密集 PDF | `ecpay-creditcard-pdf` | PDF `preprocess`、欄位表、錯誤碼表 | ✅ PASS(修純簽章 auth 誤判) |
-| callback / webhook 文件 | `github-webhooks` | async flow、驗簽、重送規則 | ✅ PASS(修多 webhook 同源碰撞) |
-| 多產品共用 endpoint | `adyen-payments-multimethod` | endpoint merge、operationId、文件可讀性 | ✅ PASS(`POST /payments` oneOf discriminator,首跑 0 error) |
-| 文件不完整案例 | `paypal-webhooks-incomplete` | fail-closed、missing、conflict、provenance | 🟥 EXPECTED_FAIL(SOURCE_UNVERIFIED 正確擋下越界 schema) |
-| 大型企業 API | `cybersource-payments` | 大型文件、複雜 schema、範例產出壓力測試 | ✅ PASS(18 schema/40+ 欄位,首跑 0 error) |
-
-> 來源型態:PDF(綠界 V5.6.1)/ WebFetch HTML(GitHub webhooks)/ 官方 OpenAPI curl(Adyen Checkout v71)/ 官方頁(PayPal,刻意不完整)/ SDK codegen md(CyberSource)。原始 `sources/` gitignore,只入庫 `extraction/` + `expected/` + `notes.md`。
-
-## 目錄結構
-
-每份樣本建立一個獨立 case。來源文件可以是 PDF、markdown、HTML 擷取後保存的文字,或官方 OpenAPI 檔。
+A directory under `benchmarks/` is a committed harness case when both identity
+files exist:
 
 ```text
-benchmarks/
-└── <case-id>/
-    ├── sources/
-    │   └── <official-source-files>
-    ├── extraction/
-    │   ├── inventory.json
-    │   ├── endpoints/
-    │   │   ├── ep000.json
-    │   │   └── ep001.json
-    │   └── integration.json        # 選填:來源有簽章、加密、callback、條件規則時必須有
-    ├── expected/
-    │   ├── minimum.json            # 此 case 至少必須抽到的重點
-    │   └── validation.expect.json  # 預期 PASS/FAIL 與必要 issue 類型
-    ├── output/                     # 實際跑 assemble 後產生,可 gitignore
-    └── notes.md                    # 來源網址、下載日期、觀察、缺漏、決策
+benchmarks/<case>/
+├── extraction/inventory.json
+└── expected/validation.expect.json
 ```
 
-建議 `case-id` 用穩定命名,例如:
+The committed extraction and expectation files define the case and its
+source-backed assertions. Other expected declarations, such as
+`expected/minimum.json`, provide the assertion thresholds used during
+execution. The original source snapshot is deliberately not part of fixture
+identity because `benchmarks/<case>/sources/` is operator-provided and
+gitignored.
 
-- `newebpay-mpg`
-- `line-pay-online-v3`
-- `tappay-backend`
-- `stripe-basic-rest`
-- `apis-guru-baseline`
+The required inventory is explicit in
+`scripts/quality_gate.py::REQUIRED_BENCHMARK_CASES`. It contains:
 
-## 每個 Case 的 `minimum.json`
+1. `adyen-payments-multimethod`
+2. `apis-guru-baseline`
+3. `cybersource-payments`
+4. `ecpay-creditcard-pdf`
+5. `funkygames-transfer-operator`
+6. `github-webhooks`
+7. `jili-legacy-gaming-pdf`
+8. `line-pay-online-v3`
+9. `newebpay-mpg`
+10. `paypal-webhooks-incomplete`
+11. `rsg-game-transfer-wallet`
+12. `stripe-basic-rest`
+13. `tappay-backend`
 
-`minimum.json` 不需要比對完整輸出,只記錄「這份文件至少應該支援開發的資訊」。
+`test_required_benchmark_cases_match_committed_cases` enforces exact set
+parity. A committed fixture omitted from the required list fails just as a
+required name with no committed fixture fails. The explicit list is a review
+boundary: adding or removing a case must be intentional.
 
-```json
-{
-  "must_have": {
-    "base_urls": 1,
-    "endpoints_min": 3,
-    "schemas_min": 1,
-    "error_codes_min": 1,
-    "examples": true,
-    "provenance": true
-  },
-  "integration": {
-    "required": true,
-    "crypto_required": true,
-    "callbacks_required": true,
-    "field_conditions_min": 1,
-    "test_cases_min": 1
-  },
-  "critical_operations": [
-    "paths./pay.post",
-    "paths./pay/notify.post"
-  ]
-}
-```
+### 2. Discovery guard
 
-## 執行流程
+`tests/test_benchmarks.py::_cases()` enumerates committed fixtures by the
+identity rule above. `test_benchmark_harness_discovers_cases` confirms the
+required cases remain discoverable even when every local `sources/` directory
+is absent.
 
-### 1. 收集來源
+This guard prevents a broken discovery expression or fixture layout from
+turning the benchmark suite into an empty, apparently successful test run. It
+proves that fixtures were enumerated; it does not prove their source-backed
+assertions ran.
 
-- 優先使用官方文件、官方 PDF、官方 API reference。
-- 記錄來源 URL、下載日期、文件版本。
-- 若文件是 HTML,保存原始 URL 與當次擷取內容。
-- 避免用部落格或非官方教學當主 benchmark;它們可作為輔助參考,但不能作為來源真相。
+### 3. Source-backed execution
 
-### 2. 前處理
+`tests/test_benchmarks.py` re-runs the deterministic assemble → validate tail
+from each committed extraction and checks the generated artifacts against the
+case's `expected/` declarations. Among other things, the assertions cover:
 
-PDF 或表格密集文件先轉 markdown。
+- expected validation PASS or EXPECTED_FAIL status;
+- the complete issue-class map, including warning drift;
+- OpenAPI 3.1 validity and structural minimums;
+- critical operations, provenance, examples, and integration contracts;
+- preparation, scoring, diff, and Foundry behavior exercised by the case.
+
+These assertions execute only when the original, dated
+`benchmarks/<case>/sources/` snapshot is present. If the snapshot is absent,
+pytest reports the source-backed assertions as skipped.
+
+**A skip is not a pass.** A skipped case was committed and discovered, but the
+source-backed assertions did not execute. Use “passed” only when the applicable
+assertions ran and passed.
+
+### 4. Strict-local preflight
+
+Run:
 
 ```bash
-uv run loop-apidoc preprocess \
-  --sources benchmarks/<case-id>/sources \
-  --out benchmarks/<case-id>/work/sources_md
+uv run python scripts/quality_gate.py --strict-local
 ```
 
-文字或 markdown 來源可直接進入擷取流程。
+Strict-local is the strongest harness claim. It:
 
-### 3. Agent 擷取
+1. runs the CI-safe lint and full pytest suite, including discovery and exact
+   required-inventory parity;
+2. requires a non-empty `sources/` tree for every required case;
+3. runs `uv run pytest tests/test_benchmarks.py -q`; and
+4. rejects the run if pytest reports any benchmark skip.
 
-依 `skills/loop-apidoc/SKILL.md` 讓 Claude Code 或 Codex 讀來源,產出:
+“Strict-local passed” therefore means every required case had a source
+snapshot, all source-backed benchmark checks ran, and no skip was reported.
 
-- `benchmarks/<case-id>/extraction/inventory.json`
-- `benchmarks/<case-id>/extraction/endpoints/*.json`
-- `benchmarks/<case-id>/extraction/integration.json`(來源有簽章/加密/callback/欄位條件時)
+## Terminology
 
-擷取原則:
+Use these terms consistently in issues, release notes, and review comments:
 
-- 不從常識補欄位。
-- 每個重要項目都要有 `source`。
-- 無法確認的資訊放進 `missing`。
-- 來源互相矛盾時標 conflict,不要自行裁決。
-
-### 4. 組裝與驗證
-
-```bash
-uv run loop-apidoc assemble \
-  --sources benchmarks/<case-id>/sources \
-  --extraction benchmarks/<case-id>/extraction \
-  --output benchmarks/<case-id>/output \
-  --json
-```
-
-取得 `run_dir` 後再跑一次 validate:
-
-```bash
-uv run loop-apidoc validate --output <run_dir>
-```
-
-### 5. 產物檢查
-
-每個 case 至少檢查這些檔案:
-
-- `openapi.yaml`
-- `api-guide.zh-TW.md`
-- `review.html`
-- `provenance.json`
-- `plan/normalization-plan.json`
-- `validation/report.json`
-- `integration-contract.json`(來源有整合機制時)
-- `examples/`(有 endpoint 可產生範例時)
-
-## 驗收標準
-
-### PASS 條件
-
-一個 case 可視為通過,需同時滿足:
-
-- `assemble --json` 回傳 `ok: true`,或在預期缺漏 case 中回傳預期 issue。
-- `openapi.yaml` 可被驗證器接受。
-- endpoint、schema、security、server 至少符合 `expected/minimum.json`。
-- `provenance.json` 能追到核心 endpoint、schema、security、integration contract 的來源。
-- 若來源有簽章/加密/callback,必須有 `integration-contract.json`。
-- `examples/` 有足夠資訊讓工程師或 agent 改成可執行 request。
-- 缺漏資訊被標成 missing/issue,沒有被硬補成看似確定的內容。
-
-### FAIL 條件
-
-任一情況需要記錄為 fail 或需要修正:
-
-- `assemble` crash 或輸出非預期格式。
-- OpenAPI invalid。
-- 明確存在於來源的 endpoint/schema/error code 未被抽到。
-- 簽章/加密訊號存在,但沒有產出 `integration.json` 或 validation 沒有報缺漏。
-- 範例程式宣稱可跑,但缺少來源必要資訊。
-- provenance 缺核心項目來源。
-- validation 沒有抓出明顯 unverified/conflict/missing。
-
-## 產物是否足夠支援後續開發
-
-每個 case 跑完後,用以下問題評分:
-
-| 問題 | 標準 |
+| Term | Meaning |
 | --- | --- |
-| OpenAPI 是否能生成 client/server stub? | endpoint、method、path、requestBody、responses、schemas 足夠 |
-| 型別是否足夠? | request/response 欄位、required、enum、巢狀結構可用 |
-| 整合機制是否足夠? | `integration-contract.json` 說清楚簽章/加密/callback/條件欄位 |
-| 範例是否有幫助? | curl / TypeScript / Python 能作為可修改起點 |
-| 來源是否可追? | `provenance.json` 能定位核心輸出來源 |
-| 缺漏是否透明? | 不確定資訊進 missing/issue,沒有被猜測 |
+| **Committed** | The fixture identity files exist in the repository. |
+| **Discovered** | The harness enumerated the committed fixture. |
+| **Skipped** | Source-backed assertions did not execute because the required source snapshot was unavailable. |
+| **Passed** | The applicable assertions executed and passed. |
+| **Strict-local passed** | Every required case had sources, all source-backed benchmark checks ran, and no skip was reported. |
 
-若大多數答案為「是」,該 case 代表產物足以支援快速生成 SDK、套件或應用整合層。若目標是 production-ready app,仍需再補商業流程、金鑰管理、部署、真實 sandbox 測試與監控。
+Do not shorten “committed and discovered” to “validated,” and do not describe
+a CI run containing source-related skips as benchmark success.
 
-## 紀錄模板
+## CI-safe and local commands
 
-每個 `notes.md` 建議使用以下格式:
+| Command | Layer verified | Source snapshots required |
+| --- | --- | --- |
+| `uv run pytest tests/test_benchmarks.py -k test_benchmark_harness_discovers_cases -q` | Discovery guard | No |
+| `uv run pytest tests/test_quality_gate.py -k required_benchmark_cases_match_committed_cases -q` | Exact committed/required parity | No |
+| `uv run python scripts/quality_gate.py` | CI-safe lint, unit/integration tests, discovery, and parity | No |
+| `uv run pytest tests/test_benchmarks.py -q` | Source-backed execution for cases whose sources are present; absent sources skip | Yes, for a complete pass |
+| `uv run python scripts/quality_gate.py --strict-local` | All four layers, with sources present and zero skips | Yes, for all thirteen cases |
 
-```markdown
-# <case-id>
+The full benchmark module creates more than thirteen pytest items because each
+fixture is used by multiple tests. Read the pytest summary for failures and
+skips; do not infer the case count from the item count.
 
-## Source
+## Source snapshot rules
 
-- Official URL:
-- Downloaded at:
-- Document version:
-- Source format: PDF / HTML / Markdown / OpenAPI
+Source documents are the only source of truth. Store the original, dated
+snapshot at:
 
-## Scope
-
-- Included:
-- Excluded:
-
-## Expected Coverage
-
-- Base URLs:
-- Critical endpoints:
-- Auth/signing:
-- Callback/webhook:
-- Error codes:
-
-## Run Log
-
-- preprocess:
-- assemble:
-- validate:
-- run_dir:
-
-## Result
-
-- Status: PASS / EXPECTED_FAIL / FAIL
-- Issues:
-- Missing source info:
-- False positives:
-- False negatives:
-
-## Follow-up
-
-- Extraction prompt changes:
-- Schema/contract changes:
-- Generator changes:
-- Validator changes:
-- Documentation changes:
+```text
+benchmarks/<case>/sources/
 ```
 
-## 第一輪執行清單
+The directory is gitignored because some upstream documents are copyrighted,
+access-controlled, or unsuitable for redistribution. Keep the case's
+`notes.md` source URL, download date, document version, format, and scope
+accurate enough to identify the snapshot.
 
-1. 建立 `benchmarks/newebpay-mpg/`,下載 NewebPay MPG 或交易相關官方文件。
-2. 建立 `benchmarks/line-pay-online-v3/`,保存 LINE Pay Online API v3 來源。
-3. 建立 `benchmarks/tappay-backend/`,保存 TapPay Backend API 來源。
-4. 建立 `benchmarks/stripe-basic-rest/`,挑 3-5 個 Stripe 基本 endpoint 當高品質 REST 對照。
-5. 建立 `benchmarks/apis-guru-baseline/`,挑一份小型 OpenAPI 當 machine-readable baseline。
-6. 逐一跑 preprocess(必要時)、agent 擷取、assemble、validate。
-7. 每跑完一份,更新 `notes.md`,不要等全部跑完才回顧。
-8. 三份以上完成後,整理共通問題,再決定要優先修擷取 prompt、contract schema、examples generator 或 validator。
+If a historical snapshot is unavailable:
 
-## 停止條件
+1. record which snapshot is unavailable and why;
+2. run the deterministic CI-safe discovery and exact-parity checks;
+3. perform a targeted source-backed spot-check for the changed behavior when a
+   legitimate matching snapshot is available; and
+4. report that strict-local could not be completed.
 
-第一輪完成後,若以下條件成立,即可進入下一階段功能補強:
+Never substitute a newer document, a synthetic fixture, or an upstream error
+page merely to make the harness run. Those bytes are different evidence and
+cannot revalidate the historical extraction.
 
-- 至少 3 份 case 可穩定 PASS。
-- 至少 1 份金流簽章 case 產出 `integration-contract.json` 與 request examples。
-- 至少 1 份缺漏/不完整 case 能正確 fail-closed。
-- 已整理出前 3 個最影響「生成可開發套件/應用」的缺口。
+## Adding a benchmark case
 
-## 執行結果(兩輪完結)
+Adding a case widens a reviewed contract. Use this sequence:
 
-### 第一輪 — ✅ 完成(5/5 PASS)
+1. Add `benchmarks/<case>/extraction/inventory.json`, endpoint extraction
+   files, optional `integration.json`, and the expected declarations.
+2. Confirm the case satisfies the fixture identity rule: both
+   `extraction/inventory.json` and `expected/validation.expect.json` exist.
+3. Add the case ID to `REQUIRED_BENCHMARK_CASES` intentionally.
+4. Run the exact-parity regression:
 
-`newebpay-mpg`(台灣金流簽章 PDF)、`line-pay-online-v3`(HMAC REST)、`tappay-backend`
-(backend payment)、`stripe-basic-rest`(高品質 REST)、`apis-guru-baseline`
-(machine-readable)全數 PASS。初跑揭出並修復 **9 項 pipeline 缺陷**(簽章接回
-false-positive、AES 模板硬接 SHA256、簽章 payload 選錯欄位、webhook 強制 responses、
-schemas.fields 中文 key 遺失 type、公開 API no-auth 誤判、payload_ref 未 sanitize、
-http securityScheme 缺 scheme 等),全數 TDD。
+   ```bash
+   uv run pytest \
+     tests/test_quality_gate.py::test_required_benchmark_cases_match_committed_cases \
+     -q
+   ```
 
-### 第二輪 — ✅ 完成(5/5 類)
+5. With the original source snapshot present, run:
 
-見上方「第二輪:擴充覆蓋」表。4 PASS + 1 EXPECTED_FAIL,新增修復 **3 項 pipeline 缺陷**
-(多 webhook 同源碰撞、webhook_name 切分、純簽章 auth 誤判),`adyen` 與 `cybersource`
-首跑即 0 error(pipeline 已成熟,未揭新缺陷)。
+   ```bash
+   uv run pytest tests/test_benchmarks.py -q
+   ```
 
-### 自動回歸 harness
+6. Run strict-local only on a machine holding all required snapshots:
 
-`tests/test_benchmarks.py`:對每個 case 用**已 commit 的 `extraction/`** 重跑確定性的
-assemble→validate,比對 `expected/{validation.expect.json,minimum.json}` —
-斷言 PASS/FAIL、**完整 issue-class map 全等**(error 與 warning 漂移皆為回歸訊號)、
-OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes/**base_urls** 下限、
-**error_codes** 下限、critical_operations、provenance/examples/integration-contract
-存在,以及 integration 子欄位(`crypto_required`/`callbacks_required` 正向、
-`field_conditions_min`/`test_cases_min` floor)。**需本機 `sources/`**(gitignore)才
-標 verified,故缺來源的 case 自動 skip。現況：**11 case + 守門**；新增 `funkygames-transfer-operator`，以直接公開 OpenAPI JSON URL 驗證快照／coverage 與 machine-readable extraction 路徑。
+   ```bash
+   uv run python scripts/quality_gate.py --strict-local
+   ```
 
-### 已完成的 generator 改進
+The exact-parity test must fail between steps 1 and 3. That RED result proves a
+new committed fixture cannot silently widen discovery without also widening the
+required release inventory.
 
-- **oneOf / discriminator 原生支援 — ✅ 完成(2026-06-29,merge `8ef9df8`)**:
-  `adyen-payments-multimethod` 的單一 `/payments` 以 `paymentMethod.type` 分流 40+ 付款
-  方式;pipeline 現原生產生 OpenAPI `oneOf` + `discriminator` ——`paymentMethod` 以 `oneOf`
-  指向三個具名成員 schema(CardDetails / IdealDetails / ApplePayDetails)、
-  `discriminator.propertyName=type`、`mapping` 對應 scheme/ideal/applepay。僅在來源以
-  `one_of` 宣告時產生,無法解析的成員名一律丟棄(不發明 dangling `$ref`)。實作計畫見
-  `docs/superpowers/plans/2026-06-29-generator-oneof-discriminator.md`。
+## Maintaining expected declarations
 
-### 已知忠實限制(後續 generator 改進候選)
+The harness is source-grounded, not snapshot-blind. Update an expected
+declaration only after determining why behavior changed:
 
-- endpoint method 大小寫比對 — ✅ 已修(2026-06-29):`plan.builder._method_key` 以
-  正規化 key(strip + lowercase)做端點分組與 stage-06 detail 接合,`GET`/`get` 等
-  僅大小寫不同者視為同一操作合併,不再產生重複端點;`EndpointEntry.method` 仍保留來源
-  原始大小寫(僅比對正規化,內容不改)。
+- If the source and intended contract did not change, treat output drift as a
+  regression and fix the pipeline.
+- If an original source snapshot legitimately changed, preserve the new dated
+  evidence and document the reason before updating expectations.
+- If a source conflict or required omission is intentional, keep the case
+  fail-closed and declare the expected issue classes instead of weakening the
+  assertion.
+
+Do not infer missing fields from REST, OAuth, payment, or webhook conventions.
+Anything the source does not state remains missing.
+
+## 繁體中文摘要
+
+Benchmark harness 分成四層，不能混為一談：
+
+1. **已提交 fixture 清單**：case 目錄同時具有
+   `extraction/inventory.json` 與
+   `expected/validation.expect.json`；目前是十三個唯一 case。
+2. **探索守門**：即使本機沒有 `sources/`，測試仍要找得到所有已提交 case，避免
+   harness 靜默變成空集合。
+3. **來源支撐執行**：只有原始、具日期的
+   `benchmarks/<case>/sources/` 快照存在時，assemble 與產物斷言才會執行；缺來源是
+   SKIP，不是 PASS。
+4. **strict-local 預檢**：`scripts/quality_gate.py --strict-local` 要求 required
+   inventory 與 committed fixture 完全一致、每個 case 都有非空來源，且 benchmark
+   測試零 skip。
+
+新增 case 時，先加入 extraction／expected 宣告，再刻意更新
+`REQUIRED_BENCHMARK_CASES`，跑 exact-parity 測試，最後才在持有原始來源快照的機器上
+跑 source-backed 與 strict-local。找不到歷史來源時，不得用新版文件、合成資料或錯誤
+頁面頂替；應記錄缺口、跑確定性 CI 檢查，並對本次變更做合法的來源支撐 spot-check。

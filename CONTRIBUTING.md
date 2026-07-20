@@ -59,6 +59,24 @@ uv run pytest tests/plan/          # 單一套件
 - 純函式以單元測試覆蓋;file-I/O 的 seam(`generate_outputs` / `run_assemble_pipeline`)以整合測試覆蓋。
 - `assemble` 組裝流程以預先寫好的擷取 JSON(`inventory.json` + `endpoints/*.json`)測試,不需真實 agent runtime。
 
+### Benchmark harness contract
+
+`benchmarks/<case>/` 同時含有 `extraction/inventory.json` 與
+`expected/validation.expect.json` 時，才是已提交 fixture。新增 fixture 必須刻意同步
+更新 `scripts/quality_gate.py::REQUIRED_BENCHMARK_CASES`，再跑 exact-parity regression：
+
+```bash
+uv run pytest \
+  tests/test_quality_gate.py::test_required_benchmark_cases_match_committed_cases \
+  -q
+```
+
+CI 在 gitignored `sources/` 不存在時仍會執行 discovery 與 exact-parity 守門，但
+source-backed assertions 會 SKIP；**SKIP 不代表 benchmark PASS**。只有持有原始來源
+快照的機器才能執行完整 case assertions，只有 `--strict-local` 全部完成且零 skip，才能
+宣稱 strict-local passed。完整四層模型與加 case 流程見
+[`docs/BENCHMARK_VALIDATION_PLAN.md`](docs/BENCHMARK_VALIDATION_PLAN.md)。
+
 > **已知**:`tests/plan/test_classify.py` 的兩個 path-boundary 測試曾出現一次無法重現的偶發失敗;目前判定為一次性 heisenbug(非順序、非 hash-seed 相依)。若你穩定重現了它,請附上環境與 seed 開 issue。
 
 ## 提交流程

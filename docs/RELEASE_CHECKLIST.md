@@ -11,12 +11,33 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
   the committed SemVer `v{version}` policy and no ordering anomaly exists.
 - [ ] `uv sync --dev` resolves cleanly.
 - [ ] `uv run ruff check .` passes.
-- [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above 95% — unit + integration + the benchmark discovery guard.
+- [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above
+  95% — unit + integration + the benchmark discovery guard and exact-parity
+  regression.
   - CI fails on any test failure.
-  - CI fails if benchmark case discovery becomes empty or loses a required case
-    (`test_benchmark_harness_discovers_cases` asserts the 13 required cases are
-    still discovered).
+  - `test_benchmark_harness_discovers_cases` proves all 13 required cases are
+    still discovered even when source snapshots are absent.
+  - `test_required_benchmark_cases_match_committed_cases` proves the explicit
+    required inventory exactly matches the committed fixture identity files.
 - [ ] `uv run python scripts/quality_gate.py` passes in CI-safe mode.
+
+## Benchmark harness layers
+
+The harness has four distinct guarantees. The **13 benchmark cases** are 13
+unique fixture directories, not the number of pytest test items; each case
+feeds several parametrized tests.
+
+| Layer | Release check | Guarantee |
+| --- | --- | --- |
+| Committed fixture inventory | Inspect `benchmarks/<case>/{extraction/inventory.json,expected/validation.expect.json}` | The case identity is committed. |
+| Discovery guard | `uv run pytest tests/test_benchmarks.py -k test_benchmark_harness_discovers_cases -q` | Fixtures are enumerated without local sources. |
+| Source-backed execution | `uv run pytest tests/test_benchmarks.py -q` with original snapshots present | Applicable assemble and artifact assertions execute and pass. |
+| Strict-local preflight | `uv run python scripts/quality_gate.py --strict-local` | Required/committed parity, non-empty sources for every case, all checks executed, and zero skips. |
+
+A committed or discovered case is not necessarily source-backed. A pytest
+SKIP caused by a missing source snapshot is not a benchmark pass. The canonical
+terminology and case-addition workflow live in
+[`BENCHMARK_VALIDATION_PLAN.md`](BENCHMARK_VALIDATION_PLAN.md).
 
 ## Deep local benchmark revalidation (when source snapshots are available)
 
@@ -27,10 +48,11 @@ snapshots are available:
 
 - [ ] `uv run pytest tests/test_benchmarks.py` with sources present — every
   committed case runs (no skips) and matches its `expected/` declaration.
-- [ ] Confirm no case is silently skipped: the run reports 13 benchmark cases
-  executed, not skipped.
+- [ ] Confirm all 13 benchmark cases executed and none was skipped. Do not use
+  the pytest item count as the case count.
 - [ ] `uv run python scripts/quality_gate.py --strict-local` passes — no
-  benchmark source directory is missing and no benchmark case is skipped.
+  required benchmark source directory is missing or empty, exact parity holds,
+  and no benchmark check is skipped.
 
 These checks strengthen a release but do **not** block a patch release when a
 historical upstream source cannot be lawfully or reproducibly retrieved. Never

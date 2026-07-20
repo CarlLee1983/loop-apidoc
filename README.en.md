@@ -60,7 +60,14 @@ The extraction engine here **is also a model** (agent-native: the current coding
 | Omission detection | Long documents get read as far as they get read; silent gaps | URL coverage ledger (expected vs fetched), preparation readiness, endpoint count/identity cross-checks — omissions get named |
 | Correction | "Try again", with no guarantee of convergence | Typed issues (severity gate + `target_file`/`field_path`/`requery_scope` routing) drive a correction loop with converged/plateau verdicts |
 | Revisions & governance | Ask again; nothing to compare against | `diff` classifies by downstream impact, `score` quantifies quality, `foundry` versions the asset |
-| Evidence | None | A regression harness of real-provider benchmarks; early runs caught 6 defects on the first validation pass — exactly the errors direct summarization ships silently |
+| Evidence | None | A thirteen-case regression harness of real-provider benchmarks; early runs caught 6 defects on the first validation pass — exactly the errors direct summarization ships silently |
+
+The benchmark evidence has two levels. CI safely proves that all committed fixtures are
+discovered and exactly match the required inventory even when their gitignored source
+snapshots are unavailable. A source-backed pass requires the original snapshots; only
+`scripts/quality_gate.py --strict-local` proves that every required case ran with zero
+skips. A discovered or skipped case has not passed source-backed revalidation. See the
+[canonical benchmark harness contract](docs/BENCHMARK_VALIDATION_PLAN.md).
 
 **Both approaches have their place — honestly:**
 

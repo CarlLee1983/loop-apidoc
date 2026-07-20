@@ -126,6 +126,28 @@ Rule of thumb: if a code/process change would make any sentence, command example
 feature list in the docs above wrong, fix it **in the same commit/release** — never defer.
 Cross-check with `docs/RELEASE_CHECKLIST.md`.
 
+## Benchmark harness contract
+
+- A committed benchmark case is a `benchmarks/<case>/` directory containing both
+  `extraction/inventory.json` and `expected/validation.expect.json`.
+- `scripts/quality_gate.py::REQUIRED_BENCHMARK_CASES` is an explicit reviewed
+  inventory. Adding or removing a committed fixture requires an intentional matching
+  update; `test_required_benchmark_cases_match_committed_cases` enforces exact set
+  parity.
+- Discovery is CI-safe and must work without local source snapshots. Source-backed
+  assertions require the original, dated, operator-provided and gitignored
+  `benchmarks/<case>/sources/` snapshot.
+- A skipped case has not passed source-backed revalidation. Never report a discovered or
+  skipped case as passed.
+- `uv run python scripts/quality_gate.py --strict-local` requires non-empty sources for
+  every required case and rejects any benchmark skip. Only a zero-skip run may be
+  described as strict-local passed.
+- Never replace an unavailable historical snapshot with a newer document, synthetic
+  fixture, or error page. Record the unavailable evidence, run deterministic CI checks,
+  and perform a legitimate targeted source-backed spot-check instead.
+- The canonical four-layer model, thirteen-case inventory, terminology, and case-addition
+  workflow are in `docs/BENCHMARK_VALIDATION_PLAN.md`.
+
 ## Further docs
 
 - Architecture + data flow (with diagrams): `docs/ARCHITECTURE.md`

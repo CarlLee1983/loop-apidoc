@@ -506,6 +506,7 @@
       <a href="#commands">CLI</a>
       <a href="#artifacts">產物</a>
       <a href="#validation">驗證</a>
+      <a href="#benchmark-harness">Benchmark</a>
       <a href="#packages">分包</a>
       <a href="#next">速查</a>
     </div>
@@ -980,6 +981,40 @@
   </div>
 </section>
 
+<!-- ===================== BENCHMARK HARNESS ===================== -->
+<section id="benchmark-harness">
+  <div class="wrap">
+    <span class="eyebrow">回歸證據架構</span>
+    <h2 class="section-title">Benchmark 有四層，SKIP 不是 PASS</h2>
+    <p class="section-lead">新工程師最容易把「fixture 已提交」「測試找到 case」「來源斷言跑過」混成同一件事。Harness 刻意拆成四層；完整定義與加 case 流程見 <a href="BENCHMARK_VALIDATION_PLAN.md"><code class="inline">docs/BENCHMARK_VALIDATION_PLAN.md</code></a>。</p>
+    <div class="value-grid">
+      <div class="value">
+        <h3>1 · Committed inventory</h3>
+        <span class="file">fixture identity</span>
+        <p>case 同時具有 <code class="inline">extraction/inventory.json</code> 與 <code class="inline">expected/validation.expect.json</code>；目前共 13 個唯一 case。</p>
+      </div>
+      <div class="value">
+        <h3>2 · Discovery guard</h3>
+        <span class="file">CI-safe</span>
+        <p>即使本機沒有來源快照，CI 仍確認所有 fixture 可被探索，並與 required inventory 完全一致。</p>
+      </div>
+      <div class="value">
+        <h3>3 · Source-backed execution</h3>
+        <span class="file">original sources required</span>
+        <p>只有原始、具日期的 <code class="inline">sources/</code> 存在時，assemble 與產物斷言才會執行；缺來源會 SKIP。</p>
+      </div>
+      <div class="value">
+        <h3>4 · Strict-local preflight</h3>
+        <span class="file">all sources · zero skips</span>
+        <p>要求全部 required case 都有非空來源、所有 source-backed checks 跑完，且零 skip。</p>
+      </div>
+    </div>
+    <div class="arch-note">
+      <b>為什麼來源不進 git？</b> 部分上游文件有著作權、存取限制或不可再散布，所以 <code class="inline">benchmarks/&lt;case&gt;/sources/</code> 是 operator 提供、gitignored 的原始快照。CI 可以證明 committed/discovered/exact parity，卻不能把來源缺席的 SKIP 稱為通過。找不到歷史快照時也不能拿新版文件、合成資料或錯誤頁面頂替。
+    </div>
+  </div>
+</section>
+
 <!-- ===================== VERSION DIFF ===================== -->
 <section id="diff">
   <div class="wrap">
@@ -1086,7 +1121,7 @@
       <div class="reads">
         <h3>接下來讀什麼</h3>
         <ul>
-          <li><b>跑一次看看</b> — 依 <code>README.md</code> 安裝(<code>uv sync</code>),用 <code>benchmarks/</code> 的樣本走一遍。</li>
+          <li><b>跑一次看看</b> — 依 <code>README.md</code> 安裝(<code>uv sync</code>)，先讀 <code>docs/BENCHMARK_VALIDATION_PLAN.md</code> 分清 CI-safe 與 source-backed，再用 <code>benchmarks/</code> 的樣本走一遍。</li>
           <li><b>架構細節</b> — <code>docs/ARCHITECTURE.md</code>:seam、套件圖、資料流表。</li>
           <li><b>擷取行為</b> — <code>skills/loop-apidoc/SKILL.md</code>:agent 實際怎麼讀來源、怎麼分段。</li>
           <li><b>設計依據</b> — <code>docs/superpowers/specs/</code> 內的設計規格與 plan。</li>
