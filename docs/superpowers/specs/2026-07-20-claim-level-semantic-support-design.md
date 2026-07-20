@@ -1,7 +1,7 @@
 # Claim-Level Semantic Evidence Support Design
 
 **Date:** 2026-07-20  
-**Status:** Proposed — awaiting user approval  
+**Status:** Implemented in the opt-in shadow architecture; legacy authority retained
 **Scope:** Model-independent Domain/Core contracts and opt-in shadow migration; legacy
 generation and validation remain authoritative
 

@@ -14,14 +14,14 @@ def test_plugin_json_valid():
     assert "description" in data
 
 
-def test_release_versions_are_synced_at_0_10_0():
+def test_release_versions_are_synchronized():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
     plugin = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text("utf-8"))
     init = (ROOT / "loop_apidoc" / "__init__.py").read_text("utf-8")
 
-    assert project["project"]["version"] == "0.15.0"
-    assert plugin["version"] == "0.15.0"
-    assert '__version__ = "0.15.0"' in init
+    assert project["project"]["version"] == "0.16.0"
+    assert plugin["version"] == "0.16.0"
+    assert '__version__ = "0.16.0"' in init
 
 
 def test_marketplace_lists_plugin():

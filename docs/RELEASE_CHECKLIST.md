@@ -14,7 +14,7 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
 - [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above 95% — unit + integration + the benchmark discovery guard.
   - CI fails on any test failure.
   - CI fails if benchmark case discovery becomes empty or loses a required case
-    (`test_benchmark_harness_discovers_cases` asserts the 10 required cases are
+    (`test_benchmark_harness_discovers_cases` asserts the 13 required cases are
     still discovered).
 - [ ] `uv run python scripts/quality_gate.py` passes in CI-safe mode.
 
@@ -27,7 +27,7 @@ snapshots are available:
 
 - [ ] `uv run pytest tests/test_benchmarks.py` with sources present — every
   committed case runs (no skips) and matches its `expected/` declaration.
-- [ ] Confirm no case is silently skipped: the run reports 10 benchmark cases
+- [ ] Confirm no case is silently skipped: the run reports 13 benchmark cases
   executed, not skipped.
 - [ ] `uv run python scripts/quality_gate.py --strict-local` passes — no
   benchmark source directory is missing and no benchmark case is skipped.

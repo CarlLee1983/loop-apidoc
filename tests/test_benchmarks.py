@@ -304,7 +304,9 @@ def test_benchmark_harness_discovers_cases() -> None:
     assert {"newebpay-mpg", "apis-guru-baseline", "tappay-backend",
             "line-pay-online-v3", "stripe-basic-rest", "cybersource-payments",
             "github-webhooks", "paypal-webhooks-incomplete",
-            "ecpay-creditcard-pdf", "adyen-payments-multimethod"} <= names
+            "ecpay-creditcard-pdf", "adyen-payments-multimethod",
+            "jili-legacy-gaming-pdf", "funkygames-transfer-operator",
+            "rsg-game-transfer-wallet"} <= names
 
 
 def test_benchmark_diff_identity(case, assembled, tmp_path) -> None:
