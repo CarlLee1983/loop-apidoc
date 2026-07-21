@@ -125,6 +125,15 @@ def test_source_naming_a_manifest_file_passes():
     assert source_violations({}, [], integration, manifest) == []
 
 
+def test_schema_field_sources_belong_to_inventory_source_scope():
+    manifest = _manifest("a.pdf", "b.pdf")
+    inventory = {"schemas": [{"source": "schema missing", "fields": [
+        {"name": "amount", "source": "a.pdf p.9"},
+    ]}]}
+
+    assert source_violations(inventory, [], None, manifest) == []
+
+
 def test_single_document_manifest_skips_the_check_entirely():
     """只有一份可用文件時歸因無歧義（sole_source），維持現行寬鬆行為，
     否則所有既有單源 run 會從 PASS 變成 exit 2。"""

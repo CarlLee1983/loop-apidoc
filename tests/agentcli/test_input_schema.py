@@ -170,6 +170,17 @@ def test_generator_supported_param_field_keys_are_allowed(tmp_path):
     load_extraction_inputs(extraction)  # 不應拋出
 
 
+def test_schema_field_source_is_accepted(tmp_path):
+    inv = json.loads(json.dumps(_INVENTORY))
+    inv["schemas"][0]["fields"][0]["source"] = "spec.md p.12"
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=inv)
+
+    loaded, _, _ = load_extraction_inputs(extraction)
+
+    assert loaded["schemas"][0]["fields"][0]["source"] == "spec.md p.12"
+
+
 def test_x_extension_key_on_field_is_allowed(tmp_path):
     # x-conditional-required 等 x- 擴充鍵屬合法(benchmark 實際使用),不可誤擋。
     ok = json.loads(json.dumps(_INVENTORY))
