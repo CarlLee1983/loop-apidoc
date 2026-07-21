@@ -863,8 +863,8 @@ def assemble(
 @app.command()
 def preprocess(
     sources: Path = typer.Option(
-        ..., "--sources", help="本機來源目錄",
-        exists=True, file_okay=False, dir_okay=True, readable=True,
+        ..., "--sources", help="本機來源目錄或單一檔案",
+        exists=True, file_okay=True, dir_okay=True, readable=True,
     ),
     out: Path = typer.Option(
         ..., "--out", help="markdown 輸出目錄（衍生位置，勿放 sources/ 內）"

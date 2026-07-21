@@ -53,6 +53,22 @@ def test_preprocess_copies_text_sources(tmp_path: Path):
     assert "converted 0 / copied 1 / passthrough 0" in res.stdout
 
 
+def test_preprocess_accepts_a_single_source_file(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    selected = sources / "selected.md"
+    selected.write_text("# Selected\nGET /selected", encoding="utf-8")
+    (sources / "unselected.md").write_text("# Unselected", encoding="utf-8")
+    out = tmp_path / "md"
+
+    res = runner.invoke(app, ["preprocess", "--sources", str(selected), "--out", str(out)])
+
+    assert res.exit_code == 0
+    assert (out / "selected.md").read_text(encoding="utf-8") == "# Selected\nGET /selected"
+    assert not (out / "unselected.md").exists()
+    assert "converted 0 / copied 1 / passthrough 0" in res.stdout
+
+
 def test_preprocess_converts_pdf_to_markdown(tmp_path: Path):
     sources = tmp_path / "sources"
     sources.mkdir()

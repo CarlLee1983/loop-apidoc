@@ -162,7 +162,7 @@ URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`sk
 
 | 階段 | 公開 seam | 產物 |
 | --- | --- | --- |
-| 前處理(可選) | `prepare_markdown(sources_dir, dest_dir)` → `PreprocessResult` / `pdf_to_markdown(pdf_path)` | `<WORK>/sources_md/`(PDF 轉 markdown;文字檔複製;其他來源 passthrough) |
+| 前處理(可選) | `prepare_markdown(sources, dest_dir)` → `PreprocessResult` / `pdf_to_markdown(pdf_path)` | `<WORK>/sources_md/`(PDF 轉 markdown;文字檔複製;其他來源 passthrough；`sources` 可為目錄或單一檔案) |
 | URL 來源(可選) | `fetch_catalog(url)` → `select_catalog(catalog, …)` → `cache_catalog_pages(catalog, out_dir)` → `find_related_pages(corpus, url)` / `normalize_html_snapshot(input, url, output)` | `<WORK>/url_sources/{catalog,selection,candidates}.json` + `<WORK>/url_corpus/`(`raw/`+`body/`+`corpus.json`);agent 另寫 `url_sources/coverage.json` 帳本傳給 `assemble --url-coverage` |
 | 來源品質(可選但 skill 預設要求) | `assess_source_quality(manifest, source_set, observations, base_report)` | `<WORK>/source-quality/`;傳入 `assemble --source-quality` 後保存為 `<run-dir>/source-quality/` |
 | 擷取(agent 寫出) | —(agent 依 SKILL 寫檔) | `inventory.json` + `endpoints/*.json` |

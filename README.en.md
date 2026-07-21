@@ -378,7 +378,7 @@ Subcommands to manage docsets, import a run directory as a candidate, and approv
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-Uses pymupdf4llm to convert every PDF under `--sources` into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
+Uses pymupdf4llm to convert every PDF in the `--sources` directory into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). `--sources` can also name one file, in which case only that file is processed. Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
 
 ### `verify-extraction` — check the extraction JSON against the contract
 

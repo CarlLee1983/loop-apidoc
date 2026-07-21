@@ -370,7 +370,7 @@ uv run loop-apidoc foundry [init|import|approve|list|current] --help
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-以 pymupdf4llm 把 `--sources` 下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 `--out` 目錄。
+以 pymupdf4llm 把 `--sources` 目錄下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。`--sources` 也可指定單一檔案，此時只會處理該檔案。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 `--out` 目錄。
 
 ### `verify-extraction` — 檢查擷取 JSON 是否符合契約
 
