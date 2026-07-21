@@ -33,7 +33,7 @@ One object describing the whole API. **You** write what the single inventory sub
  "environments": [{"name":"str","base_url":"str","version":"str|null","source":"str"}],
  "security_schemes": [{"name":"str","type":"str|null","location":"str|null","details":"str|null","source":"str"}],
  "endpoints": [{"method":"str","methods":["str"],"path":"str|null","summary":"str","source":"str","server":"str|null"}],
- "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
+ "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null","source":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
  "errors": [{"code":"str","meaning":"str","http_status":"str|null","applicable_to":["METHOD /path"],"source":"str"}],
  "operational": [{"topic":"str","detail":"str","source":"str"}],
  "missing": ["str"]}
@@ -113,7 +113,10 @@ One object describing the whole API. **You** write what the single inventory sub
   than being treated as `explicit_support`.
 - `schemas[].fields[]` uses the **English** keys `name`/`type`/`required`/`description`
   (same shape as endpoint `parameters`). Nested fields use the dotted-path convention
-  (see endpoints below).
+  (see endpoints below). An optional field-level `source` uses the same manifest-relative
+  citation format as its parent schema. In a multi-source run it must name a manifest
+  source; when supplied, it becomes provenance for the exact generated OpenAPI property,
+  so use it when the source distinguishes evidence for individual fields.
 - `errors[]` records `code`, `meaning`, and `http_status`. When the source explicitly
   limits an error to operations, add `applicable_to` as exact `METHOD /path` strings
   (for example `"POST /transfers"`); otherwise leave it as `[]`. Generated OpenAPI
