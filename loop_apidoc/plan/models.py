@@ -54,9 +54,14 @@ class EndpointEntry(_Cited):
     security: list[str] = Field(default_factory=list)
 
 
+class SchemaFieldEvidence(_Cited):
+    name: str
+
+
 class SchemaEntry(_Cited):
     name: str | None = None
     fields: list[dict] = Field(default_factory=list)
+    field_evidence: list[SchemaFieldEvidence] = Field(default_factory=list)
     # The SKILL contract documents enums as a list of freeform strings
     # (e.g. "ItemType: 1=一般商品"); structured form [{"name", "values"}] is
     # also accepted. Keep the element type open so neither shape is dropped —
