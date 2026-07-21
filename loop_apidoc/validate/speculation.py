@@ -12,6 +12,25 @@ def _is_placeholder(node) -> bool:
     return isinstance(node, dict) and node.get(X_LOOP_STATUS) == MISSING_STATUS
 
 
+def _schema_property_targets(target: str, node: object) -> list[tuple[str, object]]:
+    """Return asserted property targets below one schema or property node."""
+    if not isinstance(node, dict):
+        return []
+
+    targets: list[tuple[str, object]] = []
+    properties = node.get("properties")
+    if isinstance(properties, dict):
+        for name, property_node in properties.items():
+            property_target = f"{target}.properties.{name}"
+            targets.append((property_target, property_node))
+            targets.extend(_schema_property_targets(property_target, property_node))
+
+    items = node.get("items")
+    if isinstance(items, dict):
+        targets.extend(_schema_property_targets(f"{target}.items", items))
+    return targets
+
+
 def _asserted_targets(openapi: dict) -> list[tuple[str, object]]:
     """(target, openapi-node) for each field that asserts a fact."""
     targets: list[tuple[str, object]] = []
@@ -31,7 +50,9 @@ def _asserted_targets(openapi: dict) -> list[tuple[str, object]]:
                 targets.append((f"paths.{path}.{method.lower()}", node))
     schemas = (openapi.get("components") or {}).get("schemas") or {}
     for name, node in schemas.items():
-        targets.append((f"components.schemas.{name}", node))
+        target = f"components.schemas.{name}"
+        targets.append((target, node))
+        targets.extend(_schema_property_targets(target, node))
     return targets
 
 
@@ -50,6 +71,9 @@ def check_speculation(openapi: dict, provenance: ProvenanceDocument) -> list[Iss
         if _is_placeholder(node):
             continue
         statuses = by_target.get(target, [])
+        if not statuses and ".properties." in target:
+            parent_schema_target = target.split(".properties.", 1)[0]
+            statuses = by_target.get(parent_schema_target, [])
         if not statuses:
             issues.append(_issue(
                 IssueCode.UNSUPPORTED_ASSERTION, target,

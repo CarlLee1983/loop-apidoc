@@ -8,6 +8,7 @@ from loop_apidoc.plan.models import (
     MissingItem,
     NormalizationPlan,
     PlanItemStatus,
+    SchemaFieldEvidence,
     SchemaEntry,
     SecuritySchemeEntry,
     SourceCitation,
@@ -134,6 +135,49 @@ def test_named_enum_provenance_emitted_with_parent_schema_citation():
     assert entry.status is PlanItemStatus.SUPPORTED
     assert entry.manifest_source == "schema.md"
     assert entry.query_id == "q1"
+
+
+def test_field_evidence_emits_direct_nested_and_array_property_targets():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        schemas=[
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                name="Order",
+                fields=[
+                    {"name": "amount", "type": "number"},
+                    {"name": "customer.id", "type": "string"},
+                    {"name": "items[].sku", "type": "string"},
+                ],
+                field_evidence=[
+                    SchemaFieldEvidence(
+                        name="amount", status=PlanItemStatus.SUPPORTED,
+                        citations=[_cite(manifest_source="amount.md", locator="L10")],
+                    ),
+                    SchemaFieldEvidence(
+                        name="customer.id", status=PlanItemStatus.SUPPORTED,
+                        citations=[_cite(manifest_source="customer.md", locator="L20")],
+                    ),
+                    SchemaFieldEvidence(
+                        name="items[].sku", status=PlanItemStatus.SUPPORTED,
+                        citations=[_cite(manifest_source="items.md", locator="L30")],
+                    ),
+                ],
+            )
+        ],
+    )
+
+    targets = _targets(build_provenance(plan))
+
+    expected = {
+        "components.schemas.Order.properties.amount": ("amount.md", "L10"),
+        "components.schemas.Order.properties.customer.properties.id": ("customer.md", "L20"),
+        "components.schemas.Order.properties.items.items.properties.sku": ("items.md", "L30"),
+    }
+    for target, (manifest_source, locator) in expected.items():
+        entry = targets[target][0]
+        assert entry.manifest_source == manifest_source
+        assert entry.locator == locator
 
 
 def test_error_code_component_mapping_has_source_provenance():

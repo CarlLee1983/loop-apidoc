@@ -26,6 +26,23 @@ def _entries(target: str, cited) -> list[ProvenanceEntry]:
     ]
 
 
+def _field_target(schema_key: str, name: str) -> str | None:
+    """Return the OpenAPI target for one dotted schema field name."""
+    if not name:
+        return None
+
+    target = f"components.schemas.{schema_key}"
+    segments = name.split(".")
+    for index, segment in enumerate(segments):
+        property_name = segment.replace("[]", "")
+        if not property_name:
+            return None
+        target += f".properties.{property_name}"
+        if segment.endswith("[]") and index < len(segments) - 1:
+            target += ".items"
+    return target
+
+
 def _info_entries(plan: NormalizationPlan) -> list[ProvenanceEntry]:
     # Same resolution as OpenAPI info.{title,version} so provenance status and
     # the emitted spec never disagree (a mismatch trips SOURCE_UNVERIFIED).
@@ -69,6 +86,10 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
     for idx, schema in enumerate(plan.schemas):
         if schema.name:
             entries.extend(_entries(f"components.schemas.{key_map[idx]}", schema))
+            for evidence in schema.field_evidence:
+                target = _field_target(key_map[idx], evidence.name)
+                if target is not None:
+                    entries.extend(_entries(target, evidence))
         for enum_idx, enum in enumerate(schema.enums):
             if not isinstance(enum, dict):
                 continue  # string enums carry no separate provenance target
