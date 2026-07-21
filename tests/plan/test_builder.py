@@ -33,6 +33,21 @@ def _manifest() -> Manifest:
     )
 
 
+def _field_evidence_manifest() -> Manifest:
+    now = datetime(2026, 6, 25, tzinfo=timezone.utc)
+    return Manifest(
+        sources_root="/src", generated_at=now,
+        local_sources=[
+            LocalSource(relative_path="a.md", mime_type="text/markdown",
+                        source_format=SourceFormat.MARKDOWN, size_bytes=1, sha256="a",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+            LocalSource(relative_path="b.md", mime_type="text/markdown",
+                        source_format=SourceFormat.MARKDOWN, size_bytes=1, sha256="b",
+                        scanned_at=now, supported=True, status=ProcessingStatus.PENDING),
+        ],
+    )
+
+
 def _art(stage_id: str, kind: QueryKind, answer: str) -> AnswerArtifact:
     qid = f"{stage_id}-{kind.value}"
     return AnswerArtifact(query_id=qid, stage_id=stage_id, kind=kind, answer=answer,
@@ -71,6 +86,44 @@ def test_endpoints_classified():
     assert supported[0].path == "/u" and supported[0].method == "GET"
     assert supported[0].citations[0].manifest_source == "api.pdf"
     assert len(unverified) == 1
+
+
+def test_field_evidence_normalizes_supported_field_citation():
+    extraction = ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("07", QueryKind.INITIAL,
+                 '```json\n{"schemas": [{"name": "Payment", "source": "a.md#payment", '
+                 '"fields": [{"name": "amount", "type": "integer", '
+                 '"source": "b.md#amount"}]}]}\n```'),
+        ],
+    )
+
+    plan = build_normalization_plan(extraction, _field_evidence_manifest())
+
+    assert len(plan.schemas[0].field_evidence) == 1
+    evidence = plan.schemas[0].field_evidence[0]
+    assert evidence.name == "amount"
+    assert evidence.status is PlanItemStatus.SUPPORTED
+    assert evidence.citations[0].manifest_source == "b.md"
+
+
+def test_field_evidence_records_unmatched_field_citation():
+    extraction = ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("07", QueryKind.INITIAL,
+                 '```json\n{"schemas": [{"name": "Payment", "source": "a.md#payment", '
+                 '"fields": [{"name": "amount", "type": "integer", '
+                 '"source": "outside.md#amount"}]}]}\n```'),
+        ],
+    )
+
+    plan = build_normalization_plan(extraction, _field_evidence_manifest())
+
+    assert plan.schemas[0].field_evidence[0].status is PlanItemStatus.UNVERIFIED
+    assert len(plan.unverified_items) == 1
+    assert plan.unverified_items[0].area == "07.schemas.Payment.fields.amount"
 
 
 def test_missing_and_unverified_aggregated():

@@ -17,6 +17,7 @@ from loop_apidoc.plan.models import (
     NormalizationPlan,
     OperationalEntry,
     PlanItemStatus,
+    SchemaFieldEvidence,
     SchemaEntry,
     SecuritySchemeEntry,
     SourceConflict,
@@ -173,7 +174,7 @@ def _dedupe_endpoints(plan: NormalizationPlan) -> None:
 
 # inventory stage_id -> (json_key, plan_field, entry_class, field factory). Stage 06
 # is handled separately (merged into endpoints), so it is intentionally absent here.
-_INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
+_INVENTORY: dict[str, tuple[str, str, type, Callable[..., dict]]] = {
     "03": ("environments", "environments", EnvironmentEntry,
            lambda i: {"name": i.get("name"), "base_url": i.get("base_url"),
                       "version": i.get("version")}),
@@ -184,7 +185,9 @@ _INVENTORY: dict[str, tuple[str, str, type, Callable[[dict], dict]]] = {
            lambda i: {"method": i.get("method"), "path": i.get("path"),
                       "summary": i.get("summary"), "server": i.get("server")}),
     "07": ("schemas", "schemas", SchemaEntry,
-           lambda i: {"name": i.get("name"), "fields": i.get("fields") or [],
+           lambda i, field_evidence: {"name": i.get("name"),
+                      "fields": i.get("fields") or [],
+                      "field_evidence": field_evidence,
                       "enums": i.get("enums") or [], "constraints": i.get("constraints")}),
     "08": ("errors", "errors", ErrorEntry,
            lambda i: {"code": i.get("code"), "meaning": i.get("meaning"),
@@ -244,6 +247,31 @@ def _build_entry(
                         query_id=query_id)
         )
         return None
+
+
+def _schema_field_evidence(
+    item: dict, art: AnswerArtifact, manifest: Manifest,
+) -> list[SchemaFieldEvidence]:
+    """Normalize source-bearing stage-07 fields without changing raw fields."""
+    evidence: list[SchemaFieldEvidence] = []
+    for field in item.get("fields") or []:
+        if not isinstance(field, dict):
+            continue
+        source = field.get("source")
+        name = field.get("name")
+        if not (
+            isinstance(source, str) and source.strip()
+            and isinstance(name, str) and name.strip()
+        ):
+            continue
+        status, citation = classify_item(
+            source, query_id=art.query_id, answer_path=art.answer_path,
+            manifest=manifest,
+        )
+        evidence.append(SchemaFieldEvidence(
+            name=name, status=status, citations=[citation],
+        ))
+    return evidence
 
 
 def _note(extraction: ExtractionResult, stage_id: str) -> str:
@@ -326,8 +354,16 @@ def build_normalization_plan(
                 item.get("source"), query_id=art.query_id,
                 answer_path=art.answer_path, manifest=manifest,
             )
+            field_evidence = (
+                _schema_field_evidence(item, art, manifest)
+                if stage_id == "07" else []
+            )
+            factory_kwargs = (
+                factory(item, field_evidence)
+                if stage_id == "07" else factory(item)
+            )
             entry = _build_entry(plan, stage_id, art.query_id, json_key, entry_class,
-                                 status=status, citations=[citation], **factory(item))
+                                 status=status, citations=[citation], **factory_kwargs)
             if entry is None:
                 continue
             target.append(entry)
@@ -336,6 +372,14 @@ def build_normalization_plan(
                 plan.unverified_items.append(
                     UnverifiedItem(area=stage_id, detail=str(label), query_id=art.query_id)
                 )
+            if stage_id == "07":
+                for evidence in field_evidence:
+                    if evidence.status is PlanItemStatus.UNVERIFIED:
+                        plan.unverified_items.append(UnverifiedItem(
+                            area=(f"07.schemas.{entry.name}.fields.{evidence.name}"),
+                            detail=evidence.citations[0].locator or "",
+                            query_id=art.query_id,
+                        ))
         _add_missing_and_conflicts(plan, stage_id, art, block)
 
     # Agent-native assemble collapses inventory.json into staged answers. Its
