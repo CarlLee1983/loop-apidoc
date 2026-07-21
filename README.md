@@ -256,6 +256,9 @@ uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.i
 uv run loop-apidoc extract-markdown-drafts \
   --sources ./sources --manifest ./work/manifest.preflight.json \
   --output ./work/markdown-api-facts.json
+uv run loop-apidoc scaffold-extraction \
+  --sources ./sources --manifest ./work/manifest.preflight.json \
+  --output ./work/scaffold
 ```
 
 The cache fetches `llms.txt` once and caches every first-seen same-origin `.md` URL beneath the
@@ -265,6 +268,10 @@ individual page failures remain `fetch_failed` in the coverage ledger. The facts
 non-authoritative, line-cited draft of explicit endpoint headings, labelled parameter tables,
 and fenced examples. It helps bounded agent review but never replaces source reading,
 `verify-extraction`, or final agent-written extraction JSON.
+`scaffold-extraction` 將這些機械事實投影成 extraction-shaped 的 `inventory.json` 與
+`endpoints/ep<N>.json`，另附 coverage report 與 copy instructions。scaffold 不是
+`--extraction` 參數：必須先把 JSON 複製到 `./work`、逐一覆核 citation、補齊 security、
+integration 與 `missing[]`，再對 `./work` 執行 `verify-extraction`。
 
 ### Codex 與 Claude Code 的模型分工
 

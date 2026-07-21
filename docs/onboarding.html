@@ -1089,7 +1089,7 @@
           <tr class="io"><td><code>freshness/</code></td><td>排程用的便宜新鮮度閘:record.py 從已完成 run-dir 寫出基準 fingerprint(本地取 sha256、每個 URL 取一次版本訊號,無 <code>--force</code> 拒絕覆寫)、signals.py 重算當下訊號並分類(網路讀取但不寫檔)、check.py 彙總單一 docset、batch.py 依 watchlist 扇出多個 docset(單項錯誤收進該項結果不中斷整批)、report.py 輸出報告。退出碼即契約:0 未變動、1 已變動、2 無法判定</td></tr>
           <tr class="io"><td><code>source_quality/</code></td><td>擷取前來源品質評估與來源版本差異報告;pass 報告可隨 run-dir 稽核保存(寫檔)</td></tr>
           <tr><td><code>source_facts/</code></td><td>來源事實盤點:markdown.py 機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,collect.py 讀取 manifest 指名的來源(本套件唯一讀檔出口),gate.py 比對擷取 JSON(並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,讓共用型別算去重複而非遺漏)、deferral.py 攔截佔位式延後答案</td></tr>
-          <tr><td><code>gitbook_llms.py</code> / <code>markdown_drafts/</code></td><td>GitBook 工程化取源只抓一次 <code>llms.txt</code>，安全快取範圍內 Markdown 與 provenance/coverage；再從 manifest 指名 Markdown 產生具行號的非權威端點／表格／範例草稿。草稿只協助覆核，不能取代 <code>source_facts/</code> 或最終擷取。</td></tr>
+          <tr><td><code>gitbook_llms.py</code> / <code>markdown_drafts/</code> / <code>extraction_scaffold/</code></td><td>GitBook 工程化取源只抓一次 <code>llms.txt</code>，安全快取範圍內 Markdown 與 provenance/coverage；再從 manifest 指名 Markdown 產生具行號的非權威端點／表格／範例草稿，並可投影為 extraction-shaped scaffold。scaffold 必須複製、覆核、補齊至 workdir；不能取代 <code>source_facts/</code>、最終擷取或直接作為 <code>--extraction</code>。</td></tr>
           <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
           <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標(寫檔)</td></tr>
         </tbody>

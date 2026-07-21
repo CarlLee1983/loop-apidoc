@@ -266,6 +266,9 @@ uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.i
 uv run loop-apidoc extract-markdown-drafts \
   --sources ./sources --manifest ./work/manifest.preflight.json \
   --output ./work/markdown-api-facts.json
+uv run loop-apidoc scaffold-extraction \
+  --sources ./sources --manifest ./work/manifest.preflight.json \
+  --output ./work/scaffold
 ```
 
 The cache fetches `llms.txt` once, then saves every first-seen same-origin `.md` URL below the
@@ -275,6 +278,10 @@ is written, while individual page failures remain visible as `fetch_failed` cove
 The facts JSON is a non-authoritative, line-cited draft of explicit endpoint headings, labelled
 parameter tables, and fenced examples. It supports bounded agent review but never replaces source
 reading, final agent extraction JSON, `verify-extraction`, or `assemble`.
+`scaffold-extraction` turns those same mechanical facts into extraction-shaped `inventory.json`
+and `endpoints/ep<N>.json` files, plus a coverage report and copy instructions. The scaffold is
+not the `--extraction` argument: copy its JSON into `./work`, review every cited section, and fill
+security, integration, and `missing[]` gaps before running `verify-extraction` against `./work`.
 
 ### Model division in Codex and Claude Code
 
