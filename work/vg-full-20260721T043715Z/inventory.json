@@ -1,0 +1,353 @@
+{
+  "title": "VG 文档",
+  "version": null,
+  "overview": "VG 文档涵盖单一钱包与转账钱包两套 API。单一钱包：游戏侧商户请求（用户注册、玩家登入、历史纪录、调整限红）与钱包商户接口（投注、派彩、取消等）；转账钱包：商户请求（用户注册、玩家登入、转账、余额与转账记录、历史纪录、调整限红）。请求以 application/json 提交，并以 MD5(参数值按字首排序串联 + API_KEY) 产生 body 字段 sign。",
+  "environments": [],
+  "security_schemes": [
+    {
+      "name": "sign",
+      "type": "apiKey",
+      "location": "body",
+      "details": "将所有参数字首按顺序排列，将值串成字串，最后加上 API_KEY，以 MD5 加密取得 sign 值；sign 放在请求 body。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md# 加密说明"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/vg/sign-up",
+      "summary": "注册用户。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/sign-in",
+      "summary": "取得登入特定游戏的启动URL。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/users",
+      "summary": "查询玩家每笔投注详细记录。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit",
+      "summary": "调整玩家限红。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit/list",
+      "summary": "查询代理当前可用限红。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/table/list",
+      "summary": "查询所有牌桌。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/bet",
+      "summary": "商户投注接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/cancel",
+      "summary": "商户取消投注/结算接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/win",
+      "summary": "商户派彩接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/resettle",
+      "summary": "商户重新派彩接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/balance",
+      "summary": "查询玩家余额。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-up",
+      "summary": "注册用户。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-in",
+      "summary": "取得登入特定游戏的启动URL。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/points",
+      "summary": "玩家上分 / 下分。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/balance",
+      "summary": "查询玩家余额。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/log",
+      "summary": "查询玩家转账记录。时间区间不可超过 5 分钟",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/users",
+      "summary": "查询玩家每笔投注详细记录。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit",
+      "summary": "调整玩家限红。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit/list",
+      "summary": "查询代理当前可用限红。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/table/list",
+      "summary": "查询所有牌桌。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表",
+      "server": null
+    }
+  ],
+  "schemas": [],
+  "errors": [
+    {
+      "code": "1000",
+      "meaning": "成功",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "1001",
+      "meaning": "系统错误",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "1002",
+      "meaning": "未知错误",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5000",
+      "meaning": "验证码错误",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5001",
+      "meaning": "请求参数有误",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5002",
+      "meaning": "请求之币别不支持",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5003",
+      "meaning": "钱包余额不足",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5005",
+      "meaning": "商户不存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5006",
+      "meaning": "玩家已存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5008",
+      "meaning": "国家/地区代码错误",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5009",
+      "meaning": "玩家账号不存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5010",
+      "meaning": "玩家已被锁定",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5012",
+      "meaning": "找不到对应的游戏",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5013",
+      "meaning": "Session验证失败",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5014",
+      "meaning": "无效的时间格式",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5015",
+      "meaning": "无效的Provider",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5016",
+      "meaning": "无效的金额",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5017",
+      "meaning": "API權限不足",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5018",
+      "meaning": "無效的Brand UID",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5019",
+      "meaning": "登入 URL 超时",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5040",
+      "meaning": "请求限制，每3秒仅能叫用一次",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5041",
+      "meaning": "请求区段限制，每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料。",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5042",
+      "meaning": "下注记录不存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5043",
+      "meaning": "下注记录已存在",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "code": "5045",
+      "meaning": "转帐钱包上下分，重复的 SID",
+      "http_status": null,
+      "applicable_to": [],
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    }
+  ],
+  "operational": [
+    {
+      "topic": "请求频率限制",
+      "detail": "请求限制，每3秒仅能叫用一次（响应代码 5040）。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    },
+    {
+      "topic": "查询时间区段限制",
+      "detail": "每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料（响应代码 5041）。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"
+    }
+  ],
+  "missing": [
+    "API base URL not stated in sources",
+    "Document/API version not stated",
+    "Error HTTP status mapping not stated",
+    "Error code applicable endpoints not stated"
+  ]
+}

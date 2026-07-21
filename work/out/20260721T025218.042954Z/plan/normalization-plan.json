@@ -1,0 +1,2634 @@
+{
+  "notebook_url": "",
+  "source_inventory_note": "Source inventory: a single source manual was provided and read.",
+  "overview_note": "VG 游戏单一钱包与转账钱包 API 整合文档。",
+  "conflicts_note": "```json\n{\"missing\": []}\n```",
+  "system_groups": [
+    {
+      "name": "VG 游戏 API 文档",
+      "description": null,
+      "version": "1.0.0"
+    }
+  ],
+  "environments": [
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "03-initial",
+          "answer_path": "answers/03-initial.txt",
+          "manifest_source": "vg-wen-dang.md",
+          "locator": "vg-wen-dang.md"
+        }
+      ],
+      "name": "production",
+      "base_url": "https://api.vg-organization.com",
+      "version": null
+    }
+  ],
+  "security_schemes": [
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "04-initial",
+          "answer_path": "answers/04-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md"
+        }
+      ],
+      "name": "MD5Signature",
+      "type": "apiKey",
+      "location": "body",
+      "details": "MD5 signature using API_KEY. See 加密说明."
+    }
+  ],
+  "endpoints": [
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩"
+        },
+        {
+          "query_id": "06-ep0",
+          "answer_path": "answers/06-ep0.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩"
+        }
+      ],
+      "method": "POST",
+      "path": "/resettle",
+      "summary": "重新派彩",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "----------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "商户名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "游戏局号"
+        },
+        {
+          "name": "transid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "投注号 (betid)"
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "当笔资料最终派彩金额，不会扣/补前次派彩金额"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名 (未包含 detail)"
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "object",
+          "required": true,
+          "description": "其他资讯"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_0",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 0
+          }
+        }
+      ],
+      "tags": [
+        "qian-bao"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩"
+        },
+        {
+          "query_id": "06-ep1",
+          "answer_path": "answers/06-ep1.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩"
+        }
+      ],
+      "method": "POST",
+      "path": "/win",
+      "summary": "派彩",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "---------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "商户名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "游戏局号"
+        },
+        {
+          "name": "transid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "投注号 (betid)"
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "派彩金额"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名 (未包含 detail)"
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "object",
+          "required": true,
+          "description": "其他资讯"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_1",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Request Example",
+          "content_type": "application/json",
+          "value": {
+            "agent": "agentName",
+            "loginname": "userName",
+            "roundid": "T100112R10052197",
+            "transid": "75961a03-4f1d-40c8-93a1-4214bbf4c615",
+            "amount": "0.00",
+            "sign": "b5228747850d94e333c11183a9d7c2b1",
+            "detail": {
+              "id": 258,
+              "token": "e4dbb48deb1f0718e44599867de96837",
+              "currency": "USDT",
+              "bw": "0.00",
+              "pw": "0.00",
+              "tie": "0.00",
+              "bp": "0.00",
+              "pp": "0.00",
+              "big": "0.00",
+              "small": "0.00",
+              "lucky6": "0.00",
+              "ap": "0.00",
+              "pfp": "0.00",
+              "bw_win": "0.00",
+              "pw_win": "0.00",
+              "tie_win": "0.00",
+              "bp_win": "0.00",
+              "pp_win": "0.00",
+              "big_win": "0.00",
+              "small_win": "0.00",
+              "lucky6_win": "0.00",
+              "ap_win": "0.00",
+              "pfp_win": "0.00",
+              "abet": "0.00",
+              "abet2": "0.00",
+              "tableidx": "MD18909",
+              "shoeid": 43585,
+              "shoeround": 37,
+              "btimestamp": 1759229102,
+              "bettime": "2025-09-30T10:45:25.000Z",
+              "settletime": null,
+              "percentage": null,
+              "fanshui": null,
+              "status": 1,
+              "ip": "xxx.xxx.xxx.xxx",
+              "bettype": "single",
+              "platform": "pc",
+              "detail": null
+            }
+          }
+        },
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 0,
+            "balance": 123456.78
+          }
+        }
+      ],
+      "tags": [
+        "qian-bao"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算"
+        },
+        {
+          "query_id": "06-ep2",
+          "answer_path": "answers/06-ep2.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算"
+        }
+      ],
+      "method": "POST",
+      "path": "/cancel",
+      "summary": "取消投注/结算",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "----------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "商户名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "游戏局号"
+        },
+        {
+          "name": "transid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "投注号 (betid)"
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "<p>取消投注 = 投注金额<br>取消结算 = 派彩金额 - 投注金额</p>"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名 (未包含 detail)"
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "object",
+          "required": true,
+          "description": "其他资讯"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_2",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Request Example",
+          "content_type": "application/json",
+          "value": {
+            "agent": "agentName",
+            "loginname": "userName",
+            "roundid": "T100112R10052197",
+            "transid": "75961a03-4f1d-40c8-93a1-4214bbf4c615",
+            "amount": "0.00",
+            "sign": "b5228747850d94e333c11183a9d7c2b1",
+            "detail": {
+              "id": 258,
+              "token": "e4dbb48deb1f0718e44599867de96837",
+              "currency": "USDT",
+              "bw": "0.00",
+              "pw": "0.00",
+              "tie": "0.00",
+              "bp": "0.00",
+              "pp": "0.00",
+              "big": "0.00",
+              "small": "0.00",
+              "lucky6": "0.00",
+              "ap": "0.00",
+              "pfp": "0.00",
+              "bw_win": "0.00",
+              "pw_win": "0.00",
+              "tie_win": "0.00",
+              "bp_win": "0.00",
+              "pp_win": "0.00",
+              "big_win": "0.00",
+              "small_win": "0.00",
+              "lucky6_win": "0.00",
+              "ap_win": "0.00",
+              "pfp_win": "0.00",
+              "abet": "0.00",
+              "abet2": "0.00",
+              "tableidx": "MD18909",
+              "shoeid": 43585,
+              "shoeround": 37,
+              "btimestamp": 1759229102,
+              "bettime": "2025-09-30T10:45:25.000Z",
+              "settletime": null,
+              "percentage": null,
+              "fanshui": null,
+              "status": 1,
+              "ip": "xxx.xxx.xxx.xxx",
+              "bettype": "single",
+              "platform": "pc",
+              "detail": null
+            }
+          }
+        },
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 0,
+            "balance": 123456.78
+          }
+        }
+      ],
+      "tags": [
+        "qian-bao"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注"
+        },
+        {
+          "query_id": "06-ep3",
+          "answer_path": "answers/06-ep3.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注"
+        }
+      ],
+      "method": "POST",
+      "path": "/bet",
+      "summary": "投注",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "---------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "商户名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "token",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家令牌"
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "游戏局号"
+        },
+        {
+          "name": "transid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "投注号 (betid)"
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "投注金额"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名 (未包含 detail)"
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "object",
+          "required": true,
+          "description": "其他资讯"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_3",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Request Example",
+          "content_type": "application/json",
+          "value": {
+            "agent": "agentName",
+            "loginname": "userName",
+            "token": "0bb3dd7cd7949bfe105582dd84a78502",
+            "roundid": "T100112R10052197",
+            "transid": "b196c26f-619f-484e-9c5f-5afab43105f3",
+            "amount": 14,
+            "sign": "f939e3bafd829fbwiejdoeb16d2b5940",
+            "detail": {
+              "bubalance": "386.21",
+              "tableid": "MD3110",
+              "tableidx": "t7",
+              "shoeid": "99926",
+              "currency": "USDT",
+              "ts": 1775778961,
+              "shoeround": "6",
+              "platform": "mobile",
+              "bettype": "single",
+              "ip": "xxx.xxx.xxx.xxx",
+              "maxlose": 0,
+              "maxwin": 0,
+              "bw": 13,
+              "pw": 0,
+              "tie": 0,
+              "bp": 0,
+              "pp": 0,
+              "big": 0,
+              "small": 0,
+              "lucky6": 1,
+              "ap": 0,
+              "pfp": 0,
+              "betlimit": "B"
+            }
+          }
+        },
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 0,
+            "balance": 123456.78
+          }
+        }
+      ],
+      "tags": [
+        "qian-bao"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询"
+        },
+        {
+          "query_id": "06-ep4",
+          "answer_path": "answers/06-ep4.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询"
+        }
+      ],
+      "method": "POST",
+      "path": "/balance",
+      "summary": "余额查询",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "--------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "商户名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "token",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家令牌"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_4",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 0,
+            "balance": 123456.78
+          }
+        }
+      ],
+      "tags": [
+        "qian-bao"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+        },
+        {
+          "query_id": "06-ep5",
+          "answer_path": "answers/06-ep5.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/sign-in",
+      "summary": "登入游戏",
+      "server": null,
+      "parameters": [],
+      "request": null,
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": {
+              "url": "https://launch_url"
+            },
+            "TraceId": "4375da61-9d5e-4b19-a637-23983c34dbca"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+        },
+        {
+          "query_id": "06-ep6",
+          "answer_path": "answers/06-ep6.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/sign-in",
+      "summary": "登入游戏",
+      "server": null,
+      "parameters": [
+        {
+          "name": "------------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "language",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "用户语系([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md))"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称+后缀(suffix)"
+        },
+        {
+          "name": "rid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>桌号 tableid (<a href=\"/pages/eKP65RR00NcZ1oYQQOJD\">点击查看</a>)。<br>\\* <mark style=\"color:red;\">非必要参数，填入桌号可进指定牌桌。</mark> </p>"
+        },
+        {
+          "name": "betlimit",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>限红列表(<a href=\"https://vg-organization.gitbook.io/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao#id-200\">点击查看</a>)<br>\\* <mark style=\"color:red;\">非必要参数，可在登入时设置当前玩家限红。</mark></p>"
+        },
+        {
+          "name": "return_url",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "重新导向 URL"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_6",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": {
+              "url": "https://launch_url"
+            },
+            "TraceId": "4375da61-9d5e-4b19-a637-23983c34dbca"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+        },
+        {
+          "query_id": "06-ep7",
+          "answer_path": "answers/06-ep7.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/table/list",
+      "summary": "牌桌列表",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "--------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_7",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": [
+              {
+                "tableid": "t6",
+                "casino": "SOLAIRE",
+                "tablename": "MD3109",
+                "tablename_cn": "晨丽厅",
+                "time": 48
+              },
+              {
+                "tableid": "t7",
+                "casino": "SOLAIRE",
+                "tablename": "MD3110",
+                "tablename_cn": "晨丽厅",
+                "time": 48
+              }
+            ],
+            "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+        },
+        {
+          "query_id": "06-ep8",
+          "answer_path": "answers/06-ep8.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/table/list",
+      "summary": "牌桌列表",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "-------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名[(点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_8",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": [
+              {
+                "tableid": "t6",
+                "casino": "SOLAIRE",
+                "tablename": "MD3109",
+                "tablename_cn": "晨丽厅",
+                "time": 48
+              },
+              {
+                "tableid": "t7",
+                "casino": "SOLAIRE",
+                "tablename": "MD3110",
+                "tablename_cn": "晨丽厅",
+                "time": 48
+              }
+            ],
+            "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+        },
+        {
+          "query_id": "06-ep9",
+          "answer_path": "answers/06-ep9.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/bet/limit",
+      "summary": "玩家限红",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "------------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "betlimit",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "限红列表([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md#id-200))"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_9",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "TraceId": "76ce3739-42bc-4fe3-9bdf-1433d376b73a"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+        },
+        {
+          "query_id": "06-ep10",
+          "answer_path": "answers/06-ep10.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit",
+      "summary": "玩家限红",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "----------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "betlimit",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_10",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "TraceId": "76ce3739-42bc-4fe3-9bdf-1433d376b73a"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+        },
+        {
+          "query_id": "06-ep11",
+          "answer_path": "answers/06-ep11.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/bet/limit/list",
+      "summary": "限红列表",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "--------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_11",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": [
+              {
+                "A": "100-2000"
+              },
+              {
+                "A1": "100-5000"
+              }
+            ],
+            "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+        },
+        {
+          "query_id": "06-ep12",
+          "answer_path": "answers/06-ep12.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit/list",
+      "summary": "限红列表",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "-------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_12",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": [
+              {
+                "A": "100-2000"
+              },
+              {
+                "A1": "100-5000"
+              }
+            ],
+            "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+        },
+        {
+          "query_id": "06-ep13",
+          "answer_path": "answers/06-ep13.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/bet/users",
+      "summary": "游戏结果",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "starttime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "betid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "page_num",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "page_size",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "status",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "参数",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "username",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "shoeid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "shoeround",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "casino",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "valid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bet",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "win",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "currency",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "tableidx",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bettime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "settletime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ip",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bettype",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "platform",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "betresult",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_13",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "TraceId": "e5956b0f-8251-49c7-9066-8a6ea31b2149",
+            "data": {
+              "current_page": 1,
+              "current_counts": 1,
+              "total_pages": 8,
+              "total_counts": 8,
+              "betdetail": [
+                {
+                  "roundid": "T66R10205435",
+                  "betid": "394bbefe-334f-4fc5-8065-0d1ab5467dcd",
+                  "username": "test1",
+                  "shoeid": 1044556,
+                  "shoeround": 49,
+                  "casino": "HANN",
+                  "valid": 500,
+                  "bet": 500,
+                  "win": 975,
+                  "currency": "USDT",
+                  "tableidx": "MB2023",
+                  "bettime": "2024-05-28T10:19:11.000Z",
+                  "settletime": "2024-05-28T10:19:44.000Z",
+                  "status": 4,
+                  "ip": "36.224.192.78",
+                  "bettype": "single",
+                  "platform": "pc",
+                  "betresult": {
+                    "bw": "500.00",
+                    "pw": "0.00",
+                    "tie": "0.00",
+                    "bp": "0.00",
+                    "pp": "0.00",
+                    "big": "0.00",
+                    "small": "0.00",
+                    "lucky6": "0.00",
+                    "ap": "0.00",
+                    "pfp": "0.00",
+                    "bw_win": "975.00",
+                    "pw_win": "0.00",
+                    "tie_win": "0.00",
+                    "bp_win": "0.00",
+                    "pp_win": "0.00",
+                    "big_win": "0.00",
+                    "small_win": "0.00",
+                    "lucky6_win": "0.00",
+                    "ap_win": "0.00",
+                    "pfp_win": "0.00"
+                  },
+                  "detail": {
+                    "b1": "c5",
+                    "b2": "h11",
+                    "b3": "0",
+                    "p1": "h10",
+                    "p2": "c13",
+                    "p3": "c3"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+        },
+        {
+          "query_id": "06-ep14",
+          "answer_path": "answers/06-ep14.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/bet/users",
+      "summary": "游戏结果",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "starttime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "roundid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "betid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "page_num",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "page_size",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "status",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "int"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "string"
+        },
+        {
+          "name": "参数",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "username",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "shoeid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "shoeround",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "casino",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "valid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bet",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "win",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "currency",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "tableidx",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bettime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "settletime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ip",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "bettype",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "platform",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "betresult",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "detail",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_14",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "TraceId": "e5956b0f-8251-49c7-9066-8a6ea31b2149",
+            "data": {
+              "current_page": 1,
+              "current_counts": 1,
+              "total_pages": 8,
+              "total_counts": 8,
+              "betdetail": [
+                {
+                  "roundid": "T66R10205435",
+                  "betid": "394bbefe-334f-4fc5-8065-0d1ab5467dcd",
+                  "username": "test1",
+                  "shoeid": 1044556,
+                  "shoeround": 49,
+                  "casino": "HANN",
+                  "valid": 500,
+                  "bet": 500,
+                  "win": 975,
+                  "currency": "USDT",
+                  "tableidx": "MB2023",
+                  "bettime": "2024-05-28T10:19:11.000Z",
+                  "settletime": "2024-05-28T10:19:44.000Z",
+                  "status": 4,
+                  "ip": "36.224.192.78",
+                  "bettype": "single",
+                  "platform": "pc",
+                  "betresult": {
+                    "bw": "500.00",
+                    "pw": "0.00",
+                    "tie": "0.00",
+                    "bp": "0.00",
+                    "pp": "0.00",
+                    "big": "0.00",
+                    "small": "0.00",
+                    "lucky6": "0.00",
+                    "ap": "0.00",
+                    "pfp": "0.00",
+                    "bw_win": "975.00",
+                    "pw_win": "0.00",
+                    "tie_win": "0.00",
+                    "bp_win": "0.00",
+                    "pp_win": "0.00",
+                    "big_win": "0.00",
+                    "small_win": "0.00",
+                    "lucky6_win": "0.00",
+                    "ap_win": "0.00",
+                    "pfp_win": "0.00"
+                  },
+                  "detail": {
+                    "b1": "c5",
+                    "b2": "h11",
+                    "b3": "0",
+                    "p1": "h10",
+                    "p2": "c13",
+                    "p3": "c3"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询"
+        },
+        {
+          "query_id": "06-ep15",
+          "answer_path": "answers/06-ep15.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/balance",
+      "summary": "余额查询",
+      "server": null,
+      "parameters": [
+        {
+          "name": "----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "-------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "username",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_15",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "balance": "1000.00",
+            "TraceId": "ee7db471-4374-416c-9490-269ba29d1cda"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+        },
+        {
+          "query_id": "06-ep16",
+          "answer_path": "answers/06-ep16.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+          "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+        }
+      ],
+      "method": "POST",
+      "path": "/vg/sign-up",
+      "summary": "注册用户",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "------------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "betlimit",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "限红列表([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md#id-200))"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>玩家名称+后缀(suffix)<br><mark style=\"color:red;\">仅限小写英文字母、数字</mark></p>"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_16",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": {
+              "uid": 10208,
+              "username": "usernamexox",
+              "betlimit": "A"
+            },
+            "TraceId": "9181f940-f34e-4659-adfb-bda82c92c562"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+        },
+        {
+          "query_id": "06-ep17",
+          "answer_path": "answers/06-ep17.txt",
+          "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/sign-up",
+      "summary": "注册用户",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "----------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "betlimit",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>玩家名称+后缀(suffix)<br><mark style=\"color:red;\">仅限小写英文字母、数字</mark></p>"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_17",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "data": {
+              "uid": 10208,
+              "username": "usernamexox",
+              "betlimit": "A"
+            },
+            "TraceId": "9181f940-f34e-4659-adfb-bda82c92c562"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能"
+        },
+        {
+          "query_id": "06-ep18",
+          "answer_path": "answers/06-ep18.txt",
+          "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/points",
+      "summary": "转账功能",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "----------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "loginname",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "玩家名称"
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "转账金额"
+        },
+        {
+          "name": "sid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>商户产值<br>( 商户转账唯一订单号<mark style=\"color:red;\"><strong>12位以上</strong></mark> )</p>"
+        },
+        {
+          "name": "status",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>in = 转进<br>out = 转出 </p>"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_18",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "balance": "1000.00",
+            "TraceId": "ee7db471-4374-416c-9490-269ba29d1cda"
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    },
+    {
+      "status": "supported",
+      "citations": [
+        {
+          "query_id": "05-initial",
+          "answer_path": "answers/05-initial.txt",
+          "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录"
+        },
+        {
+          "query_id": "06-ep19",
+          "answer_path": "answers/06-ep19.txt",
+          "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md",
+          "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录"
+        }
+      ],
+      "method": "POST",
+      "path": "/vgtransfer/log",
+      "summary": "转账记录",
+      "server": null,
+      "parameters": [
+        {
+          "name": "-----------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "--------------------------------------------------------------------------------------------------"
+        },
+        {
+          "name": "agent",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "代理名称"
+        },
+        {
+          "name": "starttime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'"
+        },
+        {
+          "name": "endtime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'"
+        },
+        {
+          "name": "page_num",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "页数"
+        },
+        {
+          "name": "page_size",
+          "in": "body",
+          "type": "number",
+          "required": true,
+          "description": "<p>每页笔数<br>max: 2000</p>"
+        },
+        {
+          "name": "status",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>in = 转进<br>out = 转出 <br><mark style=\"color:red;\"><strong>若不带此参数默认将回应所有状态纪录。</strong></mark></p>"
+        },
+        {
+          "name": "sid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "<p>转账单号<br><mark style=\"color:red;\"><strong>若不带此参数默认将回应所有订单纪录。</strong></mark></p>"
+        },
+        {
+          "name": "sign",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+        },
+        {
+          "name": "参数",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "------------",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "username",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "type",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "amount",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "beforeamount",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "afteramount",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "busid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "anyid",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ip",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "createtime",
+          "in": "body",
+          "type": "string",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "request": {
+        "content_type": "application/json",
+        "schema": "schemas.Body_19",
+        "required": true,
+        "description": "Request payload"
+      },
+      "responses": [
+        {
+          "status": "200",
+          "description": "Successful response",
+          "schema": null,
+          "schema_ref": null
+        }
+      ],
+      "examples": [
+        {
+          "title": "Response Example",
+          "content_type": "application/json",
+          "value": {
+            "code": 1000,
+            "message": "Success",
+            "TraceId": "bd0dbfff-8892-48f4-ba75-83bc076232d2",
+            "data": {
+              "current_page": 1,
+              "current_counts": 3,
+              "total_pages": 1,
+              "total_counts": 3,
+              "betdetail": [
+                {
+                  "username": "test1",
+                  "type": "in",
+                  "amount": "1.00",
+                  "beforeamount": "999.00",
+                  "afteramount": "1000.00",
+                  "busid": "SDSI837429749",
+                  "anyid": "IIT20241001163628",
+                  "ip": "127.0.0.1",
+                  "createtime": "2024-10-01T08:36:28.000Z"
+                },
+                {
+                  "username": "test1",
+                  "type": "out",
+                  "amount": "-1.00",
+                  "beforeamount": "1000.00",
+                  "afteramount": "999.00",
+                  "busid": "SDSI837429749",
+                  "anyid": "OTT20241001163649",
+                  "ip": "127.0.0.1",
+                  "createtime": "2024-10-01T08:36:49.000Z"
+                },
+                {
+                  "username": "test1",
+                  "type": "out",
+                  "amount": "-1.00",
+                  "beforeamount": "999.00",
+                  "afteramount": "998.00",
+                  "busid": "SDSI837429749",
+                  "anyid": "OTT20241001163811",
+                  "ip": "127.0.0.1",
+                  "createtime": "2024-10-01T08:38:11.000Z"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "tags": [
+        "you-xi"
+      ],
+      "security": [
+        "MD5Signature"
+      ]
+    }
+  ],
+  "schemas": [],
+  "errors": [],
+  "operational": [],
+  "missing_items": [],
+  "source_conflicts": [],
+  "unverified_items": [],
+  "integration": {
+    "version": "1.0",
+    "crypto": [],
+    "callbacks": [],
+    "field_conditions": [],
+    "test_cases": [],
+    "missing": []
+  }
+}

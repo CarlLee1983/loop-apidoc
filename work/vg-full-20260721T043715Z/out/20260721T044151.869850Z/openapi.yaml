@@ -1,0 +1,1420 @@
+openapi: 3.1.0
+info:
+  title: VG 文档
+  version: 0.0.0
+  x-loop-status: missing-source
+tags:
+- name: 单一钱包
+- name: 转账钱包
+paths:
+  /vg/sign-up:
+    post:
+      summary: 注册用户。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表(点击查看)
+                loginname:
+                  type: string
+                  description: 玩家名称+后缀(suffix)，仅限小写英文字母、数字
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+        required: true
+        description: 注册用户。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success envelope with code, message, data (uid, username, betlimit),
+            and TraceId
+      operationId: post_vg_sign_up
+  /vg/sign-in:
+    post:
+      summary: 取得登入特定游戏的启动URL。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                language:
+                  type: string
+                  description: 用户语系(点击查看)
+                loginname:
+                  type: string
+                  description: 玩家名称+后缀(suffix)
+                rid:
+                  type: string
+                  description: 桌号 tableid (点击查看)。非必要参数，填入桌号可进指定牌桌。
+                betlimit:
+                  type: string
+                  description: 限红列表(点击查看)。非必要参数，可在登入时设置当前玩家限红。
+                return_url:
+                  type: string
+                  description: 重新导向 URL
+                token:
+                  type: string
+                  description: 身份令牌
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+        required: true
+        description: 取得登入特定游戏的启动URL。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success envelope with code, message, data.url (launch URL),
+            and TraceId
+      operationId: post_vg_sign_in
+  /vg/bet/users:
+    post:
+      summary: 查询玩家每笔投注详细记录。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                starttime:
+                  description: 必要(请求参数中使用 roundid、betid 时非必要)。UTC+8, 'YYYY-MM-DD HH:mm:ss'，时间区间不可超过
+                    5 分钟
+                endtime:
+                  description: 必要(请求参数中使用 roundid、betid 时非必要)。UTC+8, 'YYYY-MM-DD HH:mm:ss'，时间区间不可超过
+                    5 分钟
+                roundid:
+                  type: string
+                  description: 局号(可查询一个月内的记录)
+                betid:
+                  type: string
+                  description: 投注号(可查询一个月内的记录)
+                page_num:
+                  type: integer
+                  description: 页数
+                page_size:
+                  type: integer
+                  description: '每页笔数，max: 2000'
+                status:
+                  type: integer
+                  description: 1 = 未结算，4 = 已结算，9 = 无效单。若不带此参数默认将回应所有状态纪录。
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+              required:
+              - agent
+              - starttime
+              - endtime
+              - page_num
+              - page_size
+              - sign
+        required: true
+        description: 查询玩家每笔投注详细记录。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success envelope with pagination fields and betdetail array
+            (roundid, betid, username, shoeid, shoeround, casino, valid, bet, win,
+            currency, tableidx, bettime, settletime, status, ip, bettype, platform,
+            betresult, detail)
+      operationId: post_vg_bet_users
+  /vg/bet/limit:
+    post:
+      summary: 调整玩家限红。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表(点击查看)
+                loginname:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+        required: true
+        description: 调整玩家限红。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success envelope with code, message, and TraceId (no data field
+            in example)
+      operationId: post_vg_bet_limit
+  /vg/bet/limit/list:
+    post:
+      summary: 查询代理当前可用限红。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+        required: true
+        description: 查询代理当前可用限红。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: 'Success envelope with code, message, data array of limit-code
+            objects (e.g. {"A": "100-2000"}), and TraceId'
+      operationId: post_vg_bet_limit_list
+  /vg/table/list:
+    post:
+      summary: 查询所有牌桌。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名(点击查看)
+        required: true
+        description: 查询所有牌桌。
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success envelope with code, message, data array of table objects
+            (tableid, casino, tablename, tablename_cn, time), and TraceId
+      operationId: post_vg_table_list
+  /bet:
+    post:
+      summary: 商户投注接口。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                token:
+                  type: string
+                  description: 玩家令牌
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 投注金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  properties:
+                    bubalance:
+                      type: string
+                    tableid:
+                      type: string
+                    tableidx:
+                      type: string
+                    shoeid:
+                      type: string
+                    currency:
+                      type: string
+                    ts:
+                      type: number
+                    shoeround:
+                      type: string
+                    platform:
+                      type: string
+                    bettype:
+                      type: string
+                    ip:
+                      type: string
+                    maxlose:
+                      type: number
+                    maxwin:
+                      type: number
+                    bw:
+                      type: number
+                    pw:
+                      type: number
+                    tie:
+                      type: number
+                    bp:
+                      type: number
+                    pp:
+                      type: number
+                    big:
+                      type: number
+                    small:
+                      type: number
+                    lucky6:
+                      type: number
+                    ap:
+                      type: number
+                    pfp:
+                      type: number
+                    betlimit:
+                      type: string
+                  description: 其他资讯
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_bet
+  /cancel:
+    post:
+      summary: 商户取消投注/结算接口。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 取消投注 = 投注金额；取消结算 = 派彩金额 - 投注金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    token:
+                      type: string
+                    currency:
+                      type: string
+                    bw:
+                      type: string
+                    pw:
+                      type: string
+                    tie:
+                      type: string
+                    bp:
+                      type: string
+                    pp:
+                      type: string
+                    big:
+                      type: string
+                    small:
+                      type: string
+                    lucky6:
+                      type: string
+                    ap:
+                      type: string
+                    pfp:
+                      type: string
+                    bw_win:
+                      type: string
+                    pw_win:
+                      type: string
+                    tie_win:
+                      type: string
+                    bp_win:
+                      type: string
+                    pp_win:
+                      type: string
+                    big_win:
+                      type: string
+                    small_win:
+                      type: string
+                    lucky6_win:
+                      type: string
+                    ap_win:
+                      type: string
+                    pfp_win:
+                      type: string
+                    abet:
+                      type: string
+                    abet2:
+                      type: string
+                    tableidx:
+                      type: string
+                    shoeid:
+                      type: integer
+                    shoeround:
+                      type: integer
+                    btimestamp:
+                      type: integer
+                    bettime:
+                      type: string
+                    settletime: {}
+                    percentage: {}
+                    fanshui: {}
+                    status:
+                      type: integer
+                    ip:
+                      type: string
+                    bettype:
+                      type: string
+                    platform:
+                      type: string
+                    detail: {}
+                  description: 其他资讯
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_cancel
+  /win:
+    post:
+      summary: 商户派彩接口。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 派彩金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    token:
+                      type: string
+                    currency:
+                      type: string
+                    bw:
+                      type: string
+                    pw:
+                      type: string
+                    tie:
+                      type: string
+                    bp:
+                      type: string
+                    pp:
+                      type: string
+                    big:
+                      type: string
+                    small:
+                      type: string
+                    lucky6:
+                      type: string
+                    ap:
+                      type: string
+                    pfp:
+                      type: string
+                    bw_win:
+                      type: string
+                    pw_win:
+                      type: string
+                    tie_win:
+                      type: string
+                    bp_win:
+                      type: string
+                    pp_win:
+                      type: string
+                    big_win:
+                      type: string
+                    small_win:
+                      type: string
+                    lucky6_win:
+                      type: string
+                    ap_win:
+                      type: string
+                    pfp_win:
+                      type: string
+                    abet:
+                      type: string
+                    abet2:
+                      type: string
+                    tableidx:
+                      type: string
+                    shoeid:
+                      type: number
+                    shoeround:
+                      type: number
+                    btimestamp:
+                      type: number
+                    bettime:
+                      type: string
+                    settletime: {}
+                    percentage: {}
+                    fanshui: {}
+                    status:
+                      type: number
+                    ip:
+                      type: string
+                    bettype:
+                      type: string
+                    platform:
+                      type: string
+                    detail: {}
+                  description: 其他资讯
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_win
+  /resettle:
+    post:
+      summary: 商户重新派彩接口。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 当笔资料最终派彩金额，不会扣/补前次派彩金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  description: 其他资讯
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_resettle
+  /balance:
+    post:
+      summary: 查询玩家余额。
+      tags:
+      - 单一钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                token:
+                  type: string
+                  description: 玩家令牌
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_balance
+  /vgtransfer/sign-up:
+    post:
+      summary: 注册用户。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))
+                loginname:
+                  type: string
+                  description: 玩家名称+后缀(suffix) 仅限小写英文字母、数字
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_sign_up
+  /vgtransfer/sign-in:
+    post:
+      summary: 取得登入特定游戏的启动URL。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                language:
+                  type: string
+                  description: 用户语系([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md))
+                loginname:
+                  type: string
+                  description: 玩家名称+后缀(suffix)
+                rid:
+                  type: string
+                  description: 桌号 tableid ([点击查看](/pages/eKP65RR00NcZ1oYQQOJD))。非必要参数，填入桌号可进指定牌桌。
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](https://vg-organization.gitbook.io/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao#id-200))。非必要参数，可在登入时设置当前玩家限红。
+                return_url:
+                  type: string
+                  description: 重新导向 URL
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_sign_in
+  /vgtransfer/points:
+    post:
+      summary: 玩家上分 / 下分。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                amount:
+                  type: integer
+                  description: 转账金额
+                sid:
+                  type: string
+                  description: 商户产值 ( 商户转账唯一订单号12位以上 )
+                status:
+                  type: string
+                  description: 'in = 转进
+
+                    out = 转出'
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_points
+  /vgtransfer/balance:
+    post:
+      summary: 查询玩家余额。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                username:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_balance
+  /vgtransfer/log:
+    post:
+      summary: 查询玩家转账记录。时间区间不可超过 5 分钟
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                starttime:
+                  description: UTC+8, 'YYYY-MM-DD HH:mm:ss'
+                endtime:
+                  description: UTC+8, 'YYYY-MM-DD HH:mm:ss'
+                page_num:
+                  type: integer
+                  description: 页数
+                page_size:
+                  type: integer
+                  description: '每页笔数
+
+                    max: 2000'
+                status:
+                  type: string
+                  description: 'in = 转进
+
+                    out = 转出
+
+                    若不带此参数默认将回应所有状态纪录。'
+                sid:
+                  type: string
+                  description: '转账单号
+
+                    若不带此参数默认将回应所有订单纪录。'
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+        description: 查询玩家转账记录。时间区间不可超过 5 分钟
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_log
+  /vgtransfer/bet/users:
+    post:
+      summary: 查询玩家每笔投注详细记录。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                starttime:
+                  description: 'UTC+8, ''YYYY-MM-DD HH:mm:ss''
+
+                    时间区间不可超过 5 分钟
+
+                    (请求参数中使用 roundid、betid 时非必要)'
+                endtime:
+                  description: 'UTC+8, ''YYYY-MM-DD HH:mm:ss''
+
+                    时间区间不可超过 5 分钟
+
+                    (请求参数中使用 roundid、betid 时非必要)'
+                roundid:
+                  type: string
+                  description: '局号
+
+                    (可查询一个月内的记录)'
+                betid:
+                  type: string
+                  description: '投注号
+
+                    (可查询一个月内的记录)'
+                page_num:
+                  type: integer
+                  description: 页数
+                page_size:
+                  type: integer
+                  description: '每页笔数
+
+                    max: 2000'
+                status:
+                  type: integer
+                  description: '1 = 未结算
+
+                    4 = 已结算
+
+                    9 = 无效单
+
+                    若不带此参数默认将回应所有状态纪录。'
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/pages/xcqV5MT88Fe4CmEAPdRe))
+              required:
+              - agent
+              - starttime
+              - endtime
+              - page_num
+              - page_size
+              - sign
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_bet_users
+  /vgtransfer/bet/limit:
+    post:
+      summary: 调整玩家限红。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))
+                loginname:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_bet_limit
+  /vgtransfer/bet/limit/list:
+    post:
+      summary: 查询代理当前可用限红。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_bet_limit_list
+  /vgtransfer/table/list:
+    post:
+      summary: 查询所有牌桌。
+      tags:
+      - 转账钱包
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        schema: {}
+        description: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+        required: true
+      security:
+      - sign: []
+      responses:
+        default:
+          description: Success
+      operationId: post_vgtransfer_table_list
+components:
+  schemas:
+    ErrorCode:
+      enum:
+      - 1000
+      - 1001
+      - 1002
+      - 5000
+      - 5001
+      - 5002
+      - 5003
+      - 5005
+      - 5006
+      - 5008
+      - 5009
+      - 5010
+      - 5012
+      - 5013
+      - 5014
+      - 5015
+      - 5016
+      - 5017
+      - 5018
+      - 5019
+      - 5040
+      - 5041
+      - 5042
+      - 5043
+      - 5045
+      x-loop-error-codes:
+      - code: 1000
+        meaning: 成功
+        http_status: null
+      - code: 1001
+        meaning: 系统错误
+        http_status: null
+      - code: 1002
+        meaning: 未知错误
+        http_status: null
+      - code: 5000
+        meaning: 验证码错误
+        http_status: null
+      - code: 5001
+        meaning: 请求参数有误
+        http_status: null
+      - code: 5002
+        meaning: 请求之币别不支持
+        http_status: null
+      - code: 5003
+        meaning: 钱包余额不足
+        http_status: null
+      - code: 5005
+        meaning: 商户不存在
+        http_status: null
+      - code: 5006
+        meaning: 玩家已存在
+        http_status: null
+      - code: 5008
+        meaning: 国家/地区代码错误
+        http_status: null
+      - code: 5009
+        meaning: 玩家账号不存在
+        http_status: null
+      - code: 5010
+        meaning: 玩家已被锁定
+        http_status: null
+      - code: 5012
+        meaning: 找不到对应的游戏
+        http_status: null
+      - code: 5013
+        meaning: Session验证失败
+        http_status: null
+      - code: 5014
+        meaning: 无效的时间格式
+        http_status: null
+      - code: 5015
+        meaning: 无效的Provider
+        http_status: null
+      - code: 5016
+        meaning: 无效的金额
+        http_status: null
+      - code: 5017
+        meaning: API權限不足
+        http_status: null
+      - code: 5018
+        meaning: 無效的Brand UID
+        http_status: null
+      - code: 5019
+        meaning: 登入 URL 超时
+        http_status: null
+      - code: 5040
+        meaning: 请求限制，每3秒仅能叫用一次
+        http_status: null
+      - code: 5041
+        meaning: 请求区段限制，每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料。
+        http_status: null
+      - code: 5042
+        meaning: 下注记录不存在
+        http_status: null
+      - code: 5043
+        meaning: 下注记录已存在
+        http_status: null
+      - code: 5045
+        meaning: 转帐钱包上下分，重复的 SID
+        http_status: null
+      x-loop-error-code-map:
+      - code: 1000
+        message: 成功
+        description: 成功
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 1001
+        message: 系统错误
+        description: 系统错误
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 1002
+        message: 未知错误
+        description: 未知错误
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5000
+        message: 验证码错误
+        description: 验证码错误
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5001
+        message: 请求参数有误
+        description: 请求参数有误
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5002
+        message: 请求之币别不支持
+        description: 请求之币别不支持
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5003
+        message: 钱包余额不足
+        description: 钱包余额不足
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5005
+        message: 商户不存在
+        description: 商户不存在
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5006
+        message: 玩家已存在
+        description: 玩家已存在
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5008
+        message: 国家/地区代码错误
+        description: 国家/地区代码错误
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5009
+        message: 玩家账号不存在
+        description: 玩家账号不存在
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5010
+        message: 玩家已被锁定
+        description: 玩家已被锁定
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5012
+        message: 找不到对应的游戏
+        description: 找不到对应的游戏
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5013
+        message: Session验证失败
+        description: Session验证失败
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5014
+        message: 无效的时间格式
+        description: 无效的时间格式
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5015
+        message: 无效的Provider
+        description: 无效的Provider
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5016
+        message: 无效的金额
+        description: 无效的金额
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5017
+        message: API權限不足
+        description: API權限不足
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5018
+        message: 無效的Brand UID
+        description: 無效的Brand UID
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5019
+        message: 登入 URL 超时
+        description: 登入 URL 超时
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5040
+        message: 请求限制，每3秒仅能叫用一次
+        description: 请求限制，每3秒仅能叫用一次
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5041
+        message: 请求区段限制，每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料。
+        description: 请求区段限制，每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料。
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5042
+        message: 下注记录不存在
+        description: 下注记录不存在
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5043
+        message: 下注记录已存在
+        description: 下注记录已存在
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      - code: 5045
+        message: 转帐钱包上下分，重复的 SID
+        description: 转帐钱包上下分，重复的 SID
+        http_status: null
+        applicable_to: []
+        source:
+        - query_id: 08-initial
+          answer_path: answers/08-initial.txt
+          manifest_source: vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md
+          locator: vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码
+      type: integer
+  securitySchemes:
+    sign:
+      type: apiKey
+      in: header
+      name: 将所有参数字首按顺序排列，将值串成字串，最后加上 API_KEY，以 MD5 加密取得 sign 值；sign 放在请求 body。

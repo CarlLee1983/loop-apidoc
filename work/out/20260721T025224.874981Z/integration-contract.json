@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "MD5Signature",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex",
+      "key_source": {
+        "key": "API_KEY",
+        "iv": null,
+        "note": "API_KEY is supplied by the operator/platform"
+      },
+      "payload_assembly": [
+        {
+          "step": 1,
+          "desc": "将所有参数字首按顺序排列 (abcde...等，12345...等)",
+          "fields": []
+        },
+        {
+          "step": 2,
+          "desc": "将「值」串成字串，最后加上 API_KEY",
+          "fields": []
+        },
+        {
+          "step": 3,
+          "desc": "将此字串由 MD5 加密取得 sign 值",
+          "fields": []
+        }
+      ],
+      "verify": {
+        "field": "sign",
+        "method": "MD5",
+        "desc": "Sign parameter in request body matching MD5 checksum"
+      },
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md",
+      "provenance_target": "integration.crypto.MD5Signature"
+    }
+  ],
+  "callbacks": [],
+  "field_conditions": [],
+  "test_cases": [],
+  "api_title": "VG 游戏 API 文档",
+  "base_urls": [
+    {
+      "name": "production",
+      "base_url": "https://api.vg-organization.com",
+      "version": null
+    }
+  ],
+  "error_codes": [],
+  "missing": []
+}

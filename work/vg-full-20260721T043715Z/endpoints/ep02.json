@@ -1,0 +1,166 @@
+{
+  "method": "POST",
+  "path": "/vg/bet/users",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": null,
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "代理名称"
+    },
+    {
+      "name": "starttime",
+      "in": "body",
+      "type": "datetime",
+      "required": true,
+      "description": "必要(请求参数中使用 roundid、betid 时非必要)。UTC+8, 'YYYY-MM-DD HH:mm:ss'，时间区间不可超过 5 分钟"
+    },
+    {
+      "name": "endtime",
+      "in": "body",
+      "type": "datetime",
+      "required": true,
+      "description": "必要(请求参数中使用 roundid、betid 时非必要)。UTC+8, 'YYYY-MM-DD HH:mm:ss'，时间区间不可超过 5 分钟"
+    },
+    {
+      "name": "roundid",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "局号(可查询一个月内的记录)"
+    },
+    {
+      "name": "betid",
+      "in": "body",
+      "type": "string",
+      "required": false,
+      "description": "投注号(可查询一个月内的记录)"
+    },
+    {
+      "name": "page_num",
+      "in": "body",
+      "type": "int",
+      "required": true,
+      "description": "页数"
+    },
+    {
+      "name": "page_size",
+      "in": "body",
+      "type": "int",
+      "required": true,
+      "description": "每页笔数，max: 2000"
+    },
+    {
+      "name": "status",
+      "in": "body",
+      "type": "int",
+      "required": false,
+      "description": "1 = 未结算，4 = 已结算，9 = 无效单。若不带此参数默认将回应所有状态纪录。"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "签名(点击查看)"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": true,
+    "description": "查询玩家每笔投注详细记录。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success envelope with pagination fields and betdetail array (roundid, betid, username, shoeid, shoeround, casino, valid, bet, win, currency, tableidx, bettime, settletime, status, ip, bettype, platform, betresult, detail)",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": ["单一钱包"],
+  "security": ["sign"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "TraceId": "e5956b0f-8251-49c7-9066-8a6ea31b2149",
+        "data": {
+          "current_page": 1,
+          "current_counts": 1,
+          "total_pages": 8,
+          "total_counts": 8,
+          "betdetail": [
+            {
+              "roundid": "T66R10205435",
+              "betid": "394bbefe-334f-4fc5-8065-0d1ab5467dcd",
+              "username": "test1",
+              "shoeid": 1044556,
+              "shoeround": 49,
+              "casino": "HANN",
+              "valid": 500,
+              "bet": 500,
+              "win": 975,
+              "currency": "USDT",
+              "tableidx": "MB2023",
+              "bettime": "2024-05-28T10:19:11.000Z",
+              "settletime": "2024-05-28T10:19:44.000Z",
+              "status": 4,
+              "ip": "36.224.192.78",
+              "bettype": "single",
+              "platform": "pc",
+              "betresult": {
+                "bw": "500.00",
+                "pw": "0.00",
+                "tie": "0.00",
+                "bp": "0.00",
+                "pp": "0.00",
+                "big": "0.00",
+                "small": "0.00",
+                "lucky6": "0.00",
+                "ap": "0.00",
+                "pfp": "0.00",
+                "bw_win": "975.00",
+                "pw_win": "0.00",
+                "tie_win": "0.00",
+                "bp_win": "0.00",
+                "pp_win": "0.00",
+                "big_win": "0.00",
+                "small_win": "0.00",
+                "lucky6_win": "0.00",
+                "ap_win": "0.00",
+                "pfp_win": "0.00"
+              },
+              "detail": {
+                "b1": "c5",
+                "b2": "h11",
+                "b3": "0",
+                "p1": "h10",
+                "p2": "c13",
+                "p3": "c3"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "missing": [
+    "HTTP status code not documented",
+    "failure/error response body not documented",
+    "conditional required semantics for starttime/endtime when roundid or betid is provided not fully specified"
+  ]
+}

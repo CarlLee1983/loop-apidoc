@@ -1,0 +1,125 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "sign (general parameter signing)",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": "API_KEY",
+        "iv": null,
+        "note": "商户/代理专属 API_KEY,字串形式附加在签名串末端"
+      },
+      "payload_assembly": [
+        {"step": 1, "desc": "将所有参数字首按顺序排列 (字母 abcde... 或数字 12345...)", "fields": ["agent", "loginname"]},
+        {"step": 2, "desc": "将排序后各参数的值依序串成字串", "fields": ["agent", "loginname"]},
+        {"step": 3, "desc": "在字串最后加上 API_KEY", "fields": ["API_KEY"]},
+        {"step": 4, "desc": "将此字串以 MD5 加密取得 sign 值", "fields": []}
+      ],
+      "verify": {"field": "sign", "method": "MD5", "desc": "以相同规则重算签名字串并与请求中的 sign 值比对"},
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 7-9"
+    },
+    {
+      "name": "sign (未包含 detail variant, 单一钱包钱包类接口)",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": null,
+      "key_source": {
+        "key": "API_KEY",
+        "iv": null,
+        "note": "同一般规则的 API_KEY,附加在签名串末端"
+      },
+      "payload_assembly": [
+        {"step": 1, "desc": "签名字串不包含 detail 参数(detail 为 object,其余栏位如 agent/loginname/roundid/transid/amount 依一般规则排序串接)", "fields": ["agent", "loginname", "roundid", "transid", "amount"]},
+        {"step": 2, "desc": "在字串最后加上 API_KEY", "fields": ["API_KEY"]},
+        {"step": 3, "desc": "将此字串以 MD5 加密取得 sign 值", "fields": []}
+      ],
+      "verify": {"field": "sign", "method": "MD5", "desc": "签名 (未包含 detail)"},
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md line 25; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md line 24; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md line 24; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md line 24"
+    }
+  ],
+  "callbacks": [],
+  "field_conditions": [
+    {
+      "scope": "游戏结果 (POST /vg/bet/users; POST /vgtransfer/bet/users)",
+      "rule": "starttime、endtime 为必要参数",
+      "when": "请求参数中未使用 roundid、betid",
+      "then_required": ["starttime", "endtime"],
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 19-25"
+    },
+    {
+      "scope": "游戏结果 (POST /vg/bet/users; POST /vgtransfer/bet/users)",
+      "rule": "starttime、endtime 时间区间不可超过 5 分钟",
+      "when": null,
+      "then_required": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 24-25"
+    },
+    {
+      "scope": "游戏结果 (POST /vg/bet/users; POST /vgtransfer/bet/users)",
+      "rule": "status 参数非必要;若不带此参数,默认将回应所有状态纪录",
+      "when": "未带 status 参数",
+      "then_required": [],
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md line 30"
+    },
+    {
+      "scope": "转账记录 (POST /vgtransfer/log)",
+      "rule": "时间区间不可超过 5 分钟",
+      "when": null,
+      "then_required": [],
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md line 9"
+    },
+    {
+      "scope": "转账记录 (POST /vgtransfer/log)",
+      "rule": "status 参数非必要;若不带此参数,默认将回应所有状态纪录",
+      "when": "未带 status 参数",
+      "then_required": [],
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md line 26"
+    },
+    {
+      "scope": "转账记录 (POST /vgtransfer/log)",
+      "rule": "sid 参数非必要;若不带此参数,默认将回应所有订单纪录",
+      "when": "未带 sid 参数",
+      "then_required": [],
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md line 27"
+    },
+    {
+      "scope": "转账功能 (POST /vgtransfer/points)",
+      "rule": "sid(商户转账唯一订单号)须为 12 位以上,且须为商户端唯一值",
+      "when": null,
+      "then_required": ["sid"],
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md line 24"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "MD5 sign worked example (demo_agent/demo_user)",
+      "operation_ref": null,
+      "request": {
+        "agent": "demo_agent",
+        "loginname": "demo_user",
+        "API_KEY": "api_key"
+      },
+      "response": {
+        "sign_string": "demo_agentdemo_userapi_key",
+        "sign": "d2568959d55823991e8bd4d7aa50e64c"
+      },
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 11-50"
+    }
+  ],
+  "missing": [
+    {"area": "callbacks", "detail": "來源未說明任何平台主動通知商戶的 callback / webhook 機制(單一錢包與轉帳錢包皆無)。"},
+    {"area": "crypto.sign_string_construction", "detail": "來源未說明缺席的可選欄位(roundid、betid、status、sid 等)在組簽章字串時是整個省略還是以空字串參與。"},
+    {"area": "crypto.sign_string_construction", "detail": "來源未說明數值欄位(如 amount)在串接前如何轉成字串(小數位數、格式、正負號)。"},
+    {"area": "crypto.digest_form", "detail": "來源未明文規定 sign 摘要須為小寫十六進位;範例值為小寫但未敘述為規則。"},
+    {"area": "crypto.nested_objects", "detail": "對於未標註「未包含 detail」的端點,來源未說明巢狀物件是否納入簽章、若納入又如何序列化。"},
+    {"area": "crypto.error_handling", "detail": "來源未說明 sign 驗證失敗時回傳的響應代碼或錯誤內容。"},
+    {"area": "crypto.sign_field_exclusion", "detail": "sign 欄位本身不納入排序串接一事僅由範例呈現(範例 data 含 sign 但未參與串接),提示文字未明文敘述。"},
+    {"area": "field_conditions.roundid_betid", "detail": "來源未說明 roundid 與 betid 可否同時給、是否擇一即可,以及兩組條件皆未給時的行為。"},
+    {"area": "api.chong-xin-pai-cai", "detail": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md 未提供 Body params JSON 範例,/resettle 因此沒有可引用的請求樣本。"}
+  ]
+}

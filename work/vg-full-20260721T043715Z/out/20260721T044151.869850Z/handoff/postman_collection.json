@@ -1,0 +1,739 @@
+{
+  "info": {
+    "name": "VG 文档",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "<base_url>"
+    }
+  ],
+  "item": [
+    {
+      "name": "post_vg_sign_up",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/sign-up",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "sign-up"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"betlimit\": \"<betlimit>\",\n  \"loginname\": \"<loginname>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1sign-up/post`\nExample: `../examples/post_vg_sign_up/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vg_sign_in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/sign-in",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "sign-in"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"language\": \"<language>\",\n  \"loginname\": \"<loginname>\",\n  \"rid\": \"<rid>\",\n  \"betlimit\": \"<betlimit>\",\n  \"return_url\": \"<return_url>\",\n  \"token\": \"<token>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1sign-in/post`\nExample: `../examples/post_vg_sign_in/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vg_bet_users",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/bet/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "bet",
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"starttime\": \"<starttime>\",\n  \"endtime\": \"<endtime>\",\n  \"roundid\": \"<roundid>\",\n  \"betid\": \"<betid>\",\n  \"page_num\": \"<page_num>\",\n  \"page_size\": \"<page_size>\",\n  \"status\": \"<status>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1bet~1users/post`\nExample: `../examples/post_vg_bet_users/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vg_bet_limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/bet/limit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "bet",
+            "limit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"betlimit\": \"<betlimit>\",\n  \"loginname\": \"<loginname>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1bet~1limit/post`\nExample: `../examples/post_vg_bet_limit/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vg_bet_limit_list",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/bet/limit/list",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "bet",
+            "limit",
+            "list"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1bet~1limit~1list/post`\nExample: `../examples/post_vg_bet_limit_list/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vg_table_list",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vg/table/list",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vg",
+            "table",
+            "list"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vg~1table~1list/post`\nExample: `../examples/post_vg_table_list/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_bet",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/bet",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "bet"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"token\": \"<token>\",\n  \"roundid\": \"<roundid>\",\n  \"transid\": \"<transid>\",\n  \"amount\": \"<amount>\",\n  \"sign\": \"<sign>\",\n  \"detail\": \"<detail>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1bet/post`\nExample: `../examples/post_bet/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_cancel",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/cancel",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "cancel"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"roundid\": \"<roundid>\",\n  \"transid\": \"<transid>\",\n  \"amount\": \"<amount>\",\n  \"sign\": \"<sign>\",\n  \"detail\": \"<detail>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1cancel/post`\nExample: `../examples/post_cancel/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_win",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/win",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "win"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"roundid\": \"<roundid>\",\n  \"transid\": \"<transid>\",\n  \"amount\": \"<amount>\",\n  \"sign\": \"<sign>\",\n  \"detail\": \"<detail>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1win/post`\nExample: `../examples/post_win/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_resettle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resettle",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resettle"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"roundid\": \"<roundid>\",\n  \"transid\": \"<transid>\",\n  \"amount\": \"<amount>\",\n  \"sign\": \"<sign>\",\n  \"detail\": \"<detail>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1resettle/post`\nExample: `../examples/post_resettle/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_balance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/balance",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "balance"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"token\": \"<token>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1balance/post`\nExample: `../examples/post_balance/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_sign_up",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/sign-up",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "sign-up"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"betlimit\": \"<betlimit>\",\n  \"loginname\": \"<loginname>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1sign-up/post`\nExample: `../examples/post_vgtransfer_sign_up/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_sign_in",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/sign-in",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "sign-in"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"language\": \"<language>\",\n  \"loginname\": \"<loginname>\",\n  \"rid\": \"<rid>\",\n  \"betlimit\": \"<betlimit>\",\n  \"return_url\": \"<return_url>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1sign-in/post`\nExample: `../examples/post_vgtransfer_sign_in/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_points",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/points",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "points"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"loginname\": \"<loginname>\",\n  \"amount\": \"<amount>\",\n  \"sid\": \"<sid>\",\n  \"status\": \"<status>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1points/post`\nExample: `../examples/post_vgtransfer_points/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_balance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/balance",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "balance"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"username\": \"<username>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1balance/post`\nExample: `../examples/post_vgtransfer_balance/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_log",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/log",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "log"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"starttime\": \"<starttime>\",\n  \"endtime\": \"<endtime>\",\n  \"page_num\": \"<page_num>\",\n  \"page_size\": \"<page_size>\",\n  \"status\": \"<status>\",\n  \"sid\": \"<sid>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1log/post`\nExample: `../examples/post_vgtransfer_log/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_bet_users",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/bet/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "bet",
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"starttime\": \"<starttime>\",\n  \"endtime\": \"<endtime>\",\n  \"roundid\": \"<roundid>\",\n  \"betid\": \"<betid>\",\n  \"page_num\": \"<page_num>\",\n  \"page_size\": \"<page_size>\",\n  \"status\": \"<status>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1bet~1users/post`\nExample: `../examples/post_vgtransfer_bet_users/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_bet_limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/bet/limit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "bet",
+            "limit"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"betlimit\": \"<betlimit>\",\n  \"loginname\": \"<loginname>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1bet~1limit/post`\nExample: `../examples/post_vgtransfer_bet_limit/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_bet_limit_list",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/bet/limit/list",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "bet",
+            "limit",
+            "list"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1bet~1limit~1list/post`\nExample: `../examples/post_vgtransfer_bet_limit_list/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    },
+    {
+      "name": "post_vgtransfer_table_list",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "<content_type>"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/vgtransfer/table/list",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "vgtransfer",
+            "table",
+            "list"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent\": \"<agent>\",\n  \"sign\": \"<sign>\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "description": "OpenAPI: `../openapi.yaml#/paths/~1vgtransfer~1table~1list/post`\nExample: `../examples/post_vgtransfer_table_list/request.ts`\nRequires signing — see `../integration-contract.json#/crypto/0` (no pre-request script generated; implement crypto from the contract)."
+    }
+  ]
+}

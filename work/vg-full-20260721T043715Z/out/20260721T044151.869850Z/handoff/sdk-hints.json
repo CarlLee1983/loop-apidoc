@@ -1,0 +1,342 @@
+{
+  "version": "1.0",
+  "contracts": {
+    "openapi": "../openapi.yaml",
+    "integration": "../integration-contract.json"
+  },
+  "operation_groups": [
+    {
+      "name": "单一钱包",
+      "operations": [
+        "post_vg_sign_up",
+        "post_vg_sign_in",
+        "post_vg_bet_users",
+        "post_vg_bet_limit",
+        "post_vg_bet_limit_list",
+        "post_vg_table_list",
+        "post_bet",
+        "post_cancel",
+        "post_win",
+        "post_resettle",
+        "post_balance"
+      ]
+    },
+    {
+      "name": "转账钱包",
+      "operations": [
+        "post_vgtransfer_sign_up",
+        "post_vgtransfer_sign_in",
+        "post_vgtransfer_points",
+        "post_vgtransfer_balance",
+        "post_vgtransfer_log",
+        "post_vgtransfer_bet_users",
+        "post_vgtransfer_bet_limit",
+        "post_vgtransfer_bet_limit_list",
+        "post_vgtransfer_table_list"
+      ]
+    }
+  ],
+  "implementation_notes": [
+    {
+      "operation_id": "post_vg_sign_up",
+      "method": "POST",
+      "path": "/vg/sign-up",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1sign-up/post",
+      "example_paths": [
+        "../examples/post_vg_sign_up/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vg_sign_in",
+      "method": "POST",
+      "path": "/vg/sign-in",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1sign-in/post",
+      "example_paths": [
+        "../examples/post_vg_sign_in/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vg_bet_users",
+      "method": "POST",
+      "path": "/vg/bet/users",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1bet~1users/post",
+      "example_paths": [
+        "../examples/post_vg_bet_users/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vg_bet_limit",
+      "method": "POST",
+      "path": "/vg/bet/limit",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1bet~1limit/post",
+      "example_paths": [
+        "../examples/post_vg_bet_limit/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vg_bet_limit_list",
+      "method": "POST",
+      "path": "/vg/bet/limit/list",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1bet~1limit~1list/post",
+      "example_paths": [
+        "../examples/post_vg_bet_limit_list/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vg_table_list",
+      "method": "POST",
+      "path": "/vg/table/list",
+      "contract_pointer": "../openapi.yaml#/paths/~1vg~1table~1list/post",
+      "example_paths": [
+        "../examples/post_vg_table_list/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_bet",
+      "method": "POST",
+      "path": "/bet",
+      "contract_pointer": "../openapi.yaml#/paths/~1bet/post",
+      "example_paths": [
+        "../examples/post_bet/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_cancel",
+      "method": "POST",
+      "path": "/cancel",
+      "contract_pointer": "../openapi.yaml#/paths/~1cancel/post",
+      "example_paths": [
+        "../examples/post_cancel/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_win",
+      "method": "POST",
+      "path": "/win",
+      "contract_pointer": "../openapi.yaml#/paths/~1win/post",
+      "example_paths": [
+        "../examples/post_win/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_resettle",
+      "method": "POST",
+      "path": "/resettle",
+      "contract_pointer": "../openapi.yaml#/paths/~1resettle/post",
+      "example_paths": [
+        "../examples/post_resettle/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_balance",
+      "method": "POST",
+      "path": "/balance",
+      "contract_pointer": "../openapi.yaml#/paths/~1balance/post",
+      "example_paths": [
+        "../examples/post_balance/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_sign_up",
+      "method": "POST",
+      "path": "/vgtransfer/sign-up",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1sign-up/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_sign_up/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_sign_in",
+      "method": "POST",
+      "path": "/vgtransfer/sign-in",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1sign-in/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_sign_in/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_points",
+      "method": "POST",
+      "path": "/vgtransfer/points",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1points/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_points/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_balance",
+      "method": "POST",
+      "path": "/vgtransfer/balance",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1balance/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_balance/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_log",
+      "method": "POST",
+      "path": "/vgtransfer/log",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1log/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_log/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_bet_users",
+      "method": "POST",
+      "path": "/vgtransfer/bet/users",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1bet~1users/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_bet_users/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_bet_limit",
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1bet~1limit/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_bet_limit/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_bet_limit_list",
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit/list",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1bet~1limit~1list/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_bet_limit_list/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    },
+    {
+      "operation_id": "post_vgtransfer_table_list",
+      "method": "POST",
+      "path": "/vgtransfer/table/list",
+      "contract_pointer": "../openapi.yaml#/paths/~1vgtransfer~1table~1list/post",
+      "example_paths": [
+        "../examples/post_vgtransfer_table_list/request.ts"
+      ],
+      "requires": [
+        "runtime:base_url",
+        "crypto:MD5 sign (单一钱包)",
+        "crypto:MD5 sign (转账钱包)"
+      ],
+      "gaps": []
+    }
+  ],
+  "gaps": []
+}

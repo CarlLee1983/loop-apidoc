@@ -1,0 +1,77 @@
+{
+  "method": "POST",
+  "path": "/vg/table/list",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 7-22 (牌桌列表)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "查询所有牌桌。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "TableListItem"
+    }
+  ],
+  "tags": ["单一钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "data": [
+          {
+            "tableid": "t6",
+            "casino": "SOLAIRE",
+            "tablename": "MD3109",
+            "tablename_cn": "晨丽厅",
+            "time": 48
+          },
+          {
+            "tableid": "t7",
+            "casino": "SOLAIRE",
+            "tablename": "MD3110",
+            "tablename_cn": "晨丽厅",
+            "time": 48
+          }
+        ],
+        "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+      }
+    }
+  ],
+  "missing": [
+    "no HTTP status code documented for the response",
+    "no failure/error response body documented",
+    "response field meanings (code, message, data.tableid, data.casino, data.tablename, data.tablename_cn, data.time, TraceId) are not documented in prose, only shown via a JSON example",
+    "request field types for agent/sign are not explicitly typed beyond 'string' in the table; no required/optional marking given for headers or body fields"
+  ]
+}

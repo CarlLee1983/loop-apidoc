@@ -1,0 +1,68 @@
+{
+  "method": "POST",
+  "path": "/vg/bet/limit/list",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 3-46 (限红列表)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": null,
+      "required": null,
+      "description": "Value: `application/json` (vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 13-15)"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称 (vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 19-21)"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名(点击查看) (vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 19-22)"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": "data: array of objects; each object has a single key that is a limit code (e.g. \"A\", \"A1\") mapped to a range string (e.g. \"100-2000\") (vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 29-43)",
+      "schema_ref": "BetLimitListEntry"
+    }
+  ],
+  "tags": ["单一钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "data": [
+          {
+            "A": "100-2000"
+          },
+          {
+            "A1": "100-5000"
+          }
+        ],
+        "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+      }
+    }
+  ],
+  "missing": [
+    "No HTTP status code is stated for the response (only a Success tab with a JSON body is documented)",
+    "No failure/error response body is documented",
+    "The full list of 限红代码 (limit codes) is not published; only example codes \"A\" and \"A1\" are shown"
+  ]
+}

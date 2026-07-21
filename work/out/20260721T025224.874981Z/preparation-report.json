@@ -1,0 +1,59 @@
+{
+  "status": "ready",
+  "summary": {
+    "ready": 4,
+    "needs_attention": 0,
+    "blocked": 0
+  },
+  "phases": [
+    {
+      "id": "sources",
+      "label": "Sources",
+      "status": "ready",
+      "metrics": {
+        "local_sources": 40,
+        "supported_local_sources": 40,
+        "successful_urls": 0,
+        "unsupported_sources": 0,
+        "unreadable_sources": 0
+      },
+      "findings": []
+    },
+    {
+      "id": "extraction",
+      "label": "Extraction",
+      "status": "ready",
+      "metrics": {
+        "inventory_endpoints": 20,
+        "endpoint_detail_files": 20,
+        "inventory_missing_items": 0,
+        "endpoint_missing_items": 0
+      },
+      "findings": []
+    },
+    {
+      "id": "normalization_plan",
+      "label": "Normalization Plan",
+      "status": "ready",
+      "metrics": {
+        "missing_items": 0,
+        "source_conflicts": 0,
+        "unverified_items": 0
+      },
+      "findings": []
+    },
+    {
+      "id": "integration_contract",
+      "label": "Integration Contract",
+      "status": "ready",
+      "metrics": {
+        "crypto": 1,
+        "callbacks": 0,
+        "field_conditions": 0,
+        "test_cases": 0,
+        "missing_items": 0
+      },
+      "findings": []
+    }
+  ]
+}

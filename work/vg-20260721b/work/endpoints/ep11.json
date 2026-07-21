@@ -1,0 +1,80 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/sign-up",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 3-45 (注册用户)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": null,
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称"
+    },
+    {
+      "name": "betlimit",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称+后缀(suffix) 仅限小写英文字母、数字"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "注册用户。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "SignUpResponseData"
+    }
+  ],
+  "tags": ["转账钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "data": {
+          "uid": 10208,
+          "username": "usernamexox",
+          "betlimit": "A"
+        },
+        "TraceId": "9181f940-f34e-4659-adfb-bda82c92c562"
+      }
+    }
+  ],
+  "missing": [
+    "No HTTP status code documented for the Success response (recorded as \"default\")",
+    "No failure/error response body documented for this endpoint",
+    "Required/optional flag not specified for any Header or Body field",
+    "Body field types are informal (\"string\") with no formal schema/object name given in source"
+  ]
+}

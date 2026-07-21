@@ -1,0 +1,3 @@
+```json
+{"security_schemes": [{"name": "MD5Signature", "type": "apiKey", "location": "body", "details": "MD5 signature using API_KEY. See 加密说明.", "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md"}]}
+```

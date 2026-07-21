@@ -1,0 +1,73 @@
+{
+  "method": "POST",
+  "path": "/balance",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 5-39 (余额查询)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "商户名称"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称"
+    },
+    {
+      "name": "token",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家令牌"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "查询玩家余额。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "WalletSuccessResponse"
+    }
+  ],
+  "tags": ["单一钱包", "钱包"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 0,
+        "balance": 123456.78
+      }
+    }
+  ],
+  "missing": [
+    "no HTTP status code documented for the success response",
+    "no failure-response body documented",
+    "no list of non-zero code values documented"
+  ]
+}

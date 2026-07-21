@@ -1,0 +1,27 @@
+{
+  "issues": [
+    {
+      "code": "REQUIRED_INFO_MISSING",
+      "severity": "warning",
+      "location": "operational",
+      "evidence": "缺少 rate limit/timeout/retry 等 operational 資訊",
+      "suggested_fix": "由來源補上 operational 資訊",
+      "auto_fixable": false,
+      "target_file": null,
+      "field_path": null,
+      "requery_scope": null
+    },
+    {
+      "code": "REQUIRED_INFO_MISSING",
+      "severity": "error",
+      "location": "integration.crypto",
+      "evidence": "來源出現「加密」訊號詞,但契約未抽到任何加解密/簽章機制",
+      "suggested_fix": "重讀相關來源段落,補上 crypto 細節後重跑 assemble",
+      "auto_fixable": false,
+      "target_file": "integration.json",
+      "field_path": "crypto",
+      "requery_scope": "來源中出現「加密」的加解密/簽章段落"
+    }
+  ],
+  "root_causes": []
+}

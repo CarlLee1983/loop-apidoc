@@ -1,0 +1,213 @@
+# Developer Integration Tasks
+
+Derived navigation aid — NOT a contract. See `../openapi.yaml` for the schema.
+
+## Run Context
+
+- Primary contract: `../openapi.yaml`
+- Integration mechanisms: `../integration-contract.json`
+- Validation status: `../validation/report.md`
+- Request examples: `../examples/README.md`
+
+## Runtime Configuration
+
+- [ ] `base_url` — initial value: `<base_url>`
+- [ ] Auth `sign` — apiKey (将所有参数字首按顺序排列，将值串成字串，最后加上 API_KEY，以 MD5 加密取得 sign 值；sign 放在请求 body。)
+- [ ] Secret for `MD5 sign (单一钱包)` — key=`API_KEY` (`../integration-contract.json#/crypto/0`)
+- [ ] Secret for `MD5 sign (转账钱包)` — key=`API_KEY` (`../integration-contract.json#/crypto/1`)
+
+## Implementation Order
+
+- [ ] Implement `post_vg_sign_up` (`POST /vg/sign-up`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1sign-up/post`
+  - Example: `../examples/post_vg_sign_up/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vg_sign_in` (`POST /vg/sign-in`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1sign-in/post`
+  - Example: `../examples/post_vg_sign_in/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vg_bet_users` (`POST /vg/bet/users`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1bet~1users/post`
+  - Example: `../examples/post_vg_bet_users/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vg_bet_limit` (`POST /vg/bet/limit`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1bet~1limit/post`
+  - Example: `../examples/post_vg_bet_limit/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vg_bet_limit_list` (`POST /vg/bet/limit/list`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1bet~1limit~1list/post`
+  - Example: `../examples/post_vg_bet_limit_list/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vg_table_list` (`POST /vg/table/list`)
+  - Contract: `../openapi.yaml#/paths/~1vg~1table~1list/post`
+  - Example: `../examples/post_vg_table_list/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_bet` (`POST /bet`)
+  - Contract: `../openapi.yaml#/paths/~1bet/post`
+  - Example: `../examples/post_bet/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_cancel` (`POST /cancel`)
+  - Contract: `../openapi.yaml#/paths/~1cancel/post`
+  - Example: `../examples/post_cancel/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_win` (`POST /win`)
+  - Contract: `../openapi.yaml#/paths/~1win/post`
+  - Example: `../examples/post_win/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_resettle` (`POST /resettle`)
+  - Contract: `../openapi.yaml#/paths/~1resettle/post`
+  - Example: `../examples/post_resettle/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_balance` (`POST /balance`)
+  - Contract: `../openapi.yaml#/paths/~1balance/post`
+  - Example: `../examples/post_balance/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_sign_up` (`POST /vgtransfer/sign-up`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1sign-up/post`
+  - Example: `../examples/post_vgtransfer_sign_up/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_sign_in` (`POST /vgtransfer/sign-in`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1sign-in/post`
+  - Example: `../examples/post_vgtransfer_sign_in/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_points` (`POST /vgtransfer/points`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1points/post`
+  - Example: `../examples/post_vgtransfer_points/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_balance` (`POST /vgtransfer/balance`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1balance/post`
+  - Example: `../examples/post_vgtransfer_balance/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_log` (`POST /vgtransfer/log`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1log/post`
+  - Example: `../examples/post_vgtransfer_log/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_bet_users` (`POST /vgtransfer/bet/users`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1bet~1users/post`
+  - Example: `../examples/post_vgtransfer_bet_users/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_bet_limit` (`POST /vgtransfer/bet/limit`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1bet~1limit/post`
+  - Example: `../examples/post_vgtransfer_bet_limit/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_bet_limit_list` (`POST /vgtransfer/bet/limit/list`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1bet~1limit~1list/post`
+  - Example: `../examples/post_vgtransfer_bet_limit_list/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+- [ ] Implement `post_vgtransfer_table_list` (`POST /vgtransfer/table/list`)
+  - Contract: `../openapi.yaml#/paths/~1vgtransfer~1table~1list/post`
+  - Example: `../examples/post_vgtransfer_table_list/request.ts`
+  - Requires crypto:MD5 sign (单一钱包)
+  - Requires crypto:MD5 sign (转账钱包)
+
+## Integration Mechanisms
+
+- [ ] Signing/encryption `MD5 sign (单一钱包)` (`../integration-contract.json#/crypto/0`)
+- [ ] Signing/encryption `MD5 sign (转账钱包)` (`../integration-contract.json#/crypto/1`)
+- [ ] Callback `投注` (`../integration-contract.json#/callbacks/0`)
+- [ ] Callback `派彩` (`../integration-contract.json#/callbacks/1`)
+- [ ] Callback `取消投注/结算` (`../integration-contract.json#/callbacks/2`)
+- [ ] Callback `重新派彩` (`../integration-contract.json#/callbacks/3`)
+- [ ] Callback `余额查询` (`../integration-contract.json#/callbacks/4`)
+- [ ] Field condition #0 (`../integration-contract.json#/field_conditions/0`)
+- [ ] Field condition #1 (`../integration-contract.json#/field_conditions/1`)
+- [ ] Field condition #2 (`../integration-contract.json#/field_conditions/2`)
+- [ ] Field condition #3 (`../integration-contract.json#/field_conditions/3`)
+- [ ] Field condition #4 (`../integration-contract.json#/field_conditions/4`)
+- [ ] Field condition #5 (`../integration-contract.json#/field_conditions/5`)
+- [ ] Contract test `MD5 sign worked example (demo_agent/demo_user)` (`../integration-contract.json#/test_cases/0`)
+- [ ] Contract test `投注 Body params + Success` (`../integration-contract.json#/test_cases/1`)
+
+## Blockers & Gaps
+
+- [ ] Blocked: 10 — API base URL not stated in sources
+- [ ] Blocked: 10 — Document/API version not stated
+- [ ] Blocked: 10 — Error HTTP status mapping not stated
+- [ ] Blocked: 10 — Error code applicable endpoints not stated
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — body field required flags not documented
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — required flags not documented for agent, language, loginname, return_url, token, sign
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — conditional required semantics for starttime/endtime when roundid or betid is provided not fully specified
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — body field required flags not documented
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — body field required flags not documented
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — complete list of limit codes not documented (only example codes A and A1 shown)
+- [ ] Blocked: 06 — HTTP status code not documented
+- [ ] Blocked: 06 — body field required flags not documented
+- [ ] Blocked: 06 — failure/error response body not documented
+- [ ] Blocked: 06 — response field meanings documented only via JSON example, not prose
+- [ ] Blocked: 06 — detail sub-fields have no field-description table (types inferred from Body params JSON example only)
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — detail sub-fields have no field-description table (types inferred from Body params JSON example only)
+- [ ] Blocked: 06 — detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — detail sub-fields have no field-description table (types inferred from Body params JSON example only)
+- [ ] Blocked: 06 — detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — no Body params JSON request example on this page
+- [ ] Blocked: 06 — detail field structure not documented beyond type object
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — no request-body JSON example on this page
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — no request-body JSON example on this page
+- [ ] Blocked: 06 — no HTTP status code documented for the response
+- [ ] Blocked: 06 — no failure-response body documented
+- [ ] Blocked: 06 — required/optional not stated for Header or Body fields
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — starttime and endtime requiredness is conditional on roundid/betid usage
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Blocked: 06 — no HTTP status code documented for Success response
+- [ ] Blocked: 06 — no error response documented
+- [ ] Gap: callbacks.base_url — 来源将钱包页标为「商户接口」，但未给出商户托管回调的 base URL / host
+- [ ] Gap: callbacks.trigger — 未说明各商户接口何时由平台发起
+- [ ] Gap: crypto.optional_params — 可选参数缺席时是否省略于签名串，来源未另述
+- [ ] Gap: crypto.numeric_stringification — 数值栏位串接前如何转成字串未说明

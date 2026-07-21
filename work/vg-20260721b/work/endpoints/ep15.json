@@ -1,0 +1,153 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/log",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 3-101 (转账记录)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "application/json",
+      "enum": []
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称",
+      "enum": []
+    },
+    {
+      "name": "starttime",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'",
+      "enum": []
+    },
+    {
+      "name": "endtime",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'",
+      "enum": []
+    },
+    {
+      "name": "page_num",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "页数",
+      "enum": []
+    },
+    {
+      "name": "page_size",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "每页笔数\nmax: 2000",
+      "enum": []
+    },
+    {
+      "name": "status",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "in = 转进\nout = 转出\n若不带此参数默认将回应所有状态纪录。",
+      "enum": ["in", "out"]
+    },
+    {
+      "name": "sid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "转账单号\n若不带此参数默认将回应所有订单纪录。",
+      "enum": []
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名",
+      "enum": []
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "时间区间不可超过 5 分钟"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "data.betdetail 阵列每笔记录包含 username(玩家名称)、type(转账类型)、amount(转账金额)、beforeamount(转帐前余额)、afteramount(转账后余额)、busid(转账单号 sid)、anyid(系统产生 ID)、ip(玩家 IP 地址)、createtime(交易时间)",
+      "schema": null,
+      "schema_ref": "TransferLogResponseData"
+    }
+  ],
+  "tags": ["转账钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "TraceId": "bd0dbfff-8892-48f4-ba75-83bc076232d2",
+        "data": {
+          "current_page": 1,
+          "current_counts": 3,
+          "total_pages": 1,
+          "total_counts": 3,
+          "betdetail": [
+            {
+              "username": "test1",
+              "type": "in",
+              "amount": "1.00",
+              "beforeamount": "999.00",
+              "afteramount": "1000.00",
+              "busid": "SDSI837429749",
+              "anyid": "IIT20241001163628",
+              "ip": "127.0.0.1",
+              "createtime": "2024-10-01T08:36:28.000Z"
+            },
+            {
+              "username": "test1",
+              "type": "out",
+              "amount": "-1.00",
+              "beforeamount": "1000.00",
+              "afteramount": "999.00",
+              "busid": "SDSI837429749",
+              "anyid": "OTT20241001163649",
+              "ip": "127.0.0.1",
+              "createtime": "2024-10-01T08:36:49.000Z"
+            },
+            {
+              "username": "test1",
+              "type": "out",
+              "amount": "-1.00",
+              "beforeamount": "999.00",
+              "afteramount": "998.00",
+              "busid": "SDSI837429749",
+              "anyid": "OTT20241001163811",
+              "ip": "127.0.0.1",
+              "createtime": "2024-10-01T08:38:11.000Z"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "missing": [
+    "无 HTTP 状态码标示,回应说明仅有 Success 一种情境",
+    "未记载失败情境的回应 body 内容",
+    "Headers 表未标示 Content-Type 是否为必填",
+    "Body 表未标示各参数是否为必填"
+  ]
+}

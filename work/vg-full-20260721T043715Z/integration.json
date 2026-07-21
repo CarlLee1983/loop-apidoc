@@ -1,0 +1,157 @@
+{
+  "version": "1.0",
+  "crypto": [
+    {
+      "name": "MD5 sign (单一钱包)",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex",
+      "key_source": {
+        "key": "API_KEY",
+        "iv": null,
+        "note": "字串形式附加在签名串末端；JS/Python 示例使用占位值 api_key"
+      },
+      "payload_assembly": [
+        {"step": 1, "desc": "将所有参数字首按顺序排列 (abcde...等，12345...等)", "fields": []},
+        {"step": 2, "desc": "将参数的「值」串成字串；JS/Python 示例字段顺序为 agent 再 loginname（字母序）", "fields": ["agent", "loginname"]},
+        {"step": 3, "desc": "在字串最后加上 API_KEY", "fields": ["API_KEY"]},
+        {"step": 4, "desc": "将此字串由 MD5 加密取得 sign 值（Python 示例为 hashlib.md5(...).hexdigest()）", "fields": []}
+      ],
+      "verify": {"field": "sign", "method": "MD5", "desc": "以相同规则重算签名字串并与请求中的 sign 值比对"},
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 7-49"
+    },
+    {
+      "name": "MD5 sign (转账钱包)",
+      "purpose": "signature",
+      "algorithm": "MD5",
+      "mode": null,
+      "padding": null,
+      "encoding": "hex",
+      "key_source": {
+        "key": "API_KEY",
+        "iv": null,
+        "note": "字串形式附加在签名串末端；JS/Python 示例使用占位值 api_key"
+      },
+      "payload_assembly": [
+        {"step": 1, "desc": "将所有参数字首按顺序排列 (abcde...等，12345...等)", "fields": []},
+        {"step": 2, "desc": "将参数的「值」串成字串；JS/Python 示例字段顺序为 agent 再 loginname（字母序）", "fields": ["agent", "loginname"]},
+        {"step": 3, "desc": "在字串最后加上 API_KEY", "fields": ["API_KEY"]},
+        {"step": 4, "desc": "将此字串由 MD5 加密取得 sign 值（Python 示例为 hashlib.md5(...).hexdigest()）", "fields": []}
+      ],
+      "verify": {"field": "sign", "method": "MD5", "desc": "以相同规则重算签名字串并与请求中的 sign 值比对"},
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md lines 7-49"
+    }
+  ],
+  "callbacks": [
+    {
+      "name": "投注",
+      "trigger": null,
+      "transport": "POST application/json",
+      "payload_ref": null,
+      "verification": "请求体 sign 须按加密说明以 MD5 验证；签名未包含 detail",
+      "expected_response": "{\"code\": 0, \"balance\": 123456.78}",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 5-77"
+    },
+    {
+      "name": "派彩",
+      "trigger": null,
+      "transport": "POST application/json",
+      "payload_ref": null,
+      "verification": "请求体 sign 须按加密说明以 MD5 验证；签名未包含 detail",
+      "expected_response": "{\"code\": 0, \"balance\": 123456.78}",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 5-90"
+    },
+    {
+      "name": "取消投注/结算",
+      "trigger": null,
+      "transport": "POST application/json",
+      "payload_ref": null,
+      "verification": "请求体 sign 须按加密说明以 MD5 验证；签名未包含 detail",
+      "expected_response": "{\"code\": 0, \"balance\": 123456.78}",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 5-90"
+    },
+    {
+      "name": "重新派彩",
+      "trigger": null,
+      "transport": "POST application/json",
+      "payload_ref": null,
+      "verification": "请求体 sign 须按加密说明以 MD5 验证；签名未包含 detail",
+      "expected_response": "{\"code\": 0}",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 5-36"
+    },
+    {
+      "name": "余额查询",
+      "trigger": null,
+      "transport": "POST application/json",
+      "payload_ref": null,
+      "verification": "请求体 sign 须按加密说明以 MD5 验证（页面链至加密说明）",
+      "expected_response": "{\"code\": 0, \"balance\": 123456.78}",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 5-34"
+    }
+  ],
+  "field_conditions": [
+    {"scope": "POST /bet", "rule": "签名 (未包含 detail)", "when": null, "then_required": [], "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md line 25"},
+    {"scope": "POST /win", "rule": "签名 (未包含 detail)", "when": null, "then_required": [], "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md line 24"},
+    {"scope": "POST /cancel", "rule": "签名 (未包含 detail)", "when": null, "then_required": [], "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md line 24"},
+    {"scope": "POST /resettle", "rule": "签名 (未包含 detail)", "when": null, "then_required": [], "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md line 24"},
+    {"scope": "POST /vg/sign-up", "rule": "loginname 仅限小写英文字母、数字", "when": null, "then_required": ["loginname"], "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md line 23"},
+    {"scope": "POST /vgtransfer/sign-up", "rule": "loginname 仅限小写英文字母、数字", "when": null, "then_required": ["loginname"], "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md line 23"}
+  ],
+  "test_cases": [
+    {
+      "name": "MD5 sign worked example (demo_agent/demo_user)",
+      "operation_ref": null,
+      "request": {"loginname": "demo_user", "agent": "demo_agent", "sign": "d2568959d55823991e8bd4d7aa50e64c", "API_KEY": "api_key"},
+      "response": {"sign_string": "demo_agentdemo_userapi_key", "sign": "d2568959d55823991e8bd4d7aa50e64c"},
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 20-49"
+    },
+    {
+      "name": "投注 Body params + Success",
+      "operation_ref": "paths./bet.post",
+      "request": {
+        "agent": "agentName",
+        "loginname": "userName",
+        "token": "0bb3dd7cd7949bfe105582dd84a78502",
+        "roundid": "T100112R10052197",
+        "transid": "b196c26f-619f-484e-9c5f-5afab43105f3",
+        "amount": 14,
+        "sign": "f939e3bafd829fbwiejdoeb16d2b5940",
+        "detail": {
+          "bubalance": "386.21",
+          "tableid": "MD3110",
+          "tableidx": "t7",
+          "shoeid": "99926",
+          "currency": "USDT",
+          "ts": 1775778961,
+          "shoeround": "6",
+          "platform": "mobile",
+          "bettype": "single",
+          "ip": "xxx.xxx.xxx.xxx",
+          "maxlose": 0,
+          "maxwin": 0,
+          "bw": 13,
+          "pw": 0,
+          "tie": 0,
+          "bp": 0,
+          "pp": 0,
+          "big": 0,
+          "small": 0,
+          "lucky6": 1,
+          "ap": 0,
+          "pfp": 0,
+          "betlimit": "B"
+        }
+      },
+      "response": {"code": 0, "balance": 123456.78},
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 30-77"
+    }
+  ],
+  "missing": [
+    {"area": "callbacks.base_url", "detail": "来源将钱包页标为「商户接口」，但未给出商户托管回调的 base URL / host"},
+    {"area": "callbacks.trigger", "detail": "未说明各商户接口何时由平台发起"},
+    {"area": "crypto.optional_params", "detail": "可选参数缺席时是否省略于签名串，来源未另述"},
+    {"area": "crypto.numeric_stringification", "detail": "数值栏位串接前如何转成字串未说明"}
+  ]
+}

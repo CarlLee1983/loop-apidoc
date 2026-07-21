@@ -1,0 +1,29 @@
+{
+  "run_id": "20260721T044151.869850Z",
+  "run_dir": "work/vg-full-20260721T043715Z/out/20260721T044151.869850Z",
+  "review_html": "work/vg-full-20260721T043715Z/out/20260721T044151.869850Z/review.html",
+  "ok": true,
+  "status": "passed",
+  "report": {
+    "issues": [
+      {
+        "code": "REQUIRED_INFO_MISSING",
+        "severity": "warning",
+        "location": "servers",
+        "evidence": "來源未提供可供 path operation 使用的 concrete server URL",
+        "suggested_fix": "由來源補上 environment base_url；不可臆測 server URL",
+        "auto_fixable": false,
+        "target_file": null,
+        "field_path": null,
+        "requery_scope": null
+      }
+    ],
+    "root_causes": []
+  },
+  "toolchain": {
+    "cli_version": "0.17.0",
+    "extraction_contract_version": "1",
+    "skill_version": "0.17.0",
+    "model": null
+  }
+}

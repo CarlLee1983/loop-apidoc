@@ -1,0 +1,75 @@
+{
+  "method": "POST",
+  "path": "/vg/bet/limit",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 7-9 (POST /vg/bet/limit)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": null,
+      "required": null,
+      "description": "固定值 `application/json`（vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 11-15）"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称（vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 17-24）"
+    },
+    {
+      "name": "betlimit",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "限红列表（vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 17-24）"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称（vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 17-24）"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名（vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 17-24）"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": null,
+      "schema": null,
+      "schema_ref": "StandardResponse"
+    }
+  ],
+  "tags": ["单一钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "TraceId": "76ce3739-42bc-4fe3-9bdf-1433d376b73a"
+      }
+    }
+  ],
+  "missing": [
+    "HTTP status code not documented for the Success response",
+    "no failure/error response body documented",
+    "field-level required flags not documented for header or body parameters",
+    "data type for header 'Content-Type' not documented as a table column (only a fixed Value)"
+  ]
+}

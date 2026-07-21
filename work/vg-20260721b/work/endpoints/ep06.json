@@ -1,0 +1,301 @@
+{
+  "method": "POST",
+  "path": "/bet",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 3-82 (投注)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": true,
+      "description": "值：`application/json` (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 11-13)"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "商户名称 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-19)"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-20)"
+    },
+    {
+      "name": "token",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家令牌 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-21)"
+    },
+    {
+      "name": "roundid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "游戏局号 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-22)"
+    },
+    {
+      "name": "transid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "投注号 (betid) (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-23)"
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": "投注金额 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-24)"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名 (未包含 detail) (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-25)"
+    },
+    {
+      "name": "detail",
+      "in": "body",
+      "type": "object",
+      "required": null,
+      "description": "其他资讯 (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 17-26)"
+    },
+    {
+      "name": "detail.bubalance",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.tableid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.tableidx",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.shoeid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.currency",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.ts",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.shoeround",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.platform",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.bettype",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.ip",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.maxlose",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.maxwin",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.bw",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.pw",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.tie",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.bp",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.pp",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.big",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.small",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.lucky6",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.ap",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.pfp",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": null
+    },
+    {
+      "name": "detail.betlimit",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": null
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "商户投注接口。(vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 7-26)"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success (vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 69-78)",
+      "schema": null,
+      "schema_ref": "WalletSuccessResponse"
+    }
+  ],
+  "tags": ["单一钱包", "钱包"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Body params request example",
+      "content_type": "application/json",
+      "value": {
+        "agent": "agentName",
+        "loginname": "userName",
+        "token": "0bb3dd7cd7949bfe105582dd84a78502",
+        "roundid": "T100112R10052197",
+        "transid": "b196c26f-619f-484e-9c5f-5afab43105f3",
+        "amount": 14,
+        "sign": "f939e3bafd829fbwiejdoeb16d2b5940",
+        "detail": {
+          "bubalance": "386.21",
+          "tableid": "MD3110",
+          "tableidx": "t7",
+          "shoeid": "99926",
+          "currency": "USDT",
+          "ts": 1775778961,
+          "shoeround": "6",
+          "platform": "mobile",
+          "bettype": "single",
+          "ip": "xxx.xxx.xxx.xxx",
+          "maxlose": 0,
+          "maxwin": 0,
+          "bw": 13,
+          "pw": 0,
+          "tie": 0,
+          "bp": 0,
+          "pp": 0,
+          "big": 0,
+          "small": 0,
+          "lucky6": 1,
+          "ap": 0,
+          "pfp": 0,
+          "betlimit": "B"
+        }
+      }
+    },
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 0,
+        "balance": 123456.78
+      }
+    }
+  ],
+  "missing": [
+    "source provides no field-description table for `detail` sub-fields (only the request-body JSON example lists them)",
+    "no HTTP status code documented for the response",
+    "no failure-response body documented",
+    "no non-zero `code` value list documented for this endpoint family"
+  ]
+}

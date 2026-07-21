@@ -1,0 +1,306 @@
+{
+  "method": "POST",
+  "path": "/vg/bet/users",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+  "parameters": [
+    {
+      "name": "-----------",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "------"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "string"
+    },
+    {
+      "name": "starttime",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "roundid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "string"
+    },
+    {
+      "name": "betid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "string"
+    },
+    {
+      "name": "page_num",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "int"
+    },
+    {
+      "name": "page_size",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "int"
+    },
+    {
+      "name": "status",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "int"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "string"
+    },
+    {
+      "name": "参数",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "----------",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "roundid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "betid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "username",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "shoeid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "shoeround",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "casino",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "valid",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "bet",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "win",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "currency",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "tableidx",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "bettime",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "settletime",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "status",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "ip",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "bettype",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "platform",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "betresult",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    },
+    {
+      "name": "detail",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "schemas.Body_13",
+    "required": true,
+    "description": "Request payload"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Successful response",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "you-xi"
+  ],
+  "security": [
+    "MD5Signature"
+  ],
+  "examples": [
+    {
+      "title": "Response Example",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "TraceId": "e5956b0f-8251-49c7-9066-8a6ea31b2149",
+        "data": {
+          "current_page": 1,
+          "current_counts": 1,
+          "total_pages": 8,
+          "total_counts": 8,
+          "betdetail": [
+            {
+              "roundid": "T66R10205435",
+              "betid": "394bbefe-334f-4fc5-8065-0d1ab5467dcd",
+              "username": "test1",
+              "shoeid": 1044556,
+              "shoeround": 49,
+              "casino": "HANN",
+              "valid": 500,
+              "bet": 500,
+              "win": 975,
+              "currency": "USDT",
+              "tableidx": "MB2023",
+              "bettime": "2024-05-28T10:19:11.000Z",
+              "settletime": "2024-05-28T10:19:44.000Z",
+              "status": 4,
+              "ip": "36.224.192.78",
+              "bettype": "single",
+              "platform": "pc",
+              "betresult": {
+                "bw": "500.00",
+                "pw": "0.00",
+                "tie": "0.00",
+                "bp": "0.00",
+                "pp": "0.00",
+                "big": "0.00",
+                "small": "0.00",
+                "lucky6": "0.00",
+                "ap": "0.00",
+                "pfp": "0.00",
+                "bw_win": "975.00",
+                "pw_win": "0.00",
+                "tie_win": "0.00",
+                "bp_win": "0.00",
+                "pp_win": "0.00",
+                "big_win": "0.00",
+                "small_win": "0.00",
+                "lucky6_win": "0.00",
+                "ap_win": "0.00",
+                "pfp_win": "0.00"
+              },
+              "detail": {
+                "b1": "c5",
+                "b2": "h11",
+                "b3": "0",
+                "p1": "h10",
+                "p2": "c13",
+                "p3": "c3"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "missing": []
+}

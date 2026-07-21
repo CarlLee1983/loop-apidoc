@@ -1,0 +1,1033 @@
+openapi: 3.1.0
+info:
+  title: VG 游戏 API 文档
+  version: 1.0.0
+servers:
+- url: https://api.vg-organization.com
+  description: production
+tags:
+- name: qian-bao
+- name: you-xi
+paths:
+  /resettle:
+    post:
+      summary: 重新派彩
+      tags:
+      - qian-bao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '----------------------'
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 当笔资料最终派彩金额，不会扣/补前次派彩金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  description: 其他资讯
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - roundid
+              - transid
+              - amount
+              - sign
+              - detail
+              description: schemas.Body_0
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_resettle
+  /win:
+    post:
+      summary: 派彩
+      tags:
+      - qian-bao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '---------------'
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 派彩金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  description: 其他资讯
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - roundid
+              - transid
+              - amount
+              - sign
+              - detail
+              description: schemas.Body_1
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_win
+  /cancel:
+    post:
+      summary: 取消投注/结算
+      tags:
+      - qian-bao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '----------------------------------------'
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: <p>取消投注 = 投注金额<br>取消结算 = 派彩金额 - 投注金额</p>
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  description: 其他资讯
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - roundid
+              - transid
+              - amount
+              - sign
+              - detail
+              description: schemas.Body_2
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_cancel
+  /bet:
+    post:
+      summary: 投注
+      tags:
+      - qian-bao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '---------------'
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                token:
+                  type: string
+                  description: 玩家令牌
+                roundid:
+                  type: string
+                  description: 游戏局号
+                transid:
+                  type: string
+                  description: 投注号 (betid)
+                amount:
+                  type: number
+                  description: 投注金额
+                sign:
+                  type: string
+                  description: 签名 (未包含 detail)
+                detail:
+                  type: object
+                  description: 其他资讯
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - token
+              - roundid
+              - transid
+              - amount
+              - sign
+              - detail
+              description: schemas.Body_3
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_bet
+  /balance:
+    post:
+      summary: 余额查询
+      tags:
+      - qian-bao
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '--------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 商户名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                token:
+                  type: string
+                  description: 玩家令牌
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - token
+              - sign
+              description: schemas.Body_4
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_balance
+  /vg/sign-in:
+    post:
+      summary: 登入游戏
+      tags:
+      - you-xi
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_sign_in
+  /vgtransfer/sign-in:
+    post:
+      summary: 登入游戏
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '------------':
+                  type: string
+                  description: '------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                language:
+                  type: string
+                  description: 用户语系([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md))
+                loginname:
+                  type: string
+                  description: 玩家名称+后缀(suffix)
+                rid:
+                  type: string
+                  description: <p>桌号 tableid (<a href="/pages/eKP65RR00NcZ1oYQQOJD">点击查看</a>)。<br>\*
+                    <mark style="color:red;">非必要参数，填入桌号可进指定牌桌。</mark> </p>
+                betlimit:
+                  type: string
+                  description: <p>限红列表(<a href="https://vg-organization.gitbook.io/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao#id-200">点击查看</a>)<br>\*
+                    <mark style="color:red;">非必要参数，可在登入时设置当前玩家限红。</mark></p>
+                return_url:
+                  type: string
+                  description: 重新导向 URL
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '------------'
+              - agent
+              - language
+              - loginname
+              - rid
+              - betlimit
+              - return_url
+              - sign
+              description: schemas.Body_6
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_sign_in
+  /vg/table/list:
+    post:
+      summary: 牌桌列表
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-------':
+                  type: string
+                  description: '--------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-------'
+              - agent
+              - sign
+              description: schemas.Body_7
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_table_list
+  /vgtransfer/table/list:
+    post:
+      summary: 牌桌列表
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-------':
+                  type: string
+                  description: '-------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-------'
+              - agent
+              - sign
+              description: schemas.Body_8
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_table_list
+  /vg/bet/limit:
+    post:
+      summary: 玩家限红
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '------------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md#id-200))
+                loginname:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - betlimit
+              - loginname
+              - sign
+              description: schemas.Body_9
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_bet_limit
+  /vgtransfer/bet/limit:
+    post:
+      summary: 玩家限红
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '----------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))
+                loginname:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - betlimit
+              - loginname
+              - sign
+              description: schemas.Body_10
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_bet_limit
+  /vg/bet/limit/list:
+    post:
+      summary: 限红列表
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-------':
+                  type: string
+                  description: '--------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-------'
+              - agent
+              - sign
+              description: schemas.Body_11
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_bet_limit_list
+  /vgtransfer/bet/limit/list:
+    post:
+      summary: 限红列表
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-------':
+                  type: string
+                  description: '-------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-------'
+              - agent
+              - sign
+              description: schemas.Body_12
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_bet_limit_list
+  /vg/bet/users:
+    post:
+      summary: 游戏结果
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '------'
+                agent:
+                  type: string
+                  description: string
+                starttime:
+                  type: string
+                roundid:
+                  type: string
+                  description: string
+                betid:
+                  type: string
+                  description: string
+                page_num:
+                  type: string
+                  description: int
+                page_size:
+                  type: string
+                  description: int
+                status:
+                  type: string
+                  description: int
+                sign:
+                  type: string
+                  description: string
+                参数:
+                  type: string
+                '----------':
+                  type: string
+                username:
+                  type: string
+                shoeid:
+                  type: string
+                shoeround:
+                  type: string
+                casino:
+                  type: string
+                valid:
+                  type: string
+                bet:
+                  type: string
+                win:
+                  type: string
+                currency:
+                  type: string
+                tableidx:
+                  type: string
+                bettime:
+                  type: string
+                settletime:
+                  type: string
+                ip:
+                  type: string
+                bettype:
+                  type: string
+                platform:
+                  type: string
+                betresult:
+                  type: string
+                detail:
+                  type: string
+              required:
+              - '-----------'
+              - agent
+              - starttime
+              - roundid
+              - betid
+              - page_num
+              - page_size
+              - status
+              - sign
+              - 参数
+              - '----------'
+              - username
+              - shoeid
+              - shoeround
+              - casino
+              - valid
+              - bet
+              - win
+              - currency
+              - tableidx
+              - bettime
+              - settletime
+              - ip
+              - bettype
+              - platform
+              - betresult
+              - detail
+              description: schemas.Body_13
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_bet_users
+  /vgtransfer/bet/users:
+    post:
+      summary: 游戏结果
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '------'
+                agent:
+                  type: string
+                  description: string
+                starttime:
+                  type: string
+                roundid:
+                  type: string
+                  description: string
+                betid:
+                  type: string
+                  description: string
+                page_num:
+                  type: string
+                  description: int
+                page_size:
+                  type: string
+                  description: int
+                status:
+                  type: string
+                  description: int
+                sign:
+                  type: string
+                  description: string
+                参数:
+                  type: string
+                '----------':
+                  type: string
+                username:
+                  type: string
+                shoeid:
+                  type: string
+                shoeround:
+                  type: string
+                casino:
+                  type: string
+                valid:
+                  type: string
+                bet:
+                  type: string
+                win:
+                  type: string
+                currency:
+                  type: string
+                tableidx:
+                  type: string
+                bettime:
+                  type: string
+                settletime:
+                  type: string
+                ip:
+                  type: string
+                bettype:
+                  type: string
+                platform:
+                  type: string
+                betresult:
+                  type: string
+                detail:
+                  type: string
+              required:
+              - '-----------'
+              - agent
+              - starttime
+              - roundid
+              - betid
+              - page_num
+              - page_size
+              - status
+              - sign
+              - 参数
+              - '----------'
+              - username
+              - shoeid
+              - shoeround
+              - casino
+              - valid
+              - bet
+              - win
+              - currency
+              - tableidx
+              - bettime
+              - settletime
+              - ip
+              - bettype
+              - platform
+              - betresult
+              - detail
+              description: schemas.Body_14
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_bet_users
+  /vgtransfer/balance:
+    post:
+      summary: 余额查询
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '----------':
+                  type: string
+                  description: '-------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                username:
+                  type: string
+                  description: 玩家名称
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '----------'
+              - agent
+              - username
+              - sign
+              description: schemas.Body_15
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_balance
+  /vg/sign-up:
+    post:
+      summary: 注册用户
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '------------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md#id-200))
+                loginname:
+                  type: string
+                  description: <p>玩家名称+后缀(suffix)<br><mark style="color:red;">仅限小写英文字母、数字</mark></p>
+                sign:
+                  type: string
+                  description: 签名[(点击查看](/vg-docs/vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - betlimit
+              - loginname
+              - sign
+              description: schemas.Body_16
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vg_sign_up
+  /vgtransfer/sign-up:
+    post:
+      summary: 注册用户
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '----------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                betlimit:
+                  type: string
+                  description: 限红列表([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md))
+                loginname:
+                  type: string
+                  description: <p>玩家名称+后缀(suffix)<br><mark style="color:red;">仅限小写英文字母、数字</mark></p>
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - betlimit
+              - loginname
+              - sign
+              description: schemas.Body_17
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_sign_up
+  /vgtransfer/points:
+    post:
+      summary: 转账功能
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '----------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                loginname:
+                  type: string
+                  description: 玩家名称
+                amount:
+                  type: number
+                  description: 转账金额
+                sid:
+                  type: string
+                  description: <p>商户产值<br>( 商户转账唯一订单号<mark style="color:red;"><strong>12位以上</strong></mark>
+                    )</p>
+                status:
+                  type: string
+                  description: <p>in = 转进<br>out = 转出 </p>
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+              required:
+              - '-----------'
+              - agent
+              - loginname
+              - amount
+              - sid
+              - status
+              - sign
+              description: schemas.Body_18
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_points
+  /vgtransfer/log:
+    post:
+      summary: 转账记录
+      tags:
+      - you-xi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                '-----------':
+                  type: string
+                  description: '--------------------------------------------------------------------------------------------------'
+                agent:
+                  type: string
+                  description: 代理名称
+                starttime:
+                  type: string
+                  description: UTC+8, 'YYYY-MM-DD HH:mm:ss'
+                endtime:
+                  type: string
+                  description: UTC+8, 'YYYY-MM-DD HH:mm:ss'
+                page_num:
+                  type: number
+                  description: 页数
+                page_size:
+                  type: number
+                  description: '<p>每页笔数<br>max: 2000</p>'
+                status:
+                  type: string
+                  description: <p>in = 转进<br>out = 转出 <br><mark style="color:red;"><strong>若不带此参数默认将回应所有状态纪录。</strong></mark></p>
+                sid:
+                  type: string
+                  description: <p>转账单号<br><mark style="color:red;"><strong>若不带此参数默认将回应所有订单纪录。</strong></mark></p>
+                sign:
+                  type: string
+                  description: 签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))
+                参数:
+                  type: string
+                '------------':
+                  type: string
+                username:
+                  type: string
+                type:
+                  type: string
+                amount:
+                  type: string
+                beforeamount:
+                  type: string
+                afteramount:
+                  type: string
+                busid:
+                  type: string
+                anyid:
+                  type: string
+                ip:
+                  type: string
+                createtime:
+                  type: string
+              required:
+              - '-----------'
+              - agent
+              - starttime
+              - endtime
+              - page_num
+              - page_size
+              - status
+              - sid
+              - sign
+              - 参数
+              - '------------'
+              - username
+              - type
+              - amount
+              - beforeamount
+              - afteramount
+              - busid
+              - anyid
+              - ip
+              - createtime
+              description: schemas.Body_19
+        required: true
+        description: Request payload
+      security:
+      - MD5Signature: []
+      responses:
+        '200':
+          description: Successful response
+      operationId: post_vgtransfer_log
+components:
+  securitySchemes:
+    MD5Signature:
+      type: apiKey
+      in: header
+      name: MD5 signature using API_KEY. See 加密说明.

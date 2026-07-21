@@ -1,0 +1,88 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/points",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": null,
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称"
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "int",
+      "required": null,
+      "description": "转账金额"
+    },
+    {
+      "name": "sid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "商户产值 ( 商户转账唯一订单号12位以上 )"
+    },
+    {
+      "name": "status",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "in = 转进\nout = 转出"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": true,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": ["转账钱包"],
+  "security": ["sign"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "balance": "1000.00",
+        "TraceId": "ee7db471-4374-416c-9490-269ba29d1cda"
+      }
+    }
+  ],
+  "missing": [
+    "no HTTP status code documented for Success response",
+    "no error response documented"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/balance",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询",
+  "parameters": [
+    {
+      "name": "----------",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "-------------------------------------------------------------------------"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "代理名称"
+    },
+    {
+      "name": "username",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "玩家名称"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": true,
+      "description": "签名([点击查看](/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md))"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": "schemas.Body_15",
+    "required": true,
+    "description": "Request payload"
+  },
+  "responses": [
+    {
+      "status": "200",
+      "description": "Successful response",
+      "schema": null,
+      "schema_ref": null
+    }
+  ],
+  "tags": [
+    "you-xi"
+  ],
+  "security": [
+    "MD5Signature"
+  ],
+  "examples": [
+    {
+      "title": "Response Example",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "balance": "1000.00",
+        "TraceId": "ee7db471-4374-416c-9490-269ba29d1cda"
+      }
+    }
+  ],
+  "missing": []
+}

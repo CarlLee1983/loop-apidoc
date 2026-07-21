@@ -1,0 +1,94 @@
+{
+  "method": "POST",
+  "path": "/resettle",
+  "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 3-41 (重新派彩)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "值：`application/json`"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "商户名称"
+    },
+    {
+      "name": "loginname",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称"
+    },
+    {
+      "name": "roundid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "游戏局号"
+    },
+    {
+      "name": "transid",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "投注号 (betid)"
+    },
+    {
+      "name": "amount",
+      "in": "body",
+      "type": "number",
+      "required": null,
+      "description": "当笔资料最终派彩金额，不会扣/补前次派彩金额"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名 (未包含 detail)"
+    },
+    {
+      "name": "detail",
+      "in": "body",
+      "type": "object",
+      "required": null,
+      "description": "其他资讯"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": null
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "WalletResettleSuccessResponse"
+    }
+  ],
+  "tags": ["单一钱包", "钱包"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": { "code": 0 }
+    }
+  ],
+  "missing": [
+    "未说明 Headers/Body 各栏位是否为必填 (required)",
+    "本页未提供 Body 参数的 JSON 请求范例",
+    "未说明 HTTP 状态码",
+    "未提供失败情境的回应内容 (failure response body)",
+    "未列出非 0 的 code 值清单",
+    "detail 栏位仅标示 type=object，未说明其内部结构"
+  ]
+}

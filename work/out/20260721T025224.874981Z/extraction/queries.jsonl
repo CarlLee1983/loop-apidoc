@@ -1,0 +1,30 @@
+{"query_id":"00-initial","stage_id":"00","kind":"initial","question":"(agent inventory)","answer_path":"answers/00-initial.txt","returncode":0}
+{"query_id":"01-initial","stage_id":"01","kind":"initial","question":"(agent inventory)","answer_path":"answers/01-initial.txt","returncode":0}
+{"query_id":"02-initial","stage_id":"02","kind":"initial","question":"(agent inventory)","answer_path":"answers/02-initial.txt","returncode":0}
+{"query_id":"10-initial","stage_id":"10","kind":"initial","question":"(agent inventory)","answer_path":"answers/10-initial.txt","returncode":0}
+{"query_id":"03-initial","stage_id":"03","kind":"initial","question":"(agent inventory)","answer_path":"answers/03-initial.txt","returncode":0}
+{"query_id":"04-initial","stage_id":"04","kind":"initial","question":"(agent inventory)","answer_path":"answers/04-initial.txt","returncode":0}
+{"query_id":"05-initial","stage_id":"05","kind":"initial","question":"(agent inventory)","answer_path":"answers/05-initial.txt","returncode":0}
+{"query_id":"07-initial","stage_id":"07","kind":"initial","question":"(agent inventory)","answer_path":"answers/07-initial.txt","returncode":0}
+{"query_id":"08-initial","stage_id":"08","kind":"initial","question":"(agent inventory)","answer_path":"answers/08-initial.txt","returncode":0}
+{"query_id":"09-initial","stage_id":"09","kind":"initial","question":"(agent inventory)","answer_path":"answers/09-initial.txt","returncode":0}
+{"query_id":"06-ep0","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep0.txt","returncode":0}
+{"query_id":"06-ep1","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep1.txt","returncode":0}
+{"query_id":"06-ep2","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep2.txt","returncode":0}
+{"query_id":"06-ep3","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep3.txt","returncode":0}
+{"query_id":"06-ep4","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep4.txt","returncode":0}
+{"query_id":"06-ep5","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep5.txt","returncode":0}
+{"query_id":"06-ep6","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep6.txt","returncode":0}
+{"query_id":"06-ep7","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep7.txt","returncode":0}
+{"query_id":"06-ep8","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep8.txt","returncode":0}
+{"query_id":"06-ep9","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep9.txt","returncode":0}
+{"query_id":"06-ep10","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep10.txt","returncode":0}
+{"query_id":"06-ep11","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep11.txt","returncode":0}
+{"query_id":"06-ep12","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep12.txt","returncode":0}
+{"query_id":"06-ep13","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep13.txt","returncode":0}
+{"query_id":"06-ep14","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep14.txt","returncode":0}
+{"query_id":"06-ep15","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep15.txt","returncode":0}
+{"query_id":"06-ep16","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep16.txt","returncode":0}
+{"query_id":"06-ep17","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep17.txt","returncode":0}
+{"query_id":"06-ep18","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep18.txt","returncode":0}
+{"query_id":"06-ep19","stage_id":"06","kind":"initial","question":"(agent endpoint detail)","answer_path":"answers/06-ep19.txt","returncode":0}

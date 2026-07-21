@@ -1,0 +1,67 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/balance",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md lines 3-40 (余额查询)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "Value: application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称"
+    },
+    {
+      "name": "username",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "玩家名称"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名（详见加密说明）"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "查询玩家余额。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "TransferBalanceResponse"
+    }
+  ],
+  "tags": ["转账钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "balance": "1000.00",
+        "TraceId": "ee7db471-4374-416c-9490-269ba29d1cda"
+      }
+    }
+  ],
+  "missing": [
+    "HTTP 状态码未标注（仅有 Success 标签，无失败回应本文）",
+    "Body/Header 参数是否必填（required）未标注"
+  ]
+}

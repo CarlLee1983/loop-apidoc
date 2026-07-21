@@ -1,0 +1,70 @@
+{
+  "method": "POST",
+  "path": "/vgtransfer/bet/limit/list",
+  "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 7-22 (限红列表)",
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "type": "string",
+      "required": null,
+      "description": "application/json"
+    },
+    {
+      "name": "agent",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "代理名称"
+    },
+    {
+      "name": "sign",
+      "in": "body",
+      "type": "string",
+      "required": null,
+      "description": "签名"
+    }
+  ],
+  "request": {
+    "content_type": "application/json",
+    "schema": null,
+    "required": null,
+    "description": "查询代理当前可用限红。"
+  },
+  "responses": [
+    {
+      "status": "default",
+      "description": "Success",
+      "schema": null,
+      "schema_ref": "BetLimitListEntry"
+    }
+  ],
+  "tags": ["转账钱包", "游戏"],
+  "security": ["Md5SignParameter"],
+  "examples": [
+    {
+      "title": "Success",
+      "content_type": "application/json",
+      "value": {
+        "code": 1000,
+        "message": "Success",
+        "data": [
+          {
+            "A": "100-2000"
+          },
+          {
+            "A1": "100-5000"
+          }
+        ],
+        "TraceId": "b6c1a14e-48ef-4612-b683-e82547f06bd8"
+      }
+    }
+  ],
+  "missing": [
+    "No HTTP status code stated for the response (documented only as \"Success\" tab)",
+    "No failure-response body documented",
+    "Full list of 限红代码 (e.g. A, A1, ...) and their meanings is not published in this source",
+    "Header/body parameter required flags not stated",
+    "Request body schema/object name not stated"
+  ]
+}

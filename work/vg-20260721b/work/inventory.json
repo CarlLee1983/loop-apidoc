@@ -1,0 +1,768 @@
+{
+  "title": "VG 文档",
+  "version": null,
+  "overview": "VG 文档分为两个产品线:「单一钱包」与「转账钱包」。每个产品线各含「加密说明」(MD5 sign 计算)、「API」与「附录」(响应代码、语系列表、投注派彩 betresult 栏位、开牌结果)。单一钱包的 API 分为「游戏」(商户请求 - 用户注册、玩家登入、历史纪录、调整限红)与「钱包」(商户接口 - 投注、派彩、取消) 两组,共 11 个端点;转账钱包只有「游戏」一组,另含转账功能(上下分)、余额查询与转账记录,共 9 个端点。全部端点皆为 POST,Headers 只列出 Content-Type: application/json,请求皆需带 MD5 计算之 sign 参数。游戏类端点成功响应为 {code:1000, message:'Success', ... , TraceId};单一钱包的钱包类端点成功响应为 {code:0, balance} 或 {code:0}。",
+  "environments": [],
+  "security_schemes": [
+    {
+      "name": "Md5SignParameter",
+      "type": "MD5 签名参数 (sign)",
+      "location": "request body 参数 `sign`",
+      "details": "将所有参数字首按顺序排列 ( abcde...等,12345...等),将「值」串成字串,最后加上 API_KEY,将此字串由 MD5 加密取得 sign 值。文件提供 JS 与 Python 示例:data = {loginname:'demo_user', agent:'demo_agent'},签名串 = `${agent}${loginname}${API_KEY}` = 'demo_agentdemo_userapi_key',md5 后得 sign = 'd2568959d55823991e8bd4d7aa50e64c'。单一钱包与转账钱包两份「加密说明」内容完全相同。单一钱包的钱包接口 (/bet、/cancel、/win、/resettle) 另注明 sign 为「签名 (未包含 detail)」。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 7-50 (# 加密说明 / JS 示例 / Python 示例); vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md lines 7-50 (相同内容); 未包含 detail 之注记见 vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md line 25"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/vg/sign-up",
+      "summary": "注册用户。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 7-45 (# 注册用户)"
+    },
+    {
+      "method": "POST",
+      "path": "/vg/sign-in",
+      "summary": "取得登入特定游戏的启动URL。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md lines 7-38 (# 登入游戏)"
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/users",
+      "summary": "查询玩家每笔投注详细记录。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 7-131 (# 游戏结果)"
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit",
+      "summary": "调整玩家限红。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 7-40 (# 玩家限红)"
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit/list",
+      "summary": "查询代理当前可用限红。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 7-46 (# 限红列表)"
+    },
+    {
+      "method": "POST",
+      "path": "/vg/table/list",
+      "summary": "查询所有牌桌。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 7-54 (# 牌桌列表)"
+    },
+    {
+      "method": "POST",
+      "path": "/bet",
+      "summary": "商户投注接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 5-82 (# 投注)"
+    },
+    {
+      "method": "POST",
+      "path": "/cancel",
+      "summary": "商户取消投注/结算接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 5-95 (# 取消投注/结算)"
+    },
+    {
+      "method": "POST",
+      "path": "/win",
+      "summary": "商户派彩接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 5-95 (# 派彩)"
+    },
+    {
+      "method": "POST",
+      "path": "/resettle",
+      "summary": "商户重新派彩接口。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 5-41 (# 重新派彩)"
+    },
+    {
+      "method": "POST",
+      "path": "/balance",
+      "summary": "查询玩家余额(单一钱包,商户钱包接口)。",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 5-39 (# 余额查询)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-up",
+      "summary": "注册用户。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 7-45 (# 注册用户)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-in",
+      "summary": "取得登入特定游戏的启动URL。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md lines 7-46 (# 登入游戏)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/points",
+      "summary": "玩家上分 / 下分。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md lines 7-43 (# 转账功能)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/balance",
+      "summary": "查询玩家余额。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md lines 7-40 (# 余额查询)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/log",
+      "summary": "查询玩家转账记录。时间区间不可超过 5 分钟。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 7-101 (# 转账记录)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/users",
+      "summary": "查询玩家每笔投注详细记录。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 7-131 (# 游戏结果)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit",
+      "summary": "调整玩家限红。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 7-40 (# 玩家限红)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit/list",
+      "summary": "查询代理当前可用限红。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 7-46 (# 限红列表)"
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/table/list",
+      "summary": "查询所有牌桌。",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 7-54 (# 牌桌列表)"
+    }
+  ],
+  "schemas": [
+    {
+      "name": "SignUpRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "betlimit", "type": "string", "required": null, "description": "限红列表(连结至「限红列表」页 #id-200)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称+后缀(suffix);仅限小写英文字母、数字"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": "Headers 仅列 Content-Type: application/json",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 11-24 (**Headers** 与 **Body** 表格)"
+    },
+    {
+      "name": "SignInRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "language", "type": "string", "required": null, "description": "用户语系(连结至语系列表)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称+后缀(suffix)"},
+        {"name": "rid", "type": "string", "required": false, "description": "桌号 tableid。非必要参数,填入桌号可进指定牌桌。"},
+        {"name": "betlimit", "type": "string", "required": false, "description": "限红列表。非必要参数,可在登入时设置当前玩家限红。"},
+        {"name": "return_url", "type": "string", "required": null, "description": "重新导向 URL"},
+        {"name": "token", "type": "string", "required": null, "description": "身份令牌"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": "Headers 仅列 Content-Type: application/json",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md lines 11-19 (**Headers** 表格与 **Body** HTML table)"
+    },
+    {
+      "name": "GameResultRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": true, "description": "代理名称(Require: 必要)"},
+        {"name": "starttime", "type": "datetime", "required": true, "description": "必要(请求参数中使用 roundid、betid 时非必要);UTC+8, 'YYYY-MM-DD HH:mm:ss';时间区间不可超过 5 分钟"},
+        {"name": "endtime", "type": "datetime", "required": true, "description": "必要(请求参数中使用 roundid、betid 时非必要);UTC+8, 'YYYY-MM-DD HH:mm:ss';时间区间不可超过 5 分钟"},
+        {"name": "roundid", "type": "string", "required": false, "description": "局号(可查询一个月内的记录);Require: 非必要"},
+        {"name": "betid", "type": "string", "required": false, "description": "投注号(可查询一个月内的记录);Require: 非必要"},
+        {"name": "page_num", "type": "int", "required": true, "description": "页数(Require: 必要)"},
+        {"name": "page_size", "type": "int", "required": true, "description": "每页笔数,max: 2000(Require: 必要)"},
+        {"name": "status", "type": "int", "required": false, "description": "1 = 未结算;4 = 已结算;9 = 无效单;若不带此参数默认将回应所有状态纪录。(Require: 非必要)"},
+        {"name": "sign", "type": "string", "required": true, "description": "签名(Require: 必要)"}
+      ],
+      "enums": [],
+      "constraints": "时间区间不可超过 5 分钟;page_size max 2000;来源 Markdown 表格在 starttime 列因换行而断裂(lines 22-24),栏位内容需由原始文字读取",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 19-31 (**Body** 表格,含 Require 栏)"
+    },
+    {
+      "name": "BetLimitUpdateRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "betlimit", "type": "string", "required": null, "description": "限红列表(连结至「限红列表」页 #id-200)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 19-24 (**Body** 表格)"
+    },
+    {
+      "name": "AgentOnlyRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": "限红列表 (/vg/bet/limit/list、/vgtransfer/bet/limit/list) 与牌桌列表 (/vg/table/list、/vgtransfer/table/list) 四个端点使用相同的两栏 Body",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 19-22; vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 19-22; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 19-22; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 19-22"
+    },
+    {
+      "name": "WalletBetRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "商户名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "token", "type": "string", "required": null, "description": "玩家令牌"},
+        {"name": "roundid", "type": "string", "required": null, "description": "游戏局号"},
+        {"name": "transid", "type": "string", "required": null, "description": "投注号 (betid)"},
+        {"name": "amount", "type": "number", "required": null, "description": "投注金额"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名 (未包含 detail)"},
+        {"name": "detail", "type": "object", "required": null, "description": "其他资讯(见 WalletBetDetail)"}
+      ],
+      "enums": [],
+      "constraints": "Headers 仅列 Content-Type: application/json",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 15-26 (**Body** 表格)"
+    },
+    {
+      "name": "WalletBetDetail",
+      "fields": [
+        {"name": "bubalance", "type": "string", "required": null, "description": null},
+        {"name": "tableid", "type": "string", "required": null, "description": null},
+        {"name": "tableidx", "type": "string", "required": null, "description": null},
+        {"name": "shoeid", "type": "string", "required": null, "description": null},
+        {"name": "currency", "type": "string", "required": null, "description": null},
+        {"name": "ts", "type": "number", "required": null, "description": null},
+        {"name": "shoeround", "type": "string", "required": null, "description": null},
+        {"name": "platform", "type": "string", "required": null, "description": null},
+        {"name": "bettype", "type": "string", "required": null, "description": null},
+        {"name": "ip", "type": "string", "required": null, "description": null},
+        {"name": "maxlose", "type": "number", "required": null, "description": null},
+        {"name": "maxwin", "type": "number", "required": null, "description": null},
+        {"name": "bw", "type": "number", "required": null, "description": null},
+        {"name": "pw", "type": "number", "required": null, "description": null},
+        {"name": "tie", "type": "number", "required": null, "description": null},
+        {"name": "bp", "type": "number", "required": null, "description": null},
+        {"name": "pp", "type": "number", "required": null, "description": null},
+        {"name": "big", "type": "number", "required": null, "description": null},
+        {"name": "small", "type": "number", "required": null, "description": null},
+        {"name": "lucky6", "type": "number", "required": null, "description": null},
+        {"name": "ap", "type": "number", "required": null, "description": null},
+        {"name": "pfp", "type": "number", "required": null, "description": null},
+        {"name": "betlimit", "type": "string", "required": null, "description": null}
+      ],
+      "enums": [],
+      "constraints": "来源只提供 **Body params** JSON 范例、未提供 detail 栏位说明表;此处 type 取自范例字面 JSON 型别,description 因来源未说明而为 null",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 39-63 (**Body params** JSON 范例的 detail 物件)"
+    },
+    {
+      "name": "WalletCancelRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "商户名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "roundid", "type": "string", "required": null, "description": "游戏局号"},
+        {"name": "transid", "type": "string", "required": null, "description": "投注号 (betid)"},
+        {"name": "amount", "type": "number", "required": null, "description": "取消投注 = 投注金额;取消结算 = 派彩金额 - 投注金额"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名 (未包含 detail)"},
+        {"name": "detail", "type": "object", "required": null, "description": "其他资讯(见 WalletSettlementDetail)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 15-25 (**Body** 表格)"
+    },
+    {
+      "name": "WalletWinRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "商户名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "roundid", "type": "string", "required": null, "description": "游戏局号"},
+        {"name": "transid", "type": "string", "required": null, "description": "投注号 (betid)"},
+        {"name": "amount", "type": "number", "required": null, "description": "派彩金额"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名 (未包含 detail)"},
+        {"name": "detail", "type": "object", "required": null, "description": "其他资讯(见 WalletSettlementDetail)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 15-25 (**Body** 表格)"
+    },
+    {
+      "name": "WalletResettleRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "商户名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "roundid", "type": "string", "required": null, "description": "游戏局号"},
+        {"name": "transid", "type": "string", "required": null, "description": "投注号 (betid)"},
+        {"name": "amount", "type": "number", "required": null, "description": "当笔资料最终派彩金额,不会扣/补前次派彩金额"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名 (未包含 detail)"},
+        {"name": "detail", "type": "object", "required": null, "description": "其他资讯"}
+      ],
+      "enums": [],
+      "constraints": "此页未提供 **Body params** JSON 范例",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 15-25 (**Body** 表格)"
+    },
+    {
+      "name": "WalletSettlementDetail",
+      "fields": [
+        {"name": "id", "type": "number", "required": null, "description": null},
+        {"name": "token", "type": "string", "required": null, "description": null},
+        {"name": "currency", "type": "string", "required": null, "description": null},
+        {"name": "bw", "type": "string", "required": null, "description": null},
+        {"name": "pw", "type": "string", "required": null, "description": null},
+        {"name": "tie", "type": "string", "required": null, "description": null},
+        {"name": "bp", "type": "string", "required": null, "description": null},
+        {"name": "pp", "type": "string", "required": null, "description": null},
+        {"name": "big", "type": "string", "required": null, "description": null},
+        {"name": "small", "type": "string", "required": null, "description": null},
+        {"name": "lucky6", "type": "string", "required": null, "description": null},
+        {"name": "ap", "type": "string", "required": null, "description": null},
+        {"name": "pfp", "type": "string", "required": null, "description": null},
+        {"name": "bw_win", "type": "string", "required": null, "description": null},
+        {"name": "pw_win", "type": "string", "required": null, "description": null},
+        {"name": "tie_win", "type": "string", "required": null, "description": null},
+        {"name": "bp_win", "type": "string", "required": null, "description": null},
+        {"name": "pp_win", "type": "string", "required": null, "description": null},
+        {"name": "big_win", "type": "string", "required": null, "description": null},
+        {"name": "small_win", "type": "string", "required": null, "description": null},
+        {"name": "lucky6_win", "type": "string", "required": null, "description": null},
+        {"name": "ap_win", "type": "string", "required": null, "description": null},
+        {"name": "pfp_win", "type": "string", "required": null, "description": null},
+        {"name": "abet", "type": "string", "required": null, "description": null},
+        {"name": "abet2", "type": "string", "required": null, "description": null},
+        {"name": "tableidx", "type": "string", "required": null, "description": null},
+        {"name": "shoeid", "type": "number", "required": null, "description": null},
+        {"name": "shoeround", "type": "number", "required": null, "description": null},
+        {"name": "btimestamp", "type": "number", "required": null, "description": null},
+        {"name": "bettime", "type": "string", "required": null, "description": null},
+        {"name": "settletime", "type": null, "required": null, "description": "范例值为 null"},
+        {"name": "percentage", "type": null, "required": null, "description": "范例值为 null"},
+        {"name": "fanshui", "type": null, "required": null, "description": "范例值为 null"},
+        {"name": "status", "type": "number", "required": null, "description": null},
+        {"name": "ip", "type": "string", "required": null, "description": null},
+        {"name": "bettype", "type": "string", "required": null, "description": null},
+        {"name": "platform", "type": "string", "required": null, "description": null},
+        {"name": "detail", "type": null, "required": null, "description": "范例值为 null"}
+      ],
+      "enums": [],
+      "constraints": "派彩 (/win) 与取消投注/结算 (/cancel) 的 **Body params** JSON 范例中 detail 物件内容完全相同;来源未提供此 detail 的栏位说明表,type 取自范例字面 JSON 型别",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 37-76; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 37-76 (**Body params** JSON 范例的 detail 物件)"
+    },
+    {
+      "name": "WalletBalanceRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "商户名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "token", "type": "string", "required": null, "description": "玩家令牌"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 15-22 (**Body** 表格)"
+    },
+    {
+      "name": "WalletSuccessResponse",
+      "fields": [
+        {"name": "code", "type": "number", "required": null, "description": "Success 范例值为 0"},
+        {"name": "balance", "type": "number", "required": null, "description": "Success 范例值为 123456.78"}
+      ],
+      "enums": [],
+      "constraints": "单一钱包的 /bet、/cancel、/win、/balance 四个端点的 Success 响应范例完全相同",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 73-78; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 86-91; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 86-91; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 30-35 (**Response** Success 范例)"
+    },
+    {
+      "name": "WalletResettleSuccessResponse",
+      "fields": [
+        {"name": "code", "type": "number", "required": null, "description": "Success 范例值为 0(此端点范例不含 balance)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 33-37 (**Response** Success 范例)"
+    },
+    {
+      "name": "TransferSignUpRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "betlimit", "type": "string", "required": null, "description": "限红列表(连结至转账钱包「限红列表」)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称+后缀(suffix);仅限小写英文字母、数字"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 19-24 (**Body** 表格)"
+    },
+    {
+      "name": "TransferSignInRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "language", "type": "string", "required": null, "description": "用户语系(连结至转账钱包「语系列表」)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称+后缀(suffix)"},
+        {"name": "rid", "type": "string", "required": false, "description": "桌号 tableid。非必要参数,填入桌号可进指定牌桌。"},
+        {"name": "betlimit", "type": "string", "required": false, "description": "限红列表。非必要参数,可在登入时设置当前玩家限红。"},
+        {"name": "return_url", "type": "string", "required": null, "description": "重新导向 URL"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": "与单一钱包 SignInRequest 相比,转账钱包的 Body 表格未列 token 栏位",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md lines 19-27 (**Body** 表格)"
+    },
+    {
+      "name": "TransferPointsRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "amount", "type": "int", "required": null, "description": "转账金额"},
+        {"name": "sid", "type": "string", "required": null, "description": "商户产值(商户转账唯一订单号,12位以上)"},
+        {"name": "status", "type": "string", "required": null, "description": "in = 转进;out = 转出"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": ["in", "out"],
+      "constraints": "sid 须为商户转账唯一订单号且 12 位以上",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md lines 19-26 (**Body** 表格)"
+    },
+    {
+      "name": "TransferBalanceRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "username", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": "此端点使用 username 而非 loginname",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md lines 19-23 (**Body** 表格)"
+    },
+    {
+      "name": "TransferBalanceResponse",
+      "fields": [
+        {"name": "code", "type": "number", "required": null, "description": "Success 范例值为 1000"},
+        {"name": "message", "type": "string", "required": null, "description": "Success 范例值为 \"Success\""},
+        {"name": "balance", "type": "string", "required": null, "description": "Success 范例值为 \"1000.00\"(字串)"},
+        {"name": "TraceId", "type": "string", "required": null, "description": "追踪 ID,范例为 UUID 字串"}
+      ],
+      "enums": [],
+      "constraints": "转账钱包 /vgtransfer/balance 与 /vgtransfer/points 的 Success 响应范例完全相同(balance 位于顶层,非 data 内)",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md lines 30-37; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md lines 33-40 (**Response** Success 范例)"
+    },
+    {
+      "name": "TransferLogRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "starttime", "type": "datetime", "required": null, "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'"},
+        {"name": "endtime", "type": "datetime", "required": null, "description": "UTC+8, 'YYYY-MM-DD HH:mm:ss'"},
+        {"name": "page_num", "type": "int", "required": null, "description": "页数"},
+        {"name": "page_size", "type": "int", "required": null, "description": "每页笔数,max: 2000"},
+        {"name": "status", "type": "string", "required": null, "description": "in = 转进;out = 转出;若不带此参数默认将回应所有状态纪录。"},
+        {"name": "sid", "type": "string", "required": null, "description": "转账单号;若不带此参数默认将回应所有订单纪录。"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": ["in", "out"],
+      "constraints": "时间区间不可超过 5 分钟(页面说明);page_size max 2000",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 9, 19-28 (页面说明与 **Body** 表格)"
+    },
+    {
+      "name": "TransferLogResponseData",
+      "fields": [
+        {"name": "current_page", "type": "number", "required": null, "description": "范例值 1"},
+        {"name": "current_counts", "type": "number", "required": null, "description": "范例值 3"},
+        {"name": "total_pages", "type": "number", "required": null, "description": "范例值 1"},
+        {"name": "total_counts", "type": "number", "required": null, "description": "范例值 3"},
+        {"name": "betdetail", "type": "array", "required": null, "description": "转账记录阵列(见 TransferLogRecord)"}
+      ],
+      "enums": [],
+      "constraints": "转账记录端点的资料阵列 key 名称同样为 betdetail",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 40-81 (**Response** Success 范例 data 物件)"
+    },
+    {
+      "name": "TransferLogRecord",
+      "fields": [
+        {"name": "username", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "type", "type": "string", "required": null, "description": "转账类型(范例值 in / out)"},
+        {"name": "amount", "type": "string", "required": null, "description": "转账金额(范例 \"1.00\" / \"-1.00\")"},
+        {"name": "beforeamount", "type": "string", "required": null, "description": "转帐前余额"},
+        {"name": "afteramount", "type": "string", "required": null, "description": "转账后余额"},
+        {"name": "busid", "type": "string", "required": null, "description": "转账单号 sid"},
+        {"name": "anyid", "type": "string", "required": null, "description": "系统产生 ID"},
+        {"name": "ip", "type": "string", "required": null, "description": "玩家 IP 地址"},
+        {"name": "createtime", "type": "string", "required": null, "description": "交易时间(范例为 \"2024-10-01T08:36:28.000Z\")"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 46-56 (JSON 范例) 与 lines 91-101 (### 回应参数说明: 表格)"
+    },
+    {
+      "name": "TransferGameResultRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": true, "description": "代理名称(Require: 必要)"},
+        {"name": "starttime", "type": "datetime", "required": true, "description": "必要(请求参数中使用 roundid、betid 时非必要);UTC+8, 'YYYY-MM-DD HH:mm:ss';时间区间不可超过 5 分钟"},
+        {"name": "endtime", "type": "datetime", "required": true, "description": "必要(请求参数中使用 roundid、betid 时非必要);UTC+8, 'YYYY-MM-DD HH:mm:ss';时间区间不可超过 5 分钟"},
+        {"name": "roundid", "type": "string", "required": false, "description": "局号(可查询一个月内的记录);Require: 非必要"},
+        {"name": "betid", "type": "string", "required": false, "description": "投注号(可查询一个月内的记录);Require: 非必要"},
+        {"name": "page_num", "type": "int", "required": true, "description": "页数(Require: 必要)"},
+        {"name": "page_size", "type": "int", "required": true, "description": "每页笔数,max: 2000(Require: 必要)"},
+        {"name": "status", "type": "int", "required": false, "description": "1 = 未结算;4 = 已结算;9 = 无效单;若不带此参数默认将回应所有状态纪录。(Require: 非必要)"},
+        {"name": "sign", "type": "string", "required": true, "description": "签名(Require: 必要)"}
+      ],
+      "enums": [],
+      "constraints": "与单一钱包 GameResultRequest 表格内容相同;来源 Markdown 表格在 starttime 列因换行而断裂(lines 22-24)",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 19-31 (**Body** 表格,含 Require 栏)"
+    },
+    {
+      "name": "TransferBetLimitUpdateRequest",
+      "fields": [
+        {"name": "agent", "type": "string", "required": null, "description": "代理名称"},
+        {"name": "betlimit", "type": "string", "required": null, "description": "限红列表(连结至转账钱包「限红列表」)"},
+        {"name": "loginname", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "sign", "type": "string", "required": null, "description": "签名(连结至转账钱包「加密说明」)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 19-24 (**Body** 表格)"
+    },
+    {
+      "name": "StandardResponse",
+      "fields": [
+        {"name": "code", "type": "number", "required": null, "description": "响应代码;Success 范例值为 1000(见附录「响应代码」)"},
+        {"name": "message", "type": "string", "required": null, "description": "Success 范例值为 \"Success\""},
+        {"name": "data", "type": "object", "required": null, "description": "各端点的资料内容;牌桌列表与限红列表的 data 为阵列;玩家限红端点的 Success 范例不含 data"},
+        {"name": "TraceId", "type": "string", "required": null, "description": "追踪 ID,范例为 UUID 字串"}
+      ],
+      "enums": [],
+      "constraints": "适用于 /vg/* 与 /vgtransfer/* 的游戏类端点 Success 响应;/vgtransfer/balance 与 /vgtransfer/points 另在顶层带 balance",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 31-42; vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 31-37; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md lines 34-43 (**Response** Success 范例)"
+    },
+    {
+      "name": "SignUpResponseData",
+      "fields": [
+        {"name": "uid", "type": "number", "required": null, "description": "范例值 10208"},
+        {"name": "username", "type": "string", "required": null, "description": "范例值 \"usernamexox\""},
+        {"name": "betlimit", "type": "string", "required": null, "description": "范例值 \"A\""}
+      ],
+      "enums": [],
+      "constraints": "单一钱包与转账钱包的注册用户 Success 范例内容相同",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 35-39; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 35-39 (**Response** Success 范例 data)"
+    },
+    {
+      "name": "SignInResponseData",
+      "fields": [
+        {"name": "url", "type": "string", "required": null, "description": "游戏启动 URL;范例值为 \"https://launch_url\" 之占位字串"}
+      ],
+      "enums": [],
+      "constraints": "单一钱包与转账钱包的登入游戏 Success 范例内容相同",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md lines 30-32; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md lines 38-40 (**Response** Success 范例 data)"
+    },
+    {
+      "name": "TableListItem",
+      "fields": [
+        {"name": "tableid", "type": "string", "required": null, "description": "范例值 \"t6\" / \"t7\""},
+        {"name": "casino", "type": "string", "required": null, "description": "范例值 \"SOLAIRE\""},
+        {"name": "tablename", "type": "string", "required": null, "description": "范例值 \"MD3109\" / \"MD3110\""},
+        {"name": "tablename_cn", "type": "string", "required": null, "description": "范例值 \"晨丽厅\""},
+        {"name": "time", "type": "number", "required": null, "description": "范例值 48"}
+      ],
+      "enums": [],
+      "constraints": "牌桌列表 Success 响应的 data 为此物件之阵列;来源仅提供 JSON 范例,未提供栏位说明表",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 33-48; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 33-48 (**Response** Success 范例 data 阵列)"
+    },
+    {
+      "name": "BetLimitListEntry",
+      "fields": [
+        {"name": "限红代码", "type": "string", "required": null, "description": "以限红代码为 key、金额区间字串为 value;范例为 {\"A\": \"100-2000\"} 与 {\"A1\": \"100-5000\"};此处的 name 为 key 之占位描述,非固定栏位名"}
+      ],
+      "enums": [],
+      "constraints": "限红列表 Success 响应的 data 为此单键物件之阵列;来源仅列出 A、A1 两个范例代码,未提供完整限红代码清单",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 33-40; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 33-40 (**Response** Success 范例 data 阵列)"
+    },
+    {
+      "name": "GameResultResponseData",
+      "fields": [
+        {"name": "current_page", "type": "number", "required": null, "description": "范例值 1"},
+        {"name": "current_counts", "type": "number", "required": null, "description": "范例值 1"},
+        {"name": "total_pages", "type": "number", "required": null, "description": "范例值 8"},
+        {"name": "total_counts", "type": "number", "required": null, "description": "范例值 8"},
+        {"name": "betdetail", "type": "array", "required": null, "description": "投注明细阵列(见 BetDetailRecord)"}
+      ],
+      "enums": [],
+      "constraints": null,
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 43-99; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 43-99 (**Response** Success 范例 data 物件)"
+    },
+    {
+      "name": "BetDetailRecord",
+      "fields": [
+        {"name": "roundid", "type": "string", "required": null, "description": "游戏局号"},
+        {"name": "betid", "type": "string", "required": null, "description": "投注号"},
+        {"name": "username", "type": "string", "required": null, "description": "玩家名称"},
+        {"name": "shoeid", "type": "number", "required": null, "description": "靴号"},
+        {"name": "shoeround", "type": "number", "required": null, "description": "靴局"},
+        {"name": "casino", "type": "string", "required": null, "description": "桌别"},
+        {"name": "valid", "type": "number", "required": null, "description": "有效投注"},
+        {"name": "bet", "type": "number", "required": null, "description": "投注金额"},
+        {"name": "win", "type": "number", "required": null, "description": "派彩金额"},
+        {"name": "currency", "type": "string", "required": null, "description": "币别"},
+        {"name": "tableidx", "type": "string", "required": null, "description": "桌号"},
+        {"name": "bettime", "type": "string", "required": null, "description": "下注时间 (ISO 8601 标准日期时间格式)"},
+        {"name": "settletime", "type": "string", "required": null, "description": "结算时间 (ISO 8601 标准日期时间格式)"},
+        {"name": "status", "type": "number", "required": null, "description": "此笔数据状态:1 = 未结算;4 = 已结算"},
+        {"name": "ip", "type": "string", "required": null, "description": "玩家 IP 地址"},
+        {"name": "bettype", "type": "string", "required": null, "description": "投注类型:multi = 多台投注;multi_nc 多台投注(免佣);single = 进桌投注;single_nc 进桌投注(免佣);goodroad 好路投注;goodroad_nc 好路投注(免佣)"},
+        {"name": "platform", "type": "string", "required": null, "description": "设备(范例值 \"pc\")"},
+        {"name": "betresult", "type": "object", "required": null, "description": "详细投注与派彩结果(见附录「投注派彩」/ BetResult)"},
+        {"name": "detail", "type": "object", "required": null, "description": "开牌结果(见附录「开牌结果」/ CardResult)"}
+      ],
+      "enums": [],
+      "constraints": "单一钱包与转账钱包的「回应参数说明」表格内容相同",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 110-131 (### 回应参数说明: 表格) 与 lines 49-97 (JSON 范例); vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 110-131"
+    },
+    {
+      "name": "BetResult",
+      "fields": [
+        {"name": "bw", "type": null, "required": null, "description": "庄下注金额"},
+        {"name": "pw", "type": null, "required": null, "description": "闲下注金额"},
+        {"name": "tie", "type": null, "required": null, "description": "和下注金额"},
+        {"name": "bp", "type": null, "required": null, "description": "庄对下注金额"},
+        {"name": "pp", "type": null, "required": null, "description": "闲对下注金额"},
+        {"name": "big", "type": null, "required": null, "description": "大下注金额"},
+        {"name": "small", "type": null, "required": null, "description": "小下注金额"},
+        {"name": "lucky6", "type": null, "required": null, "description": "幸运6下注金额"},
+        {"name": "ap", "type": null, "required": null, "description": "任意对子下注金额"},
+        {"name": "pfp", "type": null, "required": null, "description": "完美对子下注金额"},
+        {"name": "bw_win", "type": null, "required": null, "description": "庄派彩金额"},
+        {"name": "pw_win", "type": null, "required": null, "description": "闲派彩金额"},
+        {"name": "tie_win", "type": null, "required": null, "description": "何派彩金额(原文如此)"},
+        {"name": "bp_win", "type": null, "required": null, "description": "庄对派彩金额"},
+        {"name": "pp_win", "type": null, "required": null, "description": "闲对派彩金额"},
+        {"name": "big_win", "type": null, "required": null, "description": "大派彩金额"},
+        {"name": "small_win", "type": null, "required": null, "description": "小派彩金额"},
+        {"name": "lucky6_win", "type": null, "required": null, "description": "幸运6派彩金额"},
+        {"name": "ap_win", "type": null, "required": null, "description": "任意对子派彩金额"},
+        {"name": "pfp_win", "type": null, "required": null, "description": "完美对子派彩金额"}
+      ],
+      "enums": [],
+      "constraints": "附录表格只有「名称/说明」两栏,未标示型别;游戏结果 JSON 范例中各值为字串(如 \"500.00\")",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/tou-zhu-pai-cai.md lines 7-28; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/tou-zhu-pai-cai.md lines 7-28 (# 投注派彩 表格)"
+    },
+    {
+      "name": "CardResult",
+      "fields": [
+        {"name": "b1", "type": null, "required": null, "description": "庄 1"},
+        {"name": "b2", "type": null, "required": null, "description": "庄 2"},
+        {"name": "b3", "type": null, "required": null, "description": "庄 3"},
+        {"name": "p1", "type": null, "required": null, "description": "闲 1"},
+        {"name": "p2", "type": null, "required": null, "description": "闲 2"},
+        {"name": "p3", "type": null, "required": null, "description": "闲 3"}
+      ],
+      "enums": [],
+      "constraints": "对应游戏结果响应中的 detail 物件;附录表格无栏位标题、未标示型别;范例值为 \"c5\"、\"h11\"、\"0\" 等字串",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/kai-pai-jie-guo.md lines 7-16 (### 开牌结果 表格); vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/kai-pai-jie-guo.md lines 7-16"
+    },
+    {
+      "name": "CardFaceExample",
+      "fields": [],
+      "enums": ["h1 = 红心 A", "d13 = 方片 K", "s12 = 黑桃 Q", "c2 = 梅花 2", "0 = 无补牌"],
+      "constraints": "附录仅以「牌面示例」列出这 5 个例子,未给出完整牌面代码清单或花色/点数编码规则",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/kai-pai-jie-guo.md lines 18-26 (### 牌面示例 表格); vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/kai-pai-jie-guo.md lines 18-26"
+    },
+    {
+      "name": "BetTypeEnum",
+      "fields": [],
+      "enums": ["multi = 多台投注", "multi_nc 多台投注(免佣)", "single = 进桌投注", "single_nc 进桌投注(免佣)", "goodroad 好路投注", "goodroad_nc 好路投注(免佣)"],
+      "constraints": "游戏结果响应 bettype 栏位可用值",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md line 127 (### 回应参数说明: bettype 列); vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md line 127"
+    },
+    {
+      "name": "BetRecordStatusEnum",
+      "fields": [],
+      "enums": ["1 = 未结算", "4 = 已结算", "9 = 无效单"],
+      "constraints": "请求参数 status 列出 1/4/9 三值;响应参数说明只列出 1 与 4",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md line 30 (**Body** status 列) 与 line 125 (### 回应参数说明: status 列); vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 30, 125"
+    },
+    {
+      "name": "TransferDirectionEnum",
+      "fields": [],
+      "enums": ["in = 转进", "out = 转出"],
+      "constraints": "转账功能 status 与转账记录 status 皆使用此列举;转账记录响应中的 type 栏位范例值同为 in / out",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md line 25 (**Body** status 列); vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md line 26 (**Body** status 列)"
+    },
+    {
+      "name": "LanguageCodeEnum",
+      "fields": [],
+      "enums": ["zh-CN = 简体中文", "zh-TW = 繁体中文", "en = 英语", "ko = 韩文"],
+      "constraints": "登入游戏 language 参数使用之语系值;两产品的语系列表内容相同",
+      "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/yu-xi-lie-biao.md lines 7-12; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md lines 7-12 (# 语系列表 表格)"
+    }
+  ],
+  "errors": [
+    {"code": "0", "meaning": "单一钱包「钱包」类端点 Success 响应范例中的 code 值", "http_status": null, "applicable_to": ["POST /bet", "POST /cancel", "POST /win", "POST /resettle", "POST /balance"], "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 73-78; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md lines 86-91; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md lines 86-91; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md lines 33-37; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 30-35 (**Response** Success 范例)"},
+    {"code": "1000", "meaning": "成功", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 9; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 9"},
+    {"code": "1001", "meaning": "系统错误", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 10; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 10"},
+    {"code": "1002", "meaning": "未知错误", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 11; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 11"},
+    {"code": "5000", "meaning": "验证码错误", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 12; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 12"},
+    {"code": "5001", "meaning": "请求参数有误", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 13; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 13"},
+    {"code": "5002", "meaning": "请求之币别不支持", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 14; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 14"},
+    {"code": "5003", "meaning": "钱包余额不足", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 15; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 15"},
+    {"code": "5005", "meaning": "商户不存在", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 16; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 16"},
+    {"code": "5006", "meaning": "玩家已存在", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 17; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 17"},
+    {"code": "5008", "meaning": "国家/地区代码错误", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 18; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 18"},
+    {"code": "5009", "meaning": "玩家账号不存在", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 19; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 19"},
+    {"code": "5010", "meaning": "玩家已被锁定", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 20; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 20"},
+    {"code": "5012", "meaning": "找不到对应的游戏", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 21; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 21"},
+    {"code": "5013", "meaning": "Session验证失败", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 22; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 22"},
+    {"code": "5014", "meaning": "无效的时间格式", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 23; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 23"},
+    {"code": "5015", "meaning": "无效的Provider", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 24; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 24"},
+    {"code": "5016", "meaning": "无效的金额", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 25; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 25"},
+    {"code": "5017", "meaning": "API權限不足", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 26; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 26"},
+    {"code": "5018", "meaning": "無效的Brand UID", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 27; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 27"},
+    {"code": "5019", "meaning": "登入 URL 超时", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 28; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 28"},
+    {"code": "5040", "meaning": "请求限制,每3秒仅能叫用一次", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 29; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 29"},
+    {"code": "5041", "meaning": "请求区段限制,每一个请求区间不超过 24小时,此外可查询资料仅为6个月内的资料。", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 30; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 30"},
+    {"code": "5042", "meaning": "下注记录不存在", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 31; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 31"},
+    {"code": "5043", "meaning": "下注记录已存在", "http_status": null, "applicable_to": [], "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 32; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 32"},
+    {"code": "5045", "meaning": "转帐钱包上下分,重复的 SID(仅列于转账钱包的响应代码表,单一钱包的表未列此码)", "http_status": null, "applicable_to": ["POST /vgtransfer/points"], "source": "vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 33"}
+  ],
+  "operational": [
+    {"topic": "签名算法", "detail": "将所有参数字首按顺序排列 ( abcde...等,12345...等),将「值」串成字串,最后加上 API_KEY,将此字串由 MD5 加密取得 sign 值;文件提供 JS(md5-js)与 Python(hashlib.md5)示例。", "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md lines 7-50; vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md lines 7-50"},
+    {"topic": "签名范围(钱包接口)", "detail": "单一钱包的 /bet、/cancel、/win、/resettle 之 sign 说明为「签名 (未包含 detail)」,即 detail 物件不参与签名。", "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md line 25; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md line 24; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md line 24; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md line 24"},
+    {"topic": "请求 Content-Type", "detail": "所有端点的 **Headers** 表格皆只列出 Content-Type: application/json。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md lines 13-15; vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md lines 11-13; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md lines 13-15"},
+    {"topic": "请求时间格式与时区", "detail": "starttime / endtime 为 datetime,格式 UTC+8, 'YYYY-MM-DD HH:mm:ss'。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 24-25; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 22-23"},
+    {"topic": "响应时间格式", "detail": "游戏结果响应之 bettime(下注时间)与 settletime(结算时间)使用 ISO 8601 标准日期时间格式(范例 \"2024-05-28T10:19:11.000Z\")。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 123-124; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 123-124"},
+    {"topic": "查询时间区间上限", "detail": "游戏结果查询的时间区间不可超过 5 分钟;转账记录页面亦标明「时间区间不可超过 5 分钟」。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 24-25; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 24-25; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md line 9"},
+    {"topic": "以 roundid / betid 查询的资料保留期", "detail": "roundid 与 betid 为非必要参数,且「可查询一个月内的记录」;使用 roundid、betid 时 starttime、endtime 非必要。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 22-27; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md lines 22-27"},
+    {"topic": "分页", "detail": "请求使用 page_num(页数)与 page_size(每页笔数,max: 2000);响应 data 内含 current_page、current_counts、total_pages、total_counts 与 betdetail 阵列。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md lines 28-29, 43-48; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 24-25, 40-45"},
+    {"topic": "选填过滤参数的默认行为", "detail": "游戏结果 status 若不带此参数默认将回应所有状态纪录;转账记录 status 若不带默认回应所有状态纪录、sid 若不带默认回应所有订单纪录。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md line 30; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md lines 26-27"},
+    {"topic": "呼叫频率限制", "detail": "响应代码 5040 = 「请求限制,每3秒仅能叫用一次」。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 29; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 29"},
+    {"topic": "请求区段与资料保留限制", "detail": "响应代码 5041 = 「请求区段限制,每一个请求区间不超过 24小时,此外可查询资料仅为6个月内的资料。」(与游戏结果页所述 5 分钟区间上限并列于来源中)。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 30; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 30"},
+    {"topic": "投注单号重复/不存在", "detail": "响应代码 5042 = 下注记录不存在、5043 = 下注记录已存在。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md lines 31-32; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md lines 31-32"},
+    {"topic": "转账订单号 (sid) 唯一性与长度", "detail": "sid 为「商户产值(商户转账唯一订单号 12位以上)」;转账钱包响应代码 5045 = 转帐钱包上下分,重复的 SID。", "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md line 24; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md line 33"},
+    {"topic": "玩家帐号命名规则", "detail": "注册用户之 loginname 为「玩家名称+后缀(suffix)」,仅限小写英文字母、数字。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md line 23; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md line 23"},
+    {"topic": "语系代码", "detail": "登入游戏 language 参数使用语系列表:zh-CN(简体中文)、zh-TW(繁体中文)、en(英语)、ko(韩文)。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/yu-xi-lie-biao.md lines 7-12; vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md lines 7-12"},
+    {"topic": "登入 URL 有效性", "detail": "响应代码 5019 = 登入 URL 超时;登入游戏响应 data.url 为游戏启动 URL,请求可带 return_url(重新导向 URL)。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md line 28; vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md lines 19, 30-32"},
+    {"topic": "取消金额语义", "detail": "/cancel 的 amount:取消投注 = 投注金额;取消结算 = 派彩金额 - 投注金额。", "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md line 23"},
+    {"topic": "重新派彩金额语义", "detail": "/resettle 的 amount 为「当笔资料最终派彩金额,不会扣/补前次派彩金额」。", "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md line 23"},
+    {"topic": "限红设定时机", "detail": "betlimit 可于注册用户时指定,亦为登入游戏的非必要参数「可在登入时设置当前玩家限红」,并可用玩家限红端点调整;可用限红由限红列表端点查询。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md line 19; vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md lines 19-24; vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md lines 19-22"},
+    {"topic": "指定牌桌进入", "detail": "登入游戏的 rid 为桌号 tableid,非必要参数,填入桌号可进指定牌桌;桌号可由牌桌列表端点查询(响应 tableid)。", "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md line 19; vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md lines 33-48"},
+    {"topic": "产品线差异", "detail": "单一钱包(dan-yi-qian-bao)路径前缀为 /vg/*(游戏类)与无前缀的钱包类端点 /bet、/cancel、/win、/resettle、/balance;转账钱包(zhuan-zhang-qian-bao)全部端点前缀为 /vgtransfer/*,并以 /vgtransfer/points 做上分/下分。", "source": "vg-wen-dang.md lines 5-43 (文档索引); vg-wen-dang/dan-yi-qian-bao/api.md lines 5-17; vg-wen-dang/zhuan-zhang-qian-bao/api.md lines 5-14"},
+    {"topic": "余额栏位型别差异", "detail": "单一钱包钱包类端点的 Success 范例 balance 为数字(123456.78);转账钱包 /vgtransfer/balance 与 /vgtransfer/points 的 Success 范例 balance 为字串(\"1000.00\")。", "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md lines 30-35; vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md lines 30-37"}
+  ],
+  "missing": [
+    "base URL(scheme+host)未於任何來源說明,僅有 root-relative path",
+    "文件版本 / API 版本號未於任何頁面標示",
+    "HTTP 狀態碼未於任何頁面標示(所有 Response 皆只給 JSON body)",
+    "失敗(非 Success)響應的 JSON body 範例未提供,僅有 Success 分頁",
+    "API_KEY 的取得、輪替與保管方式未說明",
+    "除 Content-Type 外的請求標頭(認證標頭、簽章標頭)未說明",
+    "sign 計算中參數排序的細節未完整定義(例如 detail 物件、空值、巢狀欄位如何序列化)",
+    "sign 驗證失敗對應的響應代碼未明確指出(5000「验证码错误」是否即為簽章錯誤未說明)",
+    "單一錢包「錢包」類端點(/bet、/cancel、/win、/resettle、/balance)由商戶端實作或由平台提供未明確說明,亦未說明呼叫方向與重試機制",
+    "單一錢包錢包類端點的失敗 code 值(非 0)清單未說明,與附錄 1000/5xxx 響應代碼的關係未說明",
+    "/bet 與 /win、/cancel 請求 detail 物件的欄位說明表未提供(僅有 JSON 範例)",
+    "/resettle 未提供 Body params JSON 範例",
+    "各端點 Body 欄位的必填/選填(Require)除「游戏结果」端點外皆未標示",
+    "限紅代碼完整清單未提供(僅範例 A、A1;文件連結指向 #id-200 錨點但內容未含於來源)",
+    "桌號 tableid 完整清單未提供(登入遊戲 rid 的連結頁未含於來源)",
+    "登入遊戲的 token(身份令牌)取得方式未說明",
+    "投注端點 detail.token(玩家令牌)與登入 token 的關係未說明",
+    "支援幣別清單未提供(currency 欄位僅出現 USDT 範例)",
+    "金額欄位的單位、小數位數與精度規則未說明",
+    "platform(設備)欄位可用值未列舉(僅範例 pc、mobile)",
+    "casino(桌別)欄位可用值未列舉(僅範例 SOLAIRE、HANN)",
+    "betlimit 於 detail 中的值(範例 B)與限紅列表代碼的對應未說明",
+    "開牌結果牌面代碼的完整編碼規則未說明(僅 5 筆牌面示例)",
+    "betresult 各欄位型別未標示(附錄表格僅有名稱與說明兩欄)",
+    "回呼/webhook(平台主動通知商戶)機制未說明",
+    "測試環境與正式環境的區分方式未說明",
+    "IP 白名單、TLS 或其他傳輸安全要求未說明",
+    "「游戏结果」端點 5 分鐘時間區間上限與響應代碼 5041 所述 24 小時區間上限之間的關係未說明",
+    "轉帳錢包登入遊戲 Body 表格未列 token,與單一錢包差異的原因未說明"
+  ]
+}

@@ -1,0 +1,1 @@
+Source inventory: a single source manual was provided and read.

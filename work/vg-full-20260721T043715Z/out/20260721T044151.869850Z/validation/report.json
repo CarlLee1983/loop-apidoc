@@ -1,0 +1,16 @@
+{
+  "issues": [
+    {
+      "code": "REQUIRED_INFO_MISSING",
+      "severity": "warning",
+      "location": "servers",
+      "evidence": "來源未提供可供 path operation 使用的 concrete server URL",
+      "suggested_fix": "由來源補上 environment base_url；不可臆測 server URL",
+      "auto_fixable": false,
+      "target_file": null,
+      "field_path": null,
+      "requery_scope": null
+    }
+  ],
+  "root_causes": []
+}

@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "crypto": [],
+  "callbacks": [],
+  "field_conditions": [],
+  "test_cases": [],
+  "api_title": "VG 游戏 API 文档",
+  "base_urls": [
+    {
+      "name": "production",
+      "base_url": "https://api.vg-organization.com",
+      "version": null
+    }
+  ],
+  "error_codes": [],
+  "missing": []
+}

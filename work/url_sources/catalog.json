@@ -1,0 +1,34 @@
+{
+  "entry_url": "https://vg-organization.gitbook.io/vg-docs",
+  "nodes": [
+    {
+      "url": "https://vg-organization.gitbook.io/vg-docs",
+      "title": "VG 文档",
+      "breadcrumb": [
+        "VG 文档"
+      ],
+      "parent_url": null,
+      "anchor": null
+    },
+    {
+      "url": "https://vg-organization.gitbook.io/vg-docs/vg-wen-dang/dan-yi-qian-bao",
+      "title": "单一钱包",
+      "breadcrumb": [
+        "VG 文档",
+        "单一钱包"
+      ],
+      "parent_url": "https://vg-organization.gitbook.io/vg-docs",
+      "anchor": null
+    },
+    {
+      "url": "https://vg-organization.gitbook.io/vg-docs/vg-wen-dang/zhuan-zhang-qian-bao",
+      "title": "转账钱包",
+      "breadcrumb": [
+        "VG 文档",
+        "转账钱包"
+      ],
+      "parent_url": "https://vg-organization.gitbook.io/vg-docs",
+      "anchor": null
+    }
+  ]
+}

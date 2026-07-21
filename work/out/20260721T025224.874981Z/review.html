@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VG 游戏 API 文档 - 生成產物核對</title>
+  <style>
+:root {
+  color-scheme: light;
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --text: #1f2933;
+  --muted: #667085;
+  --line: #d8dee6;
+  --accent: #096b72;
+  --accent-2: #8a5a00;
+  --bad: #b42318;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+a { color: inherit; }
+code {
+  padding: 2px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #f2f4f7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+.review-dashboard {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+.page-head {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.page-head h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+.page-head p,
+.muted,
+.metric small {
+  color: var(--muted);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.metric,
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.metric {
+  min-height: 108px;
+  padding: 14px;
+  display: grid;
+  align-content: space-between;
+}
+.metric strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1.1;
+}
+.artifact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+.artifact-link {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-decoration: none;
+  background: #fbfcfd;
+}
+.artifact-link:hover {
+  border-color: var(--accent);
+}
+.artifact-link span {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+.panel {
+  margin-top: 16px;
+  overflow: hidden;
+}
+.panel > header {
+  padding: 16px 18px 0;
+}
+.panel h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  letter-spacing: 0;
+}
+.panel > .content {
+  padding: 16px 18px 18px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.compact-table {
+  min-width: 420px;
+}
+th,
+td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+.method,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e6f4f1;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.pill {
+  background: #fff6df;
+  color: var(--accent-2);
+}
+.risk-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.risk-list li {
+  display: grid;
+  grid-template-columns: auto minmax(96px, auto) 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.empty {
+  color: var(--muted);
+  margin: 0;
+}
+@media (max-width: 720px) {
+  .review-dashboard { width: min(100% - 20px, 1180px); padding-top: 20px; }
+  .risk-list li { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main class="review-dashboard">
+  <header class="page-head">
+    <p class="muted">Loop API Doc 生成產物核對</p>
+    <h1>VG 游戏 API 文档</h1>
+    <p>這份頁面彙整同一個 run directory 內的生成產物，供人工快速核對範圍、來源、缺漏與主要 API 結構。</p>
+  </header>
+
+  <section class="metrics" aria-label="生成摘要">
+    <section class="metric"><span>來源</span><strong>40</strong><small>manifest.json</small></section>
+<section class="metric"><span>Endpoint</span><strong>20</strong><small>OpenAPI paths</small></section>
+<section class="metric"><span>Webhook</span><strong>0</strong><small>OpenAPI webhooks</small></section>
+<section class="metric"><span>Schema</span><strong>0</strong><small>components.schemas</small></section>
+<section class="metric"><span>Auth</span><strong>1</strong><small>securitySchemes</small></section>
+<section class="metric"><span>範例</span><strong>20</strong><small>request examples</small></section>
+<section class="metric"><span>核對風險</span><strong>0</strong><small>缺漏／衝突／未確認</small></section>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>產物入口</h2>
+      <p class="muted">所有連結皆指向目前 run directory 的相對路徑，可離線開啟。</p>
+    </header>
+    <div class="content artifact-grid">
+      <a class="artifact-link" href="openapi.yaml"><strong>OpenAPI</strong><span>openapi.yaml</span></a>
+<a class="artifact-link" href="api-guide.zh-TW.md"><strong>串接文件</strong><span>api-guide.zh-TW.md</span></a>
+<a class="artifact-link" href="provenance.json"><strong>來源追溯</strong><span>provenance.json</span></a>
+<a class="artifact-link" href="plan/normalization-plan.json"><strong>規格化計畫</strong><span>plan/normalization-plan.json</span></a>
+<a class="artifact-link" href="validation/report.md"><strong>驗證報告</strong><span>validation/report.md</span></a>
+<a class="artifact-link" href="integration-contract.json"><strong>整合契約</strong><span>integration-contract.json</span></a>
+<a class="artifact-link" href="examples/README.md"><strong>請求範例</strong><span>examples/README.md</span></a>
+<a class="artifact-link" href="handoff/integration-tasks.md"><strong>開發交接</strong><span>handoff/integration-tasks.md</span></a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>人工核對重點</h2>
+      <p class="muted">優先檢查缺漏、來源衝突與未確認項目；驗證細節請看 validation/report.md。</p>
+    </header>
+    <div class="content">
+      <p class="empty">目前沒有計畫層級的缺漏、衝突或未確認項目。</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>Endpoint / Webhook</h2>
+      <p class="muted">核對 method、path、摘要、參數／回應數量、認證與來源定位。</p>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>方法</th><th>路徑／名稱</th><th>摘要</th><th>狀態</th><th>參數</th><th>回應</th><th>認證</th><th>來源</th></tr>
+        </thead>
+        <tbody><tr><td><span class="method">POST</span></td><td><code>/resettle</code></td><td>重新派彩</td><td>有來源</td><td>8</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩 / 06-ep0</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/win</code></td><td>派彩</td><td>有來源</td><td>8</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩 / 06-ep1</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/cancel</code></td><td>取消投注/结算</td><td>有來源</td><td>8</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算 / 06-ep2</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/bet</code></td><td>投注</td><td>有來源</td><td>9</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注 / 06-ep3</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/balance</code></td><td>余额查询</td><td>有來源</td><td>5</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md / vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询 / 06-ep4</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/sign-in</code></td><td>登入游戏</td><td>有來源</td><td>0</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏 / 06-ep5</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/sign-in</code></td><td>登入游戏</td><td>有來源</td><td>8</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏 / 06-ep6</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/table/list</code></td><td>牌桌列表</td><td>有來源</td><td>3</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表 / 06-ep7</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/table/list</code></td><td>牌桌列表</td><td>有來源</td><td>3</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表 / 06-ep8</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/bet/limit</code></td><td>玩家限红</td><td>有來源</td><td>5</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红 / 06-ep9</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/bet/limit</code></td><td>玩家限红</td><td>有來源</td><td>5</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红 / 06-ep10</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/bet/limit/list</code></td><td>限红列表</td><td>有來源</td><td>3</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表 / 06-ep11</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/bet/limit/list</code></td><td>限红列表</td><td>有來源</td><td>3</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表 / 06-ep12</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/bet/users</code></td><td>游戏结果</td><td>有來源</td><td>27</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果 / 06-ep13</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/bet/users</code></td><td>游戏结果</td><td>有來源</td><td>27</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果 / 06-ep14</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/balance</code></td><td>余额查询</td><td>有來源</td><td>4</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询 / 06-ep15</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vg/sign-up</code></td><td>注册用户</td><td>有來源</td><td>5</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md / vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户 / 06-ep16</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/sign-up</code></td><td>注册用户</td><td>有來源</td><td>5</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户 / 05-initial<br>vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户 / 06-ep17</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/points</code></td><td>转账功能</td><td>有來源</td><td>7</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能 / 05-initial<br>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能 / 06-ep18</td></tr>
+<tr><td><span class="method">POST</span></td><td><code>/vgtransfer/log</code></td><td>转账记录</td><td>有來源</td><td>20</td><td>1</td><td>MD5Signature</td><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录 / 05-initial<br>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md / vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录 / 06-ep19</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>Schema</h2>
+      <p class="muted">核對 component key、來源名稱、欄位數與必填欄位數。</p>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>來源名稱</th><th>狀態</th><th>欄位</th><th>必填</th><th>來源</th></tr>
+        </thead>
+        <tbody><tr><td colspan="6" class="empty">沒有 schema。</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>環境與驗證</h2>
+      <p class="muted">核對 base URL 與安全機制是否與來源文件一致。</p>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>環境</th><th>base URL</th><th>版本</th><th>來源</th></tr>
+        </thead>
+        <tbody><tr><td>production</td><td><code>https://api.vg-organization.com</code></td><td>-</td><td>vg-wen-dang.md / vg-wen-dang.md / 03-initial</td></tr></tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Key</th><th>原名</th><th>Type</th><th>位置</th><th>說明</th><th>來源</th></tr>
+        </thead>
+        <tbody><tr><td><code>MD5Signature</code></td><td>MD5Signature</td><td>apiKey</td><td>body</td><td>MD5 signature using API_KEY. See 加密说明.</td><td>vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md / vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md / 04-initial</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>整合契約</h2>
+      <p class="muted">來源有提供簽章、加密、回呼或條件欄位時，這裡提供快速總覽。</p>
+    </header>
+    <div class="content">
+      <div class="table-wrap"><table class="compact-table"><thead><tr><th>項目</th><th>數量</th><th>來源產物</th></tr></thead><tbody><tr><td>加解密／簽章</td><td>1</td><td><code>integration-contract.json</code></td></tr>
+<tr><td>回呼</td><td>0</td><td><code>integration-contract.json</code></td></tr>
+<tr><td>條件欄位</td><td>0</td><td><code>integration-contract.json</code></td></tr>
+<tr><td>契約測試</td><td>0</td><td><code>integration-contract.json</code></td></tr>
+<tr><td>整合缺漏</td><td>0</td><td><code>integration-contract.json</code></td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <h2>來源清單</h2>
+      <p class="muted">用於確認本次 run 的來源範圍。</p>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>來源</th><th>格式</th><th>狀態</th></tr>
+        </thead>
+        <tbody><tr><td>vg-wen-dang.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/fu-lu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/fu-lu/kai-pai-jie-guo.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/fu-lu/tou-zhu-pai-cai.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/fu-lu/yu-xi-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/fu-lu.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/kai-pai-jie-guo.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/tou-zhu-pai-cai.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/xiang-ying-dai-ma.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/fu-lu/yu-xi-lie-biao.md</td><td>markdown</td><td>pending</td></tr>
+<tr><td>vg-wen-dang/zhuan-zhang-qian-bao/jia-mi-shuo-ming.md</td><td>markdown</td><td>pending</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>

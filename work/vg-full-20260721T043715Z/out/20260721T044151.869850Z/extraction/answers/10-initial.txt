@@ -1,0 +1,3 @@
+```json
+{"missing": ["API base URL not stated in sources", "Document/API version not stated", "Error HTTP status mapping not stated", "Error code applicable endpoints not stated"]}
+```

@@ -1,0 +1,3 @@
+```json
+{"security_schemes": [{"name": "sign", "type": "apiKey", "location": "body", "details": "将所有参数字首按顺序排列，将值串成字串，最后加上 API_KEY，以 MD5 加密取得 sign 值；sign 放在请求 body。", "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md# 加密说明"}]}
+```

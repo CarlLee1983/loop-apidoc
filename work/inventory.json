@@ -1,0 +1,168 @@
+{
+  "title": "VG 游戏 API 文档",
+  "version": "1.0.0",
+  "overview": "VG 游戏单一钱包与转账钱包 API 整合文档。",
+  "environments": [
+    {
+      "name": "production",
+      "base_url": "https://api.vg-organization.com",
+      "version": null,
+      "source": "vg-wen-dang.md"
+    }
+  ],
+  "security_schemes": [
+    {
+      "name": "MD5Signature",
+      "type": "apiKey",
+      "location": "body",
+      "details": "MD5 signature using API_KEY. See 加密说明.",
+      "source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/resettle",
+      "summary": "重新派彩",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/win",
+      "summary": "派彩",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/cancel",
+      "summary": "取消投注/结算",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/bet",
+      "summary": "投注",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/balance",
+      "summary": "余额查询",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/sign-in",
+      "summary": "登入游戏",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-in",
+      "summary": "登入游戏",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/table/list",
+      "summary": "牌桌列表",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/table/list",
+      "summary": "牌桌列表",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit",
+      "summary": "玩家限红",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit",
+      "summary": "玩家限红",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/limit/list",
+      "summary": "限红列表",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/limit/list",
+      "summary": "限红列表",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/bet/users",
+      "summary": "游戏结果",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/bet/users",
+      "summary": "游戏结果",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/balance",
+      "summary": "余额查询",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vg/sign-up",
+      "summary": "注册用户",
+      "source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/sign-up",
+      "summary": "注册用户",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/points",
+      "summary": "转账功能",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能",
+      "server": null
+    },
+    {
+      "method": "POST",
+      "path": "/vgtransfer/log",
+      "summary": "转账记录",
+      "source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录",
+      "server": null
+    }
+  ],
+  "schemas": [],
+  "errors": [],
+  "operational": [],
+  "missing": []
+}

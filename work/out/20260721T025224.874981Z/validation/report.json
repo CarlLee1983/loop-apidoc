@@ -1,0 +1,16 @@
+{
+  "issues": [
+    {
+      "code": "REQUIRED_INFO_MISSING",
+      "severity": "warning",
+      "location": "operational",
+      "evidence": "缺少 rate limit/timeout/retry 等 operational 資訊",
+      "suggested_fix": "由來源補上 operational 資訊",
+      "auto_fixable": false,
+      "target_file": null,
+      "field_path": null,
+      "requery_scope": null
+    }
+  ],
+  "root_causes": []
+}

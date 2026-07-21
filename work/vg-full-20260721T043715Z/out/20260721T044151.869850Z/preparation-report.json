@@ -1,0 +1,1347 @@
+{
+  "status": "needs_attention",
+  "summary": {
+    "ready": 1,
+    "needs_attention": 4,
+    "blocked": 0
+  },
+  "phases": [
+    {
+      "id": "sources",
+      "label": "Sources",
+      "status": "ready",
+      "metrics": {
+        "local_sources": 80,
+        "supported_local_sources": 40,
+        "successful_urls": 1,
+        "unsupported_sources": 0,
+        "unreadable_sources": 0
+      },
+      "findings": []
+    },
+    {
+      "id": "extraction",
+      "label": "Extraction",
+      "status": "needs_attention",
+      "metrics": {
+        "inventory_endpoints": 20,
+        "endpoint_detail_files": 20,
+        "inventory_missing_items": 4,
+        "endpoint_missing_items": 64
+      },
+      "findings": [
+        {
+          "severity": "warning",
+          "summary": "inventory missing item: API base URL not stated in sources",
+          "evidence": "",
+          "suggested_action": "re-read source material and fill or justify this inventory gap.",
+          "target_file": "inventory.json",
+          "field_path": "/missing/0",
+          "requery_scope": "API base URL not stated in sources"
+        },
+        {
+          "severity": "warning",
+          "summary": "inventory missing item: Document/API version not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and fill or justify this inventory gap.",
+          "target_file": "inventory.json",
+          "field_path": "/missing/1",
+          "requery_scope": "Document/API version not stated"
+        },
+        {
+          "severity": "warning",
+          "summary": "inventory missing item: Error HTTP status mapping not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and fill or justify this inventory gap.",
+          "target_file": "inventory.json",
+          "field_path": "/missing/2",
+          "requery_scope": "Error HTTP status mapping not stated"
+        },
+        {
+          "severity": "warning",
+          "summary": "inventory missing item: Error code applicable endpoints not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and fill or justify this inventory gap.",
+          "target_file": "inventory.json",
+          "field_path": "/missing/3",
+          "requery_scope": "Error code applicable endpoints not stated"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep0.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep0.json",
+          "field_path": "/missing/1",
+          "requery_scope": "body field required flags not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep0.json",
+          "field_path": "/missing/2",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep1.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required flags not documented for agent, language, loginname, return_url, token, sign",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep1.json",
+          "field_path": "/missing/1",
+          "requery_scope": "required flags not documented for agent, language, loginname, return_url, token, sign"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep1.json",
+          "field_path": "/missing/2",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep2.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep2.json",
+          "field_path": "/missing/1",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: conditional required semantics for starttime/endtime when roundid or betid is provided not fully specified",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep2.json",
+          "field_path": "/missing/2",
+          "requery_scope": "conditional required semantics for starttime/endtime when roundid or betid is provided not fully specified"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep3.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep3.json",
+          "field_path": "/missing/1",
+          "requery_scope": "body field required flags not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep3.json",
+          "field_path": "/missing/2",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep4.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep4.json",
+          "field_path": "/missing/1",
+          "requery_scope": "body field required flags not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep4.json",
+          "field_path": "/missing/2",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: complete list of limit codes not documented (only example codes A and A1 shown)",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep4.json",
+          "field_path": "/missing/3",
+          "requery_scope": "complete list of limit codes not documented (only example codes A and A1 shown)"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep5.json",
+          "field_path": "/missing/0",
+          "requery_scope": "HTTP status code not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep5.json",
+          "field_path": "/missing/1",
+          "requery_scope": "body field required flags not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep5.json",
+          "field_path": "/missing/2",
+          "requery_scope": "failure/error response body not documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: response field meanings documented only via JSON example, not prose",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep5.json",
+          "field_path": "/missing/3",
+          "requery_scope": "response field meanings documented only via JSON example, not prose"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep6.json",
+          "field_path": "/missing/0",
+          "requery_scope": "detail sub-fields have no field-description table (types inferred from Body params JSON example only)"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep6.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep6.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep6.json",
+          "field_path": "/missing/3",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep7.json",
+          "field_path": "/missing/0",
+          "requery_scope": "detail sub-fields have no field-description table (types inferred from Body params JSON example only)"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep7.json",
+          "field_path": "/missing/1",
+          "requery_scope": "detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep7.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep7.json",
+          "field_path": "/missing/3",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep7.json",
+          "field_path": "/missing/4",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep8.json",
+          "field_path": "/missing/0",
+          "requery_scope": "detail sub-fields have no field-description table (types inferred from Body params JSON example only)"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep8.json",
+          "field_path": "/missing/1",
+          "requery_scope": "detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep8.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep8.json",
+          "field_path": "/missing/3",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep8.json",
+          "field_path": "/missing/4",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no Body params JSON request example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep9.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no Body params JSON request example on this page"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: detail field structure not documented beyond type object",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep9.json",
+          "field_path": "/missing/1",
+          "requery_scope": "detail field structure not documented beyond type object"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep9.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep9.json",
+          "field_path": "/missing/3",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep9.json",
+          "field_path": "/missing/4",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no request-body JSON example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep10.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no request-body JSON example on this page"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep10.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep10.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep10.json",
+          "field_path": "/missing/3",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no request-body JSON example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep11.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no request-body JSON example on this page"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep11.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no HTTP status code documented for the response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep11.json",
+          "field_path": "/missing/2",
+          "requery_scope": "no failure-response body documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep11.json",
+          "field_path": "/missing/3",
+          "requery_scope": "required/optional not stated for Header or Body fields"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep12.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep12.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep13.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep13.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep14.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep14.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep15.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep15.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep16.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep16.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: starttime and endtime requiredness is conditional on roundid/betid usage",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep16.json",
+          "field_path": "/missing/2",
+          "requery_scope": "starttime and endtime requiredness is conditional on roundid/betid usage"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep17.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep17.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep18.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep18.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep19.json",
+          "field_path": "/missing/0",
+          "requery_scope": "no HTTP status code documented for Success response"
+        },
+        {
+          "severity": "warning",
+          "summary": "endpoint missing item: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material for this endpoint and fill the missing field.",
+          "target_file": "endpoints/ep19.json",
+          "field_path": "/missing/1",
+          "requery_scope": "no error response documented"
+        }
+      ]
+    },
+    {
+      "id": "normalization_plan",
+      "label": "Normalization Plan",
+      "status": "needs_attention",
+      "metrics": {
+        "missing_items": 68,
+        "source_conflicts": 0,
+        "unverified_items": 0
+      },
+      "findings": [
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 10: API base URL not stated in sources",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "10-initial"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 10: Document/API version not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "10-initial"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 10: Error HTTP status mapping not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "10-initial"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 10: Error code applicable endpoints not stated",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "10-initial"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep0"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep0"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep0"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep1"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required flags not documented for agent, language, loginname, return_url, token, sign",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep1"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep1"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep2"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep2"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: conditional required semantics for starttime/endtime when roundid or betid is provided not fully specified",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep2"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep3"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep3"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep3"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep4"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep4"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep4"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: complete list of limit codes not documented (only example codes A and A1 shown)",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep4"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: HTTP status code not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep5"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: body field required flags not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep5"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: failure/error response body not documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep5"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: response field meanings documented only via JSON example, not prose",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep5"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep6"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep6"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep6"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep6"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep7"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep7"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep7"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep7"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep7"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail sub-fields have no field-description table (types inferred from Body params JSON example only)",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep8"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail.settletime, detail.percentage, detail.fanshui, detail.detail have null in example so type unknown",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep8"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep8"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep8"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep8"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no Body params JSON request example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep9"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: detail field structure not documented beyond type object",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep9"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep9"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep9"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep9"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no request-body JSON example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep10"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep10"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep10"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep10"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no request-body JSON example on this page",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep11"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for the response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep11"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no failure-response body documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep11"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: required/optional not stated for Header or Body fields",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep11"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep12"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep12"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep13"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep13"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep14"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep14"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep15"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep15"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep16"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep16"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: starttime and endtime requiredness is conditional on roundid/betid usage",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep16"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep17"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep17"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep18"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep18"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no HTTP status code documented for Success response",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep19"
+        },
+        {
+          "severity": "warning",
+          "summary": "plan missing item: 06: no error response documented",
+          "evidence": "",
+          "suggested_action": "re-read source material and update the extracted answer that feeds this plan field.",
+          "target_file": "inventory.json",
+          "field_path": null,
+          "requery_scope": "06-ep19"
+        }
+      ]
+    },
+    {
+      "id": "integration_contract",
+      "label": "Integration Contract",
+      "status": "needs_attention",
+      "metrics": {
+        "crypto": 2,
+        "callbacks": 5,
+        "field_conditions": 6,
+        "test_cases": 2,
+        "missing_items": 4
+      },
+      "findings": [
+        {
+          "severity": "warning",
+          "summary": "integration contract missing item: callbacks.base_url: 来源将钱包页标为「商户接口」，但未给出商户托管回调的 base URL / host",
+          "evidence": "",
+          "suggested_action": "re-read source material and complete integration.json or record why it is absent.",
+          "target_file": "integration.json",
+          "field_path": "/missing/0",
+          "requery_scope": "callbacks.base_url"
+        },
+        {
+          "severity": "warning",
+          "summary": "integration contract missing item: callbacks.trigger: 未说明各商户接口何时由平台发起",
+          "evidence": "",
+          "suggested_action": "re-read source material and complete integration.json or record why it is absent.",
+          "target_file": "integration.json",
+          "field_path": "/missing/1",
+          "requery_scope": "callbacks.trigger"
+        },
+        {
+          "severity": "warning",
+          "summary": "integration contract missing item: crypto.optional_params: 可选参数缺席时是否省略于签名串，来源未另述",
+          "evidence": "",
+          "suggested_action": "re-read source material and complete integration.json or record why it is absent.",
+          "target_file": "integration.json",
+          "field_path": "/missing/2",
+          "requery_scope": "crypto.optional_params"
+        },
+        {
+          "severity": "warning",
+          "summary": "integration contract missing item: crypto.numeric_stringification: 数值栏位串接前如何转成字串未说明",
+          "evidence": "",
+          "suggested_action": "re-read source material and complete integration.json or record why it is absent.",
+          "target_file": "integration.json",
+          "field_path": "/missing/3",
+          "requery_scope": "crypto.numeric_stringification"
+        }
+      ]
+    },
+    {
+      "id": "url_coverage",
+      "label": "URL Coverage",
+      "status": "needs_attention",
+      "metrics": {
+        "url_sources": 1,
+        "expected": 40,
+        "fetched": 40,
+        "fetch_failed": 0,
+        "empty_suspect": 0,
+        "auth_required": 0,
+        "not_fetched": 0
+      },
+      "findings": [
+        {
+          "severity": "warning",
+          "summary": "expected URL list was not confirmed by a human",
+          "evidence": "",
+          "suggested_action": "Review the discovered page list with the user, or accept it as machine-discovered only.",
+          "target_file": "url_sources/coverage.json",
+          "field_path": "/confirmed_by_user",
+          "requery_scope": null
+        }
+      ]
+    }
+  ]
+}

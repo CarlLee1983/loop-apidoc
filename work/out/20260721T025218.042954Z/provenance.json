@@ -1,0 +1,357 @@
+{
+  "notebook_url": "",
+  "entries": [
+    {
+      "target": "info.title",
+      "status": "supported",
+      "manifest_source": null,
+      "query_id": null,
+      "answer_path": null,
+      "locator": null
+    },
+    {
+      "target": "info.version",
+      "status": "supported",
+      "manifest_source": null,
+      "query_id": null,
+      "answer_path": null,
+      "locator": null
+    },
+    {
+      "target": "servers[0]",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang.md",
+      "query_id": "03-initial",
+      "answer_path": "answers/03-initial.txt",
+      "locator": "vg-wen-dang.md"
+    },
+    {
+      "target": "components.securitySchemes.MD5Signature",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md",
+      "query_id": "04-initial",
+      "answer_path": "answers/04-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/jia-mi-shuo-ming.md"
+    },
+    {
+      "target": "paths./resettle.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩"
+    },
+    {
+      "target": "paths./resettle.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md",
+      "query_id": "06-ep0",
+      "answer_path": "answers/06-ep0.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/chong-xin-pai-cai.md# 重新派彩"
+    },
+    {
+      "target": "paths./win.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩"
+    },
+    {
+      "target": "paths./win.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md",
+      "query_id": "06-ep1",
+      "answer_path": "answers/06-ep1.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/pai-cai.md# 派彩"
+    },
+    {
+      "target": "paths./cancel.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算"
+    },
+    {
+      "target": "paths./cancel.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md",
+      "query_id": "06-ep2",
+      "answer_path": "answers/06-ep2.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/qu-xiao-tou-zhu-jie-suan.md# 取消投注/结算"
+    },
+    {
+      "target": "paths./bet.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注"
+    },
+    {
+      "target": "paths./bet.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md",
+      "query_id": "06-ep3",
+      "answer_path": "answers/06-ep3.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/tou-zhu.md# 投注"
+    },
+    {
+      "target": "paths./balance.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询"
+    },
+    {
+      "target": "paths./balance.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+      "query_id": "06-ep4",
+      "answer_path": "answers/06-ep4.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md# 余额查询"
+    },
+    {
+      "target": "paths./vg/sign-in.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+    },
+    {
+      "target": "paths./vg/sign-in.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+      "query_id": "06-ep5",
+      "answer_path": "answers/06-ep5.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+    },
+    {
+      "target": "paths./vgtransfer/sign-in.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+    },
+    {
+      "target": "paths./vgtransfer/sign-in.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/deng-ru-you-xi.md",
+      "query_id": "06-ep6",
+      "answer_path": "answers/06-ep6.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/deng-ru-you-xi.md# 登入游戏"
+    },
+    {
+      "target": "paths./vg/table/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+    },
+    {
+      "target": "paths./vg/table/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+      "query_id": "06-ep7",
+      "answer_path": "answers/06-ep7.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+    },
+    {
+      "target": "paths./vgtransfer/table/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+    },
+    {
+      "target": "paths./vgtransfer/table/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/pai-zhuo-lie-biao.md",
+      "query_id": "06-ep8",
+      "answer_path": "answers/06-ep8.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/pai-zhuo-lie-biao.md# 牌桌列表"
+    },
+    {
+      "target": "paths./vg/bet/limit.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+    },
+    {
+      "target": "paths./vg/bet/limit.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+      "query_id": "06-ep9",
+      "answer_path": "answers/06-ep9.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+    },
+    {
+      "target": "paths./vgtransfer/bet/limit.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+    },
+    {
+      "target": "paths./vgtransfer/bet/limit.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/wan-jia-xian-hong.md",
+      "query_id": "06-ep10",
+      "answer_path": "answers/06-ep10.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/wan-jia-xian-hong.md# 玩家限红"
+    },
+    {
+      "target": "paths./vg/bet/limit/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+    },
+    {
+      "target": "paths./vg/bet/limit/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+      "query_id": "06-ep11",
+      "answer_path": "answers/06-ep11.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+    },
+    {
+      "target": "paths./vgtransfer/bet/limit/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+    },
+    {
+      "target": "paths./vgtransfer/bet/limit/list.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/xian-hong-lie-biao.md",
+      "query_id": "06-ep12",
+      "answer_path": "answers/06-ep12.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/xian-hong-lie-biao.md# 限红列表"
+    },
+    {
+      "target": "paths./vg/bet/users.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+    },
+    {
+      "target": "paths./vg/bet/users.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+      "query_id": "06-ep13",
+      "answer_path": "answers/06-ep13.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+    },
+    {
+      "target": "paths./vgtransfer/bet/users.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+    },
+    {
+      "target": "paths./vgtransfer/bet/users.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/you-xi-jie-guo.md",
+      "query_id": "06-ep14",
+      "answer_path": "answers/06-ep14.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/you-xi-jie-guo.md# 游戏结果"
+    },
+    {
+      "target": "paths./vgtransfer/balance.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询"
+    },
+    {
+      "target": "paths./vgtransfer/balance.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/qian-bao/yuecha-xun.md",
+      "query_id": "06-ep15",
+      "answer_path": "answers/06-ep15.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/yuecha-xun.md# 余额查询"
+    },
+    {
+      "target": "paths./vg/sign-up.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+    },
+    {
+      "target": "paths./vg/sign-up.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+      "query_id": "06-ep16",
+      "answer_path": "answers/06-ep16.txt",
+      "locator": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+    },
+    {
+      "target": "paths./vgtransfer/sign-up.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+    },
+    {
+      "target": "paths./vgtransfer/sign-up.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/dan-yi-qian-bao/api/you-xi/zhu-ce-yong-hu.md",
+      "query_id": "06-ep17",
+      "answer_path": "answers/06-ep17.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhu-ce-yong-hu.md# 注册用户"
+    },
+    {
+      "target": "paths./vgtransfer/points.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能"
+    },
+    {
+      "target": "paths./vgtransfer/points.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md",
+      "query_id": "06-ep18",
+      "answer_path": "answers/06-ep18.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-gong-neng.md# 转账功能"
+    },
+    {
+      "target": "paths./vgtransfer/log.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md",
+      "query_id": "05-initial",
+      "answer_path": "answers/05-initial.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录"
+    },
+    {
+      "target": "paths./vgtransfer/log.post",
+      "status": "supported",
+      "manifest_source": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md",
+      "query_id": "06-ep19",
+      "answer_path": "answers/06-ep19.txt",
+      "locator": "vg-wen-dang/zhuan-zhang-qian-bao/api/you-xi/zhuan-zhang-ji-lu.md# 转账记录"
+    }
+  ]
+}

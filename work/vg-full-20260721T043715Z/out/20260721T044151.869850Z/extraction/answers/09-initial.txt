@@ -1,0 +1,3 @@
+```json
+{"operational": [{"topic": "请求频率限制", "detail": "请求限制，每3秒仅能叫用一次（响应代码 5040）。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"}, {"topic": "查询时间区段限制", "detail": "每一个请求区间不超过 24小时，此外可查询资料仅为6个月内的资料（响应代码 5041）。", "source": "vg-wen-dang/dan-yi-qian-bao/fu-lu/xiang-ying-dai-ma.md# 响应代码"}]}
+```
