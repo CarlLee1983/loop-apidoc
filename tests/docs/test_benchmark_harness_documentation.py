@@ -71,11 +71,10 @@ def _agent_benchmark_section(path: str) -> str:
     return text.split(AGENT_SECTION_MARKER, 1)[1].strip()
 
 
-def test_agent_benchmark_contract_sections_are_identical():
+def test_agents_is_the_canonical_benchmark_contract():
     agents = _agent_benchmark_section("AGENTS.md")
-    claude = _agent_benchmark_section("CLAUDE.md")
 
-    assert agents == claude
     assert "REQUIRED_BENCHMARK_CASES" in agents
     assert "A skipped case has not passed" in agents
     assert "--strict-local" in agents
+    assert "AGENTS.md" in Path("CLAUDE.md").read_text(encoding="utf-8")

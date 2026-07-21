@@ -200,6 +200,67 @@ def cache_url_entry(
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / 1 個入口頁，未送入模型")
 
 
+@app.command(name="cache-gitbook-llms")
+def cache_gitbook_llms_command(
+    url: str = typer.Option(..., "--url", help="GitBook 文件入口 URL"),
+    sources: Path = typer.Option(..., "--sources", help="不可變本機 Markdown 來源目錄"),
+    coverage: Path = typer.Option(..., "--coverage", help="輸出的 URL coverage JSON"),
+    max_bytes: Annotated[int, typer.Option("--max-bytes", min=1)] = 5 * 1024 * 1024,
+) -> None:
+    """從 GitBook llms.txt 快取所有安全、同範圍的 Markdown 頁面。"""
+    from loop_apidoc.gitbook_llms import GitBookLlmsError, cache_gitbook_llms
+
+    try:
+        result = cache_gitbook_llms(
+            url,
+            sources=sources,
+            coverage_output=coverage,
+            max_bytes=max_bytes,
+        )
+    except GitBookLlmsError as exc:
+        typer.echo(f"cache-gitbook-llms error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "index_url": result.index_url,
+                "sources": str(result.sources),
+                "coverage": str(result.coverage_path),
+                "fetched": result.fetched,
+                "fetch_failed": result.failed,
+            },
+            ensure_ascii=False,
+        )
+    )
+
+
+@app.command(name="extract-markdown-drafts")
+def extract_markdown_drafts_command(
+    sources: Path = typer.Option(
+        ..., "--sources", help="本機 Markdown 來源目錄", exists=True, file_okay=False, dir_okay=True, readable=True,
+    ),
+    manifest: Path = typer.Option(..., "--manifest", help="manifest.json", exists=True, readable=True),
+    output: Path = typer.Option(..., "--output", help="輸出的 markdown-api-facts.json"),
+) -> None:
+    """從 manifest 指名的 Markdown 產生非權威 API facts 草稿。"""
+    from loop_apidoc.markdown_drafts.collect import (
+        MarkdownDraftInputError,
+        collect_markdown_drafts,
+        load_manifest,
+    )
+
+    try:
+        if output.exists():
+            raise MarkdownDraftInputError(f"output already exists: {output}")
+        drafts = collect_markdown_drafts(sources, load_manifest(manifest))
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(drafts.model_dump_json(indent=2), encoding="utf-8")
+    except (MarkdownDraftInputError, OSError) as exc:
+        typer.echo(f"extract-markdown-drafts error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Markdown API drafts 已寫入 {output}；掃描 {len(drafts.sources)} 個來源，僅供擷取輔助")
+
+
 @app.command(name="snapshot-openapi-url")
 def snapshot_openapi_url_command(
     url: str = typer.Option(..., "--url", help="直接回傳 OpenAPI JSON/YAML 的公開 URL"),

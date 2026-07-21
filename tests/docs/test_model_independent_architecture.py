@@ -11,10 +11,7 @@ def test_architecture_docs_name_the_new_product_boundary():
     assert "Runtime Adapter" in Path("README.md").read_text(encoding="utf-8")
 
 
-def test_agent_guidance_stays_synchronized():
-    agents = Path("AGENTS.md").read_text(encoding="utf-8")
+def test_claude_guidance_refers_to_the_canonical_agents_file():
     claude = Path("CLAUDE.md").read_text(encoding="utf-8")
-    assert (
-        agents[agents.index("## What this is") :]
-        == claude[claude.index("## What this is") :]
-    )
+    assert "AGENTS.md" in claude
+    assert "canonical" in claude.lower()

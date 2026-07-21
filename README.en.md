@@ -251,6 +251,31 @@ The command downloads once, validates the declaration, then writes the original 
 and a `method: direct` coverage ledger. Existing snapshots and coverage ledgers are never
 overwritten; subsequent manifest and extraction work reads only the local file.
 
+### GitBook `llms.txt` — deterministic Markdown acquisition
+
+For a GitBook entry that publishes `llms.txt`, cache its documented Markdown corpus instead of
+spending model context on a JavaScript shell:
+
+```bash
+uv run loop-apidoc cache-gitbook-llms \
+  --url "https://example.gitbook.io/docs" \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json
+uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.io/docs" \
+  --output ./work/manifest.preflight.json
+uv run loop-apidoc extract-markdown-drafts \
+  --sources ./sources --manifest ./work/manifest.preflight.json \
+  --output ./work/markdown-api-facts.json
+```
+
+The cache fetches `llms.txt` once, then saves every first-seen same-origin `.md` URL below the
+entry path while preserving URL hierarchy beneath `sources/`. Successful pages get an original
+URL/SHA-256/timestamp sidecar; invalid indexes or output collisions fail before a partial corpus
+is written, while individual page failures remain visible as `fetch_failed` coverage results.
+The facts JSON is a non-authoritative, line-cited draft of explicit endpoint headings, labelled
+parameter tables, and fenced examples. It supports bounded agent review but never replaces source
+reading, final agent extraction JSON, `verify-extraction`, or `assemble`.
+
 ### Model division in Codex and Claude Code
 
 The skill is model-neutral: the host maps a fast model to candidate routing, a standard

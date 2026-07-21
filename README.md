@@ -241,6 +241,31 @@ uv run loop-apidoc snapshot-openapi-url \
 此命令只下載一次，驗證規格宣告後寫入原始位元組、SHA-256 與 `method: direct` 的 coverage
 ledger；既有快照或 coverage 不會被覆寫。後續 `manifest` 與擷取工作一律讀取該本機檔案。
 
+### GitBook `llms.txt` — deterministic Markdown acquisition
+
+For a GitBook entry that publishes `llms.txt`, cache the documented Markdown corpus directly
+instead of spending model context on a JavaScript shell:
+
+```bash
+uv run loop-apidoc cache-gitbook-llms \
+  --url "https://example.gitbook.io/docs" \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json
+uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.io/docs" \
+  --output ./work/manifest.preflight.json
+uv run loop-apidoc extract-markdown-drafts \
+  --sources ./sources --manifest ./work/manifest.preflight.json \
+  --output ./work/markdown-api-facts.json
+```
+
+The cache fetches `llms.txt` once and caches every first-seen same-origin `.md` URL beneath the
+entry path, preserving its URL hierarchy under `sources/`. Each successful page gets an original
+URL/SHA-256/timestamp sidecar. Index/output failures fail before a partial corpus is written;
+individual page failures remain `fetch_failed` in the coverage ledger. The facts JSON is a
+non-authoritative, line-cited draft of explicit endpoint headings, labelled parameter tables,
+and fenced examples. It helps bounded agent review but never replaces source reading,
+`verify-extraction`, or final agent-written extraction JSON.
+
 ### Codex 與 Claude Code 的模型分工
 
 skill 不綁定特定模型：由宿主將快速模型用於候選頁路由、一般模型用於受限的單頁擷取、

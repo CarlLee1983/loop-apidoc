@@ -19,7 +19,6 @@ REQUIRED_DOCS = (
     "docs/architecture-manual.html",
     "skills/loop-apidoc/reference/assemble-and-correction.md",
     "AGENTS.md",
-    "CLAUDE.md",
 )
 
 
@@ -32,9 +31,7 @@ def test_shadow_mode_and_artifact_directory_are_documented(path: str):
 
 
 def test_agent_guides_name_shadow_report_as_file_io_exit():
-    for path in ("AGENTS.md", "CLAUDE.md"):
-        text = Path(path).read_text(encoding="utf-8")
-        assert "shadow/report.py" in text
+    assert "shadow/report.py" in Path("AGENTS.md").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("path", ["README.en.md", "README.md"])
@@ -100,10 +97,9 @@ def test_shadow_docs_explain_semantic_support_and_degraded_legacy_refs(path: str
 
 
 def test_agent_guides_keep_fragment_io_inventory_aligned():
-    for path in ("AGENTS.md", "CLAUDE.md"):
-        text = Path(path).read_text(encoding="utf-8")
-        assert "adapters/fragments.py" in text
-        assert "shadow/report.py" in text
+    text = Path("AGENTS.md").read_text(encoding="utf-8")
+    assert "adapters/fragments.py" in text
+    assert "shadow/report.py" in text
 
 
 def test_semantic_evidence_design_status_matches_implementation():
