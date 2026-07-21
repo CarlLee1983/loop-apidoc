@@ -177,10 +177,12 @@ PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、靜態 HTML 快照、公
 ### `manifest` — 建立來源 manifest
 
 ```bash
-uv run loop-apidoc manifest --sources ./sources [--url <URL> ...] [--output manifest.json]
+uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] [--output manifest.json]
 ```
 
 掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 `--output` 時輸出至 stdout。
+
+`--sources` 可接受本機來源目錄或單一來源檔案；若提供檔案，系統會以其父目錄作為 `sources_root`，且 manifest 僅包含該檔案。
 
 ### `catalog-url` / `select-url` — 先建立導航索引，再選取擷取範圍
 
