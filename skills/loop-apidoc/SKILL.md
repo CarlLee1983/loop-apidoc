@@ -18,8 +18,10 @@ Two reference files hold the heavy detail — load each when you reach that phas
   model, and the correction strategy (load when handling assemble results, steps 6–8).
 - **`reference/url-fetching.md`** — the coverage-checked URL fetching SOP + `coverage.json`
   schema (load when any source is a public URL, before fetching).
-- **`reference/model-orchestration.md`** — model-neutral role, artifact, escalation, and
-  runtime-mapping contract (load when splitting work across models or Codex/Claude agents).
+- **`reference/model-orchestration.md`** — model-neutral role, capability-tier, artifact, and
+  escalation contract (load **before dispatching any subagent**, not only when splitting work
+  across Codex/Claude runtimes — it is what keeps a bounded extraction off a high-reasoning
+  model).
 - **`reference/freshness-scheduling.md`** — the `record-fingerprint` / `check-freshness`
   scheduled-freshness gate (load when setting up scheduled re-checks so they skip
   extraction when sources are unchanged).
@@ -164,6 +166,22 @@ Grounding and the read-only posture toward *sources* are unchanged: a subagent o
 reads sources and never fetches the web. Control is regained by verification, not by
 carriage — `verify-extraction` (step 5) enforces the cross-file invariants.
 
+**Every dispatch names a role and a capability tier** (`reference/model-orchestration.md`).
+Source-quality review, inventory, endpoint, and integration extraction are all **`standard`**:
+they read a bounded local scope and emit a schema, which is not high-reasoning work. Reserve
+**`high`** for the correction rounds driven by `report.issues` and for genuine cross-source
+conflict adjudication. Inheriting the orchestrator's model is the common failure — it silently
+puts a one-file extraction on a high-reasoning tier and dominates the run's cost.
+
+**One exception, and it is about evidence, not difficulty.** The `standard` default is safe
+because `verify-extraction`'s source-fact check mechanically catches an extractor that dropped
+documented fields. That check only sees **well-structured Markdown**, so when the sources are
+flattened (PDF-derived text, a snapshot that lost its tables — symptom:
+`extract-markdown-drafts` reports few or no endpoints/fields for pages that clearly document
+them), the mechanical net is absent. Keep extraction at `high` there, and say so in the run
+summary. A host with no per-subagent model control runs everything on the session model; the
+artifacts are identical, only cost and latency differ.
+
 Grounding rule (include in every subagent prompt): *"Fill strictly from the sources. Anything
 the sources do not state → null and add a short label to `missing`. Never infer; never apply
 REST/OAuth conventions. Cite the manifest filename plus the most precise deterministic
@@ -297,6 +315,13 @@ level. The compatible run directory also contains the normal generated artifacts
 outside the selected level do not load or describe them. For PASS/FAIL detail, read
 `validation/report.md` only when its JSON counterpart is insufficient to drive correction;
 the `review.html` page does **not** embed a validation summary.
+
+State in the final summary, alongside `<OUTPUT_LEVEL>`, **which capability tier ran each
+stage** — quality review, inventory, endpoints, integration, and any correction round — plus
+the reason for any stage kept at `high` (flattened sources, or an actual correction round).
+This is the only visible record that the tier discipline held: a stage that silently inherited
+the orchestrator's model is otherwise indistinguishable from a correct run until the token
+bill arrives. Hosts with no per-subagent model control report the single session model.
 
 ## Other commands (outside the generate loop)
 
