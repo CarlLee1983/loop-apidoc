@@ -184,10 +184,12 @@ PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, static HTML snapshots, public 
 ### `manifest` — build source manifest
 
 ```bash
-uv run loop-apidoc manifest --sources ./sources [--url <URL> ...] [--output manifest.json]
+uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] [--output manifest.json]
 ```
 
 Scans local sources recording relative path, format, size, SHA-256, scan time, support status, duplicate detection, and processing status; public URLs also record fetch time, HTTP status, and content hash. Without `--output`, prints to stdout.
+
+`--sources` accepts either a directory of local source files or one source file. When a file is supplied, its parent directory becomes `sources_root` and the manifest contains only that file.
 
 ### `catalog-url` / `select-url` — index navigation before fetching pages
 
