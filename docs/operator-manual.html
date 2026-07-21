@@ -165,9 +165,9 @@ uv run loop-apidoc --help
 </code></pre>
 <p>以 pymupdf4llm 把 <code>--sources</code> 下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 <code>--out</code> 目錄。</p>
 <h3 id="manifest-manifest"><code>manifest</code> — 建立來源 manifest</h3>
-<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources [--url &lt;URL&gt; ...] [--output manifest.json]
+<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--output manifest.json]
 </code></pre>
-<p>掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 <code>--output</code> 時輸出至 stdout。</p>
+<p>掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。<code>--sources</code> 可接受目錄或單一來源檔案；若提供檔案，會以其父目錄作為 <code>sources_root</code>，且 manifest 僅包含該檔案。省略 <code>--output</code> 時輸出至 stdout。</p>
 <h3 id="url-corpus">URL 導航與快取 — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
 <pre><code class="language-bash"># 只下載入口頁一次，建立側欄導航索引（不自動擷取子頁）
 uv run loop-apidoc catalog-url --url &lt;入口頁 URL&gt; --output ./work/url_sources/catalog.json

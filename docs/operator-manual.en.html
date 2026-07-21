@@ -164,9 +164,9 @@ uv run loop-apidoc --help
 </code></pre>
 <p>Uses pymupdf4llm to convert each PDF under <code>--sources</code> into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
 <h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
-<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources [--url &lt;URL&gt; ...] [--output manifest.json]
+<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--output manifest.json]
 </code></pre>
-<p>Scans local sources, recording relative path, format, size, SHA-256, scan time, whether supported, duplicate determination, and processing status; public URLs additionally record fetch time, HTTP status, and content hash. When <code>--output</code> is omitted, output goes to stdout.</p>
+<p>Scans local sources, recording relative path, format, size, SHA-256, scan time, whether supported, duplicate determination, and processing status; public URLs additionally record fetch time, HTTP status, and content hash. <code>--sources</code> accepts a directory or one source file; for a file, its parent becomes <code>sources_root</code> and the manifest contains only that file. When <code>--output</code> is omitted, output goes to stdout.</p>
 <h3 id="url-corpus">URL navigation and caching — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
 <pre><code class="language-bash"># Download the entry page only once and build a sidebar navigation index (does not auto-fetch child pages)
 uv run loop-apidoc catalog-url --url &lt;entry page URL&gt; --output ./work/url_sources/catalog.json
