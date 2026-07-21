@@ -27,6 +27,22 @@ def test_manifest_command_writes_output(tmp_path: Path):
     assert data["local_sources"][0]["status"] == "pending"
 
 
+def test_manifest_command_accepts_a_single_source_file(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    selected = sources / "guide.md"
+    selected.write_text("selected", encoding="utf-8")
+    (sources / "unselected.md").write_text("unselected", encoding="utf-8")
+
+    result = runner.invoke(app, ["manifest", "--sources", str(selected)])
+
+    assert result.exit_code == 0, result.stdout
+    data = json.loads(result.stdout)
+    assert data["sources_root"] == str(sources)
+    assert [source["relative_path"] for source in data["local_sources"]] == ["guide.md"]
+    assert data["local_sources"][0]["status"] == "pending"
+
+
 def test_manifest_command_prints_to_stdout(tmp_path: Path):
     sources = tmp_path / "sources"
     sources.mkdir()
