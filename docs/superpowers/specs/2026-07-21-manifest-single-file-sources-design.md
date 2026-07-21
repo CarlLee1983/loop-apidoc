@@ -20,15 +20,15 @@ The CLI accepts an existing readable file or directory for `--sources`.
 - When `--sources` is a directory, it calls `build_manifest` exactly as it does
   today, including all default and user-supplied exclusions.
 - When it is a file, the CLI sets the manifest root to the file's parent
-  directory. It appends exclusion patterns for every sibling path except the
-  selected file, then calls the existing directory-based `build_manifest`.
+  directory, calls the existing directory-based `build_manifest`, and retains
+  only the selected file's manifest entry.
 - As a result, `Manifest.sources_root` is the selected file's parent and
   `local_sources` contains only the selected file, whose relative path is its
   filename (or its path relative to that parent).
 
 The builder and scanner remain directory-only APIs. This retains their current
 meaning: they scan a root tree and derive POSIX relative paths from that root.
-The CLI owns the user-facing path normalization.
+The CLI owns the user-facing path normalization and single-entry selection.
 
 ## Error Handling
 
