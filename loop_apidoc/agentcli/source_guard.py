@@ -150,6 +150,13 @@ def source_violations(
         for idx, entry in enumerate(_entries(inventory, section))
         if _cited(entry.get("source"))
     ]
+    field_scope = [
+        ("inventory.json", f"schemas[{schema_idx}].fields[{field_idx}].source", field["source"])
+        for schema_idx, schema in enumerate(_entries(inventory, "schemas"))
+        for field_idx, field in enumerate(schema.get("fields") or [])
+        if isinstance(field, dict) and _cited(field.get("source"))
+    ]
+    inventory_scope = [*inventory_scope, *field_scope]
     # endpoints/*.json share one scope: one file citing correctly proves the
     # contract was understood, so a sibling's odd citation is content, not format.
     endpoint_scope = [

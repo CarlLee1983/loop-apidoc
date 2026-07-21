@@ -64,6 +64,7 @@ class FieldEntry(_StrictEntry):
     description: str | None = None
     one_of: list[str] | None = None
     discriminator: dict[str, Any] | None = None
+    source: str | None = None
 
 
 class ParamEntry(_StrictEntry):
