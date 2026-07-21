@@ -141,11 +141,19 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   <APIDOC> extract-markdown-drafts --sources "<SOURCES>" \
     --manifest "<WORK>/manifest.preflight.json" \
     --output "<WORK>/markdown-api-facts.json"
+  <APIDOC> scaffold-extraction --sources "<SOURCES>" \
+    --manifest "<WORK>/manifest.preflight.json" \
+    --output "<WORK>/scaffold"
   ```
 
   The cache command writes every eligible same-origin, entry-prefix `.md` URL and per-page
   provenance sidecars; inspect its coverage failures. The facts file is a deterministic,
   line-cited aid for bounded review only, never final extraction JSON or source authority.
+  The scaffold is a second, extraction-shaped aid: it mechanically projects only explicit
+  tables and parseable JSON examples, then records every gap. **`<WORK>/scaffold` is not the
+  `--extraction` argument**. Copy its `inventory.json` and `endpoints/` files into `<WORK>/`,
+  re-read the cited sections, and fill security, integration, and `missing[]` gaps before
+  verifying `<WORK>`.
 
 ## Subagent contract (extraction)
 
