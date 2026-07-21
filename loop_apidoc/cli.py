@@ -50,9 +50,9 @@ def manifest(
     sources: Path = typer.Option(
         ...,
         "--sources",
-        help="本機來源目錄",
+        help="本機來源目錄或單一來源檔案",
         exists=True,
-        file_okay=False,
+        file_okay=True,
         dir_okay=True,
         readable=True,
     ),
@@ -74,12 +74,26 @@ def manifest(
 ) -> None:
     """掃描本機來源並建立來源 manifest。"""
     generated_at = datetime.now(timezone.utc)
+    sources_root = sources.parent if sources.is_file() else sources
+    selected_relative_path = (
+        sources.relative_to(sources_root).as_posix() if sources.is_file() else None
+    )
     result = build_manifest(
-        sources_root=sources,
+        sources_root=sources_root,
         urls=list(url),
         generated_at=generated_at,
         excludes=tuple(exclude),
     )
+    if selected_relative_path is not None:
+        result = result.model_copy(
+            update={
+                "local_sources": [
+                    source
+                    for source in result.local_sources
+                    if source.relative_path == selected_relative_path
+                ]
+            }
+        )
     payload = result.model_dump_json(indent=2)
     if output is None:
         typer.echo(payload)
