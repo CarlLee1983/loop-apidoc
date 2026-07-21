@@ -11,9 +11,28 @@ across runtimes.
 | --- | --- | --- | --- | --- |
 | tool | deterministic CLI | source files / cache | manifest, corpus, validation result | a fetch, schema, or coverage error occurs |
 | router | fast / low-cost | catalog or candidate cards | selected URLs, sections, and rationale | the candidate cards cannot distinguish scope |
+| quality reviewer | standard | the complete source package | source-quality observations JSON | a suspected gap cannot be cited to a source locator |
 | extractor | standard | assigned local source scope only | one schema-conformant JSON object or one assigned endpoint file | source is ambiguous, contradictory, or absent |
-| integrator | high reasoning | selected evidence and extraction summaries | cross-page conflict/gap assessment | assertion lacks a source citation |
+| integrator | standard | the integration/crypto/callback sections | integration.json | a mechanic is stated inconsistently across products |
+| conflict adjudicator | high reasoning | selected evidence and extraction summaries | cross-source conflict/gap assessment | assertion lacks a source citation |
 | verifier | high reasoning + CLI | extraction files, validation report, targeted source scope | bounded correction instructions or corrected assigned file | an error remains after targeted re-read |
+
+**Most of a normal run is `standard`.** Reading a bounded local scope and emitting a schema is
+not high-reasoning work — the `high` tier exists for the correction rounds driven by
+`report.issues` and for adjudicating genuine cross-source conflict, both of which are rare and
+neither of which happens on a clean first pass. A run where every extractor inherited the
+orchestrator's high-reasoning model has not bought accuracy; it has bought carriage.
+
+### When to keep extraction at `high`
+
+The `standard` default is safe because the CLI catches a weak extractor mechanically:
+`verify-extraction`'s source-fact check reports the exact fields an endpoint's source section
+documents but the extraction dropped, and rejects deferral placeholders on sight. That check
+only parses **well-structured Markdown** (headings, GFM tables, fenced blocks). When the
+sources are flattened — PDF-derived text, an HTML snapshot that lost its tables; the symptom is
+`extract-markdown-drafts` reporting few or no endpoints and fields for pages that plainly
+document them — the mechanical net is absent and a thin extraction passes silently. Keep
+extraction at `high` for those sources and record the choice in the run summary.
 
 The router ranks and selects; it does not establish API facts. The extractor never fills gaps
 from conventions. The integrator does not replace source evidence with consensus. The CLI's
@@ -41,19 +60,32 @@ catalog.json / corpus.json / candidates.json
 
 ## Runtime mapping
 
+Tiers are capability levels, never model names — the host binds them to whatever it offers. A
+host with **no** per-subagent model control runs every role on the session model: the artifacts
+are byte-identical because correctness is decided by the CLI's schema, provenance, coverage,
+and validation checks, not by which model produced the JSON. Only cost and latency degrade.
+
 ### Codex
 
 Map the roles to Codex's configured models or agents. In an OMX-enabled session, a typical
 mapping is `explore` for router, `executor` for extractor, and `verifier` for verifier; use the
 host's equivalent roles when OMX is not installed. The skill itself does not assume that those
-roles or particular model names exist.
+roles or particular model names exist. Codex resolves `<APIDOC>` to the globally installed
+`loop-apidoc`.
 
 ### Claude Code
 
-Map the same logical roles using the host's available agent/model controls. The plugin runs the
-same `<APIDOC>` commands through `$CLAUDE_PLUGIN_ROOT`; it does not launch a separate Claude
+Map the same logical roles using the host's available agent/model controls — the Agent tool's
+per-dispatch model override, or an agent definition's frontmatter. The plugin runs the same
+`<APIDOC>` commands through `$CLAUDE_PLUGIN_ROOT`; it does not launch a separate Claude
 process or require a model-specific CLI. Keep the tool artifacts and JSON contracts identical
 to Codex so work can move between runtimes.
+
+### Any other host
+
+Bind the tiers to whatever model selection exists and run the same `<APIDOC>` commands against
+a global install. The deterministic back half (`assemble` → plan/generate/validate) is a CLI
+and is host-independent; only the fan-out orchestration is the agent's.
 
 ## Escalation and stop rules
 
