@@ -34,11 +34,12 @@ def _field_target(schema_key: str, name: str) -> str | None:
     target = f"components.schemas.{schema_key}"
     segments = name.split(".")
     for index, segment in enumerate(segments):
-        property_name = segment.replace("[]", "")
-        if not property_name:
+        is_array = segment.endswith("[]")
+        key = segment[:-2] if is_array else segment
+        if not key:
             return None
-        target += f".properties.{property_name}"
-        if segment.endswith("[]") and index < len(segments) - 1:
+        target += f".properties.{key}"
+        if is_array and index < len(segments) - 1:
             target += ".items"
     return target
 

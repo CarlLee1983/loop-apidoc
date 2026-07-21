@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+from loop_apidoc.generate.openapi import build_openapi
 from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
-from loop_apidoc.plan.models import PlanItemStatus
+from loop_apidoc.generate.provenance import build_provenance
+from loop_apidoc.plan.models import (
+    NormalizationPlan,
+    PlanItemStatus,
+    SchemaEntry,
+    SchemaFieldEvidence,
+)
 from loop_apidoc.validate.models import IssueCode
 from loop_apidoc.validate.speculation import check_speculation
 
@@ -130,3 +137,29 @@ def test_schema_property_without_provenance_uses_supported_parent_schema():
     issues = check_speculation(doc, prov)
 
     assert issues == []
+
+
+def test_unverified_nested_array_field_evidence_overrides_supported_parent_schema():
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        schemas=[
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                name="Order",
+                fields=[{"name": "items[][].sku", "type": "string"}],
+                field_evidence=[
+                    SchemaFieldEvidence(
+                        name="items[][].sku", status=PlanItemStatus.UNVERIFIED,
+                    )
+                ],
+            )
+        ],
+    )
+
+    issues = check_speculation(build_openapi(plan), build_provenance(plan))
+
+    assert len(issues) == 1
+    assert issues[0].code is IssueCode.SOURCE_UNVERIFIED
+    assert issues[0].location == (
+        "components.schemas.Order.properties.items[].items.properties.sku"
+    )

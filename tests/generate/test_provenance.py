@@ -148,6 +148,7 @@ def test_field_evidence_emits_direct_nested_and_array_property_targets():
                     {"name": "amount", "type": "number"},
                     {"name": "customer.id", "type": "string"},
                     {"name": "items[].sku", "type": "string"},
+                    {"name": "items[][].sku", "type": "string"},
                 ],
                 field_evidence=[
                     SchemaFieldEvidence(
@@ -162,6 +163,10 @@ def test_field_evidence_emits_direct_nested_and_array_property_targets():
                         name="items[].sku", status=PlanItemStatus.SUPPORTED,
                         citations=[_cite(manifest_source="items.md", locator="L30")],
                     ),
+                    SchemaFieldEvidence(
+                        name="items[][].sku", status=PlanItemStatus.SUPPORTED,
+                        citations=[_cite(manifest_source="nested-items.md", locator="L40")],
+                    ),
                 ],
             )
         ],
@@ -173,6 +178,9 @@ def test_field_evidence_emits_direct_nested_and_array_property_targets():
         "components.schemas.Order.properties.amount": ("amount.md", "L10"),
         "components.schemas.Order.properties.customer.properties.id": ("customer.md", "L20"),
         "components.schemas.Order.properties.items.items.properties.sku": ("items.md", "L30"),
+        "components.schemas.Order.properties.items[].items.properties.sku": (
+            "nested-items.md", "L40"
+        ),
     }
     for target, (manifest_source, locator) in expected.items():
         entry = targets[target][0]
