@@ -117,7 +117,7 @@ def snapshot_openapi_url(
     sources.mkdir(parents=True, exist_ok=True)
     coverage_output.parent.mkdir(parents=True, exist_ok=True)
     snapshot_path.write_bytes(raw)
-    coverage_output.write_text(ledger.model_dump_json(indent=2), encoding="utf-8")
+    coverage_output.write_text(ledger.model_dump_json(indent=2, exclude_none=True), encoding="utf-8")
     return OpenApiSnapshot(
         snapshot_path=snapshot_path,
         coverage_path=coverage_output,

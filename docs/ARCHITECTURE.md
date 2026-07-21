@@ -69,7 +69,7 @@ choices; they are no longer the product's architectural center.
 ```mermaid
 flowchart LR
     PRE["preprocess（可選）<br/>PDF→markdown"] --> SQ["source-quality（可選）<br/>assess-sources 品質閘"]
-    URL["URL 來源（可選）<br/>catalog-url → select-url<br/>→ cache-url-pages / cache-url-entry<br/>→ 本機 corpus（raw/body/corpus.json）"] --> SQ
+    URL["URL 來源（可選）<br/>catalog-url → select-url → cache-url-pages<br/>或 GitBook llms.txt → Markdown sources → drafts<br/>→ 本機 evidence / coverage"] --> SQ
     SQ --> EX
     URL -. "url_sources/coverage.json<br/>（assemble --url-coverage）" .-> M
 
@@ -148,7 +148,7 @@ flowchart TD
     class generate,run,diff,score,preparation,sourcequality,urltools io
 ```
 
-`cli.py`(Typer)目前暴露十四個頂層指令: `preprocess`、`manifest`、`catalog-url`、`select-url`、`cache-url-pages`、`cache-url-entry`、`normalize-html-snapshot`、`related-url-pages`、`assess-sources`、`verify-extraction`、`assemble`、`validate`、`score`、`diff`,另有 `foundry` 子命令群組。
+`cli.py`(Typer)另有 `cache-gitbook-llms` 與 `extract-markdown-drafts`：前者從一份 `llms.txt` 安全快取同網域、入口前綴下的 Markdown、sidecar 與 coverage；後者只讀 manifest 指名 Markdown，輸出具行號、非權威的端點／表格／範例草稿。兩者都不取代 agent 最終擷取與 `verify-extraction`。
 
 URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`skills/loop-apidoc/reference/url-fetching.md`):`catalog-url` 只下載入口頁一次並寫出導航 catalog(絕不自動跟連結,catalog 是**涵蓋宇宙**而非抓取清單);`select-url` 純選取(`--branch`/`--term`/`--url`,不下載);`cache-url-pages` 把 catalog 全頁快取成本機 corpus(`raw/` 原始 HTML + `body/` 正文 + `corpus.json` 精簡卡片:標題/標頭/內部連結/實體/雜湊,**不送模型**);`cache-url-entry` 是單頁(空 catalog/一頁式文件)變體;`related-url-pages` 依正文連結與共享實體輸出候選頁卡片;`normalize-html-snapshot` 把已下載的靜態 HTML 正規化成 Markdown 並寫 URL/hash provenance sidecar(`*.source.json`)。這些模組是頂層的 `url_catalog.py`/`url_corpus.py`/`html_snapshot.py`。
 
@@ -156,7 +156,7 @@ URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`sk
 
 `manifest/scanner.py` 以 `DEFAULT_EXCLUDES`(`README*`/`LICENSE*`/`CHANGELOG*`/`CONTRIBUTING*`/`.DS_Store`/`.git/*`)加上 `--exclude` 傳入的 glob 排除非規格檔:命中者仍列在 `manifest.json` 但 `status: ignored`、不雜湊、不可作為來源證據(`plan/classify.py` 的 `_UNUSABLE` 含 `IGNORED`,故單一文件的 `sole_source` 歸因不會被一份 README 打斷)。
 
-**檔案 I/O 出口**:`generate/`、`run/`、`preparation/report.py`、`diff/report.py`、`score/report.py`、`source_quality/report.py`、`shadow/report.py`及 URL corpus 快取(`url_corpus.cache_catalog_pages` 寫 `raw/`+`body/`、`html_snapshot.normalize_html_snapshot` 寫 Markdown+sidecar)會寫檔；讀檔側例外是 `adapters/fragments.py`（讀取 source artifact 以 materialize exact fragment）、`preparation/coverage.py`(讀 `url_sources/coverage.json`,不寫)與 `agentcli/verify.py`(讀來源與擷取目錄,不寫);其餘 domain 模組保持為純函式,便於單元測試。
+**檔案 I/O 出口**:`generate/`、`run/`、report writers、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）與 `html_snapshot.normalize_html_snapshot` 會寫檔；`markdown_drafts.collect` 是只讀 manifest 指名 Markdown 的例外，其餘 draft scanner 保持純函式。
 
 ## 資料流與關鍵 seam
 

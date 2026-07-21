@@ -128,6 +128,23 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the local filename plus JSON
   Pointer (for example `openapi.json#/paths/~1payments/post`), not an inferred HTML anchor.
 
+  For a GitBook entry that publishes `llms.txt`, use the deterministic Markdown lane before
+  cataloguing a JavaScript shell:
+
+  ```bash
+  <APIDOC> cache-gitbook-llms --url "<URL>" --sources "<SOURCES>" \
+    --coverage "<WORK>/url_sources/coverage.json"
+  <APIDOC> manifest --sources "<SOURCES>" --url "<URL>" \
+    --output "<WORK>/manifest.preflight.json"
+  <APIDOC> extract-markdown-drafts --sources "<SOURCES>" \
+    --manifest "<WORK>/manifest.preflight.json" \
+    --output "<WORK>/markdown-api-facts.json"
+  ```
+
+  The cache command writes every eligible same-origin, entry-prefix `.md` URL and per-page
+  provenance sidecars; inspect its coverage failures. The facts file is a deterministic,
+  line-cited aid for bounded review only, never final extraction JSON or source authority.
+
 ## Subagent contract (extraction)
 
 You orchestrate; **read-only subagents extract**. For each extraction below, dispatch a

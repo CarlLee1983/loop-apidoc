@@ -30,6 +30,35 @@ not a navigation entry point. Do **not** call `catalog-url`, `cache-url-pages`,
 The local snapshot is the only evidence subagents read. Re-fetch only when intentionally
 creating a new source-set version.
 
+## GitBook LLMS Markdown corpus
+
+When a GitBook-style entry point publishes `llms.txt`, prefer the deterministic Markdown
+lane over rendering its JavaScript shell:
+
+```bash
+<APIDOC> cache-gitbook-llms --url "<ENTRY_URL>" --sources "<SOURCES>" \
+  --coverage "<WORK>/url_sources/coverage.json"
+<APIDOC> manifest --sources "<SOURCES>" --url "<ENTRY_URL>" \
+  --output "<WORK>/manifest.preflight.json"
+<APIDOC> extract-markdown-drafts --sources "<SOURCES>" \
+  --manifest "<WORK>/manifest.preflight.json" \
+  --output "<WORK>/markdown-api-facts.json"
+```
+
+`cache-gitbook-llms` fetches `llms.txt` once, then caches every first-seen `.md` URL that
+is same-origin and below the entry-path prefix. It preserves that relative URL hierarchy
+under `<SOURCES>`, writes a `<document>.source.json` sidecar (original URL, SHA-256, fetch
+timestamp), and fails before writing pages if the index is invalid, no URL is eligible, or
+an immutable destination/coverage output already exists. A page-level fetch error does not
+abort the batch: it is recorded as `fetch_failed` in coverage and must remain visible during
+review. It never crawls URLs absent from the index.
+
+`extract-markdown-drafts` reads only usable Markdown files named in the manifest. Its output
+is a non-authoritative, line-cited aid: explicit endpoint headings, explicitly labelled
+Header/Query/Request/Response tables, and fenced examples. It does not produce extraction
+JSON, infer missing details, or replace source reading, endpoint-agent extraction,
+`verify-extraction`, or `assemble`.
+
 ## 1. Catalog the navigation; do not crawl it
 
 Run `catalog-url` against the entry page:

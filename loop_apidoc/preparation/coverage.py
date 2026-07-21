@@ -56,6 +56,7 @@ class CoverageResult(BaseModel):
     status: ResultStatus
     file: str | None = None
     method: FetchMethod | None = None
+    note: str | None = None
 
 
 class UrlCoverage(BaseModel):

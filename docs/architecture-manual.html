@@ -729,6 +729,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">select-url</div>
           <div class="command-chip">cache-url-pages</div>
           <div class="command-chip">cache-url-entry</div>
+          <div class="command-chip">cache-gitbook-llms</div>
+          <div class="command-chip">extract-markdown-drafts</div>
           <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
@@ -816,7 +818,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露十八個頂層操作：來源處理（<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>）、URL evidence（<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>）、品質與擷取（<code>assess-sources</code>、<code>verify-extraction</code>）、來源新鮮度閘（<code>record-fingerprint</code>、<code>check-freshness</code>、<code>check-freshness-batch</code>）、run 處理（<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>）以及 <code>foundry</code> 子群組。
+      <code>cli.py</code> 暴露二十個頂層操作：除來源、URL evidence、品質、freshness、run 與 <code>foundry</code> 外，新增 <code>cache-gitbook-llms</code>（安全快取 GitBook Markdown corpus 與 coverage）及 <code>extract-markdown-drafts</code>（具行號的非權威草稿 facts）。草稿不是 extraction output，仍須 agent 覆核、<code>verify-extraction</code> 與組裝。
       <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入。<code>adapters/fragments.py</code> 是把來源內容 materialize 成 exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
