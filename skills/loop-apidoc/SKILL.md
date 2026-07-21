@@ -227,6 +227,15 @@ See `reference/source-quality.md`.
 
 Open **`reference/extraction-schemas.md`** for the exact schemas and conventions, then:
 
+Before dispatching the inventory subagent, assess source size. For a preprocessed Markdown
+source larger than **100KB** or documentation expected to contain **30+ endpoints**, first
+run `extract-markdown-drafts` and `scaffold-extraction` against the preflight manifest. Use
+their endpoint declarations (or a bounded header/HTTP-method regex review when the source is
+not structured Markdown) to make a complete endpoint inventory checklist. These aids are
+non-authoritative: the inventory subagent must re-read the cited source and include only
+source-stated endpoints; the checklist prevents a truncated inventory response from silently
+omitting endpoint subagents.
+
 2. **inventory** — one subagent reads every source and returns one object; **you** write
    `<WORK>/inventory.json`. Include every endpoint and every error code.
 3. **endpoints** — one subagent per `inventory.endpoints` entry, **in parallel** (≤6

@@ -35,8 +35,8 @@ def pdf_to_markdown(pdf_path: Path) -> str:
     return "".join(parts)
 
 
-def prepare_markdown(sources_dir: Path, dest_dir: Path) -> PreprocessResult:
-    """Convert PDFs to markdown and copy every other source into `dest_dir`.
+def prepare_markdown(sources: Path, dest_dir: Path) -> PreprocessResult:
+    """Convert a source directory or one source file into `dest_dir`.
 
     Returned paths are relative to `dest_dir`. The existing flat output naming
     and overwrite-on-name-collision behavior is intentionally preserved.
@@ -46,7 +46,8 @@ def prepare_markdown(sources_dir: Path, dest_dir: Path) -> PreprocessResult:
     copied: list[Path] = []
     passthrough: list[Path] = []
 
-    for path in sorted(sources_dir.rglob("*")):
+    paths = [sources] if sources.is_file() else sorted(sources.rglob("*"))
+    for path in paths:
         if not path.is_file():
             continue
         suffix = path.suffix.lower()
