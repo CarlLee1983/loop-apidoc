@@ -37,6 +37,10 @@ def test_recognized_spec_kind_requires_an_openapi_or_swagger_root_field():
     assert recognized_spec_kind(b"not json", "utf-8") is None
 
 
+def test_recognized_spec_kind_rejects_an_unknown_charset():
+    assert recognized_spec_kind(b'{"openapi":"3.1.0"}', "x-invalid-charset") is None
+
+
 def test_cache_url_pages_writes_a_local_corpus_index(tmp_path: Path, monkeypatch):
     catalog_path = tmp_path / "catalog.json"
     output = tmp_path / "corpus"
@@ -404,6 +408,31 @@ def test_spa_shell_probe_ignores_missing_and_non_spec_json(tmp_path: Path):
             return httpx.Response(200, text=_SHELL_HTML)
         if request.url.path == "/openapi.json":
             return httpx.Response(200, json={"status": "ok"})
+        return httpx.Response(404)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/page",
+                nodes=[CatalogNode(url="https://docs.example.com/page", title="Doc")],
+            ),
+            tmp_path,
+            client=client,
+        )
+
+    assert [page.url for page in corpus.pages] == ["https://docs.example.com/page"]
+
+
+def test_spa_shell_probe_ignores_a_spec_with_an_unknown_charset(tmp_path: Path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/page":
+            return httpx.Response(200, text=_SHELL_HTML)
+        if request.url.path == "/openapi.json":
+            return httpx.Response(
+                200,
+                content=b'{"openapi":"3.1.0"}',
+                headers={"Content-Type": "application/json; charset=x-invalid-charset"},
+            )
         return httpx.Response(404)
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:

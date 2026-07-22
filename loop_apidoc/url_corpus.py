@@ -80,7 +80,7 @@ def openapi_spec_candidates(page_url: str) -> list[str]:
 def recognized_spec_kind(raw: bytes, encoding: str | None) -> Literal["openapi", "swagger"] | None:
     try:
         document = json.loads(raw.decode(encoding or "utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+    except (LookupError, UnicodeDecodeError, json.JSONDecodeError):
         return None
     if not isinstance(document, dict):
         return None
@@ -244,7 +244,7 @@ def _probe_openapi_specs(
                         raise ValueError(f"response exceeds {max_bytes_per_page} byte cap")
                     chunks.append(chunk)
                 raw = b"".join(chunks)
-                encoding = response.encoding or "utf-8"
+                encoding = response.charset_encoding or "utf-8"
         except (httpx.HTTPError, ValueError):
             continue
         if recognized_spec_kind(raw, encoding) is None:
