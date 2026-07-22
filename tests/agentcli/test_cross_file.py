@@ -103,6 +103,19 @@ def test_two_files_writing_the_same_endpoint_is_a_violation():
                for v in violations)
 
 
+def test_duplicate_endpoint_message_names_the_multi_context_remedy():
+    """來源真的用同一個 (method, path) 描述多個情境(多錢包模式、多金流產品)時,
+    OpenAPI 3.1 一個 path+method 只能有一個 operation —— 訊息要指出合併成 oneOf
+    的正解,否則操作者只知道被擋、不知道能怎麼寫。"""
+    inventory = _inv(_ep("POST", "/wallet/login"))
+    endpoints = [("ep0.json", _ep("POST", "/wallet/login")),
+                 ("ep1.json", _ep("POST", "/wallet/login"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any("oneOf" in v for v in violations)
+
+
 def test_duplicate_endpoint_is_not_reported_as_missing_from_inventory():
     """重複寫入的端點確實在 inventory 中 —— 只能報「重複」,不可報「不在 inventory」。"""
     inventory = _inv(_ep("GET", "/ping"), _ep("POST", "/orders"))
