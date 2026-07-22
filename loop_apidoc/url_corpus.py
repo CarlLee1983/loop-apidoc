@@ -214,6 +214,65 @@ def extract_markdown_metadata(url: str, markdown: str) -> PageMetadata:
     )
 
 
+def _probe_openapi_specs(
+    active_client: httpx.Client,
+    shell_urls: list[str],
+    output_dir: Path,
+    max_bytes_per_page: int,
+) -> list[CorpusPage]:
+    """Cache only positively identified OpenAPI or Swagger JSON from SPA shells."""
+    origins_by_candidate: dict[str, list[str]] = {}
+    for shell_url in shell_urls:
+        for candidate in openapi_spec_candidates(shell_url):
+            origins_by_candidate.setdefault(candidate, []).append(shell_url)
+
+    pages: list[CorpusPage] = []
+    for candidate, origins in origins_by_candidate.items():
+        try:
+            with active_client.stream(
+                "GET", candidate, headers={"Accept": "application/json"}
+            ) as response:
+                response.raise_for_status()
+                chunks: list[bytes] = []
+                size = 0
+                for chunk in response.iter_bytes():
+                    size += len(chunk)
+                    if size > max_bytes_per_page:
+                        raise ValueError(f"response exceeds {max_bytes_per_page} byte cap")
+                    chunks.append(chunk)
+                raw = b"".join(chunks)
+                encoding = response.encoding or "utf-8"
+        except (httpx.HTTPError, ValueError):
+            continue
+        if recognized_spec_kind(raw, encoding) is None:
+            continue
+
+        text = raw.decode(encoding)
+        digest = hashlib.sha256(raw).hexdigest()
+        raw_relative = Path("raw") / f"{digest}.json"
+        body_relative = Path("body") / f"{digest}.txt"
+        raw_path = output_dir / raw_relative
+        body_path = output_dir / body_relative
+        if not raw_path.exists():
+            raw_path.write_bytes(raw)
+        if not body_path.exists():
+            body_path.write_text(text, encoding="utf-8")
+        pages.append(
+            CorpusPage(
+                url=candidate,
+                status="fetched",
+                source_kind="openapi_spec",
+                discovered_from=origins,
+                raw_file=raw_relative.as_posix(),
+                body_file=body_relative.as_posix(),
+                content_sha256=digest,
+                byte_size=len(raw),
+                body_characters=len(text),
+            )
+        )
+    return pages
+
+
 def cache_catalog_pages(
     catalog: UrlCatalog,
     output_dir: Path,
@@ -236,6 +295,7 @@ def cache_catalog_pages(
     own_client = client is None
     active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
     pages: list[CorpusPage] = []
+    shell_urls: list[str] = []
     try:
         # Several sidebar anchors can identify sections in one static document.
         # Fetch that document once, but retain all anchors as local section
@@ -281,6 +341,8 @@ def cache_catalog_pages(
             if not body_path.exists():
                 body_path.write_text(metadata.body_text, encoding="utf-8")
             spa_detected = (not is_markdown) and is_spa_shell(text, metadata.body_text)
+            if spa_detected:
+                shell_urls.append(url)
             note = (
                 "SPA_SHELL_DETECTED: Page requires JavaScript execution to render content. "
                 "Propose headless rendering (Playwright) or look for OpenAPI/Swagger JSON endpoint."
@@ -310,6 +372,9 @@ def cache_catalog_pages(
                     note=note,
                 )
             )
+        pages.extend(
+            _probe_openapi_specs(active_client, shell_urls, output_dir, max_bytes_per_page)
+        )
     finally:
         if own_client:
             active_client.close()
