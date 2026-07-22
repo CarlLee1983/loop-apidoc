@@ -229,6 +229,13 @@ headings, internal-link, and entity metadata without calling a model. `corpus.js
 does not embed bodies; `related-url-pages` returns compact cards with breadcrumb,
 score, and evidence reason. Load a candidate `body_file` only when the model needs it.
 
+If a cached HTML page is an un-rendered SPA shell, loop-apidoc probes only four fixed
+origin-relative paths (`/swagger.json`, `/openapi.json`, `/v3/api-docs`, and
+`/api-doc/v3/sections`) for JSON documents with an `openapi` or `swagger` root field.
+Accepted specifications are stored as separate corpus sources; failed, non-spec, and
+generic-JSON responses are not recorded. The command reports the number of detected
+shells on stderr.
+
 For static single-page docs, sidebar anchors are kept as catalog-node `anchor`s and
 listed as `sections` on the corpus's single entry-page card (the same HTML is downloaded
 once). When the catalog is empty or there is no sidebar, use

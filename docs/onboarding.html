@@ -774,7 +774,7 @@
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">cache-url-pages</span></span>
-        <div><p>快取 catalog 全部頁面,建立本機正文/連結/實體索引(<code class="inline">corpus.json</code>);不呼叫模型。</p></div>
+        <div><p>快取 catalog 全部頁面,建立本機正文/連結/實體索引(<code class="inline">corpus.json</code>);不呼叫模型。若頁面是未渲染 SPA shell，只探測同 origin 的 <code class="inline">/swagger.json</code>、<code class="inline">/openapi.json</code>、<code class="inline">/v3/api-docs</code>、<code class="inline">/api-doc/v3/sections</code>；僅根欄位含 <code class="inline">openapi</code> 或 <code class="inline">swagger</code> 的 JSON 另存為獨立 corpus source。失敗、非規格與一般 JSON 不記錄，shell 計數只寫至 stderr，不會自動 headless rendering。</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">cache-url-entry</span></span>
