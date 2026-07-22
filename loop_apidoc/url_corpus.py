@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from collections import Counter
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from pydantic import BaseModel, Field
@@ -33,6 +35,8 @@ class PageMetadata(BaseModel):
 class CorpusPage(BaseModel):
     url: str
     status: Literal["fetched", "fetch_failed"]
+    source_kind: Literal["document", "openapi_spec"] = "document"
+    discovered_from: list[str] = Field(default_factory=list)
     raw_file: str | None = None
     body_file: str | None = None
     content_sha256: str | None = None
@@ -62,6 +66,28 @@ class RelatedPage(BaseModel):
     body_file: str | None = None
     score: int
     reasons: list[str] = Field(default_factory=list)
+
+
+_OPENAPI_SPEC_PATHS = ("/swagger.json", "/openapi.json", "/v3/api-docs", "/api-doc/v3/sections")
+
+
+def openapi_spec_candidates(page_url: str) -> list[str]:
+    parts = urlsplit(page_url)
+    origin = urlunsplit((parts.scheme, parts.netloc, "", "", ""))
+    return [urljoin(origin, path) for path in _OPENAPI_SPEC_PATHS]
+
+
+def recognized_spec_kind(raw: bytes, encoding: str | None) -> Literal["openapi", "swagger"] | None:
+    try:
+        document = json.loads(raw.decode(encoding or "utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(document, dict):
+        return None
+    for key in ("openapi", "swagger"):
+        if isinstance(document.get(key), str):
+            return key
+    return None
 
 
 def _content_text(element: _Element) -> str:
