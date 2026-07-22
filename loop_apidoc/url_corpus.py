@@ -44,6 +44,7 @@ class CorpusPage(BaseModel):
     entities: list[str] = Field(default_factory=list)
     sections: list[PageSection] = Field(default_factory=list)
     body_characters: int = 0
+    spa_shell_detected: bool = False
     note: str | None = None
 
 
@@ -94,6 +95,37 @@ def _entities(text: str) -> list[str]:
     for match in re.finditer(r"\b([1-9]\d{3,4})\b", text):
         matches.append((match.start(), f"error:{match.group(1)}"))
     return list(dict.fromkeys(value for _, value in sorted(matches)))
+
+
+# A JS shell renders its noscript sentence and nothing else, so a shell is
+# "almost no body text" AND "says it needs JavaScript". The length bound is what
+# separates a shell from a documentation page that merely *mentions* JavaScript
+# — dropping it flags any long page containing "enable JavaScript" and sends the
+# agent off to render a page that was already complete.
+_SPA_SHELL_MAX_BODY_CHARS = 500
+_SPA_SHELL_PHRASES = (
+    "javascript is required",
+    "javascript enabled",
+    "enable javascript",
+    "requires javascript",
+    "without javascript",
+)
+
+
+def is_spa_shell(html: str, body_text: str) -> bool:
+    """Is this the un-rendered shell of a JavaScript SPA rather than a page?
+
+    Necessarily conservative: a false positive tells the agent a complete page
+    needs headless rendering, so both signals must hold.
+    """
+    if len(body_text.strip()) >= _SPA_SHELL_MAX_BODY_CHARS:
+        return False
+    haystack = f"{html}\n{body_text}".lower()
+    if any(phrase in haystack for phrase in _SPA_SHELL_PHRASES):
+        return True
+    # Other wordings ("請開啟 JavaScript", "Turn on JS") are unbounded; a short
+    # body plus a <noscript> block naming JavaScript is the shape they share.
+    return "<noscript>" in haystack and "javascript" in haystack
 
 
 def extract_page_metadata(url: str, html: str) -> PageMetadata:
@@ -222,6 +254,13 @@ def cache_catalog_pages(
             body_path = output_dir / body_relative
             if not body_path.exists():
                 body_path.write_text(metadata.body_text, encoding="utf-8")
+            spa_detected = (not is_markdown) and is_spa_shell(text, metadata.body_text)
+            note = (
+                "SPA_SHELL_DETECTED: Page requires JavaScript execution to render content. "
+                "Propose headless rendering (Playwright) or look for OpenAPI/Swagger JSON endpoint."
+                if spa_detected
+                else None
+            )
             pages.append(
                 CorpusPage(
                     url=url,
@@ -241,6 +280,8 @@ def cache_catalog_pages(
                         if item.anchor is not None
                     ],
                     body_characters=len(metadata.body_text),
+                    spa_shell_detected=spa_detected,
+                    note=note,
                 )
             )
     finally:
