@@ -230,7 +230,10 @@ def _probe_openapi_specs(
     for candidate, origins in origins_by_candidate.items():
         try:
             with active_client.stream(
-                "GET", candidate, headers={"Accept": "application/json"}
+                "GET",
+                candidate,
+                headers={"Accept": "application/json"},
+                follow_redirects=False,
             ) as response:
                 response.raise_for_status()
                 chunks: list[bytes] = []

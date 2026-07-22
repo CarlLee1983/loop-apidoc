@@ -213,6 +213,31 @@ def test_cache_url_entry_warns_on_detected_spa_shell(tmp_path: Path, monkeypatch
     assert "1/1 pages look like un-rendered SPA shells" in result.stderr
 
 
+def test_cache_url_entry_counts_only_fetched_document_sources(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "loop_apidoc.url_corpus.cache_catalog_pages",
+        lambda *_args, **_kwargs: UrlCorpus(
+            entry_url="https://docs.example.com/intro",
+            pages=[
+                CorpusPage(url="https://docs.example.com/intro", status="fetched"),
+                CorpusPage(
+                    url="https://docs.example.com/openapi.json",
+                    status="fetched",
+                    source_kind="openapi_spec",
+                ),
+            ],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        ["cache-url-entry", "--url", "https://docs.example.com/intro", "--output", str(tmp_path / "out")],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "快取 1 / 1 個入口頁" in result.stdout
+
+
 def test_cache_url_entry_no_shell_emits_no_warning(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         "loop_apidoc.url_corpus.cache_catalog_pages",
@@ -332,6 +357,45 @@ def test_spa_shell_caches_a_recognized_openapi_document_as_a_distinct_source(tmp
     assert spec.url == "https://docs.example.com/openapi.json"
     assert spec.discovered_from == ["https://docs.example.com/page"]
     assert spec.raw_file and spec.raw_file.endswith(".json")
+
+
+def test_spa_shell_probe_rejects_redirected_openapi_candidates(tmp_path: Path):
+    requests: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        if request.url.path == "/page":
+            return httpx.Response(200, text=_SHELL_HTML)
+        if request.url.path == "/openapi.json":
+            return httpx.Response(
+                302,
+                headers={"Location": "https://untrusted.example.com/api.json"},
+            )
+        if request.url.host == "untrusted.example.com":
+            return httpx.Response(200, json={"openapi": "3.1.0"})
+        return httpx.Response(404)
+
+    with httpx.Client(
+        transport=httpx.MockTransport(handler), follow_redirects=True
+    ) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/page",
+                nodes=[CatalogNode(url="https://docs.example.com/page", title="Doc")],
+            ),
+            tmp_path,
+            client=client,
+        )
+
+    assert all(page.source_kind != "openapi_spec" for page in corpus.pages)
+    assert requests == [
+        "https://docs.example.com/page",
+        "https://docs.example.com/swagger.json",
+        "https://docs.example.com/openapi.json",
+        "https://docs.example.com/v3/api-docs",
+        "https://docs.example.com/api-doc/v3/sections",
+    ]
+    assert not list((tmp_path / "raw").glob("*.json"))
 
 
 def test_spa_shell_probe_ignores_missing_and_non_spec_json(tmp_path: Path):

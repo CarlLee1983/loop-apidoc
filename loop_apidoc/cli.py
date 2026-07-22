@@ -223,7 +223,10 @@ def cache_url_entry(
     corpus_path = output / "corpus.json"
     corpus_path.write_text(corpus.model_dump_json(indent=2), encoding="utf-8")
     _emit_spa_shell_warning(corpus)
-    fetched = sum(page.status == "fetched" for page in corpus.pages)
+    fetched = sum(
+        page.status == "fetched" and page.source_kind == "document"
+        for page in corpus.pages
+    )
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / 1 個入口頁，未送入模型")
 
 
