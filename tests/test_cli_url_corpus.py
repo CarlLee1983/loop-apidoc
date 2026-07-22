@@ -13,10 +13,28 @@ from loop_apidoc.url_corpus import (
     UrlCorpus,
     cache_catalog_pages,
     is_spa_shell,
+    openapi_spec_candidates,
+    recognized_spec_kind,
 )
 
 
 runner = CliRunner()
+
+
+def test_openapi_spec_candidates_use_only_the_page_origin():
+    assert openapi_spec_candidates("https://docs.example.com/guides/intro?lang=en") == [
+        "https://docs.example.com/swagger.json",
+        "https://docs.example.com/openapi.json",
+        "https://docs.example.com/v3/api-docs",
+        "https://docs.example.com/api-doc/v3/sections",
+    ]
+
+
+def test_recognized_spec_kind_requires_an_openapi_or_swagger_root_field():
+    assert recognized_spec_kind(b'{"openapi":"3.1.0"}', "utf-8") == "openapi"
+    assert recognized_spec_kind(b'{"swagger":"2.0"}', "utf-8") == "swagger"
+    assert recognized_spec_kind(b'{"status":"ok"}', "utf-8") is None
+    assert recognized_spec_kind(b"not json", "utf-8") is None
 
 
 def test_cache_url_pages_writes_a_local_corpus_index(tmp_path: Path, monkeypatch):
@@ -194,4 +212,3 @@ def test_rendered_page_is_not_flagged_and_keeps_note_empty(tmp_path: Path):
     assert len(corpus.pages) == 1
     assert corpus.pages[0].spa_shell_detected is False
     assert corpus.pages[0].note is None
-
