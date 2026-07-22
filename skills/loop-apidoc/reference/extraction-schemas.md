@@ -210,6 +210,30 @@ documents the field as **one of** several named member shapes:
 - **Grounding:** declare `one_of` only when the source documents the field as one of those
   member shapes; never synthesize a union from REST/payment conventions. Keys are snake_case.
 
+### Same `(method, path)` under several modes or products — one operation
+
+Sources routinely document one URL twice: two wallet modes, several payment products
+posting to one gateway, a "simple" and an "advanced" variant. OpenAPI 3.1 allows
+**exactly one operation per `path` + `method`**, so this is never two
+`endpoints/ep<N>.json` files — the cross-file gate rejects the pair.
+`server` does not help: it is not part of an endpoint's identity, and two claims naming
+different hosts for one operation are reported as a **source conflict**, not as two
+operations.
+
+Decide by what the source actually says differs:
+
+- **The paths differ and were mis-read** (a mode prefix or a mode path segment) → write
+  the real distinct paths. There was no collision.
+- **The request body differs by mode** → **one** endpoint file, with a
+  `one_of` union on the body field (add `discriminator` when the source states the
+  discriminating property). Each member shape must also appear in `inventory.schemas`.
+- **One body, mode-specific fields** → **one** endpoint file; keep the mode-specific
+  fields `required: false` and name the mode in each field's `description`, verbatim.
+
+Whichever applies, cite **every** contributing source section on that one endpoint and
+name each mode in `summary`/`description`. Never drop one mode's claim to make the pair
+fit — a dropped mode is silent data loss, which is exactly what the gate exists to stop.
+
 ### Async notifications / callbacks / webhooks
 
 Server POSTs to a caller-supplied URL (e.g. payment-result notifications): keep `method`,

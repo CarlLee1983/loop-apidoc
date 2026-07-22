@@ -115,6 +115,9 @@ def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     return [
         f"{', '.join(sorted(files))}: 同一端點 {key} 被寫進多個檔案"
         "(兩個 subagent 寫了同一個端點,另一個端點可能因此沒人寫)"
+        ";若來源真的用同一個 method+path 描述多個情境(多錢包模式、多金流產品),"
+        "OpenAPI 3.1 一個 path+method 只能有一個 operation —— 合併成單一檔案,"
+        "用 request 欄位的 oneOf + discriminator 表達情境差異"
         for key, files in sorted(seen.items()) if len(files) > 1
     ]
 
