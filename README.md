@@ -222,6 +222,11 @@ uv run loop-apidoc related-url-pages \
 候選頁的 `body_file`。這可保留完整來源與 coverage，又避免不相干分支、重複側欄和所有
 正文一起進入模型。
 
+若快取的 HTML 頁面是尚未渲染的 SPA shell，loop-apidoc 只會在同一 origin 探測四個固定
+路徑：`/swagger.json`、`/openapi.json`、`/v3/api-docs` 與 `/api-doc/v3/sections`。回應必須
+是根欄位含 `openapi` 或 `swagger` 的 JSON 文件才會接受並另存為獨立 corpus source；探測失敗、
+非規格回應與一般 JSON 都不會記錄。命令會將偵測到的 shell 數量輸出至 stderr。
+
 靜態單頁文件的 sidebar anchor 會保留為 catalog 節點的 `anchor`，並在 corpus 的單一入口
 頁卡片中列為 `sections`（同一 HTML 只下載一次）。catalog 為空或沒有側欄時，使用
 `cache-url-entry --url ... --output ...` 直接快取入口頁。已下載的 HTML 可用

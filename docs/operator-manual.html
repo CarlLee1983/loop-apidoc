@@ -181,7 +181,7 @@ uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --o
 # 依正文連結與共享實體輸出候選頁卡片，模型只在需要時讀取候選頁正文
 uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;頁面 URL&gt; --output ./work/candidates.json
 </code></pre>
-<p>token 節約式的網頁文件讀取流程:<code>catalog.json</code> 是完整的導航 coverage universe;<code>corpus.json</code> 不嵌入正文,只指向本機 <code>raw/</code> 與 <code>body/</code> 檔。catalog 為空或單頁文件時,用 <code>cache-url-entry --url ... --output ...</code> 直接快取入口頁;已下載的 HTML 可用 <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code> 轉為受支援 Markdown,並寫出帶原始 URL 與 SHA-256 的 <code>.source.json</code> provenance sidecar。</p>
+<p>token 節約式的網頁文件讀取流程:<code>catalog.json</code> 是完整的導航 coverage universe;<code>corpus.json</code> 不嵌入正文,只指向本機 <code>raw/</code> 與 <code>body/</code> 檔。若快取 HTML 是尚未渲染的 SPA shell，僅在同一 origin 探測四個固定路徑：<code>/swagger.json</code>、<code>/openapi.json</code>、<code>/v3/api-docs</code>、<code>/api-doc/v3/sections</code>；只有根欄位含 <code>openapi</code> 或 <code>swagger</code> 的 JSON 才另存為獨立 corpus source。探測失敗、非規格回應與一般 JSON 一律不記錄，命令只在 stderr 報告偵測到的 shell 數量，不會自動 headless rendering。catalog 為空或單頁文件時,用 <code>cache-url-entry --url ... --output ...</code> 直接快取入口頁;已下載的 HTML 可用 <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code> 轉為受支援 Markdown,並寫出帶原始 URL 與 SHA-256 的 <code>.source.json</code> provenance sidecar。</p>
 <h3 id="snapshot-openapi-url"><code>snapshot-openapi-url</code> — 固定直連 OpenAPI 來源</h3>
 <pre><code class="language-bash">uv run loop-apidoc snapshot-openapi-url --url &lt;OpenAPI JSON/YAML URL&gt; \\
   --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
