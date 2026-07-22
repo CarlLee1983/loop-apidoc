@@ -12,6 +12,7 @@ from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.score.models import ScoreProfile
 from loop_apidoc.shadow.models import ArchitectureMode
+from loop_apidoc.url_corpus import UrlCorpus
 from loop_apidoc.validate import validate_run_dir, write_reports
 
 app = typer.Typer(
@@ -149,6 +150,16 @@ def select_url(
     )
 
 
+def _emit_spa_shell_warning(corpus: UrlCorpus) -> None:
+    documents = [page for page in corpus.pages if page.source_kind == "document"]
+    shells = sum(page.spa_shell_detected for page in documents)
+    if shells:
+        typer.echo(
+            f"{shells}/{len(documents)} pages look like un-rendered SPA shells",
+            err=True,
+        )
+
+
 @app.command(name="cache-url-pages")
 def cache_url_pages(
     catalog: Path = typer.Option(..., "--catalog", exists=True, readable=True),
@@ -182,6 +193,7 @@ def cache_url_pages(
         raise typer.Exit(code=2) from exc
     corpus_path = output / "corpus.json"
     corpus_path.write_text(corpus.model_dump_json(indent=2), encoding="utf-8")
+    _emit_spa_shell_warning(corpus)
     fetched = sum(page.status == "fetched" for page in corpus.pages)
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / {len(corpus.pages)} 頁，未送入模型")
 
@@ -210,6 +222,7 @@ def cache_url_entry(
         raise typer.Exit(code=2) from exc
     corpus_path = output / "corpus.json"
     corpus_path.write_text(corpus.model_dump_json(indent=2), encoding="utf-8")
+    _emit_spa_shell_warning(corpus)
     fetched = sum(page.status == "fetched" for page in corpus.pages)
     typer.echo(f"corpus 已寫入 {corpus_path}；快取 {fetched} / 1 個入口頁，未送入模型")
 

@@ -69,6 +69,69 @@ def test_cache_url_pages_writes_a_local_corpus_index(tmp_path: Path, monkeypatch
     assert json.loads((output / "corpus.json").read_text(encoding="utf-8"))["pages"][0]["title"] == "A"
 
 
+def test_cache_url_pages_warns_on_detected_spa_shell(tmp_path: Path, monkeypatch):
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(
+        UrlCatalog(
+            entry_url="https://docs.example.com/intro",
+            nodes=[CatalogNode(url="https://docs.example.com/intro", title="Intro")],
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "loop_apidoc.url_corpus.cache_catalog_pages",
+        lambda *_args, **_kwargs: UrlCorpus(
+            entry_url="https://docs.example.com/intro",
+            pages=[
+                CorpusPage(
+                    url="https://docs.example.com/intro",
+                    status="fetched",
+                    spa_shell_detected=True,
+                ),
+                CorpusPage(
+                    url="https://docs.example.com/openapi.json",
+                    status="fetched",
+                    source_kind="openapi_spec",
+                ),
+            ],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        ["cache-url-pages", "--catalog", str(catalog_path), "--output", str(tmp_path / "out")],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "1/1 pages look like un-rendered SPA shells" in result.stderr
+
+
+def test_cache_url_pages_no_shell_emits_no_warning(tmp_path: Path, monkeypatch):
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(
+        UrlCatalog(
+            entry_url="https://docs.example.com/intro",
+            nodes=[CatalogNode(url="https://docs.example.com/intro", title="Intro")],
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "loop_apidoc.url_corpus.cache_catalog_pages",
+        lambda *_args, **_kwargs: UrlCorpus(
+            entry_url="https://docs.example.com/intro",
+            pages=[CorpusPage(url="https://docs.example.com/intro", status="fetched")],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        ["cache-url-pages", "--catalog", str(catalog_path), "--output", str(tmp_path / "out")],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "pages look like un-rendered SPA shells" not in result.stderr
+
+
 def test_related_url_pages_writes_compact_candidate_cards(tmp_path: Path):
     corpus_path = tmp_path / "corpus.json"
     output = tmp_path / "related.json"
@@ -119,6 +182,53 @@ def test_cache_url_entry_is_supported_without_a_catalog(tmp_path: Path, monkeypa
     assert result.exit_code == 0, result.stdout
     assert calls == [("https://docs.example.com/intro", 1)]
     assert json.loads((output / "corpus.json").read_text(encoding="utf-8"))["pages"][0]["url"] == "https://docs.example.com/intro"
+
+
+def test_cache_url_entry_warns_on_detected_spa_shell(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "loop_apidoc.url_corpus.cache_catalog_pages",
+        lambda *_args, **_kwargs: UrlCorpus(
+            entry_url="https://docs.example.com/intro",
+            pages=[
+                CorpusPage(
+                    url="https://docs.example.com/intro",
+                    status="fetched",
+                    spa_shell_detected=True,
+                ),
+                CorpusPage(
+                    url="https://docs.example.com/openapi.json",
+                    status="fetched",
+                    source_kind="openapi_spec",
+                ),
+            ],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        ["cache-url-entry", "--url", "https://docs.example.com/intro", "--output", str(tmp_path / "out")],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "1/1 pages look like un-rendered SPA shells" in result.stderr
+
+
+def test_cache_url_entry_no_shell_emits_no_warning(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "loop_apidoc.url_corpus.cache_catalog_pages",
+        lambda *_args, **_kwargs: UrlCorpus(
+            entry_url="https://docs.example.com/intro",
+            pages=[CorpusPage(url="https://docs.example.com/intro", status="fetched")],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        ["cache-url-entry", "--url", "https://docs.example.com/intro", "--output", str(tmp_path / "out")],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "pages look like un-rendered SPA shells" not in result.stderr
 
 
 def test_cache_catalog_fetches_one_document_for_multiple_anchor_sections(tmp_path: Path):
