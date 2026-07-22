@@ -200,6 +200,83 @@ def test_spa_shell_page_carries_the_flag_and_a_remediation_note(tmp_path: Path):
     assert "SPA_SHELL_DETECTED" in (corpus.pages[0].note or "")
 
 
+def test_spa_shell_caches_a_recognized_openapi_document_as_a_distinct_source(tmp_path: Path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/page":
+            return httpx.Response(200, text=_SHELL_HTML)
+        if request.url.path == "/openapi.json":
+            return httpx.Response(200, json={"openapi": "3.1.0"})
+        return httpx.Response(404)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/page",
+                nodes=[CatalogNode(url="https://docs.example.com/page", title="Doc")],
+            ),
+            tmp_path,
+            client=client,
+        )
+
+    spec = next(page for page in corpus.pages if page.source_kind == "openapi_spec")
+    assert spec.url == "https://docs.example.com/openapi.json"
+    assert spec.discovered_from == ["https://docs.example.com/page"]
+    assert spec.raw_file and spec.raw_file.endswith(".json")
+
+
+def test_spa_shell_probe_ignores_missing_and_non_spec_json(tmp_path: Path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/page":
+            return httpx.Response(200, text=_SHELL_HTML)
+        if request.url.path == "/openapi.json":
+            return httpx.Response(200, json={"status": "ok"})
+        return httpx.Response(404)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/page",
+                nodes=[CatalogNode(url="https://docs.example.com/page", title="Doc")],
+            ),
+            tmp_path,
+            client=client,
+        )
+
+    assert [page.url for page in corpus.pages] == ["https://docs.example.com/page"]
+
+
+def test_spa_shell_probe_deduplicates_candidates_and_preserves_shell_order(tmp_path: Path):
+    requests: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        if request.url.path in {"/one", "/two"}:
+            return httpx.Response(200, text=_SHELL_HTML)
+        if request.url.path == "/openapi.json":
+            return httpx.Response(200, json={"swagger": "2.0"})
+        return httpx.Response(404)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/one",
+                nodes=[
+                    CatalogNode(url="https://docs.example.com/one", title="One"),
+                    CatalogNode(url="https://docs.example.com/two", title="Two"),
+                ],
+            ),
+            tmp_path,
+            client=client,
+        )
+
+    spec = next(page for page in corpus.pages if page.source_kind == "openapi_spec")
+    assert requests.count("https://docs.example.com/openapi.json") == 1
+    assert spec.discovered_from == [
+        "https://docs.example.com/one",
+        "https://docs.example.com/two",
+    ]
+
+
 def test_rendered_page_is_not_flagged_and_keeps_note_empty(tmp_path: Path):
     html = (
         "<html><body><main><h1>Transfer API</h1><p>"
