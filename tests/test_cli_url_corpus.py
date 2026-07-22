@@ -34,6 +34,7 @@ def test_recognized_spec_kind_requires_an_openapi_or_swagger_root_field():
     assert recognized_spec_kind(b'{"openapi":"3.1.0"}', "utf-8") == "openapi"
     assert recognized_spec_kind(b'{"swagger":"2.0"}', "utf-8") == "swagger"
     assert recognized_spec_kind(b'{"status":"ok"}', "utf-8") is None
+    assert recognized_spec_kind(b'[]', "utf-8") is None
     assert recognized_spec_kind(b"not json", "utf-8") is None
 
 
