@@ -15,6 +15,14 @@ Accept single-file preprocessing and prevent large-source endpoint inventory tru
   endpoints, preventing silent omissions from truncated inventory responses.
 - Traditional-Chinese and English user guides document the new single-file
   preprocessing behavior.
+- URL corpus caching conservatively identifies un-rendered SPA shells and, for
+  each shell, probes only /swagger.json, /openapi.json, /v3/api-docs, and
+  /api-doc/v3/sections at the same origin.
+- Only JSON documents with a top-level openapi or swagger field are cached as
+  separate, provenance-bearing sources. Failed, redirected, non-spec, and
+  undecodable candidates are ignored without adding a source record.
+- cache-url-pages and cache-url-entry now warn on stderr when cached documents
+  appear to be un-rendered SPA shells.
 
 ## Validation
 
