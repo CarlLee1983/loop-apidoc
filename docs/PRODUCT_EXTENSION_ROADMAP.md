@@ -82,6 +82,13 @@ directory exists; shadow uses a verified reference
 for its declared claim path instead of legacy fallback. This is the first boundary slice,
 not Core graduation or benchmark-parity acceptance.
 
+**Evidence relationship coverage (2026-07-23):** the evaluation replay layer now has
+fixed, versioned end-to-end cases for `explicit_support`, `derived_support`,
+`contradicts`, and `insufficient`. Its metrics include exact typed-relationship
+classification accuracy, so an unsupported reference cannot look successful merely
+because support-only metrics ignore it. These deterministic cases validate Core
+semantics; they are not yet representative source-benchmark parity or a Core cutover.
+
 ### 2. Continuous source and contract governance
 
 **Goal:** turn one-off analysis runs into a controlled update cycle.

@@ -23,6 +23,33 @@ uv run pytest -k assemble                  # single test by name
 uv run ruff check .                        # lint
 ```
 
+## Development workflow: test-driven development
+
+For every behavior-changing feature or bug fix, use a vertical **Red → Green →
+Verify** loop. Documentation-only changes and purely mechanical release-version updates
+do not need a Red phase, but still require an appropriate consistency check.
+
+1. **Agree the seam first.** Before writing a test, identify the public behavior being
+   exercised — for example a CLI command/exit code, a public pure function, a typed
+   model contract, a generated artifact, or a persisted report. State that seam and get
+   requester confirmation; do not test private helpers or internal call sequences.
+2. **Red.** Add one focused regression or feature test at that seam with an independently
+   known expected result. Run the targeted test and confirm it fails for the missing or
+   incorrect behavior, rather than because of fixture/setup errors.
+3. **Green.** Make the smallest production change that makes that one test pass. Do not
+   pre-build speculative behavior for later cases or weaken source-grounding rules to
+   satisfy a test.
+4. **Repeat in small slices.** Each additional observable behavior gets its own
+   Red → Green cycle. Keep tests as refactor-resistant behavioral specifications; avoid
+   mocks of private collaborators and assertions derived by reimplementing production
+   logic in the test.
+5. **Verify.** Run the affected test module(s), then the proportionate regression suite
+   and `uv run ruff check .`. For a bug fix, keep the reproducing test permanently.
+
+For source-backed benchmarks, TDD fixtures must still obey the benchmark harness contract:
+never substitute a newer, synthetic, or error-page document for unavailable historical
+source evidence.
+
 When invoked from inside the installed plugin, the CLI is called as
 `uv run --project "${CLAUDE_PLUGIN_ROOT}" loop-apidoc <command>`.
 

@@ -114,6 +114,19 @@ def evaluate_relationships(
         else 1.0
     )
 
+    # Support-only metrics cannot reveal a verifier that downgrades a
+    # contradiction to insufficient evidence, or incorrectly promotes an
+    # insufficient reference to support. Compare the complete typed
+    # relationship set and penalize any unexpected result.
+    expected_relationships = {_relationship_key(item) for item in expected}
+    observed_relationships = {_relationship_key(item) for item in observed}
+    relationship_classification_accuracy = (
+        len(expected_relationships & observed_relationships)
+        / len(expected_relationships | observed_relationships)
+        if expected_relationships or observed_relationships
+        else 1.0
+    )
+
     report = base_report or MetricReport(
         claim_precision=1.0,
         claim_recall=1.0,
@@ -128,6 +141,9 @@ def evaluate_relationships(
             "semantic_support_recall": support_recall,
             "claim_path_coverage": path_coverage,
             "contradiction_detection_recall": contradiction_recall,
+            "relationship_classification_accuracy": (
+                relationship_classification_accuracy
+            ),
         }
     )
 
