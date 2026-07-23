@@ -12,8 +12,7 @@ Evidence Ledger
 + Governed Contract Registry
 ```
 
-The implementation mirrors the
-[model-independent architecture design](superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md):
+The implementation follows the [product design decisions](DESIGN_DECISIONS.md):
 
 - `domain/` owns the API ontology, canonical identities, immutable contract IR,
   deterministic rule packs, and pure projection compilers.
@@ -45,7 +44,7 @@ preserved as a compatibility adapter. Agent topology, prompt strategy, command l
 filesystem run directories, and the exact artifact set are replaceable implementation
 choices; they are no longer the product's architectural center.
 
-本文件說明 `loop-apidoc` 的整體流程、資料流與套件邊界。完整設計依據見 [`docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`](superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md)。
+本文件說明 `loop-apidoc` 的整體流程、資料流與套件邊界；長期設計決策見 [`docs/DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md)。
 
 ## 現行 CLI 執行模式:agent-native
 
@@ -62,7 +61,7 @@ choices; they are no longer the product's architectural center.
 - **CLI 佔位符 `<APIDOC>`**:SKILL 頂部定義一次解析規則 —— 環境有 `$CLAUDE_PLUGIN_ROOT`(Claude plugin 安裝時自動帶入)走 plugin 內含 CLI(`uv run --project "$CLAUDE_PLUGIN_ROOT" loop-apidoc`),否則退到全域 `loop-apidoc`(Codex / 獨立,`uv tool install`)。前綴用陣列寫法(`RUN=(...)`;`"${RUN[@]}"`)以兼顧 bash/zsh 與含空白路徑;**不**用 `${VAR:+…}` inline 展開(zsh 不切詞會壞)。
 - **工具名中性化**:描述 agent 行為時用動作(讀檔、搜尋、抓取 URL)而非單一 runtime 的工具名,擷取的唯讀 subagent fan-out 語意兩邊一致。
 
-設計依據見 [`docs/superpowers/specs/2026-06-27-portable-skill-codex-design.md`](superpowers/specs/2026-06-27-portable-skill-codex-design.md),安裝路徑見 [`README.md`](../README.md)。
+可攜性決策摘要見 [`docs/DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md)，安裝路徑見 [`README.md`](../README.md)。
 
 ## 高層流程
 

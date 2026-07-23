@@ -36,7 +36,7 @@ deterministically verifies claim-level `explicit_support` / `derived_support` /
 Contract IR and deterministic rules/projections,
 and Evaluation is isolated from production mutation. The agent-native flow below remains
 the current CLI compatibility adapter, not a product invariant. See
-`docs/superpowers/specs/2026-07-20-model-independent-loop-apidoc-architecture-design.md`.
+`docs/ARCHITECTURE.md` and `docs/DESIGN_DECISIONS.md`.
 
 There is **one** extraction path: the current coding agent (Claude Code or Codex) is the extraction engine. Driven by `skills/loop-apidoc/SKILL.md`, it reads the sources via a subagent fan-out that is **read-only toward sources**: each **endpoint** subagent writes its own `endpoints/ep<N>.json` and returns a one-line summary, while the **inventory**/**integration** subagents return JSON that the orchestrating agent writes to `inventory.json` (+ optional `integration.json`). The orchestrator then verifies the extraction (`verify-extraction`, the same input gate `assemble` applies) before calling the deterministic CLI `assemble` for the shared **plan → generate → validate** back half.
 
@@ -156,8 +156,7 @@ Cross-check with `docs/RELEASE_CHECKLIST.md`.
 ## Further docs
 
 - Architecture + data flow (with diagrams): `docs/ARCHITECTURE.md`
-- Design spec: `docs/superpowers/specs/2026-06-25-loop-api-documentation-pipeline-design.md`
-- Stage implementation plans: `docs/superpowers/plans/`
+- Product design decisions: `docs/DESIGN_DECISIONS.md`
 - Contributing: `CONTRIBUTING.md`
 - CI workflow: `.github/workflows/ci.yml`; release checklist: `docs/RELEASE_CHECKLIST.md`
 - Pipeline follow-ups (post-benchmark improvements): `docs/PIPELINE_FOLLOWUPS.md`
