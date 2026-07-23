@@ -170,6 +170,9 @@ npm run tag:next -- --level minor
 `release:tag` intentionally has no bump level, preventing the git tag from
 diverging from the package version. A real run pushes `HEAD` to `origin/main`
 before Tagsmith validates format, ordering, duplicates, and tag push safety.
+Tagsmith—not GitHub Actions—is the tag publisher. CI validates pushes and pull
+requests; it does not create tags. Monitor its result after the release push
+and never force-move a published tag to compensate for a failed check.
 
 ---
 
