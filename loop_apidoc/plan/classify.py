@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from pathlib import Path
 
+from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
 
@@ -83,6 +85,7 @@ def classify_item(
     query_id: str,
     answer_path: str,
     manifest: Manifest,
+    evidence: Sequence[ExtractionEvidenceReference | dict] = (),
 ) -> tuple[PlanItemStatus, SourceCitation]:
     manifest_source = match_manifest_source(locator, manifest)
     if manifest_source is None:
@@ -97,5 +100,6 @@ def classify_item(
         answer_path=answer_path,
         manifest_source=manifest_source,
         locator=locator,
+        evidence=tuple(evidence),
     )
     return status, citation

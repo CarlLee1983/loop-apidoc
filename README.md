@@ -392,7 +392,7 @@ uv run loop-apidoc verify-extraction \
   --sources ./sources --extraction ./work [--url <URL> ...] [--json]
 ```
 
-在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用、跨檔不變式,以及**語意完整性閘門**。後者會機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,當某端點的來源小節明明寫了欄位或範例、擷取卻交回空清單時直接 fail closed 並指名缺了哪些欄位,同時拒絕「需進一步擷取」這類佔位答案。來源真的沒寫的東西仍然只是缺口:在 `missing[]` 具名記下即可通過,閘門不會逼出捏造。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
+在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用、跨檔不變式、選填 v1 `evidence[]` 的精確 source/typed locator/normalized fragment SHA-256 驗證，以及**語意完整性閘門**。後者會機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,當某端點的來源小節明明寫了欄位或範例、擷取卻交回空清單時直接 fail closed 並指名缺了哪些欄位,同時拒絕「需進一步擷取」這類佔位答案。來源真的沒寫的東西仍然只是缺口:在 `missing[]` 具名記下即可通過,閘門不會逼出捏造。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
 
 ### `assemble` — 從 agent 產出的擷取 JSON 組裝(由 skill 呼叫)
 
@@ -424,6 +424,12 @@ XPath 等 typed locator，digest 則以 normalized fragment content 計算。Cor
 確定性的值比對、表格儲存格、structured path、enum 與 source-fact 檢查決定
 support；runtime confidence 不具權威。只有檔名或整份文件的 legacy citation
 會降級為 `insufficient`，claim 維持 unverified。
+
+若 extraction 條目提供 v1 `evidence[]`，它會記錄精確的 manifest source、typed
+locator、normalized fragment SHA-256 與 material claim path。`verify-extraction` 與
+`assemble` 會在建立 run 前 materialize、驗證並解析該路徑；shadow 中該 reference 會專屬於所宣告
+claim path，再由 Core 決定 relationship。欄位與範例見可攜 skill 的
+[extraction schema reference](skills/loop-apidoc/reference/extraction-schemas.md)。
 
 ---
 
@@ -523,7 +529,7 @@ uv run ruff check .
 | 套件 | 職責 |
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
-| `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
+| `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
 | `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |

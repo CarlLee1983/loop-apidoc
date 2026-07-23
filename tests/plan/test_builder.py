@@ -108,6 +108,34 @@ def test_field_evidence_normalizes_supported_field_citation():
     assert evidence.citations[0].manifest_source == "b.md"
 
 
+def test_field_exact_evidence_is_retained_on_parent_schema_claim():
+    extraction = ExtractionResult(
+        notebook_url="https://nb/x",
+        artifacts=[
+            _art("07", QueryKind.INITIAL,
+                 '```json\n{"schemas": [{"name": "Payment", "source": "a.md#payment", '
+                 '"fields": [{"name": "amount", "type": "integer", '
+                 '"source": "b.md#amount", "evidence": [{"version": 1, '
+                 '"source": "b.md", "locator": {"kind": "line_range", '
+                 '"start_line": 3, "end_line": 3}, "fragment_digest": "'
+                 + "a" * 64
+                 + '", "claim_path": "/fields/amount/type"}]}]}]}\n```'),
+        ],
+    )
+
+    plan = build_normalization_plan(extraction, _field_evidence_manifest())
+
+    references = [
+        reference
+        for citation in plan.schemas[0].citations
+        for reference in citation.evidence
+    ]
+    assert [reference.claim_path for reference in references] == [
+        "/fields/amount/type"
+    ]
+    assert references[0].source == "b.md"
+
+
 def test_field_evidence_records_unmatched_field_citation():
     extraction = ExtractionResult(
         notebook_url="https://nb/x",

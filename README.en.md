@@ -402,7 +402,7 @@ uv run loop-apidoc verify-extraction \
   --sources ./sources --extraction ./work [--url <URL> ...] [--json]
 ```
 
-Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
+Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. Optional v1 `evidence[]` references are also reopened against the manifest snapshot: their exact source identity, typed locator, and normalized-fragment SHA-256 must match before assembly. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
 
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
@@ -434,6 +434,12 @@ XPath) and a digest of the normalized fragment content. Core decides support wit
 deterministic value, table-cell, structured-path, enum, and source-fact checks; runtime
 confidence is never authoritative. A filename-only or whole-document legacy citation
 degrades to `insufficient` and leaves the claim unverified.
+
+When an extraction entry supplies v1 `evidence[]`, it records the exact manifest source,
+typed locator, normalized-fragment SHA-256, and material claim path. `verify-extraction`
+and `assemble` materialize, verify, and resolve that path before a run exists; in shadow, that reference
+owns the declared claim path and Core decides its relationship. See the portable
+[extraction schema reference](skills/loop-apidoc/reference/extraction-schemas.md).
 
 ---
 

@@ -9,7 +9,7 @@
 </head>
 <body>
 <p><a href="introduction.html">前往介紹頁</a> · <a href="index.en.html">English</a></p>
-<p>Claim-level semantic evidence 會把確定性的 <code>explicit_support</code> 或 <code>insufficient</code> relationship 連到 exact fragment；legacy 相容 shadow run 請查看 <code>core/relationships.json</code>。</p>
+<p>Claim-level semantic evidence 會把確定性的 <code>explicit_support</code> 或 <code>insufficient</code> relationship 連到 exact fragment；選填 v1 <code>evidence[]</code> 會在 run 前重新 materialize、驗證 digest 與 claim path。legacy 相容 shadow run 請查看 <code>core/relationships.json</code>。</p>
 <p>GitBook 文件若提供 <code>llms.txt</code>，可用 deterministic Markdown cache 與 line-cited draft facts 減少模型搬運。<code>scaffold-extraction</code> 可再產生待覆核的 extraction-shaped JSON；先複製並補齊到 workdir，不能直接當成 <code>--extraction</code>，最終仍以來源與驗證為準。</p>
 <p><code>loop-apidoc review</code> 可在本機開啟單使用者工作台，比對 candidate 與 current／baseline，保存結構化 handoff；只有人工明確核准才更新 Foundry current。</p>
 </body>

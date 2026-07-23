@@ -107,6 +107,12 @@ provenance 可逐欄位追到 exact fragment 與 source artifact。無法從 leg
 citation 取得精確 locator 時只會得到 `insufficient`／unverified，不會假裝成
 `explicit_support`。
 
+在 agent-native boundary，選填的 v1 `evidence[]` 會以 exact manifest source identity、
+typed locator、normalized fragment digest 與 material claim path 表示。`verify-extraction`
+與 `assemble` 都會在建立 run-dir 前透過 fragment adapter 重新 materialize 並驗證這個
+digest，並以 shared plan projection 解析 claim path。Shadow 對已宣告的 claim path 優先採用它、停用同一路徑的 legacy fallback；最終
+relationship 仍由 Core 的 deterministic value comparison 決定。
+
 `assemble --score` 在驗證報告寫出後讀取同一個 run-dir artifact 集合並產生
 `score/score.{json,md}`；這是後段品質摘要，不會回頭擷取來源，也不改變
 validation pass/fail 的語意。配合 `--target-score`/`--prev-score`/`--round-index`/`--max-rounds`,

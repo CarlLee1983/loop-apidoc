@@ -29,6 +29,8 @@ from pydantic import (
     model_validator,
 )
 
+from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
+
 
 # Keys the generator (loop_apidoc/generate/openapi.py) defensively reads on a
 # parameter/field but are not part of the documented contract: `location` (an
@@ -65,6 +67,7 @@ class FieldEntry(_StrictEntry):
     one_of: list[str] | None = None
     discriminator: dict[str, Any] | None = None
     source: str | None = None
+    evidence: list[ExtractionEvidenceReference] = []
 
 
 class ParamEntry(_StrictEntry):
@@ -93,6 +96,12 @@ class _Lax(BaseModel):
     """Permissive base: known keys are type-checked, unknown keys ignored."""
 
     model_config = ConfigDict(extra="ignore")
+
+
+class EvidenceBearingInput(_Lax):
+    """Permissive extraction entry with optional, typed exact evidence."""
+
+    evidence: list[ExtractionEvidenceReference] = []
 
 
 class _MethodBearingInput(_Lax):
@@ -135,7 +144,7 @@ def normalize_endpoint_method_fields(entry: dict[str, Any]) -> None:
                             for method in methods]
 
 
-class SchemaEntry(_Lax):
+class SchemaEntry(EvidenceBearingInput):
     name: str | None = None
     fields: list[FieldEntry] = []
     enums: list[Any] = []
@@ -164,31 +173,32 @@ class EndpointDetailInput(_MethodBearingInput):
     security: list[str] = []
     examples: list[Any] = []
     missing: list[Any] = []
+    evidence: list[ExtractionEvidenceReference] = []
 
 
 class InventoryEndpointInput(_MethodBearingInput):
-    pass
+    evidence: list[ExtractionEvidenceReference] = []
 
 
 class InventoryInput(_Lax):
     title: str | None = None
     version: str | None = None
     overview: str | None = None
-    environments: list[dict[str, Any]] = []
-    security_schemes: list[dict[str, Any]] = []
+    environments: list[EvidenceBearingInput] = []
+    security_schemes: list[EvidenceBearingInput] = []
     endpoints: list[InventoryEndpointInput] = []
     schemas: list[SchemaEntry] = []
-    errors: list[dict[str, Any]] = []
-    operational: list[dict[str, Any]] = []
+    errors: list[EvidenceBearingInput] = []
+    operational: list[EvidenceBearingInput] = []
     missing: list[Any] = []
 
 
 class IntegrationInput(_Lax):
     version: str | None = None
-    crypto: list[dict[str, Any]] = []
-    callbacks: list[dict[str, Any]] = []
-    field_conditions: list[dict[str, Any]] = []
-    test_cases: list[dict[str, Any]] = []
+    crypto: list[EvidenceBearingInput] = []
+    callbacks: list[EvidenceBearingInput] = []
+    field_conditions: list[EvidenceBearingInput] = []
+    test_cases: list[EvidenceBearingInput] = []
     missing: list[Any] = []
 
 

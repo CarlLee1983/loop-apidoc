@@ -674,7 +674,7 @@
     </div>
     <div class="arch-note">
       <b>Core shadow seam.</b> Opt in with <code class="inline">assemble --architecture-mode shadow</code>. After the legacy report is written, <code class="inline">shadow/</code> maps the in-memory manifest and plan into Core evidence and claims, runs through Core validation only, and writes observational artifacts under <code class="inline">&lt;run-dir&gt;/core/</code>. It never approves, publishes, updates Foundry, or changes the legacy status or exit code.
-      Claim paths are bound to exact fragments by <code class="inline">explicit_support</code>, <code class="inline">derived_support</code>, <code class="inline">contradicts</code>, or <code class="inline">insufficient</code>. A whole-document legacy citation cannot become supported; inspect <code class="inline">relationships.json</code> and <code class="inline">projections/provenance.json</code>.
+      Optional v1 <code class="inline">evidence[]</code> references re-materialize before a run exists, verify their digest, and resolve their claim path. Claim paths are bound to exact fragments by <code class="inline">explicit_support</code>, <code class="inline">derived_support</code>, <code class="inline">contradicts</code>, or <code class="inline">insufficient</code>. A whole-document legacy citation cannot become supported; inspect <code class="inline">relationships.json</code> and <code class="inline">projections/provenance.json</code>.
     </div>
   </div>
 </section>
@@ -798,7 +798,7 @@
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">verify-extraction</span></span>
-        <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir. The contract includes the <b>source-fact inventory</b>: when a source section plainly lists a parameter table or example blocks and the extraction left them empty, that is a silent omission rather than "the source does not say" — to claim the latter, name the field in <code class="inline">missing</code>.</p></div>
+        <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir. Optional v1 <code class="inline">evidence[]</code> references re-materialize, verify their digest, and resolve their claim path. The contract includes the <b>source-fact inventory</b>: when a source section plainly lists a parameter table or example blocks and the extraction left them empty, that is a silent omission rather than "the source does not say" — to claim the latter, name the field in <code class="inline">missing</code>.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
@@ -1050,7 +1050,7 @@
         <thead><tr><th>Package</th><th>Responsibility</th></tr></thead>
         <tbody>
           <tr><td><code>manifest/</code></td><td>Scan local sources + build manifest.json</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), evidence.py (read-side v1 exact-evidence materialization/digest and claim-path verification), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>Opt-in legacy/Core bridge and in-memory runner; only <code>shadow/report.py</code> writes the observational <code>core/</code> artifact set or a safe error report.</td></tr>
           <tr><td><code>extraction/</code></td><td>Shared models + utilities (stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>Normalization plan + source-match classification</td></tr>

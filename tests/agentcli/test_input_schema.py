@@ -181,6 +181,33 @@ def test_schema_field_source_is_accepted(tmp_path):
     assert loaded["schemas"][0]["fields"][0]["source"] == "spec.md p.12"
 
 
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        [{"source": "spec.md", "locator": {"kind": "line_range", "start_line": 1,
+                                                "end_line": 1},
+          "fragment_digest": "a" * 64, "claim_path": "/summary"}],
+        [{"version": 1, "source": "spec.md", "locator": {"kind": "line_range",
+                                                                 "start_line": 1,
+                                                                 "end_line": 1},
+          "fragment_digest": "not-a-digest", "claim_path": "/summary"}],
+        [{"version": 1, "source": "spec.md", "locator": {"kind": "whole_document"},
+          "fragment_digest": "a" * 64, "claim_path": "/summary"}],
+    ],
+)
+def test_malformed_exact_evidence_is_rejected_at_input_boundary(tmp_path, evidence):
+    inventory = json.loads(json.dumps(_INVENTORY))
+    inventory["endpoints"][0]["evidence"] = evidence
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=inventory)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "inventory.json" in str(exc.value)
+    assert "evidence" in str(exc.value)
+
+
 def test_x_extension_key_on_field_is_allowed(tmp_path):
     # x-conditional-required 等 x- 擴充鍵屬合法(benchmark 實際使用),不可誤擋。
     ok = json.loads(json.dumps(_INVENTORY))
