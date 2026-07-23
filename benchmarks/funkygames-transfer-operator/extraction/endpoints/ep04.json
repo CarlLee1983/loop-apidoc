@@ -2,6 +2,218 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/Wallet/GetBalance",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post"
+      },
+      "fragment_digest": "342b095b966d6a392ae686774b922606cc1176536a5ab17eb344f7f3b4f08f7b",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post"
+      },
+      "fragment_digest": "342b095b966d6a392ae686774b922606cc1176536a5ab17eb344f7f3b4f08f7b",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/responses/200"
+      },
+      "fragment_digest": "1c4eb1410eda60237bbdf759225aff35bbb60825e4880c934c6a70a484189421",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "ac7af85e248f7a47e7f8e59e791e4bed29d7bbd83fc6c89b110833c3f9c75e1f",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/summary"
+      },
+      "fragment_digest": "176092f5875f3e8e0125dd1c7cd110326b868888800cc5a67ffbf30f6b4ef452",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1GetBalance/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "3e13f5f82a01800f6780f5e09d2a681483c685537c7573b7d277a83b2fdcacf7",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest/properties/playerId"
+      },
+      "fragment_digest": "978fe85bc4cd4c7d9bebba0aee23f278d971e3a7cfc0198fe4191939840bc948",
+      "claim_path": "/parameters/body/playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest/properties/sessionId"
+      },
+      "fragment_digest": "a71a3575abb798f702f7741a7321db3c650d193f59ed7ef8af6e2ceed2ad55be",
+      "claim_path": "/parameters/body/sessionId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest/properties/gameCode"
+      },
+      "fragment_digest": "ec337466c351dad8473ded9a9005d5070faeb943986794fb52b748b13ab2ea7f",
+      "claim_path": "/parameters/body/gameCode/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest"
+      },
+      "fragment_digest": "e1ccaffdba45853401c99c3bfb586ba31a51635188e707a26363c8e69c267a1c",
+      "claim_path": "/parameters/body/playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest"
+      },
+      "fragment_digest": "e1ccaffdba45853401c99c3bfb586ba31a51635188e707a26363c8e69c267a1c",
+      "claim_path": "/parameters/body/sessionId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/OperatorGetBalanceRequest"
+      },
+      "fragment_digest": "e1ccaffdba45853401c99c3bfb586ba31a51635188e707a26363c8e69c267a1c",
+      "claim_path": "/parameters/body/gameCode/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

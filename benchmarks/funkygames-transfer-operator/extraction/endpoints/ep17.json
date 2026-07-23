@@ -2,6 +2,198 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/User/GetVoucherStakes",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post"
+      },
+      "fragment_digest": "4d88b5498c16d597ba1c9cd9380118386aa80dcf3af4b012c0f86ba19abcb208",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post"
+      },
+      "fragment_digest": "4d88b5498c16d597ba1c9cd9380118386aa80dcf3af4b012c0f86ba19abcb208",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/responses/200"
+      },
+      "fragment_digest": "10c411268ef4659ebf7000f3f236feee2591a01ddadd1efe4bb2b67a5a47f2d5",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "4675b2e7d6fad201c777348e1438f634f01586268bcd103937fac5c0a646ab51",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/summary"
+      },
+      "fragment_digest": "16444b4cb74035b633fcc2758b7690bdd52bbeb0f1711f52116537ce4dbbd3db",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVoucherStakes/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "a6024b7259336fbd1db3ec15eb2e2f88ae027af70c2edbf3862165e5f06b6f00",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVoucherStakesRequest/properties/currency"
+      },
+      "fragment_digest": "0c45a9c67a5cec5c9dd571bf6220b55eac3065a1b18a5438cd0d98725d197246",
+      "claim_path": "/parameters/body/currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVoucherStakesRequest/properties/gameCode"
+      },
+      "fragment_digest": "5b6b9039879fcee5722db5a2fc85403da353f7489085fde49806a20b4a38b42a",
+      "claim_path": "/parameters/body/gameCode/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVoucherStakesRequest"
+      },
+      "fragment_digest": "07f2fe5cda4439ea1eea7a811815756ad03b10cf1d47251f1b36b267508e0a29",
+      "claim_path": "/parameters/body/currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVoucherStakesRequest"
+      },
+      "fragment_digest": "07f2fe5cda4439ea1eea7a811815756ad03b10cf1d47251f1b36b267508e0a29",
+      "claim_path": "/parameters/body/gameCode/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

@@ -75,7 +75,7 @@ def test_report_writes_complete_stable_artifact_set(tmp_path):
 
 def test_safe_entry_point_converts_metadata_failure_to_error_json(tmp_path):
     plan = _plan().model_copy(
-        update={"system_groups": [_plan().system_groups[0].model_copy(update={"version": None})]}
+        update={"system_groups": [_plan().system_groups[0].model_copy(update={"name": ""})]}
     )
 
     summary = run_shadow_safely(
@@ -93,7 +93,7 @@ def test_safe_entry_point_converts_metadata_failure_to_error_json(tmp_path):
         (tmp_path / "core" / "error.json").read_text(encoding="utf-8")
     ) == {
         "exception_type": "ShadowMetadataError",
-        "message": "shadow contract metadata requires a source-stated title and version",
+        "message": "shadow contract metadata requires a source-stated title",
         "stage": "bridge",
         "status": "error",
     }

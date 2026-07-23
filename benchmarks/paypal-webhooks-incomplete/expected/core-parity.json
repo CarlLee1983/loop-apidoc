@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "expected_legacy_status": "FAIL",
+  "expected_core_verdict": "reject",
+  "require_verdict_match": true,
+  "require_exact_evidence_for_all_material_claims": true,
+  "allowed_semantic_differences": []
+}

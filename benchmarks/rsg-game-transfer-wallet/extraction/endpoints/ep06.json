@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/WithBalance/Player/GetURLToken",
-  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 748-786",
   "parameters": [
     {
       "name": "SystemCode",

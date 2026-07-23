@@ -1,0 +1,282 @@
+{
+  "sources_root": "benchmarks/cybersource-payments/sources",
+  "generated_at": "2026-07-23T15:57:32.743870Z",
+  "local_sources": [
+    {
+      "relative_path": "AuthReversalRequest.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 1451,
+      "sha256": "537fd4f20d9009849b41bdd15eac59f4ad362e5bfa3431b2670070263e3312c7",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "CaptureApi.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 1963,
+      "sha256": "50a6a4b897b47a8f47610a92782c0ef7f2263f548777d34ba11f8c8d4c27d09c",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "CapturePaymentRequest.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 2460,
+      "sha256": "c714ee2ef09fa28b316969be1fb23a424586c05e3a3f6bcb5b565309e5c88554",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "CreatePaymentRequest.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 4050,
+      "sha256": "f1c84dc37c892d34259eeabe792c97a2f6e71fada291c56d8b5f2afb362aab83",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PaymentsApi.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 10931,
+      "sha256": "96fd6ee4d7adcc21f2cc33ba7846dcbb232b1e7def14f71bae4ce3f7d5a56e07",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsCapturesPost201Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 2622,
+      "sha256": "7f191bbeecf4ab08c2ea0a33e23a2e7213e924ab3c5e941b4cce9645a8a78e78",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsPost201Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 4730,
+      "sha256": "81ad6f37f364c92690c880b050365c20d1245e1eb675fac80d4e786ebba9e1f5",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsPost400Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 1329,
+      "sha256": "eb671313262b0bf33366b0e9ecdb9372b4e7b467e8b13ce4a0449636da57b030",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsRefundPost201Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 2754,
+      "sha256": "1201ff22e4bc4cd811ebe1946f728c897dd8bd95f5add49205aed68b5b66fed1",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsReversalsPost201Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 2598,
+      "sha256": "27811d00aade56cb0e8ac8553399287cf0b71c63f9e9a06cc90068750cbb79dc",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "PtsV2PaymentsVoidsPost201Response.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 1882,
+      "sha256": "9581087e5ddbcf6983dec509f8ff0bbe01c9b81f6ea96ad0cf6c306ead1c79fc",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsClientReferenceInformation.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 3086,
+      "sha256": "0e856901a02a242993a9cad949483f2bb89ef97bf8bf2bca1f32d45797e9d506",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsOrderInformation.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 3392,
+      "sha256": "c00d6349d89ed84beba12b3b03c2a50bb7cdfe4e3a3ace4ef753df2cabc19a93",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsOrderInformationAmountDetails.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 10874,
+      "sha256": "ba9244c9f070bc3ac626aa48b81a19ec47790181f9445d3a65a84943af9d9952",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsOrderInformationBillTo.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 18694,
+      "sha256": "d59fc3b35818520e9b9f38ae24431378c2a4766440702f2b5533bd9650693ec6",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsPaymentInformation.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 7178,
+      "sha256": "426b7444abf5c82f788263942a6b9d3152c9021d5164f9c0cd10a08a534b8017",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsPaymentInformationCard.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 16009,
+      "sha256": "5b2bed6b1c25b3c8d489bc26d2d255618835230f9ee380dc0bbd143cc8273c3e",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "Ptsv2paymentsProcessingInformation.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 24694,
+      "sha256": "d4c8598ba32895af54c3a7c77ac59a04b16794f54366d176e1d2c66445aa5113",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "README.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 0,
+      "sha256": "",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": false,
+      "status": "ignored",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "RefundApi.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 3999,
+      "sha256": "6a96ef36cdf89d74b8482ee61abf37b9049697e070757640dd4bac9cee0503bc",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "RefundPaymentRequest.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 2157,
+      "sha256": "52dd9bbe3f5aae961f72c7584820430acae5ab769a38901a0ed818e8387be515",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "ReversalApi.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 3723,
+      "sha256": "d346eaf85c286b05b0b959f85d8dc3dbc4eb5f7a0e32199c8f5d8960a8496c7c",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "VoidApi.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 8732,
+      "sha256": "2804b5415af21c9006b5774ce5b5ea754fd997ce69fe75a1f998066fc2615ec8",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "VoidPaymentRequest.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 1127,
+      "sha256": "35599eec3e303d935dbd946c0e31e602cbb863c8c79d633c0b2bb75209ae8ede",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    },
+    {
+      "relative_path": "simple-authorizationinternet.md",
+      "mime_type": "text/markdown",
+      "source_format": "markdown",
+      "size_bytes": 4067,
+      "sha256": "c58b6eb7b496ab510c04287960ce8407ec552d2fef3897e87857f0a97508933b",
+      "scanned_at": "2026-07-23T15:57:32.743870Z",
+      "supported": true,
+      "status": "pending",
+      "duplicate_of": null
+    }
+  ],
+  "url_sources": []
+}

@@ -2,6 +2,15 @@
   "method": "GET",
   "path": "/betDetailUrl",
   "source": "transfer-operator.swagger.json#/paths/~1betDetailUrl/get",
+  "evidence": [
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get"}, "fragment_digest": "299541a5b473d217bd5f2eaab1194f2db5c02da41dd1c2f7449891ae44f2baf2", "claim_path": "/method"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get"}, "fragment_digest": "299541a5b473d217bd5f2eaab1194f2db5c02da41dd1c2f7449891ae44f2baf2", "claim_path": "/path"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get/responses/200"}, "fragment_digest": "38eed49c2ef56dd08baaa74998fbf7682521209fb27085680db6b19ce6cd6e01", "claim_path": "/responses/200/status_code"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get/responses/200/description"}, "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3", "claim_path": "/responses/200/description"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get/summary"}, "fragment_digest": "f52288bf6f32759c7a2f4ae5fcc6dbb11a4a28d219448c935497ba8f6c3818c0", "claim_path": "/summary"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get/parameters/0/name"}, "fragment_digest": "adcfd616172e74660c8e78995a978f395052fdd14410c84cf12cb5835aa90372", "claim_path": "/parameters/query/betDetailUrl/name"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1betDetailUrl/get/parameters/0/required"}, "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b", "claim_path": "/parameters/query/betDetailUrl/required"}
+  ],
   "parameters": [
     {
       "name": "betDetailUrl",

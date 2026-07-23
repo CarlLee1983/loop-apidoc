@@ -54,13 +54,26 @@ the legacy `source` string used by the shipping compatibility pipeline.
   the deterministic normalization-plan projection; a syntactically valid but
   unmatched path fails the extraction gate.
 
+Usually one `evidence` item owns one `claim_path`. Approved multi-fragment forms are
+bounded OpenAPI component-reference derivations: one local hop uses the child property
+or complete child schema plus the parent `$ref`; an explicitly ordered two-hop **array**
+chain uses the leaf property/schema, parent→child `$ref`, then child→leaf `$ref`. All
+items use the same claim path. Core rechecks every target, order, field path, and digest;
+do not use these forms for arbitrary `$ref` chains, unrelated secondary sources, or
+convenience citations.
+
 `verify-extraction` and `assemble` reopen the manifest snapshot and compare the typed
 locator's materialized digest and material claim path before any run directory exists. In Core shadow, a v1
 reference owns its declared `claim_path`: legacy locator fallback is disabled for that
-path, and deterministic Core comparison still decides whether it is
-`explicit_support`, `contradicts`, or `insufficient`. Do not add an `evidence` item when
-you cannot compute the exact fragment and digest; retain the normal `source` citation and
-record the gap instead.
+path. JSON Pointer and discovered table-cell fragments are compared to their parsed
+values. For source prose that has no parsed value, a v1 claim-path binding becomes a
+digest-verified `CLAIM_BOUND_EXACT_REFERENCE`; it is an explicit, reviewable assertion
+that the exact excerpt supports that one claim, not a generic text match. Use it only
+after reading the cited excerpt and only when the source visibly supports the value—never
+for a convention, default, or inferred value. A legacy page/line citation never receives
+this treatment and remains insufficient. Do not add an `evidence` item when you cannot
+compute the exact fragment and digest; retain the normal `source` citation and record the
+gap instead.
 
 ## inventory.json
 

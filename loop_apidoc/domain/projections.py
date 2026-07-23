@@ -62,6 +62,7 @@ class Projection:
 
 class OpenApiProjectionCompiler:
     name = "openapi"
+    _MISSING_SOURCE_STATUS = "missing-source"
 
     def __init__(self, version: str) -> None:
         self.version = version
@@ -157,12 +158,15 @@ class OpenApiProjectionCompiler:
             paths.setdefault(operation.path, {})[
                 operation.method.lower()
             ] = operation_payload
+        info = {
+            "title": contract.metadata.title,
+            "version": contract.metadata.version or "0.0.0",
+        }
+        if contract.metadata.version is None:
+            info["x-loop-status"] = self._MISSING_SOURCE_STATUS
         payload = {
             "openapi": "3.1.0",
-            "info": {
-                "title": contract.metadata.title,
-                "version": contract.metadata.version,
-            },
+            "info": info,
             "servers": [
                 {"url": server, "description": environment.name}
                 for environment in contract.environments

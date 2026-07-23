@@ -2,6 +2,198 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/TrialPlay/CloseTrialPlayEvent",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post"
+      },
+      "fragment_digest": "aede038b83e9cc63d58e5153ff5f6ea692eb05e2fe986df049c1dc2e1473af70",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post"
+      },
+      "fragment_digest": "aede038b83e9cc63d58e5153ff5f6ea692eb05e2fe986df049c1dc2e1473af70",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/responses/200"
+      },
+      "fragment_digest": "78b69e15a32463027cd20ba9e3db99169fafa058f6a14fb7cc4dbf946657fe72",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "b7dbe700c24500e3febfbd41b43f503c83e223a0e425408f74339c6d9873367d",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/summary"
+      },
+      "fragment_digest": "ca38e3288fa2ce23426736e4baf475be3a5086313c746017b931236d3508903b",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CloseTrialPlayEvent/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "9893eb2fa736a781c739e796e6eb7d292c0c08aac7154fe6fa62abe7c4d8f29a",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCloseTrialPlayEventRequest/properties/eventId"
+      },
+      "fragment_digest": "3cd19322b1b83fb3619b75d9ab63875cb31ae4ff0c5d92bfe4d4bd10e14f02e3",
+      "claim_path": "/parameters/body/eventId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCloseTrialPlayEventRequest/properties/freezeAllMembers"
+      },
+      "fragment_digest": "c6dce2d77d89a6e73dbc7b50dfdc7ed8d7b881d523c17df34a57856a04c2baf7",
+      "claim_path": "/parameters/body/freezeAllMembers/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCloseTrialPlayEventRequest"
+      },
+      "fragment_digest": "972ebfc1a52583a42b61b1552b6d85e8351115b29d344469bebc7cbebce52f0b",
+      "claim_path": "/parameters/body/eventId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCloseTrialPlayEventRequest"
+      },
+      "fragment_digest": "972ebfc1a52583a42b61b1552b6d85e8351115b29d344469bebc7cbebce52f0b",
+      "claim_path": "/parameters/body/freezeAllMembers/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

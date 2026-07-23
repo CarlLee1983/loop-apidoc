@@ -1,0 +1,19 @@
+{
+  "entry_url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/fa500d341c242326279e64402a547ff7c0717e0d/APIs/apis.guru/2.2.0/openapi.yaml",
+  "confirmed_by_user": true,
+  "expected": [
+    {
+      "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/fa500d341c242326279e64402a547ff7c0717e0d/APIs/apis.guru/2.2.0/openapi.yaml",
+      "title": "APIs.guru",
+      "source": "user"
+    }
+  ],
+  "results": [
+    {
+      "url": "https://raw.githubusercontent.com/APIs-guru/openapi-directory/fa500d341c242326279e64402a547ff7c0717e0d/APIs/apis.guru/2.2.0/openapi.yaml",
+      "status": "fetched",
+      "file": "sources/apis-guru-2.2.0.openapi.yaml",
+      "method": "direct"
+    }
+  ]
+}

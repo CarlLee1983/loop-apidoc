@@ -1,0 +1,19 @@
+{
+  "entry_url": "https://raw.githubusercontent.com/stripe/openapi/3881db83dff8d170d4b7ef7e00e1801cd617e891/openapi/spec3.sdk.json",
+  "confirmed_by_user": true,
+  "expected": [
+    {
+      "url": "https://raw.githubusercontent.com/stripe/openapi/3881db83dff8d170d4b7ef7e00e1801cd617e891/openapi/spec3.sdk.json",
+      "title": "Stripe API",
+      "source": "user"
+    }
+  ],
+  "results": [
+    {
+      "url": "https://raw.githubusercontent.com/stripe/openapi/3881db83dff8d170d4b7ef7e00e1801cd617e891/openapi/spec3.sdk.json",
+      "status": "fetched",
+      "file": "sources/spec3.sdk.json",
+      "method": "direct"
+    }
+  ]
+}

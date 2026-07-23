@@ -1,0 +1,19 @@
+{
+  "entry_url": "https://raw.githubusercontent.com/Adyen/adyen-openapi/74fabab0628019206b77c4823776b726345a035d/json/CheckoutService-v71.json",
+  "confirmed_by_user": true,
+  "expected": [
+    {
+      "url": "https://raw.githubusercontent.com/Adyen/adyen-openapi/74fabab0628019206b77c4823776b726345a035d/json/CheckoutService-v71.json",
+      "title": "Adyen Checkout API",
+      "source": "user"
+    }
+  ],
+  "results": [
+    {
+      "url": "https://raw.githubusercontent.com/Adyen/adyen-openapi/74fabab0628019206b77c4823776b726345a035d/json/CheckoutService-v71.json",
+      "status": "fetched",
+      "file": "sources/CheckoutService-v71.json",
+      "method": "direct"
+    }
+  ]
+}

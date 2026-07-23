@@ -2,6 +2,7 @@
   "name": "剔除遊戲中的會員",
   "method": "POST",
   "path": "/WithBalance/Player/Kickout",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 816-846",
   "description": "當 KickType=1，會剔除系統下所有人，KickType=2，會剔除站台下所有人 ，KickType=3，會剔除正在該遊戲的所有人，KickType=4，會剔除特定會員\n當 KickType=1，WebId、UserId 請填空字串，GameId 請填 0 ，KickType=2，UserId 請填空字串，GameId請填 0 ，KickType=3，WebId、UserId 請填空字串 ，KickType=4，GameId 請填 0\n此API會回傳符合剔除條件的會員數量，符合條件者將於數秒內被剔除系統",
   "request": {
     "headers": [

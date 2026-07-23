@@ -2,6 +2,258 @@
   "method": "POST",
   "path": "/{funkyReportUrl}/Funky/Report/GetBetList",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post"
+      },
+      "fragment_digest": "a91ca7b2f933ce3c77c77c4cfdc1b63e5ff068295b59238a213d4e8063d41077",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post"
+      },
+      "fragment_digest": "a91ca7b2f933ce3c77c77c4cfdc1b63e5ff068295b59238a213d4e8063d41077",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/responses/200"
+      },
+      "fragment_digest": "62e990fa81f09aeda203bf86a25702f912fb6bdaa87e53d32bf93730d6afdd6a",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "a3b0aed0a3cfd8a4243207a854a0694817b31f2121c84f9b391739558caceaae",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/summary"
+      },
+      "fragment_digest": "b997ca5473b3ec87baf86e7f0b5611175decfe6712e3de914200c02933f21ed8",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/0/name"
+      },
+      "fragment_digest": "7b1f8f62e4bc4eee577a73dbcdb9868efaf16d7335eb63ca2589811ea6561c18",
+      "claim_path": "/parameters/path/funkyReportUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyReportUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyReportUrl}~1Funky~1Report~1GetBetList/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "b45e4c246dd572f6d8971c2098d4d65267a28f91726450b31b794f6a29c76e67",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest/properties/currency"
+      },
+      "fragment_digest": "75fb0d8966b9b900f4e7e5af6c4b70e9c36231b207260a87702f322fc07c35e5",
+      "claim_path": "/parameters/body/currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest/properties/startTime"
+      },
+      "fragment_digest": "008352d28409c48353c2d71379ec10d3f1dae210740004a4e41468223694c8fd",
+      "claim_path": "/parameters/body/startTime/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest/properties/endTime"
+      },
+      "fragment_digest": "4dae1abfce0ed9d12f41483f692cd468a1557a764ee6295218b6f9a4ce93d180",
+      "claim_path": "/parameters/body/endTime/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest/properties/searchTimeType"
+      },
+      "fragment_digest": "7f301b0fde84e0791fb4b2ab95afc0a36a08fbd5d2cfc47597a5e24074f2e156",
+      "claim_path": "/parameters/body/searchTimeType/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest/properties/page"
+      },
+      "fragment_digest": "740c1dc83aedc45f61d96fb0807aa2df68525435c60f545492b6fb4f2d1f5e37",
+      "claim_path": "/parameters/body/page/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest"
+      },
+      "fragment_digest": "8f14cdbfd287e8ef7909465454a3690a11c59024b2608386d952b0afd884a787",
+      "claim_path": "/parameters/body/currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest"
+      },
+      "fragment_digest": "8f14cdbfd287e8ef7909465454a3690a11c59024b2608386d952b0afd884a787",
+      "claim_path": "/parameters/body/startTime/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest"
+      },
+      "fragment_digest": "8f14cdbfd287e8ef7909465454a3690a11c59024b2608386d952b0afd884a787",
+      "claim_path": "/parameters/body/endTime/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest"
+      },
+      "fragment_digest": "8f14cdbfd287e8ef7909465454a3690a11c59024b2608386d952b0afd884a787",
+      "claim_path": "/parameters/body/searchTimeType/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetListRequest"
+      },
+      "fragment_digest": "8f14cdbfd287e8ef7909465454a3690a11c59024b2608386d952b0afd884a787",
+      "claim_path": "/parameters/body/page/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyReportUrl",

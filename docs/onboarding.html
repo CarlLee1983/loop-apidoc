@@ -675,7 +675,7 @@
     </div>
     <div class="arch-note">
       <b>Core shadow seam。</b>以 <code class="inline">assemble --architecture-mode shadow</code> 明確啟用。Legacy report 寫出後，<code class="inline">shadow/</code> 把記憶體中的 manifest 與 plan 映成 Core evidence/claims，只執行到 Core validation，並把觀測性產物寫入 <code class="inline">&lt;run-dir&gt;/core/</code>。它不會 approval、publish、更新 Foundry，也不改 legacy status 或退出碼。
-      選填 v1 <code class="inline">evidence[]</code> 會在 run 前重新 materialize、驗證 digest 並解析 claim path。Claim path 會以 <code class="inline">explicit_support</code>、<code class="inline">derived_support</code>、<code class="inline">contradicts</code> 或 <code class="inline">insufficient</code> 綁定 exact fragment。整份文件級的 legacy citation 不會變成 supported；請檢查 <code class="inline">relationships.json</code> 與 <code class="inline">projections/provenance.json</code>。
+      選填 v1 <code class="inline">evidence[]</code> 會在 run 前重新 materialize，並驗證 source identity、locator、digest 與 claim path。Claim path 會以 <code class="inline">explicit_support</code>、<code class="inline">derived_support</code>、<code class="inline">contradicts</code> 或 <code class="inline">insufficient</code> 綁定 exact fragment。沒有 parsed scalar 的 prose 只能支援它精確綁定的單一 claim；OpenAPI structural derivation 限 versioned allowlist，並由 Core 連同所有必要 context fragments 重新計算。整份文件級的 legacy citation 不會變成 supported；請檢查 <code class="inline">relationships.json</code> 與 <code class="inline">projections/provenance.json</code>。
     </div>
   </div>
 </section>

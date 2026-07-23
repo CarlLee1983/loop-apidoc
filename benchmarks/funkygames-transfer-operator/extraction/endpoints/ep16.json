@@ -2,6 +2,178 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/User/GetVouchers",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post"
+      },
+      "fragment_digest": "f00e6432f664cdb0043e4a00af300e7da40dd23ed4010e566c3e8fc9973320cc",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post"
+      },
+      "fragment_digest": "f00e6432f664cdb0043e4a00af300e7da40dd23ed4010e566c3e8fc9973320cc",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/responses/200"
+      },
+      "fragment_digest": "02429259bc9e6d27eae42208fa333a06e9df2a4748237cf1c69669b06121130b",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "6af296114f25ed388d9ccc20a70ff59bb3813ed0ce684267984dc9a9ed929f55",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/summary"
+      },
+      "fragment_digest": "6b2a9cc7fd5294c26f2e235082f5d123afdb92cb72de5c3896a4370c08d078d6",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1GetVouchers/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "eb5b1860c3377042a278fd7d9370fe21aac5baa32f332a69b0a49a15bb107d6a",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVouchersRequest/properties/VoucherIdList"
+      },
+      "fragment_digest": "6057a6ecce7257fe82bd863b92647f42b4a57e6c3ea674b3ad9b3387f3f3d7e3",
+      "claim_path": "/parameters/body/VoucherIdList[]/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetVouchersRequest"
+      },
+      "fragment_digest": "2760b8894796b2425bd2955c06f83bcd6415593067f42ed203036c794672409b",
+      "claim_path": "/parameters/body/VoucherIdList[]/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

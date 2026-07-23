@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
@@ -22,6 +23,7 @@ from loop_apidoc.domain.claim_paths import (
     material_claim_paths,
 )
 from loop_apidoc.domain.evidence import (
+    DerivationStep,
     FragmentPrecision,
     JsonPointerLocator,
     LineRangeLocator,
@@ -301,14 +303,14 @@ def build_contract_metadata(
 ) -> ContractMetadata:
     title = plan.resolved_title
     version = plan.resolved_version
-    if not title or not title.strip() or not version or not version.strip():
+    if not title or not title.strip():
         raise ShadowMetadataError(
-            "shadow contract metadata requires a source-stated title and version"
+            "shadow contract metadata requires a source-stated title"
         )
     return ContractMetadata(
         contract_id=f"contract-{bridge.source_set_digest[:20]}",
         title=title,
-        version=version,
+        version=version.strip() if version and version.strip() else None,
         source_set_id=bridge.source_set.id,
         source_set_version=bridge.source_set.version,
         domain_version=SHADOW_DOMAIN_VERSION,
@@ -501,7 +503,13 @@ def _semantic_support_proposals(
     diagnostics: list[BridgeDiagnostic] = []
     paths = material_claim_paths(claim_kind, value)
     for path in paths:
-        exact: list[tuple[EvidenceFragment, VerificationMethod]] = []
+        exact: list[
+            tuple[
+                EvidenceFragment,
+                VerificationMethod,
+                ExtractionEvidenceReference | None,
+            ]
+        ] = []
         degraded: list[EvidenceFragment] = []
         direct = _direct_evidence_for_path(citations, path)
         if direct:
@@ -515,7 +523,7 @@ def _semantic_support_proposals(
                 ]
                 if selected:
                     exact.extend(
-                        (fragment, _verification_method(fragment))
+                        (fragment, _verification_method(fragment), reference)
                         for fragment in selected
                     )
                     continue
@@ -568,7 +576,7 @@ def _semantic_support_proposals(
                         )
                     ]
                     exact.extend(
-                        (fragment, _verification_method(fragment))
+                        (fragment, _verification_method(fragment), None)
                         for fragment in selected
                     )
                     if not selected:
@@ -576,22 +584,70 @@ def _semantic_support_proposals(
                     continue
                 selected = _source_fact_fragments_for_path(fragments, path)
                 exact.extend(
-                    (fragment, _verification_method(fragment))
+                    (fragment, _verification_method(fragment), None)
                     for fragment in selected
                 )
                 if not selected:
                     degraded.extend(document)
 
         if exact:
-            for fragment, method in exact:
-                proposal = ClaimSupportProposal(
-                    fragment_id=fragment.id,
+            schema_ref_proposal = _ref_linked_schema_two_hop_support_proposal(
+                exact=exact,
+                claim_kind=claim_kind,
+                value=value,
+                claim_path=path,
+                plan_location=plan_location,
+            )
+            if schema_ref_proposal is None:
+                schema_ref_proposal = _ref_linked_schema_property_required_support_proposal(
+                exact=exact,
+                claim_kind=claim_kind,
+                value=value,
+                claim_path=path,
+                plan_location=plan_location,
+                )
+            if schema_ref_proposal is None:
+                schema_ref_proposal = _ref_linked_schema_property_support_proposal(
+                    exact=exact,
+                    claim_kind=claim_kind,
+                    value=value,
                     claim_path=path,
-                    proposed_relationship=(
-                        SupportRelationshipType.EXPLICIT_SUPPORT
-                    ),
-                    verification_method=method,
-                    runtime_observation=plan_location,
+                    plan_location=plan_location,
+                )
+            if schema_ref_proposal is not None:
+                proposals[
+                    _canonical_json(schema_ref_proposal.model_dump(mode="json"))
+                ] = schema_ref_proposal
+                continue
+            ref_linked_proposal = _ref_linked_body_property_support_proposal(
+                exact=exact,
+                claim_kind=claim_kind,
+                value=value,
+                claim_path=path,
+                plan_location=plan_location,
+            )
+            if ref_linked_proposal is None:
+                ref_linked_proposal = _ref_linked_body_required_support_proposal(
+                    exact=exact,
+                    claim_kind=claim_kind,
+                    value=value,
+                    claim_path=path,
+                    plan_location=plan_location,
+                )
+            if ref_linked_proposal is not None:
+                proposals[
+                    _canonical_json(ref_linked_proposal.model_dump(mode="json"))
+                ] = ref_linked_proposal
+                continue
+            for fragment, method, reference in exact:
+                proposal = _claim_support_proposal(
+                    fragment=fragment,
+                    method=method,
+                    claim_kind=claim_kind,
+                    value=value,
+                    claim_path=path,
+                    plan_location=plan_location,
+                    exact_reference=reference,
                 )
                 proposals[_canonical_json(proposal.model_dump(mode="json"))] = proposal
             continue
@@ -640,6 +696,676 @@ def _semantic_support_proposals(
         tuple(proposals[key] for key in sorted(proposals)),
         tuple(_unique_diagnostics(diagnostics)),
     )
+
+
+def _claim_support_proposal(
+    *,
+    fragment: EvidenceFragment,
+    method: VerificationMethod,
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+    exact_reference: ExtractionEvidenceReference | None,
+) -> ClaimSupportProposal:
+    derivation_name = (
+        _openapi_pointer_derivation_name(claim_kind, claim_path, fragment)
+        if exact_reference is not None
+        else None
+    )
+    if derivation_name is None:
+        if (
+            exact_reference is not None
+            and method is VerificationMethod.EXACT_NORMALIZED_VALUE
+        ):
+            method = VerificationMethod.CLAIM_BOUND_EXACT_REFERENCE
+        return ClaimSupportProposal(
+            fragment_id=fragment.id,
+            claim_path=claim_path,
+            proposed_relationship=SupportRelationshipType.EXPLICIT_SUPPORT,
+            verification_method=method,
+            runtime_observation=plan_location,
+        )
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    derivation_input = {
+        "locator": fragment.locator.model_dump(mode="json"),
+        "semantic_value": fragment.semantic_value,
+    }
+    return ClaimSupportProposal(
+        fragment_id=fragment.id,
+        claim_path=claim_path,
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name=derivation_name,
+                version="1",
+                input_digests=(_digest_value(derivation_input),),
+                output_digest=_digest_value(claim_value),
+            ),
+        ),
+        runtime_observation=plan_location,
+    )
+
+
+def _ref_linked_schema_property_required_support_proposal(
+    *,
+    exact: list[
+        tuple[
+            EvidenceFragment,
+            VerificationMethod,
+            ExtractionEvidenceReference | None,
+        ]
+    ],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Group a one-hop component-ref schema required claim from two v1 refs."""
+    claim_parts = claim_path.strip("/").split("/")
+    if (
+        claim_kind != "schema"
+        or not isinstance(value, Mapping)
+        or not isinstance(value.get("name"), str)
+        or len(claim_parts) != 3
+        or claim_parts[0] != "fields"
+        or claim_parts[2] != "required"
+    ):
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    if not isinstance(claim_value, bool):
+        return None
+    field_name = claim_parts[1]
+    if field_name.count(".") != 1:
+        return None
+    prefix, child_name = field_name.split(".", 1)
+    v1_fragments = tuple(
+        (fragment, reference)
+        for fragment, _method, reference in exact
+        if reference is not None and isinstance(fragment.locator, JsonPointerLocator)
+    )
+    for schema_fragment, _schema_reference in sorted(
+        v1_fragments,
+        key=lambda item: item[0].id,
+    ):
+        schema_parts = _json_pointer_parts(schema_fragment.locator.pointer)
+        if (
+            schema_parts is None
+            or len(schema_parts) != 3
+            or schema_parts[:2] != ("components", "schemas")
+            or not isinstance(schema_fragment.semantic_value, Mapping)
+        ):
+            continue
+        properties = schema_fragment.semantic_value.get("properties")
+        property_name = child_name.removesuffix("[]")
+        source_property = (
+            properties.get(property_name) if isinstance(properties, Mapping) else None
+        )
+        if not isinstance(source_property, Mapping):
+            continue
+        if child_name.endswith("[]") != (source_property.get("type") == "array"):
+            continue
+        for context_fragment, _context_reference in sorted(
+            v1_fragments,
+            key=lambda item: item[0].id,
+        ):
+            if context_fragment.id == schema_fragment.id:
+                continue
+            context_parts = _json_pointer_parts(context_fragment.locator.pointer)
+            is_array_item = (
+                context_parts is not None
+                and len(context_parts) == 7
+                and context_parts[:2] == ("components", "schemas")
+                and context_parts[3] == "properties"
+                and context_parts[5:] == ("items", "$ref")
+            )
+            is_direct_property = (
+                context_parts is not None
+                and len(context_parts) == 6
+                and context_parts[:2] == ("components", "schemas")
+                and context_parts[3] == "properties"
+                and context_parts[5] == "$ref"
+            )
+            expected_prefix = (
+                f"{context_parts[4]}[]" if is_array_item else context_parts[4]
+            ) if context_parts is not None else None
+            if (
+                not (is_array_item or is_direct_property)
+                or context_parts is None
+                or context_parts[2] != value["name"]
+                or expected_prefix != prefix
+                or _local_openapi_schema_name(context_fragment.semantic_value)
+                != schema_parts[2]
+            ):
+                continue
+            derivation_inputs = tuple(
+                {
+                    "locator": candidate.locator.model_dump(mode="json"),
+                    "semantic_value": candidate.semantic_value,
+                }
+                for candidate in (schema_fragment, context_fragment)
+            )
+            return ClaimSupportProposal(
+                fragment_id=schema_fragment.id,
+                context_fragment_ids=(context_fragment.id,),
+                claim_path=claim_path,
+                proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+                verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+                derivation_steps=(
+                    DerivationStep(
+                        name=(
+                            "openapi_schema_ref_property_required_from_fragments"
+                        ),
+                        version="1",
+                        input_digests=tuple(
+                            _digest_value(item) for item in derivation_inputs
+                        ),
+                        output_digest=_digest_value(claim_value),
+                    ),
+                ),
+                runtime_observation=plan_location,
+            )
+    return None
+
+
+def _ref_linked_schema_two_hop_support_proposal(
+    *,
+    exact: list[tuple[EvidenceFragment, VerificationMethod, ExtractionEvidenceReference | None]],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Group exactly two ordered array-item refs for one schema field claim."""
+    parts = claim_path.strip("/").split("/")
+    if (
+        claim_kind != "schema" or not isinstance(value, Mapping)
+        or not isinstance(value.get("name"), str) or len(parts) != 3
+        or parts[0] != "fields" or parts[2] not in {"name", "type", "required"}
+        or parts[1].count(".") != 2
+    ):
+        return None
+    first_name, second_name, leaf_name = parts[1].split(".", 2)
+    if not first_name.endswith("[]") or not second_name.endswith("[]"):
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    v1 = [(f, r) for f, _m, r in exact if r is not None and isinstance(f.locator, JsonPointerLocator)]
+    contexts = []
+    for fragment, _ref in v1:
+        pointer = _json_pointer_parts(fragment.locator.pointer)
+        if pointer and len(pointer) == 7 and pointer[:2] == ("components", "schemas") and pointer[3] == "properties" and pointer[5:] == ("items", "$ref"):
+            contexts.append((fragment, pointer))
+    for first_fragment, first_pointer in contexts:
+        if first_pointer[2] != value["name"] or first_pointer[4] != first_name.removesuffix("[]"):
+            continue
+        entry_schema = _local_openapi_schema_name(first_fragment.semantic_value)
+        if entry_schema is None:
+            continue
+        for second_fragment, second_pointer in contexts:
+            if second_fragment.id == first_fragment.id or second_pointer[2] != entry_schema or second_pointer[4] != second_name.removesuffix("[]"):
+                continue
+            leaf_schema = _local_openapi_schema_name(second_fragment.semantic_value)
+            if leaf_schema is None:
+                continue
+            for primary, _primary_ref in v1:
+                primary_pointer = _json_pointer_parts(primary.locator.pointer)
+                is_property = primary_pointer is not None and len(primary_pointer) == 5 and primary_pointer[:2] == ("components", "schemas") and primary_pointer[3] == "properties"
+                is_schema = primary_pointer is not None and len(primary_pointer) == 3 and primary_pointer[:2] == ("components", "schemas")
+                if primary_pointer is None or primary_pointer[2] != leaf_schema or (parts[2] == "required" and not is_schema) or (parts[2] != "required" and not is_property):
+                    continue
+                if parts[2] == "required":
+                    properties = primary.semantic_value.get("properties") if isinstance(primary.semantic_value, Mapping) else None
+                    source_property = properties.get(leaf_name.removesuffix("[]")) if isinstance(properties, Mapping) else None
+                    expected = leaf_name.removesuffix("[]") in primary.semantic_value.get("required", ()) if isinstance(primary.semantic_value, Mapping) else None
+                else:
+                    source_property = primary.semantic_value
+                    expected = (f"{first_name}.{second_name}.{leaf_name}" if parts[2] == "name" else source_property.get("type")) if isinstance(source_property, Mapping) else None
+                if not isinstance(source_property, Mapping) or leaf_name.endswith("[]") != (source_property.get("type") == "array") or expected != claim_value:
+                    continue
+                inputs = tuple({"locator": item.locator.model_dump(mode="json"), "semantic_value": item.semantic_value} for item in (primary, first_fragment, second_fragment))
+                return ClaimSupportProposal(
+                    fragment_id=primary.id, context_fragment_ids=(first_fragment.id, second_fragment.id), claim_path=claim_path,
+                    proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT, verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+                    derivation_steps=(DerivationStep(
+                        name=f"openapi_schema_two_hop_ref_property_{parts[2]}_from_fragments", version="1",
+                        input_digests=tuple(_digest_value(item) for item in inputs), output_digest=_digest_value(claim_value),
+                    ),), runtime_observation=plan_location,
+                )
+    return None
+
+
+def _ref_linked_schema_property_support_proposal(
+    *,
+    exact: list[
+        tuple[
+            EvidenceFragment,
+            VerificationMethod,
+            ExtractionEvidenceReference | None,
+        ]
+    ],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Group a one-hop component-ref field claim from two v1 fragments.
+
+    The primary property belongs to the referenced component.  The context
+    fragment exposes the root schema's direct property or array-item ``$ref``.
+    Core repeats these structural checks before accepting the derivation.
+    """
+    claim_parts = claim_path.strip("/").split("/")
+    if (
+        claim_kind != "schema"
+        or not isinstance(value, Mapping)
+        or len(claim_parts) != 3
+        or claim_parts[0] != "fields"
+        or claim_parts[2] not in {"name", "type"}
+        or not isinstance(value.get("name"), str)
+    ):
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    v1_fragments = tuple(
+        (fragment, reference)
+        for fragment, _method, reference in exact
+        if reference is not None and isinstance(fragment.locator, JsonPointerLocator)
+    )
+    for property_fragment, _property_reference in sorted(
+        v1_fragments,
+        key=lambda item: item[0].id,
+    ):
+        property_parts = _json_pointer_parts(property_fragment.locator.pointer)
+        if (
+            property_parts is None
+            or len(property_parts) != 5
+            or property_parts[:2] != ("components", "schemas")
+            or property_parts[3] != "properties"
+            or not isinstance(property_fragment.semantic_value, Mapping)
+        ):
+            continue
+        item_schema = property_parts[2]
+        item_property = property_parts[4]
+        source_type = property_fragment.semantic_value.get("type")
+        if source_type is not None and not isinstance(source_type, str):
+            continue
+        for context_fragment, _context_reference in sorted(
+            v1_fragments,
+            key=lambda item: item[0].id,
+        ):
+            if context_fragment.id == property_fragment.id:
+                continue
+            context_parts = _json_pointer_parts(context_fragment.locator.pointer)
+            is_array_item = (
+                context_parts is not None
+                and len(context_parts) == 7
+                and context_parts[:2] == ("components", "schemas")
+                and context_parts[3] == "properties"
+                and context_parts[5:] == ("items", "$ref")
+            )
+            is_direct_property = (
+                context_parts is not None
+                and len(context_parts) == 6
+                and context_parts[:2] == ("components", "schemas")
+                and context_parts[3] == "properties"
+                and context_parts[5] == "$ref"
+            )
+            if (
+                not (is_array_item or is_direct_property)
+                or context_parts is None
+                or context_parts[2] != value["name"]
+                or _local_openapi_schema_name(context_fragment.semantic_value)
+                != item_schema
+            ):
+                continue
+            prefix = f"{context_parts[4]}[]" if is_array_item else context_parts[4]
+            suffix = "[]" if source_type == "array" else ""
+            field_name = f"{prefix}.{item_property}{suffix}"
+            expected_value = field_name if claim_parts[2] == "name" else source_type
+            if expected_value is None or expected_value != claim_value:
+                continue
+            derivation_inputs = tuple(
+                {
+                    "locator": candidate.locator.model_dump(mode="json"),
+                    "semantic_value": candidate.semantic_value,
+                }
+                for candidate in (property_fragment, context_fragment)
+            )
+            return ClaimSupportProposal(
+                fragment_id=property_fragment.id,
+                context_fragment_ids=(context_fragment.id,),
+                claim_path=claim_path,
+                proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+                verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+                derivation_steps=(
+                    DerivationStep(
+                        name=(
+                            "openapi_schema_ref_property_name_from_fragments"
+                            if claim_parts[2] == "name"
+                            else "openapi_schema_ref_property_type_from_fragments"
+                        ),
+                        version="1",
+                        input_digests=tuple(
+                            _digest_value(item) for item in derivation_inputs
+                        ),
+                        output_digest=_digest_value(claim_value),
+                    ),
+                ),
+                runtime_observation=plan_location,
+            )
+    return None
+
+
+def _ref_linked_body_property_support_proposal(
+    *,
+    exact: list[
+        tuple[
+            EvidenceFragment,
+            VerificationMethod,
+            ExtractionEvidenceReference | None,
+        ]
+    ],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Create the one-hop array-item mapping only from two v1 fragments.
+
+    The Core repeats every structural check.  This adapter-side selection only
+    groups the two exact references that jointly own one claimed body field.
+    """
+    parts = claim_path.strip("/").split("/")
+    if (
+        len(parts) != 4
+        or parts[0] != "parameters"
+        or parts[1] != "body"
+        or parts[3] != "name"
+        or not isinstance(value, Mapping)
+    ):
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    if not isinstance(claim_value, str):
+        return None
+    v1_fragments = tuple(
+        (fragment, reference)
+        for fragment, _method, reference in exact
+        if reference is not None and isinstance(fragment.locator, JsonPointerLocator)
+    )
+    for property_fragment, _property_reference in sorted(
+        v1_fragments,
+        key=lambda item: item[0].id,
+    ):
+        property_parts = _json_pointer_parts(property_fragment.locator.pointer)
+        if (
+            property_parts is None
+            or len(property_parts) != 5
+            or property_parts[:2] != ("components", "schemas")
+            or property_parts[3] != "properties"
+        ):
+            continue
+        item_schema = property_parts[2]
+        item_property = property_parts[4]
+        for context_fragment, _context_reference in sorted(
+            v1_fragments,
+            key=lambda item: item[0].id,
+        ):
+            if context_fragment.id == property_fragment.id:
+                continue
+            context_parts = _json_pointer_parts(context_fragment.locator.pointer)
+            if (
+                context_parts is None
+                or len(context_parts) != 7
+                or context_parts[:2] != ("components", "schemas")
+                or context_parts[3] != "properties"
+                or context_parts[5:] != ("items", "$ref")
+                or value.get("request_schema_ref") != context_parts[2]
+                or _local_openapi_schema_name(context_fragment.semantic_value)
+                != item_schema
+            ):
+                continue
+            suffix = "[]" if (
+                isinstance(property_fragment.semantic_value, Mapping)
+                and property_fragment.semantic_value.get("type") == "array"
+            ) else ""
+            derived_value = f"{context_parts[4]}[].{item_property}{suffix}"
+            if derived_value != claim_value:
+                continue
+            derivation_inputs = tuple(
+                {
+                    "locator": candidate.locator.model_dump(mode="json"),
+                    "semantic_value": candidate.semantic_value,
+                }
+                for candidate in (property_fragment, context_fragment)
+            )
+            return ClaimSupportProposal(
+                fragment_id=property_fragment.id,
+                context_fragment_ids=(context_fragment.id,),
+                claim_path=claim_path,
+                proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+                verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+                derivation_steps=(
+                    DerivationStep(
+                        name=(
+                            "openapi_request_body_ref_property_name_from_fragments"
+                        ),
+                        version="1",
+                        input_digests=tuple(
+                            _digest_value(item) for item in derivation_inputs
+                        ),
+                        output_digest=_digest_value(claim_value),
+                    ),
+                ),
+                runtime_observation=plan_location,
+            )
+    return None
+
+
+def _ref_linked_body_required_support_proposal(
+    *,
+    exact: list[
+        tuple[
+            EvidenceFragment,
+            VerificationMethod,
+            ExtractionEvidenceReference | None,
+        ]
+    ],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Create a one-hop array-item required mapping from two v1 fragments."""
+    parts = claim_path.strip("/").split("/")
+    if (
+        len(parts) != 4
+        or parts[:2] != ["parameters", "body"]
+        or parts[3] != "required"
+        or not isinstance(value, Mapping)
+    ):
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    if not isinstance(claim_value, bool):
+        return None
+    field_name = parts[2]
+    if field_name.count(".") != 1:
+        return None
+    outer_name, _child_name = field_name.split(".", 1)
+    if not outer_name.endswith("[]"):
+        return None
+    v1_fragments = tuple(
+        (fragment, reference)
+        for fragment, _method, reference in exact
+        if reference is not None and isinstance(fragment.locator, JsonPointerLocator)
+    )
+    for schema_fragment, _schema_reference in sorted(
+        v1_fragments,
+        key=lambda item: item[0].id,
+    ):
+        schema_parts = _json_pointer_parts(schema_fragment.locator.pointer)
+        if (
+            schema_parts is None
+            or len(schema_parts) != 3
+            or schema_parts[:2] != ("components", "schemas")
+            or not isinstance(schema_fragment.semantic_value, Mapping)
+        ):
+            continue
+        for context_fragment, _context_reference in sorted(
+            v1_fragments,
+            key=lambda item: item[0].id,
+        ):
+            if context_fragment.id == schema_fragment.id:
+                continue
+            context_parts = _json_pointer_parts(context_fragment.locator.pointer)
+            if (
+                context_parts is None
+                or len(context_parts) != 7
+                or context_parts[:2] != ("components", "schemas")
+                or context_parts[3] != "properties"
+                or context_parts[5:] != ("items", "$ref")
+                or value.get("request_schema_ref") != context_parts[2]
+                or context_parts[4] != outer_name.removesuffix("[]")
+                or _local_openapi_schema_name(context_fragment.semantic_value)
+                != schema_parts[2]
+            ):
+                continue
+            derivation_inputs = tuple(
+                {
+                    "locator": candidate.locator.model_dump(mode="json"),
+                    "semantic_value": candidate.semantic_value,
+                }
+                for candidate in (schema_fragment, context_fragment)
+            )
+            return ClaimSupportProposal(
+                fragment_id=schema_fragment.id,
+                context_fragment_ids=(context_fragment.id,),
+                claim_path=claim_path,
+                proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+                verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+                derivation_steps=(
+                    DerivationStep(
+                        name=(
+                            "openapi_request_body_ref_property_required_from_fragments"
+                        ),
+                        version="1",
+                        input_digests=tuple(
+                            _digest_value(item) for item in derivation_inputs
+                        ),
+                        output_digest=_digest_value(claim_value),
+                    ),
+                ),
+                runtime_observation=plan_location,
+            )
+    return None
+
+
+def _openapi_pointer_derivation_name(
+    claim_kind: str,
+    claim_path: str,
+    fragment: EvidenceFragment,
+) -> str | None:
+    if not isinstance(fragment.locator, JsonPointerLocator):
+        return None
+    pointer_parts = _json_pointer_parts(fragment.locator.pointer)
+    if claim_kind == "schema":
+        if (
+            claim_path == "/name"
+            and pointer_parts is not None
+            and len(pointer_parts) == 3
+            and pointer_parts[:2] == ("components", "schemas")
+        ):
+            return "openapi_schema_name_from_pointer"
+        claim_parts = claim_path.strip("/").split("/")
+        if (
+            len(claim_parts) == 3
+            and claim_parts[0] == "fields"
+            and claim_parts[2] in {"name", "type"}
+            and pointer_parts is not None
+            and len(pointer_parts) >= 5
+            and pointer_parts[:2] == ("components", "schemas")
+            and pointer_parts[3] == "properties"
+        ):
+            return {
+                "name": "openapi_schema_property_name_from_pointer",
+                "type": "openapi_schema_property_type_from_pointer",
+            }[claim_parts[2]]
+        if (
+            len(claim_parts) == 3
+            and claim_parts[0] == "fields"
+            and claim_parts[2] == "required"
+            and pointer_parts is not None
+            and len(pointer_parts) == 3
+            and pointer_parts[:2] == ("components", "schemas")
+        ):
+            return "openapi_schema_property_required_from_schema_pointer"
+        return None
+    direct = {
+        "/method": "openapi_method_from_pointer",
+        "/path": "openapi_path_from_pointer",
+    }.get(claim_path)
+    if direct is not None:
+        return direct
+    if claim_path == "/request_schema_ref":
+        return "openapi_request_schema_name_from_ref"
+    parts = claim_path.strip("/").split("/")
+    if (
+        len(parts) == 4
+        and parts[0] == "parameters"
+        and parts[1] == "body"
+        and parts[3] == "name"
+    ):
+        return "openapi_request_body_property_name_from_pointer"
+    if (
+        len(parts) == 4
+        and parts[0] == "parameters"
+        and parts[1] == "body"
+        and parts[3] == "required"
+        and pointer_parts is not None
+        and len(pointer_parts) == 3
+        and pointer_parts[:2] == ("components", "schemas")
+    ):
+        return "openapi_request_body_property_required_from_schema_pointer"
+    if len(parts) == 3 and parts[0] == "responses" and parts[2] == "status_code":
+        return "openapi_response_status_from_pointer"
+    if len(parts) == 3 and parts[0] == "responses" and parts[2] == "schema_ref":
+        return "openapi_schema_name_from_ref"
+    return None
+
+
+def _json_pointer_parts(pointer: str) -> tuple[str, ...] | None:
+    if not pointer.startswith("/"):
+        return None
+    decoded: list[str] = []
+    for segment in pointer.split("/")[1:]:
+        value: list[str] = []
+        index = 0
+        while index < len(segment):
+            character = segment[index]
+            if character != "~":
+                value.append(character)
+                index += 1
+                continue
+            if index + 1 >= len(segment) or segment[index + 1] not in {"0", "1"}:
+                return None
+            value.append("~" if segment[index + 1] == "0" else "/")
+            index += 2
+        decoded.append("".join(value))
+    return tuple(decoded)
+
+
+def _local_openapi_schema_name(value: Any) -> str | None:
+    prefix = "#/components/schemas/"
+    if not isinstance(value, str) or not value.startswith(prefix):
+        return None
+    name = value.removeprefix(prefix)
+    if not name or "/" in name:
+        return None
+    decoded = _json_pointer_parts(f"/{name}")
+    return decoded[0] if decoded is not None else None
+
+
+def _digest_value(value: Any) -> str:
+    return hashlib.sha256(_canonical_json(value).encode()).hexdigest()
 
 
 def _direct_evidence_for_path(

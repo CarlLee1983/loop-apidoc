@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 from loop_apidoc.core.models import LifecycleState
-from loop_apidoc.domain.evidence import SupportRelationshipType
+from loop_apidoc.domain.evidence import (
+    JsonPointerLocator,
+    SupportRelationshipType,
+    canonical_json,
+    fragment_digest,
+)
 from loop_apidoc.domain.models import ClaimStatus
+from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
@@ -506,3 +513,501 @@ def test_json_pointer_citation_supports_matching_scalar_path(tmp_path):
         relationship.relationship is SupportRelationshipType.CONTRADICTS
         for relationship in claim.support_relationships
     )
+
+
+def test_shadow_derives_operation_path_and_method_from_v1_openapi_evidence(tmp_path):
+    operation = {"summary": "Create payment"}
+    source = tmp_path / "openapi.json"
+    source.write_text(
+        json.dumps({"paths": {"/payments": {"post": operation}}}),
+        encoding="utf-8",
+    )
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    locator = JsonPointerLocator(pointer="/paths/~1payments/post")
+    evidence = tuple(
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=locator,
+            fragment_digest=fragment_digest(canonical_json(operation)),
+            claim_path=claim_path,
+        )
+        for claim_path in ("/method", "/path")
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                method="POST",
+                path="/payments",
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    claim = artifacts.claims[0]
+    assert claim.status is ClaimStatus.SUPPORTED
+    assert {
+        relationship.claim_path
+        for relationship in claim.support_relationships
+        if relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    } == {"/method", "/path"}
+
+
+def test_shadow_derives_response_status_from_v1_openapi_evidence(tmp_path):
+    response = {"description": "Accepted"}
+    operation = {"responses": {"202": response}}
+    source = tmp_path / "openapi.json"
+    source.write_text(
+        json.dumps(
+            {
+                "paths": {
+                    "/payments": {"post": operation},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    evidence = (
+        *(
+            ExtractionEvidenceReference(
+                version=1,
+                source="openapi.json",
+                locator=JsonPointerLocator(pointer="/paths/~1payments/post"),
+                fragment_digest=fragment_digest(canonical_json(operation)),
+                claim_path=claim_path,
+            )
+            for claim_path in ("/method", "/path")
+        ),
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer="/paths/~1payments/post/responses/202"
+            ),
+            fragment_digest=fragment_digest(canonical_json(response)),
+            claim_path="/responses/202/status_code",
+        ),
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                method="POST",
+                path="/payments",
+                responses=[{"status": "202"}],
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    relationship = next(
+        item
+        for item in artifacts.claims[0].support_relationships
+        if item.claim_path == "/responses/202/status_code"
+    )
+    assert relationship.claim_path == "/responses/202/status_code"
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "202"
+
+
+def test_shadow_derives_response_schema_name_from_v1_openapi_evidence(tmp_path):
+    schema_ref = "#/components/schemas/Payment"
+    response = {
+        "content": {"application/json": {"schema": {"$ref": schema_ref}}}
+    }
+    operation = {"responses": {"202": response}}
+    source = tmp_path / "openapi.json"
+    source.write_text(
+        json.dumps({"paths": {"/payments": {"post": operation}}}),
+        encoding="utf-8",
+    )
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    evidence = (
+        *(
+            ExtractionEvidenceReference(
+                version=1,
+                source="openapi.json",
+                locator=JsonPointerLocator(pointer="/paths/~1payments/post"),
+                fragment_digest=fragment_digest(canonical_json(operation)),
+                claim_path=claim_path,
+            )
+            for claim_path in ("/method", "/path")
+        ),
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer="/paths/~1payments/post/responses/202"
+            ),
+            fragment_digest=fragment_digest(canonical_json(response)),
+            claim_path="/responses/202/status_code",
+        ),
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer=(
+                    "/paths/~1payments/post/responses/202/content/"
+                    "application~1json/schema/$ref"
+                )
+            ),
+            fragment_digest=fragment_digest(canonical_json(schema_ref)),
+            claim_path="/responses/202/schema_ref",
+        ),
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                method="POST",
+                path="/payments",
+                responses=[{"status": "202", "schema_ref": "Payment"}],
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    relationship = next(
+        item
+        for item in artifacts.claims[0].support_relationships
+        if item.claim_path == "/responses/202/schema_ref"
+    )
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "Payment"
+
+
+def test_shadow_derives_ref_linked_request_array_property_from_v1_evidence(
+    tmp_path,
+):
+    """A request body field behind ``items.$ref`` retains both source links."""
+    request_ref = "#/components/schemas/BatchRequest"
+    item_ref = "#/components/schemas/Voucher"
+    item_property = {"type": "string"}
+    source_document = {
+        "paths": {
+            "/payments": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": request_ref}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "BatchRequest": {
+                    "properties": {
+                        "data": {
+                            "type": "array",
+                            "items": {"$ref": item_ref},
+                        }
+                    }
+                },
+                "Voucher": {"properties": {"playerId": item_property}},
+            }
+        },
+    }
+    source = tmp_path / "openapi.json"
+    source.write_text(json.dumps(source_document), encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    evidence = (
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer="/components/schemas/Voucher/properties/playerId"
+            ),
+            fragment_digest=fragment_digest(canonical_json(item_property)),
+            claim_path="/parameters/body/data[].playerId/name",
+        ),
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer=(
+                    "/components/schemas/BatchRequest/properties/data/items/$ref"
+                )
+            ),
+            fragment_digest=fragment_digest(canonical_json(item_ref)),
+            claim_path="/parameters/body/data[].playerId/name",
+        ),
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                method="POST",
+                path="/payments",
+                request={"schema_ref": "BatchRequest"},
+                parameters=[
+                    {
+                        "name": "data[].playerId",
+                        "in": "body",
+                        "required": True,
+                    }
+                ],
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    relationship = next(
+        item
+        for item in artifacts.claims[0].support_relationships
+        if item.claim_path == "/parameters/body/data[].playerId/name"
+        and item.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    )
+    assert relationship.observed_value == "data[].playerId"
+    assert len(relationship.context_fragment_ids) == 1
+
+
+def test_shadow_derives_nested_inline_schema_field_claims_from_v1_evidence(
+    tmp_path,
+):
+    """A nested inline property pointer proves its schema field claims."""
+    property_pointer = (
+        "/components/schemas/Batch/properties/data/items/properties/playerId"
+    )
+    source_property = {"type": "string"}
+    source_document = {
+        "components": {
+            "schemas": {
+                "Batch": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {"playerId": source_property},
+                            },
+                        }
+                    },
+                }
+            }
+        }
+    }
+    source = tmp_path / "openapi.json"
+    source.write_text(json.dumps(source_document), encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    evidence = tuple(
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(pointer=property_pointer),
+            fragment_digest=fragment_digest(canonical_json(source_property)),
+            claim_path=claim_path,
+        )
+        for claim_path in (
+            "/fields/data[].playerId/name",
+            "/fields/data[].playerId/type",
+        )
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        schemas=[
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="05-schema0",
+                        answer_path="inventory.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                name="Batch",
+                fields=[{"name": "data[].playerId", "type": "string"}],
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    relationships = {
+        relationship.claim_path: relationship
+        for relationship in artifacts.claims[0].support_relationships
+        if relationship.claim_path
+        in {"/fields/data[].playerId/name", "/fields/data[].playerId/type"}
+    }
+    assert relationships["/fields/data[].playerId/name"].relationship is (
+        SupportRelationshipType.DERIVED_SUPPORT
+    )
+    assert relationships["/fields/data[].playerId/name"].observed_value == (
+        "data[].playerId"
+    )
+    assert relationships["/fields/data[].playerId/type"].relationship is (
+        SupportRelationshipType.DERIVED_SUPPORT
+    )
+    assert relationships["/fields/data[].playerId/type"].observed_value == "string"

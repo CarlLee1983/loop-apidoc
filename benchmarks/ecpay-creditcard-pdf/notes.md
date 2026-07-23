@@ -9,6 +9,13 @@
   （綠界科技全方位金流 信用卡介接技術文件 V5.6.1,61 頁 PDF,2.8MB）
 - Document version：V5.6.1（inventory.version=5.6.1）
 - Source format：PDF → `loop-apidoc preprocess`(pymupdf4llm)→ markdown(`work/sources_md/gw_p110.md`,2190 行,540 表格列)
+- Source restoration (2026-07-23): re-downloaded from the same official URL into the
+  ignored `sources/gw_p110.pdf`; SHA-256
+  `fd12a38c37df000e0927d39fdc32448c304b10e8aa6056d4419c63c42b7f53e9`.
+  The PDF metadata (title, 2022-06-15 creation/modification date, 61 pages) and the
+  cited endpoint/callback/signature sections match this case's recorded V5.6.1
+  source identity. This is a restored copy of that published edition, not a newer
+  API-document substitution.
 
 ## Scope
 

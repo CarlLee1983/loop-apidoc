@@ -388,14 +388,13 @@ def test_duplicate_supported_identities_remain_distinct_stable_proposals():
     "system_groups",
     [
         [],
-        [SystemGroup(name="Demo API", version=None)],
         [SystemGroup(name="", version="1")],
     ],
 )
-def test_metadata_refuses_source_silent_title_or_version(system_groups):
+def test_metadata_refuses_source_silent_title(system_groups):
     with pytest.raises(
         ShadowMetadataError,
-        match="requires a source-stated title and version",
+        match="requires a source-stated title",
     ):
         build_contract_metadata(_plan(system_groups=system_groups), _bridge())
 

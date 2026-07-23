@@ -2,6 +2,278 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/Bet/GetBetDetail",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post"
+      },
+      "fragment_digest": "2eba058a99e865c19a6ebdffa7a7fa0028fd1b0077e6ccc480eaaae140ab41e2",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post"
+      },
+      "fragment_digest": "2eba058a99e865c19a6ebdffa7a7fa0028fd1b0077e6ccc480eaaae140ab41e2",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/responses/200"
+      },
+      "fragment_digest": "06040ff63a57d050b411b579f43c1390a083b0a48b65d8d36698a45aac01243c",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "123e259ccaacf17d3633c90113d5af62054fe0d286ebfef296c1f97ce91ae541",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/summary"
+      },
+      "fragment_digest": "7964d2cd03202f7b955d9d127a2df6c32d4c94e626ab4f89260b04cef083dd94",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Bet~1GetBetDetail/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "b4049d92505a691e5fa19390c1f59bcbd9a29a04acc49ffe902ef0216b614ffa",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/gameCode"
+      },
+      "fragment_digest": "ec337466c351dad8473ded9a9005d5070faeb943986794fb52b748b13ab2ea7f",
+      "claim_path": "/parameters/body/gameCode/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/refNo"
+      },
+      "fragment_digest": "af4ca5f66304674b8098575afc1a699fa4f18537ea6a34788605f3fde312b162",
+      "claim_path": "/parameters/body/refNo/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/playerId"
+      },
+      "fragment_digest": "978fe85bc4cd4c7d9bebba0aee23f278d971e3a7cfc0198fe4191939840bc948",
+      "claim_path": "/parameters/body/playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/lang"
+      },
+      "fragment_digest": "fc7ef1e144685b5b21f7cd813e6062fdebf902a8d7465940f65bd081936e2e38",
+      "claim_path": "/parameters/body/lang/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/sourceIp"
+      },
+      "fragment_digest": "7477ec5f5d634a7ac6902eddd9fba4a15fad86caa49f8e4857fad2811a426450",
+      "claim_path": "/parameters/body/sourceIp/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest/properties/location"
+      },
+      "fragment_digest": "7477ec5f5d634a7ac6902eddd9fba4a15fad86caa49f8e4857fad2811a426450",
+      "claim_path": "/parameters/body/location/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/gameCode/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/refNo/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/lang/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/sourceIp/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderGetBetDetailRequest"
+      },
+      "fragment_digest": "871b98e5e79aa8961778ed5b1151d08d53e21729e0e2c76b4a84da79f93e976c",
+      "claim_path": "/parameters/body/location/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

@@ -194,4 +194,4 @@ def test_shadow_uses_verified_v1_evidence_for_its_declared_claim_path(tmp_path):
         and item["relationship"] == "explicit_support"
     ]
     assert len(summary) == 1
-    assert summary[0]["reason_code"] == "EXACT_VALUE_MATCH"
+    assert summary[0]["reason_code"] == "CLAIM_BOUND_EXACT_REFERENCE"

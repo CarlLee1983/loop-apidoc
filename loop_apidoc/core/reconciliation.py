@@ -110,9 +110,10 @@ def reconcile_claims(
         evidence = tuple(
             sorted(
                 {
-                    item.fragment_id
+                    fragment_id
                     for item in ordered_relationships
                     if item.relationship is not SupportRelationshipType.INSUFFICIENT
+                    for fragment_id in (item.fragment_id, *item.context_fragment_ids)
                 }
             )
         )
@@ -155,6 +156,7 @@ def _coverage_relationships(
             "claim_identity": identity,
             "claim_path": path,
             "fragment_id": candidate.fragment_id,
+            "context_fragment_ids": (),
             "relationship": SupportRelationshipType.INSUFFICIENT,
             "verification_method": candidate.verification_method,
             "claim_value_digest": fragment_digest(canonical_json(claim_value)),

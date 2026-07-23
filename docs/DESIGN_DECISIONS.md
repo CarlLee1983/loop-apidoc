@@ -61,14 +61,35 @@ presence of an evidence ID never convert it into grounded support. OpenAPI, the
 generated guide, and review data are projections of the Canonical API Contract IR,
 never the source of truth.
 
+Core metadata preserves a source-unstated document/API version as `null`. An
+OpenAPI projection may emit the format-required `0.0.0` placeholder only with
+`x-loop-status: missing-source`; the placeholder is never a source-stated
+version or Core contract value.
+
+`derived_support` is limited to versioned, allowlisted transformations that
+Core recomputes from exact fragments and verifies with an input/output digest
+chain. The current OpenAPI JSON Pointer mappings are operation path/method,
+response status, local response/request schema `$ref` names, and request-body
+property names (including array markers), plus schema-field name/type/required
+facts. One local component `$ref` requires the child property or schema and its
+parent context reference. The only deeper exception is an explicitly ordered,
+two-hop array chain; Core receives every hop as an exact fragment and never
+follows references implicitly. A malformed pointer, external/non-schema `$ref`,
+incorrect claim path, missing or reordered context, or any digest mismatch is
+`insufficient`; the adapter cannot promote it to support by declaration.
+
 The reviewed agent-native boundary additionally accepts optional v1 exact-evidence
 references: exact manifest source identity, typed locator, normalized-fragment SHA-256,
 and material claim path. Both extraction entry points materialize and verify a supplied
 reference, then resolve its path against the shared normalized-claim projection before
 creating a run directory. A reference owns its declared claim path in
-Core shadow; deterministic Core comparison, rather than the agent's declaration, still
-decides the relationship. Legacy `source` strings remain a compatibility input until
-benchmark parity supports a production-Core cutover.
+Core shadow. Structured JSON Pointer/table-cell evidence is compared to its parsed value.
+For prose with no parsed value, a verified v1 binding is retained as the auditable
+`CLAIM_BOUND_EXACT_REFERENCE` relationship: exact source identity, typed locator,
+fragment digest, and one material path must all match. It is not available to legacy
+source strings, and an agent must not bind a convention, default, or inference as source
+evidence. Legacy `source` strings remain a compatibility input until benchmark parity
+supports a production-Core cutover.
 
 ### 3. Preserve the agent-native CLI as a compatibility adapter
 

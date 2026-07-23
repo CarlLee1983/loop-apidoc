@@ -34,6 +34,7 @@ from loop_apidoc.foundry.query import load_current_asset, resolve_current_artifa
 from loop_apidoc.foundry.register import register_docset
 from loop_apidoc.preparation import PreparationReport, PreparationSeverity, PreparationStatus
 from loop_apidoc.run.models import RunResult
+from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.score import (
     LoopVerdict,
     ScoreProfile,
@@ -307,6 +308,675 @@ def test_benchmark_harness_discovers_cases() -> None:
             "ecpay-creditcard-pdf", "adyen-payments-multimethod",
             "jili-legacy-gaming-pdf", "funkygames-transfer-operator",
             "rsg-game-transfer-wallet"} <= names
+
+
+def test_benchmark_cases_declare_core_parity_contract(case) -> None:
+    """Every committed case declares the strict-local Core cutover contract.
+
+    This declaration is intentionally checked without source snapshots.  It
+    prevents a newly committed benchmark from silently bypassing the later
+    source-backed Core/legacy comparison merely because its private snapshot is
+    unavailable in CI.
+    """
+    parity_path = case / "expected" / "core-parity.json"
+    assert parity_path.is_file(), f"{case.name}: missing expected/core-parity.json"
+
+    parity = json.loads(parity_path.read_text("utf-8"))
+    legacy = json.loads((case / "expected" / "validation.expect.json").read_text("utf-8"))
+
+    assert parity == {
+        "schema_version": 1,
+        "expected_legacy_status": legacy["current_status"],
+        "expected_core_verdict": (
+            "accept" if legacy["current_status"] == "PASS" else "reject"
+        ),
+        "require_verdict_match": True,
+        "require_exact_evidence_for_all_material_claims": True,
+        "allowed_semantic_differences": [],
+    }
+
+
+def test_funkygames_exact_openapi_evidence_reaches_core_derivation(
+    tmp_path_factory,
+) -> None:
+    """The retained Funky source snapshot proves v1 pointer evidence end to end."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-core-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    derived_paths = {
+        relationship["claim_path"]
+        for relationship in relationships
+        if relationship["claim_identity"]
+        == (
+            "claim:operation:POST "
+            "/{funkyUrl}/Funky/Game/GetGameList:definition"
+        )
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert {
+        "/method",
+        "/path",
+        "/responses/200/status_code",
+        "/responses/200/schema_ref",
+    } <= derived_paths
+
+
+def test_funkygames_all_operations_have_exact_method_and_path_derivations(
+    tmp_path_factory,
+) -> None:
+    """All 27 retained Swagger operations have v1 method/path evidence.
+
+    This asserts the public shadow-assembly outcome, rather than the internal
+    bridge implementation: every source operation must arrive at Core as two
+    independently re-computable derived claims.
+    """
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-all-operations-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    method_and_path = [
+        relationship
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] in {"/method", "/path"}
+        and relationship["relationship"] == "derived_support"
+    ]
+    operation_claims = {relationship["claim_identity"] for relationship in method_and_path}
+
+    assert len(operation_claims) == 27
+    assert len(method_and_path) == 54
+
+
+def test_funkygames_all_documented_response_statuses_have_derivations(
+    tmp_path_factory,
+) -> None:
+    """Each retained operation's documented 200 response reaches Core exactly."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-response-status-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    status_claims = {
+        relationship["claim_identity"]
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/responses/200/status_code"
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(status_claims) == 27
+
+
+def test_funkygames_all_documented_response_schemas_have_derivations(
+    tmp_path_factory,
+) -> None:
+    """Every source response with a local schema ref reaches Core exactly."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-response-schema-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    schema_claims = {
+        relationship["claim_identity"]
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/responses/200/schema_ref"
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(schema_claims) == 25
+
+
+def test_funkygames_all_documented_response_descriptions_have_exact_support(
+    tmp_path_factory,
+) -> None:
+    """All 27 source response descriptions are explicit Core support."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-response-description-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    description_claims = {
+        relationship["claim_identity"]
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/responses/200/description"
+        and relationship["relationship"] == "explicit_support"
+    }
+
+    assert len(description_claims) == 27
+
+
+def test_funkygames_all_source_summaries_have_exact_support(tmp_path_factory) -> None:
+    """Operation summaries use their source scalar, not an operation object."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-summary-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    summaries = [
+        relationship
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/summary"
+    ]
+
+    assert sum(
+        relationship["relationship"] == "explicit_support" for relationship in summaries
+    ) == 27
+    assert not any(
+        relationship["relationship"] == "contradicts" for relationship in summaries
+    )
+
+
+def test_funkygames_direct_parameter_names_have_exact_support(tmp_path_factory) -> None:
+    """Only names declared directly on operation parameters become support."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-parameter-names-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    name_claims = [
+        relationship
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"].startswith("/parameters/")
+        and relationship["claim_path"].endswith("/name")
+    ]
+
+    assert sum(
+        relationship["relationship"] == "explicit_support" for relationship in name_claims
+    ) == 104
+    assert not any(
+        relationship["relationship"] == "contradicts" for relationship in name_claims
+    )
+
+
+def test_funkygames_explicit_parameter_required_values_have_exact_support(
+    tmp_path_factory,
+) -> None:
+    """Only source-explicit operation parameter required flags become support."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-parameter-required-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    required_claims = [
+        relationship
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"].startswith("/parameters/")
+        and relationship["claim_path"].endswith("/required")
+    ]
+
+    assert sum(
+        relationship["relationship"] == "explicit_support"
+        for relationship in required_claims
+    ) == 103
+    assert not any(
+        relationship["relationship"] == "contradicts" for relationship in required_claims
+    )
+
+
+def test_funkygames_direct_body_required_values_have_derivations(
+    tmp_path_factory,
+) -> None:
+    """Direct request-schema fields retain source-stated required flags in Core."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-body-required-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    required_claims = {
+        (relationship["claim_identity"], relationship["claim_path"])
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"].startswith("/parameters/body/")
+        and relationship["claim_path"].endswith("/required")
+        and "." not in relationship["claim_path"].removeprefix(
+            "/parameters/body/"
+        ).removesuffix("/required")
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(required_claims) == 86
+
+
+def test_funkygames_ref_body_required_values_have_linked_derivations(
+    tmp_path_factory,
+) -> None:
+    """One-hop ``items.$ref`` fields retain source-stated required flags."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-ref-body-required-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    required_claims = {
+        (relationship["claim_identity"], relationship["claim_path"])
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"].startswith("/parameters/body/data[].")
+        and relationship["claim_path"].endswith("/required")
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(required_claims) == 9
+
+
+def test_funkygames_documented_request_schemas_have_derivations(tmp_path_factory) -> None:
+    """Every retained local request-body ref is re-derived by Core."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-request-schema-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    schema_claims = {
+        relationship["claim_identity"]
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/request_schema_ref"
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(schema_claims) == 25
+
+
+def test_funkygames_request_schema_refs_have_verified_derivations(tmp_path_factory) -> None:
+    """The 25 source-stated request schema refs reach Core via one mapping."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-request-schema-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    request_schema_claims = {
+        relationship["claim_identity"]
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"] == "/request_schema_ref"
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(request_schema_claims) == 25
+
+
+def test_funkygames_request_body_field_names_have_derivations(tmp_path_factory) -> None:
+    """Properties of each referenced request schema establish 95 body names."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-body-property-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    body_name_claims = {
+        (relationship["claim_identity"], relationship["claim_path"])
+        for relationship in relationships
+        if relationship["claim_identity"].startswith("claim:operation:")
+        and relationship["claim_path"].startswith("/parameters/body/")
+        and relationship["claim_path"].endswith("/name")
+        and relationship["relationship"] == "derived_support"
+    }
+
+    assert len(body_name_claims) == 95
+
+
+def test_funkygames_direct_schema_claims_have_exact_derivations(
+    tmp_path_factory,
+) -> None:
+    """The frozen Swagger directly proves 65 schema names and 258 fields."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-schema-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    direct_schema_derivations = {
+        "openapi_schema_name_from_pointer",
+        "openapi_schema_property_name_from_pointer",
+        "openapi_schema_property_type_from_pointer",
+        "openapi_schema_property_required_from_schema_pointer",
+        "openapi_schema_name_from_pointer",
+    }
+
+    def derived_paths(path_predicate) -> set[tuple[str, str]]:
+        return {
+            (relationship["claim_identity"], relationship["claim_path"])
+            for relationship in relationships
+            if relationship["claim_identity"].startswith("claim:schema:")
+            and relationship["relationship"] == "derived_support"
+            and relationship["derivation_steps"][0]["name"]
+            in direct_schema_derivations
+            and path_predicate(relationship["claim_path"])
+        }
+
+    assert len(derived_paths(lambda path: path == "/name")) == 65
+    assert len(
+        derived_paths(
+            lambda path: path.startswith("/fields/")
+            and "." not in path
+            and path.endswith("/name")
+        )
+    ) == 258
+    assert len(
+        derived_paths(
+            lambda path: path.startswith("/fields/")
+            and "." not in path
+            and path.endswith("/type")
+        )
+    ) == 258
+    assert len(
+        derived_paths(
+            lambda path: path.startswith("/fields/")
+            and "." not in path
+            and path.endswith("/required")
+        )
+    ) == 258
+
+
+def test_funkygames_one_hop_schema_ref_fields_have_exact_derivations(
+    tmp_path_factory,
+) -> None:
+    """One-hop component refs preserve all flattened schema field facts."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-ref-schema-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+
+    def derived_paths(attribute: str) -> set[tuple[str, str]]:
+        return {
+            (relationship["claim_identity"], relationship["claim_path"])
+            for relationship in relationships
+            if relationship["claim_identity"].startswith("claim:schema:")
+            and relationship["relationship"] == "derived_support"
+            and relationship["claim_path"].startswith("/fields/")
+            and "." in relationship["claim_path"]
+            and relationship["claim_path"].endswith(attribute)
+            and relationship["derivation_steps"][0]["name"].startswith(
+                "openapi_schema_ref_property_"
+            )
+        }
+
+    assert len(derived_paths("/name")) == 138
+    assert len(derived_paths("/type")) == 138
+    assert len(derived_paths("/required")) == 138
+
+
+def test_funkygames_two_hop_schema_ref_fields_have_exact_derivations(
+    tmp_path_factory,
+) -> None:
+    """The two explicitly bounded nested array chains remain source-grounded."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+    result = run_assemble_pipeline(
+        sources_root=case / "sources", extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-two-hop-schema-shadow"),
+        run_id="bench-shadow", generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    relationships = json.loads(
+        (Path(result.run_dir) / "core" / "relationships.json").read_text("utf-8")
+    )
+    for attribute in ("name", "type", "required"):
+        assert sum(
+            relationship["relationship"] == "derived_support"
+            and relationship["claim_path"].endswith(f"/{attribute}")
+            and relationship["derivation_steps"][0]["name"]
+            == f"openapi_schema_two_hop_ref_property_{attribute}_from_fragments"
+            for relationship in relationships
+        ) == 2
+
+
+def test_funkygames_obeys_declared_core_parity_contract(tmp_path_factory) -> None:
+    """The retained source snapshot satisfies its full Core graduation contract."""
+    case = _case_by_name("funkygames-transfer-operator")
+    if not _has_sources(case):
+        pytest.skip("funkygames-transfer-operator: sources/ not present")
+
+    expected = json.loads(
+        (case / "expected" / "core-parity.json").read_text("utf-8")
+    )
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("funky-parity-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    run_dir = Path(result.run_dir)
+    comparison = json.loads(
+        (run_dir / "core" / "comparison.json").read_text("utf-8")
+    )
+    relationships = json.loads(
+        (run_dir / "core" / "relationships.json").read_text("utf-8")
+    )
+    evidence = json.loads((run_dir / "core" / "evidence.json").read_text("utf-8"))
+    precision_by_id = {
+        fragment["id"]: fragment["precision"]
+        for fragment in evidence["fragments"]
+    }
+
+    assert (
+        comparison["legacy_status"]
+        == expected["expected_legacy_status"].lower() + "ed"
+    )
+    assert comparison["core_verdict"] == expected["expected_core_verdict"]
+    assert comparison["verdict_match"] is expected["require_verdict_match"]
+    assert comparison["only_in_core"] == expected["allowed_semantic_differences"]
+    assert expected["require_exact_evidence_for_all_material_claims"] is True
+    assert comparison["claim_counts"]["unverified"] == 0
+    assert all(
+        relationship["relationship"] in {"explicit_support", "derived_support"}
+        and precision_by_id[relationship["fragment_id"]] == "exact"
+        and all(
+            precision_by_id[fragment_id] == "exact"
+            for fragment_id in relationship["context_fragment_ids"]
+        )
+        for relationship in relationships
+    )
+
+
+def test_rsg_obeys_declared_core_parity_contract(tmp_path_factory) -> None:
+    """The structured RSG source snapshot satisfies its Core graduation contract."""
+    case = _case_by_name("rsg-game-transfer-wallet")
+    if not _has_sources(case):
+        pytest.skip("rsg-game-transfer-wallet: sources/ not present")
+
+    expected = json.loads(
+        (case / "expected" / "core-parity.json").read_text("utf-8")
+    )
+    result = run_assemble_pipeline(
+        sources_root=case / "sources",
+        extraction_dir=case / "extraction",
+        output_root=tmp_path_factory.mktemp("rsg-parity-shadow"),
+        run_id="bench-shadow",
+        generated_at=_FIXED_TS,
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+    run_dir = Path(result.run_dir)
+    comparison = json.loads(
+        (run_dir / "core" / "comparison.json").read_text("utf-8")
+    )
+    relationships = json.loads(
+        (run_dir / "core" / "relationships.json").read_text("utf-8")
+    )
+    evidence = json.loads((run_dir / "core" / "evidence.json").read_text("utf-8"))
+    precision_by_id = {
+        fragment["id"]: fragment["precision"]
+        for fragment in evidence["fragments"]
+    }
+
+    assert (
+        comparison["legacy_status"]
+        == expected["expected_legacy_status"].lower() + "ed"
+    )
+    assert comparison["core_verdict"] == expected["expected_core_verdict"]
+    assert comparison["verdict_match"] is expected["require_verdict_match"]
+    assert comparison["only_in_core"] == expected["allowed_semantic_differences"]
+    assert expected["require_exact_evidence_for_all_material_claims"] is True
+    assert comparison["claim_counts"]["unverified"] == 0
+    assert all(
+        relationship["relationship"] in {"explicit_support", "derived_support"}
+        and precision_by_id[relationship["fragment_id"]] == "exact"
+        and all(
+            precision_by_id[fragment_id] == "exact"
+            for fragment_id in relationship["context_fragment_ids"]
+        )
+        for relationship in relationships
+    )
 
 
 def test_benchmark_diff_identity(case, assembled, tmp_path) -> None:

@@ -80,6 +80,15 @@ def _add_title_version(extraction_dir: Path) -> None:
     )
 
 
+def _add_title_without_version(extraction_dir: Path) -> None:
+    inventory_path = extraction_dir / "inventory.json"
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    inventory["title"] = "Demo API"
+    inventory_path.write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8"
+    )
+
+
 def test_load_extraction_inputs_reads_inventory_and_endpoints(tmp_path):
     _write_extraction(tmp_path / "extraction")
     inventory, endpoint_texts, integration = load_extraction_inputs(tmp_path / "extraction")
@@ -220,6 +229,40 @@ def test_shadow_assemble_writes_complete_core_artifacts(tmp_path):
         "openapi.json",
         "review-data.json",
         "provenance.json",
+    }
+
+
+def test_shadow_assemble_preserves_source_missing_version_as_metadata_gap(tmp_path):
+    """Core preserves an unstated version; its OpenAPI projection marks its placeholder."""
+    _write_extraction(tmp_path / "extraction")
+    _add_title_without_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-shadow-missing-version",
+        generated_at=datetime(2026, 7, 23, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.SHADOW,
+    )
+
+    assert result.shadow is not None
+    assert result.shadow.status == "ok"
+    core_dir = Path(result.shadow.core_dir)
+    contract = json.loads((core_dir / "contract.json").read_text(encoding="utf-8"))
+    assert contract["metadata"]["title"] == "Demo API"
+    assert contract["metadata"]["version"] is None
+
+    openapi = json.loads(
+        (core_dir / "projections" / "openapi.json").read_text(encoding="utf-8")
+    )
+    assert openapi["info"] == {
+        "title": "Demo API",
+        "version": "0.0.0",
+        "x-loop-status": "missing-source",
     }
 
 

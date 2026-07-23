@@ -29,7 +29,10 @@ class EvidenceBinding(FrozenModel):
 class ContractMetadata(FrozenModel):
     contract_id: str
     title: str
-    version: str
+    # A source may state a title but omit its document/API version. The Canonical
+    # API Contract preserves that gap as null; a format-specific projection can
+    # add a visibly marked placeholder when its target format requires a string.
+    version: str | None = None
     source_set_id: str
     source_set_version: str
     domain_version: str

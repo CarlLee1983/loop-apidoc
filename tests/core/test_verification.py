@@ -62,6 +62,27 @@ def _proposal(
     )
 
 
+def _schema_proposal(
+    supports: tuple[ClaimSupportProposal, ...],
+    *,
+    required: bool,
+) -> ClaimProposal:
+    return ClaimProposal(
+        id="schema-proposal",
+        claim_kind="schema",
+        subject="PaymentRequest",
+        predicate="definition",
+        value={
+            "name": "PaymentRequest",
+            "fields": [
+                {"name": "amount", "type": "integer", "required": required}
+            ],
+        },
+        support_proposals=supports,
+        runtime_identity="parser",
+    )
+
+
 def _artifact(artifact_id: str = "artifact-1") -> SourceArtifact:
     return SourceArtifact(
         id=artifact_id,
@@ -195,6 +216,30 @@ def test_unequal_page_scope_is_insufficient_not_a_false_contradiction():
 
     assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
     assert relationship.reason_code == "FRAGMENT_NOT_VALUE_BEARING"
+
+
+def test_claim_bound_exact_reference_supports_verified_line_range():
+    """A v1 claim-path binding can support prose that has no parsed value."""
+    fragment = _exact_fragment(
+        "fragment-claim-bound",
+        "The currency is USD for this request.",
+        locator=LineRangeLocator(start_line=12, end_line=12),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            "USD",
+            _support(
+                "fragment-claim-bound",
+                method=VerificationMethod.CLAIM_BOUND_EXACT_REFERENCE,
+            ),
+        ),
+        _bundle(fragment),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.EXPLICIT_SUPPORT
+    assert relationship.reason_code == "CLAIM_BOUND_EXACT_REFERENCE"
+    assert relationship.observed_value is None
 
 
 def test_json_pointer_support_uses_canonical_structured_value():
@@ -380,6 +425,1070 @@ def test_allowlisted_derived_support_can_be_verified():
     )[0]
 
     assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+
+
+def test_openapi_path_key_can_provide_verified_derived_support():
+    """A source operation location can deterministically establish its path key."""
+    source_operation = {"summary": "Create payment"}
+    locator = JsonPointerLocator(pointer="/paths/~1payments/post")
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": "/paths/~1payments/post"},
+        "semantic_value": source_operation,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="source-operation",
+        claim_path="/path",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_path_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("/payments")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {"method": "POST", "path": "/payments"},
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "source-operation",
+                '{"summary":"Create payment"}',
+                locator=locator,
+                semantic_value=source_operation,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "/payments"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_operation_pointer_can_provide_verified_derived_method():
+    """An OpenAPI operation key can deterministically establish its method."""
+    source_operation = {"summary": "Create payment"}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": "/paths/~1payments/post"},
+        "semantic_value": source_operation,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="source-operation",
+        claim_path="/method",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_method_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("POST")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {"method": "POST", "path": "/payments"},
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "source-operation",
+                '{"summary":"Create payment"}',
+                locator=JsonPointerLocator(pointer="/paths/~1payments/post"),
+                semantic_value=source_operation,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "POST"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_response_pointer_can_provide_verified_derived_status():
+    """An OpenAPI response key can deterministically establish its status code."""
+    source_response = {"description": "Accepted"}
+    derivation_input = {
+        "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/202",
+        },
+        "semantic_value": source_response,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="source-response",
+        claim_path="/responses/202/status_code",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_response_status_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("202")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {"responses": [{"status_code": "202"}]},
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "source-response",
+                '{"description":"Accepted"}',
+                locator=JsonPointerLocator(
+                    pointer="/paths/~1payments/post/responses/202"
+                ),
+                semantic_value=source_response,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "202"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_schema_ref_can_provide_verified_derived_schema_name():
+    """A local OpenAPI schema reference can deterministically establish its name."""
+    source_ref = "#/components/schemas/Payment"
+    derivation_input = {
+        "locator": {
+            "kind": "json_pointer",
+            "pointer": (
+                "/paths/~1payments/post/responses/202/content/"
+                "application~1json/schema/$ref"
+            ),
+        },
+        "semantic_value": source_ref,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="response-schema-ref",
+        claim_path="/responses/202/schema_ref",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_schema_name_from_ref",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("Payment")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "responses": [
+                    {"status_code": "202", "schema_ref": "Payment"}
+                ]
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "response-schema-ref",
+                '"#/components/schemas/Payment"',
+                locator=JsonPointerLocator(
+                    pointer=(
+                        "/paths/~1payments/post/responses/202/content/"
+                        "application~1json/schema/$ref"
+                    )
+                ),
+                semantic_value=source_ref,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "Payment"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_schema_ref_can_provide_verified_derived_schema_name():
+    """A local request-body schema ref deterministically establishes its name."""
+    source_ref = "#/components/schemas/PaymentRequest"
+    pointer = (
+        "/paths/~1payments/post/requestBody/content/application~1json/schema/$ref"
+    )
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_ref,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-schema-ref",
+        claim_path="/request_schema_ref",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_schema_name_from_ref",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("PaymentRequest")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {"request_schema_ref": "PaymentRequest"},
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-schema-ref",
+                '"#/components/schemas/PaymentRequest"',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_ref,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "PaymentRequest"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_property_pointer_can_provide_derived_body_field_name():
+    """A property belongs only to the operation's referenced request schema."""
+    pointer = "/components/schemas/PaymentRequest/properties/amount"
+    source_property = {"type": "integer"}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_property,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-property",
+        claim_path="/parameters/body/amount/name",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_property_name_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("amount")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "PaymentRequest",
+                "parameters": [
+                    {"name": "amount", "location": "body", "required": True}
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-property",
+                '{"type":"integer"}',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "amount"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_schema_pointer_proves_direct_body_field_requiredness():
+    """A complete request schema proves its own direct body's required flag."""
+    pointer = "/components/schemas/PaymentRequest"
+    source_schema = {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {"amount": {"type": "integer"}},
+    }
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_schema,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-schema",
+        claim_path="/parameters/body/amount/required",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_property_required_from_schema_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json(True)),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "PaymentRequest",
+                "parameters": [
+                    {"name": "amount", "location": "body", "required": True}
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-schema",
+                '{"properties":{"amount":{"type":"integer"}},"required":["amount"],"type":"object"}',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_schema,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value is True
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_array_property_pointer_retains_array_marker():
+    """An array property maps to the extraction contract's ``[]`` suffix."""
+    pointer = "/components/schemas/PaymentRequest/properties/gameCodes"
+    source_property = {"type": "array", "items": {"type": "string"}}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_property,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-array-property",
+        claim_path="/parameters/body/gameCodes[]/name",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_property_name_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("gameCodes[]")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "PaymentRequest",
+                "parameters": [
+                    {"name": "gameCodes[]", "location": "body", "required": True}
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-array-property",
+                '{"items":{"type":"string"},"type":"array"}',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "gameCodes[]"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_schema_pointer_provides_direct_body_required_flag():
+    """A complete request schema proves one direct body field's required flag."""
+    pointer = "/components/schemas/PaymentRequest"
+    source_schema = {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {"amount": {"type": "integer"}},
+    }
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_schema,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-schema",
+        claim_path="/parameters/body/amount/required",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_property_required_from_schema_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json(True)),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "PaymentRequest",
+                "parameters": [
+                    {"name": "amount", "location": "body", "required": True}
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-schema",
+                canonical_json(source_schema),
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_schema,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value is True
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_array_item_property_pointer_provides_nested_body_name():
+    """A request schema array item property retains its array path segment."""
+    pointer = "/components/schemas/BatchRequest/properties/data/items/properties/playerId"
+    source_property = {"type": "string"}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_property,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="request-array-item-property",
+        claim_path="/parameters/body/data[].playerId/name",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_property_name_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("data[].playerId")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "BatchRequest",
+                "parameters": [
+                    {
+                        "name": "data[].playerId",
+                        "location": "body",
+                        "required": True,
+                    }
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "request-array-item-property",
+                '{"type":"string"}',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "data[].playerId"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_ref_item_property_requires_linked_exact_fragments():
+    """A referenced array-item property needs both the link and child evidence."""
+    property_pointer = "/components/schemas/Voucher/properties/playerId"
+    ref_pointer = "/components/schemas/BatchRequest/properties/data/items/$ref"
+    source_property = {"type": "string"}
+    source_ref = "#/components/schemas/Voucher"
+    property_input = {
+        "locator": {"kind": "json_pointer", "pointer": property_pointer},
+        "semantic_value": source_property,
+    }
+    ref_input = {
+        "locator": {"kind": "json_pointer", "pointer": ref_pointer},
+        "semantic_value": source_ref,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="voucher-property",
+        context_fragment_ids=("request-item-ref",),
+        claim_path="/parameters/body/data[].playerId/name",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_request_body_ref_property_name_from_fragments",
+                version="1",
+                input_digests=(
+                    fragment_digest(canonical_json(property_input)),
+                    fragment_digest(canonical_json(ref_input)),
+                ),
+                output_digest=fragment_digest(canonical_json("data[].playerId")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "BatchRequest",
+                "parameters": [
+                    {
+                        "name": "data[].playerId",
+                        "location": "body",
+                        "required": True,
+                    }
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "voucher-property",
+                '{"type":"string"}',
+                locator=JsonPointerLocator(pointer=property_pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            ),
+            _exact_fragment(
+                "request-item-ref",
+                '"#/components/schemas/Voucher"',
+                locator=JsonPointerLocator(pointer=ref_pointer),
+                semantic_value=source_ref,
+                semantic_role="structured.value",
+            ),
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "data[].playerId"
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_request_ref_item_required_uses_linked_exact_fragments():
+    """A child schema's required list needs the request ``items.$ref`` link."""
+    child_pointer = "/components/schemas/Voucher"
+    ref_pointer = "/components/schemas/BatchRequest/properties/data/items/$ref"
+    child_schema = {
+        "type": "object",
+        "required": ["playerId"],
+        "properties": {"playerId": {"type": "string"}},
+    }
+    source_ref = "#/components/schemas/Voucher"
+    child_input = {
+        "locator": {"kind": "json_pointer", "pointer": child_pointer},
+        "semantic_value": child_schema,
+    }
+    ref_input = {
+        "locator": {"kind": "json_pointer", "pointer": ref_pointer},
+        "semantic_value": source_ref,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="voucher-schema",
+        context_fragment_ids=("request-item-ref",),
+        claim_path="/parameters/body/data[].playerId/required",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name=(
+                    "openapi_request_body_ref_property_required_from_fragments"
+                ),
+                version="1",
+                input_digests=(
+                    fragment_digest(canonical_json(child_input)),
+                    fragment_digest(canonical_json(ref_input)),
+                ),
+                output_digest=fragment_digest(canonical_json(True)),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _proposal(
+            {
+                "request_schema_ref": "BatchRequest",
+                "parameters": [
+                    {
+                        "name": "data[].playerId",
+                        "location": "body",
+                        "required": True,
+                    }
+                ],
+            },
+            support,
+            claim_kind="operation",
+        ),
+        _bundle(
+            _exact_fragment(
+                "voucher-schema",
+                canonical_json(child_schema),
+                locator=JsonPointerLocator(pointer=child_pointer),
+                semantic_value=child_schema,
+                semantic_role="structured.value",
+            ),
+            _exact_fragment(
+                "request-item-ref",
+                '"#/components/schemas/Voucher"',
+                locator=JsonPointerLocator(pointer=ref_pointer),
+                semantic_value=source_ref,
+                semantic_role="structured.value",
+            ),
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value is True
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_schema_pointers_provide_name_and_direct_field_claims():
+    """A schema root and direct property prove the matching schema claims."""
+    schema_pointer = "/components/schemas/PaymentRequest"
+    property_pointer = f"{schema_pointer}/properties/amount"
+    source_schema = {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {"amount": {"type": "integer"}},
+    }
+    source_property = source_schema["properties"]["amount"]
+
+    def step(name: str, pointer: str, value: object) -> DerivationStep:
+        semantic_value = source_schema if pointer == schema_pointer else source_property
+        return DerivationStep(
+            name=name,
+            version="1",
+            input_digests=(
+                fragment_digest(
+                    canonical_json(
+                        {
+                            "locator": {"kind": "json_pointer", "pointer": pointer},
+                            "semantic_value": semantic_value,
+                        }
+                    )
+                ),
+            ),
+            output_digest=fragment_digest(canonical_json(value)),
+        )
+
+    supports = (
+        ClaimSupportProposal(
+            fragment_id="schema-root",
+            claim_path="/name",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                step("openapi_schema_name_from_pointer", schema_pointer, "PaymentRequest"),
+            ),
+        ),
+        ClaimSupportProposal(
+            fragment_id="amount-property",
+            claim_path="/fields/amount/name",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                step(
+                    "openapi_schema_property_name_from_pointer",
+                    property_pointer,
+                    "amount",
+                ),
+            ),
+        ),
+        ClaimSupportProposal(
+            fragment_id="amount-property",
+            claim_path="/fields/amount/type",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                step(
+                    "openapi_schema_property_type_from_pointer",
+                    property_pointer,
+                    "integer",
+                ),
+            ),
+        ),
+        ClaimSupportProposal(
+            fragment_id="schema-root",
+            claim_path="/fields/amount/required",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                step(
+                    "openapi_schema_property_required_from_schema_pointer",
+                    schema_pointer,
+                    True,
+                ),
+            ),
+        ),
+    )
+
+    relationships = verify_claim_support(
+        _schema_proposal(supports, required=True),
+        _bundle(
+            _exact_fragment(
+                "schema-root",
+                canonical_json(source_schema),
+                locator=JsonPointerLocator(pointer=schema_pointer),
+                semantic_value=source_schema,
+                semantic_role="structured.value",
+            ),
+            _exact_fragment(
+                "amount-property",
+                canonical_json(source_property),
+                locator=JsonPointerLocator(pointer=property_pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            ),
+        ),
+    )
+
+    assert {
+        (relationship.claim_path, relationship.observed_value)
+        for relationship in relationships
+        if relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    } == {
+        ("/name", "PaymentRequest"),
+        ("/fields/amount/name", "amount"),
+        ("/fields/amount/type", "integer"),
+        ("/fields/amount/required", True),
+    }
+
+
+def test_openapi_schema_required_mapping_proves_false_from_complete_schema():
+    """A field is false only when its exact schema omits it from ``required``."""
+    pointer = "/components/schemas/PaymentRequest"
+    source_schema = {"type": "object", "properties": {"amount": {"type": "integer"}}}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_schema,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="schema-root",
+        claim_path="/fields/amount/required",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_schema_property_required_from_schema_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json(False)),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        _schema_proposal((support,), required=False),
+        _bundle(
+            _exact_fragment(
+                "schema-root",
+                canonical_json(source_schema),
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_schema,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value is False
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def test_openapi_schema_property_pointer_derives_nested_field_name():
+    """A schema property pointer deterministically establishes its field path."""
+    pointer = "/components/schemas/Batch/properties/data/items/properties/playerId"
+    source_property = {"type": "string"}
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_property,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="schema-property",
+        claim_path="/fields/data[].playerId/name",
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_schema_property_name_from_pointer",
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json("data[].playerId")),
+            ),
+        ),
+    )
+
+    relationship = verify_claim_support(
+        ClaimProposal(
+            id="batch-schema",
+            claim_kind="schema",
+            subject="Batch",
+            predicate="definition",
+            value={
+                "name": "Batch",
+                "fields": [{"name": "data[].playerId", "type": "string"}],
+            },
+            support_proposals=(support,),
+            runtime_identity="parser",
+        ),
+        _bundle(
+            _exact_fragment(
+                "schema-property",
+                '{"type":"string"}',
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_property,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == "data[].playerId"
+
+
+def test_openapi_schema_ref_field_uses_linked_exact_fragments():
+    """A parent schema field behind one ``items.$ref`` remains verifiable."""
+    child_pointer = "/components/schemas/Voucher/properties/playerId"
+    child_schema_pointer = "/components/schemas/Voucher"
+    ref_pointer = "/components/schemas/Batch/properties/data/items/$ref"
+    child_property = {"type": "string"}
+    child_schema = {
+        "type": "object",
+        "required": ["playerId"],
+        "properties": {"playerId": child_property},
+    }
+    source_ref = "#/components/schemas/Voucher"
+
+    def derivation_input(pointer: str, semantic_value: object) -> str:
+        return fragment_digest(
+            canonical_json(
+                {
+                    "locator": {"kind": "json_pointer", "pointer": pointer},
+                    "semantic_value": semantic_value,
+                }
+            )
+        )
+
+    supports = (
+        ClaimSupportProposal(
+            fragment_id="voucher-property",
+            context_fragment_ids=("batch-item-ref",),
+            claim_path="/fields/data[].playerId/name",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                DerivationStep(
+                    name="openapi_schema_ref_property_name_from_fragments",
+                    version="1",
+                    input_digests=(
+                        derivation_input(child_pointer, child_property),
+                        derivation_input(ref_pointer, source_ref),
+                    ),
+                    output_digest=fragment_digest(
+                        canonical_json("data[].playerId")
+                    ),
+                ),
+            ),
+        ),
+        ClaimSupportProposal(
+            fragment_id="voucher-property",
+            context_fragment_ids=("batch-item-ref",),
+            claim_path="/fields/data[].playerId/type",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                DerivationStep(
+                    name="openapi_schema_ref_property_type_from_fragments",
+                    version="1",
+                    input_digests=(
+                        derivation_input(child_pointer, child_property),
+                        derivation_input(ref_pointer, source_ref),
+                    ),
+                    output_digest=fragment_digest(canonical_json("string")),
+                ),
+            ),
+        ),
+        ClaimSupportProposal(
+            fragment_id="voucher-schema",
+            context_fragment_ids=("batch-item-ref",),
+            claim_path="/fields/data[].playerId/required",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(
+                DerivationStep(
+                    name="openapi_schema_ref_property_required_from_fragments",
+                    version="1",
+                    input_digests=(
+                        derivation_input(child_schema_pointer, child_schema),
+                        derivation_input(ref_pointer, source_ref),
+                    ),
+                    output_digest=fragment_digest(canonical_json(True)),
+                ),
+            ),
+        ),
+    )
+
+    relationships = verify_claim_support(
+        ClaimProposal(
+            id="batch-schema",
+            claim_kind="schema",
+            subject="Batch",
+            predicate="definition",
+            value={
+                "name": "Batch",
+                "fields": [
+                    {"name": "data[].playerId", "type": "string", "required": True}
+                ],
+            },
+            support_proposals=supports,
+            runtime_identity="parser",
+        ),
+        _bundle(
+            _exact_fragment(
+                "voucher-property",
+                canonical_json(child_property),
+                locator=JsonPointerLocator(pointer=child_pointer),
+                semantic_value=child_property,
+                semantic_role="structured.value",
+            ),
+            _exact_fragment(
+                "voucher-schema",
+                canonical_json(child_schema),
+                locator=JsonPointerLocator(pointer=child_schema_pointer),
+                semantic_value=child_schema,
+                semantic_role="structured.value",
+            ),
+            _exact_fragment(
+                "batch-item-ref",
+                '"#/components/schemas/Voucher"',
+                locator=JsonPointerLocator(pointer=ref_pointer),
+                semantic_value=source_ref,
+                semantic_role="structured.value",
+            ),
+        ),
+    )
+
+    assert {
+        (item.claim_path, item.observed_value)
+        for item in relationships
+        if item.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    } == {
+        ("/fields/data[].playerId/name", "data[].playerId"),
+        ("/fields/data[].playerId/type", "string"),
+        ("/fields/data[].playerId/required", True),
+    }
+
+
+def test_openapi_schema_two_hop_ref_field_uses_ordered_exact_fragments():
+    """Two explicit array-item refs prove a bounded flattened schema field."""
+    property_pointer = "/components/schemas/Level/properties/level"
+    schema_pointer = "/components/schemas/Level"
+    parent_ref_pointer = "/components/schemas/Response/properties/entries/items/$ref"
+    child_ref_pointer = "/components/schemas/Entry/properties/levels/items/$ref"
+    source_property = {"type": "integer"}
+    source_schema = {
+        "type": "object",
+        "required": ["level"],
+        "properties": {"level": source_property},
+    }
+    parent_ref = "#/components/schemas/Entry"
+    child_ref = "#/components/schemas/Level"
+
+    def digest(pointer: str, semantic_value: object) -> str:
+        return fragment_digest(canonical_json({
+            "locator": {"kind": "json_pointer", "pointer": pointer},
+            "semantic_value": semantic_value,
+        }))
+
+    supports = (
+        ClaimSupportProposal(
+            fragment_id="level-property", context_fragment_ids=("entries-ref", "levels-ref"),
+            claim_path="/fields/entries[].levels[].level/name",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(DerivationStep(
+                name="openapi_schema_two_hop_ref_property_name_from_fragments", version="1",
+                input_digests=(digest(property_pointer, source_property), digest(parent_ref_pointer, parent_ref), digest(child_ref_pointer, child_ref)),
+                output_digest=fragment_digest(canonical_json("entries[].levels[].level")),
+            ),),
+        ),
+        ClaimSupportProposal(
+            fragment_id="level-property", context_fragment_ids=("entries-ref", "levels-ref"),
+            claim_path="/fields/entries[].levels[].level/type",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(DerivationStep(
+                name="openapi_schema_two_hop_ref_property_type_from_fragments", version="1",
+                input_digests=(digest(property_pointer, source_property), digest(parent_ref_pointer, parent_ref), digest(child_ref_pointer, child_ref)),
+                output_digest=fragment_digest(canonical_json("integer")),
+            ),),
+        ),
+        ClaimSupportProposal(
+            fragment_id="level-schema", context_fragment_ids=("entries-ref", "levels-ref"),
+            claim_path="/fields/entries[].levels[].level/required",
+            proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+            verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+            derivation_steps=(DerivationStep(
+                name="openapi_schema_two_hop_ref_property_required_from_fragments", version="1",
+                input_digests=(digest(schema_pointer, source_schema), digest(parent_ref_pointer, parent_ref), digest(child_ref_pointer, child_ref)),
+                output_digest=fragment_digest(canonical_json(True)),
+            ),),
+        ),
+    )
+    relationships = verify_claim_support(
+        ClaimProposal(
+            id="response-schema", claim_kind="schema", subject="Response", predicate="definition",
+            value={"name": "Response", "fields": [{"name": "entries[].levels[].level", "type": "integer", "required": True}]},
+            support_proposals=supports, runtime_identity="parser",
+        ),
+        _bundle(
+            _exact_fragment("level-property", canonical_json(source_property), locator=JsonPointerLocator(pointer=property_pointer), semantic_value=source_property, semantic_role="structured.value"),
+            _exact_fragment("level-schema", canonical_json(source_schema), locator=JsonPointerLocator(pointer=schema_pointer), semantic_value=source_schema, semantic_role="structured.value"),
+            _exact_fragment("entries-ref", '"#/components/schemas/Entry"', locator=JsonPointerLocator(pointer=parent_ref_pointer), semantic_value=parent_ref, semantic_role="structured.value"),
+            _exact_fragment("levels-ref", '"#/components/schemas/Level"', locator=JsonPointerLocator(pointer=child_ref_pointer), semantic_value=child_ref, semantic_role="structured.value"),
+        ),
+    )
+
+    assert all(item.relationship is SupportRelationshipType.DERIVED_SUPPORT for item in relationships)
 
 
 @pytest.mark.parametrize(
