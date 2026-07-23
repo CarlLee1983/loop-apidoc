@@ -34,7 +34,7 @@ model-independent 邊界。下方 agent-native 流程仍是現行 CLI 的相容 
 
 第三方 API(金流、遊戲、物流……)的串接文件形式極度分歧:掃描版 PDF、官網 HTML、Word 附件、半套的 OpenAPI。同一份規格常散落在多份文件、版本互不同步;人工整理耗時、易漏,而且整理完的結果回答不了「這個欄位是文件哪一頁說的?」——串接出錯時無從稽核,文件改版時無從比對。
 
-loop-apidoc 把這些異質來源整理成單一標準形:OpenAPI 3.1 + 繁中指南 + provenance(逐項回指來源位置)+ 驗證報告。缺什麼、哪裡互相衝突,報告明講;產物可 `diff`、可經 `foundry` 資產化、可隨時重建。
+loop-apidoc 把這些異質來源整理成單一標準形:OpenAPI 3.1 + 繁中指南 + provenance(逐項回指來源位置)+ 驗證報告。缺什麼、哪裡互相衝突,報告明講;產物可 `diff`、可在本機 `review` 工作台人工覆核、可經 `foundry` 資產化、可隨時重建。
 
 ### 在 vibe coding 中為什麼重要
 
@@ -43,7 +43,7 @@ vibe coding 的本質是把實作交給 coding agent——而 agent 的產出品
 - **原始文件是幻覺的溫床。** 直接把 PDF 或網頁丟給 agent,遇到缺漏它會用「常見慣例」腦補:自動假設 OAuth、REST 慣例、標準錯誤格式。串接金流時,這種貌似合理的臆測正是最貴的 bug。loop-apidoc 的 fail-closed 原則把「來源沒說」變成明確列出的缺項,而不是留給 agent 自由發揮的空間。
 - **agent 需要機器可讀的 ground truth。** `openapi.yaml`、`integration-contract.json` 與 `examples/` 是 agent 可直接消費的規格——比起每個 session 重讀幾十頁 PDF,token 更省、結果可重複,而且多個 agent、多個專案讀到的是**同一份事實**。
 - **人要能稽核 agent 的依據。** provenance 逐項回指來源,`review.html` 供離線人工核對——vibe coding 不是放手不管,而是把人的角色從「逐行寫碼」移到「驗收規格與產物」,這件事需要可追溯性才做得到。
-- **規格是資產,不是一次性 prompt。** `foundry` 把整理完成的 run 升級為版本化資產(`.foundry/api/` 的 `current` 指標),文件改版時 `diff` 按下游影響分類——每一次 vibe coding 迭代都站在同一份受治理的規格上,而不是每次重新理解一遍。
+- **規格是資產,不是一次性 prompt。** `review` 先在本機呈現候選版與目前版的差異，保存可交棒給工具或 agent 的結構化 handoff；人按下明確核准後，`foundry` 才把 run 升級為版本化資產（`.foundry/api/` 的 `current` 指標）。文件改版時 `diff` 按下游影響分類——每一次 vibe coding 迭代都站在同一份受治理的規格上，而不是每次重新理解一遍。
 
 ### 與「直接請 AI agent 整理」有什麼不同?
 
@@ -57,7 +57,7 @@ vibe coding 的本質是把實作交給 coding agent——而 agent 的產出品
 | 可重複性 | 每個 session 結果不同 | 後半段是純確定性 CLI:同一份擷取 JSON 永遠產出同一份成品 |
 | 遺漏偵測 | 長文件讀到哪算哪,漏了不會說 | URL coverage 帳本(expected vs fetched)、preparation 就緒度、端點數量/identity 比對——漏抓會被點名 |
 | 修正方式 | 「再改一下」,不保證收斂 | typed issues(severity 閘 + `target_file`/`field_path`/`requery_scope` 路由)驅動修正迴圈,可判定收斂/停滯 |
-| 改版與治理 | 重問一次,無法比對 | `diff` 按下游影響分類、`score` 量化品質、`foundry` 版本化資產 |
+| 改版與治理 | 重問一次,無法比對 | `diff` 按下游影響分類、`review` 保存可續辦的人工結論、`score` 量化品質、`foundry` 版本化資產 |
 | 實證 | 無 | 十三個真實廠商 case 的 benchmark 回歸 harness;早期實測第一輪 validate 就攔下 6 個「直接整理會犯的錯」 |
 
 Benchmark 證據分兩個層級：CI 在沒有 gitignored 來源快照時，仍能確定所有已提交 fixture
@@ -369,6 +369,14 @@ uv run loop-apidoc foundry [init|import|approve|list|current] --help
 
 提供管理 docset、將 run 目錄匯入為 candidate、以及核准 asset 以更新 `current` 指標的子指令。適用於需要對文件版本進行人為審核與發布管理的場景。
 
+### `review` — 本機比對、交棒與人工核准
+
+```bash
+uv run loop-apidoc review --project ./my-api --docset payment --run ./output/<run-id>
+```
+
+在 `127.0.0.1` 啟動單使用者工作台，必要時自動把完成的 run 匯入 Foundry candidate，並與目前 `current` 資產比對；第一版則建立 baseline review。畫面呈現驗證結果、版本差異與可記錄的主觀結論，寫入 candidate 的 `review/decision.json` 作為給後續工具或 agent 讀取的結構化 handoff。按下核准才更新 `current`；驗證失敗、差異或未完成 handoff 不會鎖死核准，但會把資產狀態標成 `needs_follow_up`。工作台不呼叫模型，也不取代驗證。
+
 ### `preprocess` — PDF 轉高保真 markdown(可選)
 
 ```bash
@@ -528,6 +536,7 @@ uv run ruff check .
 | `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；通過報告可隨 run-dir 稽核保存 |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
 | `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
+| `loop_apidoc/review/` | 本機單使用者 review 工作台：自動匯入 candidate、以 current/baseline 比對、保存結構化 handoff，並在人工明確核准後交由 Foundry 更新 current |
 
 ---
 

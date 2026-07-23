@@ -15,6 +15,7 @@ from loop_apidoc.foundry.models import (
     CurrentPointer,
     FoundryApprovalError,
     FoundryInputError,
+    ReviewSummary,
     make_asset_id,
 )
 
@@ -46,6 +47,7 @@ def _build_artifacts(artifacts_dir: Path) -> AssetArtifacts:
         review=rel("review.html"),
         score=rel("score", "score.json"),
         handoff=handoff,
+        review_decision=rel("review", "decision.json"),
     )
 
 
@@ -54,11 +56,12 @@ def approve_candidate(
     docset_id: str,
     run_id: str,
     *,
-    approved_by: str,
     now: datetime,
+    approved_by: str | None = None,
     min_score: int | None = None,
     allow_failing: bool = False,
     known_gaps: list[str] | None = None,
+    review: ReviewSummary | None = None,
 ) -> Asset:
     docset = store.load_docset(project_root, docset_id)
 
@@ -104,22 +107,10 @@ def approve_candidate(
         approved_at=now.isoformat(),
         approved_by=approved_by,
         known_gaps=list(known_gaps or []),
+        review=review or ReviewSummary(),
     )
 
     store.save_asset(project_root, asset)
-    store.save_current(
-        project_root,
-        docset_id,
-        CurrentPointer(
-            current_asset=asset.asset_id,
-            status=asset.status,
-            validation=asset.validation,
-            generated_at=asset.generated_at,
-            approved_at=asset.approved_at,
-            artifacts=asset.artifacts,
-        ),
-    )
-
     updated_docset = docset.model_copy(update={"current_asset": asset.asset_id})
     store.save_docset(project_root, updated_docset)
     store.save_catalog(
@@ -141,5 +132,21 @@ def approve_candidate(
         store.save_asset(
             project_root, prior.model_copy(update={"status": AssetStatus.SUPERSEDED})
         )
+
+    # This is the externally consumed promotion signal. All remaining writes happen
+    # before it so any earlier failure leaves the existing current pointer intact.
+    store.save_current(
+        project_root,
+        docset_id,
+        CurrentPointer(
+            current_asset=asset.asset_id,
+            status=asset.status,
+            validation=asset.validation,
+            generated_at=asset.generated_at,
+            approved_at=asset.approved_at,
+            artifacts=asset.artifacts,
+            review=asset.review,
+        ),
+    )
 
     return asset

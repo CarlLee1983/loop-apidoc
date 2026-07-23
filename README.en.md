@@ -36,7 +36,7 @@ Core principle: **source documents are the only source of truth**. Anything the 
 
 Third-party API documentation (payments, gaming, logistics…) comes in wildly different shapes: scanned PDFs, marketing-site HTML, Word attachments, half-finished OpenAPI files. A single spec is often scattered across several documents with unsynchronized versions. Manual consolidation is slow and lossy — and the result cannot answer "which page of which document says this field exists?", so integration bugs cannot be audited and doc revisions cannot be compared.
 
-loop-apidoc consolidates these heterogeneous sources into one canonical form: OpenAPI 3.1 + a zh-TW guide + provenance (every statement points back to its source location) + a validation report. Whatever is missing or contradictory is stated explicitly; the artifacts can be `diff`ed, promoted into governed assets via `foundry`, and rebuilt at any time.
+loop-apidoc consolidates these heterogeneous sources into one canonical form: OpenAPI 3.1 + a zh-TW guide + provenance (every statement points back to its source location) + a validation report. Whatever is missing or contradictory is stated explicitly; the artifacts can be `diff`ed, reviewed locally in the `review` workbench, promoted into governed assets via `foundry`, and rebuilt at any time.
 
 ### Why it matters for vibe coding
 
@@ -45,7 +45,7 @@ Vibe coding hands implementation to a coding agent — and the agent's output qu
 - **Raw documents breed hallucinations.** Feed a PDF or web page directly to an agent and it fills every gap with "common conventions": assuming OAuth, RESTful defaults, standard error envelopes. When the target is a payment API, these plausible-looking guesses are the most expensive bugs you can ship. loop-apidoc's fail-closed principle turns "the source doesn't say" into an explicitly listed gap instead of creative freedom for the agent.
 - **Agents need machine-readable ground truth.** `openapi.yaml`, `integration-contract.json`, and `examples/` are specs an agent can consume directly — cheaper in tokens than re-reading dozens of PDF pages every session, reproducible, and every agent in every project reads the **same facts**.
 - **Humans must be able to audit what the agent relied on.** Provenance points every statement back to its source, and `review.html` supports offline manual review — vibe coding is not hands-off; it moves the human role from "writing every line" to "reviewing the spec and the artifacts", which requires traceability.
-- **A spec is an asset, not a one-off prompt.** `foundry` promotes a completed run into a versioned asset (the `current` pointer under `.foundry/api/`), and `diff` classifies doc revisions by downstream impact — every vibe-coding iteration stands on the same governed spec instead of re-deriving it from scratch.
+- **A spec is an asset, not a one-off prompt.** `review` first presents the candidate and current-version delta locally and saves a structured handoff for tools or agents; only an explicit human approval lets `foundry` promote the run into a versioned asset (the `current` pointer under `.foundry/api/`). `diff` classifies doc revisions by downstream impact, so every vibe-coding iteration stands on the same governed spec instead of re-deriving it from scratch.
 
 ### How is this different from just asking an AI agent to organize the PDF/URL?
 
@@ -59,7 +59,7 @@ The extraction engine here **is also a model** (agent-native: the current coding
 | Reproducibility | Different every session | The back half is a deterministic CLI: the same extraction JSON always produces the same artifacts |
 | Omission detection | Long documents get read as far as they get read; silent gaps | URL coverage ledger (expected vs fetched), preparation readiness, endpoint count/identity cross-checks — omissions get named |
 | Correction | "Try again", with no guarantee of convergence | Typed issues (severity gate + `target_file`/`field_path`/`requery_scope` routing) drive a correction loop with converged/plateau verdicts |
-| Revisions & governance | Ask again; nothing to compare against | `diff` classifies by downstream impact, `score` quantifies quality, `foundry` versions the asset |
+| Revisions & governance | Ask again; nothing to compare against | `diff` classifies by downstream impact, `review` preserves a resumable human decision, `score` quantifies quality, `foundry` versions the asset |
 | Evidence | None | A thirteen-case regression harness of real-provider benchmarks; early runs caught 6 defects on the first validation pass — exactly the errors direct summarization ships silently |
 
 The benchmark evidence has two levels. CI safely proves that all committed fixtures are
@@ -379,6 +379,14 @@ uv run loop-apidoc foundry [init|import|approve|list|current] --help
 
 Subcommands to manage docsets, import a run directory as a candidate, and approve an asset to update the `current` pointer. Ideal for scenarios requiring manual review and release management of API documentation versions.
 
+### `review` — local comparison, handoff, and human approval
+
+```bash
+uv run loop-apidoc review --project ./my-api --docset payment --run ./output/<run-id>
+```
+
+Starts a single-user workbench on `127.0.0.1`. It automatically imports a completed run as a Foundry candidate when necessary, compares it with the current asset (or opens a baseline review for the first version), and presents validation, version differences, and subjective conclusions. It writes the candidate's `review/decision.json` as structured handoff for later tools or agents. Only the human approval action updates `current`; failed validation, differences, or unfinished handoffs do not lock approval, but produce a `needs_follow_up` asset state. The workbench never calls a model or replaces validation.
+
 ### `preprocess` — convert PDFs to high-fidelity markdown (optional)
 
 ```bash
@@ -538,6 +546,7 @@ uv run ruff check .
 | `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; passing reports can be retained with a run-dir |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | bounded URL navigation cataloging, page caching, and related-page candidates for local-evidence web reading |
 | `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
+| `loop_apidoc/review/` | local single-user review workbench: auto-import a candidate, compare with current/baseline, persist structured handoff, and ask Foundry to update current only after explicit human approval |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 

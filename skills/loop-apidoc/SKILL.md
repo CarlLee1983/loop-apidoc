@@ -346,6 +346,12 @@ bill arrives. Hosts with no per-subagent model control report the single session
 - `<APIDOC> diff --base "<run_dir_a>" --head "<run_dir_b>"` — classify changes between two
   completed runs (breaking / additive / changed / source_only); writes
   `<run_dir_b>/diff/report.{json,md}`.
+- `<APIDOC> review --project "<PROJECT>" --docset "<DOCSET>" --run "<run_dir>"` — when the
+  user explicitly asks for a local human review, opens a loopback Foundry workbench. It imports
+  the completed run as a candidate when needed, compares it with the current asset (or a
+  baseline), and writes only structured handoff JSON; the human may explicitly approve it.
+  Do not invoke it automatically, do not treat approval as validation PASS, and do not use it
+  to call a model.
 
 ## Important
 

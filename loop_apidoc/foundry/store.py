@@ -82,6 +82,27 @@ def save_current(project_root: Path, docset_id: str, pointer: CurrentPointer) ->
     _write_model(paths.current_path(project_root, docset_id), pointer)
 
 
+def load_review_decision(
+    project_root: Path, docset_id: str, run_id: str
+) -> object | None:
+    """Load a candidate-local review decision without coupling Foundry models to review."""
+    path = paths.candidate_review_decision_path(project_root, docset_id, run_id)
+    if not path.is_file():
+        return None
+    from loop_apidoc.review.models import ReviewDecision
+
+    return _read_model(ReviewDecision, path, "review/decision.json")
+
+
+def save_review_decision(
+    project_root: Path, docset_id: str, run_id: str, decision: BaseModel
+) -> None:
+    """The sole governance-JSON write path for candidate review decisions."""
+    _write_model(
+        paths.candidate_review_decision_path(project_root, docset_id, run_id), decision
+    )
+
+
 def upsert_catalog_entry(catalog: Catalog, entry: CatalogDocsetEntry) -> Catalog:
     replaced = False
     docsets: list[CatalogDocsetEntry] = []
