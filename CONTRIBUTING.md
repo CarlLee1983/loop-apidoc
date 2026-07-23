@@ -104,4 +104,4 @@ PR 與 push 到 `main` 會觸發 CI(`.github/workflows/ci.yml`:`uv sync` → `ru
 
 ## 專案結構
 
-各套件職責見 [`README.md`](README.md#套件結構);整體流程與資料流見 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。完整設計 spec 與分階段實作 plan 位於 `docs/superpowers/`。
+各套件職責見 [`README.md`](README.md#套件結構);整體流程與資料流見 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)，長期產品決策見 [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md)。
