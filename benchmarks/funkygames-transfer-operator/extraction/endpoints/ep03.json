@@ -2,6 +2,18 @@
   "method": "GET",
   "path": "/IngameUrl",
   "source": "transfer-operator.swagger.json#/paths/~1IngameUrl/get",
+  "evidence": [
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get"}, "fragment_digest": "b85217d1f18642a92c29008a26531d71238be939d3f176a11efcd376204df26e", "claim_path": "/method"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get"}, "fragment_digest": "b85217d1f18642a92c29008a26531d71238be939d3f176a11efcd376204df26e", "claim_path": "/path"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/responses/200"}, "fragment_digest": "38eed49c2ef56dd08baaa74998fbf7682521209fb27085680db6b19ce6cd6e01", "claim_path": "/responses/200/status_code"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/responses/200/description"}, "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3", "claim_path": "/responses/200/description"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/summary"}, "fragment_digest": "3e229ccfb0b173d3237f5b02cdafa19b937ab9896c5c6ecc5f671a47f7fb1baa", "claim_path": "/summary"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/parameters/0/name"}, "fragment_digest": "f7bff5d350767395a6c1465cb7fe7f666c6b2fdc415133525cb248cb3584eecc", "claim_path": "/parameters/query/IngameUrl/name"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/parameters/1/name"}, "fragment_digest": "3d872b2ab22a2475ca9ba197dc3cc954d8c991e44284994557fbcaf873cdb73f", "claim_path": "/parameters/query/token/name"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/parameters/2/name"}, "fragment_digest": "4eca9e1b6fb2769b9c9593656ccb420ddefccc9630893cf292aff2e3b3ee47fc", "claim_path": "/parameters/query/redirectUrl/name"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/parameters/0/required"}, "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b", "claim_path": "/parameters/query/IngameUrl/required"},
+    {"version": 1, "source": "transfer-operator.swagger.json", "locator": {"kind": "json_pointer", "pointer": "/paths/~1IngameUrl/get/parameters/1/required"}, "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b", "claim_path": "/parameters/query/token/required"}
+  ],
   "parameters": [
     {
       "name": "IngameUrl",

@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/WithBalance/History/GetGameDetail",
-  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-12 取得遊戲詳細資訊",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 889-963",
   "parameters": [
     {
       "name": "X-API-ClientID",

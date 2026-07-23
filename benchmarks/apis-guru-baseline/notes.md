@@ -6,6 +6,13 @@
 - Downloaded at: 2026-06-28
 - Document version: APIs.guru 2.2.0(OpenAPI 3.0.0)
 - Source format: OpenAPI(machine-readable;與 NewebPay PDF 形成兩極對照)
+- Source restoration (2026-07-23): the file last changed at commit
+  `fa500d341c242326279e64402a547ff7c0717e0d` (2023-04-05). A snapshot from that
+  immutable commit was written to the ignored
+  `sources/apis-guru-2.2.0.openapi.yaml`; SHA-256
+  `dee46291d885be9ed36daabdb050e988afc5e8337760c36ad059fc440be5abb2`.
+  It is byte-identical to the previously recorded `main` URL, and its acquisition
+  is recorded in `url_sources/coverage.json`.
 
 ## Scope
 

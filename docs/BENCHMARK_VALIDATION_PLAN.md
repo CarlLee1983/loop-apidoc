@@ -32,6 +32,25 @@ execution. The original source snapshot is deliberately not part of fixture
 identity because `benchmarks/<case>/sources/` is operator-provided and
 gitignored.
 
+Every committed case also carries `expected/core-parity.json`. This is a
+versioned declaration for the eventual Core graduation gate: it fixes the
+legacy and Core verdicts, requires an exact-evidence chain for every material
+claim, and disallows undeclared semantic differences. Its presence and shape
+are checked without sources, so a new fixture cannot bypass the Core gate in
+CI merely because its private snapshot is unavailable. The actual Core/legacy
+comparison remains source-backed and is eligible for cutover only after Core
+can represent every declared source gap without fabricating metadata.
+
+A non-empty source directory merely enables the legacy source-backed checks. It
+does not by itself make a case eligible for Core parity: every material claim
+must still be addressable by an exact source fragment. For example, a
+browser-flattened one-line rendition may preserve readable content but cannot
+be assigned invented claim locators; retain it as an observed legacy replay and
+obtain the original structured snapshot before declaring exact-evidence parity.
+The retained FunkyGames Swagger and RSG Markdown cases are the current executable
+full-parity replays; each other restored source snapshot must meet this same contract
+rather than a lower, source-availability-dependent bar.
+
 The required inventory is explicit in
 `scripts/quality_gate.py::REQUIRED_BENCHMARK_CASES`. It contains:
 

@@ -435,13 +435,17 @@ path is linked through an `explicit_support`, `derived_support`, `contradicts`, 
 fragments use typed locators (page, line range, section, table cell, JSON Pointer, CSS, or
 XPath) and a digest of the normalized fragment content. Core decides support with
 deterministic value, table-cell, structured-path, enum, and source-fact checks; runtime
-confidence is never authoritative. A filename-only or whole-document legacy citation
-degrades to `insufficient` and leaves the claim unverified.
+confidence is never authoritative. For prose without a parsed scalar, a verified v1
+reference can support only the one material claim path it binds after source identity,
+locator, digest, and path all pass; a filename-only or whole-document legacy citation
+still degrades to `insufficient` and leaves the claim unverified. Versioned OpenAPI JSON
+Pointer derivations are limited to Core's documented allowlist and are recomputed from
+the exact fragment plus every required local-reference context fragment.
 
 When an extraction entry supplies v1 `evidence[]`, it records the exact manifest source,
 typed locator, normalized-fragment SHA-256, and material claim path. `verify-extraction`
-and `assemble` materialize, verify, and resolve that path before a run exists; in shadow, that reference
-owns the declared claim path and Core decides its relationship. See the portable
+and `assemble` materialize, verify, and resolve that path before a run exists; in shadow,
+that reference owns only the declared claim path and Core verifies its relationship. See the portable
 [extraction schema reference](skills/loop-apidoc/reference/extraction-schemas.md).
 
 ---

@@ -2,6 +2,518 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/User/AddVouchers",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post"
+      },
+      "fragment_digest": "aca547d62caa480a4eb85ebdcface1fd3cfaea13bfe0ae32a8d7c76de0fc97b5",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post"
+      },
+      "fragment_digest": "aca547d62caa480a4eb85ebdcface1fd3cfaea13bfe0ae32a8d7c76de0fc97b5",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/summary"
+      },
+      "fragment_digest": "f68084d9f91bb2aa1906a62a209b47c08b4f188a51457dd13301523267f7b0a5",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/responses/200"
+      },
+      "fragment_digest": "d5f008e06b1c5299a6d0aecbc1d768fa3b44bcaee2584809eca3021ba8d6f8be",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "96524d4f4466421d48c201c6fb17fd7df9e84377a9ec4f64411286b94dfebd7c",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1User~1AddVouchers/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "6b8392f91d63cbdd0f4ab5e55a16718945898fd355fcf131edce5ba4efa20b7b",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/playerId"
+      },
+      "fragment_digest": "20bff8108928033d7200fc0a622e334efa6a9fa7f333bd410c4c6ee1732c4694",
+      "claim_path": "/parameters/body/data[].playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/voucherId"
+      },
+      "fragment_digest": "c5e146024f8c655b2f26ab05f3aebe22abf72349dedf9427ce9dd53d9cd26416",
+      "claim_path": "/parameters/body/data[].voucherId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].voucherId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/fixStake"
+      },
+      "fragment_digest": "97ed103822d9f973b562d83c1e019d4f3250959bc7084860474814eaf978c4a8",
+      "claim_path": "/parameters/body/data[].fixStake/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].fixStake/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/freeSpin"
+      },
+      "fragment_digest": "728a3a71a34cae14427deb6bfd45a9f53e293f6c8d77b38e9517b62867560693",
+      "claim_path": "/parameters/body/data[].freeSpin/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].freeSpin/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/effectiveDate"
+      },
+      "fragment_digest": "020ba0f3421e75b12116d0ab1a41d28ce4ef7638035e69b7027f4664c5dd80ae",
+      "claim_path": "/parameters/body/data[].effectiveDate/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].effectiveDate/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/expiredDate"
+      },
+      "fragment_digest": "54099bd35dbd269a7263c1c818ebd29c4ce311fc562791aa878f05d52289a29b",
+      "claim_path": "/parameters/body/data[].expiredDate/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].expiredDate/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/currency"
+      },
+      "fragment_digest": "8aff3c7c303b227804308fe4d3b88f56267df3b50914d2995108532815a5031c",
+      "claim_path": "/parameters/body/data[].currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/gameCodes"
+      },
+      "fragment_digest": "2060179151085b7a88d4f712f40e77a8d0c7cd68552408be57079c781d42d993",
+      "claim_path": "/parameters/body/data[].gameCodes[]/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].gameCodes[]/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest/properties/eventId"
+      },
+      "fragment_digest": "82ab65e8a1a367f44407b080b5bc028627d6b75aae2322b5183e908295cc5c66",
+      "claim_path": "/parameters/body/data[].eventId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].eventId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].voucherId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].voucherId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].fixStake/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].fixStake/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].freeSpin/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].freeSpin/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].effectiveDate/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].effectiveDate/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].expiredDate/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].expiredDate/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].gameCodes[]/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].gameCodes[]/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVoucherRequest"
+      },
+      "fragment_digest": "ef4af3f9925cf7e137593fd420044ed7b185011019adcca27ffced77e2a80dbb",
+      "claim_path": "/parameters/body/data[].eventId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderAddVouchersRequest/properties/data/items/$ref"
+      },
+      "fragment_digest": "bb905316ad61e6c22eaf15110dd2a6d06c26df57cb4b7da7ee6e5fae6f17103a",
+      "claim_path": "/parameters/body/data[].eventId/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

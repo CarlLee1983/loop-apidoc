@@ -13,6 +13,14 @@
 - Downloaded at: 2026-06-28
 - Document version: client repo `master`（無語意版號 → inventory.version=null）
 - Source format: Markdown（SDK docs）+ 官方 Python sample（包成 markdown code fence）
+- Source restoration (2026-07-23): restored the 24 cited SDK Markdown files from
+  client commit `a9dde2993c9c7ccb5ad0267822a9dd475823b19d` (2026-05-16) and the
+  official authorization sample from sample-repo commit
+  `629d93fc009126b88648d1e5bde2a4052be7046a` (2026-05-27), both preceding the
+  recorded download. The ignored `sources/` set has 25 files; its file digests
+  are in `url_sources/source-manifest.json`. The sample retains its official
+  Python bytes under the benchmark's established `.md` citation filename, with
+  no content substitution.
 
 > Cybersource 開發者入口（`developer.cybersource.com/api-reference-assets`）為 JS SPA,
 > curl/defuddle 取不到（試過 2 個 auth 頁皆 0 bytes）。改用官方 SDK repo 的 codegen `docs/*.md`

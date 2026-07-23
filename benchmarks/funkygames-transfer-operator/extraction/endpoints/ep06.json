@@ -2,6 +2,258 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/Wallet/Deposit",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post"
+      },
+      "fragment_digest": "ffa5e8f67b4ed96ff832771544102a6785ab71a14e10faa8c70e8ed2968286d5",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post"
+      },
+      "fragment_digest": "ffa5e8f67b4ed96ff832771544102a6785ab71a14e10faa8c70e8ed2968286d5",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/responses/200"
+      },
+      "fragment_digest": "cf67c93310508b8f7989d40b8977ba2701b4e6cf399964280cc63dc356fcf4f5",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "105f7e49a71d8058ab2734b9f71d158fd0471ce3728bf081e876cfb6897e025e",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/summary"
+      },
+      "fragment_digest": "9b530640b45874dc54f67c6f8c0f2a3a5bab773b5ac3b350235e570684d684df",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Wallet~1Deposit/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "d174e0a3a57ba3f87fee9155d1832c398efbc07c4043a60b620c760d3d194c40",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest/properties/txId"
+      },
+      "fragment_digest": "150e34d23224d42a27090ea2ed1ca5f36a623360b21eeccb87b9f1097d8fe608",
+      "claim_path": "/parameters/body/txId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest/properties/playerId"
+      },
+      "fragment_digest": "978fe85bc4cd4c7d9bebba0aee23f278d971e3a7cfc0198fe4191939840bc948",
+      "claim_path": "/parameters/body/playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest/properties/amount"
+      },
+      "fragment_digest": "b99c0719c3ac3bb71a71b17092e4cc2c1bb151e7b82843d3c0f686aeaa6cd94a",
+      "claim_path": "/parameters/body/amount/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest/properties/currency"
+      },
+      "fragment_digest": "3647952c943e7ecec359606dfbe5f5fcb93ff9c7a7b8dbc4cae80054c2555799",
+      "claim_path": "/parameters/body/currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest/properties/isTestAccount"
+      },
+      "fragment_digest": "2c920bf204fb610f82b5a8ef16e86e12b1c5bdddd4e5d00875b6b27992754b44",
+      "claim_path": "/parameters/body/isTestAccount/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest"
+      },
+      "fragment_digest": "0b6588d5658001f409da9d52a2aebdd0617d350ed9559f39f30ee7df3616ed52",
+      "claim_path": "/parameters/body/txId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest"
+      },
+      "fragment_digest": "0b6588d5658001f409da9d52a2aebdd0617d350ed9559f39f30ee7df3616ed52",
+      "claim_path": "/parameters/body/playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest"
+      },
+      "fragment_digest": "0b6588d5658001f409da9d52a2aebdd0617d350ed9559f39f30ee7df3616ed52",
+      "claim_path": "/parameters/body/amount/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest"
+      },
+      "fragment_digest": "0b6588d5658001f409da9d52a2aebdd0617d350ed9559f39f30ee7df3616ed52",
+      "claim_path": "/parameters/body/currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderDepositRequest"
+      },
+      "fragment_digest": "0b6588d5658001f409da9d52a2aebdd0617d350ed9559f39f30ee7df3616ed52",
+      "claim_path": "/parameters/body/isTestAccount/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

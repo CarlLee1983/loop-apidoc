@@ -2,6 +2,378 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/TrialPlay/CreateTrialPlayEvent",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post"
+      },
+      "fragment_digest": "809392f75790873f75fcb4198fdd5ad570cbcea02ab8b840afb55dd76a81760c",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post"
+      },
+      "fragment_digest": "809392f75790873f75fcb4198fdd5ad570cbcea02ab8b840afb55dd76a81760c",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/responses/200"
+      },
+      "fragment_digest": "b6b1d41ccfaf23804cb3a4ca633d2addad9828340665b9b3556d39f1a8dc07f3",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "aff8e6877fa2079ca31a1829a389b9354e7b68dc6b8fa7b4a10859b988488ae0",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/summary"
+      },
+      "fragment_digest": "ad8bf1d0f2964007e7b4405e9833519a377031bebd9dc2547bfe8878cd1fafb1",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1TrialPlay~1CreateTrialPlayEvent/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "aea9305fef04fd30c3946602b8575db23d4fcb80e3f71ee732735b72ce056b9b",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/eventName"
+      },
+      "fragment_digest": "221d56b4db4aa777fef8e02e0ba171052ecc1c9434336e464ccdc6831e2662e3",
+      "claim_path": "/parameters/body/eventName/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/startTime"
+      },
+      "fragment_digest": "9d01dee8c50cdaec788bb9b08676f231f0ba2b6354f58d54de16f50688be29bf",
+      "claim_path": "/parameters/body/startTime/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/endTime"
+      },
+      "fragment_digest": "2daab86a8ad4ce4cc6a47a711eada7344d5f96b30e6179327676db1c3218786c",
+      "claim_path": "/parameters/body/endTime/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/trialPlayTimes"
+      },
+      "fragment_digest": "35955a6d1f93348047579086312ad0ecba863f483e3da3ac28be4da0fb3cb63b",
+      "claim_path": "/parameters/body/trialPlayTimes/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/joinOption"
+      },
+      "fragment_digest": "58881b31dcba159eee6b9694c33d0ef85df9894293e8f8d5e7250a3e72fa7ee9",
+      "claim_path": "/parameters/body/joinOption/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/maxMemberCount"
+      },
+      "fragment_digest": "85fb0ebceb8227e46ce21cdaecfe968e72119f25b1eba9701155899a0f50d6dc",
+      "claim_path": "/parameters/body/maxMemberCount/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/stakeOption"
+      },
+      "fragment_digest": "eb0149d9b4157ad0ccbca78f079f3b53dc42b7840a3657ee11fcbd87ffc9f593",
+      "claim_path": "/parameters/body/stakeOption/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/currency"
+      },
+      "fragment_digest": "85263b54072028217b1fb3569e1a5d10c2177a678a34a92fad5c200aae052065",
+      "claim_path": "/parameters/body/currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/fixedStake"
+      },
+      "fragment_digest": "33ca1f6256eb07f72468924ee980ecf1699dab9c6fce43156ddfee4ffef9eb3b",
+      "claim_path": "/parameters/body/fixedStake/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/stakeLevel"
+      },
+      "fragment_digest": "dbb06d2a887392769d98268b1356c8a2b7ac4d6dd8c90c9865d5d6637165563f",
+      "claim_path": "/parameters/body/stakeLevel/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest/properties/gameCodes"
+      },
+      "fragment_digest": "ca5c5a348fdb58e91070074185e62c4eda3cd7d29e508b48e7ec46121b46096f",
+      "claim_path": "/parameters/body/gameCodes[]/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/eventName/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/startTime/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/endTime/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/gameCodes[]/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/trialPlayTimes/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/joinOption/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/maxMemberCount/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/stakeOption/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/fixedStake/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderCreateTrialPlayEventRequest"
+      },
+      "fragment_digest": "fcd6c33499f899f1811a219fb1018cfb494817d237246f26cbd03587776d48f2",
+      "claim_path": "/parameters/body/stakeLevel/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",

@@ -89,6 +89,34 @@ classification accuracy, so an unsupported reference cannot look successful mere
 because support-only metrics ignore it. These deterministic cases validate Core
 semantics; they are not yet representative source-benchmark parity or a Core cutover.
 
+**OpenAPI structural derivations (2026-07-23):** v1 exact JSON Pointer evidence can
+now propose versioned mappings for operation path/method, response status, local
+response/request-schema `$ref` names, and request-body property names with array
+markers. A field behind one `items.$ref` additionally requires two declared exact
+fragments—the parent reference and child property—which Core links and re-digests before
+deriving the dotted array field. Malformed, mismatched, or incomplete inputs remain
+insufficient.
+
+**FunkyGames source-backed parity (2026-07-23):** the retained Swagger snapshot now has
+exact v1 evidence for every material claim: all 27 operations, 95 request-body fields and
+required flags, and all schema fields, including bounded one- and two-hop component-ref
+chains. The replay result is legacy `passed` / Core `accept`, with 92/92 Core claims
+supported and zero insufficient relationships. This proves one source-backed benchmark;
+it is not the product-wide cutover: six historical benchmark source snapshots are still
+unavailable for the required strict-local zero-skip parity gate, and five restored cases
+still need claim-complete exact-evidence parity.
+
+**RSG source-backed parity (2026-07-23):** the operator supplied the original RSG
+documentation URL. Its fetched raw HTML has the same SHA-256 as the historical RSG
+snapshot, and normalization produces a structured, line-addressable Markdown derivative.
+The benchmark now binds all 33 material claims to verified v1 fragments and replays as
+legacy `passed` / Core `accept`, with zero unverified claims. For prose-only fragments,
+the claim-level binding is recorded as `CLAIM_BOUND_EXACT_REFERENCE`; it is fail-closed on
+source identity, locator, digest, and claim path, while a legacy page/line citation remains
+insufficient. This clears RSG only; it does not substitute a newer source for any of the
+six unavailable historical snapshots or lower the parity bar for the five other restored
+cases.
+
 ### 2. Continuous source and contract governance
 
 **Goal:** turn one-off analysis runs into a controlled update cycle.

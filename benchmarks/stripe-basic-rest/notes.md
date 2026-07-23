@@ -6,6 +6,13 @@
 - Downloaded at: 2026-06-28
 - Document version: Stripe API 2026-06-24.dahlia
 - Source format: OpenAPI(spec3.sdk.json,10MB)→ 取 Payment Intents 子集存於 sources/stripe-payment-intents-subset.json
+- Source restoration (2026-07-23): restored the original full OpenAPI source from
+  immutable commit `3881db83dff8d170d4b7ef7e00e1801cd617e891` (2026-06-24), which
+  matches the recorded API version date. The ignored `sources/spec3.sdk.json` has
+  SHA-256 `a58d0f7ce76116839b2031fe1fff178283f5c686c6cdbdeaf324d6670a97fe9e`; its
+  direct URL acquisition is recorded in `url_sources/coverage.json`. The committed
+  extraction remains the documented Payment Intents subset and is not expanded by
+  restoring this authoritative source.
 - 取源說明: docs.stripe.com/api 為 JS-heavy SPA(1.2MB,難淨取);改用官方 machine-readable OpenAPI spec 的 Payment Intents 子集(高品質 REST 對照,符合 doc「挑 3-5 基本 endpoint」)。
 
 ## Scope

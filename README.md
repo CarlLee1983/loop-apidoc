@@ -425,13 +425,17 @@ path 會透過 `explicit_support`、`derived_support`、`contradicts` 或
 Exact fragment 使用 page、line range、section、table cell、JSON Pointer、CSS 或
 XPath 等 typed locator，digest 則以 normalized fragment content 計算。Core 只用
 確定性的值比對、表格儲存格、structured path、enum 與 source-fact 檢查決定
-support；runtime confidence 不具權威。只有檔名或整份文件的 legacy citation
-會降級為 `insufficient`，claim 維持 unverified。
+support；runtime confidence 不具權威。若 prose fragment 沒有 parsed scalar，通過
+source identity、locator、digest 與 path 檢查的 v1 reference 只能支援它綁定的單一
+material claim path；只有檔名或整份文件的 legacy citation 仍會降級為
+`insufficient`，claim 維持 unverified。OpenAPI JSON Pointer 的 versioned derivation
+只限 Core 的文件化 allowlist，並會從 exact fragment 與所有必要的 local-reference
+context fragments 重新計算。
 
 若 extraction 條目提供 v1 `evidence[]`，它會記錄精確的 manifest source、typed
 locator、normalized fragment SHA-256 與 material claim path。`verify-extraction` 與
-`assemble` 會在建立 run 前 materialize、驗證並解析該路徑；shadow 中該 reference 會專屬於所宣告
-claim path，再由 Core 決定 relationship。欄位與範例見可攜 skill 的
+`assemble` 會在建立 run 前 materialize、驗證並解析該路徑；shadow 中該 reference
+只專屬於所宣告的 claim path，再由 Core 驗證 relationship。欄位與範例見可攜 skill 的
 [extraction schema reference](skills/loop-apidoc/reference/extraction-schemas.md)。
 
 ---

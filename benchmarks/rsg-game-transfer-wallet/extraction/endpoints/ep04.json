@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/WithBalance/Player/GetTransactionResult",
-  "source": "10b7b34e8ac125804008ebf6ca35cd9cc42e3854d3622a57460cb1df02e3a044.txt — 5-5 查詢點數交易結果",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 681-707",
   "parameters": [
     {
       "name": "X-API-ClientID",

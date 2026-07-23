@@ -199,6 +199,7 @@ class SupportRelationshipType(str, Enum):
 
 class VerificationMethod(str, Enum):
     EXACT_NORMALIZED_VALUE = "exact_normalized_value"
+    CLAIM_BOUND_EXACT_REFERENCE = "claim_bound_exact_reference"
     TABLE_CELL_MAPPING = "table_cell_mapping"
     STRUCTURED_FIELD_PATH = "structured_field_path"
     ENUM_VALUE = "enum_value"
@@ -207,6 +208,7 @@ class VerificationMethod(str, Enum):
 
 class ClaimSupportProposal(FrozenModel):
     fragment_id: str
+    context_fragment_ids: tuple[str, ...] = ()
     claim_path: str
     proposed_relationship: SupportRelationshipType
     verification_method: VerificationMethod
@@ -221,6 +223,10 @@ class ClaimSupportProposal(FrozenModel):
         }
         if self.proposed_relationship not in allowed:
             raise ValueError("runtime may only propose explicit or derived support")
+        if self.fragment_id in self.context_fragment_ids:
+            raise ValueError("context fragments must not repeat the primary fragment")
+        if len(set(self.context_fragment_ids)) != len(self.context_fragment_ids):
+            raise ValueError("context fragment IDs must be unique")
         return self
 
 
@@ -229,6 +235,7 @@ class ClaimEvidenceRelationship(FrozenModel):
     claim_identity: str
     claim_path: str
     fragment_id: str
+    context_fragment_ids: tuple[str, ...] = ()
     relationship: SupportRelationshipType
     verification_method: VerificationMethod
     claim_value_digest: str

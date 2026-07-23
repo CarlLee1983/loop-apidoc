@@ -2,6 +2,418 @@
   "method": "POST",
   "path": "/{funkyUrl}/Funky/Game/LaunchGame",
   "source": "transfer-operator.swagger.json#/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post"
+      },
+      "fragment_digest": "2e2bc2ff6a8499e84806563a4a075c2b713a6ff1d037f75f66c42ae33cb61a76",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post"
+      },
+      "fragment_digest": "2e2bc2ff6a8499e84806563a4a075c2b713a6ff1d037f75f66c42ae33cb61a76",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/responses/200"
+      },
+      "fragment_digest": "f8e9e6b38019ba1aa148daa3cf153cf1ed382001817490cabe1ff1dd00c0b930",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "7962b27f6f59ce8536a1948bc13bc89de541e9dec3d10dc1b77c7a09030241fa",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/summary"
+      },
+      "fragment_digest": "c4765b28ad42fce0cc98ba886705763956a472e133bf02a80b05806f88f9a851",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/0/name"
+      },
+      "fragment_digest": "e73d2c5d4a57fd30627a68699692180a8c48d19cca7e06d768c580a8255bc9f5",
+      "claim_path": "/parameters/path/funkyUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/1/name"
+      },
+      "fragment_digest": "88e01eac0807c1d20af2b57978f56ac0791a7e62eb80545ec0292bc78213cb20",
+      "claim_path": "/parameters/header/User-Agent/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/2/name"
+      },
+      "fragment_digest": "340941b13b105aee8568f8f7436232775d8cffb3c4038518a84fa08f87479190",
+      "claim_path": "/parameters/header/Authentication/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/3/name"
+      },
+      "fragment_digest": "67db6dbb1a685afc5905b3ca56bcefc994d2ff6156f2b70292d76ec671178099",
+      "claim_path": "/parameters/header/X-Request-ID/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/funkyUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/1/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/User-Agent/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/Authentication/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/parameters/3/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/header/X-Request-ID/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{funkyUrl}~1Funky~1Game~1LaunchGame/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "ffdddf57844dc64a23027e8738edbc32aa5e6873ad235c7e08c2b7d19195ab90",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/gameCode"
+      },
+      "fragment_digest": "5b6b9039879fcee5722db5a2fc85403da353f7489085fde49806a20b4a38b42a",
+      "claim_path": "/parameters/body/gameCode/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/userName"
+      },
+      "fragment_digest": "17cb1649fc14ea8e45979a87258a71acdc5c050bfb644572c09f0c1991887ce3",
+      "claim_path": "/parameters/body/userName/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/playerId"
+      },
+      "fragment_digest": "20bff8108928033d7200fc0a622e334efa6a9fa7f333bd410c4c6ee1732c4694",
+      "claim_path": "/parameters/body/playerId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/currency"
+      },
+      "fragment_digest": "0c45a9c67a5cec5c9dd571bf6220b55eac3065a1b18a5438cd0d98725d197246",
+      "claim_path": "/parameters/body/currency/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/language"
+      },
+      "fragment_digest": "11d976fa6db1db198e88a949146094f6f363131432a6ac04c3bc0ab5a5289eb4",
+      "claim_path": "/parameters/body/language/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/playerIp"
+      },
+      "fragment_digest": "fecbdffcf9d754a981a9e0c0d58e96b5f1e9c03b5d91e52f3839c556734e0d94",
+      "claim_path": "/parameters/body/playerIp/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/sessionId"
+      },
+      "fragment_digest": "3b0fc8b8999b1c8815cd0b593e88fac83a99d505a90dd73f270a1b663dd36c1d",
+      "claim_path": "/parameters/body/sessionId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/redirectUrl"
+      },
+      "fragment_digest": "685177412ccef79ce4273eab778e97deea72a76ba1e2f30a6dbe83f444846a63",
+      "claim_path": "/parameters/body/redirectUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/isTestAccount"
+      },
+      "fragment_digest": "1b2e5e51b4c8cc5dc3f3ab6938eadbed8216e95b848f2b918e14271fd72c7207",
+      "claim_path": "/parameters/body/isTestAccount/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/disablePromotion"
+      },
+      "fragment_digest": "c9af865212eb691085083d7ecae5e2752c08ca992ce51e1a64c82ed1b6084c8f",
+      "claim_path": "/parameters/body/disablePromotion/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/maxBet"
+      },
+      "fragment_digest": "c23715e0d1c09318e93ba4f2881b0ebfb1469aeb20622b53b6e626cb18638a0d",
+      "claim_path": "/parameters/body/maxBet/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/minBet"
+      },
+      "fragment_digest": "ce86f85987bd7891beea569de39f727f0a1c96d9f2d9100ffdcd51aadb7a02d9",
+      "claim_path": "/parameters/body/minBet/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest/properties/eventId"
+      },
+      "fragment_digest": "bf928e031e5bb4c99714a725d53ba62a0f6e0b189941b34be2442253836199b5",
+      "claim_path": "/parameters/body/eventId/name"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/gameCode/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/userName/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/playerId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/currency/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/language/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/playerIp/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/sessionId/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/redirectUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/isTestAccount/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/disablePromotion/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/maxBet/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/minBet/required"
+    },
+    {
+      "version": 1,
+      "source": "transfer-operator.swagger.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/FundProviderLaunchGameRequest"
+      },
+      "fragment_digest": "cdf82cc0ba5485e65e889026d269d7d3ae4d3872b1d12d10bc59c90ecfb7a5d9",
+      "claim_path": "/parameters/body/eventId/required"
+    }
+  ],
   "parameters": [
     {
       "name": "funkyUrl",
