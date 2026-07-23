@@ -720,7 +720,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer 入口，暴露來源、URL、品質評估與組裝命令，以及 foundry 子群組。</div>
+          <div class="module-role">Typer 入口，暴露來源、URL、品質評估、組裝、Foundry 與本機 review 工作台命令。</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
@@ -744,6 +744,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
           <div class="command-chip">diff</div>
+          <div class="command-chip">review</div>
           <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">foundry *</div>
         </div>
       </div>
@@ -819,8 +820,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 暴露二十一個頂層操作：除來源、URL evidence、品質、freshness、run 與 <code>foundry</code> 外，提供 <code>cache-gitbook-llms</code>（安全快取 GitBook Markdown corpus 與 coverage）、<code>extract-markdown-drafts</code>（具行號的非權威草稿 facts）及 <code>scaffold-extraction</code>（將草稿投影成 extraction-shaped JSON）。scaffold 仍不是 extraction output：agent 必須複製到 workdir、重讀 citations 並補齊，再執行 <code>verify-extraction</code> 與組裝。URL corpus 偵測到未渲染 SPA shell 時，只對同 origin 的四個固定路徑 <code>/swagger.json</code>、<code>/openapi.json</code>、<code>/v3/api-docs</code>、<code>/api-doc/v3/sections</code> 發出探測；僅根欄位含 <code>openapi</code> 或 <code>swagger</code> 的 JSON 會另存為獨立 corpus source。失敗、非規格與一般 JSON 均 fail-closed 而不記錄；CLI 僅在 stderr 警告 shell 計數，絕不自動 headless rendering。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取與 <code>foundry/</code> 負責寫入。<code>adapters/fragments.py</code> 是把來源內容 materialize 成 exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。
+      <code>cli.py</code> 提供來源、URL evidence、品質、freshness、run、<code>foundry</code> 與 <code>review</code> 工作台操作；後者只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>adapters/fragments.py</code> 是把來源內容 materialize 成 exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>：<code>assemble --architecture-mode shadow</code> 會在 legacy validation 後呼叫 compatibility-only 的 <code>shadow/</code> 套件。Pure bridge 把 manifest/plan 映成 Core evidence 與 claims，in-memory runner 只執行到 Core validation，且只有 <code>shadow/report.py</code> 會寫入觀測性的 <code>&lt;run-dir&gt;/core/</code> 產物或 <code>core/error.json</code>。Legacy validation、score、approval、Foundry、status 與退出碼仍具權威。
@@ -919,10 +920,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 18 個頂層命令（加上 foundry 子群組共 19 個命令）：來源／URL evidence、來源品質、擷取驗證、來源新鮮度閘、組裝、驗證、評分與版本差異。",
+      description: "Typer CLI 入口，對外暴露來源／URL evidence、來源品質、擷取驗證、來源新鮮度閘、組裝、驗證、評分、版本差異與本機 review 工作台；foundry 子群組負責資產治理。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
+      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, diff, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {

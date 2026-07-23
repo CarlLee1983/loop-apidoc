@@ -646,6 +646,56 @@ def diff(
 
 
 @app.command()
+def review(
+    project: Path = typer.Option(
+        Path("."), "--project", help="Foundry 專案根目錄", exists=True, file_okay=False
+    ),
+    docset: str = typer.Option(..., "--docset", help="要審核的 Foundry docset"),
+    run: Path = typer.Option(
+        ...,
+        "--run",
+        help="剛完成、要自動匯入的 run 目錄",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+    ),
+    port: Annotated[int, typer.Option("--port", min=0, max=65535, help="本機 GUI port；0 表示自動選擇")] = 0,
+    no_open: bool = typer.Option(False, "--no-open", help="只印出 URL，不嘗試開啟瀏覽器"),
+) -> None:
+    """自動匯入候選、比較 current，並啟動本機人工審核 GUI。"""
+    import webbrowser
+
+    from loop_apidoc.review import (
+        ReviewConflictError,
+        ReviewInputError,
+        ReviewRequest,
+        ReviewWorkflow,
+    )
+    from loop_apidoc.review.web import ReviewWebAdapter
+
+    workflow = ReviewWorkflow(project)
+    try:
+        snapshot = workflow.open_review(ReviewRequest(docset_id=docset, run_dir=run))
+        adapter = ReviewWebAdapter(workflow, snapshot, port=port)
+    except (ReviewConflictError, ReviewInputError, OSError) as exc:
+        typer.echo(f"review input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"review GUI: {adapter.url}")
+    if not no_open:
+        try:
+            webbrowser.open(adapter.url)
+        except OSError:
+            typer.echo("review browser launch failed; open the printed URL manually", err=True)
+    try:
+        adapter.serve_forever()
+    except KeyboardInterrupt:
+        typer.echo("review GUI stopped")
+    finally:
+        adapter.shutdown()
+
+
+@app.command()
 def score(
     output: Path = typer.Option(
         ...,

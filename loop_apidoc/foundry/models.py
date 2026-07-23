@@ -14,6 +14,14 @@ class AssetStatus(str, Enum):
     DEPRECATED = "deprecated"
 
 
+class ReviewState(str, Enum):
+    """Whether a governed asset has outstanding human-review follow-up work."""
+
+    UNREVIEWED = "unreviewed"
+    REVIEWED = "reviewed"
+    NEEDS_FOLLOW_UP = "needs_follow_up"
+
+
 class SourceRole(str, Enum):
     PRIMARY = "primary"
     SUPPLEMENTAL = "supplemental"
@@ -50,6 +58,14 @@ class AssetValidation(BaseModel):
     score: int | None = None
 
 
+class ReviewSummary(BaseModel):
+    """Small current-pointer signal; detailed work lives in the decision sidecar."""
+
+    state: ReviewState = ReviewState.UNREVIEWED
+    decision_path: str | None = None
+    open_handoff_count: int = 0
+
+
 class AssetArtifacts(BaseModel):
     openapi: str
     provenance: str
@@ -58,6 +74,7 @@ class AssetArtifacts(BaseModel):
     review: str | None = None
     score: str | None = None
     handoff: str | None = None
+    review_decision: str | None = None
 
 
 class Asset(BaseModel):
@@ -73,6 +90,7 @@ class Asset(BaseModel):
     approved_at: str | None = None
     approved_by: str | None = None
     known_gaps: list[str] = Field(default_factory=list)
+    review: ReviewSummary = Field(default_factory=ReviewSummary)
 
 
 class CurrentPointer(BaseModel):
@@ -82,6 +100,7 @@ class CurrentPointer(BaseModel):
     generated_at: str
     approved_at: str | None = None
     artifacts: AssetArtifacts
+    review: ReviewSummary = Field(default_factory=ReviewSummary)
 
 
 class CatalogDocsetEntry(BaseModel):

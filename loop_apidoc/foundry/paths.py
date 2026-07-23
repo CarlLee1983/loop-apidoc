@@ -38,6 +38,16 @@ def candidate_dir(project_root: Path, docset_id: str, run_id: str) -> Path:
     return candidates_dir(project_root, docset_id) / run_id
 
 
+def candidate_review_dir(project_root: Path, docset_id: str, run_id: str) -> Path:
+    return candidate_dir(project_root, docset_id, run_id) / "review"
+
+
+def candidate_review_decision_path(
+    project_root: Path, docset_id: str, run_id: str
+) -> Path:
+    return candidate_review_dir(project_root, docset_id, run_id) / "decision.json"
+
+
 def assets_dir(project_root: Path, docset_id: str) -> Path:
     return docset_dir(project_root, docset_id) / "assets"
 

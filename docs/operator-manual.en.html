@@ -89,6 +89,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#score-run">score — grade a completed run</a>
   <a class="lvl-3" href="#diff-run">diff — compare two run versions</a>
   <a class="lvl-3" href="#foundry-cli">foundry — project-local asset governance</a>
+  <a class="lvl-3" href="#review-workbench">review — local comparison and approval</a>
   <a class="lvl-2" href="#_7">Output structure</a>
   <a class="lvl-2" href="#_8">Validation rules summary</a>
   <a class="lvl-2" href="#_9">Development</a>
@@ -158,7 +159,7 @@ uv run loop-apidoc --help
 <p>PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.</p>
 <hr />
 <h2 id="_6">Usage</h2>
-<p>The CLI exposes twenty top-level commands plus the <code>foundry</code> sub-group: source processing (<code>preprocess</code>, <code>manifest</code>, <code>snapshot-openapi-url</code>), URL evidence (<code>catalog-url</code>, <code>select-url</code>, <code>cache-url-pages</code>, <code>cache-url-entry</code>, <code>cache-gitbook-llms</code>, <code>normalize-html-snapshot</code>, <code>related-url-pages</code>), draft extraction (<code>extract-markdown-drafts</code>), quality and extraction (<code>assess-sources</code>, <code>verify-extraction</code>), the scheduled source freshness gate (<code>record-fingerprint</code>, <code>check-freshness</code>, <code>check-freshness-batch</code>), run processing (<code>assemble</code>, <code>validate</code>, <code>score</code>, <code>diff</code>), and <code>foundry</code> asset governance. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
+<p>The CLI provides source processing, URL evidence, draft extraction, quality and extraction, scheduled source freshness, run processing, Foundry asset governance, and the local human-review <code>review</code> workbench. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
 <h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (optional)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -254,6 +255,10 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
 <pre><code class="language-bash">uv run loop-apidoc foundry [init|import|approve|list|current] --help
 </code></pre>
 <p>Manages the project-local <code>.foundry/api/</code> asset layer: import a completed run as a docset candidate (<code>import</code>), approve it into a versioned, self-contained official asset (<code>approve</code>, with the prior version auto-retired), and use a deterministic <code>current</code> pointer so downstream always uses the latest approved version (<code>current</code> / <code>list</code>).</p>
+<h3 id="review-workbench"><code>review</code> — local comparison, handoff, and human approval</h3>
+<pre><code class="language-bash">uv run loop-apidoc review --project ./my-api --docset payment --run ./output/&lt;run-id&gt;
+</code></pre>
+<p>Starts a single-user workbench on <code>127.0.0.1</code>; it automatically imports the completed run when the candidate does not yet exist. It compares with Foundry's <code>current</code> asset, or opens a baseline review for the first version. The page presents validation, version differences, and subjective conclusions, then saves them as candidate <code>review/decision.json</code> handoff. Only a human approval updates <code>current</code>. Failed validation, differences, or unresolved handoffs do not lock approval, but the resulting asset is marked <code>needs_follow_up</code>. The workbench never calls a model or replaces deterministic validation.</p>
 <hr />
 <h2 id="_7">Output structure</h2>
 <p>Each run uses its own run directory:</p>
@@ -423,7 +428,11 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/foundry/</code></td>
-<td>project-local <code>.foundry/api/</code> asset governance: docsets, candidate import and asset approval, maintaining the <code>current</code> pointer</td>
+<td>project-local <code>.foundry/api/</code> asset governance: docsets, candidate import and asset approval, maintaining the <code>current</code> pointer and <code>review.state</code></td>
+</tr>
+<tr>
+<td><code>loop_apidoc/review/</code></td>
+<td>local single-user review workbench: auto-import a candidate, compare current/baseline, persist structured handoff, and let Foundry update current only after explicit human approval</td>
 </tr>
 </tbody>
 </table>

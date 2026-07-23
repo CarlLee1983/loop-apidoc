@@ -89,6 +89,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#score-run">score — 為完成的 run 評分</a>
   <a class="lvl-3" href="#diff-run">diff — 比較兩次 run 版本差異</a>
   <a class="lvl-3" href="#foundry-cli">foundry — 專案本地資產治理</a>
+  <a class="lvl-3" href="#review-workbench">review — 本機比對與人工核准</a>
   <a class="lvl-2" href="#_7">輸出結構</a>
   <a class="lvl-2" href="#_8">驗證規則摘要</a>
   <a class="lvl-2" href="#benchmark-quality-gate">Benchmark 品質閘</a>
@@ -159,7 +160,7 @@ uv run loop-apidoc --help
 <p>PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、公開 URL。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
-<p>CLI 暴露二十一個頂層指令加 <code>foundry</code> 子群組:來源處理(<code>preprocess</code>、<code>manifest</code>、<code>snapshot-openapi-url</code>)、URL evidence(<code>catalog-url</code>、<code>select-url</code>、<code>cache-url-pages</code>、<code>cache-url-entry</code>、<code>cache-gitbook-llms</code>、<code>normalize-html-snapshot</code>、<code>related-url-pages</code>)、草稿擷取(<code>extract-markdown-drafts</code>、<code>scaffold-extraction</code>)、品質與擷取(<code>assess-sources</code>、<code>verify-extraction</code>)、來源新鮮度排程閘(<code>record-fingerprint</code>、<code>check-freshness</code>、<code>check-freshness-batch</code>)、run 處理(<code>assemble</code>、<code>validate</code>、<code>score</code>、<code>diff</code>)與 <code>foundry</code> 資產治理。</p>
+<p>CLI 提供來源處理、URL evidence、草稿擷取、品質與擷取、來源新鮮度、run 處理、Foundry 資產治理，以及 <code>review</code> 本機人工覆核。日常擷取流程仍由 skill 驅動；每個命令都可單獨使用。</p>
 <h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown(可選)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
@@ -256,6 +257,10 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <pre><code class="language-bash">uv run loop-apidoc foundry [init|import|approve|list|current] --help
 </code></pre>
 <p>管理專案本地 <code>.foundry/api/</code> 資產層:把完成的 run 匯入為 docset candidate(<code>import</code>),核准為版本化、自足複本的正式 asset(<code>approve</code>,舊版自動退位),並以確定性的 <code>current</code> 指標讓下游永遠取用最新核准版(<code>current</code>／<code>list</code>)。</p>
+<h3 id="review-workbench"><code>review</code> — 本機比對、交棒與人工核准</h3>
+<pre><code class="language-bash">uv run loop-apidoc review --project ./my-api --docset payment --run ./output/&lt;run-id&gt;
+</code></pre>
+<p>在 <code>127.0.0.1</code> 啟動單使用者工作台；若 candidate 尚未存在，會自動匯入完成的 run。它與 Foundry 的 <code>current</code> 比對，第一版則建立 baseline review；畫面顯示驗證結果、版本差異與可交棒的主觀結論，並把結論寫成 candidate 的 <code>review/decision.json</code>。只有人工點選核准才更新 <code>current</code>。驗證失敗、差異或未處理 handoff 不會鎖死核准，但正式資產會標記為 <code>needs_follow_up</code>。工作台不呼叫模型，也不取代確定性驗證。</p>
 <hr />
 <h2 id="_7">輸出結構</h2>
 <p>每次執行使用獨立 run directory:</p>
@@ -437,7 +442,11 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/foundry/</code></td>
-<td>專案本地 <code>.foundry/api/</code> 資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標</td>
+<td>專案本地 <code>.foundry/api/</code> 資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標與 <code>review.state</code></td>
+</tr>
+<tr>
+<td><code>loop_apidoc/review/</code></td>
+<td>本機單使用者 review 工作台：自動匯入 candidate、比對 current／baseline、保存結構化 handoff，並在人工明確核准後讓 Foundry 更新 current</td>
 </tr>
 </tbody>
 </table>

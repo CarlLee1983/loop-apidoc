@@ -726,7 +726,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer entry point exposing the source, URL, quality-assessment and assembly commands, plus the foundry sub-group.</div>
+          <div class="module-role">Typer entry point exposing source, URL, quality-assessment, assembly, Foundry, and local review-workbench commands.</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
@@ -749,6 +749,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
           <div class="command-chip">diff</div>
+          <div class="command-chip">review</div>
           <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">foundry *</div>
         </div>
       </div>
@@ -824,8 +825,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> exposes twenty top-level operations: source handling (<code>preprocess</code>, <code>manifest</code>, <code>snapshot-openapi-url</code>), URL evidence (including <code>cache-gitbook-llms</code>), deterministic draft facts (<code>extract-markdown-drafts</code>), quality and extraction, freshness, run handling and the <code>foundry</code> sub-group. GitBook caching writes a safe local Markdown corpus and coverage; draft facts are line-cited aids, not extraction output.
-      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, the URL corpus cache and <code>foundry/</code> are responsible for writing. <code>adapters/fragments.py</code> is a read-side I/O exit that materializes source content into exact fragments; Core and Domain stay pure.
+      <code>cli.py</code> provides source, URL-evidence, quality, freshness, run, <code>foundry</code>, and <code>review</code>-workbench operations. The latter is a single-user interface bound only to <code>127.0.0.1</code>: it auto-imports a candidate, compares current/baseline, saves structured handoff, and updates current only after an explicit human approval. It never calls a model or replaces validation. GitBook caching and draft facts remain local, non-authoritative extraction aids.
+      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, the URL corpus cache, <code>foundry/</code>, and <code>review/workflow.py</code> writing through Foundry are responsible for writing. <code>adapters/fragments.py</code> is a read-side I/O exit that materializes source content into exact fragments; Core and Domain stay pure.
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>: <code>assemble --architecture-mode shadow</code> invokes the compatibility-only <code>shadow/</code> package after legacy validation. Its pure bridge maps manifest/plan values into Core evidence and claims, the in-memory runner stops after Core validation, and only <code>shadow/report.py</code> writes the observational <code>&lt;run-dir&gt;/core/</code> artifacts or <code>core/error.json</code>. Legacy validation, score, approval, Foundry, status, and exit codes remain authoritative.
@@ -924,10 +925,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "The Typer CLI entry point, publicly exposing 18 top-level commands (19 including the foundry sub-group): source / URL evidence, source quality, extraction verification, the scheduled source freshness gate, assemble, validate, score and version diff.",
+      description: "The Typer CLI entry point publicly exposes source / URL evidence, source quality, extraction verification, the scheduled source freshness gate, assemble, validate, score, version diff, and the local review workbench; the foundry sub-group governs assets.",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, and diff commands",
+      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, diff, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {

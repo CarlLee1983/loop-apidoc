@@ -685,13 +685,13 @@
   <div class="wrap">
     <span class="eyebrow">端到端資料流</span>
     <h2 class="section-title">一次完整執行,經過哪些階段</h2>
-    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段;preparation、score、diff 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
+    <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。灰色標記的是可選階段;preparation、score、diff、review 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
 
     <figure class="visual-figure">
       <div class="visual-frame">
         <img src="assets/onboarding/end-to-end-flow.jpg" alt="端到端資料流" loading="lazy" />
       </div>
-      <figcaption>主幹流程產出 run-dir；score 與 diff 把完成品延伸成品質與版本判讀訊號。</figcaption>
+      <figcaption>主幹流程產出 run-dir；score、diff 與 review 把完成品延伸成品質、版本與人工結論訊號。</figcaption>
     </figure>
 
     <div class="flow">
@@ -740,6 +740,11 @@
         <span class="desc">比較兩個已完成 run-dir,依 downstream impact 分類差異。</span>
         <span class="out"><span class="opt">可選 →</span> diff/report.{json,md}</span>
       </div>
+      <div class="flow-row">
+        <span class="stage"><span class="n tint-purple">9</span>review</span>
+        <span class="desc">在本機比對 candidate 與 current／baseline，保存人工結論並可明確核准。</span>
+        <span class="out"><span class="opt">可選 →</span> .foundry/api/.../review/decision.json</span>
+      </div>
     </div>
   </div>
 </section>
@@ -748,8 +753,8 @@
 <section class="alt" id="commands">
   <div class="wrap">
     <span class="eyebrow">CLI 介面</span>
-    <h2 class="section-title">十六個指令,各司其職</h2>
-    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>),共 15 個頂層指令加 <code class="inline">foundry</code> 子群組。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理與資產治理)。</p>
+    <h2 class="section-title">CLI 指令，各司其職</h2>
+    <p class="section-lead">CLI 進入點是 Typer(<code class="inline">cli.py</code>)。注意:<b>擷取不在 CLI 裡</b> —— 那是 agent 的事;CLI 只負責後段與工具步驟(來源處理、URL evidence、來源品質、run 處理、資產治理與本機人工覆核)。</p>
 
     <div class="cmds">
       <div class="cmd">
@@ -824,6 +829,10 @@
       <div class="cmd">
         <span class="name"><span class="kw">foundry</span></span>
         <div><p>專案本地資產治理子群組(<code class="inline">init</code> / <code class="inline">import</code> / <code class="inline">approve</code> / <code class="inline">list</code> / <code class="inline">current</code>):把完成的 run 匯入為 candidate,核准成版本化 asset 並維護 <code class="inline">current</code> 指標。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">review</span></span>
+        <div><p>以 <code class="inline">127.0.0.1</code> 工作台自動匯入 candidate、比對 current／baseline、保存 <code class="inline">review/decision.json</code> handoff；只有人工明確核准才更新 current。它不呼叫模型，也不取代 validation。</p></div>
       </div>
     </div>
   </div>
@@ -1091,11 +1100,12 @@
           <tr><td><code>source_facts/</code></td><td>來源事實盤點:markdown.py 機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,collect.py 讀取 manifest 指名的來源(本套件唯一讀檔出口),gate.py 比對擷取 JSON(並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,讓共用型別算去重複而非遺漏)、deferral.py 攔截佔位式延後答案</td></tr>
           <tr><td><code>gitbook_llms.py</code> / <code>markdown_drafts/</code> / <code>extraction_scaffold/</code></td><td>GitBook 工程化取源只抓一次 <code>llms.txt</code>，安全快取範圍內 Markdown 與 provenance/coverage；再從 manifest 指名 Markdown 產生具行號的非權威端點／表格／範例草稿，並可投影為 extraction-shaped scaffold。scaffold 必須複製、覆核、補齊至 workdir；不能取代 <code>source_facts/</code>、最終擷取或直接作為 <code>--extraction</code>。</td></tr>
           <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
-          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標(寫檔)</td></tr>
+          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標與 <code>review.state</code>(寫檔)</td></tr>
+          <tr class="io"><td><code>review/</code></td><td>本機單使用者工作台：自動匯入 candidate、比對 current／baseline、保存結構化 handoff，人工明確核准後才透過 Foundry 更新 current(寫檔)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取與 <code class="inline">foundry/</code> 會寫檔。<code class="inline">adapters/fragments.py</code> 是 materialize exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">adapters/fragments.py</code> 是 materialize exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。</p>
   </div>
 </section>
 

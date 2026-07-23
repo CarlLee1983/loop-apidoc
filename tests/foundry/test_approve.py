@@ -81,6 +81,28 @@ def test_approve_supersedes_previous_asset(tmp_path: Path) -> None:
     assert store.load_current(tmp_path, "tappay-backend").current_asset == second.asset_id
 
 
+def test_approval_failure_before_current_write_keeps_current_pointer(tmp_path: Path, monkeypatch) -> None:
+    _setup(tmp_path)
+    first = approve.approve_candidate(
+        tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
+    )
+    run_dir2 = write_run_dir(tmp_path / "output" / _RUN_ID_2)
+    importer.import_run(tmp_path, "tappay-backend", run_dir2)
+
+    def fail_current(*_args: object, **_kwargs: object) -> None:
+        raise OSError("current pointer write failed")
+
+    monkeypatch.setattr(store, "save_current", fail_current)
+    with pytest.raises(OSError, match="current pointer write failed"):
+        approve.approve_candidate(
+            tmp_path, "tappay-backend", _RUN_ID_2, approved_by="a", now=_LATER
+        )
+
+    current = store.load_current(tmp_path, "tappay-backend")
+    assert current is not None
+    assert current.current_asset == first.asset_id
+
+
 def test_approve_missing_candidate_raises_input_error(tmp_path: Path) -> None:
     register.register_docset(
         tmp_path,
