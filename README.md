@@ -163,6 +163,9 @@ npm run tag:next -- --level minor
 
 `release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；正式執行會先推送
 `HEAD` 至 `origin/main`，再由 Tagsmith 負責 tag 格式、順序、重複與推送保護。
+Tagsmith（不是 GitHub Actions）是 tag 發布者；CI 只驗證 push 與 PR，不會建立 tag。
+release push 後應觀察 CI 結果；檢查失敗時以後續修正與新 release 處理，絕不 force-move
+已發布 tag。
 
 ---
 

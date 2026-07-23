@@ -102,3 +102,17 @@ npm run release:tag -- --message "loop-apidoc 0.11.0"
 `release:tag --dry-run` previews without writing. It pushes only after Tagsmith
 accepts the local-and-fetched-remote tag history; a concurrent remote tag still
 makes `git push` fail safely, so fetch and retry instead of forcing a tag.
+
+### Tag authority and CI responsibilities
+
+Tagsmith is the sole tag publisher. Use `npm run release:tag` after the local
+release checks and release-metadata commit; do not create a release tag by hand
+or expect GitHub Actions to create one. The command pushes `HEAD` to
+`origin/main`, then asks Tagsmith to validate and push the matching annotated
+`v<package-version>` tag.
+
+GitHub Actions CI is a verification trigger only: pushes and pull requests run
+tag-policy validation, dependency sync, and the quality gate. The Pages
+workflow may deploy documentation from `main`, but neither workflow creates or
+publishes a release tag. Monitor the CI run after the push; a CI failure is
+handled as a follow-up fix and release, never by force-moving a tag.
