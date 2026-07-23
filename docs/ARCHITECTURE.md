@@ -20,8 +20,9 @@ The implementation follows the [product design decisions](DESIGN_DECISIONS.md):
   intent-oriented use cases, and typed ports.
 - `adapters/` owns runtime and platform details. Models, parsers, humans, local files,
   databases, registries, and future agent runtimes are replaceable adapters.
-- `evaluation/` owns immutable cases, replay, and quality/cost/latency metrics. It cannot
-  approve or mutate production assets.
+- `evaluation/` owns immutable cases, replay, and quality/cost/latency metrics, including
+  typed evidence-relationship classification accuracy. It cannot approve or mutate
+  production assets.
 
 Core and Domain perform no filesystem, network, process, browser, model, or database I/O.
 Runtime output is always a proposal; deterministic reconciliation and policy decide whether

@@ -41,6 +41,17 @@ def test_relationship_metrics_distinguish_reference_from_support():
     assert report.semantic_support_precision == 0.0
     assert report.semantic_support_recall == 0.0
     assert report.claim_path_coverage == 0.0
+    assert report.relationship_classification_accuracy == 0.0
+
+
+def test_relationship_metrics_reject_promoted_insufficient_reference():
+    expected = (_relationship(SupportRelationshipType.INSUFFICIENT),)
+    observed = (_relationship(SupportRelationshipType.EXPLICIT_SUPPORT),)
+
+    report = evaluate_relationships(expected, observed)
+
+    assert report.semantic_support_precision == 0.0
+    assert report.relationship_classification_accuracy == 0.0
 
 
 def test_contradiction_detection_recall_counts_exact_mismatch():
@@ -52,6 +63,7 @@ def test_contradiction_detection_recall_counts_exact_mismatch():
     report = evaluate_relationships((contradiction,), (contradiction,))
 
     assert report.contradiction_detection_recall == 1.0
+    assert report.relationship_classification_accuracy == 1.0
 
 
 def test_multiple_fragments_supporting_one_path_are_scored_independently():
@@ -71,3 +83,4 @@ def test_multiple_fragments_supporting_one_path_are_scored_independently():
     assert report.semantic_support_precision == 1.0
     assert report.semantic_support_recall == 0.5
     assert report.claim_path_coverage == 1.0
+    assert report.relationship_classification_accuracy == 0.5

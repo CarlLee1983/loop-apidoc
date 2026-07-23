@@ -43,6 +43,7 @@ class MetricReport(FrozenModel):
     semantic_support_recall: float = 1.0
     claim_path_coverage: float = 1.0
     contradiction_detection_recall: float = 1.0
+    relationship_classification_accuracy: float = 1.0
 
 
 class ReplayReport(FrozenModel):
