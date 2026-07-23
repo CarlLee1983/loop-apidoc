@@ -22,7 +22,8 @@ _APATH = "integration.json"
 def _cite(item: dict, manifest: Manifest) -> dict:
     """Return {status, citations} kwargs for a _Cited entry from its `source`."""
     status, citation = classify_item(
-        item.get("source"), query_id=_QID, answer_path=_APATH, manifest=manifest
+        item.get("source"), query_id=_QID, answer_path=_APATH, manifest=manifest,
+        evidence=item.get("evidence") or (),
     )
     return {"status": status, "citations": [citation]}
 

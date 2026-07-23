@@ -713,7 +713,7 @@ def _build_schemas(
                     "http_status": entry.http_status,
                     "applicable_to": entry.applicable_to,
                     "source": [
-                        citation.model_dump(exclude_none=True)
+                        citation.model_dump(exclude_none=True, exclude_defaults=True)
                         for citation in entry.citations
                     ],
                 }

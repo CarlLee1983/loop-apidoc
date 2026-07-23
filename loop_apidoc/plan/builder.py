@@ -259,14 +259,15 @@ def _schema_field_evidence(
             continue
         source = field.get("source")
         name = field.get("name")
+        references = field.get("evidence") or ()
         if not (
-            isinstance(source, str) and source.strip()
-            and isinstance(name, str) and name.strip()
+            isinstance(name, str) and name.strip()
+            and ((isinstance(source, str) and source.strip()) or references)
         ):
             continue
         status, citation = classify_item(
             source, query_id=art.query_id, answer_path=art.answer_path,
-            manifest=manifest,
+            manifest=manifest, evidence=references,
         )
         evidence.append(SchemaFieldEvidence(
             name=name, status=status, citations=[citation],
@@ -353,6 +354,7 @@ def build_normalization_plan(
             status, citation = classify_item(
                 item.get("source"), query_id=art.query_id,
                 answer_path=art.answer_path, manifest=manifest,
+                evidence=item.get("evidence") or (),
             )
             field_evidence = (
                 _schema_field_evidence(item, art, manifest)
@@ -362,8 +364,17 @@ def build_normalization_plan(
                 factory(item, field_evidence)
                 if stage_id == "07" else factory(item)
             )
+            citations = [citation]
+            # Schema fields can carry finer-grained evidence than their parent
+            # schema.  Preserve it on the parent claim too, where the Core
+            # bridge resolves material ``/fields/...`` claim paths.
+            if stage_id == "07":
+                for field in field_evidence:
+                    for field_citation in field.citations:
+                        if field_citation not in citations:
+                            citations.append(field_citation)
             entry = _build_entry(plan, stage_id, art.query_id, json_key, entry_class,
-                                 status=status, citations=[citation], **factory_kwargs)
+                                 status=status, citations=citations, **factory_kwargs)
             if entry is None:
                 continue
             target.append(entry)
@@ -467,6 +478,7 @@ def _merge_one_detail(
     status, citation = classify_item(
         item.get("source"), query_id=art.query_id,
         answer_path=art.answer_path, manifest=manifest,
+        evidence=item.get("evidence") or (),
     )
     idx = _match_index(plan, method, path, citation.locator,
                        citation.manifest_source, consumed)

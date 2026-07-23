@@ -1,6 +1,6 @@
 # Product Extension Roadmap
 
-**Status:** Proposed
+**Status:** In progress — exact-evidence v1 boundary slice delivered; Core graduation remains proposed.
 **Updated:** 2026-07-23
 
 ## Purpose
@@ -73,6 +73,14 @@ more expensive.
    contradiction, and insufficient support.
 4. A non-default Core execution mode with output parity comparisons; retain
    shadow until the cutover criteria have been accepted.
+
+**Progress (2026-07-23):** extraction now accepts optional v1 `evidence[]`
+references containing exact manifest source identity, typed locator, normalized fragment
+digest, and material claim path. `verify-extraction` and `assemble` materialize and
+verify supplied references and resolve the path against the normalized claim before a run
+directory exists; shadow uses a verified reference
+for its declared claim path instead of legacy fallback. This is the first boundary slice,
+not Core graduation or benchmark-parity acceptance.
 
 ### 2. Continuous source and contract governance
 

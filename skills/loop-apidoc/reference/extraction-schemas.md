@@ -22,6 +22,46 @@ not repeated here.
   `enum` (inline enum list on a field/param), `location` (alias for `in`),
   `schema` (fallback for `type`).
 
+## Exact evidence references (v1, optional but fail-closed when present)
+
+An entry that can bind one of its material claims to an exact source fragment may carry
+an `evidence` array. It is accepted on inventory entries, endpoint-detail entries,
+integration entries, and `schemas[].fields[]`. This complements — it does not replace —
+the legacy `source` string used by the shipping compatibility pipeline.
+
+```json
+"evidence": [{
+  "version": 1,
+  "source": "manual.md",
+  "locator": {"kind": "line_range", "start_line": 42, "end_line": 42},
+  "fragment_digest": "<sha256 of normalized materialized fragment>",
+  "claim_path": "/summary"
+}]
+```
+
+- `version` is required and currently must be `1`.
+- `source` is the **exact manifest identity**: a local relative path such as
+  `manual.md`, or an acquired URL. It is not a prose citation and has no page suffix.
+- `locator` is typed. Use the most precise locator the source supports; the current
+  read-side adapter materializes page, line-range, JSON Pointer, and discovered Markdown
+  table-cell fragments. An unsupported, stale, ambiguous, or unmatched locator fails
+  cleanly at the extraction gate.
+- `fragment_digest` is lowercase SHA-256 of the adapter's normalized fragment content,
+  never the whole document hash.
+- `claim_path` is the Canonical API Contract material path for the enclosing claim, such
+  as `/summary`, `/parameters/query/amount/required`,
+  `/responses/200/description`, or `/fields/amount/type`. It must resolve after
+  the deterministic normalization-plan projection; a syntactically valid but
+  unmatched path fails the extraction gate.
+
+`verify-extraction` and `assemble` reopen the manifest snapshot and compare the typed
+locator's materialized digest and material claim path before any run directory exists. In Core shadow, a v1
+reference owns its declared `claim_path`: legacy locator fallback is disabled for that
+path, and deterministic Core comparison still decides whether it is
+`explicit_support`, `contradicts`, or `insufficient`. Do not add an `evidence` item when
+you cannot compute the exact fragment and digest; retain the normal `source` citation and
+record the gap instead.
+
 ## inventory.json
 
 One object describing the whole API. **You** write what the single inventory subagent returns.

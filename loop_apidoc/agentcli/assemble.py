@@ -8,6 +8,10 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from loop_apidoc.agentcli.extraction import _expand_methods, inventory_to_stage_answers
+from loop_apidoc.agentcli.evidence import (
+    verify_evidence_claim_paths,
+    verify_extraction_evidence,
+)
 from loop_apidoc.agentcli.gate import check_extraction
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
@@ -174,16 +178,45 @@ def named_endpoints(
 
 
 def build_extraction_from_files(
-    inventory: dict, endpoint_texts: list[str], store: ExtractionStore
+    inventory: dict,
+    endpoint_texts: list[str],
+    store: ExtractionStore | None,
 ) -> ExtractionResult:
     """把 agent 產出的 inventory + per-endpoint JSON 組成 ExtractionResult,
     產出與 `claude -p` 後端相同的 artifact 形狀,讓 plan 不需改動。"""
     artifacts: list[AnswerArtifact] = []
+
+    def record(
+        *,
+        query_id: str,
+        stage_id: str,
+        answer: str,
+    ) -> AnswerArtifact:
+        if store is not None:
+            return store.record(
+                query_id=query_id,
+                stage_id=stage_id,
+                kind=QueryKind.INITIAL,
+                question="(agent inventory)" if stage_id != "06"
+                else "(agent endpoint detail)",
+                answer=answer,
+                returncode=0,
+            )
+        # Claim-path verification must happen before a run directory exists.
+        # Preserve the persisted artifact's stable first-attempt shape without
+        # writing the compatibility answer files.
+        return AnswerArtifact(
+            query_id=query_id,
+            stage_id=stage_id,
+            kind=QueryKind.INITIAL,
+            answer=answer,
+            answer_path=f"answers/{query_id}.txt",
+            returncode=0,
+        )
+
     for stage_id, answer in inventory_to_stage_answers(inventory).items():
-        artifacts.append(store.record(
-            query_id=f"{stage_id}-initial", stage_id=stage_id,
-            kind=QueryKind.INITIAL, question="(agent inventory)",
-            answer=answer, returncode=0,
+        artifacts.append(record(
+            query_id=f"{stage_id}-initial", stage_id=stage_id, answer=answer,
         ))
     for idx, text in enumerate(endpoint_texts):
         detail = json.loads(text)
@@ -195,9 +228,8 @@ def build_extraction_from_files(
             answers = [text]
         for method_idx, answer in enumerate(answers):
             suffix = f"-{method_idx}" if len(answers) > 1 else ""
-            artifacts.append(store.record(
-                query_id=f"06-ep{idx}{suffix}", stage_id="06", kind=QueryKind.INITIAL,
-                question="(agent endpoint detail)", answer=answer, returncode=0,
+            artifacts.append(record(
+                query_id=f"06-ep{idx}{suffix}", stage_id="06", answer=answer,
             ))
     return ExtractionResult(notebook_url="", artifacts=artifacts)
 
@@ -259,9 +291,28 @@ def run_assemble_pipeline(
         manifest = backfill_snapshot_files(manifest, url_coverage)
 
     facts = collect_facts(sources_root, manifest)
-    violations = check_extraction(
-        inventory, named_endpoints(extraction_dir, endpoint_texts),
-        integration, manifest, facts)
+    endpoints = named_endpoints(extraction_dir, endpoint_texts)
+    violations = check_extraction(inventory, endpoints, integration, manifest, facts)
+    violations += verify_extraction_evidence(
+        inventory,
+        endpoints,
+        integration,
+        manifest,
+        facts,
+        generated_at,
+    )
+    if not violations:
+        preflight_extraction = build_extraction_from_files(
+            inventory, endpoint_texts, store=None
+        )
+        preflight_plan = build_normalization_plan(preflight_extraction, manifest)
+        preflight_contract = build_integration_contract(
+            integration, preflight_plan, manifest
+        )
+        preflight_plan = preflight_plan.model_copy(
+            update={"integration": preflight_contract}
+        )
+        violations += verify_evidence_claim_paths(preflight_plan)
     if violations:
         raise AssembleInputError(
             "擷取輸入不符契約(修正後重跑 assemble):\n"

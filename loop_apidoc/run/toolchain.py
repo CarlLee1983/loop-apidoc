@@ -9,7 +9,7 @@ from loop_apidoc.run.models import Toolchain
 
 # agent 產出的擷取 JSON schema(inventory / endpoints / integration)的契約版本。
 # 只要該 schema 有不相容或語意上的變動就 +1,讓舊 run 的產物可被歸因。
-EXTRACTION_CONTRACT_VERSION = "1"
+EXTRACTION_CONTRACT_VERSION = "2"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 

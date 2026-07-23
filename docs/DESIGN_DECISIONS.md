@@ -61,6 +61,15 @@ presence of an evidence ID never convert it into grounded support. OpenAPI, the
 generated guide, and review data are projections of the Canonical API Contract IR,
 never the source of truth.
 
+The reviewed agent-native boundary additionally accepts optional v1 exact-evidence
+references: exact manifest source identity, typed locator, normalized-fragment SHA-256,
+and material claim path. Both extraction entry points materialize and verify a supplied
+reference, then resolve its path against the shared normalized-claim projection before
+creating a run directory. A reference owns its declared claim path in
+Core shadow; deterministic Core comparison, rather than the agent's declaration, still
+decides the relationship. Legacy `source` strings remain a compatibility input until
+benchmark parity supports a production-Core cutover.
+
 ### 3. Preserve the agent-native CLI as a compatibility adapter
 
 The shipping extraction path is agent-native. The current coding agent reads sources,

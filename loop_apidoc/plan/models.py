@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
+
 
 class PlanItemStatus(str, Enum):
     SUPPORTED = "supported"
@@ -17,6 +19,9 @@ class SourceCitation(BaseModel):
     answer_path: str
     manifest_source: str | None = None
     locator: str | None = None
+    # Exact evidence is additive to the legacy string citation.  It stays on
+    # the citation so a plan item can retain several sources and claim paths.
+    evidence: tuple[ExtractionEvidenceReference, ...] = ()
 
 
 class _Cited(BaseModel):

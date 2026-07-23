@@ -675,7 +675,7 @@
     </div>
     <div class="arch-note">
       <b>Core shadow seam。</b>以 <code class="inline">assemble --architecture-mode shadow</code> 明確啟用。Legacy report 寫出後，<code class="inline">shadow/</code> 把記憶體中的 manifest 與 plan 映成 Core evidence/claims，只執行到 Core validation，並把觀測性產物寫入 <code class="inline">&lt;run-dir&gt;/core/</code>。它不會 approval、publish、更新 Foundry，也不改 legacy status 或退出碼。
-      Claim path 會以 <code class="inline">explicit_support</code>、<code class="inline">derived_support</code>、<code class="inline">contradicts</code> 或 <code class="inline">insufficient</code> 綁定 exact fragment。整份文件級的 legacy citation 不會變成 supported；請檢查 <code class="inline">relationships.json</code> 與 <code class="inline">projections/provenance.json</code>。
+      選填 v1 <code class="inline">evidence[]</code> 會在 run 前重新 materialize、驗證 digest 並解析 claim path。Claim path 會以 <code class="inline">explicit_support</code>、<code class="inline">derived_support</code>、<code class="inline">contradicts</code> 或 <code class="inline">insufficient</code> 綁定 exact fragment。整份文件級的 legacy citation 不會變成 supported；請檢查 <code class="inline">relationships.json</code> 與 <code class="inline">projections/provenance.json</code>。
     </div>
   </div>
 </section>
@@ -799,7 +799,7 @@
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">verify-extraction</span></span>
-        <div><p>檢查 agent 產出的擷取 JSON 是否符合 assemble 輸入契約;不寫檔、不建立 run-dir。契約包含<b>來源事實盤點</b>:來源小節白紙黑字列了參數表或範例區塊,擷取卻空著,就是靜默遺漏而非「來源沒寫」;要主張來源沒寫,必須在 <code class="inline">missing</code> 裡具名該欄位。</p></div>
+        <div><p>檢查 agent 產出的擷取 JSON 是否符合 assemble 輸入契約;不寫檔、不建立 run-dir。選填 v1 <code class="inline">evidence[]</code> 會重新 materialize、驗證 digest 並解析 claim path。契約包含<b>來源事實盤點</b>:來源小節白紙黑字列了參數表或範例區塊,擷取卻空著,就是靜默遺漏而非「來源沒寫」;要主張來源沒寫,必須在 <code class="inline">missing</code> 裡具名該欄位。</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
@@ -1085,7 +1085,7 @@
         <thead><tr><th>套件</th><th>職責</th></tr></thead>
         <tbody>
           <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>

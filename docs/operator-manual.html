@@ -227,7 +227,7 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>
-<p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式、來源事實、延後語句),但<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
+<p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式、來源事實、延後語句與選填 v1 <code>evidence[]</code>)。若提供 exact reference，必須能從 manifest source 依 typed locator 重新 materialize，並吻合 stated normalized-fragment SHA-256；其 <code>claim_path</code> 也必須在 shared normalized-plan projection 中解析成功。命令<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
 <p><strong>來源事實閘</strong>會機械掃描 manifest 中的 Markdown 來源,取出端點宣告、參數表與圍籬範例區塊,再以 <code>(METHOD, path)</code> 與擷取結果對照。一旦對上的來源小節寫了欄位或範例、擷取卻交回空的,就 fail closed——靜默遺漏不等於「來源沒寫」。要主張來源沒寫,在 <code>missing</code> 裡具名該欄位即可通過,所以這道閘只會逼出有據可查的缺口,不會逼出捏造。欄位名會沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,因此把共用 request body 抽成共用型別算去重複,不算遺漏。</p>
 <p>另一道檢查攔下佔位式延後答案,並分兩層以避免誤判。明確指涉「擷取這件事」的說法(<em>further extraction</em>、<em>not yet extracted</em>、「需進一步擷取」)出現在值的任何位置都算,因為真實 API 描述不會提到自己的擷取流程;泛用佔位字(<em>TBD</em>、<em>to be determined</em>、「待補」)則只有在<strong>整個欄位就只有這句</strong>時才算,因為「amount to be determined at capture」是合法的 API 描述。英文片語以詞界比對,CJK 沒有詞界可言,維持子字串比對。少了這道檢查,run 會以 <em>passed</em> 收場而產物是空的。</p>
 <p><strong>請注意適用範圍。</strong>這道掃描只認得結構良好的 Markdown:標題、含分隔列的 GFM 表格、圍籬程式碼區塊。若來源被壓成一行行超長文字(例如 HTML 轉純文字的傾印檔),掃描結果為零筆事實,這道閘就靜默失效。因此<em>閘門乾淨通過本身並不等於擷取完整</em>,它只證明「機械讀得到的事實」沒有被違反。面對非結構化來源,仍要靠 <code>review.html</code> 與人工核對。</p>
@@ -386,7 +386,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
