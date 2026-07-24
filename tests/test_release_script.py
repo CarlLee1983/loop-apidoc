@@ -39,6 +39,12 @@ def _copy_release_files(destination: Path) -> None:
     (destination / "docs").mkdir(exist_ok=True)
 
 
+def _write_current_release_notes(destination: Path) -> None:
+    (destination / "docs" / f"RELEASE_NOTES_{CURRENT_VERSION}.md").write_text(
+        "release notes", encoding="utf-8"
+    )
+
+
 def test_prepare_release_synchronizes_version_and_creates_notes(tmp_path: Path):
     _copy_release_files(tmp_path)
     calls: list[list[str]] = []
@@ -81,6 +87,7 @@ def test_prepare_release_refuses_existing_notes(tmp_path: Path):
 
 def test_tag_release_fetches_then_uses_package_version(tmp_path: Path):
     _copy_release_files(tmp_path)
+    _write_current_release_notes(tmp_path)
     calls: list[list[str]] = []
 
     def run(command: list[str], _cwd: Path) -> None:
@@ -99,6 +106,7 @@ def test_tag_release_fetches_then_uses_package_version(tmp_path: Path):
 
 def test_tag_release_pushes_main_before_publishing_tag(tmp_path: Path):
     _copy_release_files(tmp_path)
+    _write_current_release_notes(tmp_path)
     calls: list[list[str]] = []
 
     def run(command: list[str], _cwd: Path) -> None:
@@ -107,10 +115,17 @@ def test_tag_release_pushes_main_before_publishing_tag(tmp_path: Path):
     tag_release(tmp_path, f"loop-apidoc {CURRENT_VERSION}", dry_run=False, run=run)
 
     assert calls == [
+        ["gh", "auth", "status", "--hostname", "github.com"],
         ["git", "fetch", "--tags", "origin"],
         ["git", "push", "origin", "HEAD:main"],
         [
             "npx", "tagsmith", "create", "--set-version", CURRENT_VERSION, "--push",
             "--message", f"loop-apidoc {CURRENT_VERSION}",
+        ],
+        [
+            "gh", "release", "create", f"v{CURRENT_VERSION}",
+            "--verify-tag",
+            "--title", f"loop-apidoc {CURRENT_VERSION}",
+            "--notes-file", f"docs/RELEASE_NOTES_{CURRENT_VERSION}.md",
         ],
     ]

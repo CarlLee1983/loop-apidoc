@@ -1,4 +1,4 @@
-"""Prepare a synchronized release version and create its Tagsmith tag."""
+"""Prepare, tag, and publish a synchronized GitHub release."""
 
 from __future__ import annotations
 
@@ -109,19 +109,47 @@ def prepare_release(root: Path, version: str, summary: str, *, run: RunCommand =
     notes_path.write_text(_notes_text(version, summary), encoding="utf-8")
 
 
+def _github_release_command(root: Path, version: str) -> list[str]:
+    notes_path = Path("docs") / f"RELEASE_NOTES_{version}.md"
+    if not (root / notes_path).is_file():
+        raise ReleaseError(f"release notes missing: {notes_path}")
+    return [
+        "gh", "release", "create", f"v{version}",
+        "--verify-tag",
+        "--title", f"loop-apidoc {version}",
+        "--notes-file", str(notes_path),
+    ]
+
+
+def _require_github_auth(root: Path, run: RunCommand) -> None:
+    run(["gh", "auth", "status", "--hostname", "github.com"], root)
+
+
+def publish_github_release(root: Path, *, run: RunCommand = _run) -> None:
+    version = _package_version(root)
+    _version_tuple(version)
+    _require_github_auth(root, run)
+    run(_github_release_command(root, version), root)
+
+
 def tag_release(root: Path, message: str, *, dry_run: bool, run: RunCommand = _run) -> None:
     version = _package_version(root)
     _version_tuple(version)
+    github_release_command = _github_release_command(root, version)
     command = [
         "npx", "tagsmith", "create", "--set-version", version, "--push",
         "--message", message,
     ]
     if dry_run:
         command.append("--dry-run")
+    else:
+        _require_github_auth(root, run)
     run(["git", "fetch", "--tags", "origin"], root)
     if not dry_run:
         run(["git", "push", "origin", "HEAD:main"], root)
     run(command, root)
+    if not dry_run:
+        run(github_release_command, root)
 
 
 def _require_clean_worktree(root: Path) -> None:
@@ -139,16 +167,19 @@ def main(argv: list[str] | None = None) -> int:
     prepare = commands.add_parser("prepare", help="synchronize release metadata")
     prepare.add_argument("--version", required=True)
     prepare.add_argument("--summary", required=True)
-    tag = commands.add_parser("tag", help="create the package version's Tagsmith tag")
+    tag = commands.add_parser("tag", help="publish the package version's tag and GitHub release")
     tag.add_argument("--message", required=True)
     tag.add_argument("--dry-run", action="store_true")
+    commands.add_parser("github", help="create the package version's GitHub release")
     args = parser.parse_args(argv)
     try:
         _require_clean_worktree(ROOT)
         if args.command == "prepare":
             prepare_release(ROOT, args.version, args.summary)
-        else:
+        elif args.command == "tag":
             tag_release(ROOT, args.message, dry_run=args.dry_run)
+        else:
+            publish_github_release(ROOT)
     except (ReleaseError, subprocess.CalledProcessError) as exc:
         print(f"release error: {exc}", file=sys.stderr)
         return 2

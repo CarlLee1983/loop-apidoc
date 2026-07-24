@@ -80,7 +80,7 @@ Generate one representative run and eyeball the products (validation PASS does
 - [ ] Any defect fixed in this release has a regression test, benchmark fixture,
   quality-gate scenario, or documented follow-up in `docs/PIPELINE_FOLLOWUPS.md`.
 
-## Creating the release tag
+## Completing the release publication
 
 Prepare the release version before validation. The command requires a clean
 worktree, takes the version once, synchronizes every release metadata location,
@@ -90,29 +90,58 @@ refreshes `uv.lock`, and creates a non-overwritable release-note skeleton:
 npm run release:prepare -- --version 0.11.0 --summary "Describe the release"
 ```
 
-Complete the notes, run the checks above, and commit the release metadata. Then
-use the package's committed version instead of manually choosing or checking a tag:
+Complete the notes, review every teaching/promotion document named in `AGENTS.md`,
+run the checks above, and commit the release metadata. Then use the package's
+committed version instead of manually choosing a tag or creating a GitHub Release:
 
 ```bash
 # Fetches origin tags first, pushes HEAD to origin/main, validates strict semver
-# ordering and uniqueness, then creates an annotated tag for pyproject.toml's version.
+# ordering and uniqueness, creates the annotated tag for pyproject.toml's version,
+# then publishes the matching GitHub Release from docs/RELEASE_NOTES_<version>.md.
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 ```
 
-`release:tag --dry-run` previews without writing. It pushes only after Tagsmith
-accepts the local-and-fetched-remote tag history; a concurrent remote tag still
-makes `git push` fail safely, so fetch and retry instead of forcing a tag.
+`release:tag --dry-run` validates the release-notes precondition and previews the
+tag operation without pushing or writing a GitHub Release. A real run checks the
+authenticated `gh` session with release-creation permission *before* it pushes or
+creates a tag. It pushes only after Tagsmith accepts the local-and-fetched-remote
+tag history; a concurrent remote tag still makes `git push` fail safely, so fetch
+and retry instead of forcing a tag.
+
+If Tagsmith has already published the tag but the final GitHub-Release step fails,
+do not create the release manually. Resolve the GitHub authentication or API failure,
+then run the safe recovery command from a clean worktree:
+
+```bash
+npm run release:github
+```
+
+It reads the committed package version and notes, and passes `--verify-tag` to
+GitHub CLI, so GitHub cannot create a tag itself. Confirm the resulting Release URL
+contains the expected title, full notes, and is neither a draft nor a prerelease.
+
+The publication is complete only after the `main` CI run triggered by the push
+passes. Record the Release URL, then identify and watch that run:
+
+```bash
+gh run list --branch main --limit 1
+gh run watch <run-id> --exit-status
+```
+
+If it fails, preserve the published tag and Release, fix forward, and prepare a
+new version.
 
 ### Tag authority and CI responsibilities
 
 Tagsmith is the sole tag publisher. Use `npm run release:tag` after the local
-release checks and release-metadata commit; do not create a release tag by hand
-or expect GitHub Actions to create one. The command pushes `HEAD` to
-`origin/main`, then asks Tagsmith to validate and push the matching annotated
-`v<package-version>` tag.
+release checks and release-metadata commit; do not create a release tag or normal
+GitHub Release by hand, or expect GitHub Actions to create either. The command
+pushes `HEAD` to `origin/main`, asks Tagsmith to validate and push the matching
+annotated `v<package-version>` tag, then uses GitHub CLI only to publish the
+matching Release after the tag exists.
 
 GitHub Actions CI is a verification trigger only: pushes and pull requests run
 tag-policy validation, dependency sync, and the quality gate. The Pages
-workflow may deploy documentation from `main`, but neither workflow creates or
-publishes a release tag. Monitor the CI run after the push; a CI failure is
-handled as a follow-up fix and release, never by force-moving a tag.
+workflow may deploy documentation from `main`, but neither workflow creates a
+tag or a GitHub Release. Monitor the CI run after the push and release; a CI
+failure is handled as a follow-up fix and release, never by force-moving a tag.

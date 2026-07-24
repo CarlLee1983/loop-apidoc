@@ -43,6 +43,7 @@ def test_tagsmith_release_line_and_scripts_are_explicit():
     assert package["scripts"]["tag:create"].endswith("tagsmith create --push")
     assert package["scripts"]["release:prepare"] == "uv run python scripts/release.py prepare"
     assert package["scripts"]["release:tag"] == "uv run python scripts/release.py tag"
+    assert package["scripts"]["release:github"] == "uv run python scripts/release.py github"
 
 
 def test_skill_has_frontmatter_and_assemble_call():

@@ -135,7 +135,7 @@ Per-code severity and the structured-routing fields (`target_file`/`field_path`/
 
 ## Release: keep teaching & promotion docs in sync (non-negotiable)
 
-A release is **not done** when `scripts/release.py prepare`/`tag` finish. That script only
+A release is **not done** when `scripts/release.py prepare` finishes. The prepare command only
 synchronizes *version metadata* in a fixed set of files:
 `pyproject.toml`, `loop_apidoc/__init__.py`, `.claude-plugin/plugin.json`, `uv.lock`,
 `README.md`, `README.en.md`, `docs/introduction.html` (its version footer only),
@@ -157,6 +157,19 @@ new pipeline stage). These docs drift silently and are the first thing readers s
 Rule of thumb: if a code/process change would make any sentence, command example, or
 feature list in the docs above wrong, fix it **in the same commit/release** — never defer.
 Cross-check with `docs/RELEASE_CHECKLIST.md`.
+
+`npm run release:tag -- --message "loop-apidoc <version>"` is the mandatory complete
+publication command: it verifies committed `docs/RELEASE_NOTES_<version>.md`, pushes
+`HEAD` to `origin/main`, asks Tagsmith to publish the annotated `v<version>` tag, then
+creates the matching non-draft GitHub Release from those notes using `gh release create
+--verify-tag`. A real run checks `gh auth status` before any push or tag creation. Do
+not stop after the tag, create a normal Release manually, or let GitHub CLI create a
+tag. If the tag succeeds but the final GitHub Release step fails, fix the
+authentication/API problem and run `npm run release:github` from a clean worktree.
+`release:tag --dry-run` writes nothing, including no GitHub Release. After the release
+is visible, record its URL and use `gh run list --branch main --limit 1` followed by
+`gh run watch <run-id> --exit-status` to monitor CI. Failures require a follow-up
+release, never a force-moved tag.
 
 ## Benchmark harness contract
 
