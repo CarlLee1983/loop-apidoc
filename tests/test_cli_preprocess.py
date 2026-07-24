@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pymupdf
+import pytest
 from typer.testing import CliRunner
 
 from loop_apidoc.agentcli.preprocess import PreprocessResult, prepare_markdown
@@ -38,6 +39,45 @@ def test_prepare_markdown_returns_categorized_relative_paths_and_passthrough_byt
     assert (out / "manual.docx").read_bytes() == docx_bytes
     assert (out / "openapi.json").read_bytes() == json_bytes
     assert (out / "openapi.yaml").read_bytes() == yaml_bytes
+
+
+def test_prepare_markdown_preserves_source_paths_and_disambiguates_pdf_output(
+    tmp_path: Path,
+):
+    sources = tmp_path / "sources"
+    (sources / "merchant-a").mkdir(parents=True)
+    (sources / "merchant-b").mkdir()
+    (sources / "merchant-a" / "guide.md").write_text("# A", encoding="utf-8")
+    (sources / "merchant-b" / "guide.md").write_text("# B", encoding="utf-8")
+    doc = pymupdf.open()
+    doc.new_page().insert_text((72, 72), "PDF guide")
+    doc.save(str(sources / "merchant-a" / "guide.pdf"))
+    doc.close()
+    out = tmp_path / "prepared"
+
+    result = prepare_markdown(sources, out)
+
+    assert result.copied == [Path("merchant-a/guide.md"), Path("merchant-b/guide.md")]
+    assert result.converted == [Path("merchant-a/guide.pdf.md")]
+    assert (out / "merchant-a" / "guide.md").read_text(encoding="utf-8") == "# A"
+    assert (out / "merchant-b" / "guide.md").read_text(encoding="utf-8") == "# B"
+    assert (out / "merchant-a" / "guide.pdf.md").exists()
+
+
+def test_prepare_markdown_rejects_remaining_derived_output_collisions(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    doc = pymupdf.open()
+    doc.new_page().insert_text((72, 72), "PDF guide")
+    doc.save(str(sources / "guide.pdf"))
+    doc.close()
+    (sources / "guide.pdf.md").write_text("# Existing markdown", encoding="utf-8")
+    out = tmp_path / "prepared"
+
+    with pytest.raises(ValueError, match="preprocess output collision"):
+        prepare_markdown(sources, out)
+
+    assert not (out / "guide.pdf.md").exists()
 
 
 def test_preprocess_copies_text_sources(tmp_path: Path):
@@ -82,7 +122,7 @@ def test_preprocess_converts_pdf_to_markdown(tmp_path: Path):
     res = runner.invoke(app, ["preprocess", "--sources", str(sources), "--out", str(out)])
 
     assert res.exit_code == 0
-    md = (out / "manual.md").read_text(encoding="utf-8")
+    md = (out / "manual.pdf.md").read_text(encoding="utf-8")
     assert "Payment API" in md
     assert "<!-- page 1 -->" in md
     assert "converted 1 / copied 0 / passthrough 0" in res.stdout

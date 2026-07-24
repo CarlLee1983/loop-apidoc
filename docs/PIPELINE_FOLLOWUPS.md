@@ -3,13 +3,11 @@
 This document tracks pipeline improvements from item 2 onward, after the benchmark
 regression harness work.
 
-> **Status (2026-06-29):** items 2–5 implemented on branch `feat/pipeline-followups`
+> **Status (2026-07-24):** items 2–7 implemented on branch `feat/pipeline-followups`
 > (commits `d3b0ae8`, `e89cbd7`, `75ef8cb`, `f7d374d`). Each section's acceptance
 > criteria are met and covered by tests / CI.
->
-> Items 6–7 are **open** — deferred from the continuous-correction quality-gate
-> review (merge `4eb5ba6`, fix `9c4bce6`). Both are non-blocking polish on
-> `scripts/quality_gate.py`.
+> Items 6–7 were subsequently resolved on 2026-06-29. The `preprocess`
+> output-path collision recorded under item 8 was resolved on 2026-07-24.
 
 ## 2. Run Directory Isolation — ✅ done (`d3b0ae8`)
 
@@ -272,8 +270,8 @@ general-purpose helper and could mislead if reused elsewhere (e.g. against xdist
 ### Risk
 
 Items 1, 4, and 5 were already resolved before the 2026-07-02 correctness batch.
-This batch resolves items 2 and 3. Items 6 and 7 remain open as second-batch
-cleanup and coverage work.
+This batch resolves every listed diff finding; items 6 and 7 were completed in
+the subsequent correctness batch.
 
 ### Recommended Work
 
@@ -318,7 +316,8 @@ cleanup and coverage work.
 - **Resolved (2026-07-02 correctness batch 2): diff comparator review minors.**
   M1 (object-detection predicate deduped into `_looks_like_object`); M3
   (`_compare_parameters` recurses into object-typed parameter schemas).
-- **Open edge:** preprocess flattens `rglob` output into one directory, so sources
-  with the same basename in different subdirectories (or a `foo.pdf` and a sibling
-  `foo.md`) collide on write and the category counts can overstate files on disk;
-  keep this for a later batch with focused fixtures.
+- **Resolved (2026-07-24): preprocess output paths.** Directory input retains
+  source-relative paths and a converted `foo.pdf` becomes `foo.pdf.md`; the
+  complete output mapping is checked before any file content is written. Focused
+  regression coverage proves nested same-basename sources and a PDF/Markdown sibling
+  remain distinct.
