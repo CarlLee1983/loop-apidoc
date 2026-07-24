@@ -58,3 +58,29 @@ class GovernanceReport(BaseModel):
     scanned_count: int
     triggers: list[GovernanceTrigger] = Field(default_factory=list)
     snapshot: GovernanceSnapshot | None = None
+
+
+class GovernanceReviewSource(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    sha256: str
+    path: str
+
+
+class GovernanceReviewItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    kind: GovernanceTriggerKind
+    reason: str | None = None
+    run_dir: str | None = None
+    sources: list[GovernanceReviewSource] = Field(default_factory=list)
+    required_steps: list[str]
+
+
+class GovernanceReviewPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: int = 1
+    items: list[GovernanceReviewItem] = Field(default_factory=list)

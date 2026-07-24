@@ -259,6 +259,10 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
 </code></pre>
 <p>對已完成 run directory 做確定性文件品質評分,五類加權(<code>openapi_validity</code>／<code>completeness</code>／<code>consistency</code>／<code>source_grounding</code>／<code>reviewability</code>)算出 0–100,寫入 <code>&lt;run-id&gt;/score/score.{json,md}</code>。<code>--profile</code> 決定分數門檻(<code>ci</code>=85、<code>review</code>=70),可用 <code>--min-score</code> 覆寫。退出碼:<code>0</code>=達門檻、<code>1</code>=未達、<code>2</code>=輸入缺檔或格式錯誤。<code>assemble --score</code> 會附帶產生同一份報告,但<strong>不影響</strong> assemble 的退出碼(仍由 validation 決定)。</p>
+<h3 id="evaluate-runtime"><code>evaluate</code> — 比較 runtime replay 結果</h3>
+<pre><code class="language-bash">uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
+</code></pre>
+<p>比較同一案例與版本的兩份已保存 <code>ReplayReport</code> JSON，輸出 <code>evaluation-report.{json,md}</code>。報告列出每個品質 metric 的 candidate-minus-baseline delta 與 cost／latency delta；缺少量測值會保留 <code>null</code>。此命令只產生 immutable evaluation artifact，不會 assemble、匯入 Foundry 或核准契約。退出碼：<code>0</code>=完成、<code>2</code>=輸入錯誤或案例版本不一致。</p>
 <h3 id="diff-run"><code>diff</code> — 比較兩次 run 的版本差異</h3>
 <pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
 </code></pre>

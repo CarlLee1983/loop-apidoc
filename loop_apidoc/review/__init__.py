@@ -13,6 +13,7 @@ from loop_apidoc.review.models import (
     ReviewRequest,
     ReviewSnapshot,
     ReviewStateError,
+    ReviewWaiver,
 )
 from loop_apidoc.review.workflow import ReviewWorkflow
 
@@ -29,5 +30,6 @@ __all__ = [
     "ReviewRequest",
     "ReviewSnapshot",
     "ReviewStateError",
+    "ReviewWaiver",
     "ReviewWorkflow",
 ]

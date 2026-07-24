@@ -393,6 +393,26 @@ uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min
 `85`，`review` profile 預設門檻為 `70`。退出碼：`0` = pass，`1` =
 needs_attention / fail，`2` = run-dir 輸入錯誤。
 
+### `evaluate` — 比較兩個 runtime 的 replay 結果
+
+```bash
+uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
+```
+
+比較同一案例、同一版本的兩份已保存 `ReplayReport` JSON，輸出
+`evaluation-report.{json,md}`。報告列出所有品質 metric 的 candidate-minus-baseline
+delta，以及 cost／latency delta；任一端未回報成本或延遲時保留 `null`。這是 immutable
+evaluation artifact：不會 assemble、匯入 Foundry 或核准契約。退出碼：`0` = 完成，`2` =
+輸入缺檔、格式錯誤或案例版本不一致。
+
+### `governance-review-plan` — 將來源變動交給人工／agent 審核
+
+```bash
+uv run loop-apidoc governance-review-plan --trigger ./governance/governance-trigger.json --snapshot ./snapshots --output ./review-plan [--json]
+```
+
+重新驗證 immutable snapshot 的每個 source digest，並寫出 `governance-review-plan.{json,md}`：包含變更來源、既有 run 與必要的人工／agent 步驟。不會抓取、重新擷取、assemble、匯入或核准契約。
+
 ### `diff` — 比較兩次 run 的版本差異
 
 ```bash

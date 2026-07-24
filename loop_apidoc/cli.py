@@ -476,6 +476,37 @@ def governance_scan_command(
     raise typer.Exit(code=exit_code)
 
 
+@app.command(name="governance-review-plan")
+def governance_review_plan_command(
+    trigger: Path = typer.Option(..., "--trigger", exists=True, readable=True, help="governance-trigger.json"),
+    snapshot: Path | None = typer.Option(None, "--snapshot", help="immutable governance snapshot 目錄"),
+    output: Path = typer.Option(..., "--output", help="governance-review-plan.{json,md} 輸出目錄"),
+    json_output: bool = typer.Option(False, "--json", help="輸出機器可讀 JSON"),
+) -> None:
+    """把治理觸發轉成 bounded review handoff；不會重新擷取、生成或核准。"""
+    from loop_apidoc.governance.review_plan import (
+        GovernanceReviewPlanError,
+        build_review_plan,
+        load_review_plan_inputs,
+        write_review_plan,
+    )
+
+    if output.exists() and output.is_file():
+        typer.echo(f"governance-review-plan error: output path is a file: {output}", err=True)
+        raise typer.Exit(code=2)
+    try:
+        report, snapshot_data = load_review_plan_inputs(trigger, snapshot)
+        plan = build_review_plan(report, snapshot_data)
+    except GovernanceReviewPlanError as exc:
+        typer.echo(f"governance-review-plan error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    write_review_plan(plan, output)
+    if json_output:
+        typer.echo(plan.model_dump_json(indent=2))
+    else:
+        typer.echo(f"governance-review-plan COMPLETE: {len(plan.items)} item(s)；報告寫入 {output}")
+
+
 @app.command(name="normalize-html-snapshot")
 def normalize_html_snapshot_command(
     input: Path = typer.Option(..., "--input", exists=True, readable=True, help="已下載的 HTML 快照"),
@@ -791,6 +822,67 @@ def score(
             f"報告寫入 {score_dir / 'score.json'}"
         )
     raise typer.Exit(code=0 if report.status.value == "pass" else 1)
+
+
+@app.command()
+def evaluate(
+    baseline: Path = typer.Option(
+        ...,
+        "--baseline",
+        help="基準 runtime 的已保存 ReplayReport JSON",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    candidate: Path = typer.Option(
+        ...,
+        "--candidate",
+        help="候選 runtime 的已保存 ReplayReport JSON",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="evaluation-report.{json,md} 輸出目錄",
+    ),
+    json_out: bool = typer.Option(
+        False,
+        "--json",
+        help="把 comparison report JSON 印到 stdout",
+    ),
+) -> None:
+    """比較兩份同一案例版本的 runtime replay 結果；不變更 production contract。"""
+    from loop_apidoc.evaluation.models import EvaluationInputError
+    from loop_apidoc.evaluation import (
+        build_comparison_report,
+        load_replay_report,
+        write_reports as write_evaluation_reports,
+    )
+
+    if output.exists() and output.is_file():
+        typer.echo(f"evaluate input error: output path is a file: {output}", err=True)
+        raise typer.Exit(code=2)
+    try:
+        baseline_report = load_replay_report(baseline, label="baseline")
+        candidate_report = load_replay_report(candidate, label="candidate")
+        report = build_comparison_report(baseline_report, candidate_report)
+    except EvaluationInputError as exc:
+        typer.echo(f"evaluate input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    write_evaluation_reports(report, output)
+    if json_out:
+        typer.echo(report.model_dump_json(indent=2))
+    else:
+        typer.echo(
+            "evaluate COMPLETE: "
+            f"case {report.case.id}@{report.case.version}；"
+            f"報告寫入 {output / 'evaluation-report.json'}"
+        )
 
 
 @app.command()

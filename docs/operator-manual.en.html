@@ -258,6 +258,10 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 <pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
 </code></pre>
 <p>Performs a deterministic documentation-quality score on a completed run directory, computing 0–100 from five weighted categories (<code>openapi_validity</code> / <code>completeness</code> / <code>consistency</code> / <code>source_grounding</code> / <code>reviewability</code>), written to <code>&lt;run-id&gt;/score/score.{json,md}</code>. <code>--profile</code> sets the score threshold (<code>ci</code> = 85, <code>review</code> = 70), which <code>--min-score</code> can override. Exit codes: <code>0</code> = meets threshold, <code>1</code> = below, <code>2</code> = input file missing or malformed. <code>assemble --score</code> produces the same report as a side effect, but <strong>does not affect</strong> assemble's exit code (still decided by validation).</p>
+<h3 id="evaluate-runtime"><code>evaluate</code> — compare runtime replay results</h3>
+<pre><code class="language-bash">uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
+</code></pre>
+<p>Compares two persisted <code>ReplayReport</code> JSON files for the same case and version, writing <code>evaluation-report.{json,md}</code>. It reports candidate-minus-baseline deltas for every quality metric plus cost and latency; missing measurements remain <code>null</code>. This command produces an immutable evaluation artifact only: it never assembles, imports to Foundry, or approves a contract. Exit codes: <code>0</code> = complete, <code>2</code> = bad input or mismatched case version.</p>
 <h3 id="diff-run"><code>diff</code> — compare the version difference between two runs</h3>
 <pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
 </code></pre>

@@ -60,6 +60,7 @@ class ReviewWorkflow:
             binding=snapshot.binding,
             items=draft.items,
             handoff=draft.handoff,
+            waivers=draft.waivers,
             note=draft.note,
             saved_at=datetime.now(timezone.utc),
         )
@@ -217,6 +218,15 @@ class ReviewWorkflow:
                 raise ReviewStateError(
                     f"handoff references unknown review subjects: {', '.join(sorted(unknown))}"
                 )
+        for waiver in draft.waivers:
+            subject = next((item for item in snapshot.subjects if item.id == waiver.subject_id), None)
+            if subject is None:
+                raise ReviewStateError(f"waiver references unknown review subject: {waiver.subject_id}")
+            matching = [evidence for evidence in subject.evidence if evidence.claim_identity == waiver.claim_identity]
+            if not matching:
+                raise ReviewStateError("waiver claim must be supported by the review subject evidence")
+            if any(item.relationship in {"insufficient", "contradicts"} for item in matching):
+                raise ReviewStateError("waiver cannot apply to insufficient or contradictory evidence")
 
     def _review_outcome(
         self, snapshot: ReviewSnapshot, draft: ReviewDraft

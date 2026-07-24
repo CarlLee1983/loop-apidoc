@@ -133,8 +133,13 @@ def evidence_for_diff_location(
     """Resolve only unambiguous diff operation locations to Core targets."""
     method, separator, remainder = location.partition(" ")
     if method in _HTTP_METHODS and separator and remainder.startswith("/"):
-        path = remainder.split(" ", 1)[0]
-        return evidence_by_target.get(f"paths.{path}.{method.lower()}", [])
+        path, suffix_separator, suffix = remainder.partition(" ")
+        target = f"paths.{path}.{method.lower()}"
+        if suffix_separator:
+            # A field-level diff must match an exact normalized claim target.  Falling
+            # back to operation evidence would falsely imply support for that field.
+            return evidence_by_target.get(f"{target}.{suffix}", [])
+        return evidence_by_target.get(target, [])
     return evidence_by_target.get(location, [])
 
 

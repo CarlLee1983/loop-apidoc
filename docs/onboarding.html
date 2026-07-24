@@ -820,6 +820,10 @@
         </div>
       </div>
       <div class="cmd">
+        <span class="name"><span class="kw">evaluate</span></span>
+        <div><p>比較同案例版本的兩份 runtime replay JSON，產出品質、成本與延遲 delta 的 immutable 報告；不會組裝、匯入或核准契約。</p></div>
+      </div>
+      <div class="cmd">
         <span class="name"><span class="kw">governance-scan</span></span>
         <div><p>把 freshness watchlist 的批次結果轉成受控的人工處理觸發：變動來源為 <code class="inline">review_required</code>，無法判定或讀取錯誤為 <code class="inline">attention_required</code>。選填 <code class="inline">--snapshot-dir</code> 僅保存同次掃描中已變動的原始 bytes，作為不可覆寫、內容定址的 evidence pack；不會重新擷取、生成、匯入 Foundry 或核准契約。</p></div>
       </div>
