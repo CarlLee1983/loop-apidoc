@@ -24,6 +24,10 @@ Add deterministic exact-evidence verification and source-backed Core parity benc
 - Updated the extraction schema reference, architecture/design records, benchmark plan,
   roadmap, READMEs, and English/Traditional-Chinese teaching and operator pages for the
   new evidence semantics and current benchmark state.
+- Reframed the offline review page's blanket "risk" count as structured governance
+  items. Missing server URLs, authentication details, and sandbox credentials remain
+  visible and continuously trackable without being labelled integration risks merely
+  because an API document omits them; validation and score semantics are unchanged.
 
 ## Known limitations
 
