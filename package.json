@@ -5,11 +5,13 @@
     "tag:check": "git fetch --tags origin && tagsmith check",
     "tag:next": "git fetch --tags origin && tagsmith next",
     "tag:create": "git fetch --tags origin && tagsmith create --push",
+    "docs:check": "docsentry check --config .docsentry.json",
     "release:prepare": "uv run python scripts/release.py prepare",
     "release:tag": "uv run python scripts/release.py tag",
     "release:github": "uv run python scripts/release.py github"
   },
   "devDependencies": {
+    "@carllee1983/docsentry": "^0.5.0",
     "@carllee1983/tagsmith": "^0.3.1"
   }
 }

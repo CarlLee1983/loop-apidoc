@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/@carllee1983/docsentry/schema.json",
+  "documents": [
+    "README.md",
+    "README.en.md",
+    "CONTRIBUTING.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/**/*.md"
+  ]
+}

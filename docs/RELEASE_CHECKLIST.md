@@ -11,6 +11,7 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
   the committed SemVer `v{version}` policy and no ordering anomaly exists.
 - [ ] `uv sync --dev` resolves cleanly.
 - [ ] `uv run ruff check .` passes.
+- [ ] `npm run docs:check` passes for the configured Markdown documents and local evidence.
 - [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above
   95% — unit + integration + the benchmark discovery guard and exact-parity
   regression.

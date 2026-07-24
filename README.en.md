@@ -193,6 +193,22 @@ gh run watch <run-id> --exit-status
 
 ---
 
+### Documentation governance
+
+[Docsentry](https://github.com/CarlLee1983/Docsentry) verifies the selected Markdown
+documents against local repository evidence. It detects broken local links and documented
+`npm run` commands that no longer exist; CI runs the same check after `npm ci`.
+
+```bash
+npm run docs:check
+```
+
+Its scope is intentionally limited to the Markdown files in `.docsentry.json`. It does not
+validate the HTML manuals, remote URLs, prose style, translation quality, or generated run
+artifacts.
+
+---
+
 ## Supported source formats
 
 PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, static HTML snapshots, public URLs.

@@ -182,6 +182,21 @@ gh run watch <run-id> --exit-status
 
 ---
 
+### 文件治理
+
+[Docsentry](https://github.com/CarlLee1983/Docsentry) 會以本機 repository 證據驗證選定的
+Markdown 文件，偵測失效的本地連結與文件中已不存在的 `npm run` 指令；CI 會在 `npm ci` 後執行
+相同檢查。
+
+```bash
+npm run docs:check
+```
+
+它的範圍刻意限於 `.docsentry.json` 選取的 Markdown 檔案，不驗證 HTML 手冊、遠端網址、散文風格、
+翻譯品質或生成的 run 產物。
+
+---
+
 ## 支援的來源格式
 
 PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
