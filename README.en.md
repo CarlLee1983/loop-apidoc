@@ -383,6 +383,18 @@ continues; a malformed watchlist file itself fails loud. Aggregate exit codes: `
 `1` = any changed, `2` = any inconclusive or errored. Pass `--report-dir` to also write
 `freshness-scan.{json,md}`; without it nothing is written.
 
+Use `governance-scan` to turn a batch result into a bounded human-work trigger: a changed source
+becomes `review_required`, while an inconclusive or unreadable item becomes `attention_required`.
+It writes only `governance-trigger.{json,md}` — it does **not** re-extract, generate, import to
+Foundry, or approve a contract.
+
+```bash
+uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json --json \
+  --report-dir ./work/governance
+```
+
+Exit codes are likewise `0` = no action, `1` = review required, and `2` = attention required.
+
 ### `validate` — validate an existing run directory
 
 ```bash

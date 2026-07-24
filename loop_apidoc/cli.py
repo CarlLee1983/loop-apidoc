@@ -433,6 +433,40 @@ def check_freshness_batch_command(
     raise typer.Exit(code=EXIT_CODES[report.verdict])
 
 
+@app.command(name="governance-scan")
+def governance_scan_command(
+    watchlist: Path = typer.Option(..., "--watchlist", exists=True, readable=True, help="巡檢清單 freshness-watchlist.json"),
+    json_output: bool = typer.Option(False, "--json", help="輸出機器可讀 JSON"),
+    report_dir: Path | None = typer.Option(None, "--report-dir", help="另存 governance-trigger.{json,md}"),
+) -> None:
+    """建立需人工審核的來源變動觸發；不會生成、匯入或核准契約。"""
+    from loop_apidoc.freshness.batch import load_watchlist, scan_watchlist
+    from loop_apidoc.freshness.models import EXIT_CODES, FreshnessInputError, FreshnessVerdict
+    from loop_apidoc.governance.models import GovernanceStatus
+    from loop_apidoc.governance.report import render_markdown, write_reports
+    from loop_apidoc.governance.scan import build_governance_report
+
+    try:
+        loaded = load_watchlist(watchlist)
+    except FreshnessInputError as exc:
+        typer.echo(f"governance-scan error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    report = build_governance_report(scan_watchlist(loaded, base_dir=watchlist.parent))
+    if report_dir is not None:
+        write_reports(report, report_dir)
+    if json_output:
+        typer.echo(report.model_dump_json(indent=2))
+    else:
+        typer.echo(render_markdown(report))
+    exit_code = {
+        GovernanceStatus.NO_ACTION: EXIT_CODES[FreshnessVerdict.UNCHANGED],
+        GovernanceStatus.REVIEW_REQUIRED: EXIT_CODES[FreshnessVerdict.CHANGED],
+        GovernanceStatus.ATTENTION_REQUIRED: EXIT_CODES[FreshnessVerdict.INCONCLUSIVE],
+    }[report.status]
+    raise typer.Exit(code=exit_code)
+
+
 @app.command(name="normalize-html-snapshot")
 def normalize_html_snapshot_command(
     input: Path = typer.Option(..., "--input", exists=True, readable=True, help="已下載的 HTML 快照"),

@@ -359,6 +359,17 @@ uv run loop-apidoc check-freshness-batch --watchlist ./work/freshness-watchlist.
 彙總退出碼：`0` = 全部未變、`1` = 有任一已變、`2` = 有任一無法判定或發生錯誤。加上 `--report-dir` 時
 另存 `freshness-scan.{json,md}`；未帶則不寫檔。
 
+要把批次結果轉成受控的人工處理觸發，使用 `governance-scan`：來源變動會產生
+`review_required`，而無法判定或讀取錯誤會產生 `attention_required`。這個命令只寫出
+`governance-trigger.{json,md}`，**不會**重新擷取、生成、匯入 Foundry 或核准任何契約。
+
+```bash
+uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json --json \
+  --report-dir ./work/governance
+```
+
+退出碼同樣是 `0` = no action、`1` = review required、`2` = attention required。
+
 ### `validate` — 驗證既有 run 目錄
 
 ```bash

@@ -137,6 +137,14 @@ scheduled freshness check
 Source change detection must never regenerate or approve a contract by itself;
 it only creates a bounded review trigger.
 
+**Progress (2026-07-24):** `governance-scan` now translates an existing
+`freshness-watchlist.json` batch scan into a persisted `governance-trigger.{json,md}`
+report. Changed sources are `review_required`; unreadable or inconclusive items are
+`attention_required`. The command deliberately performs no extraction, generation,
+Foundry import, or approval. It is the bounded trigger at the start of the proposed
+cycle; reproducible source snapshotting and the subsequent human/agent workflow remain
+future slices.
+
 ### 3. Evidence-first review experience
 
 **Goal:** shorten human verification without weakening approval authority.
