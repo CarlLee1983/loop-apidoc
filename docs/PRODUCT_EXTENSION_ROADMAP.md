@@ -1,6 +1,6 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence v1 boundary slice and the first evidence-first review slice are delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
+**Status:** In progress — exact-evidence v1 boundary slice, the first evidence-first review slice, and governance source snapshotting are delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
 **Updated:** 2026-07-24
 
 ## Purpose
@@ -144,6 +144,14 @@ report. Changed sources are `review_required`; unreadable or inconclusive items 
 Foundry import, or approval. It is the bounded trigger at the start of the proposed
 cycle; reproducible source snapshotting and the subsequent human/agent workflow remain
 future slices.
+
+**Reproducible source snapshotting (2026-07-24):** `governance-scan --snapshot-dir`
+now retains only the raw bytes classified as changed in that same scan, as an immutable,
+content-addressed evidence pack (`governance-snapshot.json` plus `sources/<sha256>.source`).
+This avoids a second fetch between detection and review; unchanged, inconclusive, and failed
+sources are not represented, and the command still performs no extraction, generation,
+Foundry import, or approval. Re-extraction and explicit human approval remain separate future
+steps.
 
 ### 3. Evidence-first review experience
 

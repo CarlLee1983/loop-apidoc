@@ -226,10 +226,13 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <code>freshness-scan.{json,md}</code>;未帶則不寫檔。</p>
 <p>要把批次結果轉成受控的人工處理觸發，使用 <code>governance-scan</code>：</p>
 <pre><code class="language-bash">uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json \
-  [--json] [--report-dir ./work/governance]
+  [--json] [--report-dir ./work/governance] [--snapshot-dir ./work/governance-snapshot]
 </code></pre>
 <p>來源變動會產生 <code>review_required</code>；無法判定或讀取錯誤則是 <code>attention_required</code>。
-命令只會輸出 <code>governance-trigger.{json,md}</code>，不會重新擷取、生成、匯入 Foundry 或核准契約。退出碼：
+命令只會輸出 <code>governance-trigger.{json,md}</code>，不會重新擷取、生成、匯入 Foundry 或核准契約。若提供
+<code>--snapshot-dir</code>，同一次掃描中判定為 changed 的原始 bytes 會寫成不可覆寫、內容定址的 evidence pack：
+<code>sources/&lt;sha256&gt;.source</code> 與 <code>governance-snapshot.json</code>。這避免掃描後重新抓取而造成內容
+漂移；unchanged、inconclusive、error 不會被保存，全部未變時也不建立空快照。退出碼：
 <code>0</code>=no action、<code>1</code>=review required、<code>2</code>=attention required。</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]

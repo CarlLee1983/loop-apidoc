@@ -62,6 +62,7 @@ def _scan_item(item: WatchlistItem, base_dir: Path, client: httpx.Client, max_by
         openapi_version=report.openapi_version,
         reason=_summarize(report),
         run_dir=item.run_dir,
+        observations=report.observations,
     )
 
 

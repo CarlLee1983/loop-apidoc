@@ -61,3 +61,29 @@ def test_governance_scan_writes_a_review_trigger_for_a_changed_source(tmp_path: 
     }]
     assert (report_dir / "governance-trigger.json").exists()
     assert (report_dir / "governance-trigger.md").exists()
+
+
+def test_governance_scan_retains_content_addressed_snapshot_for_changed_source(tmp_path: Path):
+    watchlist = _changed_watchlist(tmp_path)
+    snapshot_dir = tmp_path / "snapshots"
+
+    result = runner.invoke(
+        app,
+        ["governance-scan", "--watchlist", str(watchlist), "--snapshot-dir", str(snapshot_dir), "--json"],
+    )
+
+    assert result.exit_code == 1
+    report = json.loads(result.stdout)
+    snapshot = report["snapshot"]
+    assert snapshot["source_count"] == 1
+    assert snapshot["items"] == [{
+        "label": "payment-api",
+        "sources": [{
+            "id": "spec.pdf",
+            "kind": "local_file",
+            "sha256": hash_bytes(b"current source"),
+            "path": f"sources/{hash_bytes(b'current source')}.source",
+        }],
+    }]
+    assert (snapshot_dir / "governance-snapshot.json").is_file()
+    assert (snapshot_dir / "sources" / f"{hash_bytes(b'current source')}.source").read_bytes() == b"current source"

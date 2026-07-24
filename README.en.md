@@ -386,11 +386,15 @@ continues; a malformed watchlist file itself fails loud. Aggregate exit codes: `
 Use `governance-scan` to turn a batch result into a bounded human-work trigger: a changed source
 becomes `review_required`, while an inconclusive or unreadable item becomes `attention_required`.
 It writes only `governance-trigger.{json,md}` — it does **not** re-extract, generate, import to
-Foundry, or approve a contract.
+Foundry, or approve a contract. To retain the exact changed bytes for a reproducible later
+human/agent re-extraction, add `--snapshot-dir`. It writes an immutable, content-addressed
+evidence pack (`sources/<sha256>.source` and `governance-snapshot.json`). Unchanged,
+inconclusive, and failed sources are never snapshotted, and an all-unchanged scan creates no
+empty pack.
 
 ```bash
 uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json --json \
-  --report-dir ./work/governance
+  --report-dir ./work/governance --snapshot-dir ./work/governance-snapshot
 ```
 
 Exit codes are likewise `0` = no action, `1` = review required, and `2` = attention required.

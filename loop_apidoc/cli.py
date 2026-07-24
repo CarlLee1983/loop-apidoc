@@ -438,6 +438,7 @@ def governance_scan_command(
     watchlist: Path = typer.Option(..., "--watchlist", exists=True, readable=True, help="巡檢清單 freshness-watchlist.json"),
     json_output: bool = typer.Option(False, "--json", help="輸出機器可讀 JSON"),
     report_dir: Path | None = typer.Option(None, "--report-dir", help="另存 governance-trigger.{json,md}"),
+    snapshot_dir: Path | None = typer.Option(None, "--snapshot-dir", help="保留 changed 來源的不可覆寫證據快照"),
 ) -> None:
     """建立需人工審核的來源變動觸發；不會生成、匯入或核准契約。"""
     from loop_apidoc.freshness.batch import load_watchlist, scan_watchlist
@@ -445,6 +446,7 @@ def governance_scan_command(
     from loop_apidoc.governance.models import GovernanceStatus
     from loop_apidoc.governance.report import render_markdown, write_reports
     from loop_apidoc.governance.scan import build_governance_report
+    from loop_apidoc.governance.snapshot import GovernanceSnapshotError, write_snapshot
 
     try:
         loaded = load_watchlist(watchlist)
@@ -452,7 +454,14 @@ def governance_scan_command(
         typer.echo(f"governance-scan error: {exc}", err=True)
         raise typer.Exit(code=2) from exc
 
-    report = build_governance_report(scan_watchlist(loaded, base_dir=watchlist.parent))
+    scan = scan_watchlist(loaded, base_dir=watchlist.parent)
+    report = build_governance_report(scan)
+    if snapshot_dir is not None:
+        try:
+            report = report.model_copy(update={"snapshot": write_snapshot(scan, snapshot_dir)})
+        except GovernanceSnapshotError as exc:
+            typer.echo(f"governance-scan error: {exc}", err=True)
+            raise typer.Exit(code=2) from exc
     if report_dir is not None:
         write_reports(report, report_dir)
     if json_output:
