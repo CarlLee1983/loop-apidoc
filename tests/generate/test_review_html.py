@@ -121,6 +121,26 @@ def test_review_html_visualizes_generated_artifacts_for_manual_review(tmp_path):
     assert "欄位 memo 未確認" in html
 
 
+def test_review_html_tracks_server_and_auth_gaps_as_governance_items(tmp_path):
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        missing_items=[
+            MissingItem(area="server_url", detail="來源未提供 production URL"),
+            MissingItem(area="authentication", detail="來源未提供 sandbox credentials"),
+        ],
+    )
+
+    generate_outputs(plan, _manifest(), tmp_path)
+    html = (tmp_path / "review.html").read_text(encoding="utf-8")
+
+    assert "<span>治理項目</span><strong>2</strong>" in html
+    assert "規格治理清單" in html
+    assert "規格狀態，不代表每一項都是整合風險" in html
+    assert "來源未提供 production URL" in html
+    assert "來源未提供 sandbox credentials" in html
+    assert "核對風險" not in html
+
+
 def test_review_html_renders_url_sources_without_crashing(tmp_path):
     # Regression: a manifest carrying a URL source (assemble --url ...) must not
     # crash review-page generation. UrlSource has no `status` field — its status

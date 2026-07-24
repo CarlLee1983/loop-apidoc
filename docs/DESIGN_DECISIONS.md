@@ -140,6 +140,12 @@ structured Markdown. Preparation reports, deterministic scores, version diffs, a
 freshness reports help an operator understand readiness and change; they do not
 fabricate claims or silently change validation semantics.
 
+Source-unstated deployment details such as a concrete server URL, authentication
+details, or sandbox credentials remain structured governance gaps. Their absence from
+an API document alone is not an integration-risk conclusion: review projections retain
+their type, area, detail, and status so teams can manage them continuously and apply
+risk interpretation in the downstream integration context.
+
 The optional `--architecture-mode shadow` runs legacy manifest/plan input through the
 model-independent Core and writes observational artifacts under `core/`. Shadow success
 or failure never changes legacy validation, score, approval, run status, or exit code.
@@ -190,6 +196,6 @@ metadata only; it does not replace documentation review.
 3. 每一項 material claim 都必須可追到 exact evidence fragment；整份文件引用只能是 `insufficient`，不是來源支持。
 4. 現行 agent-native CLI 是相容層：agent 擷取 JSON，CLI 確定性地組裝、生成與驗證；`assemble` 不擷取也不自動修正。
 5. URL、GitBook、Markdown draft 與 scaffold 都是受限且可重現的證據輔助；draft/scaffold 絕不取代人或 agent 的來源覆核。
-6. 擷取 gate、validation 與 no-speculation 規則一律 fail closed；分數、diff、freshness 與 preparation 是品質訊號，不是另一個事實來源。
+6. 擷取 gate、validation 與 no-speculation 規則一律 fail closed；分數、diff、freshness 與 preparation 是品質訊號，不是另一個事實來源。文件未提供 Server URL、authentication details 或 sandbox credentials 時，保留為可持續管理的治理缺口，不單憑缺席判定為整合風險。
 7. Foundry 以候選、版本化 asset 與 `current` 管理契約；本機 review 工作台只在人工明確核准後升級，並如實標示 `needs_follow_up`。
 8. benchmark、release 與對外文件都是產品契約；來源快照缺失或測試 skip 都不能宣稱通過。

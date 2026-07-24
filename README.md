@@ -20,7 +20,7 @@ model-independent 邊界。下方 agent-native 流程仍是現行 CLI 的相容 
 
 - **OpenAPI 3.1 YAML**（`openapi.yaml`）
 - **繁體中文 Markdown 串接文件**（`api-guide.zh-TW.md`）
-- **離線人工核對頁**（`review.html`）
+- **離線人工核對頁**（`review.html`）：把缺漏、來源衝突與未確認事項列為可持續追蹤的治理項目，不把文件未提供 Server URL、authentication details 或 sandbox credentials 一律標成整合風險
 - **來源追溯資料**（`provenance.json`）
 - **驗證與缺漏報告**（`validation/report.{json,md}`）
 

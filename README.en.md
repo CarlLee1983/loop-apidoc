@@ -22,7 +22,7 @@ CLI compatibility adapter. See the
 
 - **OpenAPI 3.1 YAML** (`openapi.yaml`)
 - **Traditional Chinese Markdown integration guide** (`api-guide.zh-TW.md`)
-- **Offline manual review page** (`review.html`)
+- **Offline manual review page** (`review.html`): tracks gaps, source conflicts, and unverified facts as governance items; a document that omits a server URL, authentication details, or sandbox credentials is not automatically labelled an integration risk
 - **Source provenance** (`provenance.json`)
 - **Validation & gap report** (`validation/report.{json,md}`)
 

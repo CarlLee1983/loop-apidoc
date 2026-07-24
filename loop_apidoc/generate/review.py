@@ -79,7 +79,7 @@ def _metric(label: str, value: int | str, note: str) -> str:
     )
 
 
-def _risk_items(plan: NormalizationPlan) -> str:
+def _governance_items(plan: NormalizationPlan) -> str:
     groups = [
         ("缺漏", plan.missing_items),
         ("來源衝突", plan.source_conflicts),
@@ -97,7 +97,7 @@ def _risk_items(plan: NormalizationPlan) -> str:
             )
     if not rows:
         return '<p class="empty">目前沒有計畫層級的缺漏、衝突或未確認項目。</p>'
-    return '<ul class="risk-list">' + "\n".join(rows) + "</ul>"
+    return '<ul class="governance-list">' + "\n".join(rows) + "</ul>"
 
 
 def _source_rows(manifest: Manifest) -> str:
@@ -433,14 +433,14 @@ th {
   background: #fff6df;
   color: var(--accent-2);
 }
-.risk-list {
+.governance-list {
   display: grid;
   gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.risk-list li {
+.governance-list li {
   display: grid;
   grid-template-columns: auto minmax(96px, auto) 1fr;
   gap: 10px;
@@ -454,7 +454,7 @@ th {
 }
 @media (max-width: 720px) {
   .review-dashboard { width: min(100% - 20px, 1180px); padding-top: 20px; }
-  .risk-list li { grid-template-columns: 1fr; }
+  .governance-list li { grid-template-columns: 1fr; }
 }
 """
 
@@ -469,7 +469,7 @@ def build_review_html(
     source_count = len(manifest.local_sources) + len(manifest.url_sources)
     endpoint_count = sum(1 for endpoint in plan.endpoints if endpoint.path)
     webhook_count = len(webhook_items(plan))
-    gap_count = (
+    governance_item_count = (
         len(plan.missing_items)
         + len(plan.source_conflicts)
         + len(plan.unverified_items)
@@ -483,7 +483,7 @@ def build_review_html(
             _metric("Schema", len(_generated_schemas(result)), "components.schemas"),
             _metric("Auth", len(plan.security_schemes), "securitySchemes"),
             _metric("範例", example_count, "request examples"),
-            _metric("核對風險", gap_count, "缺漏／衝突／未確認"),
+            _metric("治理項目", governance_item_count, "缺漏／衝突／未確認"),
         ]
     )
     return f"""<!doctype html>
@@ -518,11 +518,11 @@ def build_review_html(
 
   <section class="panel">
     <header>
-      <h2>人工核對重點</h2>
-      <p class="muted">優先檢查缺漏、來源衝突與未確認項目；驗證細節請看 validation/report.md。</p>
+      <h2>規格治理清單</h2>
+      <p class="muted">結構化追蹤缺漏、來源衝突與未確認項目；這些是可持續管理的規格狀態，不代表每一項都是整合風險。驗證細節請看 validation/report.md。</p>
     </header>
     <div class="content">
-      {_risk_items(plan)}
+      {_governance_items(plan)}
     </div>
   </section>
 
