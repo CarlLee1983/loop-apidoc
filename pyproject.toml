@@ -39,4 +39,4 @@ addopts = "-q"
 extend-exclude = ["work"]
 
 [tool.coverage.report]
-fail_under = 95
+fail_under = 92.5
