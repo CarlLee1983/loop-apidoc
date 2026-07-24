@@ -10,6 +10,8 @@ from loop_apidoc.review.binding import (
     artifact_digests,
     build_binding,
     diff_subject,
+    evidence_for_diff_location,
+    load_exact_evidence_by_target,
     validation_subject,
 )
 from loop_apidoc.review.models import (
@@ -170,9 +172,19 @@ class ReviewWorkflow:
             raise ReviewInputError(str(exc)) from exc
         if decision is not None and decision.binding != binding:
             raise ReviewConflictError("saved review decision is stale for current evidence")
-        subjects = [validation_subject(issue) for issue in candidate.validation.issues]
+        exact_evidence = load_exact_evidence_by_target(candidate_dir)
+        subjects = [
+            validation_subject(issue, exact_evidence.get(issue.location))
+            for issue in candidate.validation.issues
+        ]
         if diff is not None:
-            subjects = [diff_subject(finding) for finding in diff.findings] + subjects
+            subjects = [
+                diff_subject(
+                    finding,
+                    evidence_for_diff_location(finding.location, exact_evidence),
+                )
+                for finding in diff.findings
+            ] + subjects
         return ReviewSnapshot(
             key=ReviewKey(docset_id=docset_id, candidate_run_id=candidate_run_id),
             binding=binding,

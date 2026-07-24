@@ -267,7 +267,7 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <h3 id="review-workbench"><code>review</code> — 本機比對、交棒與人工核准</h3>
 <pre><code class="language-bash">uv run loop-apidoc review --project ./my-api --docset payment --run ./output/&lt;run-id&gt;
 </code></pre>
-<p>在 <code>127.0.0.1</code> 啟動單使用者工作台；若 candidate 尚未存在，會自動匯入完成的 run。它與 Foundry 的 <code>current</code> 比對，第一版則建立 baseline review；畫面顯示驗證結果、版本差異與可交棒的主觀結論，並把結論寫成 candidate 的 <code>review/decision.json</code>。只有人工點選核准才更新 <code>current</code>。驗證失敗、差異或未處理 handoff 不會鎖死核准，但正式資產會標記為 <code>needs_follow_up</code>。工作台不呼叫模型，也不取代確定性驗證。</p>
+<p>在 <code>127.0.0.1</code> 啟動單使用者工作台；若 candidate 尚未存在，會自動匯入完成的 run。它與 Foundry 的 <code>current</code> 比對，第一版則建立 baseline review；畫面顯示驗證結果、版本差異與可交棒的主觀結論。若 candidate 包含 Core evidence，對應的 validation finding，以及能明確對應的 operation-level version diff，會顯示 relationship（<code>explicit_support</code>、<code>derived_support</code>、<code>contradicts</code> 或 <code>insufficient</code>）、fragment locator／digest 與保留的來源 excerpt，並連到 Core review artifacts。不足或矛盾證據會明確標示，不會被呈現為支持。結論會寫成 candidate 的 <code>review/decision.json</code>。只有人工點選核准才更新 <code>current</code>。驗證失敗、差異或未處理 handoff 不會鎖死核准，但正式資產會標記為 <code>needs_follow_up</code>。工作台不呼叫模型，也不取代確定性驗證。</p>
 <hr />
 <h2 id="_7">輸出結構</h2>
 <p>每次執行使用獨立 run directory:</p>

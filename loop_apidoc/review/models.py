@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -34,6 +34,21 @@ class ReviewSubjectKind(str, Enum):
     DIFF = "diff"
     VALIDATION = "validation"
     MANUAL = "manual"
+
+
+class ReviewEvidence(BaseModel):
+    """A Core evidence relationship attached to a review subject."""
+
+    claim_identity: str
+    claim_path: str
+    relationship: Literal[
+        "explicit_support", "derived_support", "contradicts", "insufficient"
+    ]
+    source_id: str
+    source_locator: str
+    fragment_locator: dict[str, Any]
+    fragment_digest: str
+    normalized_excerpt: str | None = None
 
 
 class ReviewDisposition(str, Enum):
@@ -76,6 +91,7 @@ class ReviewSubject(BaseModel):
     kind: ReviewSubjectKind
     location: str
     summary: str
+    evidence: list[ReviewEvidence] = Field(default_factory=list)
 
 
 class ReviewItem(BaseModel):
