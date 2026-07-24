@@ -237,6 +237,19 @@ the Canonical API Contract IR, then implement protocol-specific adapters and
 projections behind that interface. Supporting a second protocol is justified
 only when there are real source sets and downstream consumers for it.
 
+**Design accepted (2026-07-24):**
+[Protocol Expansion Design](PROTOCOL_EXPANSION_DESIGN.md) defines the staged
+Core seam, output artifact contract, HTTP parity gate, and the separate
+GraphQL/AsyncAPI vertical slices. Implementation begins with the seam and its
+HTTP compatibility proof; the two new formats remain gated on real source sets
+and confirmed downstream consumers.
+
+**Progress (2026-07-24):** the gate was satisfied with a GitHub public GraphQL
+schema and a pinned OGC AsyncAPI conformance example, each paired with a named
+tooling consumer. Domain now has separate GraphQL SDL and AsyncAPI 3 projection
+adapters for minimal source-backed slices. This does not yet change legacy
+`assemble`, generated run artifacts, or the existing validation/governance flow.
+
 ## Decision rule
 
 Start with priority 1. It adds the evidence precision that every subsequent

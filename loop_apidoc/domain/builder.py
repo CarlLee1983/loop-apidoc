@@ -15,6 +15,7 @@ from loop_apidoc.domain.models import (
     Gap,
     GroundedApiContract,
     IntegrationMechanic,
+    Interaction,
     Operation,
     OperationalConstraint,
     Schema,
@@ -44,6 +45,7 @@ class ContractClaimInput:
 
 _MODEL_BY_KIND = {
     "environment": Environment,
+    "interaction": Interaction,
     "operation": Operation,
     "webhook": Webhook,
     "schema": Schema,
@@ -54,6 +56,7 @@ _MODEL_BY_KIND = {
 }
 _FIELD_BY_KIND = {
     "environment": "environments",
+    "interaction": "interactions",
     "operation": "operations",
     "webhook": "webhooks",
     "schema": "schemas",

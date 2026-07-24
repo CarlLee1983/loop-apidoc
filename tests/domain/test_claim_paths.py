@@ -76,6 +76,48 @@ def test_scalar_claim_uses_root_path():
     assert claim_value_at("custom", "USD", "") == "USD"
 
 
+def test_interaction_paths_are_specific_to_the_explicit_transport_binding():
+    graphql = {
+        "identity": "interaction:graphql:query:product",
+        "mode": "request_reply",
+        "binding": {
+            "transport": "graphql",
+            "operation_kind": "query",
+            "root_field": "product",
+        },
+    }
+    asyncapi = {
+        "identity": "interaction:asyncapi:orders.status.changed",
+        "mode": "subscribe",
+        "binding": {
+            "transport": "asyncapi",
+            "channel": "orders.status.changed",
+            "direction": "subscribe",
+            "message_name": "OrderStatusChanged",
+        },
+    }
+
+    assert material_claim_paths("interaction", graphql) == (
+        "/binding/operation_kind",
+        "/binding/root_field",
+        "/binding/transport",
+        "/identity",
+        "/mode",
+    )
+    assert material_claim_paths("interaction", asyncapi) == (
+        "/binding/channel",
+        "/binding/direction",
+        "/binding/message_name",
+        "/binding/transport",
+        "/identity",
+        "/mode",
+    )
+    assert (
+        claim_value_at("interaction", asyncapi, "/binding/channel")
+        == "orders.status.changed"
+    )
+
+
 def test_unknown_path_fails_closed():
     with pytest.raises(ClaimPathError, match="unknown material claim path"):
         claim_value_at("operation", {"method": "GET", "path": "/"}, "/summary")

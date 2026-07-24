@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any, Literal
+
+from pydantic import Field
 
 from loop_apidoc.domain.base import FrozenModel as FrozenModel
 from loop_apidoc.domain.evidence import SupportRelationshipType
@@ -56,6 +58,77 @@ class Response(FrozenModel):
     status_code: str
     description: str | None = None
     schema_ref: str | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class InteractionMode(str, Enum):
+    REQUEST_REPLY = "request_reply"
+    PUBLISH = "publish"
+    SUBSCRIBE = "subscribe"
+    STREAM = "stream"
+
+
+class HttpTransportBinding(FrozenModel):
+    """HTTP-specific details carried by a protocol-neutral interaction."""
+
+    transport: Literal["http"] = "http"
+    method: str
+    path: str
+    server: str | None = None
+    parameters: tuple[Parameter, ...] = ()
+    request_schema_ref: str | None = None
+    responses: tuple[Response, ...] = ()
+    security: tuple[str, ...] = ()
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class GraphqlOperationKind(str, Enum):
+    QUERY = "query"
+    MUTATION = "mutation"
+    SUBSCRIPTION = "subscription"
+
+
+class GraphqlTransportBinding(FrozenModel):
+    """GraphQL operation details carried by a protocol-neutral interaction."""
+
+    transport: Literal["graphql"] = "graphql"
+    operation_kind: GraphqlOperationKind
+    root_field: str
+    output_schema_ref: str | None = None
+    output_required: bool | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class AsyncApiDirection(str, Enum):
+    PUBLISH = "publish"
+    SUBSCRIBE = "subscribe"
+
+
+class AsyncApiTransportBinding(FrozenModel):
+    """AsyncAPI message details carried by a protocol-neutral interaction."""
+
+    transport: Literal["asyncapi"] = "asyncapi"
+    channel: str
+    channel_address: str | None = None
+    direction: AsyncApiDirection
+    message_name: str
+    payload_schema_ref: str | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+TransportBinding = Annotated[
+    HttpTransportBinding | GraphqlTransportBinding | AsyncApiTransportBinding,
+    Field(discriminator="transport"),
+]
+
+
+class Interaction(FrozenModel):
+    """A source-grounded interaction with a transport-specific binding."""
+
+    identity: str
+    mode: InteractionMode
+    binding: TransportBinding
+    summary: str | None = None
     evidence: tuple[EvidenceBinding, ...] = ()
 
 
@@ -152,6 +225,7 @@ class WaiverRecord(FrozenModel):
 class GroundedApiContract(FrozenModel):
     metadata: ContractMetadata
     environments: tuple[Environment, ...] = ()
+    interactions: tuple[Interaction, ...] = ()
     operations: tuple[Operation, ...] = ()
     webhooks: tuple[Webhook, ...] = ()
     schemas: tuple[Schema, ...] = ()

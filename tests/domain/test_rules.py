@@ -5,7 +5,12 @@ from loop_apidoc.domain.models import (
     ContractClaim,
     ContractMetadata,
     EvidenceBinding,
+    GraphqlOperationKind,
+    GraphqlTransportBinding,
     GroundedApiContract,
+    HttpTransportBinding,
+    Interaction,
+    InteractionMode,
     Operation,
     Response,
 )
@@ -50,6 +55,46 @@ def test_rules_report_dangling_schema_and_missing_evidence():
         "OPERATION_EVIDENCE_REQUIRED",
         "SCHEMA_REFERENCE_UNRESOLVED",
     }
+
+
+def test_rules_apply_response_and_evidence_requirements_to_http_interactions():
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        interactions=(
+            Interaction(
+                identity="interaction:http:GET:/health",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(method="GET", path="/health"),
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert {finding.code for finding in findings} == {
+        "INTERACTION_EVIDENCE_REQUIRED",
+        "INTERACTION_RESPONSE_REQUIRED",
+    }
+
+
+def test_rules_apply_common_evidence_requirement_to_graphql_interactions():
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        interactions=(
+            Interaction(
+                identity="interaction:graphql:query:product",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=GraphqlTransportBinding(
+                    operation_kind=GraphqlOperationKind.QUERY,
+                    root_field="product",
+                ),
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert {finding.code for finding in findings} == {"INTERACTION_EVIDENCE_REQUIRED"}
 
 
 def test_fragment_id_only_binding_does_not_satisfy_semantic_rule():
