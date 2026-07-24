@@ -53,6 +53,38 @@ def _operation_paths(value: dict[str, Any]) -> dict[str, Any]:
     return paths
 
 
+def _interaction_paths(value: dict[str, Any]) -> dict[str, Any]:
+    paths: dict[str, Any] = {}
+    for name in ("identity", "mode", "summary"):
+        _put(paths, f"/{name}", value.get(name))
+    binding = value.get("binding")
+    if not isinstance(binding, dict):
+        return paths
+    transport = binding.get("transport")
+    _put(paths, "/binding/transport", transport)
+    if transport == "http":
+        for path, item in _operation_paths(binding).items():
+            paths[f"/binding{path}"] = item
+    elif transport == "graphql":
+        for name in (
+            "operation_kind",
+            "root_field",
+            "output_schema_ref",
+            "output_required",
+        ):
+            _put(paths, f"/binding/{name}", binding.get(name))
+    elif transport == "asyncapi":
+        for name in (
+            "channel",
+            "channel_address",
+            "direction",
+            "message_name",
+            "payload_schema_ref",
+        ):
+            _put(paths, f"/binding/{name}", binding.get(name))
+    return paths
+
+
 def _environment_paths(value: dict[str, Any]) -> dict[str, Any]:
     paths: dict[str, Any] = {}
     _put(paths, "/name", value.get("name"))
@@ -125,6 +157,7 @@ def _operational_paths(value: dict[str, Any]) -> dict[str, Any]:
 
 
 _PATH_HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
+    "interaction": _interaction_paths,
     "operation": _operation_paths,
     "schema": _schema_paths,
     "environment": _environment_paths,
@@ -151,4 +184,3 @@ def claim_value_at(claim_kind: str, value: Any, path: str) -> Any:
     if path not in values:
         raise ClaimPathError(f"unknown material claim path: {path}")
     return values[path]
-

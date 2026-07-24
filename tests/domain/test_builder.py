@@ -98,3 +98,32 @@ def test_builder_attaches_parameter_binding_to_exact_child():
     assert binding.relationship_id == relationship.id
     assert binding.claim_path == relationship.claim_path
     assert binding.relationship == SupportRelationshipType.EXPLICIT_SUPPORT
+
+
+def test_builder_routes_a_supported_http_interaction_into_the_canonical_contract():
+    contract = build_grounded_contract(
+        _metadata(),
+        (
+            ContractClaimInput(
+                identity="interaction:http:GET:/health",
+                claim_kind="interaction",
+                value={
+                    "identity": "interaction:http:GET:/health",
+                    "mode": "request_reply",
+                    "binding": {
+                        "transport": "http",
+                        "method": "GET",
+                        "path": "/health",
+                        "responses": [{"status_code": "200", "description": "OK"}],
+                    },
+                },
+                status=ClaimStatus.SUPPORTED,
+                evidence_refs=("fragment-health",),
+            ),
+        ),
+    )
+
+    assert contract.interactions[0].binding.path == "/health"
+    assert contract.interactions[0].evidence == (
+        EvidenceBinding(fragment_id="fragment-health"),
+    )

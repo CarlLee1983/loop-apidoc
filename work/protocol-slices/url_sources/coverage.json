@@ -1,0 +1,32 @@
+{
+  "entry_url": "https://docs.github.com/public/fpt/schema.docs.graphql",
+  "confirmed_by_user": true,
+  "expected": [
+    {
+      "url": "https://docs.github.com/public/fpt/schema.docs.graphql",
+      "title": "GitHub GraphQL public schema",
+      "source": "user"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/opengeospatial/ogcapi-environmental-data-retrieval/88ed4ddee449db2ea60359a61eb3a1dff6a46c24/extensions/pubsub/standard/examples/yaml/asyncapi.yaml",
+      "title": "OGC API EDR Pub/Sub AsyncAPI conformance example",
+      "source": "user"
+    }
+  ],
+  "results": [
+    {
+      "url": "https://docs.github.com/public/fpt/schema.docs.graphql",
+      "status": "fetched",
+      "file": "graphql/github.schema.graphql",
+      "method": "direct",
+      "note": "Official public schema snapshot; see adjacent source sidecar for digest."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/opengeospatial/ogcapi-environmental-data-retrieval/88ed4ddee449db2ea60359a61eb3a1dff6a46c24/extensions/pubsub/standard/examples/yaml/asyncapi.yaml",
+      "status": "fetched",
+      "file": "asyncapi/ogc-edr-pubsub.asyncapi.yaml",
+      "method": "direct",
+      "note": "Official OGC conformance-example snapshot; not a production integration contract."
+    }
+  ]
+}

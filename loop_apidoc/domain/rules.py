@@ -8,7 +8,12 @@ from loop_apidoc.domain.identity import (
     DomainIdentityError,
     canonical_operation_identity,
 )
-from loop_apidoc.domain.models import ClaimStatus, FrozenModel, GroundedApiContract
+from loop_apidoc.domain.models import (
+    ClaimStatus,
+    FrozenModel,
+    GroundedApiContract,
+    HttpTransportBinding,
+)
 
 
 class DomainFinding(FrozenModel):
@@ -100,6 +105,38 @@ class ApiDomainRulePack(FrozenModel):
                             f"security:{ref}",
                         )
                     )
+
+        for index, interaction in enumerate(contract.interactions):
+            location = f"interactions[{index}]"
+            binding = interaction.binding
+            identity = interaction.identity
+            if isinstance(binding, HttpTransportBinding):
+                try:
+                    identity = canonical_operation_identity(
+                        binding.method, binding.path
+                    )
+                except DomainIdentityError as exc:
+                    findings.append(
+                        _finding("INTERACTION_IDENTITY_INVALID", str(exc), location)
+                    )
+                if interaction.mode.value == "request_reply" and not binding.responses:
+                    findings.append(
+                        _finding(
+                            "INTERACTION_RESPONSE_REQUIRED",
+                            "request/reply interaction has no response",
+                            location,
+                            identity,
+                        )
+                    )
+            if not interaction.evidence:
+                findings.append(
+                    _finding(
+                        "INTERACTION_EVIDENCE_REQUIRED",
+                        "interaction has no evidence binding",
+                        location,
+                        identity,
+                    )
+                )
 
         for index, schema in enumerate(contract.schemas):
             for field in schema.fields:
