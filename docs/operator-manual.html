@@ -201,7 +201,7 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
   --observations &lt;observations.json&gt; --source-set &lt;名稱&gt; --output ./work/source-quality [--base-manifest &lt;舊 manifest&gt;]
 </code></pre>
 <p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
-<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> — 來源新鮮度排程閘</h3>
+<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> / <code>governance-scan</code> — 來源新鮮度與治理觸發</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 
 uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json \
@@ -224,6 +224,13 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <code>check-freshness</code>相同的比對,單一項目抓取或讀取失敗只會把該項標記為 <code>error</code> 並記錄原因,不會中止整批巡檢;但 watchlist 檔案本身格式錯誤(非合法 JSON 或不符 schema)會直接失敗。彙總退出碼:
 <code>0</code>=全部未變、<code>1</code>=有任一已變、<code>2</code>=有任一無法判定或發生錯誤。加上 <code>--report-dir</code> 時另外寫出
 <code>freshness-scan.{json,md}</code>;未帶則不寫檔。</p>
+<p>要把批次結果轉成受控的人工處理觸發，使用 <code>governance-scan</code>：</p>
+<pre><code class="language-bash">uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json \
+  [--json] [--report-dir ./work/governance]
+</code></pre>
+<p>來源變動會產生 <code>review_required</code>；無法判定或讀取錯誤則是 <code>attention_required</code>。
+命令只會輸出 <code>governance-trigger.{json,md}</code>，不會重新擷取、生成、匯入 Foundry 或核准契約。退出碼：
+<code>0</code>=no action、<code>1</code>=review required、<code>2</code>=attention required。</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>
