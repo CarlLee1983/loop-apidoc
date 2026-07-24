@@ -726,7 +726,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="lane-title">Entry</div>
         <button type="button" class="module-card" data-module="cli">
           <div class="module-name">cli.py <span class="pill prep">Entry</span></div>
-          <div class="module-role">Typer entry point exposing source, URL, quality-assessment, assembly, Foundry, and local review-workbench commands.</div>
+          <div class="module-role">Typer entry point exposing source, URL, quality-assessment, freshness/governance, assembly, Foundry, and local review-workbench commands.</div>
         </button>
         <div class="command-list" aria-label="public commands">
           <div class="command-chip">preprocess</div>
@@ -745,6 +745,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">record-fingerprint</div>
           <div class="command-chip">check-freshness</div>
           <div class="command-chip">check-freshness-batch</div>
+          <div class="command-chip">governance-scan</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -1045,10 +1046,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "freshness/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "A cheap scheduled freshness gate, so \"did the source change?\" can be answered without re-running the whole pipeline. record-fingerprint writes a baseline from a completed or adopted run-dir: sha256 for local sources, one version signal per URL source (OpenAPI compares info.version; HTML uses ETag/Last-Modified, then falls back to a body sha256). It refuses to overwrite without --force. check-freshness recomputes each source's current signal and compares it to the baseline; check-freshness-batch fans the same gate across many docsets listed in a freshness-watchlist.json and aggregates one freshness-scan report. The exit codes are the contract: 0 unchanged (skip the re-parse), 1 changed (re-run extraction), 2 inconclusive (a source could not be fetched or read). The batch keeps the same aggregate semantics; a per-item error is captured in that item's result rather than aborting the batch, but a malformed watchlist fails loud.",
+      description: "A cheap scheduled freshness gate, so \"did the source change?\" can be answered without re-running the whole pipeline. record-fingerprint writes a baseline from a completed or adopted run-dir: sha256 for local sources, one version signal per URL source (OpenAPI compares info.version; HTML uses ETag/Last-Modified, then falls back to a body sha256). It refuses to overwrite without --force. check-freshness recomputes each source's current signal and compares it to the baseline; check-freshness-batch fans the same gate across many docsets listed in a freshness-watchlist.json and aggregates one freshness-scan report. governance-scan turns that batch result into a bounded review/attention trigger; optional --snapshot-dir retains only the same-scan changed raw bytes in an immutable, content-addressed evidence pack, avoiding a second fetch. It never re-extracts, generates, imports, or approves a contract. The exit codes are the contract: 0 unchanged (skip the re-parse), 1 changed (re-run extraction), 2 inconclusive (a source could not be fetched or read). The batch keeps the same aggregate semantics; a per-item error is captured in that item's result rather than aborting the batch, but a malformed watchlist fails loud.",
       seam: "build_fingerprint(run_dir) / check_freshness(fingerprint) / load_watchlist(path) / scan_watchlist(watchlist)",
       inputs: "manifest and URL coverage of a completed run-dir, the source-fingerprint.json baseline, freshness-watchlist.json",
-      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}",
+      outputs: "source-fingerprint.json, freshness-report.{json,md}, freshness-scan.{json,md}, governance-trigger.{json,md}; optionally governance-snapshot.json plus content-addressed changed-source bytes",
       sideEffect: "File I/O: record.py and report.py write files; signals.py does network reads but writes nothing, and check.py / batch.py are pure orchestration"
     },
     "source-facts": {
