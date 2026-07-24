@@ -6,7 +6,8 @@
     "tag:next": "git fetch --tags origin && tagsmith next",
     "tag:create": "git fetch --tags origin && tagsmith create --push",
     "release:prepare": "uv run python scripts/release.py prepare",
-    "release:tag": "uv run python scripts/release.py tag"
+    "release:tag": "uv run python scripts/release.py tag",
+    "release:github": "uv run python scripts/release.py github"
   },
   "devDependencies": {
     "@carllee1983/tagsmith": "^0.3.1"

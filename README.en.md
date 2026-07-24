@@ -139,7 +139,7 @@ uv sync
 uv run loop-apidoc --help
 ```
 
-### Release tags
+### Complete release publication
 
 The project uses [Tagsmith](https://github.com/CarlLee1983/Tagsmith) and a
 release script to make versioning repeatable. Enter a version once: preparation
@@ -153,11 +153,15 @@ npm run release:prepare -- --version 0.11.0 --summary "Add release workflow"
 # Complete release notes, run validation, and commit the metadata.
 git add . && git commit -m "release: publish 0.11.0"
 
-# Read the committed package version, push HEAD to origin/main, then create and push the matching tag.
+# Read the committed package version, push HEAD to origin/main, create and push the matching tag,
+# then create the GitHub Release from its committed release notes.
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 
-# Preview the tag operation only.
+# Preview the tag operation only; this never writes a GitHub Release.
 npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+
+# Recovery only: publish the GitHub Release for an already existing Tagsmith tag.
+npm run release:github
 ```
 
 The lower-level Tagsmith commands remain available for independent inspection:
@@ -168,11 +172,24 @@ npm run tag:next -- --level minor
 ```
 
 `release:tag` intentionally has no bump level, preventing the git tag from
-diverging from the package version. A real run pushes `HEAD` to `origin/main`
-before Tagsmith validates format, ordering, duplicates, and tag push safety.
-Tagsmith—not GitHub Actions—is the tag publisher. CI validates pushes and pull
-requests; it does not create tags. Monitor its result after the release push
-and never force-move a published tag to compensate for a failed check.
+diverging from the package version. A real run checks authenticated GitHub CLI
+access before it can push or tag, then requires the committed
+`docs/RELEASE_NOTES_<version>.md`, pushes `HEAD` to `origin/main`, asks Tagsmith
+to validate and publish the annotated tag, then uses GitHub CLI to create the
+matching non-draft GitHub Release from those notes. GitHub must
+verify the tag already exists, so it can never create a competing tag itself.
+Tagsmith—not GitHub Actions or GitHub CLI—is the tag publisher. Use
+`release:github` only to repair a failed final GitHub-Release step for an
+already published tag. Monitor CI after the push and release; handle a failing
+check with a new release, never by force-moving a published tag.
+
+Record the printed Release URL, then verify the `main` CI run before declaring
+the publication complete:
+
+```bash
+gh run list --branch main --limit 1
+gh run watch <run-id> --exit-status
+```
 
 ---
 

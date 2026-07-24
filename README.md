@@ -134,7 +134,7 @@ uv sync
 uv run loop-apidoc --help
 ```
 
-### 發布 tag
+### 完整發布流程
 
 專案以 [Tagsmith](https://github.com/CarlLee1983/Tagsmith) 與 release script 固定版本化流程。版本
 只輸入一次；準備命令會同步 Python／plugin／文件版本、更新 lock，並建立不可覆寫的 release-note
@@ -147,11 +147,15 @@ npm run release:prepare -- --version 0.11.0 --summary "新增發佈流程"
 # 補齊 release notes，執行完整驗證後，提交 metadata
 git add . && git commit -m "release: publish 0.11.0"
 
-# 讀取 pyproject.toml 的已提交版本，先推送 HEAD 到 origin/main，再以 Tagsmith 建立相同 tag
+# 讀取 pyproject.toml 的已提交版本，先推送 HEAD 到 origin/main，以 Tagsmith 建立相同 tag，
+# 再依已提交的 release notes 建立 GitHub Release
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 
-# 只預覽 tag 動作
+# 只預覽 tag 動作；不會寫入 GitHub Release
 npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+
+# 僅限補救：已由 Tagsmith 發布 tag，但最後 GitHub Release 步驟失敗時使用
+npm run release:github
 ```
 
 低階 Tagsmith 指令仍可用於單獨檢查與預覽：
@@ -161,11 +165,20 @@ npm ci
 npm run tag:next -- --level minor
 ```
 
-`release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；正式執行會先推送
-`HEAD` 至 `origin/main`，再由 Tagsmith 負責 tag 格式、順序、重複與推送保護。
-Tagsmith（不是 GitHub Actions）是 tag 發布者；CI 只驗證 push 與 PR，不會建立 tag。
-release push 後應觀察 CI 結果；檢查失敗時以後續修正與新 release 處理，絕不 force-move
-已發布 tag。
+`release:tag` 不接受 bump level，以避免 tag 與 package version 分岔；正式執行會先確認 GitHub CLI
+的登入權限，未通過就不會 push 或打 tag，接著確認已提交的 `docs/RELEASE_NOTES_<version>.md`，推送
+`HEAD` 至 `origin/main`，再由 Tagsmith 負責 tag 格式、順序、重複與推送保護，最後透過 GitHub CLI
+依 release notes 建立相同版本的非草稿 GitHub Release。GitHub 必須驗證 tag 已存在，因此不能自行建立
+競爭的 tag。Tagsmith（不是 GitHub Actions 或 GitHub CLI）是唯一 tag 發布者；`release:github` 僅在
+已發布 tag 的最後 GitHub Release 步驟失敗時作補救。release push 與 release 建立後都要觀察 CI；檢查
+失敗時以後續修正與新 release 處理，絕不 force-move 已發布 tag。
+
+記錄命令輸出的 Release URL，接著確認 `main` push 觸發的 CI 才算完整發布：
+
+```bash
+gh run list --branch main --limit 1
+gh run watch <run-id> --exit-status
+```
 
 ---
 
