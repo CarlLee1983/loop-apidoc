@@ -417,7 +417,7 @@ uv run loop-apidoc foundry [init|import|approve|list|current] --help
 uv run loop-apidoc review --project ./my-api --docset payment --run ./output/<run-id>
 ```
 
-在 `127.0.0.1` 啟動單使用者工作台，必要時自動把完成的 run 匯入 Foundry candidate，並與目前 `current` 資產比對；第一版則建立 baseline review。畫面呈現驗證結果、版本差異與可記錄的主觀結論，寫入 candidate 的 `review/decision.json` 作為給後續工具或 agent 讀取的結構化 handoff。按下核准才更新 `current`；驗證失敗、差異或未完成 handoff 不會鎖死核准，但會把資產狀態標成 `needs_follow_up`。工作台不呼叫模型，也不取代驗證。
+在 `127.0.0.1` 啟動單使用者工作台，必要時自動把完成的 run 匯入 Foundry candidate，並與目前 `current` 資產比對；第一版則建立 baseline review。畫面呈現驗證結果、版本差異與可記錄的主觀結論。若 candidate 帶有 Core evidence，對應的 validation finding，以及能明確對應的 operation-level version diff，都會直接顯示 relationship（`explicit_support`、`derived_support`、`contradicts` 或 `insufficient`）、fragment locator／digest 與保留的來源 excerpt，並連到 Core review artifacts；不足或矛盾證據會明確標示，不會被呈現為支持。結論寫入 candidate 的 `review/decision.json` 作為給後續工具或 agent 讀取的結構化 handoff。按下核准才更新 `current`；驗證失敗、差異或未完成 handoff 不會鎖死核准，但會把資產狀態標成 `needs_follow_up`。工作台不呼叫模型，也不取代驗證。
 
 ### `preprocess` — PDF 轉高保真 markdown(可選)
 

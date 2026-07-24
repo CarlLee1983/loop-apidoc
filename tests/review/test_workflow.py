@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 import pytest
@@ -61,6 +62,43 @@ def _write_needs_attention_score(run: Path) -> None:
     )
 
 
+def _write_core_evidence(run: Path, *, target: str) -> None:
+    core_dir = run / "core"
+    core_dir.mkdir()
+    (core_dir / "evidence.json").write_text(json.dumps({
+        "source_set_id": "source-set",
+        "source_set_version": "1",
+        "artifacts": [],
+        "fragments": [{
+            "id": "fragment-1",
+            "source_artifact_id": "source-1",
+            "locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+            "fragment_digest": "a" * 64,
+            "normalized_excerpt": "POST /ping requires an API key.",
+            "precision": "exact",
+        }],
+    }), encoding="utf-8")
+    projection_dir = core_dir / "projections"
+    projection_dir.mkdir()
+    (projection_dir / "review-data.json").write_text(json.dumps({
+        "contract": {},
+        "relationships": [{
+            "target": target,
+            "claim_identity": "operation:/ping:get",
+            "claim_path": "/method",
+            "relationship_id": "relationship-1",
+            "relationship": "explicit_support",
+            "fragment_id": "fragment-1",
+            "fragment_locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+            "fragment_digest": "digest-1",
+            "source_artifact_id": "source-1",
+            "source_artifact_digest": "source-digest",
+            "source_id": "manual.md",
+            "source_locator": "manual.md",
+        }],
+    }), encoding="utf-8")
+
+
 def test_open_review_imports_valid_run_and_uses_baseline_without_current(tmp_path: Path) -> None:
     workflow = _workflow(tmp_path)
     run = _run(tmp_path, "20260723T120000.000000Z")
@@ -71,6 +109,90 @@ def test_open_review_imports_valid_run_and_uses_baseline_without_current(tmp_pat
     assert snapshot.diff is None
     assert paths.candidate_dir(tmp_path, "vendor-payments", run.name).is_dir()
     assert snapshot.binding.base_asset_id is None
+
+
+def test_open_review_attaches_verified_exact_evidence_to_matching_validation_subject(
+    tmp_path: Path,
+) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z", validation_ok=False)
+    core_dir = run / "core"
+    core_dir.mkdir()
+    (core_dir / "evidence.json").write_text(
+        """{
+  "source_set_id": "source-set",
+  "source_set_version": "1",
+  "artifacts": [],
+  "fragments": [{
+    "id": "fragment-1",
+    "source_artifact_id": "source-1",
+    "locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+    "fragment_digest": "a".repeat(64),
+    "normalized_excerpt": "POST /ping requires an API key.",
+    "precision": "exact"
+  }]
+}""".replace('"a".repeat(64)', '"' + "a" * 64 + '"'),
+        encoding="utf-8",
+    )
+    projection_dir = core_dir / "projections"
+    projection_dir.mkdir()
+    (projection_dir / "review-data.json").write_text(
+        """{
+  "contract": {},
+  "relationships": [{
+    "target": "paths./ping.get",
+    "claim_identity": "operation:/ping:get",
+    "claim_path": "/method",
+    "relationship_id": "relationship-1",
+    "relationship": "explicit_support",
+    "fragment_id": "fragment-1",
+    "fragment_locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+    "fragment_digest": "digest-1",
+    "source_artifact_id": "source-1",
+    "source_artifact_digest": "source-digest",
+    "source_id": "manual.md",
+    "source_locator": "manual.md"
+  }, {
+    "target": "paths./ping.get",
+    "claim_identity": "operation:/ping:get",
+    "claim_path": "/security",
+    "relationship_id": "relationship-2",
+    "relationship": "insufficient",
+    "fragment_id": "fragment-1",
+    "fragment_locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+    "fragment_digest": "digest-1",
+    "source_artifact_id": "source-1",
+    "source_artifact_digest": "source-digest",
+    "source_id": "manual.md",
+    "source_locator": "manual.md"
+  }]
+}""",
+        encoding="utf-8",
+    )
+
+    snapshot = workflow.open_review(_request(run))
+
+    subject = snapshot.subjects[0]
+    assert subject.location == "paths./ping.get"
+    assert [item.model_dump() for item in subject.evidence] == [{
+        "claim_identity": "operation:/ping:get",
+        "claim_path": "/method",
+        "relationship": "explicit_support",
+        "source_id": "manual.md",
+        "source_locator": "manual.md",
+        "fragment_locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+        "fragment_digest": "a" * 64,
+        "normalized_excerpt": "POST /ping requires an API key.",
+    }, {
+        "claim_identity": "operation:/ping:get",
+        "claim_path": "/security",
+        "relationship": "insufficient",
+        "source_id": "manual.md",
+        "source_locator": "manual.md",
+        "fragment_locator": {"kind": "line_range", "start_line": 12, "end_line": 14},
+        "fragment_digest": "a" * 64,
+        "normalized_excerpt": "POST /ping requires an API key.",
+    }]
 
 
 def test_open_review_reopens_same_candidate_but_rejects_changed_collision(tmp_path: Path) -> None:
@@ -99,6 +221,7 @@ def test_second_review_compares_candidate_against_current_asset(tmp_path: Path) 
     openapi = yaml.safe_load((second_run / "openapi.yaml").read_text(encoding="utf-8"))
     openapi["paths"]["/refunds"] = {"get": {"responses": {"200": {"description": "ok"}}}}
     (second_run / "openapi.yaml").write_text(yaml.safe_dump(openapi), encoding="utf-8")
+    _write_core_evidence(second_run, target="paths./refunds.get")
 
     snapshot = workflow.open_review(_request(second_run))
 
@@ -106,6 +229,9 @@ def test_second_review_compares_candidate_against_current_asset(tmp_path: Path) 
     assert snapshot.diff is not None
     assert snapshot.diff.summary["additive"] == 1
     assert snapshot.binding.base_asset_id is not None
+    diff_subject = next(subject for subject in snapshot.subjects if subject.kind is ReviewSubjectKind.DIFF)
+    assert diff_subject.location == "GET /refunds"
+    assert diff_subject.evidence[0].claim_path == "/method"
 
 
 def test_save_decision_rejects_unknown_subject_and_persists_valid_handoff(tmp_path: Path) -> None:

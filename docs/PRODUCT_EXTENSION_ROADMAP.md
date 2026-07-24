@@ -1,6 +1,6 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence v1 boundary slice delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
+**Status:** In progress — exact-evidence v1 boundary slice and the first evidence-first review slice are delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
 **Updated:** 2026-07-24
 
 ## Purpose
@@ -156,6 +156,18 @@ insufficient evidence as such, rather than hiding it behind a confidence score.
 Structured review decisions and policy-bound, expiring waivers may be added,
 but a waiver must never convert unsupported source material into a supported
 claim.
+
+**Progress (2026-07-24):** the local Foundry review workbench now attaches
+Core evidence relationships to validation findings with the same OpenAPI target.
+Reviewers can expand `explicit_support`, `derived_support`, `contradicts`, or
+`insufficient` relationships
+to see the exact fragment locator, normalized-fragment digest, and retained
+excerpt, and can open the retained `core/evidence.json` and
+`core/projections/review-data.json` artifacts. These artifacts participate in
+the review binding digest, so an existing decision becomes stale if its
+evidence changes. Operation-level HTTP diffs map to evidence only when their
+method/path location has one exact Core target; field-level or otherwise
+ambiguous diffs deliberately remain unlinked. Waivers remain a future slice.
 
 ### 4. Downstream engineering enforcement
 

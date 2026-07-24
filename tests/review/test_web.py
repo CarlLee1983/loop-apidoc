@@ -69,6 +69,9 @@ def test_workbench_page_restores_saved_decisions_and_accepts_manual_items() -> N
     assert "Candidate, current, and provenance artifacts" in page
     assert "renderArtifacts(s)" in page
     assert "binding:snapshot.binding" in page
+    assert "renderEvidence(subject.evidence)" in page
+    assert "normalized_excerpt" in page
+    assert "core/projections/review-data.json" in page
 
 
 def test_loopback_adapter_serves_fixed_snapshot_and_protects_writes(tmp_path: Path) -> None:
