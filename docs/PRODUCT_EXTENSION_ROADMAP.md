@@ -1,7 +1,7 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence v1 boundary slice delivered; Core graduation remains proposed.
-**Updated:** 2026-07-23
+**Status:** In progress — exact-evidence v1 boundary slice delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
+**Updated:** 2026-07-24
 
 ## Purpose
 
@@ -179,12 +179,11 @@ approval.
 
 ## Near-term maintenance item
 
-`preprocess` currently flattens recursive source paths into one output
-directory. Same-basename inputs from different subdirectories, or a PDF and
-Markdown file with the same basename, can collide. Preserve relative paths or
-introduce a deterministic collision-safe naming strategy, then add focused
-fixtures. This is a low-risk maintenance task rather than a product-priority
-initiative.
+**Delivered (2026-07-24):** `preprocess` now preserves source-relative paths for
+directory inputs, and writes `guide.pdf` as `guide.pdf.md`; this avoids both
+cross-directory basename collisions and PDF/Markdown sibling collisions. It
+validates the complete output mapping before writing and fails clearly if a
+remaining derived-name collision exists.
 
 ## Defer protocol expansion until its seam is designed
 

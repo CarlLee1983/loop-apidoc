@@ -163,7 +163,7 @@ uv run loop-apidoc --help
 <h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (optional)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). <code>--sources</code> can also name one file, in which case only that file is processed. Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
+<p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Directory input preserves source-relative paths; <code>guide.pdf</code> becomes <code>guide.pdf.md</code>, avoiding a collision with a sibling <code>guide.md</code>. <code>--sources</code> can also name one file, in which case only that file is processed. Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
 <h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--output manifest.json]
 </code></pre>

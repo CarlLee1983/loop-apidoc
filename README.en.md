@@ -429,7 +429,7 @@ Starts a single-user workbench on `127.0.0.1`. It automatically imports a comple
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-Uses pymupdf4llm to convert every PDF in the `--sources` directory into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). `--sources` can also name one file, in which case only that file is processed. Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
+Uses pymupdf4llm to convert every PDF in the `--sources` directory into markdown that preserves tables and heading structure (non-PDF text sources are copied verbatim). Directory input preserves source-relative paths; a PDF named `guide.pdf` becomes `guide.pdf.md`, preventing collisions with a sibling `guide.md`. `--sources` can also name one file, in which case only that file is processed. Convert table-heavy or large PDFs before extraction to avoid table distortion from raw PDF reads, then point extraction subagents at `--out`.
 
 ### `verify-extraction` — check the extraction JSON against the contract
 
