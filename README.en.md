@@ -123,7 +123,7 @@ artifacts stay out of agent context and agent handoffs to reduce token use. This
 delivery policy and does not change CLI source grounding, validation, or the compatible run
 directory structure.
 
-Release notes: [`0.22.1`](docs/RELEASE_NOTES_0.22.1.md).
+Release notes: [`0.22.2`](docs/RELEASE_NOTES_0.22.2.md).
 
 ---
 
