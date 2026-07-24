@@ -59,6 +59,7 @@ def detect_openapi(raw: bytes, content_type: str) -> tuple[bool, str | None]:
 @dataclass(frozen=True)
 class ObservedSignal:
     signal: SourceSignal | None
+    raw: bytes | None = None
     not_modified: bool = False
     failed: bool = False
     error: str | None = None
@@ -118,4 +119,4 @@ def fetch_url_signal(
         sha256=hash_bytes(raw),
     )
     kind = SourceKind.OPENAPI_URL if is_openapi else SourceKind.WEB_URL
-    return ObservedSignal(signal=signal, kind=kind)
+    return ObservedSignal(signal=signal, raw=raw, kind=kind)

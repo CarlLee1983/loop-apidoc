@@ -222,6 +222,17 @@ SHA-256, and local files compare SHA-256. Exit codes: <code>0</code> = unchanged
 <code>check-freshness</code> for every item; a fetch or read failure on a single item only marks that item as <code>error</code> and records the reason, without aborting the whole batch; but a malformed watchlist file (invalid JSON or off-schema) fails outright. Aggregate exit codes:
 <code>0</code> = all unchanged, <code>1</code> = any changed, <code>2</code> = any inconclusive or errored. With <code>--report-dir</code> it additionally writes
 <code>freshness-scan.{json,md}</code>; without it, no file is written.</p>
+<p>To turn the batch result into a bounded human-work trigger, use <code>governance-scan</code>:</p>
+<pre><code class="language-bash">uv run loop-apidoc governance-scan --watchlist ./work/freshness-watchlist.json \
+  [--json] [--report-dir ./work/governance] [--snapshot-dir ./work/governance-snapshot]
+</code></pre>
+<p>A changed source becomes <code>review_required</code>; an inconclusive or unreadable item becomes
+<code>attention_required</code>. The command never re-extracts, generates, imports to Foundry, or approves a
+contract. With <code>--snapshot-dir</code>, changed source bytes from that same scan are retained in an immutable,
+content-addressed evidence pack: <code>sources/&lt;sha256&gt;.source</code> and
+<code>governance-snapshot.json</code>. This avoids a second, racy fetch; unchanged, inconclusive, and failed
+sources are not retained, and an all-unchanged scan creates no empty pack. Exit codes are <code>0</code> = no
+action, <code>1</code> = review required, and <code>2</code> = attention required.</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — check that the extraction JSON meets the contract</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
 </code></pre>

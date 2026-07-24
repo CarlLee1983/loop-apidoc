@@ -10,26 +10,22 @@ from loop_apidoc.freshness.models import (
     FreshnessVerdict,
     SourceFingerprint,
     SourceKind,
+    SourceSignal,
     SourceResult,
+    SourceObservation,
     SourceStatus,
 )
-from loop_apidoc.freshness.signals import (
-    FreshnessInputError,
-    ObservedSignal,
-    classify,
-    fetch_url_signal,
-    file_signal,
-)
+from loop_apidoc.freshness.signals import ObservedSignal, classify, fetch_url_signal, hash_bytes
 
 
 def _observe_local(entry: FingerprintEntry, sources_root: Path | None) -> ObservedSignal:
     if sources_root is None:
         return ObservedSignal(signal=None, failed=True, error="--sources required for local source")
     try:
-        signal = file_signal(sources_root / entry.id)
-    except FreshnessInputError as exc:
-        return ObservedSignal(signal=None, failed=True, error=str(exc))
-    return ObservedSignal(signal=signal, kind=SourceKind.LOCAL_FILE)
+        raw = (sources_root / entry.id).read_bytes()
+    except OSError as exc:
+        return ObservedSignal(signal=None, failed=True, error=f"cannot read local source {sources_root / entry.id}: {exc}")
+    return ObservedSignal(signal=SourceSignal(sha256=hash_bytes(raw)), raw=raw, kind=SourceKind.LOCAL_FILE)
 
 
 def check_freshness(
@@ -47,6 +43,7 @@ def check_freshness(
         owns_client = True
 
     results: list[SourceResult] = []
+    observations: list[SourceObservation] = []
     try:
         for entry in fingerprint.sources:
             if entry.kind is SourceKind.LOCAL_FILE:
@@ -61,6 +58,13 @@ def check_freshness(
                 )
             status, reason = classify(entry, observed)
             results.append(SourceResult(id=entry.id, kind=entry.kind, status=status, reason=reason))
+            observations.append(SourceObservation(
+                id=entry.id,
+                kind=entry.kind,
+                status=status,
+                signal=observed.signal,
+                raw=observed.raw,
+            ))
     finally:
         if owns_client and active_client is not None:
             active_client.close()
@@ -82,4 +86,5 @@ def check_freshness(
         unchanged_count=unchanged_count,
         changed=changed,
         inconclusive=inconclusive,
+        observations=observations,
     )

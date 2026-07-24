@@ -90,3 +90,21 @@ def test_local_file_missing_root_is_inconclusive():
                              signal=SourceSignal(sha256="x"))
     report = check_freshness(_fp(entry), sources_root=None)
     assert report.verdict is FreshnessVerdict.INCONCLUSIVE
+
+
+def test_observed_source_bytes_are_not_serialized_in_freshness_report(tmp_path: Path):
+    source = tmp_path / "spec.md"
+    source.write_text("current source", encoding="utf-8")
+    from loop_apidoc.freshness.signals import hash_bytes
+
+    entry = FingerprintEntry(
+        id="spec.md",
+        kind=SourceKind.LOCAL_FILE,
+        signal=SourceSignal(sha256=hash_bytes(b"previous source")),
+    )
+
+    report = check_freshness(_fp(entry), sources_root=tmp_path)
+
+    assert report.observations[0].raw == b"current source"
+    assert "observations" not in report.model_dump()
+    assert "current source" not in report.model_dump_json()

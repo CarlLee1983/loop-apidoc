@@ -62,6 +62,23 @@ class SourceResult(BaseModel):
     reason: str | None = None
 
 
+class SourceObservation(BaseModel):
+    """The bytes and signal observed during one freshness classification.
+
+    Raw bytes are deliberately excluded from serialized freshness reports.  They
+    exist only long enough for governance to retain a changed source without a
+    second, racy fetch.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    kind: SourceKind
+    status: SourceStatus
+    signal: SourceSignal | None = None
+    raw: bytes | None = Field(default=None, exclude=True)
+
+
 class FreshnessReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -71,6 +88,7 @@ class FreshnessReport(BaseModel):
     unchanged_count: int
     changed: list[SourceResult] = Field(default_factory=list)
     inconclusive: list[SourceResult] = Field(default_factory=list)
+    observations: list[SourceObservation] = Field(default_factory=list, exclude=True)
 
 
 EXIT_CODES: dict[FreshnessVerdict, int] = {
@@ -111,6 +129,7 @@ class BatchItemResult(BaseModel):
     openapi_version: str | None = None
     reason: str | None = None
     run_dir: str | None = None
+    observations: list[SourceObservation] = Field(default_factory=list, exclude=True)
 
 
 class BatchReport(BaseModel):
