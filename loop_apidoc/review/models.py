@@ -109,10 +109,22 @@ class HandoffTask(BaseModel):
     subject_ids: list[str] = Field(default_factory=list)
 
 
+class ReviewWaiver(BaseModel):
+    """A human-approved, expiring review exception; never evidence support."""
+
+    subject_id: str
+    claim_identity: str
+    reason: str
+    approved_by: str
+    expires_at: datetime
+    scope: list[str] = Field(default_factory=list)
+
+
 class ReviewDraft(BaseModel):
     binding: ReviewBinding
     items: list[ReviewItem] = Field(default_factory=list)
     handoff: list[HandoffTask] = Field(default_factory=list)
+    waivers: list[ReviewWaiver] = Field(default_factory=list)
     note: str = ""
 
 

@@ -65,3 +65,27 @@ class ReplayComparison(FrozenModel):
     recall_delta: float
     cost_delta: float | None = None
     latency_delta_ms: float | None = None
+
+
+class EvaluationInputError(ValueError):
+    """Persisted evaluation results cannot be compared safely."""
+
+
+class EvaluationCaseReference(FrozenModel):
+    id: str
+    version: str
+
+
+class RuntimeReference(FrozenModel):
+    identity: str
+    version: str
+    domain_version: str
+
+
+class EvaluationComparisonReport(FrozenModel):
+    case: EvaluationCaseReference
+    baseline: RuntimeReference
+    candidate: RuntimeReference
+    metrics: dict[str, float]
+    cost_delta: float | None = None
+    latency_ms_delta: float | None = None

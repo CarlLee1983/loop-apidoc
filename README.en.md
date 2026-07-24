@@ -415,6 +415,27 @@ uv run loop-apidoc score --output ./output/<run-id> [--profile ci|review] [--min
 
 Reads the existing run directory's `validation/report.json`, `openapi.yaml`, `provenance.json`, `manifest.json`, and optional `plan/normalization-plan.json`, and outputs `score/score.json` and `score/score.md`. The `ci` profile defaults to a threshold of `85`, and `review` defaults to `70`. Exit codes: `0` = pass, `1` = needs_attention / fail, `2` = run-dir input error.
 
+### `evaluate` — compare replay results from two runtimes
+
+```bash
+uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
+```
+
+Compares two persisted `ReplayReport` JSON files for the same case and version, writing
+`evaluation-report.{json,md}`. The report includes candidate-minus-baseline deltas for every
+quality metric plus cost and latency; a missing measurement remains `null`. This is an
+immutable evaluation artifact: it never assembles, imports to Foundry, or approves a
+contract. Exit codes: `0` = complete, `2` = missing/malformed input or mismatched case
+version.
+
+### `governance-review-plan` — hand a source change to human/agent review
+
+```bash
+uv run loop-apidoc governance-review-plan --trigger ./governance/governance-trigger.json --snapshot ./snapshots --output ./review-plan [--json]
+```
+
+Revalidates every immutable snapshot digest and writes `governance-review-plan.{json,md}` with changed sources, the prior run, and required human/agent steps. It never fetches, re-extracts, assembles, imports, or approves a contract.
+
 ### `diff` — compare two runs for a version delta
 
 ```bash

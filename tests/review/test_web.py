@@ -65,6 +65,7 @@ def test_workbench_page_restores_saved_decisions_and_accepts_manual_items() -> N
     assert "const decision=s.decision||" in page
     assert "select.value=item?.disposition||''" in page
     assert "id=\"manual-items\"" in page
+    assert "id=\"waivers\"" in page
     assert "items:[...subjectItems,...manualItems]" in page
     assert "Candidate, current, and provenance artifacts" in page
     assert "renderArtifacts(s)" in page

@@ -153,6 +153,11 @@ sources are not represented, and the command still performs no extraction, gener
 Foundry import, or approval. Re-extraction and explicit human approval remain separate future
 steps.
 
+**Bounded review handoff (2026-07-24):** `governance-review-plan` reads a persisted trigger
+and verified immutable snapshot, rechecks every retained source digest, then writes a work-item
+plan containing the changed source references, prior run reference, and required review steps.
+It cannot fetch, re-extract, assemble, import, or approve a contract.
+
 ### 3. Evidence-first review experience
 
 **Goal:** shorten human verification without weakening approval authority.
@@ -175,7 +180,10 @@ excerpt, and can open the retained `core/evidence.json` and
 the review binding digest, so an existing decision becomes stale if its
 evidence changes. Operation-level HTTP diffs map to evidence only when their
 method/path location has one exact Core target; field-level or otherwise
-ambiguous diffs deliberately remain unlinked. Waivers remain a future slice.
+ambiguous diffs deliberately remain unlinked. Expiring waivers are now explicit
+review-decision records, bound to a subject's supported exact claim and retained
+with the governed asset; the UI refuses to apply them to insufficient or
+contradictory evidence. A waiver changes no evidence relationship.
 
 ### 4. Downstream engineering enforcement
 
@@ -204,6 +212,14 @@ operator-facing evaluation workflow: versioned cases, repeatable runtime runs,
 and reports that compare precision, recall, support-relationship accuracy,
 cost, and latency. Evaluation stays isolated from production mutation and
 approval.
+
+**Progress (2026-07-24):** `evaluate` now compares two persisted, versioned
+`ReplayReport` JSON artifacts for the same case and writes
+`evaluation-report.{json,md}`. It reports every quality-metric delta alongside
+cost and latency deltas (unknown measurements remain `null`) and rejects
+mismatched case versions. This initial operator slice never calls assemble,
+Foundry import, or approval; repeatable case-set execution remains a future
+extension.
 
 ## Near-term maintenance item
 

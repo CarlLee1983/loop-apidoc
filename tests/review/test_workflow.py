@@ -19,6 +19,7 @@ from loop_apidoc.review import (
     ReviewKey,
     ReviewRequest,
     ReviewStateError,
+    ReviewWaiver,
     ReviewWorkflow,
 )
 from loop_apidoc.review.models import ReviewSnapshot, ReviewSubjectKind
@@ -101,7 +102,7 @@ def _write_core_evidence(run: Path, *, target: str) -> None:
 
 def test_open_review_imports_valid_run_and_uses_baseline_without_current(tmp_path: Path) -> None:
     workflow = _workflow(tmp_path)
-    run = _run(tmp_path, "20260723T120000.000000Z")
+    run = _run(tmp_path, "20260723T120000.000000Z", validation_ok=False)
 
     snapshot = workflow.open_review(_request(run))
 
@@ -234,6 +235,24 @@ def test_second_review_compares_candidate_against_current_asset(tmp_path: Path) 
     assert diff_subject.evidence[0].claim_path == "/method"
 
 
+def test_field_diff_requires_an_exact_evidence_target() -> None:
+    from loop_apidoc.review.binding import evidence_for_diff_location
+
+    operation_evidence = []
+    field_evidence = []
+    evidence = {
+        "paths./payments.post": operation_evidence,
+        "paths./payments.post.requestBody.application/json": field_evidence,
+    }
+
+    assert evidence_for_diff_location(
+        "POST /payments requestBody.application/json", evidence
+    ) is field_evidence
+    assert evidence_for_diff_location(
+        "POST /payments requestBody.application/xml", evidence
+    ) == []
+
+
 def test_save_decision_rejects_unknown_subject_and_persists_valid_handoff(tmp_path: Path) -> None:
     workflow = _workflow(tmp_path)
     run = _run(tmp_path, "20260723T120000.000000Z", validation_ok=False)
@@ -320,6 +339,26 @@ def test_clean_baseline_approval_marks_current_reviewed(tmp_path: Path) -> None:
     assert result.needs_follow_up is False
     assert current is not None
     assert current.review.state is ReviewState.REVIEWED
+
+
+def test_review_persists_an_expiring_waiver_for_explicit_evidence(tmp_path: Path) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z", validation_ok=False)
+    _write_core_evidence(run, target="paths./ping.get")
+    snapshot = workflow.open_review(_request(run))
+    subject = snapshot.subjects[0]
+    waiver = ReviewWaiver(
+        subject_id=subject.id,
+        claim_identity="operation:/ping:get",
+        reason="Provider remediation is tracked externally.",
+        approved_by="reviewer@example.test",
+        expires_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+    )
+
+    saved = workflow.save_decision(snapshot.key, _draft(snapshot, waivers=[waiver]))
+
+    assert saved.decision is not None
+    assert saved.decision.waivers == [waiver]
 
 
 def test_stale_saved_decision_refuses_to_be_reopened(tmp_path: Path) -> None:
