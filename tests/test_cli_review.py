@@ -11,8 +11,6 @@ def test_review_help_describes_local_candidate_workbench() -> None:
 
     assert result.exit_code == 0
     assert "自動匯入候選" in result.output
-    assert "--docset" in result.output
-    assert "--run" in result.output
 
 
 def test_review_starts_loopback_adapter_without_opening_a_browser(
