@@ -1,5 +1,5 @@
 {
-  "_note": "表格密集 PDF。初跑揭 1 項真 pipeline 缺陷(純簽章 auth 誤觸 no-auth gap)→ TDD 修 completeness 後 PASS。5 個 REQUIRED_INFO_MISSING.warning 為 5 個 endpoint 各無逐端點範例(忠實;範例由 generator 合成、CheckMacValue 範例放 integration.test_cases)。",
+  "_note": "表格密集 PDF。初跑揭 1 項真 pipeline 缺陷(純簽章 auth 誤觸 no-auth gap)→ TDD 修 completeness 後 PASS。5 個 warning 為 endpoint 無逐端點範例；另 1 個 warning 揭露 /Cashier/AioCheckOut/V5 成功 response 無可用 schema 欄位。",
   "target_status": "PASS",
   "current_status": "PASS",
   "must_validate": {
@@ -8,8 +8,8 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5 },
-  "acceptable_warnings": "5 endpoint 各一筆『缺少 request/response 範例』:來源未附逐端點完整 request 範例(降為 WARNING)。",
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 6 },
+  "acceptable_warnings": "5 endpoint 各一筆缺少 request/response 範例；/Cashier/AioCheckOut/V5 另有 1 筆成功 response 無可用 schema 欄位。",
   "resolved_issue_was": {
     "kind": "pipeline-bug",
     "code": "REQUIRED_INFO_MISSING",
