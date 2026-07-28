@@ -29,3 +29,6 @@ runs/
 tmp/
 /.work/
 /out/
+
+# 本機 Teams 匯出預覽（可能包含聊天內容，不入庫）
+/teams-archive-preview/
