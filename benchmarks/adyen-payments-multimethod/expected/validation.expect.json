@@ -1,5 +1,5 @@
 {
-  "_note": "多產品共用 endpoint 類。首跑即 0 error PASS — pipeline 已成熟,本 case 未揭新缺陷。3 個 REQUIRED_INFO_MISSING.warning 為 endpoints 無逐端點 inline 範例(忠實缺漏,降為 WARNING;接地範例放在 integration.test_cases → card-direct / ideal 官方 sample)。與 cybersource 同慣例。",
+  "_note": "多產品共用 endpoint 類。首跑即 0 error PASS — pipeline 已成熟。3 個 warning 為 endpoints 無逐端點 inline 範例；另 1 個 warning 揭露 /paymentMethods 的成功 response 無可用 schema 欄位。",
   "target_status": "PASS",
   "current_status": "PASS",
   "must_validate": {
@@ -8,8 +8,8 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 3 },
-  "acceptable_warnings": "3 endpoints(/payments、/payments/details、/paymentMethods)各一筆『endpoint 缺少 request/response 範例』:extraction 的 endpoint 物件未帶 inline 範例,接地官方 sample 改放 integration.test_cases(card-direct、ideal),降為 WARNING。",
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 4 },
+  "acceptable_warnings": "3 endpoints(/payments、/payments/details、/paymentMethods)各一筆缺少 inline 範例；/paymentMethods 另有 1 筆成功 response 無可用 schema 欄位。接地官方 sample 放在 integration.test_cases(card-direct、ideal)。",
   "observations": [
     "多產品共用 endpoint 的核心:單一 POST /payments 以 paymentMethod.type discriminator 服務 40+ 付款方式。pipeline 現原生產生 OpenAPI oneOf/discriminator——paymentMethod 以 oneOf 指向三個具名成員 schema(CardDetails/IdealDetails/ApplePayDetails)、discriminator.propertyName=type、mapping 對應 scheme/ideal/applepay。此為原生 oneOf/discriminator 的正面證明(機器可用的多型),非忠實限制。api-guide 段落以 oneOf：A / B / C 呈現多型分流,operationId(post_payments / post_payments_details / post_paymentMethods)穩定。",
     "endpoint merge 未碰撞:三個端點各自獨立(/payments、/payments/details、/paymentMethods 為不同路徑),非同路徑多次描述;對偶 case github-webhooks 已測『同 (method,null) 多 callback 合併』。此 case 證明同一進入點承載多產品時不誤拆、不誤併。",
