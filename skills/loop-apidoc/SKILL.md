@@ -57,7 +57,7 @@ the host is non-interactive.
 
 | `<OUTPUT_LEVEL>` | Deliver and discuss | Do not load into agent context unless needed to fix validation |
 | --- | --- | --- |
-| `minimal (default)` | `openapi.yaml`, `provenance.json`, `validation/report.json`, and the always-written `integration-contract.json` (including source-backed operational rules) | Markdown guide, `review.html`, `examples/`, `handoff/`, preparation/source-quality/score/diff reports |
+| `minimal (default)` | `openapi.yaml`, `provenance.json`, `validation/report.json`, and the always-written `integration-contract.json` (including source-backed transport, amount direction, idempotency, line-currency policy, and operational rules) | Markdown guide, `review.html`, `examples/`, `handoff/`, preparation/source-quality/score/diff reports |
 | `review` | `minimal` plus `api-guide.zh-TW.md` and `review.html` | `examples/`, `handoff/`, and optional analysis reports |
 | `handoff` | `minimal` plus `examples/` and `handoff/` | Markdown guide, `review.html`, and optional analysis reports |
 | `full` | Every generated product and optional report that the user requested | Nothing selected by this table |
@@ -252,8 +252,12 @@ omitting endpoint subagents.
    genuinely cannot be extracted, name it in `missing[]` and say what the source does not
    state — never "requires further extraction" or any other placeholder. Step 5 rejects
    both the omission and the placeholder.
-4. **integration** (optional) — one subagent over the encryption/signing/callback/
-   field-condition sections; it returns the JSON and **you** write `<WORK>/integration.json`.
+4. **integration** (optional) — one subagent over the transport, amount-direction,
+   idempotency, line-currency, encryption/signing, callback, and field-condition
+   sections; it returns the JSON and **you** write `<WORK>/integration.json`.
+   Record only source-stated semantics. A request that lacks a currency field does
+   not establish a single-currency line; leave `policy` null and record the gap
+   unless the source explicitly states the policy.
    Omit the file entirely only when the sources describe no integration mechanics.
 
 ### 5. Verify the extraction

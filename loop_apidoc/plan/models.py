@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -148,6 +149,40 @@ class ContractTestCase(_Cited):
     response: dict | None = None
 
 
+class TransportPolicy(_Cited):
+    name: str | None = None
+    protocol: str | None = None
+    methods: list[str] = Field(default_factory=list)
+    content_type: str | None = None
+    content_type_note: str | None = None
+    http_status: str | None = None
+    timezone: str | None = None
+    time_format: str | None = None
+    operation_refs: list[str] = Field(default_factory=list)
+
+
+class AmountDirection(_Cited):
+    operation_ref: str | None = None
+    balance_effect: Literal["credit", "debit"] | None = None
+    amount_sign: Literal["positive", "negative", "signed"] | None = None
+    precision: str | None = None
+
+
+class IdempotencyRule(_Cited):
+    operation_refs: list[str] = Field(default_factory=list)
+    code: str | None = None
+    meaning: str | None = None
+    action: str | None = None
+
+
+class LineCurrencyPolicy(_Cited):
+    scope: str | None = None
+    policy: Literal["single", "multiple"] | None = None
+    currency_binding: str | None = None
+    operation_refs: list[str] = Field(default_factory=list)
+    note: str | None = None
+
+
 class ContractMissing(BaseModel):
     area: str
     detail: str
@@ -155,6 +190,10 @@ class ContractMissing(BaseModel):
 
 class IntegrationContract(BaseModel):
     version: str = "1.0"
+    transport: list[TransportPolicy] = Field(default_factory=list)
+    amount_direction: list[AmountDirection] = Field(default_factory=list)
+    idempotency: list[IdempotencyRule] = Field(default_factory=list)
+    line_currency_policy: list[LineCurrencyPolicy] = Field(default_factory=list)
     crypto: list[CryptoScheme] = Field(default_factory=list)
     callbacks: list[Callback] = Field(default_factory=list)
     field_conditions: list[FieldCondition] = Field(default_factory=list)

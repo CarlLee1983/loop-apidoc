@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from loop_apidoc.agentcli.cross_file import cross_file_violations
 
 
@@ -21,6 +23,26 @@ def test_clean_extraction_has_no_violations():
                  ("ep1.json", _ep("POST", "/orders"))]
 
     assert cross_file_violations(inventory, endpoints) == []
+
+
+@pytest.mark.parametrize(
+    "integration",
+    [
+        {"transport": [{"operation_refs": ["POST /missing"]}]},
+        {"amount_direction": [{"operation_ref": "POST /missing"}]},
+        {"idempotency": [{"operation_refs": ["POST /missing"]}]},
+        {"line_currency_policy": [{"operation_refs": ["POST /missing"]}]},
+    ],
+)
+def test_integration_semantic_operation_references_must_resolve(integration):
+    inventory = _inv(_ep("GET", "/ping"))
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    violations = cross_file_violations(inventory, endpoints, integration)
+
+    assert len(violations) == 1
+    assert "integration.json" in violations[0]
+    assert "POST /missing" in violations[0]
 
 
 def test_operational_applicability_operation_must_resolve():

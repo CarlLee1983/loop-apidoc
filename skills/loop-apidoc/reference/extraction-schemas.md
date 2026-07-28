@@ -316,12 +316,54 @@ give every callback detail the correct `source`.
 
 ## integration.json (optional)
 
-One object for encryption, signing, callbacks, and cross-field conditions. Dispatch one
+One object for source-stated domain semantics, encryption, signing, callbacks, and cross-field conditions. Dispatch one
 read-only subagent over the relevant sections.
 
 ```json
 {
   "version": "1.0",
+  "transport": [
+    {
+      "name": "str|null",
+      "protocol": "str|null",
+      "methods": ["GET", "POST"],
+      "content_type": "str|null",
+      "content_type_note": "str|null",
+      "http_status": "str|null",
+      "timezone": "str|null",
+      "time_format": "str|null",
+      "operation_refs": ["METHOD /path"],
+      "source": "str"
+    }
+  ],
+  "amount_direction": [
+    {
+      "operation_ref": "METHOD /path|null",
+      "balance_effect": "credit|debit|null",
+      "amount_sign": "positive|negative|signed|null",
+      "precision": "str|null",
+      "source": "str"
+    }
+  ],
+  "idempotency": [
+    {
+      "operation_refs": ["METHOD /path"],
+      "code": "str|null",
+      "meaning": "str|null",
+      "action": "str|null",
+      "source": "str"
+    }
+  ],
+  "line_currency_policy": [
+    {
+      "scope": "str|null",
+      "policy": "single|multiple|null",
+      "currency_binding": "str|null",
+      "operation_refs": ["METHOD /path"],
+      "note": "str|null",
+      "source": "str"
+    }
+  ],
   "crypto": [
     {
       "name": "str",
@@ -357,6 +399,18 @@ read-only subagent over the relevant sections.
 }
 ```
 
+- `transport`: global or operation-scoped wire rules such as protocol, content
+  type, HTTP-status semantics, timezone, and time format.
+- `amount_direction`: one operation's source-stated balance effect, accepted sign,
+  and precision. Direction comes from the source, never from payment conventions.
+- `idempotency`: source-stated duplicate or in-progress result codes and the exact
+  caller action. Do not turn ordinary failures into success or retry instructions.
+- `line_currency_policy`: source-stated single/multiple-currency policy and binding.
+  **The absence of a request currency field is not evidence of a single-currency
+  line.** When the source does not explicitly state the policy, use `policy: null`
+  and record the uncertainty in `missing`.
+- `operation_ref` / `operation_refs`: exact `METHOD /path` identities from
+  `inventory.endpoints`; unresolved references fail at the extraction gate.
 - `payload_assembly`: the ordered steps for building the string to encrypt/sign (the
   signature chain). Only include what the source states.
 - `payload_ref` / `operation_ref`: point to an existing `inventory.schemas` name or
@@ -367,8 +421,8 @@ read-only subagent over the relevant sections.
 - `source`: required per entry, in the same `<relative_path> p.<N>` form as inventory
   (see above). Each entry's `source` is carried through to `integration-contract.json`
   alongside a `provenance_target` for reverse lookup.
-- **Omit-vs-empty:** if the sources describe **no** integration mechanics, **omit
+- **Omit-vs-empty:** if the sources describe **no** domain semantics or integration mechanics, **omit
   `integration.json` entirely** (do not write an empty file). If they mention
-  encryption/signing/callbacks/conditions/test-cases but omit required details, **write the
+  any typed semantic, encryption/signing/callbacks/conditions/test-cases but omit required details, **write the
   file with the stated facts plus `missing` entries** — do not omit it just because detail is
   incomplete.

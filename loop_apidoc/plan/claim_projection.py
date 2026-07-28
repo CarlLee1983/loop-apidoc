@@ -16,6 +16,7 @@ from loop_apidoc.domain.identity import (
     canonical_operation_identity,
 )
 from loop_apidoc.plan.models import (
+    AmountDirection,
     Callback,
     ContractTestCase,
     CryptoScheme,
@@ -23,10 +24,13 @@ from loop_apidoc.plan.models import (
     EnvironmentEntry,
     ErrorEntry,
     FieldCondition,
+    IdempotencyRule,
+    LineCurrencyPolicy,
     NormalizationPlan,
     OperationalEntry,
     SchemaEntry,
     SecuritySchemeEntry,
+    TransportPolicy,
 )
 
 
@@ -71,6 +75,14 @@ def iter_plan_claim_projections(
     integration = plan.integration
     if integration is not None:
         integration_areas = (
+            ("transport", "transport_policy", _transport_policy_value),
+            ("amount_direction", "amount_direction", _amount_direction_value),
+            ("idempotency", "idempotency_rule", _idempotency_value),
+            (
+                "line_currency_policy",
+                "line_currency_policy",
+                _line_currency_policy_value,
+            ),
             ("crypto", "integration_mechanic", _crypto_value),
             ("callbacks", "webhook", _callback_value),
             ("field_conditions", "integration_mechanic", _condition_value),
@@ -108,6 +120,14 @@ def _subject(entry: Any, plan_location: str) -> str:
         return entry.scope or plan_location
     if isinstance(entry, ContractTestCase):
         return entry.name or plan_location
+    if isinstance(entry, TransportPolicy):
+        return entry.name or plan_location
+    if isinstance(entry, AmountDirection):
+        return entry.operation_ref or plan_location
+    if isinstance(entry, IdempotencyRule):
+        return entry.code or plan_location
+    if isinstance(entry, LineCurrencyPolicy):
+        return entry.scope or plan_location
     return plan_location
 
 
@@ -190,6 +210,58 @@ def _operational_value(entry: OperationalEntry) -> dict[str, Any]:
     _put(value, "detail", entry.detail)
     if entry.applies_to:
         value["applies_to"] = [scope.model_dump() for scope in entry.applies_to]
+    return value
+
+
+def _transport_policy_value(entry: TransportPolicy) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for field in (
+        "name",
+        "protocol",
+        "content_type",
+        "content_type_note",
+        "http_status",
+        "timezone",
+        "time_format",
+    ):
+        _put(value, field, getattr(entry, field))
+    if entry.methods:
+        value["methods"] = list(entry.methods)
+    if entry.operation_refs:
+        value["operation_refs"] = [
+            _canonical_operation_reference(item) for item in entry.operation_refs
+        ]
+    return value
+
+
+def _amount_direction_value(entry: AmountDirection) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    if entry.operation_ref is not None:
+        value["operation_ref"] = _canonical_operation_reference(entry.operation_ref)
+    for field in ("balance_effect", "amount_sign", "precision"):
+        _put(value, field, getattr(entry, field))
+    return value
+
+
+def _idempotency_value(entry: IdempotencyRule) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    if entry.operation_refs:
+        value["operation_refs"] = [
+            _canonical_operation_reference(item) for item in entry.operation_refs
+        ]
+    for field in ("code", "meaning", "action"):
+        _put(value, field, getattr(entry, field))
+    return value
+
+
+def _line_currency_policy_value(entry: LineCurrencyPolicy) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for field in ("scope", "policy", "currency_binding", "note"):
+        _put(value, field, getattr(entry, field))
+    if entry.operation_refs:
+        value["operation_refs"] = [
+            _canonical_operation_reference(item) for item in entry.operation_refs
+        ]
     return value
 
 

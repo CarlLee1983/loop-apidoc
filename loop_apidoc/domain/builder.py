@@ -5,6 +5,7 @@ from typing import Any
 from loop_apidoc.domain.claim_paths import escape_segment
 from loop_apidoc.domain.evidence import ClaimEvidenceRelationship
 from loop_apidoc.domain.models import (
+    AmountDirection,
     ApiError,
     ClaimStatus,
     Conflict,
@@ -14,12 +15,15 @@ from loop_apidoc.domain.models import (
     EvidenceBinding,
     Gap,
     GroundedApiContract,
+    IdempotencyRule,
     IntegrationMechanic,
     Interaction,
+    LineCurrencyPolicy,
     Operation,
     OperationalConstraint,
     Schema,
     SecurityScheme,
+    TransportPolicy,
     Webhook,
 )
 
@@ -53,6 +57,10 @@ _MODEL_BY_KIND = {
     "error": ApiError,
     "integration_mechanic": IntegrationMechanic,
     "operational_constraint": OperationalConstraint,
+    "transport_policy": TransportPolicy,
+    "amount_direction": AmountDirection,
+    "idempotency_rule": IdempotencyRule,
+    "line_currency_policy": LineCurrencyPolicy,
 }
 _FIELD_BY_KIND = {
     "environment": "environments",
@@ -64,6 +72,10 @@ _FIELD_BY_KIND = {
     "error": "errors",
     "integration_mechanic": "integration_mechanics",
     "operational_constraint": "operational_constraints",
+    "transport_policy": "transport_policies",
+    "amount_direction": "amount_directions",
+    "idempotency_rule": "idempotency_rules",
+    "line_currency_policy": "line_currency_policies",
 }
 
 

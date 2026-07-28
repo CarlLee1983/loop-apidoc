@@ -140,6 +140,29 @@ def _mechanism_lines(plan: NormalizationPlan) -> list[str]:
     contract = plan.integration
     lines: list[str] = []
     if contract is not None:
+        semantic_sections = (
+            ("transport", contract.transport, "Transport policy", "name"),
+            (
+                "amount_direction",
+                contract.amount_direction,
+                "Amount direction",
+                "operation_ref",
+            ),
+            ("idempotency", contract.idempotency, "Idempotency rule", "code"),
+            (
+                "line_currency_policy",
+                contract.line_currency_policy,
+                "Line currency policy",
+                "scope",
+            ),
+        )
+        for section, entries, label, identity_field in semantic_sections:
+            for idx, entry in enumerate(entries):
+                identity = getattr(entry, identity_field) or idx
+                lines.append(
+                    f"- [ ] {label} `{identity}` "
+                    f"(`../integration-contract.json#/{section}/{idx}`)"
+                )
         for idx, s in enumerate(contract.crypto):
             lines.append(
                 f"- [ ] Signing/encryption `{s.name or idx}` "

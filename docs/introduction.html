@@ -834,7 +834,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         </div>
         <h3>整合契約</h3>
         <span class="file">integration-contract.json</span>
-        <p>固定產生的機讀契約除了簽章、callback 等整合機制，也保存來源明載的跨端點規則、金額公式與欄位語意，讓下游 SDK 工具不必重讀 Markdown。</p>
+        <p>固定產生的機讀契約除了簽章、callback 等整合機制，也保存來源明載的 transport、金額方向、冪等、線路幣別與跨端點規則，讓下游 SDK 工具不必重讀 Markdown；request 缺少 currency 欄位不會被推論成單幣別。</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">

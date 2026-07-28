@@ -200,6 +200,44 @@ class OperationalConstraint(FrozenModel):
     evidence: tuple[EvidenceBinding, ...] = ()
 
 
+class TransportPolicy(FrozenModel):
+    name: str | None = None
+    protocol: str | None = None
+    methods: tuple[str, ...] = ()
+    content_type: str | None = None
+    content_type_note: str | None = None
+    http_status: str | None = None
+    timezone: str | None = None
+    time_format: str | None = None
+    operation_refs: tuple[str, ...] = ()
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class AmountDirection(FrozenModel):
+    operation_ref: str | None = None
+    balance_effect: Literal["credit", "debit"] | None = None
+    amount_sign: Literal["positive", "negative", "signed"] | None = None
+    precision: str | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class IdempotencyRule(FrozenModel):
+    operation_refs: tuple[str, ...] = ()
+    code: str | None = None
+    meaning: str | None = None
+    action: str | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
+class LineCurrencyPolicy(FrozenModel):
+    scope: str | None = None
+    policy: Literal["single", "multiple"] | None = None
+    currency_binding: str | None = None
+    operation_refs: tuple[str, ...] = ()
+    note: str | None = None
+    evidence: tuple[EvidenceBinding, ...] = ()
+
+
 class ContractClaim(FrozenModel):
     identity: str
     claim_kind: str | None = None
@@ -239,6 +277,10 @@ class GroundedApiContract(FrozenModel):
     errors: tuple[ApiError, ...] = ()
     integration_mechanics: tuple[IntegrationMechanic, ...] = ()
     operational_constraints: tuple[OperationalConstraint, ...] = ()
+    transport_policies: tuple[TransportPolicy, ...] = ()
+    amount_directions: tuple[AmountDirection, ...] = ()
+    idempotency_rules: tuple[IdempotencyRule, ...] = ()
+    line_currency_policies: tuple[LineCurrencyPolicy, ...] = ()
     claims: tuple[ContractClaim, ...] = ()
     gaps: tuple[Gap, ...] = ()
     conflicts: tuple[Conflict, ...] = ()

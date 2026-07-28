@@ -36,7 +36,16 @@ _INVENTORY_SECTIONS = (
     "errors",
     "operational",
 )
-_INTEGRATION_SECTIONS = ("crypto", "callbacks", "field_conditions", "test_cases")
+_INTEGRATION_SECTIONS = (
+    "transport",
+    "amount_direction",
+    "idempotency",
+    "line_currency_policy",
+    "crypto",
+    "callbacks",
+    "field_conditions",
+    "test_cases",
+)
 
 
 def verify_extraction_evidence(

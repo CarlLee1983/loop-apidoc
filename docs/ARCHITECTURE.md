@@ -100,7 +100,7 @@ flowchart LR
     R -.agent 重讀來源、覆寫 JSON 後重跑 assemble.-> EX
 ```
 
-`assemble` 不擷取,只組裝 agent 已寫出的 JSON:`manifest → plan → generate → validate`,再以 `--json` 回報 `run_id`/`run_dir`/`review_html`/`ok`/`status`/`report`(帶 `--score` 時另有 `score` 與 `loop`)。修正由 **agent 自行驅動**(無 CLI 內建迴圈):agent 依報告回頭重讀相關來源、覆寫對應的 `inventory.json` 或 `endpoints/<NN>.json`,再重跑 `assemble`,預設最多 3 輪;帶 `--score` 走分數自循環時改由 `--max-rounds`(預設 6)控制。`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
+`assemble` 不擷取,只組裝 agent 已寫出的 JSON:`manifest → plan → generate → validate`,再以 `--json` 回報 `run_id`/`run_dir`/`review_html`/`ok`/`status`/`report`(帶 `--score` 時另有 `score` 與 `loop`)。選填的 `integration.json` 以 typed `transport[]`、`amount_direction[]`、`idempotency[]`、`line_currency_policy[]` 保存來源明載的領域語意，經 extraction gate、normalization plan 與 canonical claim projection 後進入固定產生的 `integration-contract.json`；request 缺少 currency 欄位不構成單幣別證據。修正由 **agent 自行驅動**(無 CLI 內建迴圈):agent 依報告回頭重讀相關來源、覆寫對應的 `inventory.json`、`endpoints/<NN>.json` 或 `integration.json`,再重跑 `assemble`,預設最多 3 輪;帶 `--score` 走分數自循環時改由 `--max-rounds`(預設 6)控制。`UNFIXABLE`(來源無法確認／衝突／不支援斷言)為 fail-closed,回報為缺漏／衝突而不補寫。
 
 `assemble --architecture-mode shadow` 是 opt-in compatibility sidecar：legacy
 validation report 寫出後，同一份 manifest 與 normalization plan 會經

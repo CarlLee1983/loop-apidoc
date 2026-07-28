@@ -321,8 +321,45 @@ def _operational_reference_violations(
     return out
 
 
+def _integration_operation_reference_violations(
+    endpoints: list[tuple[str, dict]], integration: dict | None
+) -> list[str]:
+    endpoint_keys = {
+        key
+        for _, endpoint in endpoints
+        for expanded in _expand_methods([endpoint])
+        if (key := _key(expanded)) is not None
+    }
+    section_fields = {
+        "transport": "operation_refs",
+        "amount_direction": "operation_ref",
+        "idempotency": "operation_refs",
+        "line_currency_policy": "operation_refs",
+    }
+    out: list[str] = []
+    for section, field in section_fields.items():
+        for entry_index, entry in enumerate(_entries(integration, section)):
+            raw = entry.get(field)
+            references = raw if isinstance(raw, list) else [raw]
+            for ref_index, reference in enumerate(references):
+                if reference is None:
+                    continue
+                if _operation_reference_key(reference) in endpoint_keys:
+                    continue
+                location = f"{section}[{entry_index}].{field}"
+                if isinstance(raw, list):
+                    location += f"[{ref_index}]"
+                out.append(
+                    f"integration.json: {location} 未指向任何 "
+                    f"inventory.endpoints identity:{reference!r}"
+                )
+    return out
+
+
 def cross_file_violations(
-    inventory: dict, endpoints: list[tuple[str, dict]]
+    inventory: dict,
+    endpoints: list[tuple[str, dict]],
+    integration: dict | None = None,
 ) -> list[str]:
     """一次列出所有跨檔違規——修正是一次重寫擷取 JSON,不是逐筆往返。"""
     return (
@@ -333,4 +370,5 @@ def cross_file_violations(
         + _reference_violations(inventory, endpoints)
         + _server_violations(inventory)
         + _operational_reference_violations(inventory, endpoints)
+        + _integration_operation_reference_violations(endpoints, integration)
     )

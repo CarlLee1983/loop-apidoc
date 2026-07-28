@@ -24,10 +24,19 @@ def _base_urls(plan: NormalizationPlan) -> list[dict]:
     ]
 
 
-_SECTIONS = ("crypto", "callbacks", "field_conditions", "test_cases")
+_SECTIONS = (
+    "transport",
+    "amount_direction",
+    "idempotency",
+    "line_currency_policy",
+    "crypto",
+    "callbacks",
+    "field_conditions",
+    "test_cases",
+)
 
 # field_conditions entries carry no name, so they are addressed by index.
-_INDEXED_SECTIONS = frozenset({"field_conditions"})
+_INDEXED_SECTIONS = frozenset({"amount_direction", "field_conditions"})
 
 
 def entry_target(section: str, idx: int, entry) -> str:
@@ -38,15 +47,21 @@ def entry_target(section: str, idx: int, entry) -> str:
     """
     if section in _INDEXED_SECTIONS:
         return f"integration.{section}.{idx}"
-    return f"integration.{section}.{getattr(entry, 'name', None) or idx}"
+    identity = (
+        getattr(entry, "name", None)
+        or getattr(entry, "code", None)
+        or getattr(entry, "scope", None)
+        or idx
+    )
+    return f"integration.{section}.{identity}"
 
 
 def build_integration_document(plan: NormalizationPlan) -> dict:
     """Serialize plan.integration into the integration-contract.json dict (pure).
 
-    crypto/callbacks/field_conditions/test_cases come from the extracted
-    contract; error_codes/base_urls are reused from already-structured plan data
-    so the same fact is never grounded twice.
+    Typed domain semantics plus crypto/callbacks/field_conditions/test_cases come
+    from the extracted contract; error_codes/base_urls are reused from already-
+    structured plan data so the same fact is never grounded twice.
     """
     contract = plan.integration
     contract = contract or IntegrationContract()

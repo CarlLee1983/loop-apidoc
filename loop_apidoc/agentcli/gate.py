@@ -28,7 +28,7 @@ def check_extraction(
     """一次列出所有違規(path / source / 跨檔 / 來源事實),讓 agent 一次改寫即可。"""
     return (
         check_extraction_inputs(inventory, endpoints, integration, manifest)
-        + cross_file_violations(inventory, endpoints)
+        + cross_file_violations(inventory, endpoints, integration)
         + source_fact_violations(facts or FactIndex(), endpoints, inventory)
         + deferral_violations(endpoints)
     )

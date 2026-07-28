@@ -37,6 +37,10 @@ def test_document_is_present_and_empty_when_no_mechanics_are_stated():
     doc = build_integration_document(NormalizationPlan(notebook_url="x"))
 
     assert doc is not None
+    assert doc["transport"] == []
+    assert doc["amount_direction"] == []
+    assert doc["idempotency"] == []
+    assert doc["line_currency_policy"] == []
     assert doc["crypto"] == []
     assert doc["callbacks"] == []
     assert doc["field_conditions"] == []

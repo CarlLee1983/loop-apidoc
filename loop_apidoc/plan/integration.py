@@ -3,6 +3,7 @@ from __future__ import annotations
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.classify import classify_item
 from loop_apidoc.plan.models import (
+    AmountDirection,
     Callback,
     ContractMissing,
     ContractTestCase,
@@ -10,9 +11,12 @@ from loop_apidoc.plan.models import (
     CryptoStep,
     CryptoVerify,
     FieldCondition,
+    IdempotencyRule,
     IntegrationContract,
     KeySource,
+    LineCurrencyPolicy,
     NormalizationPlan,
+    TransportPolicy,
 )
 
 _QID = "integration"
@@ -88,6 +92,52 @@ def _test_case(item: dict, manifest: Manifest) -> ContractTestCase:
     )
 
 
+def _transport(item: dict, manifest: Manifest) -> TransportPolicy:
+    return TransportPolicy(
+        **_cite(item, manifest),
+        name=item.get("name"),
+        protocol=item.get("protocol"),
+        methods=list(item.get("methods") or []),
+        content_type=item.get("content_type"),
+        content_type_note=item.get("content_type_note"),
+        http_status=item.get("http_status"),
+        timezone=item.get("timezone"),
+        time_format=item.get("time_format"),
+        operation_refs=list(item.get("operation_refs") or []),
+    )
+
+
+def _amount_direction(item: dict, manifest: Manifest) -> AmountDirection:
+    return AmountDirection(
+        **_cite(item, manifest),
+        operation_ref=item.get("operation_ref"),
+        balance_effect=item.get("balance_effect"),
+        amount_sign=item.get("amount_sign"),
+        precision=item.get("precision"),
+    )
+
+
+def _idempotency(item: dict, manifest: Manifest) -> IdempotencyRule:
+    return IdempotencyRule(
+        **_cite(item, manifest),
+        operation_refs=list(item.get("operation_refs") or []),
+        code=item.get("code"),
+        meaning=item.get("meaning"),
+        action=item.get("action"),
+    )
+
+
+def _line_currency_policy(item: dict, manifest: Manifest) -> LineCurrencyPolicy:
+    return LineCurrencyPolicy(
+        **_cite(item, manifest),
+        scope=item.get("scope"),
+        policy=item.get("policy"),
+        currency_binding=item.get("currency_binding"),
+        operation_refs=list(item.get("operation_refs") or []),
+        note=item.get("note"),
+    )
+
+
 def build_integration_contract(
     integration_json: dict | None,
     plan: NormalizationPlan,
@@ -107,6 +157,15 @@ def build_integration_contract(
 
     return IntegrationContract(
         version=str(data.get("version") or "1.0"),
+        transport=[_transport(i, manifest) for i in _list("transport")],
+        amount_direction=[
+            _amount_direction(i, manifest) for i in _list("amount_direction")
+        ],
+        idempotency=[_idempotency(i, manifest) for i in _list("idempotency")],
+        line_currency_policy=[
+            _line_currency_policy(i, manifest)
+            for i in _list("line_currency_policy")
+        ],
         crypto=[_crypto(i, manifest) for i in _list("crypto")],
         callbacks=[_callback(i, manifest) for i in _list("callbacks")],
         field_conditions=[_condition(i, manifest) for i in _list("field_conditions")],

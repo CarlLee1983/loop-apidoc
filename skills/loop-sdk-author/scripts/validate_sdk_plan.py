@@ -22,7 +22,16 @@ REQUIRED_TOP_LEVEL = {
 }
 
 REQUIRED_CONTRACTS = {"openapi", "integration", "sdk_hints"}
-REQUIRED_MECHANISMS = {"auth", "crypto", "callbacks", "operational"}
+REQUIRED_MECHANISMS = {
+    "auth",
+    "transport",
+    "amount_direction",
+    "idempotency",
+    "line_currency_policy",
+    "crypto",
+    "callbacks",
+    "operational",
+}
 REQUIRED_OPERATION_FIELDS = {"operation_id", "method", "contract_pointer", "sdk_method"}
 
 FORBIDDEN_KEYS = {
