@@ -776,7 +776,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="generate">
             <div class="module-name">generate/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">輸出 OpenAPI、Markdown 與 provenance。</div>
+            <div class="module-role">輸出 OpenAPI、Markdown、provenance 與 operational 機讀契約。</div>
           </button>
           <button type="button" class="module-card" data-module="validate">
             <div class="module-name">validate/ <span class="pill pure">Pure</span></div>
@@ -855,7 +855,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "agent",
       pillLabel: "Agent",
       desc: "擷取引擎是<b>當前的 coding agent 自己</b>（Claude Code plugin 或 OpenAI Codex CLI）。agent 依 <code>skills/loop-apidoc/SKILL.md</code>，以<b>唯讀 subagent fan-out</b> 分段擷取：每個 subagent 只讀檔與搜尋、回傳 JSON（不寫檔、不連網），由主 agent 把回傳結果寫成 <code>inventory.json</code> 與逐 endpoint 的 <code>endpoints/*.json</code>。",
-      details: "<h4>10 大擷取分段主題</h4><ul><li>01 來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 rate limit / timeout / retry / idempotency / webhook</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>分段避免單一回答承載全部內容而漏失欄位；唯一 grounding 規則：來源未述者一律 null 並記入 <code>missing</code>，不推測、不套 REST/OAuth 慣例。</p>",
+      details: "<h4>10 大擷取分段主題</h4><ul><li>01 來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 operational 限制、跨端點業務規則、欄位語意與公式</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>分段避免單一回答承載全部內容而漏失欄位；唯一 grounding 規則：來源未述者一律 null 並記入 <code>missing</code>，不推測、不套 REST/OAuth 慣例。</p>",
       seam: "skills/loop-apidoc/SKILL.md（agent 寫出 inventory.json + endpoints/*.json）",
       inputs: "&lt;SOURCES&gt; 或 &lt;WORK&gt;/sources_md, 目標 JSON schema",
       outputs: "inventory.json, endpoints/*.json"
@@ -888,7 +888,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "io",
       pillLabel: "File Output",
       desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
-      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）；來源有錯誤碼對照時，以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照（0.9.2 起）</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema，並把缺漏、衝突與未確認事項列為可持續追蹤的治理項目，而非一律標成整合風險</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
+      details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）；來源有錯誤碼對照時，以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照（0.9.2 起）</li><li><b>integration-contract.json</b>: 固定產生的機讀契約，保存 operational 規則、applies_to 關聯與整合機制</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema，並把缺漏、衝突與未確認事項列為可持續追蹤的治理項目，而非一律標成整合風險</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json"
@@ -899,7 +899,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "pure",
       pillLabel: "Pure Logic",
       desc: "對生成的 OpenAPI/Markdown/Provenance 執行四類嚴格驗證檢查。特別是<b>「禁止推測」</b>：任何進入輸出的內容都必須對應到 <code>provenance.json</code> 的 target 上，交叉比對是否有來源依據，嚴格阻絕推測與幻覺。",
-      details: "<h4>四大驗證維度</h4><ul><li><b>結構驗證</b>：檢查 OpenAPI 規格合法性，端點必須包含 method、path 與至少一個 response</li><li><b>完整度驗證</b>：標記為 unverified 的來源、必要欄位缺失、不可讀來源皆會使驗證失敗</li><li><b>一致性驗證</b>：OpenAPI 與 Markdown / Provenance 的端點集合與 security 名稱必須完全一致</li><li><b>禁止推測驗證</b>：任何輸出項目必須對應 provenance 來源；無來源支持的內容視為違規</li></ul>",
+      details: "<h4>四大驗證維度</h4><ul><li><b>結構驗證</b>：檢查 OpenAPI 規格合法性，端點必須包含 method、path 與至少一個 response</li><li><b>完整度驗證</b>：必要欄位缺失會阻擋；supported/readable 但零實質引用的來源與成功 response 無可用 schema 欄位則以 warning 揭露</li><li><b>一致性驗證</b>：OpenAPI 與 Markdown / Provenance 的端點集合與 security 名稱必須完全一致</li><li><b>禁止推測驗證</b>：任何輸出項目必須對應 provenance 來源；無來源支持的內容視為違規</li></ul>",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
       outputs: "validation/report.json, validation/report.md"
@@ -972,7 +972,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "generate/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "把 normalization plan 轉成實際交付產物，包含 OpenAPI、Markdown guide、人工核對頁與 provenance mapping。",
+      description: "把 normalization plan 轉成實際交付產物，包含 OpenAPI、Markdown guide、人工核對頁、provenance 與固定產生的 operational 機讀契約。",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization plan, manifest, run-dir path",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json",
@@ -982,7 +982,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "validate/",
       badgeClass: "pure",
       badgeLabel: "Pure Logic",
-      description: "驗證 OpenAPI、Markdown 與 provenance 的結構、完整度、一致性與禁止推測規則。",
+      description: "驗證 OpenAPI、Markdown 與 provenance 的結構、完整度、一致性與禁止推測規則，並揭露零引用來源與空殼 response。",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "generated outputs, plan, manifest",
       outputs: "validation report data and report files through run-dir flow",
@@ -1022,7 +1022,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "score/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "對已完成 run-dir 做確定性文件品質評分，五類加權（openapi_validity／completeness／consistency／source_grounding／reviewability）算出 0–100，支援 ci／review profile；不改變 validation pass/fail。",
+      description: "對已完成 run-dir 做確定性文件品質評分，五類加權算出 0–100，並輸出 response operation／field／hollow 指標；支援 ci／review profile且不改變 validation pass/fail。",
       seam: "load_score_inputs(run_dir) / evaluate_score(inputs, profile, min_score) / write_reports(report, score_dir)",
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",

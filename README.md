@@ -471,7 +471,7 @@ uv run loop-apidoc assemble \
   [--architecture-mode legacy|shadow] [--json] [--score]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 `integration.json` 簽章/加密契約)組裝成輸出:manifest → plan → generate → validate。`inventory.operational[]` 用來記錄來源明載的全域／跨端點規則；選填的 `applies_to[]` 會把規則連到經閘門驗證的 operation 或欄位，並由固定產生的 `integration-contract.json` 交給下游工具。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
 `score/score.md`；assemble 的退出碼仍維持既有驗證語意。有 URL 來源時，可用 `--url-coverage` 傳入 agent 記錄的 `url_sources/coverage.json` 撈取帳本，`assemble` 會做 warning-only 的 URL 涵蓋檢核（不影響驗證嚴重度閘）。搭配 `--score` 的自循環旗標 `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` 可讓 agent 依回報的 loop verdict 決定是否再跑一輪修正。
 
 可用 `--architecture-mode shadow` 明確啟用觀測性的 model-independent Core
@@ -520,7 +520,7 @@ output/
     ├── api-guide.zh-TW.md          # 繁體中文串接文件
     ├── review.html                 # 生成產物人工核對頁(離線 HTML)
     ├── provenance.json             # 每個輸出項目的來源追溯
-    ├── integration-contract.json   # 簽章/加密整合契約(來源有提供時)
+    ├── integration-contract.json   # 固定產生的機讀契約：operational 規則＋整合機制
     ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例(產出時)
     ├── handoff/                    # 開發交接輔助(衍生產物,非契約來源)
     │   ├── integration-tasks.md    # 實作順序/執行設定/阻塞項檢查表
@@ -572,9 +572,13 @@ output/
 | 類別 | 內容 |
 | --- | --- |
 | **結構** | OpenAPI 3.1 合法性;endpoint 必須有 method、path 與至少一個 response |
-| **完整性** | 標記 `unverified` 的來源、缺漏必要欄位、manifest 涵蓋缺口(不可讀來源等)會使驗證失敗 |
+| **完整性** | 必要欄位缺漏會使驗證失敗；supported/readable 但零實質引用的來源，以及成功 response 沒有可用 schema 欄位，會以 warning 明確浮現 |
 | **一致性** | OpenAPI 與 Markdown／provenance 的 endpoint 集合與 security 名稱需一致 |
 | **禁止推測** | 每個輸出項目須對應 provenance 來源;無來源支持的內容視為違規 |
+
+`score/score.json` 與 `score/score.md` 也會列出 response contract 指標：path operation
+總數、具可用 response schema 的 operation 數、空殼 operation 數與 response 欄位總數。
+這些指標用來揭露交付可用性，不改變 validation severity。
 
 驗證會將問題分類:`OPENAPI_INVALID` / `OUTPUT_MISMATCH` → 可由重新生成修正;`REQUIRED_INFO_MISSING` → agent 重讀相關來源補齊;`SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → 無法修正(fail-closed,回報為缺漏／衝突)。修正由 agent 依 `assemble --json` 回報自行驅動(重讀來源、覆寫擷取 JSON 後重跑),而非由 CLI 內建迴圈。
 

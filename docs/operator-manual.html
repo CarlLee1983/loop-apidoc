@@ -254,11 +254,11 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <h3 id="validate-run"><code>validate</code> — 驗證既有 run 目錄</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
-<p>對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 <code>&lt;run-dir&gt;/validation/</code>。通過回傳 <code>0</code>,有 ERROR 級問題回傳 <code>1</code>。</p>
+<p>對 run 目錄輸出執行結構／完整性／一致性／禁止推測四類驗證,並將報告寫入 <code>&lt;run-dir&gt;/validation/</code>。supported/readable 但零實質引用的來源，以及成功 response 沒有可用 schema 欄位，會以 warning 浮現；通過回傳 <code>0</code>,有 ERROR 級問題回傳 <code>1</code>。</p>
 <h3 id="score-run"><code>score</code> — 為完成的 run 目錄評分</h3>
 <pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
 </code></pre>
-<p>對已完成 run directory 做確定性文件品質評分,五類加權(<code>openapi_validity</code>／<code>completeness</code>／<code>consistency</code>／<code>source_grounding</code>／<code>reviewability</code>)算出 0–100,寫入 <code>&lt;run-id&gt;/score/score.{json,md}</code>。<code>--profile</code> 決定分數門檻(<code>ci</code>=85、<code>review</code>=70),可用 <code>--min-score</code> 覆寫。退出碼:<code>0</code>=達門檻、<code>1</code>=未達、<code>2</code>=輸入缺檔或格式錯誤。<code>assemble --score</code> 會附帶產生同一份報告,但<strong>不影響</strong> assemble 的退出碼(仍由 validation 決定)。</p>
+<p>對已完成 run directory 做確定性文件品質評分,五類加權(<code>openapi_validity</code>／<code>completeness</code>／<code>consistency</code>／<code>source_grounding</code>／<code>reviewability</code>)算出 0–100，並列出 response operation、可用 schema、空殼 operation 與欄位總數，寫入 <code>&lt;run-id&gt;/score/score.{json,md}</code>。<code>--profile</code> 決定分數門檻(<code>ci</code>=85、<code>review</code>=70),可用 <code>--min-score</code> 覆寫。退出碼:<code>0</code>=達門檻、<code>1</code>=未達、<code>2</code>=輸入缺檔或格式錯誤。<code>assemble --score</code> 會附帶產生同一份報告,但<strong>不影響</strong> assemble 的退出碼(仍由 validation 決定)。</p>
 <h3 id="evaluate-runtime"><code>evaluate</code> — 比較 runtime replay 結果</h3>
 <pre><code class="language-bash">uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
 </code></pre>
@@ -291,7 +291,7 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
     ├── api-guide.zh-TW.md          # 繁體中文串接文件
     ├── review.html                 # 生成產物人工核對頁（離線 HTML）
     ├── provenance.json             # 每個輸出項目的來源追溯
-    ├── integration-contract.json   # 簽章/加密整合契約（來源有提供時）
+    ├── integration-contract.json   # 固定產生：operational 規則＋整合機制
     ├── examples/                   # 逐端點 curl / TypeScript / Python 請求範例（產出時）
     ├── handoff/                    # 開發交接輔助（衍生產物，非契約來源）
     │   ├── integration-tasks.md    # 實作順序/執行設定/阻塞項檢查表
@@ -416,7 +416,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/validate/</code></td>
-<td>結構／完整性／一致性／禁止推測驗證與報告</td>
+<td>結構／完整性／一致性／禁止推測驗證、零引用來源與空殼 response 告警</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/run/</code></td>

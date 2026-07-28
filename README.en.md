@@ -489,7 +489,7 @@ uv run loop-apidoc assemble \
   [--architecture-mode legacy|shadow] [--json] [--score]
 ```
 
-Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, `report`, and `toolchain` to stdout for the agent to parse and drive the correction loop. The run directory also gets a `run.json` descriptor recording `toolchain` (`cli_version`, `extraction_contract_version`, `skill_version`, `model`) so a later regression can be attributed to a version from the artifacts alone; `--extractor-model` lets the agent state the extraction model explicitly — omitted means `null` (the CLI never guesses). Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
+Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` signing/crypto contract): manifest → plan → generate → validate. Inventory `operational[]` entries cover source-stated global and cross-endpoint rules; optional `applies_to[]` links each rule to a validated operation or field, and the always-written `integration-contract.json` exposes those rules to downstream tools. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, `report`, and `toolchain` to stdout for the agent to parse and drive the correction loop. The run directory also gets a `run.json` descriptor recording `toolchain` (`cli_version`, `extraction_contract_version`, `skill_version`, `model`) so a later regression can be attributed to a version from the artifacts alone; `--extractor-model` lets the agent state the extraction model explicitly — omitted means `null` (the CLI never guesses). Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
 
 Use `--architecture-mode shadow` to opt into an observational pass through the
 model-independent Core after the legacy validation report is written. A successful pass
@@ -538,7 +538,7 @@ output/
     ├── api-guide.zh-TW.md          # Traditional Chinese integration guide
     ├── review.html                 # offline HTML page for manual artifact review
     ├── provenance.json             # per-output source traceability
-    ├── integration-contract.json   # signing/crypto integration contract (when sources provide one)
+    ├── integration-contract.json   # always-written machine contract: operational rules + integration mechanics
     ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
     ├── handoff/                    # developer handoff aids (derived artifacts, not a contract source)
     │   ├── integration-tasks.md    # implementation order / runtime config / blocker checklist
@@ -590,9 +590,13 @@ When the sources provide an error-code table, `components.schemas.ErrorCode` —
 | Category | What it checks |
 | --- | --- |
 | **Structure** | OpenAPI 3.1 validity; every endpoint must have a method, path, and at least one response |
-| **Completeness** | `unverified` sources, missing required fields, and manifest coverage gaps (e.g. unreadable sources) fail validation |
+| **Completeness** | Missing required fields fail validation; supported/readable sources with zero material citations and successful responses with no usable schema fields are visible as warnings |
 | **Consistency** | The endpoint set and security names must agree across OpenAPI, Markdown, and provenance |
 | **No speculation** | Every output item must map to a provenance source; unsupported content is a violation |
+
+`score/score.json` and `score/score.md` also expose response-contract metrics: total path
+operations, operations with usable response schemas, hollow operations, and response field
+count. These metrics describe delivery usefulness without changing validation severity.
 
 Validation classifies issues: `OPENAPI_INVALID` / `OUTPUT_MISMATCH` → fixable by regeneration; `REQUIRED_INFO_MISSING` → the agent re-reads the relevant sources to fill the gap; `SOURCE_UNVERIFIED` / `SOURCE_CONFLICT` / `UNSUPPORTED_ASSERTION` → not fixable (fail-closed, reported as gaps/conflicts). Correction is driven by the agent from the `assemble --json` report (re-reading sources and overwriting the extraction JSON, then re-running), not by an in-CLI loop.
 

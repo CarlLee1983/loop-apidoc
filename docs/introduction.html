@@ -834,7 +834,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         </div>
         <h3>整合契約</h3>
         <span class="file">integration-contract.json</span>
-        <p>不只列出單一個端點,還把它們串成一條可執行的交易流程:先呼叫誰、拿到什麼、再帶進下一步,讓工程師知道整套怎麼接。</p>
+        <p>固定產生的機讀契約除了簽章、callback 等整合機制，也保存來源明載的跨端點規則、金額公式與欄位語意，讓下游 SDK 工具不必重讀 Markdown。</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
@@ -966,7 +966,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M19 8v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8z"/><path d="M9 13l2 2 4-4"/></svg>
         </div>
         <h3>看五個面向打分</h3>
-        <p>規格正確性、完整度、一致性、來源依據、可複核性,五個維度加權後得出一個總分。</p>
+        <p>規格正確性、完整度、一致性、來源依據、可複核性,五個維度加權後得出總分；報告另列 response 欄位總數與空殼 operation，避免「有 response 但沒有契約」被外觀掩蓋。</p>
       </div>
       <div class="card">
         <div class="badge tint-amber">

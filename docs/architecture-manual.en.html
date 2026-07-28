@@ -781,7 +781,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="generate">
             <div class="module-name">generate/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">Emits OpenAPI, Markdown and provenance.</div>
+            <div class="module-role">Emits OpenAPI, Markdown, provenance, and the operational machine contract.</div>
           </button>
           <button type="button" class="module-card" data-module="validate">
             <div class="module-name">validate/ <span class="pill pure">Pure</span></div>
@@ -860,7 +860,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "agent",
       pillLabel: "Agent",
       desc: "The extraction engine is <b>the current coding agent itself</b> (the Claude Code plugin or the OpenAI Codex CLI). Following <code>skills/loop-apidoc/SKILL.md</code>, the agent extracts in segments via a <b>read-only subagent fan-out</b>: each subagent only reads files and searches, returning JSON (no file writes, no network), and the orchestrating agent writes those results into <code>inventory.json</code> and per-endpoint <code>endpoints/*.json</code>.",
-      details: "<h4>10 extraction segment topics</h4><ul><li>01 Source inventory</li><li>02 API system overview and terminology</li><li>03 Environments / base URL / versions</li><li>04 Authentication / authorization / signing</li><li>05 Endpoint list</li><li>06 Per-endpoint details (method/path/params/req/resp/examples)</li><li>07 Shared schemas / enums / data constraints</li><li>08 Error codes and failure behavior</li><li>09 Rate limit / timeout / retry / idempotency / webhook</li><li>10 Source conflicts, gaps, and items that cannot be confirmed</li></ul><p>Segmenting keeps a single answer from carrying everything and dropping fields; the sole grounding rule: anything a source does not state is left null and recorded in <code>missing</code> — never inferred, never filled with REST/OAuth conventions.</p>",
+      details: "<h4>10 extraction segment topics</h4><ul><li>01 Source inventory</li><li>02 API system overview and terminology</li><li>03 Environments / base URL / versions</li><li>04 Authentication / authorization / signing</li><li>05 Endpoint list</li><li>06 Per-endpoint details (method/path/params/req/resp/examples)</li><li>07 Shared schemas / enums / data constraints</li><li>08 Error codes and failure behavior</li><li>09 Operational limits, cross-endpoint business rules, field semantics, and formulas</li><li>10 Source conflicts, gaps, and items that cannot be confirmed</li></ul><p>Segmenting keeps a single answer from carrying everything and dropping fields; the sole grounding rule: anything a source does not state is left null and recorded in <code>missing</code> — never inferred, never filled with REST/OAuth conventions.</p>",
       seam: "skills/loop-apidoc/SKILL.md (agent writes inventory.json + endpoints/*.json)",
       inputs: "&lt;SOURCES&gt; or &lt;WORK&gt;/sources_md, target JSON schema",
       outputs: "inventory.json, endpoints/*.json"
@@ -893,7 +893,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "io",
       pillLabel: "File Output",
       desc: "Converts the normalization plan into the actual deliverable artifact files. This module and run are the only two exits with file-write (I/O) responsibility. If an OpenAPI-required field is missing from the sources, it is filled with a minimal legal placeholder value, and the custom field <code>x-loop-status: missing-source</code> is added automatically along with a corresponding log entry.",
-      details: "<p>Exported artifacts include:</p><ul><li><b>openapi.yaml</b>: a standard OpenAPI 3.1 spec file (including 3.1 structures such as webhooks); when the sources provide an error-code mapping, the <code>x-loop-error-code-map</code> extension losslessly preserves the source-grounded error-code → meaning mapping (since 0.9.2)</li><li><b>api-guide.zh-TW.md</b>: a Traditional-Chinese API integration guide</li><li><b>review.html</b>: a self-styled, offline-openable manual review page that gathers sources / endpoints / schemas and presents gaps, conflicts, and unverified facts as continuously trackable governance items rather than blanket integration risks</li><li><b>provenance.json</b>: records the detailed source-tracing mapping for every OpenAPI and Markdown field</li></ul>",
+      details: "<p>Exported artifacts include:</p><ul><li><b>openapi.yaml</b>: a standard OpenAPI 3.1 spec file (including 3.1 structures such as webhooks); when the sources provide an error-code mapping, the <code>x-loop-error-code-map</code> extension losslessly preserves the source-grounded error-code → meaning mapping (since 0.9.2)</li><li><b>integration-contract.json</b>: an always-written machine contract carrying operational rules, applies_to links, and integration mechanics</li><li><b>api-guide.zh-TW.md</b>: a Traditional-Chinese API integration guide</li><li><b>review.html</b>: a self-styled, offline-openable manual review page that gathers sources / endpoints / schemas and presents gaps, conflicts, and unverified facts as continuously trackable governance items rather than blanket integration risks</li><li><b>provenance.json</b>: records the detailed source-tracing mapping for every OpenAPI and Markdown field</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json"
@@ -904,7 +904,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       pillClass: "pure",
       pillLabel: "Pure Logic",
       desc: "Runs four categories of strict validation checks over the generated OpenAPI/Markdown/Provenance. In particular <b>“no speculation”</b>: anything entering the output must map to a target in <code>provenance.json</code> and be cross-checked for source grounding, strictly blocking speculation and hallucination.",
-      details: "<h4>Four validation dimensions</h4><ul><li><b>Structure validation</b>: checks OpenAPI spec legality; each endpoint must include a method, a path and at least one response</li><li><b>Completeness validation</b>: sources marked unverified, missing required fields, and unreadable sources all fail validation</li><li><b>Consistency validation</b>: the endpoint set and security names must match exactly across OpenAPI and Markdown / Provenance</li><li><b>No-speculation validation</b>: every output item must map to a provenance source; content with no source support is treated as a violation</li></ul>",
+      details: "<h4>Four validation dimensions</h4><ul><li><b>Structure validation</b>: checks OpenAPI spec legality; each endpoint must include a method, a path and at least one response</li><li><b>Completeness validation</b>: missing required fields block; supported/readable sources with zero material citations and successful responses with no usable schema fields are exposed as warnings</li><li><b>Consistency validation</b>: the endpoint set and security names must match exactly across OpenAPI and Markdown / Provenance</li><li><b>No-speculation validation</b>: every output item must map to a provenance source; content with no source support is treated as a violation</li></ul>",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "openapi.yaml, api-guide.zh-TW.md, provenance.json",
       outputs: "validation/report.json, validation/report.md"
@@ -977,7 +977,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "generate/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "Turns the normalization plan into the actual deliverable artifacts, including OpenAPI, the Markdown guide, the manual review page and the provenance mapping.",
+      description: "Turns the normalization plan into deliverable artifacts, including OpenAPI, the Markdown guide, the review page, provenance, and the always-written operational machine contract.",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization plan, manifest, run-dir path",
       outputs: "openapi.yaml, api-guide.zh-TW.md, review.html, provenance.json",
@@ -987,7 +987,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "validate/",
       badgeClass: "pure",
       badgeLabel: "Pure Logic",
-      description: "Validates the structure, completeness, consistency and no-speculation rules across OpenAPI, Markdown and provenance.",
+      description: "Validates structure, completeness, consistency, and no-speculation, including uncited-source and hollow-response warnings.",
       seam: "validate_outputs(plan, result, manifest) / validate_run_dir(run_dir)",
       inputs: "generated outputs, plan, manifest",
       outputs: "validation report data and report files through run-dir flow",
@@ -1027,7 +1027,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "score/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "Deterministic documentation-quality score for a completed run-dir: five weighted categories (openapi_validity / completeness / consistency / source_grounding / reviewability) produce a 0–100 score, supporting the ci / review profiles; it does not change validation pass/fail.",
+      description: "Deterministic documentation-quality score for a completed run-dir: five weighted categories produce 0–100 plus response operation / field / hollow metrics; ci / review profiles never change validation pass/fail.",
       seam: "load_score_inputs(run_dir) / evaluate_score(inputs, profile, min_score) / write_reports(report, score_dir)",
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",
