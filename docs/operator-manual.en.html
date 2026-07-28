@@ -253,11 +253,11 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 <h3 id="validate-run"><code>validate</code> — validate an existing run directory</h3>
 <pre><code class="language-bash">uv run loop-apidoc validate --output ./output/&lt;run-id&gt;
 </code></pre>
-<p>Runs the four validation categories — structure / completeness / consistency / no-speculation — over the run directory's outputs, and writes the report into <code>&lt;run-dir&gt;/validation/</code>. Returns <code>0</code> on pass, <code>1</code> when there are ERROR-severity issues.</p>
+<p>Runs the four validation categories — structure / completeness / consistency / no-speculation — over the run directory's outputs, and writes the report into <code>&lt;run-dir&gt;/validation/</code>. Supported/readable sources with zero material citations and successful responses with no usable schema fields appear as warnings. Returns <code>0</code> on pass, <code>1</code> when there are ERROR-severity issues.</p>
 <h3 id="score-run"><code>score</code> — grade a completed run directory</h3>
 <pre><code class="language-bash">uv run loop-apidoc score --output ./output/&lt;run-id&gt; [--profile ci|review] [--min-score N] [--json]
 </code></pre>
-<p>Performs a deterministic documentation-quality score on a completed run directory, computing 0–100 from five weighted categories (<code>openapi_validity</code> / <code>completeness</code> / <code>consistency</code> / <code>source_grounding</code> / <code>reviewability</code>), written to <code>&lt;run-id&gt;/score/score.{json,md}</code>. <code>--profile</code> sets the score threshold (<code>ci</code> = 85, <code>review</code> = 70), which <code>--min-score</code> can override. Exit codes: <code>0</code> = meets threshold, <code>1</code> = below, <code>2</code> = input file missing or malformed. <code>assemble --score</code> produces the same report as a side effect, but <strong>does not affect</strong> assemble's exit code (still decided by validation).</p>
+<p>Performs a deterministic documentation-quality score on a completed run directory, computing 0–100 from five weighted categories (<code>openapi_validity</code> / <code>completeness</code> / <code>consistency</code> / <code>source_grounding</code> / <code>reviewability</code>) and reporting response operations, usable schemas, hollow operations, and field count in <code>&lt;run-id&gt;/score/score.{json,md}</code>. <code>--profile</code> sets the score threshold (<code>ci</code> = 85, <code>review</code> = 70), which <code>--min-score</code> can override. Exit codes: <code>0</code> = meets threshold, <code>1</code> = below, <code>2</code> = input file missing or malformed. <code>assemble --score</code> produces the same report as a side effect, but <strong>does not affect</strong> assemble's exit code (still decided by validation).</p>
 <h3 id="evaluate-runtime"><code>evaluate</code> — compare runtime replay results</h3>
 <pre><code class="language-bash">uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
 </code></pre>
@@ -290,7 +290,7 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
     ├── api-guide.zh-TW.md          # Traditional-Chinese integration guide
     ├── review.html                 # manual review page for generated artifacts (offline HTML)
     ├── provenance.json             # source traceability for each output item
-    ├── integration-contract.json   # signature/encryption integration contract (when the source provides it)
+    ├── integration-contract.json   # always written: operational rules + integration mechanics
     ├── examples/                   # per-endpoint curl / TypeScript / Python request examples (when produced)
     ├── handoff/                    # developer handoff aids (derived artifacts, not the contract source)
     │   ├── integration-tasks.md    # implementation order / execution config / blocker checklist
@@ -403,7 +403,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/validate/</code></td>
-<td>structure / completeness / consistency / no-speculation validation and reporting</td>
+<td>structure / completeness / consistency / no-speculation validation, including uncited-source and hollow-response warnings</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/run/</code></td>

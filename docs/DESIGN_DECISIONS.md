@@ -174,6 +174,21 @@ Any user-visible command, output, workflow, or governance change updates its tea
 and operator documentation in the same change. Release automation synchronizes version
 metadata only; it does not replace documentation review.
 
+### 9. Make silent source and response omissions observable
+
+Coverage is bidirectional. Provenance must reject claims that lack source support, and
+validation must also warn when a supported, readable source contributes no material
+citation. The generated guide distinguishes all run inputs from sources actually cited.
+Successful path responses that contain no usable schema fields remain valid OpenAPI but
+surface as completeness warnings; score reports publish operation, hollow-operation, and
+response-field counts without changing the validation severity gate.
+
+Source-stated global and cross-endpoint business rules belong in `operational[]`.
+Optional `applies_to[]` references are resolved against real operations and structural
+fields at the extraction boundary. The always-written `integration-contract.json`
+preserves these rules as a downstream machine contract instead of requiring SDK tooling
+to rebuild them from the human Markdown guide.
+
 ## Canonical operational references
 
 - [Architecture](ARCHITECTURE.md) — component boundaries, data flow, and seams.
@@ -199,3 +214,4 @@ metadata only; it does not replace documentation review.
 6. 擷取 gate、validation 與 no-speculation 規則一律 fail closed；分數、diff、freshness 與 preparation 是品質訊號，不是另一個事實來源。文件未提供 Server URL、authentication details 或 sandbox credentials 時，保留為可持續管理的治理缺口，不單憑缺席判定為整合風險。
 7. Foundry 以候選、版本化 asset 與 `current` 管理契約；本機 review 工作台只在人工明確核准後升級，並如實標示 `needs_follow_up`。
 8. benchmark、release 與對外文件都是產品契約；來源快照缺失或測試 skip 都不能宣稱通過。
+9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游。

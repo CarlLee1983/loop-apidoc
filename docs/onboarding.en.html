@@ -619,7 +619,7 @@
         </div>
         <h3>Handoff loop</h3>
         <span class="file">integration-contract · examples · handoff/</span>
-        <p>OpenAPI is the contract; the derived Postman collection, SDK hints, task list, and examples help the next engineer pick it up.</p>
+        <p>OpenAPI and the always-written integration contract are the machine contracts; the latter preserves cross-endpoint operational rules, while the derived Postman collection, SDK hints, task list, and examples help the next engineer pick it up.</p>
       </div>
     </div>
   </div>
@@ -861,7 +861,7 @@
       <div class="stage-cell"><span class="sn">06</span><span>Per-endpoint detail (method / path / parameters / req / resp / examples)</span></div>
       <div class="stage-cell"><span class="sn">07</span><span>Shared schemas / enums / data constraints</span></div>
       <div class="stage-cell"><span class="sn">08</span><span>Error codes and failure behavior</span></div>
-      <div class="stage-cell"><span class="sn">09</span><span>rate limit / timeout / retry / idempotency / webhook</span></div>
+      <div class="stage-cell"><span class="sn">09</span><span>operational limits, cross-endpoint business rules, field semantics, and formulas</span></div>
       <div class="stage-cell"><span class="sn">10</span><span>Source conflicts, gaps, and items that cannot be confirmed</span></div>
     </div>
   </div>
@@ -904,7 +904,7 @@
         </div>
         <h3>Validation report</h3>
         <span class="file">validation/report</span>
-        <p>Lists where things are complete and where there are gaps / conflicts, giving quality an auditable basis.</p>
+        <p>Lists gaps and conflicts, including supported sources with zero citations and successful responses with no usable schema fields.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
@@ -912,7 +912,7 @@
         </div>
         <h3>Quality score</h3>
         <span class="file">score/score.{json,md}</span>
-        <p>Turns openapi_validity, completeness, consistency, source_grounding, and reviewability into comparable scores.</p>
+        <p>Turns five quality categories into comparable scores and reports response fields, operations, and hollow operations.</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">

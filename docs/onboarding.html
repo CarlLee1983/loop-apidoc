@@ -620,7 +620,7 @@
         </div>
         <h3>Handoff loop</h3>
         <span class="file">integration-contract · examples · handoff/</span>
-        <p>OpenAPI 是契約,衍生的 Postman、SDK hints、任務清單與 examples 幫下一位工程師接手。</p>
+        <p>OpenAPI 與固定產生的 integration-contract 是機讀契約；後者保留跨端點 operational 規則，衍生的 Postman、SDK hints、任務清單與 examples 幫下一位工程師接手。</p>
       </div>
     </div>
   </div>
@@ -862,7 +862,7 @@
       <div class="stage-cell"><span class="sn">06</span><span>逐 endpoint 細節(method / path / 參數 / req / resp / 範例)</span></div>
       <div class="stage-cell"><span class="sn">07</span><span>共用 schema / enum / 資料限制</span></div>
       <div class="stage-cell"><span class="sn">08</span><span>錯誤碼與失敗行為</span></div>
-      <div class="stage-cell"><span class="sn">09</span><span>rate limit / timeout / retry / idempotency / webhook</span></div>
+      <div class="stage-cell"><span class="sn">09</span><span>operational 限制、跨端點業務規則、欄位語意與公式</span></div>
       <div class="stage-cell"><span class="sn">10</span><span>來源衝突、缺漏、無法確認事項</span></div>
     </div>
   </div>
@@ -905,7 +905,7 @@
         </div>
         <h3>驗證報告</h3>
         <span class="file">validation/report</span>
-        <p>列出哪裡完整、哪裡缺漏 / 衝突,品質有憑據可查。</p>
+        <p>列出缺漏／衝突，也會揭露 supported 但零引用的來源與無可用 schema 欄位的成功 response。</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">
@@ -913,7 +913,7 @@
         </div>
         <h3>品質評分</h3>
         <span class="file">score/score.{json,md}</span>
-        <p>把 openapi_validity、completeness、consistency、source_grounding、reviewability 轉成可比較分數。</p>
+        <p>把五類品質轉成可比較分數，並列出 response 欄位數、operation 數與空殼 operation 數。</p>
       </div>
       <div class="value">
         <div class="badge tint-purple">

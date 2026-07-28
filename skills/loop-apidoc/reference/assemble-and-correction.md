@@ -126,8 +126,8 @@ your extraction JSON and re-running.
 |---|---|---|---|
 | `OPENAPI_INVALID` | error | assembled OpenAPI is structurally invalid, or a `$ref` doesn't resolve, or YAML won't parse | fix the upstream JSON that produced it (usually a `schema_ref`/`one_of` name not in `inventory.schemas`, or a malformed security scheme), re-assemble |
 | `OUTPUT_MISMATCH` | error | Markdown ↔ OpenAPI disagree, **or** an integration `payload_ref`/`operation_ref`/signature wiring doesn't resolve (these three are `auto_fixable`) | for integration refs: point them at an existing schema/operation name. For md↔openapi: re-assemble after the upstream JSON is corrected |
-| `REQUIRED_INFO_MISSING` | error **or** warning | a required piece is absent. ERROR: endpoint has no `method`, a real path has no `responses`, an endpoint has no `security` and no "no-auth" marker, a crypto signal with no detail, a missing `verify.field`. WARNING: missing `summary`/`examples`/`operational` | re-read the affected source scope and fill the JSON. A response entry does **not** require a provider-published HTTP status: use `status: "default"` with the cited universal envelope when HTTP status is silent. WARNING ones are reported gaps when the source is genuinely silent |
-| `SOURCE_UNVERIFIED` | error (warning for an unsupported source) | a target can't be traced to a cited source | usually a missing/incorrect `source` on the entry — add/correct it. If the assertion truly has no source, fail-closed (remove / report). An *unsupported* source surfaces here as a non-blocking warning |
+| `REQUIRED_INFO_MISSING` | error **or** warning | a required piece is absent. ERROR: endpoint has no `method`, a real path has no `responses`, an endpoint has no `security` and no "no-auth" marker, a crypto signal with no detail, a missing `verify.field`. WARNING: missing `summary`/`examples`/`operational`, or a real path's successful response has no usable schema fields | re-read the affected source scope and fill the JSON. A response entry does **not** require a provider-published HTTP status: use `status: "default"` with the cited universal envelope when HTTP status is silent. WARNING ones are reported gaps when the source is genuinely silent |
+| `SOURCE_UNVERIFIED` | error or warning | a target can't be traced to a cited source, or a supported/readable manifest source has zero material citations | usually a missing/incorrect `source` on the entry — add/correct it. If the assertion truly has no source, fail-closed (remove / report). Unsupported and supported-but-uncited sources surface as non-blocking warnings so silent source omission remains visible |
 | `SOURCE_CONFLICT` | error | two sources disagree about the same target | re-read both; **report the conflict** — do not silently pick one |
 | `UNSUPPORTED_ASSERTION` | error | the output asserts something no source states (speculation leaked in) | remove the unsupported content; fail-closed |
 
@@ -189,9 +189,10 @@ user**. Never hard-code fill-ins; never fabricate to make validation pass.
 **Product artifacts — confirm these exist after PASS:**
 
 - `openapi.yaml`, `api-guide.zh-TW.md`, `review.html`, `provenance.json`
-- `integration-contract.json` — **always** written. Empty `crypto`/`callbacks`/
-  `field_conditions`/`test_cases` = "sources stated no integration mechanics"; its
-  **emptiness, not its absence**, is the signal.
+- `integration-contract.json` — **always** written. It carries source-backed
+  `operational[]` rules as well as `crypto`/`callbacks`/`field_conditions`/`test_cases`.
+  Empty arrays mean the sources stated no facts in that category; the artifact's
+  **contents, not its presence**, are the signal.
 - `examples/<operationId>/request.{sh,ts,py}` + `examples/README.md` — **always** written when
   there is ≥1 endpoint. Values render as `<placeholder>` when the source states no example.
 - `validation/report.json` + `validation/report.md`
