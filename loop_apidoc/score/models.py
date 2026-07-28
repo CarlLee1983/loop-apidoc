@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from loop_apidoc.generate.models import ProvenanceDocument
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.validate.models import ValidationReport
+from loop_apidoc.validate.response_contract import ResponseContractMetrics
 
 
 class ScoreStatus(str, Enum):
@@ -65,6 +66,9 @@ class ScoreReport(BaseModel):
     profile: ScoreProfile
     min_score: int = Field(ge=0, le=100)
     category_scores: dict[str, int]
+    response_contract: ResponseContractMetrics = Field(
+        default_factory=ResponseContractMetrics
+    )
     blocking_findings: list[ScoreFinding] = Field(default_factory=list)
     findings: list[ScoreFinding] = Field(default_factory=list)
 

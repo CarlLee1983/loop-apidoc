@@ -24,6 +24,12 @@ def render_markdown(report: ScoreReport) -> str:
         f"Score: **{report.score} / 100**",
         f"Profile: `{report.profile.value}`",
         f"Minimum score: `{report.min_score}`",
+        (
+            "Response contract: "
+            f"**{report.response_contract.field_count} fields across "
+            f"{report.response_contract.path_operations} operations; "
+            f"{report.response_contract.hollow_operations} hollow.**"
+        ),
         "",
         "## Category Scores",
         "",

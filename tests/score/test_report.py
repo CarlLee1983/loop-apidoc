@@ -8,6 +8,7 @@ from loop_apidoc.score.models import (
     ScoreStatus,
 )
 from loop_apidoc.score.report import render_markdown, write_reports
+from loop_apidoc.validate.response_contract import ResponseContractMetrics
 
 
 def _report() -> ScoreReport:
@@ -43,6 +44,12 @@ def _report() -> ScoreReport:
             "source_grounding": 100,
             "reviewability": 80,
         },
+        response_contract=ResponseContractMetrics(
+            path_operations=4,
+            operations_with_usable_schema=3,
+            hollow_operations=1,
+            field_count=27,
+        ),
         blocking_findings=[blocking],
         findings=[blocking, warning],
     )
@@ -55,6 +62,7 @@ def test_render_markdown_includes_summary_categories_and_findings() -> None:
     assert "Status: **FAIL**" in md
     assert "Score: **78 / 100**" in md
     assert "| openapi_validity | 0 |" in md
+    assert "Response contract: **27 fields across 4 operations; 1 hollow.**" in md
     assert "## Blocking Findings" in md
     assert "**OPENAPI_INVALID**" in md
     assert "## Recommended Fixes" in md

@@ -14,6 +14,7 @@ from loop_apidoc.score.models import (
     resolved_min_score,
 )
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
+from loop_apidoc.validate.response_contract import analyze_response_contracts
 
 _ISSUE_CATEGORY: dict[IssueCode, ScoreCategory] = {
     IssueCode.OPENAPI_INVALID: ScoreCategory.OPENAPI_VALIDITY,
@@ -199,6 +200,7 @@ def evaluate_score(
     min_score: int | None = None,
 ) -> ScoreReport:
     threshold = resolved_min_score(profile, min_score)
+    response_contract = analyze_response_contracts(inputs.openapi).metrics
     findings = [
         _finding_from_issue(
             issue,
@@ -223,6 +225,7 @@ def evaluate_score(
         profile=profile,
         min_score=threshold,
         category_scores=category_scores,
+        response_contract=response_contract,
         blocking_findings=blocking_findings,
         findings=findings,
     )

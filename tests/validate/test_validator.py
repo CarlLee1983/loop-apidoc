@@ -63,6 +63,22 @@ def test_good_outputs_validate_clean():
     assert report.ok is True, [i.model_dump() for i in report.errors()]
 
 
+def test_hollow_success_response_warns_at_operation_boundary():
+    plan = _good_plan()
+
+    report = validate_outputs(plan, build_result(plan, _manifest()), _manifest())
+
+    response_warnings = [
+        issue
+        for issue in report.warnings()
+        if issue.location == "paths./users.get" and issue.field_path == "responses"
+    ]
+    assert len(response_warnings) == 1
+    assert response_warnings[0].evidence == (
+        "successful response has no usable schema contract"
+    )
+
+
 def test_missing_method_makes_report_not_ok():
     plan = _good_plan()
     plan.endpoints[0].method = None

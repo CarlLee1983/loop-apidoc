@@ -40,6 +40,7 @@ def _inputs(
     issues: list[Issue] | None = None,
     *,
     run_dir: Path = Path("output/run"),
+    openapi: dict | None = None,
     plan: dict | None = None,
     review_html_exists: bool = True,
     validation_markdown_exists: bool = True,
@@ -47,7 +48,8 @@ def _inputs(
 ) -> ScoreInputs:
     return ScoreInputs(
         run_dir=run_dir,
-        openapi={"openapi": "3.1.0", "info": {"title": "Demo"}, "paths": {}},
+        openapi=openapi
+        or {"openapi": "3.1.0", "info": {"title": "Demo"}, "paths": {}},
         validation=ValidationReport(issues=issues or []),
         provenance=ProvenanceDocument(notebook_url="", entries=[]),
         manifest=manifest or _manifest(),
@@ -87,6 +89,43 @@ def test_no_issues_produces_pass_with_full_scores() -> None:
         "reviewability": 100,
     }
     assert report.findings == []
+
+
+def test_score_report_carries_response_contract_metrics() -> None:
+    openapi = {
+        "openapi": "3.1.0",
+        "info": {"title": "Demo"},
+        "paths": {
+            "/usable": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {"type": "string"},
+                                            "name": {"type": "string"},
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            },
+            "/hollow": {"get": {"responses": {"200": {"description": "OK"}}}},
+        },
+    }
+
+    report = evaluate_score(_inputs(openapi=openapi), profile=ScoreProfile.CI)
+
+    assert report.response_contract.path_operations == 2
+    assert report.response_contract.operations_with_usable_schema == 1
+    assert report.response_contract.hollow_operations == 1
+    assert report.response_contract.field_count == 2
 
 
 def test_ci_error_is_blocking_fail() -> None:
