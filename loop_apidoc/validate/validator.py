@@ -8,6 +8,7 @@ from loop_apidoc.validate.consistency import check_consistency
 from loop_apidoc.validate.coverage import check_manifest_coverage
 from loop_apidoc.validate.integration import check_integration
 from loop_apidoc.validate.models import ValidationReport
+from loop_apidoc.validate.response_contract import analyze_response_contracts
 from loop_apidoc.validate.root_cause import derive_root_causes
 from loop_apidoc.validate.speculation import check_speculation
 from loop_apidoc.validate.structure import check_structure
@@ -30,4 +31,5 @@ def validate_outputs(
     issues += check_speculation(result.openapi, result.provenance)
     issues += check_manifest_coverage(manifest, result.provenance)
     issues += check_integration(plan, result)
+    issues += analyze_response_contracts(result.openapi).issues
     return ValidationReport(issues=issues, root_causes=derive_root_causes(issues))
