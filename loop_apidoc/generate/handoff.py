@@ -138,33 +138,37 @@ def _implementation_order_lines(openapi: dict, plan: NormalizationPlan) -> list[
 
 def _mechanism_lines(plan: NormalizationPlan) -> list[str]:
     contract = plan.integration
-    if contract is None:
-        return ["- Integration contract not present for this run."]
     lines: list[str] = []
-    for idx, s in enumerate(contract.crypto):
+    if contract is not None:
+        for idx, s in enumerate(contract.crypto):
+            lines.append(
+                f"- [ ] Signing/encryption `{s.name or idx}` "
+                f"(`../integration-contract.json#/crypto/{idx}`)"
+            )
+        for idx, cb in enumerate(contract.callbacks):
+            lines.append(
+                f"- [ ] Callback `{cb.name or idx}` "
+                f"(`../integration-contract.json#/callbacks/{idx}`)"
+            )
+        for idx, _cond in enumerate(contract.field_conditions):
+            lines.append(
+                f"- [ ] Field condition #{idx} "
+                f"(`../integration-contract.json#/field_conditions/{idx}`)"
+            )
+        for idx, tc in enumerate(contract.test_cases):
+            lines.append(
+                f"- [ ] Contract test `{tc.name or idx}` "
+                f"(`../integration-contract.json#/test_cases/{idx}`)"
+            )
+    for idx, entry in enumerate(plan.operational):
         lines.append(
-            f"- [ ] Signing/encryption `{s.name or idx}` "
-            f"(`../integration-contract.json#/crypto/{idx}`)"
-        )
-    for idx, cb in enumerate(contract.callbacks):
-        lines.append(
-            f"- [ ] Callback `{cb.name or idx}` "
-            f"(`../integration-contract.json#/callbacks/{idx}`)"
-        )
-    for idx, _cond in enumerate(contract.field_conditions):
-        lines.append(
-            f"- [ ] Field condition #{idx} "
-            f"(`../integration-contract.json#/field_conditions/{idx}`)"
-        )
-    for idx, tc in enumerate(contract.test_cases):
-        lines.append(
-            f"- [ ] Contract test `{tc.name or idx}` "
-            f"(`../integration-contract.json#/test_cases/{idx}`)"
+            f"- [ ] Operational rule `{entry.topic or idx}` "
+            f"(`../integration-contract.json#/operational/{idx}`)"
         )
     if not lines:
         lines.append(
-            "- No source-grounded signing, encryption, callback, condition, or "
-            "test-case mechanisms were found."
+            "- No source-grounded signing, encryption, callback, condition, "
+            "operational-rule, or test-case mechanisms were found."
         )
     return lines
 

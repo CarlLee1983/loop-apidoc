@@ -118,6 +118,28 @@ def test_interaction_paths_are_specific_to_the_explicit_transport_binding():
     )
 
 
+def test_operational_applicability_has_stable_material_paths():
+    value = {
+        "topic": "Cancel amount",
+        "detail": "Use the wager amount.",
+        "applies_to": [
+            {"operation": "POST /cancel", "field": "request.amount"}
+        ],
+    }
+
+    assert material_claim_paths("operational_constraint", value) == (
+        "/applies_to/POST ~1cancel#request.amount/field",
+        "/applies_to/POST ~1cancel#request.amount/operation",
+        "/detail",
+        "/topic",
+    )
+    assert claim_value_at(
+        "operational_constraint",
+        value,
+        "/applies_to/POST ~1cancel#request.amount/field",
+    ) == "request.amount"
+
+
 def test_unknown_path_fails_closed():
     with pytest.raises(ClaimPathError, match="unknown material claim path"):
         claim_value_at("operation", {"method": "GET", "path": "/"}, "/summary")

@@ -8,6 +8,7 @@ from loop_apidoc.plan.models import (
     KeySource,
     MissingItem,
     NormalizationPlan,
+    OperationalEntry,
     PlanItemStatus,
     SourceConflict,
     UnverifiedItem,
@@ -93,3 +94,24 @@ def test_tasks_no_schema_tables():
     # navigation only — never a request-body field table / response schema copy
     assert "properties" not in md
     assert "| Field | Type |" not in md
+
+
+def test_tasks_link_operational_rules_into_the_machine_contract():
+    plan = _plan().model_copy(
+        update={
+            "operational": [
+                OperationalEntry(
+                    status=PlanItemStatus.SUPPORTED,
+                    topic="Cancel amount",
+                    detail="Use the wager amount.",
+                )
+            ]
+        }
+    )
+
+    md = build_handoff(_openapi(), plan, {"operational": [{}]})[
+        "handoff/integration-tasks.md"
+    ]
+
+    assert "Cancel amount" in md
+    assert "../integration-contract.json#/operational/0" in md

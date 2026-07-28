@@ -153,6 +153,15 @@ def _operational_paths(value: dict[str, Any]) -> dict[str, Any]:
     paths: dict[str, Any] = {}
     for name in ("topic", "detail"):
         _put(paths, f"/{name}", value.get(name))
+    for scope in value.get("applies_to") or ():
+        if not isinstance(scope, dict) or scope.get("operation") is None:
+            continue
+        operation = str(scope["operation"])
+        field = scope.get("field")
+        identity = operation if field is None else f"{operation}#{field}"
+        prefix = f"/applies_to/{escape_segment(identity)}"
+        _put(paths, f"{prefix}/operation", scope.get("operation"))
+        _put(paths, f"{prefix}/field", field)
     return paths
 
 

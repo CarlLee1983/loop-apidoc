@@ -84,9 +84,15 @@ class ErrorEntry(_Cited):
     applicable_to: list[str] = Field(default_factory=list)
 
 
+class OperationalApplicability(BaseModel):
+    operation: str
+    field: str | None = None
+
+
 class OperationalEntry(_Cited):
     topic: str | None = None
     detail: str | None = None
+    applies_to: list[OperationalApplicability] = Field(default_factory=list)
 
 
 class CryptoStep(BaseModel):

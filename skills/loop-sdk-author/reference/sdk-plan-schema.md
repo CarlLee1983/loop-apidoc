@@ -10,7 +10,7 @@ The plan is a derived handoff artifact, not a source document.
 - Do not copy OpenAPI schemas. Use `contract_pointer` values that point to
   `openapi.yaml`.
 - Use `integration-contract.json` pointers for crypto, signing, callbacks,
-  field conditions, and contract tests.
+  field conditions, operational rules, and contract tests.
 - Use `handoff/sdk-hints.json` for grouping and implementation notes.
 - Put missing or unsupported source facts in `gaps`.
 
@@ -33,7 +33,8 @@ The plan is a derived handoff artifact, not a source document.
   "mechanisms": {
     "auth": [],
     "crypto": [],
-    "callbacks": []
+    "callbacks": [],
+    "operational": []
   },
   "adapters": [],
   "gaps": []
@@ -96,6 +97,16 @@ Use pointers into `integration-contract.json`:
   "name": "TradeInfo",
   "contract_pointer": "../integration-contract.json#/crypto/0",
   "purpose": "request"
+}
+```
+
+Cross-endpoint business rules remain links to their machine-readable contract entry:
+
+```json
+{
+  "name": "Cancel amount",
+  "contract_pointer": "../integration-contract.json#/operational/0",
+  "applies_to": [{"operation": "POST /cancel", "field": "request.amount"}]
 }
 ```
 

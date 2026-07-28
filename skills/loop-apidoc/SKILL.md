@@ -57,7 +57,7 @@ the host is non-interactive.
 
 | `<OUTPUT_LEVEL>` | Deliver and discuss | Do not load into agent context unless needed to fix validation |
 | --- | --- | --- |
-| `minimal (default)` | `openapi.yaml`, `provenance.json`, `validation/report.json`, and `integration-contract.json` when the source defines integration mechanics | Markdown guide, `review.html`, `examples/`, `handoff/`, preparation/source-quality/score/diff reports |
+| `minimal (default)` | `openapi.yaml`, `provenance.json`, `validation/report.json`, and the always-written `integration-contract.json` (including source-backed operational rules) | Markdown guide, `review.html`, `examples/`, `handoff/`, preparation/source-quality/score/diff reports |
 | `review` | `minimal` plus `api-guide.zh-TW.md` and `review.html` | `examples/`, `handoff/`, and optional analysis reports |
 | `handoff` | `minimal` plus `examples/` and `handoff/` | Markdown guide, `review.html`, and optional analysis reports |
 | `full` | Every generated product and optional report that the user requested | Nothing selected by this table |

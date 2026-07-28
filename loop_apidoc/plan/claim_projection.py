@@ -188,6 +188,8 @@ def _operational_value(entry: OperationalEntry) -> dict[str, Any]:
     value: dict[str, Any] = {}
     _put(value, "topic", entry.topic)
     _put(value, "detail", entry.detail)
+    if entry.applies_to:
+        value["applies_to"] = [scope.model_dump() for scope in entry.applies_to]
     return value
 
 

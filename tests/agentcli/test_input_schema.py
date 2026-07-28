@@ -225,6 +225,26 @@ def test_invalid_integration_is_rejected_with_filename(tmp_path):
     assert "integration.json" in str(exc.value)
 
 
+def test_operational_applicability_requires_an_operation_identity(tmp_path):
+    inventory = json.loads(json.dumps(_INVENTORY))
+    inventory["operational"] = [
+        {
+            "topic": "Amount semantics",
+            "detail": "Use the wager amount.",
+            "source": "spec.md p.9",
+            "applies_to": [{"field": "request.amount"}],
+        }
+    ]
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=inventory)
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "inventory.json" in str(exc.value)
+    assert "operational[0].applies_to[0].operation" in str(exc.value)
+
+
 def test_null_response_status_is_allowed(tmp_path):
     # webhook 風格回應無 HTTP status(benchmark 實際存在)→ 允許 null。
     ep = json.loads(json.dumps(_ENDPOINT))

@@ -26,6 +26,11 @@ def _entries(target: str, cited) -> list[ProvenanceEntry]:
     ]
 
 
+def operational_target(index: int, entry) -> str:
+    """Stable target shared by provenance and the machine-readable contract."""
+    return f"operational.{entry.topic or index}"
+
+
 def _field_target(schema_key: str, name: str) -> str | None:
     """Return the OpenAPI target for one dotted schema field name."""
     if not name:
@@ -106,9 +111,8 @@ def build_provenance(plan: NormalizationPlan) -> ProvenanceDocument:
             entries.extend(_entries("components.schemas.ErrorCode", error))
             entries.extend(_entries(f"components.schemas.ErrorCode.{error.code}", error))
 
-    for op in plan.operational:
-        if op.topic:
-            entries.extend(_entries(f"operational.{op.topic}", op))
+    for index, op in enumerate(plan.operational):
+        entries.extend(_entries(operational_target(index, op), op))
 
     for item in plan.missing_items:
         entries.append(ProvenanceEntry(

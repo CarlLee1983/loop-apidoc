@@ -23,6 +23,95 @@ def test_clean_extraction_has_no_violations():
     assert cross_file_violations(inventory, endpoints) == []
 
 
+def test_operational_applicability_operation_must_resolve():
+    inventory = _inv(_ep("GET", "/ping"))
+    inventory["operational"] = [
+        {
+            "topic": "Cancel amount",
+            "applies_to": [{"operation": "POST /cancel"}],
+        }
+    ]
+    endpoints = [("ep0.json", _ep("GET", "/ping"))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any(
+        "operational[0].applies_to[0].operation" in violation
+        and "POST /cancel" in violation
+        for violation in violations
+    )
+
+
+def test_operational_applicability_field_must_resolve_on_the_operation():
+    inventory = _inv(_ep("POST", "/cancel"))
+    inventory["operational"] = [
+        {
+            "topic": "Cancel amount",
+            "applies_to": [
+                {"operation": "POST /cancel", "field": "request.total"}
+            ],
+        }
+    ]
+    endpoints = [
+        (
+            "ep0.json",
+            _ep(
+                "POST",
+                "/cancel",
+                parameters=[{"name": "amount", "in": "body"}],
+            ),
+        )
+    ]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert any(
+        "operational[0].applies_to[0].field" in violation
+        and "request.total" in violation
+        for violation in violations
+    )
+
+
+def test_operational_applicability_resolves_response_schema_field():
+    inventory = _inv(_ep("POST", "/balance"), schemas=("BalanceResult",))
+    inventory["schemas"][0]["fields"] = [{"name": "balance"}]
+    inventory["operational"] = [
+        {
+            "topic": "Balance type",
+            "applies_to": [
+                {"operation": "POST /balance", "field": "response.balance"}
+            ],
+        }
+    ]
+    endpoints = [
+        (
+            "ep0.json",
+            _ep(
+                "POST",
+                "/balance",
+                responses=[{"status": "200", "schema_ref": "BalanceResult"}],
+            ),
+        )
+    ]
+
+    assert cross_file_violations(inventory, endpoints) == []
+
+
+def test_operational_applicability_resolves_pathless_webhook_summary():
+    webhook = _ep("POST", None)
+    webhook["summary"] = "Payment result"
+    inventory = _inv(webhook)
+    inventory["operational"] = [
+        {
+            "topic": "acknowledgement",
+            "detail": "Reply with the documented acknowledgement body.",
+            "applies_to": [{"operation": "POST Payment result"}],
+        }
+    ]
+
+    assert cross_file_violations(inventory, [("ep0.json", webhook)]) == []
+
+
 def test_method_case_is_normalized():
     inventory = _inv(_ep("get", "/ping"))
     endpoints = [("ep0.json", _ep("GET", "/ping"))]

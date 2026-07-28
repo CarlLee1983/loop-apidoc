@@ -17,7 +17,7 @@ Use only these contract artifacts from a completed run directory:
 
 - `openapi.yaml` for operations, parameters, schemas, security, servers, and tags.
 - `integration-contract.json` for signing, encryption, callbacks, field
-  conditions, and contract tests. Every entry carries `source` (the cited
+  conditions, contract tests, and cross-endpoint `operational` rules. Every entry carries `source` (the cited
   location in the original document) and `provenance_target` (its key in
   `provenance.json`) — cite the `source` whenever a rule drives SDK behaviour.
 - `handoff/sdk-hints.json` for operation grouping, implementation order, gaps,
@@ -59,7 +59,7 @@ The plan is a portable contract for later SDK generation:
 - `runtime.config` lists configurable values such as `base_url` and secrets.
 - `operation_groups` mirrors OpenAPI tags or `sdk-hints.json` groups.
 - `operations` lists SDK method names and `contract_pointer` links only.
-- `mechanisms` links auth, crypto, callbacks, and tests back to
+- `mechanisms` links auth, crypto, callbacks, operational rules, and tests back to
   `integration-contract.json`.
 - `adapters` is empty unless the user asks for a specific programming language.
   Language adapters may name a language package layout, but not an application

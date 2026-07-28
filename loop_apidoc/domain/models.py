@@ -188,9 +188,15 @@ class IntegrationMechanic(FrozenModel):
     evidence: tuple[EvidenceBinding, ...] = ()
 
 
+class OperationalApplicability(FrozenModel):
+    operation: str
+    field: str | None = None
+
+
 class OperationalConstraint(FrozenModel):
     topic: str
     detail: str
+    applies_to: tuple[OperationalApplicability, ...] = ()
     evidence: tuple[EvidenceBinding, ...] = ()
 
 
