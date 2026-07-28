@@ -44,5 +44,13 @@ def test_stage_by_id_unknown_raises():
         stage_by_id("99")
 
 
+def test_operational_stage_targets_cross_endpoint_business_semantics():
+    stage = stage_by_id("09")
+
+    assert "cross-endpoint business rules" in stage.goal
+    assert "amount formulas" in stage.goal
+    assert "applies_to" in (stage.json_hint or "")
+
+
 def test_stage_is_a_model():
     assert isinstance(STAGES[0], QueryStage)

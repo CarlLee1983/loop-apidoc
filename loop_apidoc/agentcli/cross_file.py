@@ -2,9 +2,10 @@
 
 Endpoint subagents write their own file, so the orchestrator no longer sees each
 endpoint's JSON pass through its context. What it loses in carriage it must regain
-in verification: these six invariants catch every failure mode that *loses data* —
+in verification: these invariants catch every failure mode that *loses data* —
 a subagent that died, one that wrote an endpoint nobody asked for, two that wrote
-the same endpoint, or one that invented a schema/security name.
+the same endpoint, one that invented a schema/security name, or an operational
+rule that points at a nonexistent operation/field.
 
 Deliberately set-based, never index-based: generation keys on `method`/`path`(有
 path 時)或 `summary`(webhook/callback 的 path 為 null 時)而從不看檔名,所以兩個
@@ -215,6 +216,111 @@ def _server_violations(inventory: dict) -> list[str]:
     return out
 
 
+def _operation_reference_key(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    method, separator, locator = value.strip().partition(" ")
+    if not separator or not locator:
+        return None
+    if locator.startswith("/"):
+        return _key({"method": method, "path": locator})
+    return _key({"method": method, "path": None, "summary": locator})
+
+
+def _schema_field_names(inventory: dict, schema_name: Any) -> set[str]:
+    for schema in _entries(inventory, "schemas"):
+        if schema.get("name") != schema_name:
+            continue
+        fields = schema.get("fields")
+        if not isinstance(fields, list):
+            return set()
+        return {
+            field["name"]
+            for field in fields
+            if isinstance(field, dict) and isinstance(field.get("name"), str)
+        }
+    return set()
+
+
+def _field_resolves(inventory: dict, endpoint: dict, value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    area, separator, name = value.partition(".")
+    if not separator or not name:
+        return False
+    parameters = endpoint.get("parameters")
+    for parameter in parameters if isinstance(parameters, list) else []:
+        if not isinstance(parameter, dict) or parameter.get("name") != name:
+            continue
+        location = parameter.get("in") or parameter.get("location")
+        if area == "request" and location == "body":
+            return True
+        if area == "parameter" and location != "body":
+            return True
+        if area in {"query", "path", "header", "cookie"} and location == area:
+            return True
+    if area == "request":
+        request = endpoint.get("request")
+        if isinstance(request, dict) and name in _schema_field_names(
+            inventory, request.get("schema_ref")
+        ):
+            return True
+    if area == "response":
+        responses = endpoint.get("responses")
+        if isinstance(responses, list):
+            return any(
+                name in _schema_field_names(inventory, response.get("schema_ref"))
+                for response in responses
+                if isinstance(response, dict)
+            )
+    return False
+
+
+def _operational_reference_violations(
+    inventory: dict, endpoints: list[tuple[str, dict]]
+) -> list[str]:
+    endpoint_keys = {
+        key
+        for _, endpoint in endpoints
+        for expanded in _expand_methods([endpoint])
+        if (key := _key(expanded)) is not None
+    }
+    endpoints_by_key = {
+        key: expanded
+        for _, endpoint in endpoints
+        for expanded in _expand_methods([endpoint])
+        if (key := _key(expanded)) is not None
+    }
+    out: list[str] = []
+    for op_index, entry in enumerate(_entries(inventory, "operational")):
+        applies_to = entry.get("applies_to")
+        if not isinstance(applies_to, list):
+            continue
+        for scope_index, scope in enumerate(applies_to):
+            if not isinstance(scope, dict):
+                continue
+            operation = scope.get("operation")
+            operation_key = _operation_reference_key(operation)
+            if operation_key not in endpoint_keys:
+                out.append(
+                    "inventory.json: "
+                    f"operational[{op_index}].applies_to[{scope_index}].operation "
+                    "未指向任何 inventory.endpoints identity:"
+                    f"{operation!r}"
+                )
+                continue
+            field = scope.get("field")
+            if field is not None and not _field_resolves(
+                inventory, endpoints_by_key[operation_key], field
+            ):
+                out.append(
+                    "inventory.json: "
+                    f"operational[{op_index}].applies_to[{scope_index}].field "
+                    f"未指向 {operation} 的任何 request/response/parameter field:{field!r}"
+                )
+    return out
+
+
 def cross_file_violations(
     inventory: dict, endpoints: list[tuple[str, dict]]
 ) -> list[str]:
@@ -226,4 +332,5 @@ def cross_file_violations(
         + _shared_methods_violations(inventory, endpoints)
         + _reference_violations(inventory, endpoints)
         + _server_violations(inventory)
+        + _operational_reference_violations(inventory, endpoints)
     )

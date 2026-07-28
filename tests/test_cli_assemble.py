@@ -83,6 +83,7 @@ def test_assemble_json_emits_run_dir_and_report(tmp_path):
     # exit code 必須與 ok 一致(避免「永遠 FAIL」之類的回歸)
     assert res.exit_code == (0 if payload["ok"] else 1)
     assert Path(payload["run_dir"]).is_dir()
+    assert (Path(payload["run_dir"]) / "integration-contract.json").is_file()
     assert Path(payload["review_html"]).name == "review.html"
     assert Path(payload["review_html"]).is_file()
 

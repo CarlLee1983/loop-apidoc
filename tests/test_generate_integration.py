@@ -8,6 +8,7 @@ from loop_apidoc.plan.models import (
     ErrorEntry,
     IntegrationContract,
     NormalizationPlan,
+    OperationalEntry,
     PlanItemStatus,
     SourceCitation,
 )
@@ -32,8 +33,73 @@ def _plan_with_contract() -> NormalizationPlan:
     )
 
 
-def test_document_none_when_no_contract():
-    assert build_integration_document(NormalizationPlan(notebook_url="x")) is None
+def test_document_is_present_and_empty_when_no_mechanics_are_stated():
+    doc = build_integration_document(NormalizationPlan(notebook_url="x"))
+
+    assert doc is not None
+    assert doc["crypto"] == []
+    assert doc["callbacks"] == []
+    assert doc["field_conditions"] == []
+    assert doc["test_cases"] == []
+    assert doc["operational"] == []
+
+
+def test_document_carries_operational_rules_without_integration_input():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        operational=[
+            OperationalEntry(
+                status=PlanItemStatus.SUPPORTED,
+                topic="Amount semantics",
+                detail="cancel settlement amount = payout - bet",
+                citations=[
+                    SourceCitation(
+                        query_id="09",
+                        answer_path="inventory.json",
+                        manifest_source="manual.pdf",
+                        locator="manual.pdf p.7",
+                    )
+                ],
+            )
+        ],
+    )
+
+    doc = build_integration_document(plan)
+
+    assert doc is not None
+    assert doc["operational"] == [
+        {
+            "topic": "Amount semantics",
+            "detail": "cancel settlement amount = payout - bet",
+            "applies_to": [],
+            "source": "manual.pdf p.7",
+            "provenance_target": "operational.Amount semantics",
+        }
+    ]
+
+
+def test_operational_rules_carry_structured_applicability():
+    plan = NormalizationPlan(
+        notebook_url="x",
+        operational=[
+            OperationalEntry(
+                status=PlanItemStatus.SUPPORTED,
+                topic="Cancel amount",
+                detail="Use the wager amount when cancelling a bet.",
+                applies_to=[
+                    {"operation": "POST /cancel", "field": "request.amount"},
+                    {"operation": "POST /cancel"},
+                ],
+            )
+        ],
+    )
+
+    doc = build_integration_document(plan)
+
+    assert doc["operational"][0]["applies_to"] == [
+        {"operation": "POST /cancel", "field": "request.amount"},
+        {"operation": "POST /cancel", "field": None},
+    ]
 
 
 def test_document_renders_sections_and_reuses_errors():

@@ -194,7 +194,8 @@ _INVENTORY: dict[str, tuple[str, str, type, Callable[..., dict]]] = {
                       "http_status": i.get("http_status"),
                       "applicable_to": i.get("applicable_to") or []}),
     "09": ("operational", "operational", OperationalEntry,
-           lambda i: {"topic": i.get("topic"), "detail": i.get("detail")}),
+           lambda i: {"topic": i.get("topic"), "detail": i.get("detail"),
+                      "applies_to": i.get("applies_to") or []}),
 }
 
 

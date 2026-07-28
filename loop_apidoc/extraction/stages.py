@@ -107,11 +107,13 @@ STAGES: tuple[QueryStage, ...] = (
         '"applicable_to": [str], "source": str|null}], "missing": [str]}',
     ),
     _structured(
-        "09", "Rate limits, timeouts, retry, idempotency and webhooks",
+        "09", "Operational constraints and cross-endpoint business rules",
         "List rate limits, timeouts, retry rules, idempotency rules and webhook "
-        "behavior stated by the sources.",
+        "behavior, plus cross-endpoint business rules, amount formulas, field "
+        "semantics and product-line differences stated by the sources.",
         "operational",
-        '{"operational": [{"topic": str|null, "detail": str|null, "source": str|null}],'
+        '{"operational": [{"topic": str|null, "detail": str|null, "applies_to": '
+        '[{"operation": str, "field": str|null}], "source": str|null}],'
         ' "missing": [str]}',
     ),
     _narrative(

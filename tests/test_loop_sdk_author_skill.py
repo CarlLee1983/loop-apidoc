@@ -23,6 +23,7 @@ def test_loop_sdk_author_skill_is_deployable():
     assert "integration-contract.json" in text
     assert "handoff/sdk-hints.json" in text
     assert "app stack" in text
+    assert "operational" in text
 
 
 def test_sdk_plan_schema_reference_defines_boundaries():
@@ -32,6 +33,8 @@ def test_sdk_plan_schema_reference_defines_boundaries():
     assert "Do not copy OpenAPI schemas" in text
     assert "contract_pointer" in text
     assert "forbidden" in text.lower()
+    assert '"operational": []' in text
+    assert "../integration-contract.json#/operational/0" in text
 
 
 def test_validate_sdk_plan_accepts_minimal_stack_neutral_plan(tmp_path):
@@ -74,6 +77,7 @@ def test_validate_sdk_plan_accepts_minimal_stack_neutral_plan(tmp_path):
                 }
             ],
             "callbacks": [],
+            "operational": [],
         },
         "adapters": [],
         "gaps": [],
@@ -114,7 +118,12 @@ def test_validate_sdk_plan_rejects_app_stack_and_schema_copy(tmp_path):
                 "requestBody": {"properties": {"amount": {"type": "integer"}}},
             }
         ],
-        "mechanisms": {"auth": [], "crypto": [], "callbacks": []},
+        "mechanisms": {
+            "auth": [],
+            "crypto": [],
+            "callbacks": [],
+            "operational": [],
+        },
         "framework": "Next.js",
         "adapters": [],
         "gaps": [],
@@ -133,3 +142,34 @@ def test_validate_sdk_plan_rejects_app_stack_and_schema_copy(tmp_path):
     assert result.returncode == 1
     assert "framework" in result.stderr
     assert "requestBody" in result.stderr
+
+
+def test_validate_sdk_plan_requires_operational_mechanism_collection(tmp_path):
+    plan = {
+        "version": "1.0",
+        "source_run_dir": "output/run",
+        "contracts": {
+            "openapi": "../openapi.yaml",
+            "integration": "../integration-contract.json",
+            "sdk_hints": "../handoff/sdk-hints.json",
+        },
+        "runtime": {"config": []},
+        "operation_groups": [],
+        "operations": [],
+        "mechanisms": {"auth": [], "crypto": [], "callbacks": []},
+        "adapters": [],
+        "gaps": [],
+    }
+    path = tmp_path / "sdk-plan.json"
+    path.write_text(json.dumps(plan), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, str(VALIDATOR), str(path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "mechanisms.operational" in result.stderr

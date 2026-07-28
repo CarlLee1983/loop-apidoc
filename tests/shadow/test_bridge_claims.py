@@ -366,6 +366,24 @@ def test_distinct_conflicting_values_for_same_identity_are_preserved():
     }
 
 
+def test_operational_applicability_survives_canonical_claim_projection():
+    entry = OperationalEntry(
+        status=PlanItemStatus.SUPPORTED,
+        citations=[CITATION],
+        topic="Cancel amount",
+        detail="Use the wager amount.",
+        applies_to=[
+            {"operation": "POST /cancel", "field": "request.amount"}
+        ],
+    )
+
+    result = build_runtime_result(_plan(operational=[entry]), _bridge())
+
+    assert result.claim_proposals[0].value["applies_to"] == [
+        {"operation": "POST /cancel", "field": "request.amount"}
+    ]
+
+
 def test_duplicate_supported_identities_remain_distinct_stable_proposals():
     first = OperationalEntry(
         status=PlanItemStatus.SUPPORTED,

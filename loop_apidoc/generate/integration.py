@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import ProvenanceEntry
-from loop_apidoc.generate.provenance import _entries
+from loop_apidoc.generate.provenance import _entries, operational_target
 from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan
 
 
@@ -41,7 +41,7 @@ def entry_target(section: str, idx: int, entry) -> str:
     return f"integration.{section}.{getattr(entry, 'name', None) or idx}"
 
 
-def build_integration_document(plan: NormalizationPlan) -> dict | None:
+def build_integration_document(plan: NormalizationPlan) -> dict:
     """Serialize plan.integration into the integration-contract.json dict (pure).
 
     crypto/callbacks/field_conditions/test_cases come from the extracted
@@ -49,12 +49,12 @@ def build_integration_document(plan: NormalizationPlan) -> dict | None:
     so the same fact is never grounded twice.
     """
     contract = plan.integration
-    if contract is None:
-        return None
+    contract = contract or IntegrationContract()
     payload = contract.model_dump(exclude={"missing"}, exclude_none=False)
     payload["api_title"] = plan.resolved_title
     payload["base_urls"] = _base_urls(plan)
     payload["error_codes"] = _error_codes(plan)
+    payload["operational"] = [entry.model_dump() for entry in plan.operational]
     payload["missing"] = [m.model_dump() for m in contract.missing]
     # Swap internal bookkeeping (status/citations) for the two fields a consumer
     # needs to trace a rule back to its origin: the cited `source` string, and the
@@ -66,6 +66,11 @@ def build_integration_document(plan: NormalizationPlan) -> dict | None:
             entry.pop("citations", None)
             entry["source"] = cited.citations[0].locator if cited.citations else None
             entry["provenance_target"] = entry_target(section, idx, cited)
+    for idx, (entry, cited) in enumerate(zip(payload["operational"], plan.operational)):
+        entry.pop("status", None)
+        entry.pop("citations", None)
+        entry["source"] = cited.citations[0].locator if cited.citations else None
+        entry["provenance_target"] = operational_target(idx, cited)
     return payload
 
 

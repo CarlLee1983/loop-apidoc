@@ -152,6 +152,18 @@ class SchemaEntry(EvidenceBearingInput):
     source: str | None = None
 
 
+class OperationalApplicabilityInput(_Lax):
+    operation: str
+    field: str | None = None
+
+
+class OperationalInput(EvidenceBearingInput):
+    topic: str | None = None
+    detail: str | None = None
+    source: str | None = None
+    applies_to: list[OperationalApplicabilityInput] = []
+
+
 class ResponseEntry(_Lax):
     status: str | None = None
     description: str | None = None
@@ -189,7 +201,7 @@ class InventoryInput(_Lax):
     endpoints: list[InventoryEndpointInput] = []
     schemas: list[SchemaEntry] = []
     errors: list[EvidenceBearingInput] = []
-    operational: list[EvidenceBearingInput] = []
+    operational: list[OperationalInput] = []
     missing: list[Any] = []
 
 

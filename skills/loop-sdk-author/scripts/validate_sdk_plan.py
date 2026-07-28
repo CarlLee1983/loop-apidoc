@@ -22,6 +22,7 @@ REQUIRED_TOP_LEVEL = {
 }
 
 REQUIRED_CONTRACTS = {"openapi", "integration", "sdk_hints"}
+REQUIRED_MECHANISMS = {"auth", "crypto", "callbacks", "operational"}
 REQUIRED_OPERATION_FIELDS = {"operation_id", "method", "contract_pointer", "sdk_method"}
 
 FORBIDDEN_KEYS = {
@@ -121,7 +122,12 @@ def validate(plan: Any) -> list[str]:
         _expect_list("runtime.config", runtime.get("config"), errors)
 
     _expect_list("operation_groups", plan.get("operation_groups"), errors)
-    _expect_object("mechanisms", plan.get("mechanisms"), errors)
+    mechanisms = _expect_object("mechanisms", plan.get("mechanisms"), errors)
+    if mechanisms is not None:
+        for key in sorted(REQUIRED_MECHANISMS - set(mechanisms)):
+            errors.append(f"$.mechanisms.{key} is required")
+        for key in sorted(REQUIRED_MECHANISMS & set(mechanisms)):
+            _expect_list(f"mechanisms.{key}", mechanisms.get(key), errors)
     _expect_list("adapters", plan.get("adapters"), errors)
     _expect_list("gaps", plan.get("gaps"), errors)
 

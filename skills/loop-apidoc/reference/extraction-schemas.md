@@ -88,7 +88,7 @@ One object describing the whole API. **You** write what the single inventory sub
  "endpoints": [{"method":"str","methods":["str"],"path":"str|null","summary":"str","source":"str","server":"str|null"}],
  "schemas": [{"name":"str","fields":[{"name":"str","type":"str|null","required":"bool|null","description":"str|null","source":"str|null"}],"enums":["str"],"constraints":"str|null","source":"str"}],
  "errors": [{"code":"str","meaning":"str","http_status":"str|null","applicable_to":["METHOD /path"],"source":"str"}],
- "operational": [{"topic":"str","detail":"str","source":"str"}],
+ "operational": [{"topic":"str","detail":"str","source":"str","applies_to":[{"operation":"METHOD /path","field":"request.amount|response.balance|null"}]}],
  "missing": ["str"]}
 ```
 
@@ -97,6 +97,13 @@ One object describing the whole API. **You** write what the single inventory sub
 - `version`: the source-stated document/API version, **verbatim** (e.g. `NDNF-1.2.2`);
   `null` if none → becomes OpenAPI `info.version`.
 - Include **every** endpoint and **every** error code.
+- Put source-stated cross-endpoint rules, amount formulas, field semantics, and
+  product-line differences in `operational[]`, not only rate limits or retries.
+  `applies_to[].operation` must name an inventory operation as `METHOD /path` (or
+  `METHOD summary` for a path-less webhook). Optional `field` uses a structural
+  prefix such as `request.amount`, `response.balance`, `query.cursor`, or
+  `header.X-Signature`; both the operation and field must resolve at the extraction
+  gate. Omit `applies_to` only when the source states a genuinely global rule.
 - Use legacy `method` for one operation, or additive `methods` when the same
   endpoint contract applies to multiple HTTP methods. `methods` is expanded into
   one canonical operation per method before planning; every other field in that
