@@ -18,6 +18,7 @@ from loop_apidoc.plan.models import (
     PlanItemStatus,
     SchemaEntry,
     SecuritySchemeEntry,
+    SourceCitation,
     SystemGroup,
 )
 
@@ -83,6 +84,52 @@ def test_original_api_names_preserved():
 def test_source_listed_in_scope_section():
     md = build_markdown(_full_plan(), _manifest())
     assert "api.md" in md
+
+
+def test_scope_distinguishes_input_sources_from_materially_cited_sources():
+    manifest = _manifest().model_copy(
+        update={
+            "local_sources": [
+                *_manifest().local_sources,
+                LocalSource(
+                    relative_path="codes.pdf",
+                    mime_type="application/pdf",
+                    source_format=SourceFormat.PDF,
+                    size_bytes=10,
+                    sha256="codes",
+                    scanned_at=_NOW,
+                    supported=True,
+                    status=ProcessingStatus.PENDING,
+                ),
+            ]
+        }
+    )
+    plan = NormalizationPlan(
+        notebook_url="https://nb/x",
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                method="GET",
+                path="/users",
+                responses=[{"status": "200"}],
+                citations=[
+                    SourceCitation(
+                        query_id="06",
+                        answer_path="answers/06.txt",
+                        manifest_source="api.md",
+                    )
+                ],
+            )
+        ],
+    )
+
+    md = build_markdown(plan, manifest)
+
+    assert "本文件涵蓋的來源" not in md
+    assert "本次輸入來源：" in md
+    assert "實際引用來源：" in md
+    assert md.count("`api.md`") == 2
+    assert md.count("`codes.pdf`") == 1
 
 
 def test_missing_item_surfaced():

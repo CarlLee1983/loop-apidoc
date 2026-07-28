@@ -28,6 +28,6 @@ def validate_outputs(
     issues += check_completeness(plan)
     issues += check_consistency(result.openapi, result.markdown)
     issues += check_speculation(result.openapi, result.provenance)
-    issues += check_manifest_coverage(manifest)
+    issues += check_manifest_coverage(manifest, result.provenance)
     issues += check_integration(plan, result)
     return ValidationReport(issues=issues, root_causes=derive_root_causes(issues))

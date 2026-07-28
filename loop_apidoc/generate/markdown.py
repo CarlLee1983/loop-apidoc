@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from loop_apidoc.generate.naming import security_scheme_key, webhook_items
+from loop_apidoc.generate.provenance import build_provenance
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 
@@ -28,11 +29,22 @@ def _title(plan: NormalizationPlan) -> str:
 
 
 def _scope(plan: NormalizationPlan, manifest: Manifest) -> list[str]:
-    lines = [plan.overview_note or _EMPTY, "", "本文件涵蓋的來源："]
+    lines = [plan.overview_note or _EMPTY, "", "本次輸入來源："]
     sources = [s.relative_path for s in manifest.local_sources]
     sources += [u.url for u in manifest.url_sources]
     if sources:
         lines += [f"- `{s}`" for s in sources]
+    else:
+        lines.append(_EMPTY)
+    cited_ids = {
+        entry.manifest_source
+        for entry in build_provenance(plan).entries
+        if entry.manifest_source is not None
+    }
+    cited_sources = [source for source in sources if source in cited_ids]
+    lines += ["", "實際引用來源："]
+    if cited_sources:
+        lines += [f"- `{source}`" for source in cited_sources]
     else:
         lines.append(_EMPTY)
     return lines
