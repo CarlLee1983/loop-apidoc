@@ -95,3 +95,32 @@ def test_unsupported_source_warns_but_report_stays_ok():
     report = validate_outputs(plan, build_result(plan, _manifest()), manifest)
     assert report.ok is True
     assert any(i.location == "logo.png" for i in report.warnings())
+
+
+def test_supported_uncited_source_warns_but_report_stays_ok():
+    plan = _good_plan()
+    manifest = _manifest().model_copy(
+        update={
+            "local_sources": [
+                *_manifest().local_sources,
+                LocalSource(
+                    relative_path="codes.pdf",
+                    mime_type="application/pdf",
+                    source_format=SourceFormat.PDF,
+                    size_bytes=10,
+                    sha256="codes",
+                    scanned_at=_NOW,
+                    supported=True,
+                    status=ProcessingStatus.PENDING,
+                ),
+            ]
+        }
+    )
+
+    report = validate_outputs(plan, build_result(plan, manifest), manifest)
+
+    assert report.ok is True
+    coverage_warnings = [
+        issue for issue in report.warnings() if issue.location == "codes.pdf"
+    ]
+    assert len(coverage_warnings) == 1

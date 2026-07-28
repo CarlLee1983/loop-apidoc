@@ -7,7 +7,10 @@ from loop_apidoc.manifest.models import (
     Manifest,
     ProcessingStatus,
     SourceFormat,
+    UrlSource,
 )
+from loop_apidoc.generate.models import ProvenanceDocument, ProvenanceEntry
+from loop_apidoc.plan.models import PlanItemStatus
 from loop_apidoc.validate.coverage import check_manifest_coverage
 from loop_apidoc.validate.models import IssueCode, Severity
 
@@ -33,6 +36,77 @@ def _manifest(*sources: LocalSource) -> Manifest:
         generated_at=_NOW,
         local_sources=list(sources),
     )
+
+
+def _provenance(*sources: str) -> ProvenanceDocument:
+    return ProvenanceDocument(
+        notebook_url="",
+        entries=[
+            ProvenanceEntry(
+                target=f"paths./{index}.get",
+                status=PlanItemStatus.SUPPORTED,
+                manifest_source=source,
+            )
+            for index, source in enumerate(sources)
+        ],
+    )
+
+
+def test_supported_source_without_material_citation_is_warning() -> None:
+    manifest = _manifest(
+        _source("api.md", SourceFormat.MARKDOWN, ProcessingStatus.PENDING),
+        _source("codes.pdf", SourceFormat.PDF, ProcessingStatus.PENDING),
+    )
+
+    issues = check_manifest_coverage(manifest, _provenance("api.md"))
+
+    assert len(issues) == 1
+    assert issues[0].code is IssueCode.SOURCE_UNVERIFIED
+    assert issues[0].severity is Severity.WARNING
+    assert issues[0].location == "codes.pdf"
+    assert "material citation" in issues[0].evidence
+
+
+def test_successful_standalone_url_without_material_citation_is_warning() -> None:
+    manifest = Manifest(
+        sources_root="./sources",
+        generated_at=_NOW,
+        url_sources=[
+            UrlSource(
+                url="https://docs.example.com/api",
+                fetched_at=_NOW,
+                http_status=200,
+            )
+        ],
+    )
+
+    issues = check_manifest_coverage(manifest, _provenance())
+
+    assert len(issues) == 1
+    assert issues[0].location == "https://docs.example.com/api"
+    assert issues[0].severity is Severity.WARNING
+
+
+def test_url_snapshot_is_not_counted_as_a_second_document() -> None:
+    manifest = Manifest(
+        sources_root="./sources",
+        generated_at=_NOW,
+        local_sources=[
+            _source("api.md", SourceFormat.MARKDOWN, ProcessingStatus.PENDING)
+        ],
+        url_sources=[
+            UrlSource(
+                url="https://docs.example.com/api",
+                fetched_at=_NOW,
+                http_status=200,
+                snapshot_file="api.md",
+            )
+        ],
+    )
+
+    issues = check_manifest_coverage(manifest, _provenance("api.md"))
+
+    assert issues == []
 
 
 def test_unreadable_source_is_error() -> None:
