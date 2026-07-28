@@ -149,6 +149,38 @@ def test_verify_extraction_rejects_unmatched_exact_evidence_claim_path(tmp_path)
     assert {path.name for path in tmp_path.iterdir()} == {"sources", "extraction"}
 
 
+def test_domain_semantic_exact_evidence_is_verified(tmp_path):
+    sources, _manifest, _facts = _sources_and_manifest(tmp_path)
+    extraction = tmp_path / "extraction"
+    _write_extraction(extraction, _inventory())
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "line_currency_policy": [
+                    {
+                        "scope": "Agent line",
+                        "policy": "single",
+                        "source": "manual.md line 4",
+                        "evidence": [
+                            _reference(digest="a" * 64)
+                            | {"claim_path": "/policy"}
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    violations = verify_extraction_dir(
+        sources_root=sources,
+        extraction_dir=extraction,
+        generated_at=NOW,
+    )
+
+    assert any("fragment_digest is stale or mismatched" in item for item in violations)
+
+
 def test_assemble_rejects_stale_exact_evidence_before_run_directory(tmp_path):
     sources, _manifest, _facts = _sources_and_manifest(tmp_path)
     extraction = tmp_path / "extraction"

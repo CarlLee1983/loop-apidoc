@@ -16,7 +16,8 @@ product flow, persistence layer, UI, and deployment stack remain out of scope.
 Use only these contract artifacts from a completed run directory:
 
 - `openapi.yaml` for operations, parameters, schemas, security, servers, and tags.
-- `integration-contract.json` for signing, encryption, callbacks, field
+- `integration-contract.json` for `transport`, `amount_direction`,
+  `idempotency`, `line_currency_policy`, signing, encryption, callbacks, field
   conditions, contract tests, and cross-endpoint `operational` rules. Every entry carries `source` (the cited
   location in the original document) and `provenance_target` (its key in
   `provenance.json`) — cite the `source` whenever a rule drives SDK behaviour.
@@ -48,7 +49,9 @@ Markdown or app assumptions.
 - Do not copy OpenAPI schemas into the SDK plan. Use `contract_pointer` values
   back to `openapi.yaml`.
 - Do not infer retries, pagination, idempotency, authentication defaults,
-  signing details, callback behavior, or error semantics from convention.
+  signing details, callback behavior, amount direction, line currency, or
+  error semantics from convention. In particular, a missing request currency
+  field does not establish a single-currency line.
 - Source-missing values become `gaps`; they are not filled from typical SDK
   practice.
 
@@ -59,8 +62,9 @@ The plan is a portable contract for later SDK generation:
 - `runtime.config` lists configurable values such as `base_url` and secrets.
 - `operation_groups` mirrors OpenAPI tags or `sdk-hints.json` groups.
 - `operations` lists SDK method names and `contract_pointer` links only.
-- `mechanisms` links auth, crypto, callbacks, operational rules, and tests back to
-  `integration-contract.json`.
+- `mechanisms` links auth, transport, amount direction, idempotency,
+  line-currency policy, crypto, callbacks, operational rules, and tests back
+  to `integration-contract.json`.
 - `adapters` is empty unless the user asks for a specific programming language.
   Language adapters may name a language package layout, but not an application
   framework.

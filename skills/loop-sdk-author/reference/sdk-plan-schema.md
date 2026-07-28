@@ -9,8 +9,9 @@ The plan is a derived handoff artifact, not a source document.
   application exists.
 - Do not copy OpenAPI schemas. Use `contract_pointer` values that point to
   `openapi.yaml`.
-- Use `integration-contract.json` pointers for crypto, signing, callbacks,
-  field conditions, operational rules, and contract tests.
+- Use `integration-contract.json` pointers for transport, amount direction,
+  idempotency, line-currency policy, crypto, signing, callbacks, field
+  conditions, operational rules, and contract tests.
 - Use `handoff/sdk-hints.json` for grouping and implementation notes.
 - Put missing or unsupported source facts in `gaps`.
 
@@ -32,6 +33,10 @@ The plan is a derived handoff artifact, not a source document.
   "operations": [],
   "mechanisms": {
     "auth": [],
+    "transport": [],
+    "amount_direction": [],
+    "idempotency": [],
+    "line_currency_policy": [],
     "crypto": [],
     "callbacks": [],
     "operational": []
@@ -109,6 +114,22 @@ Cross-endpoint business rules remain links to their machine-readable contract en
   "applies_to": [{"operation": "POST /cancel", "field": "request.amount"}]
 }
 ```
+
+Domain semantics use the same pointer-only rule. For example, an SDK method that
+credits a balance links to the verified amount-direction entry instead of copying
+or guessing the rule:
+
+```json
+{
+  "name": "Deposit credits balance",
+  "contract_pointer": "../integration-contract.json#/amount_direction/0"
+}
+```
+
+Populate `transport`, `amount_direction`, `idempotency`, and
+`line_currency_policy` only from their corresponding contract arrays. If the
+contract leaves a value `null`, preserve the gap. The absence of a request
+currency field is not evidence that a line supports only one currency.
 
 ### `adapters`
 

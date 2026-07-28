@@ -1,18 +1,24 @@
 from datetime import datetime, timezone
 
+import pytest
+
 from loop_apidoc.generate.models import GenerateResult, ProvenanceDocument
 from loop_apidoc.manifest.models import LocalSource, Manifest, ProcessingStatus, SourceFormat
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.plan.models import (
+    AmountDirection,
     CryptoScheme,
     ContractTestCase,
     CryptoVerify,
+    IdempotencyRule,
     IntegrationContract,
     KeySource,
+    LineCurrencyPolicy,
     NormalizationPlan,
     OperationalEntry,
     PlanItemStatus,
     SourceCitation,
+    TransportPolicy,
 )
 from loop_apidoc.validate.integration import check_integration
 from loop_apidoc.validate.models import IssueCode
@@ -32,6 +38,41 @@ def test_uncited_crypto_is_unsupported_assertion():
         integration=IntegrationContract(crypto=[CryptoScheme(status=PlanItemStatus.UNVERIFIED, name="c")]),
     )
     codes = [i.code for i in check_integration(plan, _result({}))]
+    assert IssueCode.UNSUPPORTED_ASSERTION in codes
+
+
+@pytest.mark.parametrize(
+    ("section", "entry"),
+    [
+        (
+            "transport",
+            TransportPolicy(status=PlanItemStatus.SUPPORTED, name="HTTP defaults"),
+        ),
+        (
+            "amount_direction",
+            AmountDirection(
+                status=PlanItemStatus.SUPPORTED,
+                operation_ref="POST /deposit",
+            ),
+        ),
+        (
+            "idempotency",
+            IdempotencyRule(status=PlanItemStatus.SUPPORTED, code="9"),
+        ),
+        (
+            "line_currency_policy",
+            LineCurrencyPolicy(status=PlanItemStatus.SUPPORTED, scope="Agent line"),
+        ),
+    ],
+)
+def test_uncited_domain_semantics_are_unsupported_assertions(section, entry):
+    plan = NormalizationPlan(
+        notebook_url="x",
+        integration=IntegrationContract(**{section: [entry]}),
+    )
+
+    codes = [issue.code for issue in check_integration(plan, _result({}))]
+
     assert IssueCode.UNSUPPORTED_ASSERTION in codes
 
 

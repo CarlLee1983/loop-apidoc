@@ -140,6 +140,72 @@ def test_operational_applicability_has_stable_material_paths():
     ) == "request.amount"
 
 
+def test_domain_semantics_have_stable_material_claim_paths():
+    operation = "operation:POST:/deposit"
+
+    assert material_claim_paths(
+        "transport_policy",
+        {
+            "name": "HTTP defaults",
+            "protocol": "HTTPS",
+            "methods": ["POST"],
+            "operation_refs": [operation],
+        },
+    ) == (
+        "/methods/POST",
+        "/name",
+        "/operation_refs/operation:POST:~1deposit",
+        "/protocol",
+    )
+    assert material_claim_paths(
+        "amount_direction",
+        {
+            "operation_ref": operation,
+            "balance_effect": "credit",
+            "amount_sign": "positive",
+            "precision": "12,4",
+        },
+    ) == (
+        "/amount_sign",
+        "/balance_effect",
+        "/operation_ref",
+        "/precision",
+    )
+    assert material_claim_paths(
+        "idempotency_rule",
+        {
+            "operation_refs": [operation],
+            "code": "9",
+            "meaning": "Duplicate transaction.",
+            "action": "Treat as processed.",
+        },
+    ) == (
+        "/action",
+        "/code",
+        "/meaning",
+        "/operation_refs/operation:POST:~1deposit",
+    )
+    assert material_claim_paths(
+        "line_currency_policy",
+        {
+            "scope": "Agent line",
+            "policy": "single",
+            "currency_binding": "agent",
+            "operation_refs": [operation],
+        },
+    ) == (
+        "/currency_binding",
+        "/operation_refs/operation:POST:~1deposit",
+        "/policy",
+        "/scope",
+    )
+    assert claim_value_at(
+        "line_currency_policy",
+        {"policy": "single"},
+        "/policy",
+    ) == "single"
+
+
 def test_unknown_path_fails_closed():
     with pytest.raises(ClaimPathError, match="unknown material claim path"):
         claim_value_at("operation", {"method": "GET", "path": "/"}, "/summary")

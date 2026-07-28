@@ -190,6 +190,27 @@ def test_all_integration_sections_are_checked():
     assert len(violations) == 4
 
 
+def test_domain_semantic_integration_sections_are_source_checked():
+    manifest = _manifest("a.pdf", "b.pdf")
+    integration = {
+        "transport": [{"source": "nope"}],
+        "amount_direction": [{"source": "nope"}],
+        "idempotency": [{"source": "nope"}],
+        "line_currency_policy": [{"source": "nope"}],
+    }
+
+    violations = source_violations({}, [], integration, manifest)
+
+    assert len(violations) == 4
+    for section in (
+        "transport",
+        "amount_direction",
+        "idempotency",
+        "line_currency_policy",
+    ):
+        assert any(f"{section}[0].source" in violation for violation in violations)
+
+
 def test_absent_source_is_left_to_validation():
     """缺 source 是 fail-closed 的 gap（validate 會報 SOURCE_UNVERIFIED），
     不是格式錯誤；邊界只擋格式不合的字串。"""

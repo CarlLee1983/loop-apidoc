@@ -2,15 +2,19 @@ from __future__ import annotations
 
 from loop_apidoc.generate.handoff import build_handoff
 from loop_apidoc.plan.models import (
+    AmountDirection,
     ContractTestCase,
     CryptoScheme,
+    IdempotencyRule,
     IntegrationContract,
     KeySource,
+    LineCurrencyPolicy,
     MissingItem,
     NormalizationPlan,
     OperationalEntry,
     PlanItemStatus,
     SourceConflict,
+    TransportPolicy,
     UnverifiedItem,
 )
 
@@ -115,3 +119,43 @@ def test_tasks_link_operational_rules_into_the_machine_contract():
 
     assert "Cancel amount" in md
     assert "../integration-contract.json#/operational/0" in md
+
+
+def test_tasks_link_domain_semantics_into_the_machine_contract():
+    plan = _plan().model_copy(
+        update={
+            "integration": IntegrationContract(
+                transport=[
+                    TransportPolicy(
+                        status=PlanItemStatus.SUPPORTED,
+                        name="HTTP defaults",
+                    )
+                ],
+                amount_direction=[
+                    AmountDirection(
+                        status=PlanItemStatus.SUPPORTED,
+                        operation_ref="POST /payments",
+                    )
+                ],
+                idempotency=[
+                    IdempotencyRule(
+                        status=PlanItemStatus.SUPPORTED,
+                        code="9",
+                    )
+                ],
+                line_currency_policy=[
+                    LineCurrencyPolicy(
+                        status=PlanItemStatus.SUPPORTED,
+                        scope="Agent line",
+                    )
+                ],
+            )
+        }
+    )
+
+    md = build_handoff(_openapi(), plan, {})["handoff/integration-tasks.md"]
+
+    assert "../integration-contract.json#/transport/0" in md
+    assert "../integration-contract.json#/amount_direction/0" in md
+    assert "../integration-contract.json#/idempotency/0" in md
+    assert "../integration-contract.json#/line_currency_policy/0" in md

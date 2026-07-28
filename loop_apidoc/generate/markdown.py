@@ -115,10 +115,61 @@ def _field_line(name: str, field: dict, location: str | None = None) -> str:
 def _integration(plan: NormalizationPlan) -> list[str]:
     contract = plan.integration
     if contract is None or not (
-        contract.crypto or contract.callbacks or contract.field_conditions or contract.test_cases
+        contract.transport
+        or contract.amount_direction
+        or contract.idempotency
+        or contract.line_currency_policy
+        or contract.crypto
+        or contract.callbacks
+        or contract.field_conditions
+        or contract.test_cases
     ):
         return ["（來源未提供整合機制資訊)"]
     lines: list[str] = []
+    for policy in contract.transport:
+        lines.append(f"### 傳輸政策：{policy.name or '(未命名)'}")
+        if policy.protocol:
+            lines.append(f"- 協定：`{policy.protocol}`")
+        if policy.methods:
+            lines.append("- HTTP 方法：" + "、".join(f"`{method}`" for method in policy.methods))
+        if policy.content_type:
+            lines.append(f"- Content-Type：`{policy.content_type}`")
+        if policy.content_type_note:
+            lines.append(f"- Content-Type 說明：{policy.content_type_note}")
+        if policy.http_status:
+            lines.append(f"- HTTP 狀態：{policy.http_status}")
+        if policy.timezone:
+            lines.append(f"- 時區：{policy.timezone}")
+        if policy.time_format:
+            lines.append(f"- 時間格式：{policy.time_format}")
+        if policy.operation_refs:
+            lines.append("- 適用端點：" + "、".join(f"`{ref}`" for ref in policy.operation_refs))
+    for direction in contract.amount_direction:
+        lines.append(f"### 金額方向：{direction.operation_ref or '(未指定端點)'}")
+        if direction.balance_effect:
+            lines.append(f"- 餘額效果：`{direction.balance_effect}`")
+        if direction.amount_sign:
+            lines.append(f"- 金額符號：`{direction.amount_sign}`")
+        if direction.precision:
+            lines.append(f"- 精度：{direction.precision}")
+    for rule in contract.idempotency:
+        lines.append(f"### 冪等規則：{rule.code or '(未指定代碼)'}")
+        if rule.meaning:
+            lines.append(f"- 意義：{rule.meaning}")
+        if rule.action:
+            lines.append(f"- 呼叫端動作：{rule.action}")
+        if rule.operation_refs:
+            lines.append("- 適用端點：" + "、".join(f"`{ref}`" for ref in rule.operation_refs))
+    for policy in contract.line_currency_policy:
+        lines.append(f"### 線路幣別政策：{policy.scope or '(未指定範圍)'}")
+        if policy.policy:
+            lines.append(f"- 幣別政策：`{policy.policy}`")
+        if policy.currency_binding:
+            lines.append(f"- 幣別綁定：`{policy.currency_binding}`")
+        if policy.operation_refs:
+            lines.append("- 適用端點：" + "、".join(f"`{ref}`" for ref in policy.operation_refs))
+        if policy.note:
+            lines.append(f"- 說明：{policy.note}")
     for c in contract.crypto:
         lines.append(f"### 加解密／簽章：{c.name or '(未命名)'}")
         if c.algorithm:

@@ -165,6 +165,65 @@ def _operational_paths(value: dict[str, Any]) -> dict[str, Any]:
     return paths
 
 
+def _semantic_paths(
+    value: dict[str, Any],
+    *,
+    scalar_fields: tuple[str, ...],
+    collection_fields: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    paths: dict[str, Any] = {}
+    for field in scalar_fields:
+        _put(paths, f"/{field}", value.get(field))
+    for field in collection_fields:
+        for item in value.get(field) or ():
+            _put(paths, f"/{field}/{escape_segment(str(item))}", item)
+    return paths
+
+
+def _transport_policy_paths(value: dict[str, Any]) -> dict[str, Any]:
+    return _semantic_paths(
+        value,
+        scalar_fields=(
+            "name",
+            "protocol",
+            "content_type",
+            "content_type_note",
+            "http_status",
+            "timezone",
+            "time_format",
+        ),
+        collection_fields=("methods", "operation_refs"),
+    )
+
+
+def _amount_direction_paths(value: dict[str, Any]) -> dict[str, Any]:
+    return _semantic_paths(
+        value,
+        scalar_fields=(
+            "operation_ref",
+            "balance_effect",
+            "amount_sign",
+            "precision",
+        ),
+    )
+
+
+def _idempotency_rule_paths(value: dict[str, Any]) -> dict[str, Any]:
+    return _semantic_paths(
+        value,
+        scalar_fields=("code", "meaning", "action"),
+        collection_fields=("operation_refs",),
+    )
+
+
+def _line_currency_policy_paths(value: dict[str, Any]) -> dict[str, Any]:
+    return _semantic_paths(
+        value,
+        scalar_fields=("scope", "policy", "currency_binding", "note"),
+        collection_fields=("operation_refs",),
+    )
+
+
 _PATH_HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "interaction": _interaction_paths,
     "operation": _operation_paths,
@@ -175,6 +234,10 @@ _PATH_HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "webhook": _webhook_paths,
     "integration_mechanic": _integration_paths,
     "operational_constraint": _operational_paths,
+    "transport_policy": _transport_policy_paths,
+    "amount_direction": _amount_direction_paths,
+    "idempotency_rule": _idempotency_rule_paths,
+    "line_currency_policy": _line_currency_policy_paths,
 }
 
 

@@ -835,7 +835,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         </div>
         <h3>Integration contract</h3>
         <span class="file">integration-contract.json</span>
-        <p>This always-written machine contract carries integration mechanics plus source-stated cross-endpoint rules, amount formulas, and field semantics, so downstream SDK tools do not have to rebuild them from Markdown.</p>
+        <p>This always-written machine contract carries source-stated transport, amount direction, idempotency, line-currency policy, integration mechanics, and cross-endpoint rules, so downstream SDK tools do not have to rebuild them from Markdown. Missing request currency is never treated as proof of a single-currency line.</p>
       </div>
       <div class="value">
         <div class="badge tint-amber">

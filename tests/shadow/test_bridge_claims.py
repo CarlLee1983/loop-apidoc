@@ -11,6 +11,7 @@ from loop_apidoc.manifest.models import (
     SourceFormat,
 )
 from loop_apidoc.plan.models import (
+    AmountDirection,
     Callback,
     ContractTestCase,
     CryptoScheme,
@@ -19,7 +20,9 @@ from loop_apidoc.plan.models import (
     EnvironmentEntry,
     ErrorEntry,
     FieldCondition,
+    IdempotencyRule,
     IntegrationContract,
+    LineCurrencyPolicy,
     NormalizationPlan,
     OperationalEntry,
     PlanItemStatus,
@@ -27,6 +30,7 @@ from loop_apidoc.plan.models import (
     SecuritySchemeEntry,
     SourceCitation,
     SystemGroup,
+    TransportPolicy,
 )
 from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
@@ -382,6 +386,79 @@ def test_operational_applicability_survives_canonical_claim_projection():
     assert result.claim_proposals[0].value["applies_to"] == [
         {"operation": "POST /cancel", "field": "request.amount"}
     ]
+
+
+def test_domain_semantics_have_distinct_canonical_claim_kinds():
+    contract = IntegrationContract(
+        transport=[
+            TransportPolicy(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[CITATION],
+                name="HTTP defaults",
+                protocol="HTTPS",
+                methods=["POST"],
+                operation_refs=["POST /deposit"],
+            )
+        ],
+        amount_direction=[
+            AmountDirection(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[CITATION],
+                operation_ref="POST /deposit",
+                balance_effect="credit",
+                amount_sign="positive",
+                precision="12,4",
+            )
+        ],
+        idempotency=[
+            IdempotencyRule(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[CITATION],
+                operation_refs=["POST /deposit"],
+                code="9",
+                meaning="Duplicate transaction.",
+                action="Treat the original transaction as processed.",
+            )
+        ],
+        line_currency_policy=[
+            LineCurrencyPolicy(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[CITATION],
+                scope="Agent line",
+                policy="single",
+                currency_binding="agent",
+                operation_refs=["POST /deposit"],
+            )
+        ],
+    )
+
+    result = build_runtime_result(_plan(integration=contract), _bridge())
+
+    proposals = {proposal.claim_kind: proposal for proposal in result.claim_proposals}
+    assert proposals["transport_policy"].value == {
+        "name": "HTTP defaults",
+        "protocol": "HTTPS",
+        "methods": ["POST"],
+        "operation_refs": ["operation:POST:/deposit"],
+    }
+    assert proposals["amount_direction"].value == {
+        "operation_ref": "operation:POST:/deposit",
+        "balance_effect": "credit",
+        "amount_sign": "positive",
+        "precision": "12,4",
+    }
+    assert proposals["idempotency_rule"].value == {
+        "operation_refs": ["operation:POST:/deposit"],
+        "code": "9",
+        "meaning": "Duplicate transaction.",
+        "action": "Treat the original transaction as processed.",
+    }
+    assert proposals["line_currency_policy"].value == {
+        "scope": "Agent line",
+        "policy": "single",
+        "currency_binding": "agent",
+        "operation_refs": ["operation:POST:/deposit"],
+    }
 
 
 def test_duplicate_supported_identities_remain_distinct_stable_proposals():

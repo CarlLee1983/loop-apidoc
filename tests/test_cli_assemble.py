@@ -88,6 +88,301 @@ def test_assemble_json_emits_run_dir_and_report(tmp_path):
     assert Path(payload["review_html"]).is_file()
 
 
+def test_assemble_preserves_source_grounded_transport_policy(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "transport": [
+                    {
+                        "name": "HTTP defaults",
+                        "protocol": "HTTPS",
+                        "methods": ["GET", "POST"],
+                        "content_type": "application/x-www-form-urlencoded",
+                        "content_type_note": "Required for non-GET requests.",
+                        "http_status": "Business failures also return HTTP 200.",
+                        "timezone": "UTC-4",
+                        "time_format": "RFC3339",
+                        "operation_refs": [],
+                        "source": "manual.md p.1",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--json",
+        ],
+    )
+
+    payload = json.loads(res.stdout)
+    contract = json.loads(
+        (Path(payload["run_dir"]) / "integration-contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["transport"] == [
+        {
+            "name": "HTTP defaults",
+            "protocol": "HTTPS",
+            "methods": ["GET", "POST"],
+            "content_type": "application/x-www-form-urlencoded",
+            "content_type_note": "Required for non-GET requests.",
+            "http_status": "Business failures also return HTTP 200.",
+            "timezone": "UTC-4",
+            "time_format": "RFC3339",
+            "operation_refs": [],
+            "source": "manual.md p.1",
+            "provenance_target": "integration.transport.HTTP defaults",
+        }
+    ]
+
+
+def test_assemble_preserves_source_grounded_amount_direction(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    inventory = json.loads((extraction / "inventory.json").read_text(encoding="utf-8"))
+    inventory["endpoints"] = [
+        {
+            "method": "POST",
+            "path": "/deposit",
+            "summary": "Deposit funds",
+            "source": "manual.md p.2",
+        }
+    ]
+    (extraction / "inventory.json").write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8"
+    )
+    endpoint = dict(_ENDPOINT, method="POST", path="/deposit")
+    (extraction / "endpoints" / "ep0.json").write_text(
+        json.dumps(endpoint, ensure_ascii=False), encoding="utf-8"
+    )
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "amount_direction": [
+                    {
+                        "operation_ref": "POST /deposit",
+                        "balance_effect": "credit",
+                        "amount_sign": "positive",
+                        "precision": "12 integer digits and 4 fractional digits",
+                        "source": "manual.md p.2",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--json",
+        ],
+    )
+
+    payload = json.loads(res.stdout)
+    contract = json.loads(
+        (Path(payload["run_dir"]) / "integration-contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["amount_direction"] == [
+        {
+            "operation_ref": "POST /deposit",
+            "balance_effect": "credit",
+            "amount_sign": "positive",
+            "precision": "12 integer digits and 4 fractional digits",
+            "source": "manual.md p.2",
+            "provenance_target": "integration.amount_direction.0",
+        }
+    ]
+
+
+def test_assemble_preserves_source_grounded_idempotency_rule(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "idempotency": [
+                    {
+                        "operation_refs": ["GET /ping"],
+                        "code": "9",
+                        "meaning": "Duplicate transaction identifier.",
+                        "action": "Treat the original transaction as processed.",
+                        "source": "manual.md p.2",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--json",
+        ],
+    )
+
+    payload = json.loads(res.stdout)
+    contract = json.loads(
+        (Path(payload["run_dir"]) / "integration-contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["idempotency"] == [
+        {
+            "operation_refs": ["GET /ping"],
+            "code": "9",
+            "meaning": "Duplicate transaction identifier.",
+            "action": "Treat the original transaction as processed.",
+            "source": "manual.md p.2",
+            "provenance_target": "integration.idempotency.9",
+        }
+    ]
+
+
+def test_assemble_preserves_explicit_line_currency_policy(tmp_path):
+    sources, extraction, out = _setup(tmp_path)
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "line_currency_policy": [
+                    {
+                        "scope": "Agent line",
+                        "policy": "single",
+                        "currency_binding": "agent",
+                        "operation_refs": ["GET /ping"],
+                        "note": "The source explicitly binds one currency to each agent.",
+                        "source": "manual.md p.2",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--json",
+        ],
+    )
+
+    payload = json.loads(res.stdout)
+    contract = json.loads(
+        (Path(payload["run_dir"]) / "integration-contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["line_currency_policy"] == [
+        {
+            "scope": "Agent line",
+            "policy": "single",
+            "currency_binding": "agent",
+            "operation_refs": ["GET /ping"],
+            "note": "The source explicitly binds one currency to each agent.",
+            "source": "manual.md p.2",
+            "provenance_target": "integration.line_currency_policy.Agent line",
+        }
+    ]
+
+
+def test_assemble_does_not_infer_line_currency_policy_from_missing_request_field(
+    tmp_path,
+):
+    sources, extraction, out = _setup(tmp_path)
+    (extraction / "integration.json").write_text(
+        json.dumps(
+            {
+                "line_currency_policy": [
+                    {
+                        "scope": "Agent line",
+                        "policy": None,
+                        "currency_binding": None,
+                        "operation_refs": ["GET /ping"],
+                        "note": "The documented request has no currency field.",
+                        "source": "manual.md p.2",
+                    }
+                ],
+                "missing": [
+                    {
+                        "area": "line_currency_policy.Agent line.policy",
+                        "detail": "The source does not explicitly state single or multiple currency.",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--json",
+        ],
+    )
+
+    contract = json.loads(
+        (
+            Path(json.loads(res.stdout)["run_dir"])
+            / "integration-contract.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert contract["line_currency_policy"][0]["policy"] is None
+    assert contract["line_currency_policy"][0]["currency_binding"] is None
+    assert contract["missing"] == [
+        {
+            "area": "line_currency_policy.Agent line.policy",
+            "detail": "The source does not explicitly state single or multiple currency.",
+        }
+    ]
+
+
 def test_assemble_plain_output_mentions_status(tmp_path):
     """非 --json 路徑:輸出人類可讀的「狀態 …」字串。"""
     sources, extraction, out = _setup(tmp_path)

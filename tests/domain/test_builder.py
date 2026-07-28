@@ -127,3 +127,62 @@ def test_builder_routes_a_supported_http_interaction_into_the_canonical_contract
     assert contract.interactions[0].evidence == (
         EvidenceBinding(fragment_id="fragment-health"),
     )
+
+
+def test_builder_routes_supported_domain_semantics_into_typed_collections():
+    contract = build_grounded_contract(
+        _metadata(),
+        (
+            ContractClaimInput(
+                identity="claim:transport-policy:http-defaults:definition",
+                claim_kind="transport_policy",
+                value={
+                    "name": "HTTP defaults",
+                    "protocol": "HTTPS",
+                    "methods": ["POST"],
+                    "operation_refs": ["operation:POST:/deposit"],
+                },
+                status=ClaimStatus.SUPPORTED,
+            ),
+            ContractClaimInput(
+                identity="claim:amount-direction:deposit:definition",
+                claim_kind="amount_direction",
+                value={
+                    "operation_ref": "operation:POST:/deposit",
+                    "balance_effect": "credit",
+                    "amount_sign": "positive",
+                    "precision": "12,4",
+                },
+                status=ClaimStatus.SUPPORTED,
+            ),
+            ContractClaimInput(
+                identity="claim:idempotency-rule:9:definition",
+                claim_kind="idempotency_rule",
+                value={
+                    "operation_refs": ["operation:POST:/deposit"],
+                    "code": "9",
+                    "meaning": "Duplicate transaction.",
+                    "action": "Treat the original transaction as processed.",
+                },
+                status=ClaimStatus.SUPPORTED,
+            ),
+            ContractClaimInput(
+                identity="claim:line-currency-policy:agent:definition",
+                claim_kind="line_currency_policy",
+                value={
+                    "scope": "Agent line",
+                    "policy": "single",
+                    "currency_binding": "agent",
+                    "operation_refs": ["operation:POST:/deposit"],
+                },
+                status=ClaimStatus.SUPPORTED,
+            ),
+        ),
+    )
+
+    assert contract.transport_policies[0].protocol == "HTTPS"
+    assert contract.amount_directions[0].balance_effect == "credit"
+    assert contract.idempotency_rules[0].action == (
+        "Treat the original transaction as processed."
+    )
+    assert contract.line_currency_policies[0].policy == "single"

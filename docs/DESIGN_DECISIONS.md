@@ -189,6 +189,15 @@ fields at the extraction boundary. The always-written `integration-contract.json
 preserves these rules as a downstream machine contract instead of requiring SDK tooling
 to rebuild them from the human Markdown guide.
 
+Stable wallet/payment semantics use dedicated typed collections in optional
+`integration.json`: `transport[]`, `amount_direction[]`, `idempotency[]`, and
+`line_currency_policy[]`. Their operation references resolve at the extraction gate,
+their claims enter the canonical projection, and every output entry retains source and
+provenance links. The source-only invariant still wins over a plausible domain
+inference: a request without a currency field does not establish a single-currency
+line. Without an explicit policy statement, `policy` remains `null` and the uncertainty
+is recorded in `missing`.
+
 ## Canonical operational references
 
 - [Architecture](ARCHITECTURE.md) — component boundaries, data flow, and seams.
@@ -214,4 +223,4 @@ to rebuild them from the human Markdown guide.
 6. 擷取 gate、validation 與 no-speculation 規則一律 fail closed；分數、diff、freshness 與 preparation 是品質訊號，不是另一個事實來源。文件未提供 Server URL、authentication details 或 sandbox credentials 時，保留為可持續管理的治理缺口，不單憑缺席判定為整合風險。
 7. Foundry 以候選、版本化 asset 與 `current` 管理契約；本機 review 工作台只在人工明確核准後升級，並如實標示 `needs_follow_up`。
 8. benchmark、release 與對外文件都是產品契約；來源快照缺失或測試 skip 都不能宣稱通過。
-9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游。
+9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游；transport、金額方向、冪等與線路幣別使用專屬 typed collection，且 request 缺少 currency 欄位絕不視為單幣別證據。

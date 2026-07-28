@@ -19,7 +19,7 @@ Design rules:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -164,6 +164,44 @@ class OperationalInput(EvidenceBearingInput):
     applies_to: list[OperationalApplicabilityInput] = []
 
 
+class TransportPolicyInput(EvidenceBearingInput):
+    name: str | None = None
+    protocol: str | None = None
+    methods: list[str] = []
+    content_type: str | None = None
+    content_type_note: str | None = None
+    http_status: str | None = None
+    timezone: str | None = None
+    time_format: str | None = None
+    operation_refs: list[str] = []
+    source: str | None = None
+
+
+class AmountDirectionInput(EvidenceBearingInput):
+    operation_ref: str | None = None
+    balance_effect: Literal["credit", "debit"] | None = None
+    amount_sign: Literal["positive", "negative", "signed"] | None = None
+    precision: str | None = None
+    source: str | None = None
+
+
+class IdempotencyRuleInput(EvidenceBearingInput):
+    operation_refs: list[str] = []
+    code: str | None = None
+    meaning: str | None = None
+    action: str | None = None
+    source: str | None = None
+
+
+class LineCurrencyPolicyInput(EvidenceBearingInput):
+    scope: str | None = None
+    policy: Literal["single", "multiple"] | None = None
+    currency_binding: str | None = None
+    operation_refs: list[str] = []
+    note: str | None = None
+    source: str | None = None
+
+
 class ResponseEntry(_Lax):
     status: str | None = None
     description: str | None = None
@@ -207,6 +245,10 @@ class InventoryInput(_Lax):
 
 class IntegrationInput(_Lax):
     version: str | None = None
+    transport: list[TransportPolicyInput] = []
+    amount_direction: list[AmountDirectionInput] = []
+    idempotency: list[IdempotencyRuleInput] = []
+    line_currency_policy: list[LineCurrencyPolicyInput] = []
     crypto: list[EvidenceBearingInput] = []
     callbacks: list[EvidenceBearingInput] = []
     field_conditions: list[EvidenceBearingInput] = []

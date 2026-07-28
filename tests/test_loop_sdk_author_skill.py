@@ -24,6 +24,9 @@ def test_loop_sdk_author_skill_is_deployable():
     assert "handoff/sdk-hints.json" in text
     assert "app stack" in text
     assert "operational" in text
+    assert "amount_direction" in text
+    assert "idempotency" in text
+    assert "line_currency_policy" in text
 
 
 def test_sdk_plan_schema_reference_defines_boundaries():
@@ -34,7 +37,12 @@ def test_sdk_plan_schema_reference_defines_boundaries():
     assert "contract_pointer" in text
     assert "forbidden" in text.lower()
     assert '"operational": []' in text
+    assert '"transport": []' in text
+    assert '"amount_direction": []' in text
+    assert '"idempotency": []' in text
+    assert '"line_currency_policy": []' in text
     assert "../integration-contract.json#/operational/0" in text
+    assert "../integration-contract.json#/amount_direction/0" in text
 
 
 def test_validate_sdk_plan_accepts_minimal_stack_neutral_plan(tmp_path):
@@ -69,6 +77,10 @@ def test_validate_sdk_plan_accepts_minimal_stack_neutral_plan(tmp_path):
         ],
         "mechanisms": {
             "auth": [],
+            "transport": [],
+            "amount_direction": [],
+            "idempotency": [],
+            "line_currency_policy": [],
             "crypto": [
                 {
                     "name": "TradeInfo",
@@ -120,6 +132,10 @@ def test_validate_sdk_plan_rejects_app_stack_and_schema_copy(tmp_path):
         ],
         "mechanisms": {
             "auth": [],
+            "transport": [],
+            "amount_direction": [],
+            "idempotency": [],
+            "line_currency_policy": [],
             "crypto": [],
             "callbacks": [],
             "operational": [],
@@ -144,7 +160,7 @@ def test_validate_sdk_plan_rejects_app_stack_and_schema_copy(tmp_path):
     assert "requestBody" in result.stderr
 
 
-def test_validate_sdk_plan_requires_operational_mechanism_collection(tmp_path):
+def test_validate_sdk_plan_requires_all_domain_mechanism_collections(tmp_path):
     plan = {
         "version": "1.0",
         "source_run_dir": "output/run",
@@ -172,4 +188,11 @@ def test_validate_sdk_plan_requires_operational_mechanism_collection(tmp_path):
     )
 
     assert result.returncode == 1
-    assert "mechanisms.operational" in result.stderr
+    for section in (
+        "transport",
+        "amount_direction",
+        "idempotency",
+        "line_currency_policy",
+        "operational",
+    ):
+        assert f"mechanisms.{section}" in result.stderr

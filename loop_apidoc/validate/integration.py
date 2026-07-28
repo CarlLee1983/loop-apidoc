@@ -34,6 +34,10 @@ def _issue(code: IssueCode, location: str, evidence: str, fix: str, *,
 def _uncited(contract: IntegrationContract) -> list[Issue]:
     issues: list[Issue] = []
     groups = (
+        ("transport", contract.transport),
+        ("amount_direction", contract.amount_direction),
+        ("idempotency", contract.idempotency),
+        ("line_currency_policy", contract.line_currency_policy),
         ("crypto", contract.crypto),
         ("callbacks", contract.callbacks),
         ("field_conditions", contract.field_conditions),
@@ -41,7 +45,13 @@ def _uncited(contract: IntegrationContract) -> list[Issue]:
     )
     for section, entries in groups:
         for idx, entry in enumerate(entries):
-            label = getattr(entry, "name", None) or str(idx)
+            label = (
+                getattr(entry, "name", None)
+                or getattr(entry, "code", None)
+                or getattr(entry, "scope", None)
+                or getattr(entry, "operation_ref", None)
+                or str(idx)
+            )
             location = f"integration.{section}.{label}"
             if not entry.citations:
                 issues.append(
