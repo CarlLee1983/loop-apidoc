@@ -208,7 +208,8 @@ PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、靜態 HTML 快照、公
 ### `manifest` — 建立來源 manifest
 
 ```bash
-uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] [--output manifest.json]
+uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] \
+  [--url-coverage ./work/url_sources/coverage.json] [--output manifest.json]
 ```
 
 掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。省略 `--output` 時輸出至 stdout。
@@ -264,6 +265,29 @@ uv run loop-apidoc related-url-pages \
 `normalize-html-snapshot --input page.html --url ... --output sources/page.md` 轉為受支援
 Markdown；命令會寫出帶原始 URL 與 SHA-256 的 `.source.json` provenance sidecar。HTML
 本身也會在 manifest 中列為受支援格式。
+
+若互動式瀏覽器能顯示受保護頁面，但直接 HTTP 取源被擋，可在完全不連線 origin 的情況下
+匯入已儲存的 HTML／Markdown：
+
+```bash
+uv run loop-apidoc import-rendered-url \
+  --input ./captures/quickstart.html \
+  --url "https://docs.example.com/quickstart/" \
+  --captured-at "2026-07-29T08:30:00+08:00" \
+  --capture-method browser_save \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json \
+  --confirmed-by-user
+uv run loop-apidoc manifest --sources ./sources \
+  --url "https://docs.example.com/quickstart/" \
+  --url-coverage ./work/url_sources/coverage.json \
+  --output ./work/manifest.preflight.json
+```
+
+importer 會保留原始位元組，並寫出含原始／canonical URL、擷取時間與方法、SHA-256 的
+versioned provenance sidecar；格式錯誤與任何輸出碰撞都會拒絕。匹配的
+`fetched_rendered` 結果讓 `manifest`／`assemble` 使用通過驗證的本機快照，不再探測受保護
+origin；URL、路徑、method 或 digest 不一致則 fail closed。
 
 若 URL 本身就是 Swagger 2.0 或 OpenAPI 3.x JSON／YAML，請先把它固定為本機來源，而不是
 走 HTML 導覽流程：
@@ -329,7 +353,7 @@ uv run loop-apidoc assess-sources \
   --output ./work/source-quality [--base-manifest <舊 manifest>]
 ```
 
-在擷取前把 manifest 與 agent 記錄的來源觀察評成來源品質報告（`source-quality-report.{json,zh-TW.md}`）與來源版本差異（`source-diff.{json,md}`，提供 `--base-manifest` 時比對舊 manifest）。結論為 `pass` 或 `reject`；退出碼：`0` = pass、`1` = reject、`2` = 輸入檔錯誤。產出的目錄可經 `assemble --source-quality` 傳入：`reject` 會在建立 run-dir 前中止，`pass` 報告則隨 run-dir 保存供稽核。
+在擷取前把 manifest 與 agent 記錄的來源觀察評成來源品質報告（`source-quality-report.{json,zh-TW.md}`）與來源版本差異（`source-diff.{json,md}`，提供 `--base-manifest` 時比對舊 manifest）。blocker observation 可明列 `required_source_refs`；reject report 會依原順序去重後輸出為下一輪 bounded capture seed，但絕不自動抓取或 crawl。結論為 `pass` 或 `reject`；退出碼：`0` = pass、`1` = reject、`2` = 輸入檔錯誤。產出的目錄可經 `assemble --source-quality` 傳入：`reject` 會在建立 run-dir 前中止，`pass` 報告則隨 run-dir 保存供稽核。
 
 ### `record-fingerprint` / `check-freshness` — 來源新鮮度排程閘
 

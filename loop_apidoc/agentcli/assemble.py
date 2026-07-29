@@ -24,7 +24,7 @@ from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.extraction.stages import QueryKind
 from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.generate.writer import generate_outputs
-from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.manifest.builder import ManifestInputError, build_manifest
 from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
@@ -283,9 +283,16 @@ def run_assemble_pipeline(
 
     # manifest 必須先於 run 目錄建立:source 格式檢查要拿它比對,而檢查失敗時
     # 不該留下孤兒 run 目錄。build_manifest 只掃描與探測,不寫檔。
-    manifest = build_manifest(
-        sources_root=sources_root, urls=urls or [], generated_at=generated_at,
-        excludes=excludes)
+    try:
+        manifest = build_manifest(
+            sources_root=sources_root,
+            urls=urls or [],
+            generated_at=generated_at,
+            excludes=excludes,
+            url_coverage=url_coverage,
+        )
+    except ManifestInputError as exc:
+        raise AssembleInputError(str(exc)) from exc
     if url_coverage is not None:
         # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
         manifest = backfill_snapshot_files(manifest, url_coverage)

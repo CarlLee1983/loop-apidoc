@@ -130,6 +130,13 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   `--url-coverage "<WORK>/url_sources/coverage.json"`. Cite the local filename plus JSON
   Pointer (for example `openapi.json#/paths/~1payments/post`), not an inferred HTML anchor.
 
+  If direct HTTP access is blocked but an interactive browser can render the page, save the
+  rendered HTML/Markdown and run `import-rendered-url` with the original URL, an explicit
+  timezone-aware capture timestamp, and `browser_save` or `playwright`. Then pass the generated
+  coverage file to both `manifest --url-coverage` and `assemble --url-coverage`. The verified
+  `fetched_rendered` entry prevents a redundant origin fetch; never hand-author or repair its
+  provenance sidecar.
+
   For a GitBook entry that publishes `llms.txt`, use the deterministic Markdown lane before
   cataloguing a JavaScript shell:
 
@@ -216,7 +223,10 @@ source filename + page/section/anchor. The controller writes
   --source-set "vN" --output "<WORK>/source-quality"
 ```
 
-Exit `1` means `reject`: provide the generated supplement report and stop. Do not create
+Exit `1` means `reject`: provide the generated supplement report and stop. When an observation
+names explicit linked contract pages, put only those absolute URLs in its
+`required_source_refs`; the rejected report returns their ordered, de-duplicated union as a
+bounded next-capture list and never crawls it. Do not create
 `inventory.json` or endpoint extraction files. Exit `0` permits extraction; warnings remain
 visible and must not be filled with assumptions. When this gate ran, pass
 `--source-quality "<WORK>/source-quality"` to `assemble` (step 6) — the passing report is

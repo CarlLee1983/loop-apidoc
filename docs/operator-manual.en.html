@@ -81,6 +81,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#preprocess">preprocess — PDF to markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — build the source manifest</a>
   <a class="lvl-3" href="#url-corpus">URL navigation and caching (catalog / select / cache)</a>
+  <a class="lvl-3" href="#import-rendered-url">import-rendered-url — protected rendered evidence</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — source quality gate</a>
   <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — scheduled source freshness gate</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — extraction contract check</a>
@@ -165,7 +166,7 @@ uv run loop-apidoc --help
 </code></pre>
 <p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Directory input preserves source-relative paths; <code>guide.pdf</code> becomes <code>guide.pdf.md</code>, avoiding a collision with a sibling <code>guide.md</code>. <code>--sources</code> can also name one file, in which case only that file is processed. Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
 <h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
-<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--output manifest.json]
+<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
 <p>Scans local sources, recording relative path, format, size, SHA-256, scan time, whether supported, duplicate determination, and processing status; public URLs additionally record fetch time, HTTP status, and content hash. <code>--sources</code> accepts a directory or one source file; for a file, its parent becomes <code>sources_root</code> and the manifest contains only that file. When <code>--output</code> is omitted, output goes to stdout.</p>
 <h3 id="url-corpus">URL navigation and caching — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
@@ -182,6 +183,14 @@ uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --o
 uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;page URL&gt; --output ./work/candidates.json
 </code></pre>
 <p>A token-efficient web-doc reading flow: <code>catalog.json</code> is the complete navigation coverage universe; <code>corpus.json</code> embeds no body text, only pointing at the local <code>raw/</code> and <code>body/</code> files. When the catalog is empty or the document is a single page, use <code>cache-url-entry --url ... --output ...</code> to cache the entry page directly; already-downloaded HTML can be converted to supported Markdown with <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code>, which also writes a <code>.source.json</code> provenance sidecar carrying the original URL and SHA-256.</p>
+<h3 id="import-rendered-url"><code>import-rendered-url</code> — import protected browser-rendered evidence</h3>
+<pre><code class="language-bash">uv run loop-apidoc import-rendered-url --input ./captures/page.html --url &lt;original URL&gt; \
+  --captured-at "2026-07-29T08:30:00+08:00" --capture-method browser_save \
+  --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
+uv run loop-apidoc manifest --sources ./sources --url &lt;original URL&gt; \
+  --url-coverage ./work/url_sources/coverage.json --output ./work/manifest.json
+</code></pre>
+<p>Use this lane when an interactive browser can render a page that direct HTTP acquisition cannot reach. It preserves the saved HTML/Markdown bytes and writes versioned provenance for the original/canonical URL, capture time/method, and SHA-256 plus a <code>fetched_rendered</code> coverage result. Existing destinations, malformed metadata, and URL/path/method/digest mismatches fail closed. A verified match prevents <code>manifest</code> and <code>assemble</code> from probing that protected origin; no CAPTCHA handling, credential automation, inference, or crawling is performed.</p>
 <h3 id="snapshot-openapi-url"><code>snapshot-openapi-url</code> — pin a directly-linked OpenAPI source</h3>
 <pre><code class="language-bash">uv run loop-apidoc snapshot-openapi-url --url &lt;OpenAPI JSON/YAML URL&gt; \\
   --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
@@ -198,7 +207,7 @@ uv run loop-apidoc extract-markdown-drafts --sources ./sources --manifest ./work
 <pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
   --observations &lt;observations.json&gt; --source-set &lt;name&gt; --output ./work/source-quality [--base-manifest &lt;old manifest&gt;]
 </code></pre>
-<p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
+<p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. Blocker observations may list explicit HTTP(S) links in <code>required_source_refs</code>; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed and never crawls it. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
 <h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> — scheduled source freshness gate</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 

@@ -220,7 +220,8 @@ PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, static HTML snapshots, public 
 ### `manifest` — build source manifest
 
 ```bash
-uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] [--output manifest.json]
+uv run loop-apidoc manifest --sources ./sources-or-file [--url <URL> ...] \
+  [--url-coverage ./work/url_sources/coverage.json] [--output manifest.json]
 ```
 
 Scans local sources recording relative path, format, size, SHA-256, scan time, support status, duplicate detection, and processing status; public URLs also record fetch time, HTTP status, and content hash. Without `--output`, prints to stdout.
@@ -280,6 +281,30 @@ HTML can be converted into supported Markdown with
 `normalize-html-snapshot --input page.html --url ... --output sources/page.md`; the command
 writes a `.source.json` provenance sidecar carrying the original URL and SHA-256. HTML
 itself is also listed as a supported format in the manifest.
+
+When an interactive browser can render a protected page that direct HTTP acquisition cannot
+reach, import the saved HTML or Markdown without contacting the origin:
+
+```bash
+uv run loop-apidoc import-rendered-url \
+  --input ./captures/quickstart.html \
+  --url "https://docs.example.com/quickstart/" \
+  --captured-at "2026-07-29T08:30:00+08:00" \
+  --capture-method browser_save \
+  --sources ./sources \
+  --coverage ./work/url_sources/coverage.json \
+  --confirmed-by-user
+uv run loop-apidoc manifest --sources ./sources \
+  --url "https://docs.example.com/quickstart/" \
+  --url-coverage ./work/url_sources/coverage.json \
+  --output ./work/manifest.preflight.json
+```
+
+The importer preserves the original bytes and writes a versioned provenance sidecar containing
+the original/canonical URL, capture timestamp and method, and SHA-256. It refuses malformed
+provenance inputs and all output collisions. A matching `fetched_rendered` result lets
+`manifest` and `assemble` use the verified local snapshot without probing the protected origin;
+URL, path, method, or digest mismatches fail closed.
 
 When a URL itself is a Swagger 2.0 or OpenAPI 3.x JSON/YAML document, snapshot it as a local
 source instead of using the HTML navigation flow:
@@ -348,7 +373,7 @@ uv run loop-apidoc assess-sources \
   --output ./work/source-quality [--base-manifest <old manifest>]
 ```
 
-Before extraction, grades the manifest plus the agent-recorded source observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`, compared against an old manifest when `--base-manifest` is given). The verdict is `pass` or `reject`; exit codes: `0` = pass, `1` = reject, `2` = bad input file. The output directory can be passed to `assemble --source-quality`: a `reject` verdict stops before a run-dir is created, while a `pass` report is preserved with the run-dir for audit.
+Before extraction, grades the manifest plus the agent-recorded source observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`, compared against an old manifest when `--base-manifest` is given). A blocker observation may explicitly provide `required_source_refs`; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed list, but never fetches or crawls them. The verdict is `pass` or `reject`; exit codes: `0` = pass, `1` = reject, `2` = bad input file. The output directory can be passed to `assemble --source-quality`: a `reject` verdict stops before a run-dir is created, while a `pass` report is preserved with the run-dir for audit.
 
 ### `record-fingerprint` / `check-freshness` — scheduled source-freshness gate
 

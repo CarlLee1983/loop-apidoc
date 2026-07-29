@@ -30,6 +30,31 @@ not a navigation entry point. Do **not** call `catalog-url`, `cache-url-pages`,
 The local snapshot is the only evidence subagents read. Re-fetch only when intentionally
 creating a new source-set version.
 
+## Browser-rendered protected URL
+
+When direct acquisition receives a challenge or authorization failure but an interactive
+browser can legitimately render the page, save the rendered HTML or Markdown and import it
+without contacting the origin:
+
+```bash
+<APIDOC> import-rendered-url --input "<CAPTURE.html>" --url "<ORIGINAL_URL>" \
+  --captured-at "<ISO-8601_WITH_OFFSET>" --capture-method browser_save \
+  --sources "<SOURCES>" --coverage "<WORK>/url_sources/coverage.json" \
+  [--filename "<stable-name>.html"] [--confirmed-by-user]
+<APIDOC> manifest --sources "<SOURCES>" --url "<ORIGINAL_URL>" \
+  --url-coverage "<WORK>/url_sources/coverage.json" \
+  --output "<WORK>/manifest.preflight.json"
+```
+
+Use `--capture-method playwright` when Playwright produced the saved bytes. The importer keeps
+the bytes unchanged and writes a `*.source.json` sidecar with schema version, original and
+canonical URL, capture timestamp/method, local filename, and SHA-256. It refuses malformed
+URLs/timestamps/methods and any existing source, sidecar, or coverage destination. A matching
+`fetched_rendered` result makes `manifest` and `assemble` verify the sidecar, URL, local path,
+method, and bytes before treating the local file as URL evidence; verified evidence prevents a
+redundant origin request. Any mismatch fails closed. The command does not solve challenges,
+handle credentials, infer omitted contracts, or follow links.
+
 ## GitBook LLMS Markdown corpus
 
 When a GitBook-style entry point publishes `llms.txt`, prefer the deterministic Markdown
@@ -187,7 +212,8 @@ Security red line: **the pipeline and the agent never handle or record credentia
       "url": "https://docs.example.com/api/auth",
       "status": "fetched",
       "file": "url_sources/auth.md",
-      "method": "defuddle"
+      "method": "defuddle",
+      "provenance_file": null
     }
   ]
 }
@@ -196,8 +222,11 @@ Security red line: **the pipeline and the agent never handle or record credentia
 - `expected[].source`: `nav` | `sitemap` | `user`
 - `results[].status`: `fetched` | `fetched_rendered` | `empty_suspect` | `fetch_failed` |
   `auth_required` | `skipped_by_user`
-- `results[].method`: `defuddle` | `playwright` | `direct`; use `direct` only for a single
+- `results[].method`: `defuddle` | `playwright` | `browser` | `direct`; use `browser` only for
+  `import-rendered-url --capture-method browser_save`, and use `direct` only for a single
   machine-readable JSON/YAML response saved unchanged as the local source snapshot
   (`auth_required` / `fetch_failed` / `skipped_by_user` may omit `file` / `method`).
+- `results[].provenance_file`: required for `fetched_rendered`; it must resolve to the imported
+  source's `*.source.json` sidecar.
 
 A malformed coverage.json (missing key, unknown status) fails assemble loudly (exit 2).

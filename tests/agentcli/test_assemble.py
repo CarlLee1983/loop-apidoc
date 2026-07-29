@@ -28,6 +28,7 @@ from loop_apidoc.preparation.coverage import (
     ResultStatus,
     UrlCoverage,
 )
+from loop_apidoc.rendered_url import import_rendered_url
 from loop_apidoc.run.models import RunStatus
 from loop_apidoc.shadow.models import (
     ArchitectureMode,
@@ -502,10 +503,12 @@ def test_pipeline_backfills_snapshot_file_into_manifest(tmp_path, monkeypatch):
     # build_manifest 內部會探測 URL — 用 MockTransport 攔截,避免真網路。
     real_build = assemble_mod.build_manifest
 
-    def fake_build(*, sources_root, urls, generated_at, excludes=()):
+    def fake_build(
+        *, sources_root, urls, generated_at, excludes=(), url_coverage=None
+    ):
         return real_build(sources_root=sources_root, urls=urls,
                           generated_at=generated_at, client=_mock_client(),
-                          excludes=excludes)
+                          excludes=excludes, url_coverage=url_coverage)
 
     monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
 
@@ -547,10 +550,12 @@ def test_pipeline_without_coverage_leaves_snapshot_file_none(tmp_path, monkeypat
 
     real_build = assemble_mod.build_manifest
 
-    def fake_build(*, sources_root, urls, generated_at, excludes=()):
+    def fake_build(
+        *, sources_root, urls, generated_at, excludes=(), url_coverage=None
+    ):
         return real_build(sources_root=sources_root, urls=urls,
                           generated_at=generated_at, client=_mock_client(),
-                          excludes=excludes)
+                          excludes=excludes, url_coverage=url_coverage)
 
     monkeypatch.setattr(assemble_mod, "build_manifest", fake_build)
 
@@ -568,3 +573,42 @@ def test_pipeline_without_coverage_leaves_snapshot_file_none(tmp_path, monkeypat
     manifest_payload = json.loads(
         (out / "run-nocov" / "manifest.json").read_text(encoding="utf-8"))
     assert manifest_payload["url_sources"][0]["snapshot_file"] is None
+
+
+def test_pipeline_uses_verified_rendered_snapshot_without_origin_fetch(
+    tmp_path, monkeypatch
+):
+    _write_extraction(tmp_path / "extraction")
+    rendered = tmp_path / "rendered.md"
+    rendered.write_text("# Demo API\nGET /ping", encoding="utf-8")
+    sources = tmp_path / "sources"
+    coverage = tmp_path / "coverage.json"
+    import_rendered_url(
+        rendered,
+        original_url="https://protected.example.com/overview",
+        captured_at="2026-07-29T00:30:00Z",
+        capture_method="playwright",
+        sources=sources,
+        coverage_output=coverage,
+    )
+
+    def unexpected_probe(*args, **kwargs):
+        raise AssertionError("protected origin must not be fetched")
+
+    monkeypatch.setattr("loop_apidoc.manifest.builder.probe_url", unexpected_probe)
+    out = tmp_path / "out"
+    run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=out,
+        run_id="run-rendered",
+        generated_at=datetime(2026, 7, 29, tzinfo=timezone.utc),
+        urls=["https://protected.example.com/overview"],
+        url_coverage_path=coverage,
+    )
+
+    manifest_payload = json.loads(
+        (out / "run-rendered" / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest_payload["url_sources"][0]["note"] == "fetched_rendered"
+    assert manifest_payload["url_sources"][0]["snapshot_file"] == "rendered.md"
