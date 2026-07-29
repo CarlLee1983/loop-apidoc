@@ -7,6 +7,10 @@ from loop_apidoc.source_quality.models import SourceDiffReport, SourceQualityRep
 
 def render_markdown(report: SourceQualityReport) -> str:
     lines = ["# 來源品質報告", "", f"結論：**{report.verdict.value}**", ""]
+    if report.required_source_refs:
+        lines.extend(["## 待補來源連結", ""])
+        lines.extend(f"- {reference}" for reference in report.required_source_refs)
+        lines.append("")
     for finding in report.findings:
         lines.extend([
             f"## {finding.id}：{finding.category}", "",

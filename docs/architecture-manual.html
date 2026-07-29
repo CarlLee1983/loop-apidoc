@@ -733,6 +733,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">extract-markdown-drafts</div>
           <div class="command-chip">scaffold-extraction</div>
           <div class="command-chip">normalize-html-snapshot</div>
+          <div class="command-chip">import-rendered-url</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
@@ -800,7 +801,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="source-quality">
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">擷取前來源品質評估與差異報告；通過報告可隨 run-dir 保存。</div>
+            <div class="module-role">擷取前來源品質評估與差異報告；reject 可輸出明確 bounded required_source_refs 且不 crawl，通過報告可隨 run-dir 保存。</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="freshness">
             <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>

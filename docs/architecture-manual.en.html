@@ -738,6 +738,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">cache-gitbook-llms</div>
           <div class="command-chip">extract-markdown-drafts</div>
           <div class="command-chip">normalize-html-snapshot</div>
+          <div class="command-chip">import-rendered-url</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
@@ -805,7 +806,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="source-quality">
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">Pre-extraction source-quality assessment and diff report; a passing report can be retained alongside the run-dir.</div>
+            <div class="module-role">Pre-extraction source-quality assessment and diff report; reject may expose explicit bounded required_source_refs without crawling, and a passing report can be retained alongside the run-dir.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="freshness">
             <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>

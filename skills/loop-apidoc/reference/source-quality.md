@@ -20,13 +20,18 @@ Every non-empty item has this shape:
     "severity": "blocker",
     "affected_scope": ["POST /transfer"],
     "required_supplement": "Provider response envelope and error codes.",
-    "acceptance_criteria": "The envelope fields and outcome semantics are cited."
+    "acceptance_criteria": "The envelope fields and outcome semantics are cited.",
+    "required_source_refs": ["https://docs.example.com/transfer/response"]
   }
 ]
 ```
 
 `severity` is `blocker` or `warning`; all string fields are required and non-blank.
-`affected_scope` is optional and defaults to `[]`.
+`affected_scope` and `required_source_refs` are optional and default to `[]`. Every
+`required_source_refs` value must be an absolute HTTP(S) URL without credentials and must be an
+explicit link in the reviewed source—not a guessed conventional page. On `reject`, the report
+collects blocker references in first-seen order and removes duplicates. This list is a bounded,
+reviewable next-capture seed; `assess-sources` never fetches or crawls it.
 
 Run `assess-sources` after manifest/preprocess. The verdict is `pass` (exit 0) or
 `reject` (exit 1); a `reject` stops the run before `inventory.json`. When the gate ran,

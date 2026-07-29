@@ -38,6 +38,7 @@ class ResultStatus(str, Enum):
 class FetchMethod(str, Enum):
     DEFUDDLE = "defuddle"
     PLAYWRIGHT = "playwright"
+    BROWSER = "browser"
     DIRECT = "direct"
 
 
@@ -56,6 +57,7 @@ class CoverageResult(BaseModel):
     status: ResultStatus
     file: str | None = None
     method: FetchMethod | None = None
+    provenance_file: str | None = None
     note: str | None = None
 
 

@@ -67,6 +67,13 @@ def manifest(
         "--exclude",
         help="額外排除的 glob（可重複）；預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
     ),
+    url_coverage: Path | None = typer.Option(
+        None,
+        "--url-coverage",
+        exists=True,
+        readable=True,
+        help="URL coverage.json；驗證匹配的 rendered snapshot 後可免 origin fetch",
+    ),
     output: Path | None = typer.Option(
         None,
         "--output",
@@ -79,12 +86,25 @@ def manifest(
     selected_relative_path = (
         sources.relative_to(sources_root).as_posix() if sources.is_file() else None
     )
-    result = build_manifest(
-        sources_root=sources_root,
-        urls=list(url),
-        generated_at=generated_at,
-        excludes=tuple(exclude),
-    )
+    from loop_apidoc.manifest.builder import ManifestInputError
+    from loop_apidoc.preparation.coverage import CoverageInputError, load_coverage
+
+    try:
+        parsed_coverage = load_coverage(url_coverage) if url_coverage else None
+        if parsed_coverage is not None and not url:
+            raise ManifestInputError(
+                "--url-coverage requires at least one matching --url source"
+            )
+        result = build_manifest(
+            sources_root=sources_root,
+            urls=list(url),
+            generated_at=generated_at,
+            excludes=tuple(exclude),
+            url_coverage=parsed_coverage,
+        )
+    except (CoverageInputError, ManifestInputError) as exc:
+        typer.echo(f"manifest error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
     if selected_relative_path is not None:
         result = result.model_copy(
             update={
@@ -345,6 +365,48 @@ def snapshot_openapi_url_command(
     typer.echo(
         f"OpenAPI snapshot 已寫入 {result.snapshot_path}；SHA-256 {result.sha256}；"
         f"coverage 已寫入 {result.coverage_path}"
+    )
+
+
+@app.command(name="import-rendered-url")
+def import_rendered_url_command(
+    input: Path = typer.Option(
+        ..., "--input", exists=True, readable=True, help="已由瀏覽器儲存或渲染的 HTML/Markdown"
+    ),
+    url: str = typer.Option(..., "--url", help="快照的原始公開 URL"),
+    captured_at: str = typer.Option(
+        ..., "--captured-at", help="含時區的 ISO-8601 擷取時間"
+    ),
+    capture_method: str = typer.Option(
+        ..., "--capture-method", help="browser_save 或 playwright"
+    ),
+    sources: Path = typer.Option(..., "--sources", help="不可變本機來源目錄"),
+    coverage: Path = typer.Option(..., "--coverage", help="輸出的 URL coverage.json"),
+    filename: str | None = typer.Option(None, "--filename", help="來源檔名；預設沿用輸入檔名"),
+    confirmed_by_user: bool = typer.Option(
+        False, "--confirmed-by-user", help="標記 URL scope 已由使用者確認"
+    ),
+) -> None:
+    """離線匯入 browser-rendered URL source、provenance 與 coverage。"""
+    from loop_apidoc.rendered_url import RenderedUrlImportError, import_rendered_url
+
+    try:
+        result = import_rendered_url(
+            input,
+            original_url=url,
+            captured_at=captured_at,
+            capture_method=capture_method,
+            sources=sources,
+            coverage_output=coverage,
+            filename=filename,
+            confirmed_by_user=confirmed_by_user,
+        )
+    except (RenderedUrlImportError, OSError) as exc:
+        typer.echo(f"import-rendered-url error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        f"rendered source 已寫入 {result.source_path}；SHA-256 {result.sha256}；"
+        f"provenance 已寫入 {result.provenance_path}；coverage 已寫入 {result.coverage_path}"
     )
 
 

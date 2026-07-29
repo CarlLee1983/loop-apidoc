@@ -48,9 +48,22 @@ def assess_source_quality(
         if any(finding.is_blocker for finding in findings)
         else QualityVerdict.PASS
     )
+    required_source_refs = (
+        list(
+            dict.fromkeys(
+                reference
+                for finding in findings
+                if finding.is_blocker
+                for reference in finding.required_source_refs
+            )
+        )
+        if verdict is QualityVerdict.REJECT
+        else []
+    )
     return SourceQualityReport(
         verdict=verdict,
         source_set=source_set,
         base_source_set=base_report.source_set if base_report else None,
         findings=findings,
+        required_source_refs=required_source_refs,
     )

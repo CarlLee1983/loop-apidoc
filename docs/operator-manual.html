@@ -81,6 +81,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#preprocess">preprocess — PDF 轉 markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#url-corpus">URL 導航與快取（catalog / select / cache）</a>
+  <a class="lvl-3" href="#import-rendered-url">import-rendered-url — 受保護 rendered evidence</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
   <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — 來源新鮮度排程閘</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — 擷取契約檢查</a>
@@ -166,7 +167,7 @@ uv run loop-apidoc --help
 </code></pre>
 <p>以 pymupdf4llm 把 <code>--sources</code> 目錄下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。目錄輸入會保留來源相對路徑；<code>guide.pdf</code> 會輸出為 <code>guide.pdf.md</code>，避免和同目錄的 <code>guide.md</code> 衝突。<code>--sources</code> 也可指定單一檔案，此時只會處理該檔案。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 <code>--out</code> 目錄。</p>
 <h3 id="manifest-manifest"><code>manifest</code> — 建立來源 manifest</h3>
-<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--output manifest.json]
+<pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
 <p>掃描本機來源,記錄相對路徑、格式、大小、SHA-256、掃描時間、是否受支援、重複判定與處理狀態;公開 URL 另記錄擷取時間、HTTP 狀態與內容雜湊。<code>--sources</code> 可接受目錄或單一來源檔案；若提供檔案，會以其父目錄作為 <code>sources_root</code>，且 manifest 僅包含該檔案。省略 <code>--output</code> 時輸出至 stdout。</p>
 <h3 id="url-corpus">URL 導航與快取 — <code>catalog-url</code> / <code>select-url</code> / <code>cache-url-pages</code> / <code>related-url-pages</code></h3>
@@ -183,6 +184,14 @@ uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --o
 uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;頁面 URL&gt; --output ./work/candidates.json
 </code></pre>
 <p>token 節約式的網頁文件讀取流程:<code>catalog.json</code> 是完整的導航 coverage universe;<code>corpus.json</code> 不嵌入正文,只指向本機 <code>raw/</code> 與 <code>body/</code> 檔。若快取 HTML 是尚未渲染的 SPA shell，僅在同一 origin 探測四個固定路徑：<code>/swagger.json</code>、<code>/openapi.json</code>、<code>/v3/api-docs</code>、<code>/api-doc/v3/sections</code>；只有根欄位含 <code>openapi</code> 或 <code>swagger</code> 的 JSON 才另存為獨立 corpus source。探測失敗、非規格回應與一般 JSON 一律不記錄，命令只在 stderr 報告偵測到的 shell 數量，不會自動 headless rendering。catalog 為空或單頁文件時,用 <code>cache-url-entry --url ... --output ...</code> 直接快取入口頁;已下載的 HTML 可用 <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code> 轉為受支援 Markdown,並寫出帶原始 URL 與 SHA-256 的 <code>.source.json</code> provenance sidecar。</p>
+<h3 id="import-rendered-url"><code>import-rendered-url</code> — 匯入受保護的 browser-rendered evidence</h3>
+<pre><code class="language-bash">uv run loop-apidoc import-rendered-url --input ./captures/page.html --url &lt;原始 URL&gt; \
+  --captured-at "2026-07-29T08:30:00+08:00" --capture-method browser_save \
+  --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
+uv run loop-apidoc manifest --sources ./sources --url &lt;原始 URL&gt; \
+  --url-coverage ./work/url_sources/coverage.json --output ./work/manifest.json
+</code></pre>
+<p>適用於互動式瀏覽器能顯示、但直接 HTTP 取源被擋的頁面。命令保留已儲存的 HTML／Markdown 原始位元組，寫出包含 original/canonical URL、capture time/method、SHA-256 的版本化 provenance，以及 <code>fetched_rendered</code> coverage。既有目的檔、格式錯誤及 URL／path／method／digest mismatch 一律 fail closed；驗證匹配後，<code>manifest</code> 與 <code>assemble</code> 不再探測該受保護 origin。命令不處理 CAPTCHA／credentials、不推論、不 crawl。</p>
 <h3 id="snapshot-openapi-url"><code>snapshot-openapi-url</code> — 固定直連 OpenAPI 來源</h3>
 <pre><code class="language-bash">uv run loop-apidoc snapshot-openapi-url --url &lt;OpenAPI JSON/YAML URL&gt; \\
   --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
@@ -200,7 +209,7 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
 <pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
   --observations &lt;observations.json&gt; --source-set &lt;名稱&gt; --output ./work/source-quality [--base-manifest &lt;舊 manifest&gt;]
 </code></pre>
-<p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
+<p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。blocker observation 可列出來源明確連結的 <code>required_source_refs</code>；reject report 依原順序去重後輸出為 bounded next-capture seed，絕不自動 crawl。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
 <h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> / <code>governance-scan</code> — 來源新鮮度與治理觸發</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 

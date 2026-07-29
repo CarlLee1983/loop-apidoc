@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -24,6 +25,7 @@ class QualityObservation(BaseModel):
     affected_scope: list[str] = Field(default_factory=list)
     required_supplement: str
     acceptance_criteria: str
+    required_source_refs: list[str] = Field(default_factory=list)
 
     @field_validator(
         "source",
@@ -39,6 +41,17 @@ class QualityObservation(BaseModel):
             raise ValueError("must not be blank")
         return value
 
+    @field_validator("required_source_refs")
+    @classmethod
+    def _absolute_http_refs(cls, values: list[str]) -> list[str]:
+        for value in values:
+            parts = urlsplit(value)
+            if parts.scheme not in {"http", "https"} or not parts.netloc:
+                raise ValueError("required_source_refs must contain absolute http(s) URLs")
+            if parts.username or parts.password:
+                raise ValueError("required_source_refs must not contain credentials")
+        return values
+
 
 class QualityFinding(QualityObservation):
     id: str
@@ -53,6 +66,7 @@ class SourceQualityReport(BaseModel):
     source_set: str
     base_source_set: str | None = None
     findings: list[QualityFinding] = Field(default_factory=list)
+    required_source_refs: list[str] = Field(default_factory=list)
 
     @property
     def blocker_count(self) -> int:
