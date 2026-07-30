@@ -71,9 +71,11 @@ class Projection:
         )
 
 
+_MISSING_SOURCE_STATUS = "missing-source"
+
+
 class OpenApiProjectionCompiler:
     name = "openapi"
-    _MISSING_SOURCE_STATUS = "missing-source"
 
     def __init__(self, version: str) -> None:
         self.version = version
@@ -127,7 +129,7 @@ class OpenApiProjectionCompiler:
             "version": contract.metadata.version or "0.0.0",
         }
         if contract.metadata.version is None:
-            info["x-loop-status"] = self._MISSING_SOURCE_STATUS
+            info["x-loop-status"] = _MISSING_SOURCE_STATUS
         payload = {
             "openapi": "3.1.0",
             "info": info,
@@ -190,6 +192,17 @@ class GraphqlProjectionCompiler:
             output_type = binding.output_schema_ref
             if binding.output_required:
                 output_type += "!"
+            if any(
+                field == binding.root_field
+                for field, _ in root_fields[binding.operation_kind]
+            ):
+                # Duplicated root fields are invalid SDL; refuse rather than
+                # emit a document no GraphQL consumer can parse.
+                raise UnsupportedProjectionError(
+                    "graphql projection cannot represent two "
+                    f"{binding.operation_kind.value} interactions on root field "
+                    f"{binding.root_field!r}"
+                )
             root_fields[binding.operation_kind].append(
                 (binding.root_field, output_type)
             )
@@ -255,6 +268,13 @@ class AsyncApiProjectionCompiler:
                     "asyncapi projection cannot resolve payload schema "
                     f"{binding.payload_schema_ref!r}"
                 )
+            if binding.channel in channels:
+                # A single-entry map would drop the earlier slice with no gap
+                # record. Refuse to emit rather than lose a documented channel.
+                raise UnsupportedProjectionError(
+                    "asyncapi projection cannot represent two interactions on "
+                    f"channel {binding.channel!r}"
+                )
             channels[binding.channel] = {
                 "address": binding.channel_address,
                 "messages": {
@@ -272,12 +292,15 @@ class AsyncApiProjectionCompiler:
                 "action": _asyncapi_action(binding.direction),
                 "channel": {"$ref": f"#/channels/{binding.channel}"},
             }
+        info = {
+            "title": contract.metadata.title,
+            "version": contract.metadata.version or "0.0.0",
+        }
+        if contract.metadata.version is None:
+            info["x-loop-status"] = _MISSING_SOURCE_STATUS
         payload = {
             "asyncapi": "3.0.0",
-            "info": {
-                "title": contract.metadata.title,
-                "version": contract.metadata.version or "0.0.0",
-            },
+            "info": info,
             "channels": channels,
             "operations": operations,
             "components": {

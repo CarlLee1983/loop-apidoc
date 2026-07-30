@@ -5,14 +5,17 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from typer.testing import CliRunner
+import pytest
+from typer.testing import CliRunner, Result
 import yaml
 
 from loop_apidoc.cli import app
+from loop_apidoc.protocol_run import ContractFormat, project_contract
 from loop_apidoc.domain.evidence import (
     EvidenceBundle,
     EvidenceFragment,
     FragmentPrecision,
+    FragmentReconstructionRef,
     LineRangeLocator,
     SourceArtifact,
     SourceDescriptor,
@@ -22,6 +25,8 @@ from loop_apidoc.domain.evidence import (
 from loop_apidoc.domain.models import (
     AsyncApiDirection,
     AsyncApiTransportBinding,
+    ClaimStatus,
+    ContractClaim,
     ContractMetadata,
     EvidenceBinding,
     GraphqlOperationKind,
@@ -29,6 +34,7 @@ from loop_apidoc.domain.models import (
     GroundedApiContract,
     Interaction,
     InteractionMode,
+    Operation,
     Schema,
     SchemaField,
 )
@@ -475,6 +481,54 @@ def test_project_contract_fails_validation_when_an_emitted_field_has_no_evidence
     assert "SOURCE_UNVERIFIED" in (output / "review.html").read_text(encoding="utf-8")
 
 
+def test_project_contract_fails_when_an_emitted_value_contradicts_its_exact_evidence(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    # fragment-11 states the root field is `viewer`; the contract now claims a
+    # different field while still citing that fragment as explicit support.
+    contradicted = interaction.model_copy(
+        update={
+            "binding": interaction.binding.model_copy(
+                update={"root_field": "deleteEverything"}
+            )
+        }
+    )
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (contradicted,)}
+    )
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "graphql-run"
+    _write_input(input_path, projection_input.model_copy(update={"contract": contract}))
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "graphql",
+            "--output",
+            str(output),
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert json.loads(result.stdout)["status"] == "failed"
+    report = json.loads((output / "validation" / "report.json").read_text())
+    mismatches = [
+        issue
+        for issue in report["issues"]
+        if issue["location"] == "interactions[0]/binding/root_field"
+    ]
+    assert [issue["code"] for issue in mismatches] == ["SOURCE_UNVERIFIED"]
+    assert "deleteEverything" in mismatches[0]["evidence"]
+    assert "viewer" in mismatches[0]["evidence"]
+
+
 def test_project_contract_graphql_reports_an_empty_object_type_as_invalid(
     tmp_path: Path,
 ) -> None:
@@ -548,6 +602,465 @@ def test_project_contract_fails_validation_for_a_tampered_exact_fragment_digest(
     assert ("SOURCE_UNVERIFIED", "evidence.fragments.fragment-10") in {
         (issue["code"], issue["location"]) for issue in report["issues"]
     }
+
+
+def test_project_contract_reports_an_empty_asyncapi_payload_schema_as_invalid(
+    tmp_path: Path,
+) -> None:
+    projection_input = _asyncapi_projection_input()
+    hollow = projection_input.contract.schemas[0].model_copy(update={"fields": ()})
+    contract = projection_input.contract.model_copy(update={"schemas": (hollow,)})
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "asyncapi-run"
+    _write_input(input_path, projection_input.model_copy(update={"contract": contract}))
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "asyncapi",
+            "--output",
+            str(output),
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("OUTPUT_MISMATCH", "asyncapi.yaml") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_marks_an_asyncapi_version_the_source_never_stated(
+    tmp_path: Path,
+) -> None:
+    projection_input = _asyncapi_projection_input()
+    contract = projection_input.contract.model_copy(
+        update={
+            "metadata": projection_input.contract.metadata.model_copy(
+                update={"version": None}
+            )
+        }
+    )
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "asyncapi-run"
+    _write_input(input_path, projection_input.model_copy(update={"contract": contract}))
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "asyncapi",
+            "--output",
+            str(output),
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    info = yaml.safe_load((output / "asyncapi.yaml").read_text(encoding="utf-8"))["info"]
+    # A required-by-format placeholder must be distinguishable from a version
+    # the source actually stated as 0.0.0.
+    assert info["x-loop-status"] == "missing-source"
+
+
+def test_project_contract_rejects_two_interactions_on_one_graphql_root_field(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    # Emitting both would produce a duplicated field in `type Query`, which is
+    # not valid SDL.
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (interaction, interaction)}
+    )
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "graphql-run"
+    _write_input(input_path, projection_input.model_copy(update={"contract": contract}))
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "graphql",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "viewer" in result.output
+    assert not output.exists()
+
+
+def test_project_contract_rejects_two_interactions_on_one_asyncapi_channel(
+    tmp_path: Path,
+) -> None:
+    projection_input = _asyncapi_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    # A send and a receive slice on one channel is the ordinary AsyncAPI shape;
+    # the single-entry channel/operation maps would silently drop one of them.
+    opposite = interaction.model_copy(
+        update={
+            "binding": interaction.binding.model_copy(
+                update={
+                    "direction": AsyncApiDirection.PUBLISH,
+                    "message_name": "collection_ack",
+                }
+            )
+        }
+    )
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (interaction, opposite)}
+    )
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "asyncapi-run"
+    _write_input(input_path, projection_input.model_copy(update={"contract": contract}))
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "asyncapi",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "notify-collections" in result.output
+    assert not output.exists()
+
+
+def _run_graphql(tmp_path: Path, projection_input: ProjectionInput) -> tuple[Result, Path]:
+    input_path = tmp_path / "projection-input.json"
+    output = tmp_path / "run"
+    _write_input(input_path, projection_input)
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "graphql",
+            "--output",
+            str(output),
+            "--json",
+        ],
+    )
+    return result, output
+
+
+def test_project_contract_rejects_a_transport_the_selected_format_cannot_carry(
+    tmp_path: Path,
+) -> None:
+    # AsyncAPI interactions cannot be projected as GraphQL.
+    result, output = _run_graphql(tmp_path, _asyncapi_projection_input())
+
+    assert result.exit_code == 2
+    assert "asyncapi" in result.output
+    assert not output.exists()
+
+
+def test_project_contract_rejects_legacy_http_operations(tmp_path: Path) -> None:
+    projection_input = _graphql_projection_input()
+    contract = projection_input.contract.model_copy(
+        update={"operations": (Operation(method="GET", path="/viewer"),)}
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 2
+    assert "operations" in result.output
+    assert not output.exists()
+
+
+def test_project_contract_rejects_a_contract_without_interactions(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    contract = projection_input.contract.model_copy(update={"interactions": ()})
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 2
+    assert "no interactions" in result.output
+    assert not output.exists()
+
+
+def test_project_contract_rejects_an_unreadable_projection_input(tmp_path: Path) -> None:
+    input_path = tmp_path / "projection-input.json"
+    input_path.write_text("{not json", encoding="utf-8")
+    output = tmp_path / "run"
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "project-contract",
+            "--input",
+            str(input_path),
+            "--format",
+            "graphql",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert not output.exists()
+
+
+def test_project_contract_rejects_an_input_missing_its_evidence_bundle(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"evidence": None})
+    )
+
+    assert result.exit_code == 2
+    assert "requires contract, source_set, and evidence" in result.output
+    assert not output.exists()
+
+
+def test_project_contract_fails_when_the_source_set_identity_disagrees(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    metadata = projection_input.contract.metadata.model_copy(
+        update={"source_set_version": "1999-01-01"}
+    )
+    contract = projection_input.contract.model_copy(update={"metadata": metadata})
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", "projection-input.source_set") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_fails_when_an_artifact_names_an_unknown_source(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    artifact, *rest = projection_input.evidence.artifacts
+    evidence = projection_input.evidence.model_copy(
+        update={
+            "artifacts": (artifact.model_copy(update={"source_id": "ghost"}), *rest)
+        }
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"evidence": evidence})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", f"evidence.artifacts.{artifact.id}") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_fails_when_a_fragment_names_an_unknown_artifact(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    first, *rest = projection_input.evidence.fragments
+    orphan = first.model_copy(update={"source_artifact_id": "ghost-artifact"})
+    evidence = projection_input.evidence.model_copy(
+        update={"fragments": (orphan, *rest)}
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"evidence": evidence})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", f"evidence.fragments.{first.id}") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_fails_when_an_exact_fragment_embeds_no_excerpt(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    first, *rest = projection_input.evidence.fragments
+    # The domain model accepts an exact fragment that can be reconstructed from
+    # its artifact, but a standalone protocol run has no artifact to read.
+    bare = first.model_copy(
+        update={
+            "normalized_excerpt": None,
+            "reconstruction_ref": FragmentReconstructionRef(
+                source_artifact_id=first.source_artifact_id,
+                locator=first.locator,
+            ),
+        }
+    )
+    evidence = projection_input.evidence.model_copy(update={"fragments": (bare, *rest)})
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"evidence": evidence})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", f"evidence.fragments.{first.id}") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_fails_when_a_binding_cites_an_absent_fragment(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    dangling = interaction.model_copy(
+        update={
+            "evidence": tuple(
+                reference.model_copy(update={"fragment_id": "fragment-missing"})
+                for reference in interaction.evidence
+            )
+        }
+    )
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (dangling,)}
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert any(
+        "fragment-missing" in issue["evidence"] for issue in report["issues"]
+    )
+
+
+def test_project_contract_fails_when_a_binding_claims_an_unsupported_relationship(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    binding = interaction.binding
+    weakened = interaction.model_copy(
+        update={
+            "binding": binding.model_copy(
+                update={
+                    "evidence": tuple(
+                        reference.model_copy(
+                            update={
+                                "relationship": SupportRelationshipType.INSUFFICIENT
+                            }
+                        )
+                        for reference in binding.evidence
+                    )
+                }
+            )
+        }
+    )
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (weakened,)}
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    locations = {issue["location"] for issue in report["issues"]}
+    # The interaction-level coverage gate must also report the now-unsupported
+    # emitted values, not merely the malformed relationship.
+    assert "interactions[0]/binding/operation_kind" in locations
+
+
+def test_project_contract_fails_when_a_claim_path_does_not_resolve(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    interaction = projection_input.contract.interactions[0]
+    misrouted = interaction.model_copy(
+        update={
+            "evidence": tuple(
+                reference.model_copy(update={"claim_path": "/binding/no_such_field"})
+                for reference in interaction.evidence
+            )
+        }
+    )
+    contract = projection_input.contract.model_copy(
+        update={"interactions": (misrouted,)}
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", "interactions[0]/binding/no_such_field") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_reports_domain_rule_findings_in_the_run(
+    tmp_path: Path,
+) -> None:
+    projection_input = _graphql_projection_input()
+    contract = projection_input.contract.model_copy(
+        update={
+            "claims": (
+                ContractClaim(identity="viewer.login", status=ClaimStatus.SUPPORTED),
+            )
+        }
+    )
+    result, output = _run_graphql(
+        tmp_path, projection_input.model_copy(update={"contract": contract})
+    )
+
+    assert result.exit_code == 1
+    report = json.loads((output / "validation" / "report.json").read_text())
+    assert ("SOURCE_UNVERIFIED", "claims[0]") in {
+        (issue["code"], issue["location"]) for issue in report["issues"]
+    }
+
+
+def test_project_contract_leaves_no_partial_run_when_writing_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output = tmp_path / "run"
+
+    def explode(*args: object, **kwargs: object) -> None:
+        raise OSError("disk full")
+
+    monkeypatch.setattr("loop_apidoc.protocol_run.run._write_run", explode)
+
+    with pytest.raises(OSError):
+        project_contract(
+            _graphql_projection_input(),
+            contract_format=ContractFormat.GRAPHQL,
+            output=output,
+        )
+
+    assert not output.exists()
+    # The staging directory is a sibling of the target; none may survive.
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_project_contract_rejects_an_unknown_format_without_writing(tmp_path: Path) -> None:

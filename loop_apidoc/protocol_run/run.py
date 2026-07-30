@@ -5,9 +5,11 @@ import json
 import shutil
 import tempfile
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
+import yaml
 
 from loop_apidoc.domain.evidence import (
     FragmentPrecision,
@@ -43,6 +45,7 @@ _SUPPORTED_RELATIONSHIPS = {
     SupportRelationshipType.EXPLICIT_SUPPORT,
     SupportRelationshipType.DERIVED_SUPPORT,
 }
+_BINDING_CLAIM_PREFIX = "/binding/"
 
 
 def load_projection_input(path: Path) -> ProjectionInput:
@@ -152,6 +155,7 @@ def _validate_projection_input(
 ) -> ValidationReport:
     issues = _identity_issues(projection_input)
     issues.extend(_grounding_issues(projection_input))
+    issues.extend(_claim_value_issues(projection_input))
     issues.extend(_coverage_issues(projection_input, contract_format))
     issues.extend(
         _domain_issue(finding)
@@ -260,6 +264,73 @@ def _grounding_issues(projection_input: ProjectionInput) -> list[Issue]:
                 _unverified(location, f"fragment {binding.fragment_id!r} is not exact")
             )
     return issues
+
+
+def _claim_value_issues(projection_input: ProjectionInput) -> list[Issue]:
+    """Compare every emitted binding value against the fragment it cites.
+
+    `_grounding_issues` only proves a citation is well-formed and exact. Without
+    this check a contract may name any fragment for any value, so support would
+    be by reference rather than by value.
+    """
+    evidence = projection_input.evidence
+    assert evidence is not None
+    fragments = {fragment.id: fragment for fragment in evidence.fragments}
+    issues: list[Issue] = []
+    # One claim path may legitimately be cited more than once; a given
+    # (path, fragment) contradiction is still a single defect to fix.
+    reported: set[tuple[str, str]] = set()
+    for index, interaction in enumerate(projection_input.contract.interactions):
+        binding = interaction.binding
+        for reference in (*interaction.evidence, *binding.evidence):
+            claim_path = reference.claim_path
+            if claim_path is None or not claim_path.startswith(_BINDING_CLAIM_PREFIX):
+                continue
+            if reference.relationship not in _SUPPORTED_RELATIONSHIPS:
+                continue
+            fragment = fragments.get(reference.fragment_id)
+            if fragment is None or fragment.precision is not FragmentPrecision.EXACT:
+                continue
+            attribute = claim_path[len(_BINDING_CLAIM_PREFIX):]
+            location = f"interactions[{index}]{claim_path}"
+            if (location, fragment.id) in reported:
+                continue
+            reported.add((location, fragment.id))
+            if "/" in attribute or not hasattr(binding, attribute):
+                issues.append(
+                    _unverified(
+                        location,
+                        f"claim path {claim_path!r} does not resolve on the binding",
+                    )
+                )
+                continue
+            claimed = _claim_text(getattr(binding, attribute))
+            if claimed is None:
+                continue
+            stated = fragment.semantic_value or fragment.normalized_excerpt
+            if stated is None:
+                continue
+            if normalize_excerpt(claimed) != normalize_excerpt(str(stated)):
+                issues.append(
+                    _unverified(
+                        location,
+                        f"emitted value {claimed!r} contradicts exact fragment "
+                        f"{fragment.id} stating {stated!r}",
+                    )
+                )
+    return issues
+
+
+def _claim_text(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, Enum):
+        return str(value.value)
+    if isinstance(value, str):
+        return value
+    return None
 
 
 def _coverage_issues(
@@ -402,7 +473,7 @@ def _structural_issues(
             and all(schema.fields for schema in projection_input.contract.schemas)
         )
     else:
-        valid = valid and text.startswith("asyncapi:")
+        valid = valid and _asyncapi_document_is_valid(text)
     if valid:
         return []
     return [
@@ -414,6 +485,58 @@ def _structural_issues(
             suggested_fix="Correct the source-backed contract and regenerate the artifact.",
         )
     ]
+
+
+def _asyncapi_document_is_valid(text: str) -> bool:
+    """Parse the emitted AsyncAPI document and check it hangs together.
+
+    A prefix test on the serialized text is not a structural check: `asyncapi`
+    sorts first among the emitted keys, so it holds for every document this
+    compiler can produce.
+    """
+    try:
+        document = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return False
+    if not isinstance(document, dict):
+        return False
+    if not isinstance(document.get("asyncapi"), str):
+        return False
+    channels = document.get("channels")
+    operations = document.get("operations")
+    if not isinstance(channels, dict) or not channels:
+        return False
+    if not isinstance(operations, dict) or not operations:
+        return False
+    schemas = (document.get("components") or {}).get("schemas")
+    if not isinstance(schemas, dict):
+        return False
+    for operation in operations.values():
+        target = _ref_name(operation.get("channel"), "#/channels/")
+        if target is None or target not in channels:
+            return False
+    for channel in channels.values():
+        messages = channel.get("messages")
+        if not isinstance(messages, dict) or not messages:
+            return False
+        for message in messages.values():
+            name = _ref_name(
+                message.get("payload"), "#/components/schemas/"
+            )
+            if name is None or name not in schemas:
+                return False
+            if not (schemas[name] or {}).get("properties"):
+                return False
+    return True
+
+
+def _ref_name(value: object, prefix: str) -> str | None:
+    if not isinstance(value, dict):
+        return None
+    ref = value.get("$ref")
+    if not isinstance(ref, str) or not ref.startswith(prefix):
+        return None
+    return ref[len(prefix):]
 
 
 def _write_run(
