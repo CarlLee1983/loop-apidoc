@@ -1,5 +1,12 @@
 # Development Opportunities (2026-07-24)
 
+> **Historical snapshot — not the active backlog.** This document records a point-in-time
+> assessment and is retained for decision provenance. Its implementation-status table was
+> already stale by the end of 2026-07-24: `evaluate` and `governance-review-plan` were
+> delivered, while its exclusion of downstream enforcement relied on a reported decision
+> that was not established by repository evidence. Use
+> [Product Extension Roadmap](PRODUCT_EXTENSION_ROADMAP.md) for current priority and status.
+
 ## Scope and conclusion
 
 This inventory excludes downstream delivery/enforcement (roadmap priority 4),

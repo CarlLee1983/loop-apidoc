@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "case_id": "rsg-game-transfer-wallet",
+  "assurance": "sanitized_fixture_exact_evidence",
+  "strict_local_eligible": false,
+  "original_snapshot": {
+    "path": "sources/rsg-game-transfer-wallet.zh-TW.normalized.md",
+    "source_url": "https://docs.rsg-games.com/transfer/zh-tw/#api",
+    "captured_on": "2026-07-16",
+    "sha256": "e807ff5b93c1f3aa79d397f17e6841e77f31a045d35cdc8bb815182a67fbdfb3"
+  },
+  "sanitized_source": {
+    "path": "sanitized_sources/rsg-game-transfer-wallet.zh-TW.normalized.md",
+    "sha256": "801c7083f1e97c3039da8db382b80069ea05a27c133b0e8822926dfebb646bd1"
+  },
+  "sanitization": {
+    "method": "line-preserving exact-evidence allowlist",
+    "original_line_count": 1918,
+    "unretained_content": "empty lines",
+    "retained_line_ranges": [
+      [272, 283],
+      [498, 503],
+      [521, 565],
+      [577, 601],
+      [602, 633],
+      [634, 665],
+      [666, 680],
+      [681, 707],
+      [708, 747],
+      [748, 786],
+      [787, 815],
+      [816, 846],
+      [847, 852],
+      [853, 888],
+      [889, 963],
+      [1313, 1330],
+      [1435, 1463]
+    ]
+  }
+}

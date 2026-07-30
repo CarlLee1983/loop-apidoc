@@ -805,6 +805,10 @@
         <div><p>Check whether the agent-produced extraction JSON conforms to the assemble input contract; writes nothing, creates no run-dir. Optional v1 <code class="inline">evidence[]</code> references re-materialize, verify their digest, and resolve their claim path. The contract includes the <b>source-fact inventory</b>: when a source section plainly lists a parameter table or example blocks and the extraction left them empty, that is a silent omission rather than "the source does not say" — to claim the latter, name the field in <code class="inline">missing</code>.</p></div>
       </div>
       <div class="cmd">
+        <span class="name"><span class="kw">project-contract</span></span>
+        <div><p>Core-first GraphQL/AsyncAPI boundary: consume a canonical contract + source set + exact evidence bundle, then atomically write the format artifact, zh-TW guide, provenance, review, validation, and run metadata. It fails closed on digest, coverage, transport, or schema-reference problems and does not branch legacy <code class="inline">assemble</code>.</p></div>
+      </div>
+      <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
           <p>Assemble the JSON the agent wrote → plan → preparation → generate → validate, reporting via <code class="inline">--json</code>; optional <code class="inline">--score</code>, <code class="inline">--source-quality</code>, <code class="inline">--url-coverage</code>.</p>

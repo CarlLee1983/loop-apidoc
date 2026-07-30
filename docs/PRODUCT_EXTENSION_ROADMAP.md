@@ -1,7 +1,10 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence v1 boundary slice, the first evidence-first review slice, and governance source snapshotting are delivered; Core graduation remains proposed. The preprocess collision maintenance item was delivered on 2026-07-24.
-**Updated:** 2026-07-24
+**Status:** In progress — exact-evidence parity is complete for 2 of 7 restored
+source-backed benchmarks; 5 restored cases still need claim-complete parity and 6
+historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
+outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
+**Updated:** 2026-07-29
 
 ## Purpose
 
@@ -30,6 +33,43 @@ The repository already provides more than document conversion:
 
 The following priorities build on those foundations instead of duplicating
 them.
+
+## Product and domain boundary
+
+`loop-apidoc` remains a domain-neutral, source-grounded API contract product.
+Payment and wallet integrations are an important initial vertical, but benchmark
+composition does not redefine the Canonical Contract Core. Transport policy and
+idempotency remain general integration semantics; amount direction and line-currency
+policy belong to an optional Payment Profile governed by the same exact-evidence and
+fail-closed rules.
+
+An industry-specific typed concept is added only when it recurs across providers, has a
+named downstream consumer, cannot be represented faithfully by an existing generic
+constraint, and has source-backed benchmark coverage. The accepted boundary and the
+compatibility treatment of the v0.27 collections are recorded in
+[ADR 0001](adr/0001-keep-a-general-core-with-payment-profile.md).
+
+## Delivery reconciliation through 0.28
+
+The following releases were opportunistic deliveries while priority 1 could not clear
+its benchmark gate. They preserved the source-grounded and fail-closed invariants, but
+they did not advance Core production graduation:
+
+- **0.26.0:** introduced the protocol-neutral `Interaction` seam and isolated,
+  source-backed GraphQL SDL and AsyncAPI 3 projection compilers. They remain outside
+  `assemble`, run artifacts, validation, and governance.
+- **0.27.0:** added typed integration collections, operational applicability, bidirectional
+  source-coverage warnings, and hollow-success-response observability. The payment-specific
+  portion is now governed as an optional Payment Profile rather than a new product identity.
+- **0.28.0:** added provenance-verified browser-rendered URL import and bounded
+  `required_source_refs` capture guidance for sources that direct HTTP cannot obtain.
+
+The maintained priority-1 count is therefore 13 committed benchmark cases: 7 currently
+have local historical sources, of which FunkyGames and RSG have claim-complete exact
+evidence; the other 5 restored cases still require parity work, and 6 historical
+snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
+eligible restored sources, but cannot turn an unavailable original snapshot into a
+strict-local pass.
 
 ## Recommended sequence
 
@@ -229,13 +269,13 @@ cross-directory basename collisions and PDF/Markdown sibling collisions. It
 validates the complete output mapping before writing and fails clearly if a
 remaining derived-name collision exists.
 
-## Defer protocol expansion until its seam is designed
+## Defer protocol main-flow integration until preceding blockers are resolved
 
 Do not add GraphQL or AsyncAPI as conditional branches in the current
-HTTP/OpenAPI-oriented model. First introduce a clear protocol/transport seam in
-the Canonical API Contract IR, then implement protocol-specific adapters and
-projections behind that interface. Supporting a second protocol is justified
-only when there are real source sets and downstream consumers for it.
+HTTP/OpenAPI-oriented compatibility model. The protocol/transport seam and isolated
+projection compilers are retained, but functional integration into CLI commands, run
+artifacts, validation, diff/score, Foundry, and governance is sequenced after the domain
+boundary, roadmap/documentation governance, and priority-1 benchmark CI work are resolved.
 
 **Design accepted (2026-07-24):**
 [Protocol Expansion Design](PROTOCOL_EXPANSION_DESIGN.md) defines the staged
@@ -244,11 +284,23 @@ GraphQL/AsyncAPI vertical slices. Implementation begins with the seam and its
 HTTP compatibility proof; the two new formats remain gated on real source sets
 and confirmed downstream consumers.
 
-**Progress (2026-07-24):** the gate was satisfied with a GitHub public GraphQL
-schema and a pinned OGC AsyncAPI conformance example, each paired with a named
-tooling consumer. Domain now has separate GraphQL SDL and AsyncAPI 3 projection
-adapters for minimal source-backed slices. This does not yet change legacy
-`assemble`, generated run artifacts, or the existing validation/governance flow.
+**Progress (2026-07-24):** a GitHub public GraphQL schema and a pinned OGC AsyncAPI
+conformance example support separate minimal GraphQL SDL and AsyncAPI 3 projection
+adapters. The associated tooling consumers establish format-level testability, not a
+reason to bypass higher-priority product work.
+
+**Sequencing decision (2026-07-29):** keep the seam and regression tests stable. After
+the preceding product-boundary, strategy-governance, and benchmark-CI problems are
+resolved, begin functional GraphQL/AsyncAPI integration through the staged artifact and
+validation contract in [Protocol Expansion Design](PROTOCOL_EXPANSION_DESIGN.md).
+
+**Functional slice delivered (2026-07-29):** `project-contract` now accepts a
+self-contained canonical contract/source-set/evidence bundle and writes atomic GraphQL
+or AsyncAPI runs with the format artifact, Traditional-Chinese guide, provenance,
+offline review, validation reports, and run metadata. Unsupported transports and
+unresolved schema references stop before output; missing or tampered exact evidence
+produces validation FAIL. The legacy HTTP `assemble` path remains unchanged. Cross-format
+diff/score/Foundry governance is the next extension boundary, not part of this slice.
 
 ## Decision rule
 
@@ -263,6 +315,8 @@ shared evidence contract is established.
 
 這份文件記錄 `loop-apidoc` 在「來源依據式 API 文件分析／生成」之外可延伸的產品方向。
 所有延伸均受同一原則約束：來源沒有明示的資訊，一律保留為缺口或 `null`，不可用慣例推測。
+產品維持領域中立；支付／錢包是重要的首個垂直領域，其中 amount direction 與 line-currency
+policy 屬選填 Payment Profile，不因現有 benchmark 組成而變成通用核心的必要語意。
 
 1. **先讓精確證據成為 extraction 正式契約，再逐步讓 Core 接管。**
    目前 CLI 的 legacy citation 常停留在文件層級；應加入來源 identity、locator、fragment
@@ -281,9 +335,12 @@ shared evidence contract is established.
    利用現有 `evaluation/` 的 replay、準確度、成本與延遲衡量，完成可重複比較不同 runtime 的
    operator workflow；評測不可影響 production contract 或核准。
 
-另有一個低風險維護項：修正 `preprocess` 將不同子目錄同名來源展平後可能覆寫的問題。
+0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
+coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG 已完成
+claim-complete exact evidence，另 5 份待補，6 份歷史快照不可得。
 
-暫不直接加入 GraphQL／AsyncAPI；目前模型偏 HTTP/OpenAPI，應先在 Canonical API Contract IR
-設計 protocol/transport seam，再以獨立 adapter 與 projection 支援第二種協定。
+GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
+與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。
 
 **建議順序：**先做第 1 項，因為它是後續所有擴充共享的可信證據基礎。

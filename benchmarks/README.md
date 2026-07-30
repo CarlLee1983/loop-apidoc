@@ -9,6 +9,8 @@
 ```text
 <case-id>/
 ├── sources/                 # 官方原始來源(gitignore — 操作者本機提供,不入庫)
+├── sanitized_sources/       # 選填:經審核、保留原始行號的可重散布 exact-evidence 子集
+├── sanitized-fixture.json   # 選填:原始/子集 hash、來源身分、保留行範圍與 assurance
 ├── work/                    # preprocess 產出的 markdown 等衍生檔(gitignore)
 ├── extraction/              # agent 擷取產物(入庫 — 可追溯、可重跑基準)
 │   ├── inventory.json
@@ -72,6 +74,18 @@ OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critic
 
 > **需本機 `sources/`**:驗證器需 manifest 含被引用來源才會把項目標為 verified;
 > `sources/` 為操作者提供且 gitignore(部分有版權),故缺 `sources/` 的 case 會自動 **skip**。
+
+### Sanitized exact-evidence lane
+
+```bash
+uv run python scripts/quality_gate.py --sanitized-fixtures
+```
+
+這條獨立 CI lane 只接受 `SANITIZED_BENCHMARK_CASES` 明列且具有
+`sanitized-fixture.json` 的 case。子集必須保留原始行號，未保留內容以空行取代，並記錄
+原始 URL／日期／SHA-256、子集 SHA-256 與 retained ranges。通過只代表 retained claims
+具有 exact fragment 支撐且 legacy/Core parity；不是完整 source-backed 重驗，也不能替代
+`sources/` 或宣稱 strict-local PASS。
 
 ## 進度
 

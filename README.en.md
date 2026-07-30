@@ -68,6 +68,9 @@ snapshots are unavailable. A source-backed pass requires the original snapshots;
 `scripts/quality_gate.py --strict-local` proves that every required case ran with zero
 skips. A discovered or skipped case has not passed source-backed revalidation. See the
 [canonical benchmark harness contract](docs/BENCHMARK_VALIDATION_PLAN.md).
+For exact-evidence changes, `scripts/quality_gate.py --sanitized-fixtures` adds a
+reviewed, line-preserving CI replay of retained source fragments. It is a narrower
+fixture-backed assurance and never counts as source-backed or strict-local success.
 
 **Both approaches have their place — honestly:**
 
@@ -150,7 +153,8 @@ creates a non-overwritable release-note skeleton:
 # Synchronize metadata and create docs/RELEASE_NOTES_0.11.0.md.
 npm run release:prepare -- --version 0.11.0 --summary "Add release workflow"
 
-# Complete release notes, run validation, and commit the metadata.
+# Complete release notes, select exactly one Strategy impact option,
+# run validation, and commit the metadata.
 git add . && git commit -m "release: publish 0.11.0"
 
 # Read the committed package version, push HEAD to origin/main, create and push the matching tag,
@@ -182,6 +186,12 @@ Tagsmith—not GitHub Actions or GitHub CLI—is the tag publisher. Use
 `release:github` only to repair a failed final GitHub-Release step for an
 already published tag. Monitor CI after the push and release; handle a failing
 check with a new release, never by force-moving a published tag.
+
+The release-note skeleton requires exactly one `Strategy impact` choice: either explain
+why product direction, priorities, and subsystem scope are unchanged, or list the
+strategy documents updated in the release. `release:tag` (including dry-run) and
+`release:github` reject a missing, unresolved, or multiply selected declaration before
+authentication or any other external action.
 
 Record the printed Release URL, then verify the `main` CI run before declaring
 the publication complete:
@@ -502,6 +512,31 @@ uv run loop-apidoc verify-extraction \
 
 Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. Optional v1 `evidence[]` references are also reopened against the manifest snapshot: their exact source identity, typed locator, and normalized-fragment SHA-256 must match before assembly. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
 
+### `project-contract` — create a GraphQL or AsyncAPI run from a canonical contract
+
+```bash
+uv run loop-apidoc project-contract \
+  --input ./projection-input.json \
+  --format graphql \
+  --output ./output/graphql-run \
+  --json
+```
+
+Consumes one self-contained `ProjectionInput` JSON containing `contract`, `source_set`,
+and `evidence`. `--format graphql` writes `schema.graphql` and
+`graphql-guide.zh-TW.md`; `--format asyncapi` writes `asyncapi.yaml` and
+`asyncapi-guide.zh-TW.md`. Both runs also contain `provenance.json`, `review.html`,
+`validation/report.{json,md}`, and `run.json`.
+
+The command accepts only homogeneous protocol-neutral interactions and never converts
+them to HTTP. It verifies exact excerpt digests, source-set identities, supported
+relationships, and evidence coverage for every emitted interaction value and schema
+field. Unsupported transports, bad input, unresolved schema references, or an existing
+output path return `2` without writing or overwriting a run. Grounding or structural
+findings write a reviewable failed run and return `1`; a clean run returns `0`. This is a
+Core-first projection boundary, separate from the legacy agent extraction/`assemble`
+workflow. Cross-format diff, score, and Foundry import are not yet supported.
+
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
 ```bash
@@ -646,6 +681,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `evidence.py` (read-side materialization and digest verification for optional v1 exact-evidence references), `gate.py` (`check_extraction`: the single gate aggregator shared by `assemble` and `verify-extraction`, including the source-facts semantic completeness check), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
+| `loop_apidoc/protocol_run/` | `project-contract` Core-first GraphQL/AsyncAPI run: validates a canonical contract/source-set/evidence bundle and atomically writes the format artifact, zh-TW guide, provenance, review, validation, and run metadata |
 | `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |

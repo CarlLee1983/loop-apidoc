@@ -702,6 +702,67 @@ def verify_extraction(
     raise typer.Exit(code=2 if violations else 0)
 
 
+@app.command(name="project-contract")
+def project_contract_command(
+    input_: Path = typer.Option(
+        ...,
+        "--input",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        help="ProjectionInput JSON（contract + source_set + evidence）",
+    ),
+    contract_format: str = typer.Option(
+        ...,
+        "--format",
+        help="輸出格式：graphql 或 asyncapi",
+    ),
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="新建的 protocol run 目錄；拒絕覆寫既有路徑",
+    ),
+    json_out: bool = typer.Option(
+        False,
+        "--json",
+        help="把 run result JSON 印到 stdout",
+    ),
+) -> None:
+    """從來源依據式 Canonical Contract 產生 GraphQL 或 AsyncAPI run。"""
+    from loop_apidoc.protocol_run import (
+        ContractFormat,
+        ProtocolRunInputError,
+        load_projection_input,
+        project_contract,
+    )
+
+    try:
+        selected_format = ContractFormat(contract_format.lower())
+    except ValueError as exc:
+        typer.echo(f"project-contract input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    try:
+        projection_input = load_projection_input(input_)
+        result = project_contract(
+            projection_input,
+            contract_format=selected_format,
+            output=output,
+        )
+    except ProtocolRunInputError as exc:
+        typer.echo(f"project-contract input error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    if json_out:
+        typer.echo(result.model_dump_json(indent=2))
+    else:
+        typer.echo(
+            f"project-contract {result.status.upper()}: {result.format.value}; "
+            f"run 已寫入 {result.run_dir}"
+        )
+    raise typer.Exit(code=0 if result.ok else 1)
+
+
 @app.command()
 def validate(
     output: Path = typer.Option(

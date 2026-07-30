@@ -11,6 +11,7 @@
 <p><a href="introduction.html">前往介紹頁</a> · <a href="index.en.html">English</a></p>
 <p>互動式瀏覽器可顯示的受保護文件能透過 <code>import-rendered-url</code> 離線匯入；版本化 capture provenance 會綁定 original/canonical URL、時間、方法、本機檔案與 SHA-256，只有驗證匹配的 coverage 才會省略該 origin fetch。source-quality reject 也可輸出來源明確連出的 bounded <code>required_source_refs</code>，但不自動 crawl。</p>
 <p>Claim-level semantic evidence 會把確定性的 support relationship 連到 exact fragment；選填 v1 <code>evidence[]</code> 會在 run 前重新 materialize、驗證 source identity、locator、digest 與 claim path。沒有 parsed scalar 的 prose 只能支援它精確綁定的單一 claim，OpenAPI derivation 則限 versioned allowlist 並由 Core 重新計算。legacy 相容 shadow run 請查看 <code>core/relationships.json</code>。</p>
+<p><code>project-contract</code> 已提供 Core-first GraphQL／AsyncAPI 功能路徑：從 canonical contract、source set 與 exact evidence bundle 原子產生格式 artifact、繁中指南、provenance、review、validation 與 run metadata，不在 legacy HTTP <code>assemble</code> 增加協定分支。</p>
 <p>GitBook 文件若提供 <code>llms.txt</code>，可用 deterministic Markdown cache 與 line-cited draft facts 減少模型搬運。<code>scaffold-extraction</code> 可再產生待覆核的 extraction-shaped JSON；先複製並補齊到 workdir，不能直接當成 <code>--extraction</code>，最終仍以來源與驗證為準。</p>
 <p>固定產生的 <code>integration-contract.json</code> 會攜帶來源明載的 transport、amount direction、idempotency、line-currency policy 與跨端點 operational 規則；request 沒有 currency 欄位不代表單幣別。validation 也會揭露零實質引用的 supported 來源與空殼 response schema，score 則列出 response 欄位與 hollow operation 指標。</p>
 <p><code>loop-apidoc review</code> 可在本機開啟單使用者工作台，比對 candidate 與 current／baseline，保存結構化 handoff；只有人工明確核准才更新 Foundry current。</p>

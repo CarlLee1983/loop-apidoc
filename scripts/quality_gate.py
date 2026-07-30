@@ -40,6 +40,7 @@ REQUIRED_BENCHMARK_CASES = (
     "funkygames-transfer-operator",
     "rsg-game-transfer-wallet",
 )
+SANITIZED_BENCHMARK_CASES = ("rsg-game-transfer-wallet",)
 
 
 class QualityGateFailure(RuntimeError):
@@ -87,6 +88,10 @@ def _excerpt(text: str, limit: int = 1200) -> str:
 
 def required_benchmark_cases() -> tuple[str, ...]:
     return REQUIRED_BENCHMARK_CASES
+
+
+def required_sanitized_benchmark_cases() -> tuple[str, ...]:
+    return SANITIZED_BENCHMARK_CASES
 
 
 def missing_benchmark_sources(
@@ -263,20 +268,36 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
     return results
 
 
-def command_plan(*, strict_local: bool) -> list[tuple[str, list[str]]]:
+def command_plan(
+    *,
+    strict_local: bool,
+    sanitized_fixtures: bool = False,
+) -> list[tuple[str, list[str]]]:
     plan: list[tuple[str, list[str]]] = [
         ("ruff", ["uv", "run", "ruff", "check", "."]),
         ("pytest", ["uv", "run", "pytest", "--cov=loop_apidoc"]),
     ]
     if strict_local:
         plan.append(("benchmarks", ["uv", "run", "pytest", "tests/test_benchmarks.py", "-q"]))
+    if sanitized_fixtures:
+        plan.append((
+            "sanitized-fixtures",
+            ["uv", "run", "pytest", "tests/test_sanitized_benchmarks.py", "-q"],
+        ))
     return plan
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict-local", action="store_true")
+    parser.add_argument("--sanitized-fixtures", action="store_true")
     args = parser.parse_args(argv)
+    if args.strict_local and args.sanitized_fixtures:
+        print(
+            "quality-gate error: --strict-local and --sanitized-fixtures cannot be combined",
+            file=sys.stderr,
+        )
+        return 2
     try:
         if args.strict_local:
             missing = missing_benchmark_sources()
@@ -286,7 +307,10 @@ def main(argv: list[str] | None = None) -> int:
                     + ", ".join(missing)
                 )
         benchmark_result: _RunResult | None = None
-        for name, cmd in command_plan(strict_local=args.strict_local):
+        for name, cmd in command_plan(
+            strict_local=args.strict_local,
+            sanitized_fixtures=args.sanitized_fixtures,
+        ):
             result = run_step(name, cmd)
             if name == "benchmarks":
                 benchmark_result = result
