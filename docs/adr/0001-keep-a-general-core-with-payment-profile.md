@@ -28,3 +28,10 @@ Payment-specific concepts must not become prerequisites for non-payment contract
 future model migration may group them behind an explicit profile boundary, but it must
 preserve existing `integration.json` input and generated artifact compatibility through
 a separately reviewed public seam.
+
+**Falsified if:** a payment-specific concept stops being optional for a non-payment
+contract. Concretely, this decision no longer holds when `amount_direction` or
+`line_currency_policy` becomes a required field, a non-empty default, or a validation
+prerequisite in `loop_apidoc/agentcli/input_schema.py`, `loop_apidoc/plan/models.py`,
+`loop_apidoc/domain/models.py`, or `loop_apidoc/validate/integration.py` — that is, when
+a contract carrying neither can no longer reach a passing validation report.

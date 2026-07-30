@@ -25,6 +25,15 @@ Add provenance-verified browser-rendered URL snapshots for source-grounded API d
   operator manuals, onboarding material, landing pages, and English/Traditional-
   Chinese READMEs for the new workflow.
 
+## Strategy impact
+
+- [ ] None — <explain why no strategy document changed>
+- [x] Updated — `docs/PRODUCT_EXTENSION_ROADMAP.md`: the `import-rendered-url`
+  source-acquisition subsystem sat outside every roadmap priority. The declaration was
+  added retroactively when the gate was introduced, and the roadmap's delivery
+  reconciliation records this release as opportunistic delivery while priority 1 was
+  blocked.
+
 ## Validation
 
 - `npm run tag:check`
