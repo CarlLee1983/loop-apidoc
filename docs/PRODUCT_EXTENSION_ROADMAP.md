@@ -4,7 +4,7 @@
 source-backed benchmarks; 5 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
-**Updated:** 2026-07-29
+**Updated:** 2026-07-30
 
 ## Purpose
 
@@ -291,18 +291,13 @@ conformance example support separate minimal GraphQL SDL and AsyncAPI 3 projecti
 adapters. The associated tooling consumers establish format-level testability, not a
 reason to bypass higher-priority product work.
 
-**Sequencing decision (2026-07-29):** keep the seam and regression tests stable. After
-the preceding product-boundary, strategy-governance, and benchmark-CI problems are
-resolved, begin functional GraphQL/AsyncAPI integration through the staged artifact and
-validation contract in [Protocol Expansion Design](PROTOCOL_EXPANSION_DESIGN.md).
-
-**Functional slice delivered (2026-07-29):** `project-contract` now accepts a
-self-contained canonical contract/source-set/evidence bundle and writes atomic GraphQL
-or AsyncAPI runs with the format artifact, Traditional-Chinese guide, provenance,
-offline review, validation reports, and run metadata. Unsupported transports and
-unresolved schema references stop before output; missing or tampered exact evidence
-produces validation FAIL. The legacy HTTP `assemble` path remains unchanged. Cross-format
-diff/score/Foundry governance is the next extension boundary, not part of this slice.
+**Sequencing decision (revised 2026-07-30):** keep the compiler seam and regression
+tests stable, but freeze functional GraphQL/AsyncAPI integration. No CLI, run artifact,
+validation, diff/score, or Foundry path should be added until a named real downstream
+consumer provides its source set and acceptance contract. The GitHub and OGC fixtures
+establish format-level testability only; they do not establish product demand or an
+end-to-end grounding contract. Record the consumer and acceptance criteria in this
+roadmap or a dedicated ADR before resuming implementation.
 
 ## Decision rule
 

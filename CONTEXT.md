@@ -26,10 +26,11 @@ The self-contained Core boundary value containing one Canonical Contract, its ex
 Source Set identity, and its Evidence Bundle.
 _Avoid_: protocol extraction, projection config
 
-**Protocol Run**:
-An atomic GraphQL or AsyncAPI artifact run produced from one Projection Input. It stays
-separate from the legacy HTTP extraction/assemble adapter.
-_Avoid_: alternate assemble, OpenAPI conversion
+**Protocol Projection Compiler**:
+A deterministic GraphQL or AsyncAPI compiler over the Canonical Contract. It remains a
+tested Core seam, not a public run workflow, until a named downstream consumer defines
+the required source and acceptance contract.
+_Avoid_: protocol run, alternate assemble, OpenAPI conversion
 
 **Transport Policy**:
 A source-stated, cross-operation rule for wire-level behavior such as protocol,

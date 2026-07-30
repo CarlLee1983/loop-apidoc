@@ -25,3 +25,11 @@ def test_version_flag_listed_in_help():
     # Linux runner. Assert the rendered help semantics, not terminal styling.
     plain_help = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", result.stdout)
     assert "--version" in plain_help
+
+
+def test_frozen_protocol_integration_is_not_exposed_in_help():
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    plain_help = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", result.stdout)
+    assert "project-contract" not in plain_help

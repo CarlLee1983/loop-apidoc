@@ -1071,7 +1071,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
     <h2 class="section-title">在不改變既有權威的前提下比較 Core</h2>
     <p class="section-lead"><code>assemble --architecture-mode shadow</code> 會在 legacy validation 後執行觀測性 Core 旁路，將 evidence、claims、canonical contract、policy decision、workflow/events 與 comparison 寫入 <code>&lt;run-dir&gt;/core/</code>。Legacy 結果、score、approval、Foundry 與退出碼仍具權威；預設模式不建立 <code>core/</code>。</p>
     <p class="section-lead">Claim-level ledger 會把每個 material claim path 以 <code>explicit_support</code>、<code>derived_support</code>、<code>contradicts</code> 或 <code>insufficient</code> 連到 exact typed fragment 與 source artifact。選填 v1 <code>evidence[]</code> 會在建立 run 前重新 materialize，並驗證 source identity、locator、digest 與 claim path。沒有 parsed scalar 的 prose 只能支援它精確綁定的單一 claim；versioned OpenAPI structural derivation 限 allowlist，且會連同所有必要的 local-reference context fragments 由 Core 重新計算。Runtime confidence 不決定 support，整份文件級的 legacy citation 維持 unverified。精確追蹤請看 <code>relationships.json</code> 與 <code>projections/provenance.json</code>。</p>
-    <p class="section-lead"><code>project-contract</code> 是可實際使用的 Core-first GraphQL／AsyncAPI 邊界。自包含的 canonical contract、source set 與 exact evidence bundle 會原子產生格式 artifact、繁中指南、provenance、離線 review、validation report 與 run metadata，不在 legacy HTTP <code>assemble</code> 增加協定分支。</p>
+    <p class="section-lead">Core 保留經測試的 GraphQL／AsyncAPI 純 compiler seam，但在具名下游 consumer 提供真實來源集與驗收契約前，不公開 CLI 或 run workflow。格式 fixture 只能證明 compiler 可測，不能代替產品需求或端到端 grounding。</p>
   </div>
 </section>
 
