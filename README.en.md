@@ -512,30 +512,12 @@ uv run loop-apidoc verify-extraction \
 
 Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. Optional v1 `evidence[]` references are also reopened against the manifest snapshot: their exact source identity, typed locator, and normalized-fragment SHA-256 must match before assembly. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
 
-### `project-contract` — create a GraphQL or AsyncAPI run from a canonical contract
+### GraphQL and AsyncAPI status
 
-```bash
-uv run loop-apidoc project-contract \
-  --input ./projection-input.json \
-  --format graphql \
-  --output ./output/graphql-run \
-  --json
-```
-
-Consumes one self-contained `ProjectionInput` JSON containing `contract`, `source_set`,
-and `evidence`. `--format graphql` writes `schema.graphql` and
-`graphql-guide.zh-TW.md`; `--format asyncapi` writes `asyncapi.yaml` and
-`asyncapi-guide.zh-TW.md`. Both runs also contain `provenance.json`, `review.html`,
-`validation/report.{json,md}`, and `run.json`.
-
-The command accepts only homogeneous protocol-neutral interactions and never converts
-them to HTTP. It verifies exact excerpt digests, source-set identities, supported
-relationships, and evidence coverage for every emitted interaction value and schema
-field. Unsupported transports, bad input, unresolved schema references, or an existing
-output path return `2` without writing or overwriting a run. Grounding or structural
-findings write a reviewable failed run and return `1`; a clean run returns `0`. This is a
-Core-first projection boundary, separate from the legacy agent extraction/`assemble`
-workflow. Cross-format diff, score, and Foundry import are not yet supported.
+Core retains tested, pure `GraphqlProjectionCompiler` and `AsyncApiProjectionCompiler`
+seams, but exposes no CLI or run workflow for either format. End-to-end integration stays
+frozen until a named downstream consumer supplies a real source set and acceptance
+contract; format fixtures prove compiler testability, not product demand or full grounding.
 
 ### `assemble` — assemble from agent-produced extraction JSON (invoked by the skill)
 
@@ -681,7 +663,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `evidence.py` (read-side materialization and digest verification for optional v1 exact-evidence references), `gate.py` (`check_extraction`: the single gate aggregator shared by `assemble` and `verify-extraction`, including the source-facts semantic completeness check), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF→markdown via pymupdf4llm) |
-| `loop_apidoc/protocol_run/` | `project-contract` Core-first GraphQL/AsyncAPI run: validates a canonical contract/source-set/evidence bundle and atomically writes the format artifact, zh-TW guide, provenance, review, validation, and run metadata |
+| `loop_apidoc/domain/` | Protocol-neutral canonical contract, evidence relationships, domain profiles, and pure GraphQL/AsyncAPI projection compilers; neither format currently has a public run integration |
 | `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |

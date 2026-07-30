@@ -806,10 +806,6 @@
         <div><p>檢查 agent 產出的擷取 JSON 是否符合 assemble 輸入契約;不寫檔、不建立 run-dir。選填 v1 <code class="inline">evidence[]</code> 會重新 materialize、驗證 digest 並解析 claim path。契約包含<b>來源事實盤點</b>:來源小節白紙黑字列了參數表或範例區塊,擷取卻空著,就是靜默遺漏而非「來源沒寫」;要主張來源沒寫,必須在 <code class="inline">missing</code> 裡具名該欄位。</p></div>
       </div>
       <div class="cmd">
-        <span class="name"><span class="kw">project-contract</span></span>
-        <div><p>Core-first GraphQL／AsyncAPI 邊界：讀取 canonical contract、source set 與 exact evidence bundle，原子寫出格式 artifact、繁中指南、provenance、review、validation 與 run metadata。digest、coverage、transport 或 schema reference 不符時 fail closed，且不在 legacy <code class="inline">assemble</code> 增加協定分支。</p></div>
-      </div>
-      <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
           <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報;可加 <code class="inline">--score</code>、<code class="inline">--source-quality</code>、<code class="inline">--url-coverage</code>。</p>

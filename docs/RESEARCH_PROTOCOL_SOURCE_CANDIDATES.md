@@ -1,7 +1,7 @@
 # Source Candidates for GraphQL and AsyncAPI Slices
 
-**Status:** researched 2026-07-24; candidates await operator intake and
-snapshotting.
+**Status:** researched 2026-07-24; candidates await operator intake,
+snapshotting, and confirmation of a named real downstream consumer.
 **Purpose:** identify first-party or standards-body sources that can support
 the planned GraphQL and AsyncAPI vertical slices without using synthetic
 fixtures as source evidence.
@@ -19,6 +19,11 @@ claim about a live production broker. It is appropriate for a standard-focused
 AsyncAPI projection and validation fixture, but must not be reported as a
 production integration benchmark.
 
+The tools and actor roles below demonstrate that each format has an ecosystem;
+none is a confirmed consumer of a loop-apidoc artifact. Public run integration
+therefore remains frozen until an actual project or operator is named together
+with its source set and acceptance criteria.
+
 ## GraphQL candidate: GitHub public schema
 
 - **Source:** [GitHub GraphQL public schema download](https://docs.github.com/public/fpt/schema.docs.graphql).
@@ -27,7 +32,7 @@ production integration benchmark.
   API.
 - **Source facts available:** schema types, fields, input objects, enums, root
   operations, arguments, descriptions, lists, and nullability.
-- **Named consumer:** GitHub documents [GitHub CLI `gh api graphql`](https://docs.github.com/en/graphql/guides/using-graphql-clients)
+- **Candidate tooling consumer:** GitHub documents [GitHub CLI `gh api graphql`](https://docs.github.com/en/graphql/guides/using-graphql-clients)
   as a GraphQL client; the same page describes schema introspection for client
   documentation/autocomplete. GraphQL Code Generator also accepts a local
   `.graphql` schema path as input ([schema configuration](https://the-guild.dev/graphql/codegen/docs/config-reference/codegen-config)).
@@ -47,7 +52,7 @@ production integration benchmark.
   is preferred over a branch URL because its Git revision is immutable.
 - **Source facts available:** AsyncAPI version, MQTT server/security, channels,
   receive operations, message names, payload schemas, and required fields.
-- **Named consumer:** an OGC API–EDR subscriber/data consumer; the standard
+- **Candidate tooling consumer:** an OGC API–EDR subscriber/data consumer; the standard
   defines a subscriber as the entity that creates a subscription to a
   publisher. For artifact validation and docs generation, the official
   [AsyncAPI Generator](https://www.asyncapi.com/tools/generator) is a concrete

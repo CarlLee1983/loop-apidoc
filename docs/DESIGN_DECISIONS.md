@@ -1,7 +1,7 @@
 # Design Decisions / 設計決策
 
 **Status:** Current concise design record
-**Updated:** 2026-07-29
+**Updated:** 2026-07-30
 
 This document is the durable record of product-level decisions for `loop-apidoc`.
 It replaces the former collection of dated implementation plans and design notes.
@@ -219,24 +219,18 @@ become required facts for contracts outside that profile. The accepted rationale
 compatibility consequence are recorded in
 [ADR 0001](adr/0001-keep-a-general-core-with-payment-profile.md).
 
-### 11. Integrate new protocols through a Core-first run, not legacy branches
+### 11. Freeze protocol integration until a named consumer establishes demand
 
-Expose `project-contract` over a self-contained `ProjectionInput`
-(`GroundedApiContract` + `SourceSet` + `EvidenceBundle`). Select exactly one homogeneous
-GraphQL or AsyncAPI projection and atomically write its format artifact plus shared
-guide, provenance, review, validation, and run metadata. Do not add protocol conditionals
-to the HTTP/OpenAPI extraction or generation compatibility adapter.
+Keep `GraphqlProjectionCompiler` and `AsyncApiProjectionCompiler` as deterministic,
+tested Core seams. Do not expose a GraphQL/AsyncAPI CLI, run directory, validation path,
+diff/score behavior, or Foundry lifecycle until a named downstream consumer supplies a
+real source set and an explicit acceptance contract. Do not add protocol conditionals to
+the HTTP/OpenAPI extraction or generation compatibility adapter.
 
-The canonical contract is the stable protocol-neutral seam already governed by exact
-support relationships. A separate run boundary makes the existing compilers usable
-without pretending the HTTP extraction schema can represent GraphQL arguments or broker
-semantics. Every emitted interaction value and schema field requires supported exact
-evidence; input or unsupported-projection errors leave no run, while grounding or
-structural findings leave a failed run for review.
-
-GraphQL and AsyncAPI therefore have functional CLI and artifact/validation paths while
-legacy `assemble` remains byte-compatible. Diff, score, Foundry import/approval,
-GraphQL arguments, and broader structural validators remain deliberate follow-ups.
+The public GitHub and OGC fixtures establish format-level compiler testability only.
+They do not establish product demand, end-to-end exact-evidence coverage, or adequate
+format validation. Resuming integration requires recording the consumer and its source-
+backed acceptance criteria here or in a dedicated ADR before implementation begins.
 
 ## Canonical operational references
 
@@ -265,4 +259,4 @@ GraphQL arguments, and broader structural validators remain deliberate follow-up
 8. benchmark、release 與對外文件都是產品契約；來源快照缺失或測試 skip 都不能宣稱通過。
 9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游；transport、金額方向、冪等與線路幣別使用專屬 typed collection，且 request 缺少 currency 欄位絕不視為單幣別證據。
 10. 產品維持領域中立；支付／錢包是重要的首個垂直領域，但不是整個產品定義。transport policy 與 idempotency 屬通用整合語意，amount direction 與 line-currency policy 則屬選填 Payment Profile。新的產業專屬 typed concept 必須符合跨供應商重現、具名下游 consumer、無法由既有通用 constraint 忠實表達及具來源支撐 benchmark 等准入條件。
-11. GraphQL／AsyncAPI 以獨立的 Core-first `project-contract` run 接入，不在 legacy HTTP/OpenAPI `assemble` 塞協定分支。輸入必須同時帶 canonical contract、source set 與 evidence bundle；輸出的格式 artifact、繁中指南、provenance、review、validation 與 run metadata 共用同一 exact-evidence gate。
+11. GraphQL／AsyncAPI 保留確定性、可測試的 Core compiler seam，但在具名下游 consumer 提供真實來源集與明確驗收契約前，凍結 CLI、run、validation、diff／score 與 Foundry 整合；公開 fixture 只能證明格式 compiler 可測，不能代替產品需求或端到端 exact-evidence coverage。

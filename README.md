@@ -491,28 +491,11 @@ uv run loop-apidoc verify-extraction \
 
 在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用、跨檔不變式、選填 v1 `evidence[]` 的精確 source/typed locator/normalized fragment SHA-256 驗證，以及**語意完整性閘門**。後者會機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,當某端點的來源小節明明寫了欄位或範例、擷取卻交回空清單時直接 fail closed 並指名缺了哪些欄位,同時拒絕「需進一步擷取」這類佔位答案。來源真的沒寫的東西仍然只是缺口:在 `missing[]` 具名記下即可通過,閘門不會逼出捏造。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
 
-### `project-contract` — 從 canonical contract 建立 GraphQL／AsyncAPI run
+### GraphQL／AsyncAPI 狀態
 
-```bash
-uv run loop-apidoc project-contract \
-  --input ./projection-input.json \
-  --format graphql \
-  --output ./output/graphql-run \
-  --json
-```
-
-輸入是一份自包含的 `ProjectionInput` JSON，必須同時具有 `contract`、`source_set`
-與 `evidence`。`--format graphql` 產生 `schema.graphql` 與
-`graphql-guide.zh-TW.md`；`--format asyncapi` 產生 `asyncapi.yaml` 與
-`asyncapi-guide.zh-TW.md`。兩者都固定寫出 `provenance.json`、`review.html`、
-`validation/report.{json,md}` 與 `run.json`。
-
-命令只接受同一種 protocol 的 canonical interactions，不會轉成 HTTP。它會驗證 source-set
-identity、exact excerpt digest、supported relationship，以及每個實際輸出的 interaction 值與
-schema field 是否有 exact evidence。格式／輸入錯誤、不支援 transport、無法解析 schema ref
-或 output 已存在時，回傳 `2` 且不寫入／覆寫 run；grounding 或結構問題會保留可審核的 failed
-run 並回傳 `1`；乾淨通過回傳 `0`。這是 Core-first projection 邊界，與 legacy agent
-擷取／`assemble` 流程分離；跨格式 diff、score 與 Foundry import 尚未接入。
+Core 保留經測試的 `GraphqlProjectionCompiler` 與 `AsyncApiProjectionCompiler` 純函式
+邊界，但目前不公開 CLI 或 run workflow。等具名下游 consumer 提供真實來源集與驗收契約後，
+才會恢復端到端整合；格式 fixture 只能證明 compiler 可測，不能代替產品需求或完整 grounding。
 
 ### `assemble` — 從 agent 產出的擷取 JSON 組裝(由 skill 呼叫)
 
@@ -658,7 +641,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
 | `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
-| `loop_apidoc/protocol_run/` | `project-contract` Core-first GraphQL／AsyncAPI run：驗證 canonical contract／source-set／evidence bundle，原子寫出格式 artifact、繁中指南、provenance、review、validation 與 run metadata |
+| `loop_apidoc/domain/` | protocol-neutral canonical contract、evidence relationship、領域 profiles，以及純 GraphQL／AsyncAPI projection compilers；目前沒有這兩種格式的公開 run integration |
 | `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |

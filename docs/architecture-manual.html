@@ -743,7 +743,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">check-freshness</div>
           <div class="command-chip">check-freshness-batch</div>
           <div class="command-chip">governance-scan</div>
-          <div class="command-chip">project-contract</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -759,10 +758,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <button type="button" class="module-card active" data-module="agentcli">
           <div class="module-name">agentcli/ <span class="pill agent">Controller</span></div>
           <div class="module-role">組裝 agent 擷取 JSON，串接後段 deterministic pipeline。</div>
-        </button>
-        <button type="button" class="module-card io-boundary" data-module="protocol-run">
-          <div class="module-name">protocol_run/ <span class="pill io">File I/O</span></div>
-          <div class="module-role">從 canonical contract 與 exact evidence 建立原子 GraphQL／AsyncAPI run。</div>
         </button>
       </div>
 
@@ -929,10 +924,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露來源／URL evidence、來源品質、擷取驗證、project-contract protocol run、組裝、驗證、評分、版本差異與本機 review 工作台；foundry 子群組負責資產治理。",
+      description: "Typer CLI 入口，對外暴露來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分、版本差異與本機 review 工作台；foundry 子群組負責資產治理。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, quality, protocol-run, assemble, validate, score, diff, review, and Foundry commands",
+      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, diff, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -944,16 +939,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "inventory.json, endpoints/*.json, sources root, urls",
       outputs: "run-dir plus JSON status report",
       sideEffect: "Coordinates pipeline; generate/ and run/ own file writes"
-    },
-    "protocol-run": {
-      title: "protocol_run/",
-      badgeClass: "io",
-      badgeLabel: "File I/O",
-      description: "Core-first GraphQL／AsyncAPI run 邊界：驗證單一 protocol 的 ProjectionInput、exact excerpt digest、support relationship 與輸出欄位 coverage，再原子寫出格式 artifact 及共用 guide／provenance／review／validation metadata。",
-      seam: "project_contract(projection_input, contract_format, output)",
-      inputs: "GroundedApiContract + SourceSet + EvidenceBundle",
-      outputs: "schema.graphql or asyncapi.yaml plus guide, provenance, review, validation, run.json",
-      sideEffect: "Atomically creates one non-overwriting run directory"
     },
     manifest: {
       title: "manifest/",
