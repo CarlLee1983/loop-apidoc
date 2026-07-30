@@ -17,7 +17,8 @@ _Avoid_: Core extension field, vendor special case
 
 **Payment Profile**:
 The Domain Profile for payment and wallet semantics that are not meaningful to every
-API contract.
+API contract. It owns Amount Direction and Line Currency Policy; contracts without
+those semantics have no Payment Profile.
 _Avoid_: Payment core, universal integration semantics
 
 **Projection Input**:

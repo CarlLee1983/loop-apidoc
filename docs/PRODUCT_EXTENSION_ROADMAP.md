@@ -41,7 +41,9 @@ Payment and wallet integrations are an important initial vertical, but benchmark
 composition does not redefine the Canonical Contract Core. Transport policy and
 idempotency remain general integration semantics; amount direction and line-currency
 policy belong to an optional Payment Profile governed by the same exact-evidence and
-fail-closed rules.
+fail-closed rules. The Canonical Contract now owns those collections only through that
+optional profile; v0.27 top-level names remain derived compatibility views rather than
+parallel Core state.
 
 An industry-specific typed concept is added only when it recurs across providers, has a
 named downstream consumer, cannot be represented faithfully by an existing generic

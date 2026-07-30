@@ -21,6 +21,7 @@ from loop_apidoc.domain.models import (
     LineCurrencyPolicy,
     Operation,
     OperationalConstraint,
+    PaymentProfile,
     Schema,
     SecurityScheme,
     TransportPolicy,
@@ -62,7 +63,7 @@ _MODEL_BY_KIND = {
     "idempotency_rule": IdempotencyRule,
     "line_currency_policy": LineCurrencyPolicy,
 }
-_FIELD_BY_KIND = {
+_CORE_FIELD_BY_KIND = {
     "environment": "environments",
     "interaction": "interactions",
     "operation": "operations",
@@ -73,8 +74,10 @@ _FIELD_BY_KIND = {
     "integration_mechanic": "integration_mechanics",
     "operational_constraint": "operational_constraints",
     "transport_policy": "transport_policies",
-    "amount_direction": "amount_directions",
     "idempotency_rule": "idempotency_rules",
+}
+_PAYMENT_FIELD_BY_KIND = {
+    "amount_direction": "amount_directions",
     "line_currency_policy": "line_currency_policies",
 }
 
@@ -83,7 +86,12 @@ def build_grounded_contract(
     metadata: ContractMetadata,
     claims: tuple[ContractClaimInput, ...],
 ) -> GroundedApiContract:
-    values: dict[str, list] = {field: [] for field in _FIELD_BY_KIND.values()}
+    values: dict[str, list] = {
+        field: [] for field in _CORE_FIELD_BY_KIND.values()
+    }
+    payment_values: dict[str, list] = {
+        field: [] for field in _PAYMENT_FIELD_BY_KIND.values()
+    }
     contract_claims: list[ContractClaim] = []
     gaps: list[Gap] = []
     conflicts: list[Conflict] = []
@@ -137,7 +145,11 @@ def build_grounded_contract(
         if claim.status not in {ClaimStatus.SUPPORTED, ClaimStatus.WAIVED}:
             continue
         model = _MODEL_BY_KIND.get(claim.claim_kind)
-        field = _FIELD_BY_KIND.get(claim.claim_kind)
+        field = _CORE_FIELD_BY_KIND.get(claim.claim_kind)
+        target = values
+        if field is None:
+            field = _PAYMENT_FIELD_BY_KIND.get(claim.claim_kind)
+            target = payment_values
         if model is None or field is None or not isinstance(claim.value, dict):
             continue
         value = _route_child_evidence(
@@ -146,10 +158,18 @@ def build_grounded_contract(
             semantic_evidence,
         )
         value["evidence"] = [item.model_dump(mode="json") for item in evidence]
-        values[field].append(model.model_validate(value))
+        target[field].append(model.model_validate(value))
+    payment_profile = (
+        PaymentProfile(
+            **{field: tuple(items) for field, items in payment_values.items()}
+        )
+        if any(payment_values.values())
+        else None
+    )
     return GroundedApiContract(
         metadata=metadata,
         **{field: tuple(items) for field, items in values.items()},
+        payment_profile=payment_profile,
         claims=tuple(contract_claims),
         gaps=tuple(gaps),
         conflicts=tuple(conflicts),

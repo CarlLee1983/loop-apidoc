@@ -13,7 +13,8 @@ amount direction and line-currency policy belong to the Payment Profile. A new
 industry-specific typed concept is admitted only when it recurs across providers, has a
 named downstream consumer, cannot be represented faithfully by an existing generic
 constraint, and has source-backed benchmark coverage. The v0.27 serialized collections
-remain compatible while any structural profile migration is designed separately.
+remain compatible through derived top-level views while the Canonical Contract stores
+their state only in the optional Payment Profile.
 
 ## Considered options
 
@@ -24,10 +25,12 @@ remain compatible while any structural profile migration is designed separately.
 
 ## Consequences
 
-Payment-specific concepts must not become prerequisites for non-payment contracts. A
-future model migration may group them behind an explicit profile boundary, but it must
-preserve existing `integration.json` input and generated artifact compatibility through
-a separately reviewed public seam.
+Payment-specific concepts must not become prerequisites for non-payment contracts.
+`GroundedApiContract` owns at most one optional `PaymentProfile`; amount direction and
+line-currency policy live only there. The legacy top-level collection names remain a
+read/write compatibility adapter derived from that profile, so they do not create a
+second source of state. `integration.json` input and generated artifact shapes remain
+unchanged.
 
 **Falsified if:** a payment-specific concept stops being optional for a non-payment
 contract. Concretely, this decision no longer holds when `amount_direction` or

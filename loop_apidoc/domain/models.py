@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import Field, computed_field, model_validator
 
 from loop_apidoc.domain.base import FrozenModel as FrozenModel
 from loop_apidoc.domain.evidence import SupportRelationshipType
@@ -238,6 +238,13 @@ class LineCurrencyPolicy(FrozenModel):
     evidence: tuple[EvidenceBinding, ...] = ()
 
 
+class PaymentProfile(FrozenModel):
+    """Optional payment and wallet semantics outside the contract core."""
+
+    amount_directions: tuple[AmountDirection, ...] = ()
+    line_currency_policies: tuple[LineCurrencyPolicy, ...] = ()
+
+
 class ContractClaim(FrozenModel):
     identity: str
     claim_kind: str | None = None
@@ -278,10 +285,48 @@ class GroundedApiContract(FrozenModel):
     integration_mechanics: tuple[IntegrationMechanic, ...] = ()
     operational_constraints: tuple[OperationalConstraint, ...] = ()
     transport_policies: tuple[TransportPolicy, ...] = ()
-    amount_directions: tuple[AmountDirection, ...] = ()
     idempotency_rules: tuple[IdempotencyRule, ...] = ()
-    line_currency_policies: tuple[LineCurrencyPolicy, ...] = ()
+    payment_profile: PaymentProfile | None = Field(default=None, exclude=True)
     claims: tuple[ContractClaim, ...] = ()
     gaps: tuple[Gap, ...] = ()
     conflicts: tuple[Conflict, ...] = ()
     waivers: tuple[WaiverRecord, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def _load_legacy_payment_collections(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        data = dict(value)
+        legacy_fields = {
+            "amount_directions",
+            "line_currency_policies",
+        }
+        present = legacy_fields.intersection(data)
+        if "payment_profile" in data and present:
+            raise ValueError(
+                "payment_profile cannot be combined with legacy payment collections"
+            )
+        if not present:
+            return data
+        profile = {
+            field: data.pop(field, ())
+            for field in sorted(legacy_fields)
+        }
+        if any(profile.values()):
+            data["payment_profile"] = profile
+        return data
+
+    @computed_field(return_type=tuple[AmountDirection, ...])
+    @property
+    def amount_directions(self) -> tuple[AmountDirection, ...]:
+        if self.payment_profile is None:
+            return ()
+        return self.payment_profile.amount_directions
+
+    @computed_field(return_type=tuple[LineCurrencyPolicy, ...])
+    @property
+    def line_currency_policies(self) -> tuple[LineCurrencyPolicy, ...]:
+        if self.payment_profile is None:
+            return ()
+        return self.payment_profile.line_currency_policies

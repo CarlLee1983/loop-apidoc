@@ -30,6 +30,13 @@ the claim is supported, missing, conflicting, unverified, waived, or superseded.
 OpenAPI and the review payload are projections of the Canonical API Contract IR, not its
 source of truth.
 
+The Canonical Contract Core stays domain-neutral. Payment-only Amount Direction and Line
+Currency Policy values are owned by one optional `PaymentProfile`; a non-payment contract
+has no profile. Legacy v0.27 top-level collection names are read/write compatibility
+views derived from the profile, so the model keeps one source of state while existing
+serialized consumers remain compatible. Transport Policy and Idempotency Rule remain
+Core integration semantics.
+
 GraphQL and AsyncAPI use the functional Core-first boundary:
 
 ```text

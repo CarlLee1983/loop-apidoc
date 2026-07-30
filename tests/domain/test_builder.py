@@ -59,6 +59,7 @@ def test_supported_environment_accepts_the_generic_evidence_binding():
     assert contract.environments[0].evidence == (
         EvidenceBinding(fragment_id="fragment-manual"),
     )
+    assert contract.payment_profile is None
 
 
 def test_builder_attaches_parameter_binding_to_exact_child():
@@ -129,7 +130,7 @@ def test_builder_routes_a_supported_http_interaction_into_the_canonical_contract
     )
 
 
-def test_builder_routes_supported_domain_semantics_into_typed_collections():
+def test_builder_routes_payment_semantics_into_an_optional_profile():
     contract = build_grounded_contract(
         _metadata(),
         (
@@ -181,8 +182,11 @@ def test_builder_routes_supported_domain_semantics_into_typed_collections():
     )
 
     assert contract.transport_policies[0].protocol == "HTTPS"
-    assert contract.amount_directions[0].balance_effect == "credit"
     assert contract.idempotency_rules[0].action == (
         "Treat the original transaction as processed."
     )
-    assert contract.line_currency_policies[0].policy == "single"
+    assert contract.payment_profile is not None
+    assert contract.payment_profile.amount_directions[0].balance_effect == "credit"
+    assert contract.payment_profile.line_currency_policies[0].policy == "single"
+    assert "amount_directions" not in type(contract).model_fields
+    assert "line_currency_policies" not in type(contract).model_fields
