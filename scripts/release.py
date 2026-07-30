@@ -13,6 +13,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 _SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+_STRATEGY_HEADING = "## Strategy impact"
+_STRATEGY_OPTION = re.compile(
+    r"^- \[([ xX])\] (None|Updated) — (.+)$", flags=re.MULTILINE
+)
 RunCommand = Callable[[list[str], Path], None]
 
 
@@ -87,6 +91,11 @@ Release date: {date.today().isoformat()}
 
 - Describe the user-facing changes in this release.
 
+## Strategy impact
+
+- [ ] None — <explain why no strategy document changed>
+- [ ] Updated — <list each strategy document changed>
+
 ## Validation
 
 - `npm run tag:check`
@@ -121,6 +130,25 @@ def _github_release_command(root: Path, version: str) -> list[str]:
     ]
 
 
+def _require_strategy_impact(root: Path, version: str) -> None:
+    notes_path = root / "docs" / f"RELEASE_NOTES_{version}.md"
+    if not notes_path.is_file():
+        raise ReleaseError(f"release notes missing: {notes_path.relative_to(root)}")
+    text = notes_path.read_text(encoding="utf-8")
+    if _STRATEGY_HEADING not in text:
+        raise ReleaseError("strategy impact declaration is missing from release notes")
+    section = text.split(_STRATEGY_HEADING, 1)[1].split("\n## ", 1)[0]
+    options = _STRATEGY_OPTION.findall(section)
+    if len(options) != 2 or {label for _, label, _ in options} != {"None", "Updated"}:
+        raise ReleaseError("strategy impact declaration must contain None and Updated options")
+    selected = [(label, detail.strip()) for mark, label, detail in options if mark.lower() == "x"]
+    if len(selected) != 1:
+        raise ReleaseError("strategy impact declaration must select exactly one option")
+    _, detail = selected[0]
+    if detail.startswith("<") and detail.endswith(">"):
+        raise ReleaseError("strategy impact declaration must replace the selected placeholder")
+
+
 def _require_github_auth(root: Path, run: RunCommand) -> None:
     run(["gh", "auth", "status", "--hostname", "github.com"], root)
 
@@ -128,6 +156,7 @@ def _require_github_auth(root: Path, run: RunCommand) -> None:
 def publish_github_release(root: Path, *, run: RunCommand = _run) -> None:
     version = _package_version(root)
     _version_tuple(version)
+    _require_strategy_impact(root, version)
     _require_github_auth(root, run)
     run(_github_release_command(root, version), root)
 
@@ -135,6 +164,7 @@ def publish_github_release(root: Path, *, run: RunCommand = _run) -> None:
 def tag_release(root: Path, message: str, *, dry_run: bool, run: RunCommand = _run) -> None:
     version = _package_version(root)
     _version_tuple(version)
+    _require_strategy_impact(root, version)
     github_release_command = _github_release_command(root, version)
     command = [
         "npx", "tagsmith", "create", "--set-version", version, "--push",

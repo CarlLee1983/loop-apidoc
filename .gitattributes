@@ -1,0 +1,2 @@
+# This fixture preserves the original 1,918-line coordinate space with empty redactions.
+benchmarks/rsg-game-transfer-wallet/sanitized_sources/rsg-game-transfer-wallet.zh-TW.normalized.md whitespace=-blank-at-eof

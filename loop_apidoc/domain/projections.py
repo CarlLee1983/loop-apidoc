@@ -232,6 +232,7 @@ class AsyncApiProjectionCompiler:
         contract: GroundedApiContract | ProjectionInput,
     ) -> Projection:
         contract = _projection_input(contract).contract
+        schema_names = {schema.name for schema in contract.schemas}
         channels: dict[str, dict] = {}
         operations: dict[str, dict] = {}
         for interaction in contract.interactions:
@@ -248,6 +249,11 @@ class AsyncApiProjectionCompiler:
             if binding.payload_schema_ref is None:
                 raise UnsupportedProjectionError(
                     "asyncapi projection requires an explicit payload schema reference"
+                )
+            if binding.payload_schema_ref not in schema_names:
+                raise UnsupportedProjectionError(
+                    "asyncapi projection cannot resolve payload schema "
+                    f"{binding.payload_schema_ref!r}"
                 )
             channels[binding.channel] = {
                 "address": binding.channel_address,
@@ -626,14 +632,25 @@ def _binding_targets(
         for binding in schema.evidence:
             if binding.claim_path is None:
                 continue
-            suffix = binding.claim_path.strip("/").replace("/", ".")
             values.append(
                 (
                     binding,
-                    f"components.schemas.{schema.name}"
-                    + (f".{suffix}" if suffix else ""),
+                    _schema_target(contract, schema.name, binding.claim_path),
                 )
             )
+        for field in schema.fields:
+            for binding in field.evidence:
+                if binding.claim_path is None:
+                    continue
+                claim_path = binding.claim_path
+                if not claim_path.startswith("/fields/"):
+                    claim_path = f"/fields/{field.name}{claim_path}"
+                values.append(
+                    (
+                        binding,
+                        _schema_target(contract, schema.name, claim_path),
+                    )
+                )
     known = {
         (binding.relationship_id, target) for binding, target in values
     }
@@ -654,6 +671,29 @@ def _operation_target(path: str, method: str, claim_path: str) -> str:
     if claim_path in {"/method", "/path"} or not suffix:
         return base
     return f"{base}.{suffix}"
+
+
+def _schema_target(
+    contract: GroundedApiContract,
+    schema_name: str,
+    claim_path: str,
+) -> str:
+    parts = claim_path.strip("/").split("/") if claim_path.strip("/") else []
+    transports = {interaction.binding.transport for interaction in contract.interactions}
+    if transports == {"graphql"}:
+        base = f"graphql:{schema_name}"
+        if len(parts) >= 2 and parts[0] == "fields":
+            suffix = ".".join(parts[1:])
+            return f"{base}.{suffix}"
+    elif transports == {"asyncapi"}:
+        base = f"asyncapi:components.schemas.{schema_name}"
+        if len(parts) >= 2 and parts[0] == "fields":
+            suffix = ".".join(parts[1:])
+            return f"{base}.properties.{suffix}"
+    else:
+        base = f"components.schemas.{schema_name}"
+    suffix = ".".join(parts)
+    return base + (f".{suffix}" if suffix else "")
 
 
 def _interaction_target(interaction, claim_path: str) -> str:

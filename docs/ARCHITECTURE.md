@@ -30,6 +30,21 @@ the claim is supported, missing, conflicting, unverified, waived, or superseded.
 OpenAPI and the review payload are projections of the Canonical API Contract IR, not its
 source of truth.
 
+GraphQL and AsyncAPI use the functional Core-first boundary:
+
+```text
+ProjectionInput (GroundedApiContract + SourceSet + EvidenceBundle)
+  → project-contract --format graphql|asyncapi
+  → format artifact + zh-TW guide + provenance + review + validation + run metadata
+```
+
+`protocol_run/` owns this atomic, non-overwriting run-directory I/O exit. It requires a
+homogeneous protocol contract, verifies source-set identity, exact excerpt digests,
+supported relationships, and evidence coverage for every emitted interaction value and
+schema field. Unsupported transports and unresolved references fail before output;
+grounding or structural findings persist a failed run for review. This path does not add
+GraphQL/AsyncAPI branches to the legacy HTTP/OpenAPI extraction adapter.
+
 The Evidence Ledger stores exact `EvidenceFragment` values with typed locators and a digest
 of normalized fragment content. Core binds a material claim path to a fragment with an
 `explicit_support`, `derived_support`, `contradicts`, or `insufficient` relationship and
@@ -185,7 +200,7 @@ URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`sk
 
 source-quality blocker observation 可攜帶來源明確連出的 `required_source_refs`；reject report 只做 ordered de-duplication，作為下一輪 bounded capture seed，不抓取、不 crawl，也不改變 reject 語意。
 
-**檔案 I/O 出口**:`generate/`、`run/`、report writers、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot` 與 `rendered_url.import_rendered_url` 會寫檔；`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外，其餘 draft scanner 保持純函式。
+**檔案 I/O 出口**:`generate/`、`run/`、`protocol_run/run.py`、report writers、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot` 與 `rendered_url.import_rendered_url` 會寫檔；`protocol_run/run.py` 原子建立 GraphQL／AsyncAPI run，`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外，其餘 draft scanner 保持純函式。
 
 ## 資料流與關鍵 seam
 

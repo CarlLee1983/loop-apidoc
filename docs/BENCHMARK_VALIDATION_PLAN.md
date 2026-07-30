@@ -124,6 +124,38 @@ Strict-local is the strongest harness claim. It:
 “Strict-local passed” therefore means every required case had a source
 snapshot, all source-backed benchmark checks ran, and no skip was reported.
 
+## Supplemental sanitized-fixture lane
+
+When an original historical snapshot cannot be redistributed, CI may exercise
+a separately reviewed, redistributable subset containing only the exact source
+fragments needed by committed extraction claims. Run:
+
+```bash
+uv run python scripts/quality_gate.py --sanitized-fixtures
+```
+
+This is an orthogonal CI assurance, not a fifth source-backed harness layer and
+not a replacement for strict-local. Each admitted case must have:
+
+- a reviewed entry in `SANITIZED_BENCHMARK_CASES`;
+- `sanitized-fixture.json` binding the original URL, capture date, original
+  SHA-256, sanitized SHA-256, retained line ranges, and
+  `strict_local_eligible: false`;
+- a line-preserving source under `sanitized_sources/`, so exact line locators
+  retain their original coordinates while all unretained content is empty; and
+- a passing legacy/Core shadow replay where every material relationship is
+  explicit or derived support backed only by exact fragments.
+
+The current pilot inventory contains `rsg-game-transfer-wallet`.
+`test_required_sanitized_benchmark_cases_match_committed_descriptors` enforces
+exact parity between the reviewed inventory and committed descriptors. The
+sanitized replay proves only fixture-backed exact-evidence parity for the
+retained claims. It does not prove that the full original document was
+revalidated, restore an unavailable historical snapshot, or make the case
+eligible for the phrase “strict-local passed.” The CLI rejects combining
+`--strict-local` and `--sanitized-fixtures` so the two assurance claims cannot
+be collapsed into one result.
+
 ## Terminology
 
 Use these terms consistently in issues, release notes, and review comments:
@@ -135,6 +167,7 @@ Use these terms consistently in issues, release notes, and review comments:
 | **Skipped** | Source-backed assertions did not execute because the required source snapshot was unavailable. |
 | **Passed** | The applicable assertions executed and passed. |
 | **Strict-local passed** | Every required case had sources, all source-backed benchmark checks ran, and no skip was reported. |
+| **Sanitized-fixture exact-evidence passed** | A reviewed redistributable subset replayed the retained claims with exact fragment support; this is not source-backed or strict-local success. |
 
 Do not shorten “committed and discovered” to “validated,” and do not describe
 a CI run containing source-related skips as benchmark success.
@@ -146,6 +179,7 @@ a CI run containing source-related skips as benchmark success.
 | `uv run pytest tests/test_benchmarks.py -k test_benchmark_harness_discovers_cases -q` | Discovery guard | No |
 | `uv run pytest tests/test_quality_gate.py -k required_benchmark_cases_match_committed_cases -q` | Exact committed/required parity | No |
 | `uv run python scripts/quality_gate.py` | CI-safe lint, unit/integration tests, discovery, and parity | No |
+| `uv run python scripts/quality_gate.py --sanitized-fixtures` | CI-safe checks plus the reviewed sanitized exact-evidence lane | No; only committed sanitized subsets |
 | `uv run pytest tests/test_benchmarks.py -q` | Source-backed execution for cases whose sources are present; absent sources skip | Yes, for a complete pass |
 | `uv run python scripts/quality_gate.py --strict-local` | All four layers, with sources present and zero skips | Yes, for all thirteen cases |
 
@@ -243,6 +277,12 @@ Benchmark harness 分成四層，不能混為一談：
 4. **strict-local 預檢**：`scripts/quality_gate.py --strict-local` 要求 required
    inventory 與 committed fixture 完全一致、每個 case 都有非空來源，且 benchmark
    測試零 skip。
+
+另外有一條獨立、不可混稱為第五層的 sanitized-fixture CI lane：
+`scripts/quality_gate.py --sanitized-fixtures` 只重播經審核、可重新散布、保留原始行號的
+exact-evidence 片段。它會驗證 retained claims 的 legacy/Core parity，但不代表完整原始文件
+已重新驗證，也不能稱為 source-backed 或 strict-local PASS。目前 pilot 是
+`rsg-game-transfer-wallet`；受控清單與 descriptor 必須 exact parity。
 
 新增 case 時，先加入 extraction／expected 宣告，再刻意更新
 `REQUIRED_BENCHMARK_CASES`，跑 exact-parity 測試，最後才在持有原始來源快照的機器上

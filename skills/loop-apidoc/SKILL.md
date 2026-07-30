@@ -47,6 +47,32 @@ RUN=(loop-apidoc); [ -n "$CLAUDE_PLUGIN_ROOT" ] && RUN=(uv run --project "$CLAUD
 (Do **not** use `${CLAUDE_PLUGIN_ROOT:+uv run --project "$CLAUDE_PLUGIN_ROOT"}` inline: bash
 word-splits it but zsh does not, so it breaks under zsh.)
 
+## Protocol projection boundary
+
+The extraction flow below remains the HTTP/OpenAPI compatibility path. When the caller
+already has a self-contained canonical `ProjectionInput` containing a contract, source set,
+and evidence bundle, project it directly to a GraphQL or AsyncAPI run instead:
+
+```bash
+<APIDOC> project-contract --input "<projection-input.json>" \
+  --format graphql --output "<OUT>" --json
+<APIDOC> project-contract --input "<projection-input.json>" \
+  --format asyncapi --output "<OUT>" --json
+```
+
+This boundary does **not** extract GraphQL/AsyncAPI source documents and does not translate
+legacy extraction JSON into a canonical contract. The input must be format-homogeneous and
+all emitted protocol claims must carry explicit or derived support. Standalone exact evidence
+must include its excerpt so the command can recompute the normalized fragment digest without
+access to an external source tree.
+
+Exit `0` means the protocol run passed validation, `1` means artifacts were written but
+validation failed, and `2` means the input/format is invalid or the output directory already
+exists. GraphQL runs write `schema.graphql` and `graphql-guide.zh-TW.md`; AsyncAPI runs write
+`asyncapi.yaml` and `asyncapi-guide.zh-TW.md`. Both also write `provenance.json`,
+`review.html`, `validation/report.{json,md}`, and `run.json`. Richer protocol extraction,
+GraphQL arguments, score/diff, and Foundry lifecycle integration remain outside this command.
+
 ## Output-level checkpoint
 
 Before reading sources, dispatching subagents, or running `<APIDOC> manifest`, tell the user

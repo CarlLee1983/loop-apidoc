@@ -66,6 +66,26 @@ def test_command_plan_strict_local_includes_benchmarks():
     ]
 
 
+def test_command_plan_sanitized_fixture_mode_includes_dedicated_lane():
+    plan = quality_gate.command_plan(strict_local=False, sanitized_fixtures=True)
+
+    assert plan == [
+        ("ruff", ["uv", "run", "ruff", "check", "."]),
+        ("pytest", ["uv", "run", "pytest", "--cov=loop_apidoc"]),
+        (
+            "sanitized-fixtures",
+            ["uv", "run", "pytest", "tests/test_sanitized_benchmarks.py", "-q"],
+        ),
+    ]
+
+
+def test_quality_gate_rejects_combining_strict_local_and_sanitized_fixtures(capsys):
+    exit_code = quality_gate.main(["--strict-local", "--sanitized-fixtures"])
+
+    assert exit_code == 2
+    assert "cannot be combined" in capsys.readouterr().err
+
+
 def test_required_benchmark_cases_match_committed_cases():
     cases = quality_gate.required_benchmark_cases()
     benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
@@ -78,6 +98,18 @@ def test_required_benchmark_cases_match_committed_cases():
 
     assert set(cases) == committed
     assert len(cases) == len(committed)
+
+
+def test_required_sanitized_benchmark_cases_match_committed_descriptors():
+    cases = quality_gate.required_sanitized_benchmark_cases()
+    benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
+    committed = {
+        case.name
+        for case in benchmark_root.iterdir()
+        if (case / "sanitized-fixture.json").is_file()
+    }
+
+    assert set(cases) == committed == {"rsg-game-transfer-wallet"}
 
 
 def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):
@@ -106,6 +138,20 @@ def test_missing_benchmark_sources_accepts_nested_only_sources(tmp_path):
     )
 
     assert missing == []
+
+
+def test_strict_local_does_not_accept_sanitized_sources_as_originals(tmp_path):
+    root = tmp_path / "benchmarks"
+    sanitized = root / "fixture-only" / "sanitized_sources"
+    sanitized.mkdir(parents=True)
+    (sanitized / "manual.md").write_text("retained evidence", encoding="utf-8")
+
+    missing = quality_gate.missing_benchmark_sources(
+        benchmark_root=root,
+        cases=["fixture-only"],
+    )
+
+    assert missing == ["fixture-only"]
 
 
 @pytest.mark.parametrize("stdout", [

@@ -23,6 +23,10 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
   - `test_required_benchmark_cases_match_committed_cases` proves the explicit
     required inventory exactly matches the committed fixture identity files.
 - [ ] `uv run python scripts/quality_gate.py` passes in CI-safe mode.
+- [ ] `uv run python scripts/quality_gate.py --sanitized-fixtures` passes when
+  the release changes exact-evidence materialization, Core parity, or the
+  sanitized fixture contract. Report it as sanitized-fixture exact-evidence,
+  never as source-backed or strict-local success.
 
 ## Benchmark harness layers
 
@@ -41,6 +45,12 @@ A committed or discovered case is not necessarily source-backed. A pytest
 SKIP caused by a missing source snapshot is not a benchmark pass. The canonical
 terminology and case-addition workflow live in
 [`BENCHMARK_VALIDATION_PLAN.md`](BENCHMARK_VALIDATION_PLAN.md).
+
+The supplemental sanitized-fixture lane is deliberately outside these four
+layers. Its reviewed, line-preserving subsets give CI an exact-evidence parity
+signal for retained claims, but they neither replace original snapshots nor
+qualify for strict-local. `--strict-local` and `--sanitized-fixtures` are
+mutually exclusive.
 
 ## Deep local benchmark revalidation (when source snapshots are available)
 
@@ -93,9 +103,11 @@ refreshes `uv.lock`, and creates a non-overwritable release-note skeleton:
 npm run release:prepare -- --version 0.11.0 --summary "Describe the release"
 ```
 
-Complete the notes, review every teaching/promotion document named in `AGENTS.md`,
-run the checks above, and commit the release metadata. Then use the package's
-committed version instead of manually choosing a tag or creating a GitHub Release:
+Complete the notes and select exactly one `Strategy impact` option: either explain why
+the release does not change product direction, priority, or subsystem scope, or list the
+strategy documents updated in the same change. Review every teaching/promotion document
+named in `AGENTS.md`, run the checks above, and commit the release metadata. Then use the
+package's committed version instead of manually choosing a tag or creating a GitHub Release:
 
 ```bash
 # Fetches origin tags first, pushes HEAD to origin/main, validates strict semver
@@ -104,8 +116,10 @@ committed version instead of manually choosing a tag or creating a GitHub Releas
 npm run release:tag -- --message "loop-apidoc 0.11.0"
 ```
 
-`release:tag --dry-run` validates the release-notes precondition and previews the
-tag operation without pushing or writing a GitHub Release. A real run checks the
+`release:tag --dry-run`, `release:tag`, and the recovery-only `release:github` reject a
+missing, unresolved, or multiply selected strategy-impact declaration before auth,
+fetch, push, tag, or release creation. A valid dry run then previews the tag operation
+without pushing or writing a GitHub Release. A real run checks the
 authenticated `gh` session with release-creation permission *before* it pushes or
 creates a tag. It pushes only after Tagsmith accepts the local-and-fetched-remote
 tag history; a concurrent remote tag still makes `git push` fail safely, so fetch

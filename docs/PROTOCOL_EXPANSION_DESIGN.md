@@ -1,9 +1,9 @@
 # Protocol Expansion Design: GraphQL and AsyncAPI
 
-**Status:** Core transport seam and minimal source-backed GraphQL/AsyncAPI
-projection slices delivered; provenance, validation, guides, and CLI artifacts remain
-pending.
-**Updated:** 2026-07-24
+**Status:** Core transport seam, GraphQL/AsyncAPI compilers, and the functional
+`project-contract` CLI/run-artifact/validation slice are delivered. Cross-format diff,
+score, and Foundry import remain future work.
+**Updated:** 2026-07-29
 
 ## Purpose
 
@@ -163,8 +163,13 @@ SDL defaults.
 `User.name: String` fields. `GraphqlProjectionCompiler` emits deterministic SDL
 from a typed GraphQL interaction. Exact line evidence maps to the stable
 `graphql:Query.viewer` provenance target, and an unresolved output schema
-reference fails closed. Argument handling, reader-guide generation, and CLI/run
-integration are still pending.
+reference fails closed.
+
+**Functional integration (2026-07-29):** `project-contract --format graphql`
+accepts a self-contained `ProjectionInput` and atomically writes `schema.graphql`,
+`graphql-guide.zh-TW.md`, `provenance.json`, `review.html`,
+`validation/report.{json,md}`, and `run.json`. Exact fragment digests and emitted-field
+coverage fail closed. Argument modeling remains outside this initial compiler slice.
 
 ### Phase 3 — AsyncAPI vertical slice
 
@@ -188,8 +193,12 @@ provides the `notify-collections` receive slice, its `collections` address,
 emits deterministic AsyncAPI YAML from a typed AsyncAPI interaction. Exact-evidence
 provenance maps the payload claim to the stable
 `asyncapi:notify-collections.receive.message.collection_msg.payload` target.
-Structural validation beyond this slice, the reader guide, and CLI/run integration are
-still pending.
+The compiler now also rejects unresolved payload schema references.
+
+**Functional integration (2026-07-29):** `project-contract --format asyncapi`
+writes `asyncapi.yaml`, `asyncapi-guide.zh-TW.md`, and the same shared evidence/review/
+validation/run artifacts. Channel, address, direction, message, payload reference, and
+emitted schema fields require supported exact fragments.
 
 ## Source intake contract for the format slices
 
@@ -212,6 +221,12 @@ or a newer replacement document cannot stand in for the supplied source.
 Extend `assemble`, review, diff, score, Foundry metadata, skill instructions,
 and English-primary/Traditional-Chinese-secondary teaching documents. Every
 format must retain the same explicit approval and fail-closed governance path.
+
+**Progress (2026-07-29):** the first Core-first main-flow boundary is delivered as
+`project-contract`; it intentionally does not branch the HTTP/OpenAPI legacy `assemble`
+adapter. Shared run review and validation artifacts are present. Diff, score, Foundry
+asset import/approval, GraphQL argument modeling, and richer format validators remain
+explicit follow-ups rather than silent compatibility claims.
 
 ## Non-goals
 

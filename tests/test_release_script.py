@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.release import ReleaseError, prepare_release, tag_release
+from scripts.release import (
+    ReleaseError,
+    prepare_release,
+    publish_github_release,
+    tag_release,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,7 +46,14 @@ def _copy_release_files(destination: Path) -> None:
 
 def _write_current_release_notes(destination: Path) -> None:
     (destination / "docs" / f"RELEASE_NOTES_{CURRENT_VERSION}.md").write_text(
-        "release notes", encoding="utf-8"
+        """# release notes
+
+## Strategy impact
+
+- [x] None — maintenance release with no product-direction change
+- [ ] Updated — <list each strategy document changed>
+""",
+        encoding="utf-8",
     )
 
 
@@ -62,6 +74,9 @@ def test_prepare_release_synchronizes_version_and_creates_notes(tmp_path: Path):
     notes = (tmp_path / "docs" / f"RELEASE_NOTES_{NEXT_VERSION}.md").read_text()
     assert f"# loop-apidoc {NEXT_VERSION} release notes" in notes
     assert "Adds reusable releases." in notes
+    assert "## Strategy impact" in notes
+    assert "- [ ] None — <explain why no strategy document changed>" in notes
+    assert "- [ ] Updated — <list each strategy document changed>" in notes
     assert calls == [["uv", "lock"]]
 
 
@@ -129,3 +144,61 @@ def test_tag_release_pushes_main_before_publishing_tag(tmp_path: Path):
             "--notes-file", f"docs/RELEASE_NOTES_{CURRENT_VERSION}.md",
         ],
     ]
+
+
+@pytest.mark.parametrize(
+    "strategy_section",
+    [
+        "",
+        """## Strategy impact
+
+- [ ] None — <explain why no strategy document changed>
+- [ ] Updated — <list each strategy document changed>
+""",
+        """## Strategy impact
+
+- [x] None — maintenance only
+- [x] Updated — docs/PRODUCT_EXTENSION_ROADMAP.md
+""",
+        """## Strategy impact
+
+- [x] None — <explain why no strategy document changed>
+- [ ] Updated — <list each strategy document changed>
+""",
+    ],
+)
+def test_tag_release_rejects_unresolved_strategy_impact_before_external_commands(
+    tmp_path: Path,
+    strategy_section: str,
+):
+    _copy_release_files(tmp_path)
+    (tmp_path / "docs" / f"RELEASE_NOTES_{CURRENT_VERSION}.md").write_text(
+        f"# release notes\n\n{strategy_section}", encoding="utf-8"
+    )
+    calls: list[list[str]] = []
+
+    with pytest.raises(ReleaseError, match="strategy impact"):
+        tag_release(
+            tmp_path,
+            f"loop-apidoc {CURRENT_VERSION}",
+            dry_run=False,
+            run=lambda command, _cwd: calls.append(command),
+        )
+
+    assert calls == []
+
+
+def test_github_release_rejects_unresolved_strategy_impact_before_auth(tmp_path: Path):
+    _copy_release_files(tmp_path)
+    (tmp_path / "docs" / f"RELEASE_NOTES_{CURRENT_VERSION}.md").write_text(
+        "# release notes", encoding="utf-8"
+    )
+    calls: list[list[str]] = []
+
+    with pytest.raises(ReleaseError, match="strategy impact"):
+        publish_github_release(
+            tmp_path,
+            run=lambda command, _cwd: calls.append(command),
+        )
+
+    assert calls == []
