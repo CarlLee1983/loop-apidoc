@@ -13,6 +13,7 @@ the committed `extraction/` + `expected/` are enough to define the assertions.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from collections import Counter
@@ -44,6 +45,7 @@ from loop_apidoc.score import (
     loop_verdict,
     write_reports as write_score_reports,
 )
+from scripts.quality_gate import required_sanitized_benchmark_cases
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -1241,3 +1243,63 @@ def test_benchmark_extraction_passes_the_gate(case) -> None:
     )
 
     assert violations == [], f"{case.name}: {violations}"
+
+
+@pytest.mark.parametrize("case_id", required_sanitized_benchmark_cases())
+def test_sanitized_fixture_is_a_true_redaction_of_the_original_snapshot(
+    case_id: str,
+) -> None:
+    """A sanitized subset must be derived from the real snapshot, not authored.
+
+    `tests/test_sanitized_benchmarks.py` can only check the subset against itself:
+    the original is gitignored, so CI cannot tell a redaction from synthetic
+    content. That distinction is the whole premise of the lane, so it is asserted
+    here in the source-backed layer, where `--strict-local` forbids a skip.
+    """
+    case = _case_by_name(case_id)
+    descriptor_path = case / "sanitized-fixture.json"
+    assert descriptor_path.is_file(), f"{case_id}: sanitized-fixture.json is missing"
+    if not _has_sources(case):
+        pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
+
+    descriptor = json.loads(descriptor_path.read_text(encoding="utf-8"))
+    original_path = case / descriptor["original_snapshot"]["path"]
+    assert original_path.is_file(), f"{case.name}: {original_path} is missing"
+    assert (
+        hashlib.sha256(original_path.read_bytes()).hexdigest()
+        == descriptor["original_snapshot"]["sha256"]
+    ), f"{case.name}: original snapshot does not match the recorded digest"
+
+    original = original_path.read_text(encoding="utf-8").splitlines()
+    sanitized = (
+        (case / descriptor["sanitized_source"]["path"])
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    assert len(sanitized) == len(original), (
+        f"{case.name}: sanitized subset must preserve the original line coordinates"
+    )
+    retained = {
+        line_number
+        for start, end in descriptor["sanitization"]["retained_line_ranges"]
+        for line_number in range(start, end + 1)
+    }
+    for number, (kept, source_line) in enumerate(zip(sanitized, original), start=1):
+        if not kept:
+            continue
+        assert number in retained, (
+            f"{case.name}: line {number} is not inside a declared retained range"
+        )
+        assert kept == source_line, (
+            f"{case.name}: line {number} does not match the original snapshot"
+        )
+    blanked = [
+        number
+        for number in sorted(retained)
+        if number <= len(sanitized)
+        and not sanitized[number - 1]
+        and original[number - 1]
+    ]
+    assert blanked == [], (
+        f"{case.name}: declared-retained lines were dropped: {blanked[:5]}"
+    )
