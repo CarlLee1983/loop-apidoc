@@ -208,6 +208,9 @@ is recorded in `missing`.
 wallet documents are an important initial vertical, not the definition of the whole
 product. Transport policy and idempotency are general integration semantics;
 amount direction and line-currency policy belong to an optional Payment Profile.
+The Canonical Contract stores those two collections only inside `PaymentProfile`;
+legacy top-level names are derived compatibility views, never parallel state. A
+contract with no payment semantics has no profile.
 
 New industry-specific typed concepts enter a profile only when they recur across
 providers, have a named downstream consumer, cannot be represented faithfully by an
