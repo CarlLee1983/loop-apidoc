@@ -506,6 +506,7 @@
       <a href="#commands">CLI</a>
       <a href="#artifacts">Artifacts</a>
       <a href="#validation">Validation</a>
+      <a href="#benchmark-harness">Benchmarks</a>
       <a href="#packages">Packages</a>
       <a href="#next">Quick ref</a>
     </div>
@@ -997,6 +998,43 @@
           <p>The source can't be confirmed / sources conflict / an unsupported assertion → <b>do not fill it in</b>; report it faithfully as a gap or conflict. This is exactly where the core invariant is enforced.</p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BENCHMARK HARNESS ===================== -->
+<section id="benchmark-harness">
+  <div class="wrap">
+    <span class="eyebrow">Regression evidence architecture</span>
+    <h2 class="section-title">The benchmark has four layers; SKIP is not PASS</h2>
+    <p class="section-lead">New engineers can easily conflate "the fixture is committed," "the test discovered the case," and "the source-backed assertions ran." The harness deliberately separates four layers; see <a href="BENCHMARK_VALIDATION_PLAN.md"><code class="inline">docs/BENCHMARK_VALIDATION_PLAN.md</code></a> for the full contract and case-addition workflow.</p>
+    <div class="value-grid">
+      <div class="value">
+        <h3>1 · Committed inventory</h3>
+        <span class="file">fixture identity</span>
+        <p>A case contains both <code class="inline">extraction/inventory.json</code> and <code class="inline">expected/validation.expect.json</code>; there are currently 13 unique cases.</p>
+      </div>
+      <div class="value">
+        <h3>2 · Discovery guard</h3>
+        <span class="file">CI-safe</span>
+        <p>Even without local source snapshots, CI confirms that every fixture is discoverable and exactly matches the required inventory.</p>
+      </div>
+      <div class="value">
+        <h3>3 · Source-backed execution</h3>
+        <span class="file">original sources required</span>
+        <p>Assemble and artifact assertions run only when the original, dated <code class="inline">sources/</code> snapshot exists; a missing source produces SKIP.</p>
+      </div>
+      <div class="value">
+        <h3>4 · Strict-local preflight</h3>
+        <span class="file">all sources · zero skips</span>
+        <p>Every required case must have non-empty sources, every source-backed check must execute, and the run must report zero skips.</p>
+      </div>
+    </div>
+    <div class="arch-note">
+      <b>Why are original sources excluded from Git?</b> Some upstream documents have copyright, access, or redistribution restrictions, so <code class="inline">benchmarks/&lt;case&gt;/sources/</code> contains operator-provided, gitignored snapshots. CI can prove committed inventory, discovery, and deterministic parity, but it cannot call a missing-source SKIP a pass. Never replace an unavailable historical snapshot with newer documentation, synthetic data, or an error page.
+    </div>
+    <div class="arch-note">
+      <b>Supplemental sanitized-fixture lane:</b> <code class="inline">scripts/quality_gate.py --sanitized-fixtures</code> replays reviewed, line-preserving exact-evidence fragments in CI. The current pilot is <code class="inline">rsg-game-transfer-wallet</code>. This lane sits outside the four layers and proves fixture-backed parity only for retained claims; it neither replaces original <code class="inline">sources/</code> nor qualifies as source-backed or strict-local PASS.
     </div>
   </div>
 </section>
