@@ -13,7 +13,7 @@ operator-provided, gitignored `benchmarks/<case>/sources/` present.
 - [ ] `uv run ruff check .` passes.
 - [ ] `npm run docs:check` passes for the configured Markdown documents and local evidence.
 - [ ] `uv run pytest --cov=loop_apidoc` passes with total coverage at or above
-  92.5% — the current 93.16% baseline floor. Do not lower this threshold without
+  the configured 92.5% floor. Do not lower this threshold without
   an explicit quality-policy decision; behavior-changing work still requires a
   focused regression test. This suite includes unit + integration + the benchmark
   discovery guard and exact-parity regression.
