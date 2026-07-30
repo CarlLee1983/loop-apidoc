@@ -36,6 +36,7 @@ def _copy_release_files(destination: Path) -> None:
         "loop_apidoc/__init__.py",
         ".claude-plugin/plugin.json",
         "docs/introduction.html",
+        "docs/introduction.en.html",
         "tests/test_plugin_manifest.py",
     ]:
         target = destination / relative
@@ -71,6 +72,9 @@ def test_prepare_release_synchronizes_version_and_creates_notes(tmp_path: Path):
     assert f'"version": "{NEXT_VERSION}"' in (tmp_path / ".claude-plugin" / "plugin.json").read_text()
     assert f'version = "{NEXT_VERSION}"' in (tmp_path / "uv.lock").read_text()
     assert f"發行說明：[`{NEXT_VERSION}`](docs/RELEASE_NOTES_{NEXT_VERSION}.md)" in (tmp_path / "README.md").read_text()
+    assert f"loop-apidoc v{NEXT_VERSION}" in (
+        tmp_path / "docs" / "introduction.en.html"
+    ).read_text()
     notes = (tmp_path / "docs" / f"RELEASE_NOTES_{NEXT_VERSION}.md").read_text()
     assert f"# loop-apidoc {NEXT_VERSION} release notes" in notes
     assert "Adds reusable releases." in notes

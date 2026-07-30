@@ -93,6 +93,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#review-workbench">review — local comparison and approval</a>
   <a class="lvl-2" href="#_7">Output structure</a>
   <a class="lvl-2" href="#_8">Validation rules summary</a>
+  <a class="lvl-2" href="#benchmark-quality-gate">Benchmark quality gate</a>
   <a class="lvl-2" href="#_9">Development</a>
   <a class="lvl-3" href="#_10">Package structure</a>
   <a class="lvl-2" href="#_11">Design documents</a>
@@ -370,6 +371,23 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 </tbody>
 </table>
 <p>Validation classifies issues: <code>OPENAPI_INVALID</code> / <code>OUTPUT_MISMATCH</code> → fixable by regeneration; <code>REQUIRED_INFO_MISSING</code> → the agent re-reads the relevant sources to fill the gap; <code>SOURCE_UNVERIFIED</code> / <code>SOURCE_CONFLICT</code> / <code>UNSUPPORTED_ASSERTION</code> → unfixable (fail-closed, reported as a gap/conflict). Correction is agent-driven based on the <code>assemble --json</code> report (re-read sources, overwrite the extraction JSON, then re-run) rather than a loop built into the CLI.</p>
+<hr />
+<h2 id="benchmark-quality-gate">Benchmark quality gate: CI-safe and strict-local</h2>
+<p>The benchmark harness has four guarantees: committed fixture inventory, discovery guard, source-backed execution, and strict-local preflight. The current 13 refers to unique case directories, not pytest item count; one case feeds several parametrized tests. See <a href="BENCHMARK_VALIDATION_PLAN.md"><code>docs/BENCHMARK_VALIDATION_PLAN.md</code></a> for the full contract.</p>
+<h3>CI-safe operation</h3>
+<pre><code class="language-bash">uv run python scripts/quality_gate.py
+</code></pre>
+<p>CI-safe mode does not require the operator-provided, gitignored <code>benchmarks/&lt;case&gt;/sources/</code> snapshots. It runs lint and the full pytest suite, including fixture discovery and exact parity between <code>REQUIRED_BENCHMARK_CASES</code> and committed fixtures. Source-backed case assertions SKIP when their sources are unavailable; this proves that the case is committed and discoverable, <strong>not that the benchmark passed</strong>.</p>
+<h3>Sanitized exact-evidence CI lane</h3>
+<pre><code class="language-bash">uv run python scripts/quality_gate.py --sanitized-fixtures
+</code></pre>
+<p>Exact-evidence or Core-parity changes can use this independent lane to replay the reviewed, line-preserving, redistributable fragments listed in <code>SANITIZED_BENCHMARK_CASES</code>. The current pilot is <code>rsg-game-transfer-wallet</code>. Passing proves fixture-backed exact-evidence parity for retained claims only; it is neither complete source-backed revalidation nor strict-local PASS.</p>
+<h3>Strict-local operation</h3>
+<pre><code class="language-bash">uv run python scripts/quality_gate.py --strict-local
+</code></pre>
+<p>Run this only on a machine holding all 13 original, dated source snapshots. The preflight rejects any required <code>sources/</code> directory that is missing or empty, then runs the source-backed benchmark module. Any pytest skip fails the gate. Passing means required and committed inventories match, every source-backed assertion executed, and the run had zero skips.</p>
+<p><code>--strict-local</code> never accepts <code>sanitized_sources/</code> as original evidence and cannot be combined with <code>--sanitized-fixtures</code>, preventing the two assurance claims from being confused.</p>
+<p>If a historical source cannot be obtained lawfully and reproducibly, record the missing snapshot, complete deterministic CI-safe checks, and perform a legitimate source-backed spot-check for the change. Never substitute newer documentation, synthetic fixtures, or an upstream error page, and never claim strict-local passed.</p>
 <hr />
 <h2 id="_9">Development</h2>
 <pre><code class="language-bash"># Run tests

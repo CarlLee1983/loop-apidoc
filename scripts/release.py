@@ -71,6 +71,7 @@ def _update_versions(root: Path, current: str, target: str) -> None:
         rf'\g<1>{target}\g<2>{target}\g<3>',
     )
     _replace(root / "docs/introduction.html", r'loop-apidoc v\d+\.\d+\.\d+', f"loop-apidoc v{target}")
+    _replace(root / "docs/introduction.en.html", r'loop-apidoc v\d+\.\d+\.\d+', f"loop-apidoc v{target}")
     test_path = root / "tests/test_plugin_manifest.py"
     test_text = test_path.read_text(encoding="utf-8")
     if current not in test_text:
