@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import pymupdf4llm
 
-from loop_apidoc.docx_normalization import prepare_docx, write_prepared_docx
+from loop_apidoc.docx_normalization import (
+    PreparedDocx,
+    prepare_docx,
+    write_prepared_docx,
+)
 
 # Source formats we can flatten to markdown text for the agent to read. Other
 # formats are copied byte-for-byte so no declared source silently disappears.
@@ -18,6 +23,55 @@ class PreprocessResult:
     converted: list[Path]
     copied: list[Path]
     passthrough: list[Path]
+
+
+class PreprocessKind(Enum):
+    CONVERTED_PDF = "converted-pdf"
+    CONVERTED_DOCX = "converted-docx"
+    COPIED_TEXT = "copied"
+    PASSTHROUGH = "passthrough"
+
+    @classmethod
+    def from_suffix(cls, suffix: str) -> PreprocessKind:
+        if suffix == ".pdf":
+            return cls.CONVERTED_PDF
+        if suffix == ".docx":
+            return cls.CONVERTED_DOCX
+        if suffix in _TEXT_SUFFIXES:
+            return cls.COPIED_TEXT
+        return cls.PASSTHROUGH
+
+    @property
+    def converts_to_markdown(self) -> bool:
+        return self in {self.CONVERTED_PDF, self.CONVERTED_DOCX}
+
+    @property
+    def requires_docx_preflight(self) -> bool:
+        return self is self.CONVERTED_DOCX
+
+
+@dataclass(frozen=True)
+class PreprocessItem:
+    source: Path
+    relative: Path
+    kind: PreprocessKind
+
+    @classmethod
+    def from_source(cls, source: Path, source_relative: Path) -> PreprocessItem:
+        kind = PreprocessKind.from_suffix(source.suffix.lower())
+        relative = (
+            source_relative.with_name(f"{source_relative.name}.md")
+            if kind.converts_to_markdown
+            else source_relative
+        )
+        return cls(source=source, relative=relative, kind=kind)
+
+    @property
+    def claimed_outputs(self) -> tuple[Path, ...]:
+        if self.kind.requires_docx_preflight:
+            sidecar = self.relative.with_suffix(self.relative.suffix + ".source.json")
+            return self.relative, sidecar
+        return (self.relative,)
 
 
 def pdf_to_markdown(pdf_path: Path) -> str:
@@ -51,69 +105,53 @@ def prepare_markdown(sources: Path, dest_dir: Path) -> PreprocessResult:
     passthrough: list[Path] = []
 
     paths = [sources] if sources.is_file() else sorted(sources.rglob("*"))
-    planned: list[tuple[Path, Path, str]] = []
+    planned: list[PreprocessItem] = []
     for path in paths:
         if not path.is_file():
             continue
-        suffix = path.suffix.lower()
         source_relative = Path(path.name) if sources.is_file() else path.relative_to(sources)
-        if suffix == ".pdf":
-            relative = source_relative.with_name(f"{source_relative.name}.md")
-            kind = "converted-pdf"
-        elif suffix == ".docx":
-            relative = source_relative.with_name(f"{source_relative.name}.md")
-            kind = "converted-docx"
-        elif suffix in _TEXT_SUFFIXES:
-            relative = source_relative
-            kind = "copied"
-        else:
-            relative = source_relative
-            kind = "passthrough"
-        planned.append((path, relative, kind))
+        planned.append(PreprocessItem.from_source(path, source_relative))
 
     destinations: dict[Path, Path] = {}
-    for path, relative, kind in planned:
-        claims = [relative]
-        if kind == "converted-docx":
-            claims.append(relative.with_suffix(relative.suffix + ".source.json"))
-        for claim in claims:
-            prior = destinations.setdefault(claim, path)
-            if prior != path:
+    for item in planned:
+        for claim in item.claimed_outputs:
+            prior = destinations.setdefault(claim, item.source)
+            if prior != item.source:
                 raise ValueError(
                     "preprocess output collision: "
-                    f"{prior} and {path} both map to {dest_dir / claim}"
+                    f"{prior} and {item.source} both map to {dest_dir / claim}"
                 )
 
-    for _path, relative, kind in planned:
-        if kind != "converted-docx":
+    for item in planned:
+        if not item.kind.requires_docx_preflight:
             continue
-        sidecar = relative.with_suffix(relative.suffix + ".source.json")
-        if (dest_dir / relative).exists() or (dest_dir / sidecar).exists():
+        if any((dest_dir / claim).exists() for claim in item.claimed_outputs):
             raise ValueError("DOCX normalization output already exists")
 
-    prepared_docx = {
-        path: prepare_docx(path, relative.name)
-        for path, relative, kind in planned
-        if kind == "converted-docx"
+    prepared_docx: dict[Path, PreparedDocx] = {
+        item.source: prepare_docx(item.source, item.relative.name)
+        for item in planned
+        if item.kind.requires_docx_preflight
     }
 
-    for path, relative, kind in planned:
-        output_path = dest_dir / relative
+    for item in planned:
+        output_path = dest_dir / item.relative
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        if kind == "converted-pdf":
-            output_path.write_text(pdf_to_markdown(path), encoding="utf-8")
-            converted.append(relative)
-        elif kind == "converted-docx":
-            write_prepared_docx(prepared_docx[path], output_path)
-            converted.append(relative)
-        elif kind == "copied":
+        if item.kind is PreprocessKind.CONVERTED_PDF:
+            output_path.write_text(pdf_to_markdown(item.source), encoding="utf-8")
+            converted.append(item.relative)
+        elif item.kind is PreprocessKind.CONVERTED_DOCX:
+            write_prepared_docx(prepared_docx[item.source], output_path)
+            converted.append(item.relative)
+        elif item.kind is PreprocessKind.COPIED_TEXT:
             output_path.write_text(
-                path.read_text(encoding="utf-8", errors="replace"), encoding="utf-8"
+                item.source.read_text(encoding="utf-8", errors="replace"),
+                encoding="utf-8",
             )
-            copied.append(relative)
+            copied.append(item.relative)
         else:
-            output_path.write_bytes(path.read_bytes())
-            passthrough.append(relative)
+            output_path.write_bytes(item.source.read_bytes())
+            passthrough.append(item.relative)
 
     return PreprocessResult(
         dest_dir=dest_dir,

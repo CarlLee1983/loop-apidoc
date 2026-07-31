@@ -4,7 +4,7 @@
 source-backed benchmarks; 5 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
-**Updated:** 2026-07-30
+**Updated:** 2026-07-31
 
 ## Purpose
 
@@ -42,7 +42,8 @@ enter any agent context. After acquisition/preprocess, a manifest binds the exac
 package and `inspect-source-risk` deterministically scans UTF-8 Markdown, HTML, and OpenAPI
 JSON/YAML. Raw PDF/Word, invalid UTF-8, oversized text, and other unscannable pending sources
 are blockers rather than implicit exceptions. Fixed findings identify only rules, source refs,
-and locators; they never reproduce the matched payload or rewrite evidence.
+and locators; they never reproduce the matched payload or rewrite evidence. Reports retain at
+most 1,000 findings and replace further matches with a fail-closed truncation blocker.
 
 The versioned report records schema/ruleset, `max_bytes`, manifest digest, per-source SHA-256,
 and a stable source-binding digest. `assess-sources --source-risk` verifies and embeds that
@@ -290,8 +291,9 @@ remaining derived-name collision exists.
 
 **Delivered (2026-07-31):** the same `preprocess` seam now converts `.docx` to
 deterministic `<name>.docx.md` plus source-hash provenance. A bounded, fail-closed
-OOXML gate rejects unsafe ZIP/package/XML, macros and active content, external
-relationships, and `altChunk`; every DOCX in a batch is validated before outputs
+OOXML gate scans every Word XML part and rejects unsafe ZIP/package/XML, macros and active DDE
+field content, external relationships, markup-compatibility alternate content, `altChunk`, and merged-cell table
+semantics that cannot be rendered faithfully; every DOCX in a batch is validated before outputs
 are written. The resulting Markdown still passes through the existing manifest-bound
 `inspect-source-risk` gate. Legacy `.doc` remains an explicit passthrough gap.
 

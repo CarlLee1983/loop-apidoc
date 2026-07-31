@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from loop_apidoc import docx_normalization
 from loop_apidoc.cli import app
+from loop_apidoc.docx_normalization import prepare_docx, write_prepared_docx
 
 
 runner = CliRunner()
@@ -89,7 +89,7 @@ def test_normalize_docx_writes_structured_markdown_and_provenance(
     sidecar = output.with_suffix(output.suffix + ".source.json")
     provenance = json.loads(sidecar.read_text(encoding="utf-8"))
     assert provenance["schema_version"] == 1
-    assert provenance["security_policy_version"] == "1"
+    assert provenance["security_policy_version"] == "2"
     assert provenance["source_file"] == source.name
     assert provenance["source_sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
     assert provenance["normalized_file"] == output.name
@@ -345,6 +345,97 @@ def test_preprocess_rejects_altchunk_content(tmp_path: Path) -> None:
     assert not (output_dir / "manual.docx.md").exists()
 
 
+def test_preprocess_rejects_ddeauto_field_without_partial_output(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:fldSimple w:instr="DDEAUTO c:\\windows\\system32\\cmd.exe"><w:r><w:t>Displayed result</w:t></w:r></w:fldSimple></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+
+    result = runner.invoke(
+        app,
+        ["preprocess", "--sources", str(source), "--out", str(output_dir)],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert "DOCX-ACTIVE-CONTENT" in result.output
+    assert not output.exists()
+    assert not output.with_suffix(output.suffix + ".source.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("document_xml", "extra_entries", "expected_code"),
+    [
+        pytest.param(
+            """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:customXml><w:p><w:r><w:instrText>DD</w:instrText></w:r><w:r><w:instrText>EAUTO server topic</w:instrText></w:r></w:p></w:customXml></w:body></w:document>""",
+            None,
+            "DOCX-ACTIVE-CONTENT",
+            id="dde-in-unrendered-wrapper",
+        ),
+        pytest.param(
+            """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
+            {
+                "word/header1.xml": """<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:AlternateContent><mc:Choice Requires="w"/><mc:Fallback/></mc:AlternateContent></w:hdr>"""
+            },
+            "DOCX-UNSUPPORTED-CONTENT",
+            id="alternate-content-in-word-part",
+        ),
+        pytest.param(
+            """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:tbl><w:customXml><w:tr><w:tc><w:tcPr><w:gridSpan w:val="2"/></w:tcPr><w:p/></w:tc></w:tr></w:customXml></w:tbl></w:body></w:document>""",
+            None,
+            "DOCX-UNSUPPORTED-CONTENT",
+            id="merged-cell-in-unrendered-wrapper",
+        ),
+    ],
+)
+def test_preprocess_rejects_protected_ooxml_outside_rendered_nodes(
+    tmp_path: Path,
+    document_xml: str,
+    extra_entries: dict[str, bytes | str] | None,
+    expected_code: str,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(source, document_xml, extra_entries=extra_entries)
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+
+    result = runner.invoke(
+        app,
+        ["preprocess", "--sources", str(source), "--out", str(output_dir)],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert expected_code in result.output
+    assert not output.exists()
+    assert not output.with_suffix(output.suffix + ".source.json").exists()
+
+
+def test_preprocess_rejects_alternate_content_without_partial_output(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><w:body><w:p><mc:AlternateContent><mc:Choice Requires="w"><w:r><w:t>Choice contract</w:t></w:r></mc:Choice><mc:Fallback><w:r><w:t>Fallback contract</w:t></w:r></mc:Fallback></mc:AlternateContent></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+
+    result = runner.invoke(
+        app,
+        ["preprocess", "--sources", str(source), "--out", str(output_dir)],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert "DOCX-UNSUPPORTED-CONTENT" in result.output
+    assert not output.exists()
+    assert not output.with_suffix(output.suffix + ".source.json").exists()
+
+
 def test_preprocess_rejects_unrendered_visible_word_parts(tmp_path: Path) -> None:
     source = tmp_path / "manual.docx"
     _write_docx(
@@ -427,6 +518,36 @@ def test_preprocess_rejects_inline_object_inside_table_cell(tmp_path: Path) -> N
     assert result.exit_code == 2, result.stdout
     assert "DOCX-UNSUPPORTED-CONTENT" in result.output
     assert not (output_dir / "manual.docx.md").exists()
+
+
+@pytest.mark.parametrize(
+    "cell_property",
+    [
+        '<w:gridSpan w:val="2"/>',
+        '<w:vMerge w:val="restart"/>',
+    ],
+)
+def test_preprocess_rejects_merged_table_cells_without_partial_output(
+    tmp_path: Path,
+    cell_property: str,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        f"""<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:tbl><w:tr><w:tc><w:tcPr>{cell_property}</w:tcPr><w:p><w:r><w:t>Combined header</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Third</w:t></w:r></w:p></w:tc></w:tr></w:tbl></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+
+    result = runner.invoke(
+        app,
+        ["preprocess", "--sources", str(source), "--out", str(output_dir)],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert "DOCX-UNSUPPORTED-CONTENT" in result.output
+    assert not output.exists()
+    assert not output.with_suffix(output.suffix + ".source.json").exists()
 
 
 def test_preprocess_validates_all_docx_before_writing_batch_outputs(
@@ -523,8 +644,8 @@ def test_preprocess_rejects_docx_provenance_output_collision_before_writing(
     assert not (output_dir / "manual.docx.md.source.json").exists()
 
 
-def test_preprocess_cleans_partial_files_when_provenance_staging_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_write_prepared_docx_cleans_staged_file_when_provenance_staging_fails(
+    tmp_path: Path,
 ) -> None:
     source = tmp_path / "manual.docx"
     _write_docx(
@@ -532,26 +653,23 @@ def test_preprocess_cleans_partial_files_when_provenance_staging_fails(
         """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
     )
     output_dir = tmp_path / "sources_text"
-    real_temporary_file = docx_normalization.tempfile.NamedTemporaryFile
-    calls = 0
+    output_dir.mkdir()
+    output = output_dir / "manual.docx.md"
+    sidecar = output.with_suffix(output.suffix + ".source.json")
+    prepared = prepare_docx(source, output.name)
 
-    def fail_second_staging_file(*args: object, **kwargs: object):
-        nonlocal calls
-        calls += 1
-        if calls == 2:
+    def fail_provenance_stage(target: Path, content: bytes) -> Path:
+        if target == sidecar:
             raise OSError("simulated staging failure")
-        return real_temporary_file(*args, **kwargs)
+        staged = target.with_name(f".{target.name}.staged")
+        staged.write_bytes(content)
+        return staged
 
-    monkeypatch.setattr(
-        docx_normalization.tempfile,
-        "NamedTemporaryFile",
-        fail_second_staging_file,
-    )
+    with pytest.raises(OSError, match="simulated staging failure"):
+        write_prepared_docx(
+            prepared,
+            output,
+            stage_file=fail_provenance_stage,
+        )
 
-    result = runner.invoke(
-        app,
-        ["preprocess", "--sources", str(source), "--out", str(output_dir)],
-    )
-
-    assert result.exit_code == 2, result.stdout
     assert list(output_dir.iterdir()) == []

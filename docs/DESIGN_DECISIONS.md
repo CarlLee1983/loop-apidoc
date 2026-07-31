@@ -124,11 +124,22 @@ therefore finish acquisition/preprocessing, build a manifest for the exact reada
 and pass deterministic `inspect-source-risk` before any router, quality reviewer, or extractor
 reads source-derived text. The inspector supports bounded UTF-8 Markdown, HTML, and OpenAPI
 JSON/YAML; PDF, Word, invalid UTF-8, oversized text, and other unscannable pending sources fail
-closed until converted and re-manifested. It never rewrites evidence or echoes a matched payload.
-The built-in `preprocess` seam handles `.docx` as a bounded OOXML package: it rejects unsafe
-ZIP/package/XML, macro or active content, external relationships, and unsupported alternate
-content before writing deterministic Markdown plus source-hash provenance. Legacy `.doc`
+closed until converted and re-manifested. It never rewrites evidence or echoes a matched payload;
+the report retains at most 1,000 findings and uses a blocker truncation sentinel when more matches
+exist, preventing bounded input from amplifying into unbounded output.
+The built-in `preprocess` seam handles `.docx` as a bounded OOXML package: it scans every Word XML
+part and rejects unsafe ZIP/package/XML, macro or active DDE field content, external relationships,
+unsupported alternate content, and merged-cell table semantics that cannot be rendered faithfully before writing
+deterministic Markdown plus source-hash provenance. Legacy `.doc`
 remains outside this trusted boundary and requires an operator-controlled external conversion.
+
+The DOCX ingestion shape and ZIP/XML fallback were adapted from
+[`virgiliojr94/book-to-skill`](https://github.com/virgiliojr94/book-to-skill) revision
+`efda3b2212ce1b2c052126e85e14de40a32442e8`. That project is an upstream design/code source, not
+a runtime dependency or a promise to support its wider EPUB/RTF/MOBI input matrix. The local seam
+deliberately tightens the boundary with bounded OOXML validation, full-batch preflight,
+deterministic source provenance, and fail-closed rendering. Its MIT notice is retained in
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 
 The audit contract is versioned and source-bound: schema/ruleset, `max_bytes`, manifest digest,
 per-source SHA-256, and a stable source-binding digest are all checked.

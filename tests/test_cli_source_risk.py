@@ -171,6 +171,51 @@ def test_inspect_source_risk_classifies_control_content_by_fixed_rules(
     ]
 
 
+def test_inspect_source_risk_bounds_high_density_findings(tmp_path: Path) -> None:
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "dense-controls.md"
+    source.write_text("\u200b" * 200_000, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 1, result.stdout
+    report_path = output / "source-risk-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["ruleset_version"] == "2"
+    assert report["verdict"] == "reject"
+    assert len(report["findings"]) == 1_000
+    assert report["findings"][-1] == {
+        "rule_id": "SR-FINDINGS-TRUNCATED",
+        "severity": "blocker",
+        "source_ref": "/local_sources/0",
+        "locator": "file",
+    }
+    assert all(
+        finding["rule_id"] == "SR-ZERO-WIDTH-FORMATTING"
+        for finding in report["findings"][:-1]
+    )
+    assert report_path.stat().st_size < 200_000
+
+
 def test_inspect_source_risk_rejects_source_larger_than_scan_cap(
     tmp_path: Path,
 ) -> None:

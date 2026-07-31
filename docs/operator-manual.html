@@ -166,7 +166,7 @@ uv run loop-apidoc --help
 <h3 id="preprocess"><code>preprocess</code> — PDF／DOCX 轉可掃描 markdown</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<p>PDF 使用 pymupdf4llm；<code>.docx</code> 使用內建 fail-closed OOXML normalizer。兩者都保留標題與表格並輸出 <code>&lt;原檔名&gt;.md</code>。DOCX 另寫 deterministic <code>.source.json</code> provenance。此首個 slice 接受 UTF-8-compatible Transitional OOXML textual DOCX；unsafe ZIP／OPC／XML、巨集與 active content、外部 relationship、DTD/entity、<code>altChunk</code>、embedded media，以及有實質內容的 header/footer/note/comment part 都會在整批輸出前拒絕。舊式 <code>.doc</code> 維持 passthrough，須由操作者用可信任工具轉檔。之後對精確的 <code>--out</code> 建 manifest、通過 <code>inspect-source-risk</code>，再讓 agent 讀取。</p>
+<p>PDF 使用 pymupdf4llm；<code>.docx</code> 使用內建 fail-closed OOXML normalizer。受支援的文件會保留標題與表格並輸出 <code>&lt;原檔名&gt;.md</code>；deterministic <code>.source.json</code> sidecar 會記錄 schema／security-policy version、原始與正規化檔名、大小及 SHA-256。政策上限為壓縮檔 25 MiB、2,048 entries、每個 member 10 MiB、解壓總量 50 MiB、壓縮比 100:1。此首個 slice 接受 UTF-8-compatible Transitional OOXML textual DOCX；unsafe ZIP／OPC／XML、巨集與 active DDE field code、markup-compatibility alternate content、外部 relationship、DTD/entity、<code>altChunk</code>、embedded media、有實質內容的 header/footer/note/comment part，以及目前無法忠實輸出的合併儲存格語意，都會在整批輸出前拒絕。既有 Markdown／sidecar、衍生路徑碰撞與 normalization error 一律不覆寫，<code>preprocess</code> 以 exit 2 結束。DOCX ZIP/XML fallback 改編自 MIT 授權的 <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a> 固定 revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>；本專案沒有 runtime dependency，也未繼承 EPUB／RTF／MOBI 支援，授權全文見<a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">第三方公告</a>。舊式 <code>.doc</code> 維持 passthrough，須由操作者用可信任工具轉檔。之後對精確的 <code>--out</code> 建 manifest、通過 <code>inspect-source-risk</code>，再讓 agent 讀取。</p>
 <h3 id="manifest-manifest"><code>manifest</code> — 建立來源 manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
@@ -211,7 +211,7 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
 <pre><code class="language-bash">uv run loop-apidoc inspect-source-risk --sources ./sources --manifest ./work/manifest.json \
   --output ./work/source-risk [--max-bytes 5242880]
 </code></pre>
-<p>請在<strong>前處理與 manifest 建立後、任何 agent 讀取來源內容前</strong>執行。它把 manifest 綁定的 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則找出高風險 Unicode、控制字元與 instruction／control-token pattern。原始 PDF 與 Word 刻意標為 <code>unscannable</code> 並拒絕通過：須先轉成支援的文字格式，再對精確 bytes 重建 manifest。命令輸出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫來源，也不回顯命中 payload；finding 只含 rule ID、manifest source reference 與 locator。退出碼：<code>0</code> = pass（可含 warning）、<code>1</code> = reject（blocker 或 unscannable source）、<code>2</code> = 輸入無效、過期、不安全或不可讀。</p>
+<p>請在<strong>前處理與 manifest 建立後、任何 agent 讀取來源內容前</strong>執行。它把 manifest 綁定的 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則找出高風險 Unicode、控制字元與 instruction／control-token pattern。原始 PDF 與 Word 刻意標為 <code>unscannable</code> 並拒絕通過：須先轉成支援的文字格式，再對精確 bytes 重建 manifest。blocker rules 為 <code>SR-UNICODE-TAG</code>、<code>SR-BIDI-OVERRIDE</code>、<code>SR-CONTROL-CHARACTER</code>、<code>SR-UNSCANNABLE</code>、<code>SR-SCAN-SIZE-EXCEEDED</code>、<code>SR-INVALID-UTF8</code>、<code>SR-FINDINGS-TRUNCATED</code>；warning rules 為 <code>SR-BIDI-FORMATTING</code>、<code>SR-ZERO-WIDTH-FORMATTING</code>、<code>SR-INSTRUCTION-OVERRIDE-TEXT</code>、<code>SR-CONTROL-TOKEN-TEXT</code>。warning 是人工覆核訊號，不是可遵循的來源指令。命令輸出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫來源，也不回顯命中 payload；finding 只含 rule ID、manifest source reference 與 locator。報告最多保留 1,000 筆 finding，其餘命中會用 blocker <code>SR-FINDINGS-TRUNCATED</code> 表示。退出碼：<code>0</code> = pass（可含 warning）、<code>1</code> = reject（blocker 或 unscannable source）、<code>2</code> = 輸入無效、過期、不安全或不可讀。</p>
 <h3 id="assess-sources"><code>assess-sources</code> — 擷取前來源品質閘</h3>
 <pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
   --source-risk ./work/source-risk --observations &lt;observations.json&gt; \
@@ -422,7 +422,11 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF／DOCX→md 編排)、<code>docx_normalization.py</code>(bounded、fail-closed OOXML 驗證與 provenance)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(typed PDF／DOCX→md 編排)</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/docx_*.py</code></td>
+<td><code>docx_normalization.py</code> 穩定 facade、pure package-wide fail-closed OOXML 驗證／rendering，以及 <code>docx_publish.py</code> 分段暫存且於可回報寫入失敗時回滾的 provenance publication</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
