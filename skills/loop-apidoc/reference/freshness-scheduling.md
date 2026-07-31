@@ -28,7 +28,9 @@ Run on a schedule (cron, headless agent, CI):
 ## Exit-code contract
 
 - **`0` unchanged** → stop. No extraction, no cost.
-- **`1` changed** → re-run the extraction pipeline (the skill's normal steps 2–8),
+- **`1` changed** → re-run the normal named pipeline, including a fresh
+  `manifest` → `inspect-source-risk` → `assess-sources --source-risk` sequence before
+  extraction,
   then refresh the baseline:
 
   ```bash
@@ -46,7 +48,7 @@ on schedule:
   if result.exit == 0:
     stop                                   # no cost
   elif result.exit == 1:
-    run extraction pipeline (steps 2-8)    # pays for extraction only here
+    run normal source-risk + extraction pipeline  # pays for model extraction only here
     run(<APIDOC> record-fingerprint --run-dir <run> --output <path> --force)
   elif result.exit == 2:
     alert human                            # source unreachable / auth / moved
@@ -56,7 +58,8 @@ A ready-to-run implementation of this loop lives at
 `examples/freshness-scheduling/check-and-refresh.sh` (+ its `README.md`): a cron/CI-mountable
 wrapper that branches on the exit code, runs a caller-supplied `REPARSE_CMD` on `changed`,
 and then refreshes the baseline with `record-fingerprint --force`. Point `REPARSE_CMD` at
-your own re-extraction step (the skill's steps 2–8).
+your own normal re-extraction step; it must rebuild and revalidate the source-risk binding
+before any agent reads changed source content.
 
 ## Batch scan (many docsets)
 

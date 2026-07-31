@@ -82,12 +82,12 @@ source-backed 或 strict-local PASS。
 
 ## 運作方式
 
-擷取引擎是**當前的 coding agent 自己**:在 Claude Code plugin 或 OpenAI Codex CLI 的 session 裡,agent 依 `loop-apidoc` skill 讀來源、以**對來源唯讀的 subagent fan-out** 擷取——主 agent 寫出 `inventory.json`(＋選填 `integration.json`),各端點 subagent 各自寫出 `endpoints/ep<N>.json`——先以 `verify-extraction` 檢查擷取契約,再呼叫確定性 CLI `assemble` 跑後段 plan → generate → validate。
+擷取引擎是**當前的 coding agent 自己**:在 Claude Code plugin 或 OpenAI Codex CLI 的 session 裡,確定性工具先取得／前處理 agent 實際會讀的來源包、建立 manifest,並執行 pre-model `inspect-source-risk`。只有與來源穩定綁定的 pass audit 才能進入 agent 來源品質審查與**對來源唯讀的 subagent fan-out**。主 agent 寫出 `inventory.json`(＋選填 `integration.json`),各端點 subagent 各自寫出 `endpoints/ep<N>.json`,先以 `verify-extraction` 檢查擷取契約,再呼叫確定性 CLI `assemble` 跑後段 plan → generate → validate。
 
 ### 完整流程
 
 ```
-preprocess(可選) → 擷取(agent 唯讀 subagent fan-out) → verify-extraction(契約檢查) → manifest → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證
+來源取得／preprocess → manifest → inspect-source-risk → agent 來源品質審查 → assess-sources --source-risk → 擷取(agent 唯讀 subagent fan-out) → verify-extraction → assemble: manifest → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證
 ```
 
 驗證會輸出分類後的問題報告。修正由 agent 自行驅動:`assemble` 以 `--json` 回報結果,agent 依報告回頭重讀來源、覆寫擷取 JSON,再重新執行 `assemble`,直到通過或判定為無法修正的缺漏／衝突。
@@ -323,6 +323,8 @@ uv run loop-apidoc cache-gitbook-llms \
   --coverage ./work/url_sources/coverage.json
 uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.io/docs" \
   --output ./work/manifest.preflight.json
+uv run loop-apidoc inspect-source-risk --sources ./sources \
+  --manifest ./work/manifest.preflight.json --output ./work/source-risk
 uv run loop-apidoc extract-markdown-drafts \
   --sources ./sources --manifest ./work/manifest.preflight.json \
   --output ./work/markdown-api-facts.json
@@ -334,7 +336,8 @@ uv run loop-apidoc scaffold-extraction \
 The cache fetches `llms.txt` once and caches every first-seen same-origin `.md` URL beneath the
 entry path, preserving its URL hierarchy under `sources/`. Each successful page gets an original
 URL/SHA-256/timestamp sidecar. Index/output failures fail before a partial corpus is written;
-individual page failures remain `fetch_failed` in the coverage ledger. The facts JSON is a
+individual page failures remain `fetch_failed` in the coverage ledger. 在
+`inspect-source-risk` 通過前，不得檢視 source-derived drafts 或重讀其 citations。The facts JSON is a
 non-authoritative, line-cited draft of explicit endpoint headings, labelled parameter tables,
 and fenced examples. It helps bounded agent review but never replaces source reading,
 `verify-extraction`, or final agent-written extraction JSON.
@@ -351,17 +354,34 @@ skill 不綁定特定模型：由宿主將快速模型用於候選頁路由、�
 [`model-orchestration.md`](skills/loop-apidoc/reference/model-orchestration.md) 的角色矩陣、
 交接契約與 Codex／Claude 對應方式。
 
+### `inspect-source-risk` — agent 讀來源前的確定性風險閘
+
+```bash
+uv run loop-apidoc inspect-source-risk \
+  --sources ./work/sources_md --manifest ./work/manifest.preflight.json \
+  --output ./work/source-risk [--max-bytes 5242880]
+```
+
+在來源文字進入模型 context 前，掃描 manifest 精確綁定的來源包。支援 UTF-8
+Markdown、HTML、OpenAPI JSON/YAML；PDF、Word、無效 UTF-8、超過上限的文字與其他不可掃描
+pending source 都是 blocker，需先轉換再重建 manifest。預設每檔 5 MiB。固定格式的
+`source-risk-report.{json,zh-TW.md}` 只記 rule ID、severity、source ref 與 locator，絕不回顯
+命中的 payload，也不改寫來源 bytes。schema/ruleset 版本、`max_bytes`、manifest digest、逐來源
+SHA-256 coverage 與穩定 source-binding digest 會阻止 stale audit 重用。退出碼：`0` = pass、
+`1` = reject、`2` = 無效、不安全、無法讀取或綁定不符的輸入。
+
 ### `assess-sources` — 擷取前來源品質評估
 
 ```bash
 uv run loop-apidoc assess-sources \
-  --sources ./sources --manifest ./work/manifest.json \
+  --sources ./work/sources_md --manifest ./work/manifest.preflight.json \
+  --source-risk ./work/source-risk \
   --observations ./work/source-observations.json \
   --source-set "<來源集名稱>" \
   --output ./work/source-quality [--base-manifest <舊 manifest>]
 ```
 
-在擷取前把 manifest 與 agent 記錄的來源觀察評成來源品質報告（`source-quality-report.{json,zh-TW.md}`）與來源版本差異（`source-diff.{json,md}`，提供 `--base-manifest` 時比對舊 manifest）。blocker observation 可明列 `required_source_refs`；reject report 會依原順序去重後輸出為下一輪 bounded capture seed，但絕不自動抓取或 crawl。結論為 `pass` 或 `reject`；退出碼：`0` = pass、`1` = reject、`2` = 輸入檔錯誤。產出的目錄可經 `assemble --source-quality` 傳入：`reject` 會在建立 run-dir 前中止，`pass` 報告則隨 run-dir 保存供稽核。
+擷取前先驗證 `--source-risk` 是同一份 manifest 與穩定 source binding 的 current pass，並對目前來源 bytes 重跑確定性檢查，再把 manifest 與 agent 記錄的來源觀察評成來源品質報告（`source-quality-report.{json,zh-TW.md}`）與來源版本差異（`source-diff.{json,md}`）；JSON 會嵌入已驗證的 source-risk audit。blocker observation 可明列 `required_source_refs`；reject report 依原順序去重後輸出為 bounded next-capture seed，但不抓取或 crawl。退出碼：`0` = pass、`1` = 品質 reject、`2` = 缺少、格式錯誤、已 reject、stale、遭竄改或綁定不符的輸入／audit。產出的目錄可經 `assemble --source-quality` 傳入；assemble 會重建 manifest、再次重跑確定性檢查並重驗嵌入 audit，建立 run-dir 前即拒絕異動或竄改。
 
 ### `record-fingerprint` / `check-freshness` — 來源新鮮度排程閘
 
@@ -568,7 +588,7 @@ output/
     │   ├── report.json
     │   └── report.md
     ├── source-quality/              # 傳入 --source-quality 時保留來源品質稽核
-    │   ├── source-quality-report.json
+    │   ├── source-quality-report.json # 內嵌已驗證的 source-risk audit
     │   ├── source-quality-report.zh-TW.md
     │   ├── source-diff.json
     │   └── source-diff.md
@@ -651,7 +671,8 @@ uv run ruff check .
 | `loop_apidoc/diff/` | 比較兩個 run 目錄的版本差異，依 impact 分類並輸出報告 |
 | `loop_apidoc/preparation/` | 在 assemble 內把 manifest 與 plan 評成準備度報告 |
 | `loop_apidoc/score/` | 既有 run-dir 文件品質評分(JSON/Markdown report, CI gate 狀態) |
-| `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；通過報告可隨 run-dir 稽核保存 |
+| `loop_apidoc/source_risk/` | agent 讀來源前，對 manifest 綁定的 UTF-8 Markdown/HTML/OpenAPI 文字做確定性檢查；固定 no-payload finding、版本化 schema/rules、bounded read、穩定來源綁定、已驗證 report loader 與 `source-risk-report.{json,zh-TW.md}` |
+| `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；要求並嵌入已驗證的 source-risk audit，通過報告可隨 run-dir 稽核保存 |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
 | `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
 | `loop_apidoc/review/` | 本機單使用者 review 工作台：自動匯入 candidate、以 current/baseline 比對、保存結構化 handoff，並在人工明確核准後交由 Foundry 更新 current |

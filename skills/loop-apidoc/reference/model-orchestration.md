@@ -9,7 +9,7 @@ across runtimes.
 
 | Role | Capability | May read | Must produce | Escalate when |
 | --- | --- | --- | --- | --- |
-| tool | deterministic CLI | source files / cache | manifest, corpus, validation result | a fetch, schema, or coverage error occurs |
+| tool | deterministic CLI | source files / cache | manifest, source-risk audit, corpus, validation result | a fetch, risk, schema, or coverage error occurs |
 | router | fast / low-cost | catalog or candidate cards | selected URLs, sections, and rationale | the candidate cards cannot distinguish scope |
 | quality reviewer | standard | the complete source package | source-quality observations JSON | a suspected gap cannot be cited to a source locator |
 | extractor | standard | assigned local source scope only | one schema-conformant JSON object or one assigned endpoint file | source is ambiguous, contradictory, or absent |
@@ -37,21 +37,29 @@ extraction at `high` for those sources and record the choice in the run summary.
 The router ranks and selects; it does not establish API facts. The extractor never fills gaps
 from conventions. The integrator does not replace source evidence with consensus. The CLI's
 schema, provenance, coverage, and validation checks decide whether an artifact is acceptable.
+No model role may read source bodies, derived candidate text, or source-quality evidence until
+the deterministic `inspect-source-risk` report is a current pass for that exact manifest and
+stable source binding. The inspector is a tool, not another agent role.
 
 ## Artifact hand-off
 
 Pass paths and compact summaries, not copied source bodies:
 
 ```text
-catalog.json / corpus.json / candidates.json
+acquisition/preprocess -> manifest.json
+  -> inspect-source-risk: source-risk-report.json (pass, source-bound)
+  -> quality reviewer: source-quality-observations.json
+  -> assess-sources --source-risk: source-quality-report.json
+catalog.json / corpus.json / candidates.json (only after the risk pass)
   -> router: selected body_file paths and sections
   -> extractor(s): inventory.json or endpoints/ep<N>.json
   -> verify-extraction / assemble --json
   -> verifier: report.issues + only the named source scope
 ```
 
-- For URL sources, cache first; give the router candidate cards and let it select local
-  `body_file` evidence. Do not place all cached pages in a model context.
+- For URL sources, cache first, manifest and inspect the exact local text package, then give the
+  router candidate cards and let it select local `body_file` evidence. Do not let the router
+  read cards before the risk pass or place all cached pages in a model context.
 - Assign each endpoint extractor one output path and one bounded source scope. Keep the
   existing maximum of six concurrent endpoint extractions unless the host has an explicit
   lower safe limit.
@@ -89,7 +97,8 @@ and is host-independent; only the fan-out orchestration is the agent's.
 
 ## Escalation and stop rules
 
-1. Start with tools, then the router, then bounded extractors.
+1. Start with acquisition/preprocess tools, build the manifest, obtain a current
+   `inspect-source-risk` pass, then dispatch the quality reviewer, router, and bounded extractors.
 2. Escalate to a stronger model only for genuine cross-page reasoning, ambiguity, or a failed
    targeted correction.
 3. Re-read only the source scope named by `report.issues`; do not restart the full extraction.

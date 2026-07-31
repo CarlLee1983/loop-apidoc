@@ -5,6 +5,8 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, field_validator
 
+from loop_apidoc.source_risk.models import SourceRiskReport
+
 
 class QualityVerdict(str, Enum):
     PASS = "pass"
@@ -67,6 +69,7 @@ class SourceQualityReport(BaseModel):
     base_source_set: str | None = None
     findings: list[QualityFinding] = Field(default_factory=list)
     required_source_refs: list[str] = Field(default_factory=list)
+    source_risk: SourceRiskReport | None = None
 
     @property
     def blocker_count(self) -> int:

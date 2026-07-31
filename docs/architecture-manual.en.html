@@ -738,9 +738,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">cache-url-entry</div>
           <div class="command-chip">cache-gitbook-llms</div>
           <div class="command-chip">extract-markdown-drafts</div>
+          <div class="command-chip">scaffold-extraction</div>
           <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">import-rendered-url</div>
           <div class="command-chip">related-url-pages</div>
+          <div class="command-chip">inspect-source-risk</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
           <div class="command-chip">snapshot-openapi-url</div>
@@ -748,6 +750,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">check-freshness</div>
           <div class="command-chip">check-freshness-batch</div>
           <div class="command-chip">governance-scan</div>
+          <div class="command-chip">governance-review-plan</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -807,7 +810,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="source-quality">
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">Pre-extraction source-quality assessment and diff report; reject may expose explicit bounded required_source_refs without crawling, and a passing report can be retained alongside the run-dir.</div>
+            <div class="module-role">Requires and embeds a verified source-risk audit, then assesses traceable source quality; assemble revalidates the binding before retaining a pass report.</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="source-risk">
+            <div class="module-name">source_risk/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">Manifest-bound text inspection before agent access; writes a locator-only audit without rewriting or echoing source payloads.</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="freshness">
             <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
@@ -829,8 +836,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> provides source, URL-evidence, quality, freshness, run, <code>foundry</code>, and <code>review</code>-workbench operations. The latter is a single-user interface bound only to <code>127.0.0.1</code>: it auto-imports a candidate, compares current/baseline, saves structured handoff, and updates current only after an explicit human approval. It never calls a model or replaces validation. GitBook caching and draft facts remain local, non-authoritative extraction aids.
-      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, the URL corpus cache, <code>foundry/</code>, and <code>review/workflow.py</code> writing through Foundry are responsible for writing. <code>adapters/fragments.py</code> is a read-side I/O exit that materializes source content into exact fragments; Core and Domain stay pure.
+      <code>cli.py</code> provides 28 source, URL-evidence, risk, quality, freshness, run, <code>foundry</code>, and <code>review</code>-workbench commands. The latter is a single-user interface bound only to <code>127.0.0.1</code>: it auto-imports a candidate, compares current/baseline, saves structured handoff, and updates current only after an explicit human approval. It never calls a model or replaces validation. GitBook caching and draft facts remain local, non-authoritative extraction aids.
+      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_risk/report.py</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, the URL corpus cache, <code>foundry/</code>, and <code>review/workflow.py</code> writing through Foundry are responsible for writing. <code>source_risk/inspect.py</code> and <code>adapters/fragments.py</code> are read-side I/O exits; Core and Domain stay pure.
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>: <code>assemble --architecture-mode shadow</code> invokes the compatibility-only <code>shadow/</code> package after legacy validation. Its pure bridge maps manifest/plan values into Core evidence and claims, the in-memory runner stops after Core validation, and only <code>shadow/report.py</code> writes the observational <code>&lt;run-dir&gt;/core/</code> artifacts or <code>core/error.json</code>. Legacy validation, score, approval, Foundry, status, and exit codes remain authoritative.
@@ -849,10 +856,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       num: "PREP",
       title: "Provide Sources & Preprocess",
       pillClass: "prep",
-      pillLabel: "Manual / Optional",
-      desc: "Before extraction starts, the operator prepares the sources: local files go into a source directory (<code>&lt;SOURCES&gt;</code>), and public URLs are passed with <code>--url</code>. For table-heavy or large PDFs, it is best to first run <code>preprocess</code> to convert them into high-fidelity markdown (pymupdf4llm preserves tables and heading structure), avoiding the table distortion of raw PDF reads. No external notebook or browser login is required.",
-      details: "<p>Source formats supported in the first release: PDF, Markdown, Word, OpenAPI JSON/YAML, and public web-page URLs.</p><p><code>preprocess</code> is an <b>optional</b> local I/O step; non-PDF text sources are copied verbatim into the output directory, after which you simply point the extraction subagents at the converted <code>sources_md</code> directory.</p>",
-      seam: "prepare_markdown(sources_dir, dest_dir) / pdf_to_markdown(pdf_path)",
+      pillLabel: "Required gate",
+      desc: "Before extraction starts, the operator prepares scannable sources, builds <code>manifest.json</code>, and runs <code>inspect-source-risk</code>. Raw PDF and Word are unscannable and must first be converted to supported text; the built-in <code>preprocess</code> path handles PDF → high-fidelity Markdown. No agent may read source content until the manifest-bound risk report passes.",
+      details: "<p>The risk gate scans Markdown, HTML, and OpenAPI JSON/YAML as text for deterministic risky Unicode, control characters, and instruction/control-token patterns. It never rewrites a source or echoes matched payloads; reports contain rule IDs, source references, and locators only.</p><p>Exit codes: 0 pass, 1 reject, 2 invalid/stale/unsafe input. <code>assess-sources --source-risk</code> verifies and embeds the pass audit, and <code>assemble --source-quality</code> revalidates its source binding.</p>",
+      seam: "prepare_markdown(...) / build_manifest(...) / inspect_source_risks(...) / load_verified_source_risk_report(...) ",
       inputs: "Raw API documentation sources (local directory), public URLs",
       outputs: "&lt;SOURCES&gt;, &lt;WORK&gt;/sources_md (optional)"
     },
@@ -861,7 +868,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "Extraction",
       pillClass: "agent",
       pillLabel: "Agent",
-      desc: "The extraction engine is <b>the current coding agent itself</b> (the Claude Code plugin or the OpenAI Codex CLI). Following <code>skills/loop-apidoc/SKILL.md</code>, the agent extracts in segments via a <b>read-only subagent fan-out</b>: each subagent only reads files and searches, returning JSON (no file writes, no network), and the orchestrating agent writes those results into <code>inventory.json</code> and per-endpoint <code>endpoints/*.json</code>.",
+      desc: "After the manifest-bound source-risk report passes, the extraction engine is <b>the current coding agent itself</b> (the Claude Code plugin or the OpenAI Codex CLI). Following <code>skills/loop-apidoc/SKILL.md</code>, the agent extracts in segments via a <b>read-only subagent fan-out</b>: each subagent only reads files and searches, returning JSON (no file writes, no network), and the orchestrating agent writes those results into <code>inventory.json</code> and per-endpoint <code>endpoints/*.json</code>.",
       details: "<h4>10 extraction segment topics</h4><ul><li>01 Source inventory</li><li>02 API system overview and terminology</li><li>03 Environments / base URL / versions</li><li>04 Authentication / authorization / signing</li><li>05 Endpoint list</li><li>06 Per-endpoint details (method/path/params/req/resp/examples)</li><li>07 Shared schemas / enums / data constraints</li><li>08 Error codes and failure behavior</li><li>09 Operational limits, cross-endpoint business rules, field semantics, and formulas</li><li>10 Source conflicts, gaps, and items that cannot be confirmed</li></ul><p>Segmenting keeps a single answer from carrying everything and dropping fields; the sole grounding rule: anything a source does not state is left null and recorded in <code>missing</code> — never inferred, never filled with REST/OAuth conventions.</p>",
       seam: "skills/loop-apidoc/SKILL.md (agent writes inventory.json + endpoints/*.json)",
       inputs: "&lt;SOURCES&gt; or &lt;WORK&gt;/sources_md, target JSON schema",
@@ -929,10 +936,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "The Typer CLI entry point publicly exposes source / URL evidence, source quality, extraction verification, assemble, validate, score, version diff, and the local review workbench; the foundry sub-group governs assets.",
+      description: "The Typer CLI entry point exposes 28 commands for source / URL evidence, pre-agent risk, source quality, extraction verification, assembly, validation, scoring, version diff, and local review; the foundry sub-group governs assets.",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, diff, review, and Foundry commands",
+      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -1039,11 +1046,21 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_quality/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "Assesses source quality before extraction based on traceable observations and emits pass/reject. If you pass the pass-report directory to assemble's --source-quality, the system retains the report and source diff in the run-dir; a reject builds no run-dir.",
+      description: "Requires --source-risk, verifies its manifest/source binding, embeds the audit, then assesses traceable observations. If the pass-report directory is passed to assemble --source-quality, assemble rebuilds the manifest and revalidates that binding before retaining the report; a missing, stale, or rejected audit builds no run-dir.",
       seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
-      inputs: "manifest, grounded observations, optional base manifest",
+      inputs: "manifest, verified source-risk report directory, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "source-risk": {
+      title: "source_risk/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "A deterministic, manifest-bound text-risk gate that runs before any agent reads sources. Markdown, HTML, and OpenAPI JSON/YAML are scanned; raw PDF/Word are unscannable and reject until converted. Reports never rewrite sources or echo matched payloads.",
+      seam: "inspect_source_risks(...) / load_verified_source_risk_report(...) / inspect-source-risk",
+      inputs: "exact source directory, manifest.json, optional max-bytes",
+      outputs: "source-risk-report.json, source-risk-report.zh-TW.md",
+      sideEffect: "Read-side I/O verifies exact source bytes; report.py writes the audit only"
     },
     "freshness": {
       title: "freshness/",

@@ -22,6 +22,9 @@ Two reference files hold the heavy detail — load each when you reach that phas
   escalation contract (load **before dispatching any subagent**, not only when splitting work
   across Codex/Claude runtimes — it is what keeps a bounded extraction off a high-reasoning
   model).
+- **`reference/source-quality.md`** — the deterministic pre-agent source-risk report and the
+  agent-reviewed source-quality contract (load after acquisition/preprocess, before any agent
+  reads source content).
 - **`reference/freshness-scheduling.md`** — the `record-fingerprint` / `check-freshness`
   scheduled-freshness gate (load when setting up scheduled re-checks so they skip
   extraction when sources are unchanged).
@@ -80,7 +83,8 @@ larger-context model is available.
 
 ## Flow
 
-`manifest` (preflight) → read sources via a read-only subagent fan-out → **you** write
+acquisition/preprocess → `manifest` → `inspect-source-risk` → agent source-quality review →
+`assess-sources --source-risk` → read sources via a read-only subagent fan-out → **you** write
 `inventory.json` (+ optional `integration.json`); each endpoint subagent writes its own
 `endpoints/ep<N>.json` → `verify-extraction` → `assemble` (deterministic
 plan→generate→validate) → correct on FAIL.
@@ -90,23 +94,16 @@ plan→generate→validate) → correct on FAIL.
 Create a dedicated `<WORK>` dir outside `<SOURCES>` and `<OUT>`. Treat `<SOURCES>` as
 immutable evidence; write all derived text/JSON under `<WORK>`.
 
-```bash
-<APIDOC> manifest --sources "<SOURCES>" [--url "<URL>" ...] --output "<WORK>/manifest.preflight.json"
-```
-
-Read the manifest: no usable local source **and** no successful URL → stop and report. Skip
-`unreadable`; convert/replace `unsupported` before extraction or report the gap; for
-`duplicate`, extract the first only.
-
 Then choose the read location `<EXTRACT_SOURCES>` by source type:
 
-- **Markdown / small simple PDF** → `<EXTRACT_SOURCES>=<SOURCES>` (subagents read directly).
-- **Large or table-heavy PDF** (40+ pages, parameter/error tables, or raw text loses
-  columns) → `<APIDOC> preprocess --sources "<SOURCES>" --out "<WORK>/sources_md"`, set
+- **Markdown / HTML / OpenAPI JSON or YAML** → `<EXTRACT_SOURCES>=<SOURCES>`.
+- **PDF** (including small/simple PDFs) → `<APIDOC> preprocess --sources "<SOURCES>" --out
+  "<WORK>/sources_md"`, set
   `<EXTRACT_SOURCES>=<WORK>/sources_md`. Cite the original filename + the inserted
-  `<!-- page N -->` marker.
-- **Word** → extract readable text/markdown into `<WORK>/sources_text` if the runtime can't
-  read it directly; preserve the original filename + headings so citations point back.
+  `<!-- page N -->` marker. Raw PDF is intentionally an unscannable source-risk blocker.
+- **Word** → extract readable UTF-8 Markdown into `<WORK>/sources_text` and set that as
+  `<EXTRACT_SOURCES>`; preserve the original filename + headings so citations point back.
+  Raw Word is intentionally an unscannable source-risk blocker.
 - **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
   `<APIDOC> normalize-html-snapshot --input page.html --url "<ORIGINAL_URL>" --output
   "<WORK>/sources_md/page.md"` — writes Markdown plus a URL/hash provenance sidecar; cite
@@ -158,16 +155,34 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   line-cited aid for bounded review only, never final extraction JSON or source authority.
   The scaffold is a second, extraction-shaped aid: it mechanically projects only explicit
   tables and parseable JSON examples, then records every gap. **`<WORK>/scaffold` is not the
-  `--extraction` argument**. Copy its `inventory.json` and `endpoints/` files into `<WORK>/`,
-  re-read the cited sections, and fill security, integration, and `missing[]` gaps before
-  verifying `<WORK>`.
+  `--extraction` argument**. Do not inspect its source-derived content, re-read citations, or
+  fill gaps until the manifest-bound source package has passed the risk gate below.
+
+  For a catalog/HTML corpus, materialize every selected page that a model may read as a local
+  `.html` or `.md` artifact inside `<EXTRACT_SOURCES>` before building the manifest. Do not hand
+  unmanifested `<WORK>/url_corpus/body` text to any agent. Direct OpenAPI snapshots, rendered
+  imports, and GitBook Markdown already satisfy this rule when their local files live under
+  `<EXTRACT_SOURCES>`.
+
+After all acquisition and conversion is complete, build the manifest over the **exact local
+package that agents will read**:
+
+```bash
+<APIDOC> manifest --sources "<EXTRACT_SOURCES>" [--url "<URL>" ...] \
+  --output "<WORK>/manifest.preflight.json"
+```
+
+Read the manifest: no usable local source **and** no successful URL → stop and report. Skip
+`unreadable`; convert/replace `unsupported` before inspection or report the gap; for
+`duplicate`, inspect and extract the first only. Do not dispatch a router, quality reviewer,
+inventory reader, or endpoint reader yet.
 
 ## Subagent contract (extraction)
 
 You orchestrate; **read-only subagents extract**. For each extraction below, dispatch a
 read-only subagent (file read + search only — **no web, no write**; for URLs the
-`<WORK>/url_sources/` cache is the evidence). Give it: the source location
-(`<EXTRACT_SOURCES>` + URL cache), the relevant manifest source ids, the endpoint/section
+manifest-bound local artifact is the evidence). Give it: the source location
+(`<EXTRACT_SOURCES>` only), the relevant manifest source ids, the endpoint/section
 scope, the exact schema (from `reference/extraction-schemas.md`), and the grounding rule.
 
 Write permission is layered. An **endpoint** subagent writes exactly the one
@@ -209,28 +224,55 @@ for legacy validation compatibility, but semantic shadow treats it as degraded
 After writing any extraction file, parse it as JSON before continuing. Use the **English
 keys** exactly as the schemas show — localized machine keys are rejected at assemble (exit 2).
 
-### 1.5 Source-quality gate (before extraction)
+### 1.5 Source-risk and source-quality gates (before any agent source read)
 
-After `manifest` and any required `preprocess`, dispatch one read-only quality-review
-subagent over the complete source package. It returns only JSON observations grounded in
-source filename + page/section/anchor. The controller writes
-`<WORK>/source-quality-observations.json`, then runs:
+After acquisition/preprocess and `manifest`, run the deterministic risk inspector **before
+any agent or subagent reads source content**:
 
 ```bash
-<APIDOC> assess-sources --sources "<SOURCES>" \
+<APIDOC> inspect-source-risk --sources "<EXTRACT_SOURCES>" \
   --manifest "<WORK>/manifest.preflight.json" \
+  --output "<WORK>/source-risk" [--max-bytes 5242880]
+```
+
+The default per-file `max_bytes` is 5 MiB. The inspector accepts UTF-8 Markdown, HTML, and
+OpenAPI JSON/YAML. PDF, Word, invalid UTF-8, oversized text, and other unscannable pending
+sources are blockers: convert them into the exact readable package, rebuild the manifest, and
+re-run. Exit `0` is pass, `1` is a risk reject, and `2` is invalid/stale input. The fixed
+`source-risk-report.{json,zh-TW.md}` records rule IDs, source refs, and locators only; it never
+copies a matched payload or mutates source bytes. Its `schema_version`, `ruleset_version`,
+`max_bytes`, manifest digest, and stable source binding make the audit replayable.
+
+If deterministic Markdown drafts or a scaffold were produced during acquisition, only now may
+you inspect them. Copy its `inventory.json` and `endpoints/` files into `<WORK>/`, re-read the
+cited sections from `<EXTRACT_SOURCES>`, and fill security, integration, and `missing[]` gaps.
+Derived drafts never authorize reading an unmanifested URL cache.
+
+Only after exit `0`, dispatch one read-only quality-review subagent over the complete inspected
+source package. It returns only JSON observations grounded in source filename +
+page/section/anchor. The controller writes `<WORK>/source-quality-observations.json`, then runs:
+
+```bash
+<APIDOC> assess-sources --sources "<EXTRACT_SOURCES>" \
+  --manifest "<WORK>/manifest.preflight.json" \
+  --source-risk "<WORK>/source-risk" \
   --observations "<WORK>/source-quality-observations.json" \
   --source-set "vN" --output "<WORK>/source-quality"
 ```
 
-Exit `1` means `reject`: provide the generated supplement report and stop. When an observation
+`assess-sources` verifies that the risk report is a current pass for the same manifest and
+source binding, then embeds that audit in `source-quality-report.json`. Exit `1` means
+source-quality `reject`: provide the generated supplement report and stop. Exit `2` means a
+missing, malformed, rejected, stale, or mismatched risk/input contract. When an observation
 names explicit linked contract pages, put only those absolute URLs in its
 `required_source_refs`; the rejected report returns their ordered, de-duplicated union as a
 bounded next-capture list and never crawls it. Do not create
 `inventory.json` or endpoint extraction files. Exit `0` permits extraction; warnings remain
-visible and must not be filled with assumptions. When this gate ran, pass
+visible and must not be filled with assumptions. When these gates ran, pass
 `--source-quality "<WORK>/source-quality"` to `assemble` (step 6) — the passing report is
-retained in `<run_dir>/source-quality/`, and a `reject` verdict aborts assemble (exit 2).
+retained in `<run_dir>/source-quality/`; `assemble` revalidates its embedded source-risk audit
+against the newly built manifest's stable source binding, so changed source bytes fail before a
+run directory is created. A `reject` verdict aborts assemble (exit 2).
 See `reference/source-quality.md`.
 
 ### 2–4. Extract → write the JSON
@@ -274,7 +316,7 @@ omitting endpoint subagents.
 
 ```bash
 <APIDOC> verify-extraction \
-  --sources "<SOURCES>" --extraction "<WORK>" [--url "<URL>" ...] --json
+  --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" [--url "<URL>" ...] --json
 ```
 
 Exit 0 → proceed. Exit 2 → the JSON array on stdout lists every violation (missing or
@@ -301,7 +343,7 @@ a round trip.
 
 ```bash
 <APIDOC> assemble \
-  --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] \
+  --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] \
   [--source-quality "<WORK>/source-quality"] --json
 ```
 

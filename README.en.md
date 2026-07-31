@@ -85,12 +85,12 @@ In one sentence: **vibe coding made "writing code" fast, so "getting the spec ri
 
 ## How it works
 
-The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows the `loop-apidoc` skill to read sources via a **subagent fan-out that is read-only toward sources** — the main agent writes `inventory.json` (plus an optional `integration.json`) while each endpoint subagent writes its own `endpoints/ep<N>.json` — checks the extraction contract with `verify-extraction`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
+The extraction engine is **the current coding agent itself**: inside a Claude Code plugin or OpenAI Codex CLI session, deterministic tooling first acquires/preprocesses the exact readable source package, builds its manifest, and runs the pre-model `inspect-source-risk` gate. Only a source-bound pass may reach the agent's source-quality review and **subagent fan-out that is read-only toward sources**. The main agent writes `inventory.json` (plus an optional `integration.json`) while each endpoint subagent writes its own `endpoints/ep<N>.json`, checks the extraction contract with `verify-extraction`, then calls the deterministic CLI `assemble` for the back half (plan → generate → validate).
 
 ### Full flow
 
 ```
-preprocess (optional) → extraction (agent read-only subagent fan-out) → verify-extraction (contract check) → manifest → normalization plan → generate (OpenAPI + Markdown) → validate
+acquisition/preprocess → manifest → inspect-source-risk → agent source-quality review → assess-sources --source-risk → extraction (agent read-only subagent fan-out) → verify-extraction → assemble: manifest → normalization plan → generate (OpenAPI + Markdown) → validate
 ```
 
 Validation emits a classified issue report. Correction is **agent-driven**: `assemble` reports results via `--json`, the agent re-reads the affected sources, overwrites the extraction JSON, and re-runs `assemble` — until it passes or an issue is deemed an unfixable gap/conflict.
@@ -343,6 +343,8 @@ uv run loop-apidoc cache-gitbook-llms \
   --coverage ./work/url_sources/coverage.json
 uv run loop-apidoc manifest --sources ./sources --url "https://example.gitbook.io/docs" \
   --output ./work/manifest.preflight.json
+uv run loop-apidoc inspect-source-risk --sources ./sources \
+  --manifest ./work/manifest.preflight.json --output ./work/source-risk
 uv run loop-apidoc extract-markdown-drafts \
   --sources ./sources --manifest ./work/manifest.preflight.json \
   --output ./work/markdown-api-facts.json
@@ -355,7 +357,8 @@ The cache fetches `llms.txt` once, then saves every first-seen same-origin `.md`
 entry path while preserving URL hierarchy beneath `sources/`. Successful pages get an original
 URL/SHA-256/timestamp sidecar; invalid indexes or output collisions fail before a partial corpus
 is written, while individual page failures remain visible as `fetch_failed` coverage results.
-The facts JSON is a non-authoritative, line-cited draft of explicit endpoint headings, labelled
+Do not inspect source-derived drafts or re-read their citations until `inspect-source-risk`
+passes. The facts JSON is a non-authoritative, line-cited draft of explicit endpoint headings, labelled
 parameter tables, and fenced examples. It supports bounded agent review but never replaces source
 reading, final agent extraction JSON, `verify-extraction`, or `assemble`.
 `scaffold-extraction` turns those same mechanical facts into extraction-shaped `inventory.json`
@@ -373,17 +376,35 @@ reason to send the whole corpus. See
 [`model-orchestration.md`](skills/loop-apidoc/reference/model-orchestration.md) for the role
 matrix, hand-off contract, and Codex/Claude mapping.
 
+### `inspect-source-risk` — deterministic gate before any agent reads sources
+
+```bash
+uv run loop-apidoc inspect-source-risk \
+  --sources ./work/sources_md --manifest ./work/manifest.preflight.json \
+  --output ./work/source-risk [--max-bytes 5242880]
+```
+
+Scans the exact manifest-bound text package before it enters model context. UTF-8 Markdown,
+HTML, and OpenAPI JSON/YAML are supported; PDF, Word, invalid UTF-8, oversized text, and other
+unscannable pending sources are blockers, so convert them and rebuild the manifest first. The
+default limit is 5 MiB per file. The fixed `source-risk-report.{json,zh-TW.md}` records only rule
+IDs, severities, source refs, and locators—never the matched payload—and source bytes are not
+changed. Its schema/ruleset versions, `max_bytes`, manifest digest, per-source SHA-256 coverage,
+and stable source-binding digest prevent stale audit reuse. Exit codes: `0` = pass, `1` = reject,
+`2` = invalid, unsafe, unreadable, or mismatched input.
+
 ### `assess-sources` — pre-extraction source-quality assessment
 
 ```bash
 uv run loop-apidoc assess-sources \
-  --sources ./sources --manifest ./work/manifest.json \
+  --sources ./work/sources_md --manifest ./work/manifest.preflight.json \
+  --source-risk ./work/source-risk \
   --observations ./work/source-observations.json \
   --source-set "<source set name>" \
   --output ./work/source-quality [--base-manifest <old manifest>]
 ```
 
-Before extraction, grades the manifest plus the agent-recorded source observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`, compared against an old manifest when `--base-manifest` is given). A blocker observation may explicitly provide `required_source_refs`; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed list, but never fetches or crawls them. The verdict is `pass` or `reject`; exit codes: `0` = pass, `1` = reject, `2` = bad input file. The output directory can be passed to `assemble --source-quality`: a `reject` verdict stops before a run-dir is created, while a `pass` report is preserved with the run-dir for audit.
+Before extraction, verifies that `--source-risk` is a current pass for the same manifest and stable source binding, re-runs the deterministic inspection against the current source bytes, then grades the manifest plus agent-recorded observations into a source-quality report (`source-quality-report.{json,zh-TW.md}`) and a source-version diff (`source-diff.{json,md}`). The JSON embeds the verified source-risk audit. A blocker observation may explicitly provide `required_source_refs`; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed list, but never fetches or crawls them. Exit codes: `0` = pass, `1` = quality reject, `2` = malformed, missing, rejected, stale, tampered, or mismatched input/audit. The output directory can be passed to `assemble --source-quality`: a quality reject stops before a run-dir is created, while a pass report is preserved for audit. Assemble rebuilds the manifest, repeats deterministic inspection, and revalidates the embedded audit before run-dir creation.
 
 ### `record-fingerprint` / `check-freshness` — scheduled source-freshness gate
 
@@ -590,7 +611,7 @@ output/
     │   ├── report.json
     │   └── report.md
     ├── source-quality/              # preserved when --source-quality is supplied
-    │   ├── source-quality-report.json
+    │   ├── source-quality-report.json # embeds the verified source-risk audit
     │   ├── source-quality-report.zh-TW.md
     │   ├── source-diff.json
     │   └── source-diff.md
@@ -673,7 +694,8 @@ uv run ruff check .
 | `loop_apidoc/diff/` | run-to-run version diff: load run artifacts, classify changes (`breaking` / `additive` / `changed` / `source_only`), render and write `diff/report.{json,md}` |
 | `loop_apidoc/preparation/` | preparation readiness reporting inside assemble |
 | `loop_apidoc/score/` | documentation quality scoring for completed run-dirs |
-| `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; passing reports can be retained with a run-dir |
+| `loop_apidoc/source_risk/` | deterministic pre-agent inspection of manifest-bound UTF-8 Markdown/HTML/OpenAPI text; fixed no-payload findings, versioned schema/rules, bounded reads, stable source binding, verified report loading, and `source-risk-report.{json,zh-TW.md}` |
+| `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; it requires and embeds a verified source-risk audit, and passing reports can be retained with a run-dir |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | bounded URL navigation cataloging, page caching, and related-page candidates for local-evidence web reading |
 | `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
 | `loop_apidoc/review/` | local single-user review workbench: auto-import a candidate, compare with current/baseline, persist structured handoff, and ask Foundry to update current only after explicit human approval |

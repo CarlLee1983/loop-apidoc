@@ -9,6 +9,7 @@
 </head>
 <body>
 <p><a href="introduction.html">前往介紹頁</a> · <a href="index.en.html">English</a></p>
+<p>任何 agent 讀取來源內容前，原始 PDF／Word 必須先轉成支援的文字，並以 manifest 綁定的精確 bytes 通過 <code>inspect-source-risk</code>。掃描不改寫來源，也不回顯命中 payload；<code>assess-sources --source-risk</code> 會嵌入已驗證 audit，<code>assemble --source-quality</code> 則重新驗證 binding。</p>
 <p>互動式瀏覽器可顯示的受保護文件能透過 <code>import-rendered-url</code> 離線匯入；版本化 capture provenance 會綁定 original/canonical URL、時間、方法、本機檔案與 SHA-256，只有驗證匹配的 coverage 才會省略該 origin fetch。source-quality reject 也可輸出來源明確連出的 bounded <code>required_source_refs</code>，但不自動 crawl。</p>
 <p>Claim-level semantic evidence 會把確定性的 support relationship 連到 exact fragment；選填 v1 <code>evidence[]</code> 會在 run 前重新 materialize、驗證 source identity、locator、digest 與 claim path。沒有 parsed scalar 的 prose 只能支援它精確綁定的單一 claim，OpenAPI derivation 則限 versioned allowlist 並由 Core 重新計算。legacy 相容 shadow run 請查看 <code>core/relationships.json</code>。</p>
 <p>Core 保留經測試的 GraphQL／AsyncAPI 純 compiler seam，但在具名下游 consumer 提供真實來源集與驗收契約前，不公開這兩種格式的 CLI 或 run workflow。</p>
