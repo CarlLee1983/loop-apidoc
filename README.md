@@ -494,13 +494,13 @@ uv run loop-apidoc review --project ./my-api --docset payment --run ./output/<ru
 
 在 `127.0.0.1` 啟動單使用者工作台，必要時自動把完成的 run 匯入 Foundry candidate，並與目前 `current` 資產比對；第一版則建立 baseline review。畫面呈現驗證結果、版本差異與可記錄的主觀結論。若 candidate 帶有 Core evidence，對應的 validation finding，以及能明確對應的 operation-level version diff，都會直接顯示 relationship（`explicit_support`、`derived_support`、`contradicts` 或 `insufficient`）、fragment locator／digest 與保留的來源 excerpt，並連到 Core review artifacts；不足或矛盾證據會明確標示，不會被呈現為支持。結論寫入 candidate 的 `review/decision.json` 作為給後續工具或 agent 讀取的結構化 handoff。按下核准才更新 `current`；驗證失敗、差異或未完成 handoff 不會鎖死核准，但會把資產狀態標成 `needs_follow_up`。工作台不呼叫模型，也不取代驗證。
 
-### `preprocess` — PDF 轉高保真 markdown(可選)
+### `preprocess` — PDF／DOCX 轉成可掃描 markdown
 
 ```bash
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-以 pymupdf4llm 把 `--sources` 目錄下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。目錄輸入會保留來源相對路徑；`guide.pdf` 會輸出為 `guide.pdf.md`，避免和同目錄的 `guide.md` 衝突。`--sources` 也可指定單一檔案，此時只會處理該檔案。表格密集或大型 PDF 在擷取前先轉換,可避免原始 PDF 讀取扭曲表格;之後把擷取 subagent 指向 `--out` 目錄。
+PDF 使用 pymupdf4llm，`.docx` 使用內建 fail-closed OOXML normalizer；兩者都保留標題與表格並輸出 `<原檔名>.md`。DOCX 另寫 deterministic `.source.json` sidecar，綁定原始與正規化後 SHA-256。此首個 slice 支援 UTF-8-compatible Transitional OOXML textual DOCX；ZIP 路徑／資源上限、巨集與 active content、外部 relationship、DTD/entity、損壞的 OPC/XML、`altChunk`、embedded media，以及帶實質內容的 header/footer/note/comment part 都會在批次輸出前被拒絕，避免靜默漏掉來源證據。舊式 `.doc` 維持 passthrough，須先用可信任的外部工具轉檔。目錄輸入保留來源相對路徑，`--sources` 也可指定單一檔案。之後務必針對精確的 `--out` 目錄建立 manifest 並通過 `inspect-source-risk`，agent 才能讀取。
 
 ### `verify-extraction` — 檢查擷取 JSON 是否符合契約
 
@@ -660,7 +660,8 @@ uv run ruff check .
 | 套件 | 職責 |
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
-| `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF→md 前處理,pymupdf4llm) |
+| `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF／DOCX→markdown 編排) |
+| `loop_apidoc/docx_normalization.py` | bounded、fail-closed OOXML 驗證與 deterministic DOCX→Markdown／provenance 產生；不執行或解析外部 package relationship |
 | `loop_apidoc/domain/` | protocol-neutral canonical contract、evidence relationship、領域 profiles，以及純 GraphQL／AsyncAPI projection compilers；目前沒有這兩種格式的公開 run integration |
 | `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |

@@ -698,7 +698,7 @@
     <div class="flow">
       <div class="flow-row">
         <span class="stage"><span class="n tint-purple">0</span>preprocess / normalize</span>
-        <span class="desc">Convert raw PDF/Word into supported text before inspection; the built-in preprocess path handles PDF → high-fidelity Markdown.</span>
+        <span class="desc">Convert raw PDF/Word into supported text before inspection; built-in preprocess handles PDF/DOCX → Markdown and validates DOCX with a bounded fail-closed OOXML gate.</span>
         <span class="out">scannable source directory</span>
       </div>
       <div class="flow-row">
@@ -770,7 +770,7 @@
     <div class="cmds">
       <div class="cmd">
         <span class="name"><span class="kw">preprocess</span></span>
-        <div><p>PDF → markdown preprocessing (optional), making sources easier for the agent to read.</p></div>
+        <div><p>PDF/DOCX → markdown; DOCX also gets deterministic source-hash provenance and unsafe OOXML is rejected before output.</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">manifest</span></span>
@@ -1116,7 +1116,7 @@
         <tbody>
           <tr><td><code>manifest/</code></td><td>Scan local sources + build manifest.json</td></tr>
           <tr class="io"><td><code>rendered_url.py</code></td><td>Offline rendered-source import plus read-side provenance verification; writes immutable source/sidecar/coverage and prevents a matched protected-origin probe</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), evidence.py (read-side v1 exact-evidence materialization/digest and claim-path verification), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py (assemble JSON → plan→preparation→generate→validate), input_schema.py (pydantic validation at the boundary), evidence.py (read-side v1 exact-evidence materialization/digest and claim-path verification), gate.py/verify.py (the extraction-contract check for <code>verify-extraction</code>, including the source-fact and deferral gates from <code>source_facts/</code>, writes nothing), extraction.py (inventory → plan answers), preprocess.py (PDF/DOCX→markdown orchestration); <code>docx_normalization.py</code> owns bounded fail-closed OOXML validation and provenance</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>Opt-in legacy/Core bridge and in-memory runner; only <code>shadow/report.py</code> writes the observational <code>core/</code> artifact set or a safe error report.</td></tr>
           <tr><td><code>extraction/</code></td><td>Shared models + utilities (stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>Normalization plan + source-match classification</td></tr>

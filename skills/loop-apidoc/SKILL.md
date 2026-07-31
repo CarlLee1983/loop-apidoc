@@ -101,9 +101,14 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   "<WORK>/sources_md"`, set
   `<EXTRACT_SOURCES>=<WORK>/sources_md`. Cite the original filename + the inserted
   `<!-- page N -->` marker. Raw PDF is intentionally an unscannable source-risk blocker.
-- **Word** → extract readable UTF-8 Markdown into `<WORK>/sources_text` and set that as
-  `<EXTRACT_SOURCES>`; preserve the original filename + headings so citations point back.
-  Raw Word is intentionally an unscannable source-risk blocker.
+- **Word (`.docx`)** → `<APIDOC> preprocess --sources "<SOURCES>" --out
+  "<WORK>/sources_text"`, set `<EXTRACT_SOURCES>=<WORK>/sources_text`. The built-in
+  normalizer writes `<name>.docx.md` plus deterministic `<name>.docx.md.source.json`
+  provenance, preserves headings/tables and content controls, and rejects unsafe OOXML packages
+  before any output. This first slice supports UTF-8-compatible Transitional OOXML textual DOCX only; embedded media
+  and visible header/footer/note/comment parts fail closed instead of being silently omitted.
+  Legacy `.doc` remains passthrough and must be converted with a trusted external tool before
+  the risk gate. Raw Word is intentionally an unscannable source-risk blocker.
 - **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
   `<APIDOC> normalize-html-snapshot --input page.html --url "<ORIGINAL_URL>" --output
   "<WORK>/sources_md/page.md"` — writes Markdown plus a URL/hash provenance sidecar; cite

@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pymupdf4llm
 
+from loop_apidoc.docx_normalization import prepare_docx, write_prepared_docx
+
 # Source formats we can flatten to markdown text for the agent to read. Other
 # formats are copied byte-for-byte so no declared source silently disappears.
 _TEXT_SUFFIXES = {".md", ".markdown", ".txt"}
@@ -57,7 +59,10 @@ def prepare_markdown(sources: Path, dest_dir: Path) -> PreprocessResult:
         source_relative = Path(path.name) if sources.is_file() else path.relative_to(sources)
         if suffix == ".pdf":
             relative = source_relative.with_name(f"{source_relative.name}.md")
-            kind = "converted"
+            kind = "converted-pdf"
+        elif suffix == ".docx":
+            relative = source_relative.with_name(f"{source_relative.name}.md")
+            kind = "converted-docx"
         elif suffix in _TEXT_SUFFIXES:
             relative = source_relative
             kind = "copied"
@@ -67,19 +72,39 @@ def prepare_markdown(sources: Path, dest_dir: Path) -> PreprocessResult:
         planned.append((path, relative, kind))
 
     destinations: dict[Path, Path] = {}
-    for path, relative, _kind in planned:
-        prior = destinations.setdefault(relative, path)
-        if prior != path:
-            raise ValueError(
-                "preprocess output collision: "
-                f"{prior} and {path} both map to {dest_dir / relative}"
-            )
+    for path, relative, kind in planned:
+        claims = [relative]
+        if kind == "converted-docx":
+            claims.append(relative.with_suffix(relative.suffix + ".source.json"))
+        for claim in claims:
+            prior = destinations.setdefault(claim, path)
+            if prior != path:
+                raise ValueError(
+                    "preprocess output collision: "
+                    f"{prior} and {path} both map to {dest_dir / claim}"
+                )
+
+    for _path, relative, kind in planned:
+        if kind != "converted-docx":
+            continue
+        sidecar = relative.with_suffix(relative.suffix + ".source.json")
+        if (dest_dir / relative).exists() or (dest_dir / sidecar).exists():
+            raise ValueError("DOCX normalization output already exists")
+
+    prepared_docx = {
+        path: prepare_docx(path, relative.name)
+        for path, relative, kind in planned
+        if kind == "converted-docx"
+    }
 
     for path, relative, kind in planned:
         output_path = dest_dir / relative
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        if kind == "converted":
+        if kind == "converted-pdf":
             output_path.write_text(pdf_to_markdown(path), encoding="utf-8")
+            converted.append(relative)
+        elif kind == "converted-docx":
+            write_prepared_docx(prepared_docx[path], output_path)
             converted.append(relative)
         elif kind == "copied":
             output_path.write_text(

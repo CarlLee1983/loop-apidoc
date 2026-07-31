@@ -78,7 +78,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-2" href="#_4">提供來源</a>
   <a class="lvl-3" href="#_5">支援的來源格式</a>
   <a class="lvl-2" href="#_6">使用方式</a>
-  <a class="lvl-3" href="#preprocess">preprocess — PDF 轉 markdown</a>
+  <a class="lvl-3" href="#preprocess">preprocess — PDF／DOCX 轉 markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#url-corpus">URL 導航與快取（catalog / select / cache）</a>
   <a class="lvl-3" href="#import-rendered-url">import-rendered-url — 受保護 rendered evidence</a>
@@ -163,10 +163,10 @@ uv run loop-apidoc --help
 <hr />
 <h2 id="_6">使用方式</h2>
 <p>CLI 提供來源處理、URL evidence、草稿擷取、品質與擷取、來源新鮮度、run 處理、Foundry 資產治理，以及 <code>review</code> 本機人工覆核。日常擷取流程仍由 skill 驅動；每個命令都可單獨使用。</p>
-<h3 id="preprocess"><code>preprocess</code> — PDF 轉高保真 markdown（raw PDF 必要）</h3>
+<h3 id="preprocess"><code>preprocess</code> — PDF／DOCX 轉可掃描 markdown</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<p>以 pymupdf4llm 把 <code>--sources</code> 目錄下的每個 PDF 轉成保留表格與標題結構的 markdown(非 PDF 文字來源原樣複製)。目錄輸入會保留來源相對路徑；<code>guide.pdf</code> 會輸出為 <code>guide.pdf.md</code>。所有 raw PDF 都必須在 risk gate 前轉換；之後對 <code>--out</code> 建 manifest、通過 <code>inspect-source-risk</code>，再把擷取 subagent 指向該精確目錄。</p>
+<p>PDF 使用 pymupdf4llm；<code>.docx</code> 使用內建 fail-closed OOXML normalizer。兩者都保留標題與表格並輸出 <code>&lt;原檔名&gt;.md</code>。DOCX 另寫 deterministic <code>.source.json</code> provenance。此首個 slice 接受 UTF-8-compatible Transitional OOXML textual DOCX；unsafe ZIP／OPC／XML、巨集與 active content、外部 relationship、DTD/entity、<code>altChunk</code>、embedded media，以及有實質內容的 header/footer/note/comment part 都會在整批輸出前拒絕。舊式 <code>.doc</code> 維持 passthrough，須由操作者用可信任工具轉檔。之後對精確的 <code>--out</code> 建 manifest、通過 <code>inspect-source-risk</code>，再讓 agent 讀取。</p>
 <h3 id="manifest-manifest"><code>manifest</code> — 建立來源 manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
@@ -422,7 +422,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF→md 前處理,pymupdf4llm)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(PDF／DOCX→md 編排)、<code>docx_normalization.py</code>(bounded、fail-closed OOXML 驗證與 provenance)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>

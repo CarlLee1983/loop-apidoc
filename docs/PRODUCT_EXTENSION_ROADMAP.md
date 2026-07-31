@@ -288,6 +288,13 @@ cross-directory basename collisions and PDF/Markdown sibling collisions. It
 validates the complete output mapping before writing and fails clearly if a
 remaining derived-name collision exists.
 
+**Delivered (2026-07-31):** the same `preprocess` seam now converts `.docx` to
+deterministic `<name>.docx.md` plus source-hash provenance. A bounded, fail-closed
+OOXML gate rejects unsafe ZIP/package/XML, macros and active content, external
+relationships, and `altChunk`; every DOCX in a batch is validated before outputs
+are written. The resulting Markdown still passes through the existing manifest-bound
+`inspect-source-risk` gate. Legacy `.doc` remains an explicit passthrough gap.
+
 ## Defer protocol main-flow integration until preceding blockers are resolved
 
 Do not add GraphQL or AsyncAPI as conditional branches in the current

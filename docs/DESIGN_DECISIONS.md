@@ -125,6 +125,10 @@ and pass deterministic `inspect-source-risk` before any router, quality reviewer
 reads source-derived text. The inspector supports bounded UTF-8 Markdown, HTML, and OpenAPI
 JSON/YAML; PDF, Word, invalid UTF-8, oversized text, and other unscannable pending sources fail
 closed until converted and re-manifested. It never rewrites evidence or echoes a matched payload.
+The built-in `preprocess` seam handles `.docx` as a bounded OOXML package: it rejects unsafe
+ZIP/package/XML, macro or active content, external relationships, and unsupported alternate
+content before writing deterministic Markdown plus source-hash provenance. Legacy `.doc`
+remains outside this trusted boundary and requires an operator-controlled external conversion.
 
 The audit contract is versioned and source-bound: schema/ruleset, `max_bytes`, manifest digest,
 per-source SHA-256, and a stable source-binding digest are all checked.

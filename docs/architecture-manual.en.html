@@ -857,7 +857,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "Provide Sources & Preprocess",
       pillClass: "prep",
       pillLabel: "Required gate",
-      desc: "Before extraction starts, the operator prepares scannable sources, builds <code>manifest.json</code>, and runs <code>inspect-source-risk</code>. Raw PDF and Word are unscannable and must first be converted to supported text; the built-in <code>preprocess</code> path handles PDF → high-fidelity Markdown. No agent may read source content until the manifest-bound risk report passes.",
+      desc: "Before extraction starts, the operator prepares scannable sources, builds <code>manifest.json</code>, and runs <code>inspect-source-risk</code>. Raw PDF and Word are unscannable; built-in <code>preprocess</code> handles PDF/DOCX → Markdown and rejects unsafe DOCX through a bounded fail-closed OOXML gate before output. No agent may read source content until the manifest-bound risk report passes.",
       details: "<p>The risk gate scans Markdown, HTML, and OpenAPI JSON/YAML as text for deterministic risky Unicode, control characters, and instruction/control-token patterns. It never rewrites a source or echoes matched payloads; reports contain rule IDs, source references, and locators only.</p><p>Exit codes: 0 pass, 1 reject, 2 invalid/stale/unsafe input. <code>assess-sources --source-risk</code> verifies and embeds the pass audit, and <code>assemble --source-quality</code> revalidates its source binding.</p>",
       seam: "prepare_markdown(...) / build_manifest(...) / inspect_source_risks(...) / load_verified_source_risk_report(...) ",
       inputs: "Raw API documentation sources (local directory), public URLs",

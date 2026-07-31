@@ -78,7 +78,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-2" href="#_4">Providing sources</a>
   <a class="lvl-3" href="#_5">Supported source formats</a>
   <a class="lvl-2" href="#_6">Usage</a>
-  <a class="lvl-3" href="#preprocess">preprocess — PDF to markdown</a>
+  <a class="lvl-3" href="#preprocess">preprocess — PDF/DOCX to markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — build the source manifest</a>
   <a class="lvl-3" href="#url-corpus">URL navigation and caching (catalog / select / cache)</a>
   <a class="lvl-3" href="#import-rendered-url">import-rendered-url — protected rendered evidence</a>
@@ -163,10 +163,10 @@ uv run loop-apidoc --help
 <hr />
 <h2 id="_6">Usage</h2>
 <p>The CLI provides source processing, URL evidence, draft extraction, quality and extraction, scheduled source freshness, run processing, Foundry asset governance, and the local human-review <code>review</code> workbench. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
-<h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (required for raw PDF input)</h3>
+<h3 id="preprocess"><code>preprocess</code> — convert PDF/DOCX to scannable markdown</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Directory input preserves source-relative paths; <code>guide.pdf</code> becomes <code>guide.pdf.md</code>, avoiding a collision with a sibling <code>guide.md</code>. <code>--sources</code> can also name one file. Every raw PDF must be converted before the risk gate; afterwards, build the manifest over <code>--out</code>, pass it through <code>inspect-source-risk</code>, and point extraction subagents at that exact directory.</p>
+<p>PDF uses pymupdf4llm; <code>.docx</code> uses the built-in fail-closed OOXML normalizer. Both preserve headings and tables and write <code>&lt;original-name&gt;.md</code>. DOCX also gets deterministic <code>.source.json</code> provenance. This first slice accepts UTF-8-compatible Transitional OOXML textual DOCX; unsafe ZIP/OPC/XML, macros and active content, external relationships, DTD/entities, <code>altChunk</code>, embedded media, and material header/footer/note/comment parts are rejected before batch outputs are written. Legacy <code>.doc</code> remains passthrough and needs operator-controlled trusted conversion. Afterwards, build the manifest over the exact <code>--out</code> directory and pass <code>inspect-source-risk</code> before any agent reads it.</p>
 <h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
@@ -422,7 +422,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code> (assemble the agent-written extraction JSON → plan→generate→validate), <code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code> (extraction input contract checks, i.e. <code>verify-extraction</code>; <code>gate.py</code> also aggregates the source-fact and deferral violations from <code>source_facts/</code>), <code>evidence.py</code> (read-side materialization and digest verification for optional v1 exact-evidence references), <code>extraction.py</code> (convert <code>inventory.json</code> into per-stage plan answers), <code>preprocess.py</code> (PDF→md preprocessing, pymupdf4llm)</td>
+<td><code>assemble.py</code> (assemble the agent-written extraction JSON → plan→generate→validate), <code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code> (extraction input contract checks, i.e. <code>verify-extraction</code>; <code>gate.py</code> also aggregates the source-fact and deferral violations from <code>source_facts/</code>), <code>evidence.py</code> (read-side materialization and digest verification for optional v1 exact-evidence references), <code>extraction.py</code> (convert <code>inventory.json</code> into per-stage plan answers), <code>preprocess.py</code> (PDF/DOCX→md orchestration), <code>docx_normalization.py</code> (bounded fail-closed OOXML validation and provenance)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
