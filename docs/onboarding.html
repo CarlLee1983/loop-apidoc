@@ -11,20 +11,20 @@
     --ink: #2c3043;
     --ink-soft: #5d6478;
     --teal: #15a39a;
-    --teal-deep: #0f7a73;
+    --teal-deep: #0c6f69;
     --teal-soft: #d8f3f0;
     --coral: #ff6f61;
-    --coral-deep: #d9483b;
+    --coral-deep: #b2352a;
     --coral-soft: #ffe2dd;
     --amber: #f5a524;
-    --amber-deep: #b5791a;
+    --amber-deep: #82550d;
     --amber-soft: #fdeccb;
     --purple: #7c6df2;
     --purple-deep: #5b4cc4;
     --purple-soft: #e7e3fd;
     --green: #2bb673;
     --red: #ef5350;
-    --grey: #b6bccb;
+    --grey: #697082;
     --line: #ece5d8;
     --nav-h: 62px;
     --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
@@ -32,11 +32,12 @@
     --radius: 8px;
     --radius-sm: 8px;
     --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --measure: 68ch;
     font-size: 17px;
   }
 
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); scrollbar-gutter: stable; }
 
   body {
     margin: 0;
@@ -46,9 +47,11 @@
       -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     line-height: 1.75;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   a { color: inherit; }
+  a:focus-visible { outline: 3px solid var(--teal-deep); outline-offset: 3px; }
   .skip-link {
     position: fixed; left: 16px; top: 10px; z-index: 20;
     transform: translateY(-160%);
@@ -58,7 +61,8 @@
   .skip-link:focus { transform: translateY(0); }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   section { padding: 70px 0; }
-  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; text-wrap: balance; }
+  p, li, dd { text-wrap: pretty; }
   section[id] { scroll-margin-top: calc(var(--nav-h) + 18px); }
 
   code, .mono { font-family: var(--mono); }
@@ -85,7 +89,7 @@
   .section-lead {
     font-size: 1.06rem;
     color: var(--ink-soft);
-    max-width: 720px;
+    max-width: var(--measure);
     margin: 0 0 40px;
   }
 
@@ -104,7 +108,16 @@
     background: rgba(250, 247, 239, 0.92);
     border-bottom: 1px solid var(--line);
     backdrop-filter: blur(14px);
+    transition: box-shadow 160ms ease;
   }
+  .page-nav::after {
+    content: "";
+    position: absolute; left: 0; bottom: -1px;
+    width: var(--reading-progress, 0%); height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--teal));
+    transition: width 100ms linear;
+  }
+  .page-nav.is-scrolled { box-shadow: 0 8px 24px -18px rgba(44, 48, 67, 0.65); }
   .page-nav .wrap {
     height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px;
   }
@@ -127,8 +140,9 @@
     font-weight: 700; padding: 7px 10px; text-decoration: none;
   }
   .nav-links a:hover, .nav-links a:focus-visible {
-    background: var(--teal-soft); color: var(--teal-deep); outline: none;
+    background: var(--teal-soft); color: var(--teal-deep);
   }
+  .nav-links a[aria-current="location"] { background: var(--ink); color: #fff; }
 
   /* ---------- HERO ---------- */
   .hero {
@@ -139,6 +153,8 @@
       radial-gradient(900px 480px at -5% 110%, var(--purple-soft) 0%, transparent 52%);
     padding: 74px 0 54px;
   }
+  .language-switch { font-size: 0.86rem; color: var(--ink-soft); margin: 0 0 18px; }
+  .language-switch a { color: var(--teal-deep); font-weight: 700; text-underline-offset: 3px; }
   .hero .eyebrow { background: var(--purple-soft); color: var(--purple-deep); }
   .hero h1 {
     font-size: clamp(1.85rem, 5vw, 2.9rem);
@@ -149,11 +165,26 @@
   .hero p.sub {
     font-size: 1.14rem;
     color: var(--ink-soft);
-    max-width: 760px;
-    margin: 0 0 14px;
+    max-width: var(--measure);
+    margin: 0;
   }
   .hero-grid {
-    display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; align-items: start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas: "heading summary" "copy summary";
+    gap: 18px 34px; align-items: start;
+  }
+  .hero-heading { grid-area: heading; }
+  .hero-copy { grid-area: copy; display: grid; gap: 16px; }
+  .hero-summary { grid-area: summary; }
+  .reading-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; color: var(--ink-soft); font-size: 0.88rem; font-weight: 650; }
+  .reading-meta span + span::before { content: "·"; margin-right: 16px; color: var(--grey); }
+  .product-boundary {
+    border-left: 4px solid var(--purple);
+    background: rgba(231, 227, 253, 0.58);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    font-size: 0.98rem !important;
   }
   .hero-summary {
     background: rgba(255,255,255,0.78); border: 1px solid var(--line);
@@ -169,7 +200,7 @@
   }
   .hero .ladder {
     display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-    margin-top: 26px; font-size: 0.92rem; color: var(--ink-soft);
+    margin-top: 8px; font-size: 0.92rem; color: var(--ink-soft);
   }
   .hero .ladder .here {
     background: var(--ink); color: #fff; border-radius: 999px;
@@ -191,14 +222,16 @@
     box-shadow: var(--shadow-sm);
     margin-top: 34px;
   }
-  .vocab b.h { color: var(--ink); display: block; margin-bottom: 12px; }
+  .vocab summary { color: var(--ink); font-weight: 750; cursor: pointer; }
+  .vocab summary::marker { color: var(--purple-deep); }
+  .vocab[open] summary { margin-bottom: 16px; }
   .vocab dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; }
   .vocab dt { font-family: var(--mono); font-size: 0.82rem; color: var(--purple-deep); font-weight: 600; white-space: nowrap; }
   .vocab dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
 
   /* ---------- invariant banner ---------- */
   .invariant {
-    background: linear-gradient(135deg, var(--coral-deep), var(--coral));
+    background: linear-gradient(135deg, #8f291f, var(--coral-deep));
     color: #fff;
     border-radius: var(--radius);
     padding: 50px 46px;
@@ -210,7 +243,7 @@
     opacity: 0.9; text-transform: uppercase;
   }
   .invariant h2 { font-size: clamp(1.4rem, 4vw, 2.1rem); margin: 14px 0 16px; max-width: 720px; }
-  .invariant p { font-size: 1.06rem; max-width: 700px; margin: 0 0 12px; opacity: 0.96; }
+  .invariant p { font-size: 1.06rem; max-width: var(--measure); margin: 0 0 16px; opacity: 0.96; }
   .invariant code { background: rgba(255,255,255,0.2); padding: 1px 7px; border-radius: 6px; font-size: 0.9em; }
   .invariant .pill {
     display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
@@ -308,7 +341,7 @@
   .value .file {
     display: inline-block;
     max-width: 100%;
-    font-family: var(--mono); font-size: 0.76rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
+    font-family: var(--mono); font-size: 0.84rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
     overflow-wrap: anywhere;
   }
   .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.95rem; overflow-wrap: anywhere; }
@@ -330,6 +363,7 @@
     max-width: 100%;
     min-width: 0;
   }
+  .visual-frame:focus-visible, .table-scroll:focus-visible { outline: 3px solid var(--teal-deep); outline-offset: 4px; }
   .alt .visual-frame { background: var(--bg); }
   .visual-frame img {
     display: block;
@@ -461,19 +495,27 @@
   footer { text-align: center; padding: 38px 24px 54px; color: var(--ink-soft); font-size: 0.86rem; border-top: 1px solid var(--line); }
 
   @media (max-width: 900px) {
-    :root { --nav-h: 104px; }
+    :root { --nav-h: 96px; }
     .page-nav { height: auto; min-height: var(--nav-h); }
-    .page-nav .wrap { align-items: flex-start; flex-direction: column; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
-    .nav-links { width: 100%; padding-bottom: 2px; }
-    .hero-grid { grid-template-columns: 1fr; }
+    .page-nav .wrap { align-items: flex-start; flex-direction: column; gap: 4px; padding-top: 7px; padding-bottom: 7px; }
+    .nav-links { width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+    .nav-links::-webkit-scrollbar { display: block; height: 3px; }
+    .nav-links::-webkit-scrollbar-thumb { background: var(--grey); border-radius: 999px; }
+    .nav-links a { display: flex; align-items: center; min-height: 44px; padding: 5px 9px; }
+    .hero-grid { grid-template-columns: 1fr; grid-template-areas: "heading" "summary" "copy"; gap: 18px; }
     .hero-summary { max-width: 640px; }
   }
 
   @media (max-width: 720px) {
     :root { font-size: 16px; }
-    section { padding: 52px 0; }
+    section { padding: 56px 0; }
     .wrap { padding: 0 18px; }
-    .hero { padding: 48px 0 44px; }
+    .hero { padding: 38px 0 44px; }
+    .hero h1 { margin-bottom: 12px; }
+    .hero p.sub { font-size: 1.06rem; }
+    .reading-meta { gap: 4px 12px; }
+    .reading-meta span + span::before { margin-right: 12px; }
+    .hero-summary { padding: 16px 18px; }
     .arch { grid-template-columns: 1fr; }
     .arch-seam { padding: 16px 0; }
     .arch-seam .seam-box { max-width: none; width: 100%; }
@@ -487,6 +529,11 @@
     .hero .ladder .sep { display: none; }
     .hero .ladder .here, .hero .ladder .other { flex: 1 1 100%; }
     .prov-art { overflow: visible; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .page-nav, .page-nav::after { transition: none; }
   }
 </style>
 </head>
@@ -516,42 +563,45 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero" id="top">
   <div class="wrap">
-    <p style="font-size:0.86rem; color:var(--ink-soft); margin:0 0 18px;">繁體中文(目前) · <a href="onboarding.en.html" style="color:var(--teal-deep); font-weight:600;">English</a></p>
+    <p class="language-switch">繁體中文（目前） · <a href="onboarding.en.html" lang="en" hreflang="en">English</a></p>
     <div class="hero-grid">
-      <div>
+      <div class="hero-heading">
         <span class="eyebrow">技術導覽 · 給新進工程同仁</span>
         <h1>loop-apidoc 是一條<span class="hl">來源依據式</span>的 API 文件 pipeline</h1>
-        <p class="sub"><strong>新產品邊界：</strong>Evidence Ledger、Grounded Claim Graph、Canonical API Contract IR、確定性 assurance 與受治理 release。下方 agent-native 執行方式是現行 CLI 相容 adapter，不是 Core 不變式。</p>
-        <p class="sub">它把各家廠商雜亂的串接文件(PDF / Markdown / HTML / OpenAPI JSON / 公開網址),轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計,讀完就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
-
-        <div class="ladder">
-          <span class="other">introduction.html<br>非技術 · 賣點</span>
-          <span class="sep">→</span>
-          <span class="here">你在這裡<br>新人 · 技術全貌</span>
-          <span class="sep">→</span>
-          <span class="other">ARCHITECTURE.md<br>維護者 · seam 細節</span>
-        </div>
+        <p class="reading-meta" aria-label="閱讀資訊"><span>約 15 分鐘</span><span>13 個主題</span><span>可逐段閱讀</span></p>
       </div>
 
       <aside class="hero-summary" aria-label="閱讀重點">
         <h2>讀完要掌握</h2>
         <ul>
-          <li>來源文件是唯一真實來源,缺漏就標記缺漏。</li>
-          <li>agent 只負責擷取,CLI 後段負責可重現組裝。</li>
+          <li>來源文件是唯一真實來源，缺漏就標記缺漏。</li>
+          <li>agent 只負責擷取，CLI 後段負責可重現組裝。</li>
           <li>每次 run 都留下驗證、評分、差異與交接證據。</li>
         </ul>
       </aside>
+
+      <div class="hero-copy">
+        <p class="sub">它把各家廠商雜亂的串接文件（PDF / Markdown / HTML / OpenAPI JSON / 公開網址），轉成一組標準化、可追溯的產物。這份文件帶你看懂整條流程怎麼跑、以及為什麼這樣設計，讀完就能銜接 <code class="inline">ARCHITECTURE.md</code> 與 <code class="inline">SKILL.md</code>。</p>
+        <p class="sub product-boundary"><strong>新產品邊界：</strong>Evidence Ledger、Grounded Claim Graph、Canonical API Contract IR、確定性 assurance 與受治理 release。下方 agent-native 執行方式是現行 CLI 相容 adapter，不是 Core 不變式。</p>
+        <div class="ladder">
+          <a class="other" href="introduction.html">introduction.html<br>非技術 · 賣點</a>
+          <span class="sep">→</span>
+          <span class="here">你在這裡<br>新人 · 技術全貌</span>
+          <span class="sep">→</span>
+          <a class="other" href="ARCHITECTURE.md">ARCHITECTURE.md<br>維護者 · seam 細節</a>
+        </div>
+      </div>
     </div>
 
-    <div class="vocab">
-      <b class="h">開始前,先對齊幾個會反覆出現的詞</b>
+    <details class="vocab">
+      <summary>開始前，先對齊 4 個會反覆出現的詞</summary>
       <dl>
-        <dt>OpenAPI</dt><dd>描述 REST API 的業界標準格式(本專案產出 OpenAPI 3.1 YAML),工具鏈與工程師都能直接吃。</dd>
-        <dt>agent</dt><dd>當前的 coding agent(Claude Code 或 Codex)本身;在本專案裡,它就是擷取引擎。</dd>
-        <dt>subagent</dt><dd>由主 agent 派出的唯讀小幫手,只負責「讀來源、回傳 JSON」,不寫檔。</dd>
-        <dt>run-dir</dt><dd>一次執行產出的輸出目錄,裝著該次跑出來的所有產物(OpenAPI、指南、provenance、報告)。</dd>
+        <dt>OpenAPI</dt><dd>描述 REST API 的業界標準格式（本專案產出 OpenAPI 3.1 YAML），工具鏈與工程師都能直接吃。</dd>
+        <dt>agent</dt><dd>當前的 coding agent（Claude Code 或 Codex）本身；在本專案裡，它就是擷取引擎。</dd>
+        <dt>subagent</dt><dd>由主 agent 派出的唯讀小幫手，只負責「讀來源、回傳 JSON」，不寫檔。</dd>
+        <dt>run-dir</dt><dd>一次執行產出的輸出目錄，裝著該次跑出來的所有產物（OpenAPI、指南、provenance、報告）。</dd>
       </dl>
-    </div>
+    </details>
   </div>
 </header>
 
@@ -563,13 +613,13 @@
     <div class="invariant">
       <span class="tag">不可協商的核心不變式</span>
       <h2>來源文件是唯一的真實來源。</h2>
-      <p>來源沒寫的東西,一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
-      <p>驗證遇到缺漏會大聲失敗(fail loudly),而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策,都是為了守住這條線。</p>
-      <p>反過來說,<b>「來源沒寫」也必須拿得出證據</b>:<code>source_facts/</code> 會機械掃描 Markdown 來源的參數表與範例區塊,來源明明寫了、擷取卻空著就擋下;「之後再擷取」「需進一步擷取」這類佔位答案同樣擋下。要主張某欄位來源真的沒寫,就在 <code>missing</code> 裡具名——所以這道閘只逼出具名缺口,不會逼出捏造。</p>
-      <p>但要清楚它的界線:掃描只認得<b>結構良好的 Markdown</b>(標題、GFM 表格、圍籬區塊)。來源若被壓成一行行超長文字,掃出零筆事實,這道閘等於沒作用。<b>閘門乾淨通過 ≠ 擷取完整</b>——它擋掉的是「機械證明得了的遺漏」,其餘仍要人工核對。</p>
+      <p>來源沒寫的東西，一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
+      <p>驗證遇到缺漏會大聲失敗（fail loudly），而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策，都是為了守住這條線。</p>
+      <p>反過來說，<b>「來源沒寫」也必須拿得出證據</b>：<code>source_facts/</code> 會機械掃描 Markdown 來源的參數表與範例區塊，來源明明寫了、擷取卻空著就擋下；「之後再擷取」「需進一步擷取」這類佔位答案同樣擋下。要主張某欄位來源真的沒寫，就在 <code>missing</code> 裡具名——所以這道閘只逼出具名缺口，不會逼出捏造。</p>
+      <p>但要清楚它的界線：掃描只認得<b>結構良好的 Markdown</b>（標題、GFM 表格、圍籬區塊）。來源若被壓成一行行超長文字，掃出零筆事實，這道閘等於沒作用。<b>閘門乾淨通過 ≠ 擷取完整</b>——它擋掉的是「機械證明得了的遺漏」，其餘仍要人工核對。</p>
       <span class="pill">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>
-        寧可標記「缺漏」,也不編造內容
+        寧可標記「缺漏」，也不編造內容
       </span>
     </div>
   </div>
@@ -579,12 +629,12 @@
 <section class="alt" id="loops">
   <div class="wrap">
     <span class="eyebrow">Loop Engineering</span>
-    <h2 class="section-title">四個閉環:來源、品質、版本、交接</h2>
-    <p class="section-lead">loop-apidoc 的工程重點是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手,而不只是產一份文件。</p>
+    <h2 class="section-title">四個閉環：來源、品質、版本、交接</h2>
+    <p class="section-lead">loop-apidoc 的工程重點，是讓來源、品質、版本與交接都能被機器重跑、被人核對、被 downstream 使用者接手，而不只是產一份文件。</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/loop-layers.jpg" alt="四個閉環" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="可左右捲動查看四個閉環圖">
+        <img src="assets/onboarding/loop-layers.svg" alt="四個閉環" width="1120" height="620" loading="lazy" />
       </div>
       <figcaption>四個 loop 是同一條 pipeline 的四層保護，而不是四條互不相干的流程。</figcaption>
     </figure>
@@ -630,12 +680,12 @@
 <section id="architecture">
   <div class="wrap">
     <span class="eyebrow">關鍵架構</span>
-    <h2 class="section-title">兩段式:agent 擷取 ‖ 確定性 CLI 後段</h2>
-    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半,中間用兩個 JSON 檔當唯一交界,兩邊各自可獨立測試、獨立替換。</p>
+    <h2 class="section-title">兩段式：agent 擷取 ‖ 確定性 CLI 後段</h2>
+    <p class="section-lead">這是你最需要先建立的心智模型。整條 pipeline 切成兩半，中間用兩個 JSON 檔當唯一交界，兩邊各自可獨立測試、獨立替換。</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/two-stage-architecture.jpg" alt="兩段式架構" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="可左右捲動查看兩段式架構圖">
+        <img src="assets/onboarding/two-stage-architecture.svg" alt="兩段式架構" width="1120" height="620" loading="lazy" />
       </div>
       <figcaption>不確定性集中在擷取前段；確定性後段只讀 seam JSON 並產生可重跑產物。</figcaption>
     </figure>
@@ -685,12 +735,12 @@
 <section id="flow">
   <div class="wrap">
     <span class="eyebrow">端到端資料流</span>
-    <h2 class="section-title">一次完整執行,經過哪些階段</h2>
+    <h2 class="section-title">一次完整執行，經過哪些階段</h2>
     <p class="section-lead">每一階段都有明確的輸入 / 輸出(產物)。原始 PDF／Word 必須先轉成可掃描文字，manifest 綁定的 source-risk gate 也必須在 agent 擷取前通過。灰色標記的是可選階段;preparation、score、diff、review 與 handoff 讓一次 run 從「生成」延伸成可審查、可比較、可交接的工程資產。</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/end-to-end-flow.jpg" alt="端到端資料流" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="可左右捲動查看端到端資料流圖">
+        <img src="assets/onboarding/end-to-end-flow.svg" alt="端到端資料流" width="1120" height="660" loading="lazy" />
       </div>
       <figcaption>主幹流程產出 run-dir；score、diff 與 review 把完成品延伸成品質、版本與人工結論訊號。</figcaption>
     </figure>
@@ -958,12 +1008,12 @@
 <section id="validation">
   <div class="wrap">
     <span class="eyebrow">可追溯 ↔ 驗證對齊</span>
-    <h2 class="section-title">禁止推測,靠 target 逐一對齊來把關</h2>
-    <p class="section-lead">這是「絕不臆測」如何被機器強制執行的關鍵機制:<code class="inline">provenance.json</code> 的 <code class="inline">target</code> 字串,與 OpenAPI 位置一對一對齊。</p>
+    <h2 class="section-title">禁止推測，靠 target 逐一對齊來把關</h2>
+    <p class="section-lead">這是「絕不臆測」如何被機器強制執行的關鍵機制：<code class="inline">provenance.json</code> 的 <code class="inline">target</code> 字串，與 OpenAPI 位置一對一對齊。</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/provenance-target-align.jpg" alt="target 一對一對齊" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="可左右捲動查看 target 對齊圖">
+        <img src="assets/onboarding/provenance-target-align.jpg" alt="target 一對一對齊" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>provenance 的 target 字串與 OpenAPI 位置一對一對齊，是 no-speculation 檢查的比對基準。</figcaption>
     </figure>
@@ -978,12 +1028,12 @@
 <section class="alt" id="correction">
   <div class="wrap">
     <span class="eyebrow">修正迴圈</span>
-    <h2 class="section-title">驗證問題會被分類,而不是盲目重試</h2>
+    <h2 class="section-title">驗證問題會被分類，而不是盲目重試</h2>
     <p class="section-lead">沒有 CLI 內建的修正迴圈。<code class="inline">assemble</code> 回報分類結果,修正由 <b>agent 自行驅動</b>:回頭重讀來源、覆寫對應 JSON、再跑一次,最多 3 輪。問題分兩類:</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/validation-correction-loop.jpg" alt="修正迴圈" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="可左右捲動查看修正迴圈圖">
+        <img src="assets/onboarding/validation-correction-loop.svg" alt="修正迴圈" width="1120" height="640" loading="lazy" />
       </div>
       <figcaption>target 對齊先決定輸出是否有來源依據；分類結果再決定是修 seam 還是 fail-closed。</figcaption>
     </figure>
@@ -1058,7 +1108,7 @@
 <section id="diff">
   <div class="wrap">
     <span class="eyebrow">版本差異</span>
-    <h2 class="section-title">換版本時,依 downstream impact 分四類</h2>
+    <h2 class="section-title">換版本時，依 downstream impact 分四類</h2>
     <p class="section-lead"><code class="inline">diff</code> 拿同一支 API 的<b>新舊兩個已完成 run-dir</b> 相比,看的是「這次改版會不會害到下游串接」,而不是「來源改了哪幾個字」。每一筆差異都被歸到下面四種 impact 之一,並依嚴重度由高到低排序,讓你一眼看出該不該擋、該通知誰。</p>
     <div class="lights">
       <div class="light lv-red">
@@ -1109,7 +1159,7 @@
   <div class="wrap">
     <span class="eyebrow">套件邊界</span>
     <h2 class="section-title">程式碼怎麼分包</h2>
-    <p class="section-lead">原則:除了少數 I/O 出口,其餘模組皆為純函式,便於單元測試。修改時請守住這個邊界,讓每個 loop 都能獨立驗證。</p>
+    <p class="section-lead">原則：除了少數 I/O 出口，其餘模組皆為純函式，便於單元測試。修改時請守住這個邊界，讓每個 loop 都能獨立驗證。</p>
     <div class="table-scroll" tabindex="0" aria-label="套件邊界表格">
       <table class="pkg-table">
         <thead><tr><th>套件</th><th>職責</th></tr></thead>
@@ -1179,6 +1229,46 @@
 <footer>
   loop-apidoc 技術導覽 · 給新進工程同仁 · 來源依據式 API 文件 pipeline
 </footer>
+
+<script>
+  (() => {
+    const nav = document.querySelector(".page-nav");
+    const links = [...document.querySelectorAll(".nav-links a[href^='#']")];
+    const sections = [...document.querySelectorAll("main section[id]")];
+
+    const setCurrent = (id) => {
+      let currentLink = null;
+      links.forEach((link) => {
+        if (link.getAttribute("href") === `#${id}`) {
+          link.setAttribute("aria-current", "location");
+          currentLink = link;
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+      if (currentLink && window.matchMedia("(max-width: 900px)").matches) {
+        currentLink.scrollIntoView({ block: "nearest", inline: "center" });
+      }
+    };
+
+    const updateProgress = () => {
+      const distance = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = distance > 0 ? Math.min(100, Math.max(0, (window.scrollY / distance) * 100)) : 0;
+      nav.style.setProperty("--reading-progress", `${progress}%`);
+      nav.classList.toggle("is-scrolled", window.scrollY > 8);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.find((entry) => entry.isIntersecting);
+      if (visible) setCurrent(visible.target.id);
+    }, { rootMargin: "-24% 0px -66% 0px" });
+
+    sections.forEach((section) => observer.observe(section));
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+    updateProgress();
+  })();
+</script>
 
 </body>
 </html>
