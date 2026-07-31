@@ -24,7 +24,7 @@ Add a fail-closed pre-agent source-risk gate and secure provenance-bound DOCX no
 
 ## Strategy impact
 
-- [ ] None
+- [ ] None — Not selected because this release updates strategy documents.
 - [x] Updated — `docs/DESIGN_DECISIONS.md` records the bounded DOCX adaptation and
   `docs/PRODUCT_EXTENSION_ROADMAP.md` records delivery of the source-risk and secure DOCX
   ingestion slices.
