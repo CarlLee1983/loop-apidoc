@@ -11,20 +11,20 @@
     --ink: #2c3043;
     --ink-soft: #5d6478;
     --teal: #15a39a;
-    --teal-deep: #0f7a73;
+    --teal-deep: #0c6f69;
     --teal-soft: #d8f3f0;
     --coral: #ff6f61;
-    --coral-deep: #d9483b;
+    --coral-deep: #b2352a;
     --coral-soft: #ffe2dd;
     --amber: #f5a524;
-    --amber-deep: #b5791a;
+    --amber-deep: #82550d;
     --amber-soft: #fdeccb;
     --purple: #7c6df2;
     --purple-deep: #5b4cc4;
     --purple-soft: #e7e3fd;
     --green: #2bb673;
     --red: #ef5350;
-    --grey: #b6bccb;
+    --grey: #697082;
     --line: #ece5d8;
     --nav-h: 62px;
     --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
@@ -32,11 +32,12 @@
     --radius: 8px;
     --radius-sm: 8px;
     --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --measure: 68ch;
     font-size: 17px;
   }
 
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 18px); scrollbar-gutter: stable; }
 
   body {
     margin: 0;
@@ -46,9 +47,11 @@
       -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     line-height: 1.75;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   a { color: inherit; }
+  a:focus-visible { outline: 3px solid var(--teal-deep); outline-offset: 3px; }
   .skip-link {
     position: fixed; left: 16px; top: 10px; z-index: 20;
     transform: translateY(-160%);
@@ -58,7 +61,8 @@
   .skip-link:focus { transform: translateY(0); }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
   section { padding: 70px 0; }
-  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; text-wrap: balance; }
+  p, li, dd { text-wrap: pretty; }
   section[id] { scroll-margin-top: calc(var(--nav-h) + 18px); }
 
   code, .mono { font-family: var(--mono); }
@@ -85,7 +89,7 @@
   .section-lead {
     font-size: 1.06rem;
     color: var(--ink-soft);
-    max-width: 720px;
+    max-width: var(--measure);
     margin: 0 0 40px;
   }
 
@@ -104,7 +108,16 @@
     background: rgba(250, 247, 239, 0.92);
     border-bottom: 1px solid var(--line);
     backdrop-filter: blur(14px);
+    transition: box-shadow 160ms ease;
   }
+  .page-nav::after {
+    content: "";
+    position: absolute; left: 0; bottom: -1px;
+    width: var(--reading-progress, 0%); height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--teal));
+    transition: width 100ms linear;
+  }
+  .page-nav.is-scrolled { box-shadow: 0 8px 24px -18px rgba(44, 48, 67, 0.65); }
   .page-nav .wrap {
     height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px;
   }
@@ -127,8 +140,9 @@
     font-weight: 700; padding: 7px 10px; text-decoration: none;
   }
   .nav-links a:hover, .nav-links a:focus-visible {
-    background: var(--teal-soft); color: var(--teal-deep); outline: none;
+    background: var(--teal-soft); color: var(--teal-deep);
   }
+  .nav-links a[aria-current="location"] { background: var(--ink); color: #fff; }
 
   /* ---------- HERO ---------- */
   .hero {
@@ -139,6 +153,8 @@
       radial-gradient(900px 480px at -5% 110%, var(--purple-soft) 0%, transparent 52%);
     padding: 74px 0 54px;
   }
+  .language-switch { font-size: 0.86rem; color: var(--ink-soft); margin: 0 0 18px; }
+  .language-switch a { color: var(--teal-deep); font-weight: 700; text-underline-offset: 3px; }
   .hero .eyebrow { background: var(--purple-soft); color: var(--purple-deep); }
   .hero h1 {
     font-size: clamp(1.85rem, 5vw, 2.9rem);
@@ -149,11 +165,26 @@
   .hero p.sub {
     font-size: 1.14rem;
     color: var(--ink-soft);
-    max-width: 760px;
-    margin: 0 0 14px;
+    max-width: var(--measure);
+    margin: 0;
   }
   .hero-grid {
-    display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; align-items: start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas: "heading summary" "copy summary";
+    gap: 18px 34px; align-items: start;
+  }
+  .hero-heading { grid-area: heading; }
+  .hero-copy { grid-area: copy; display: grid; gap: 16px; }
+  .hero-summary { grid-area: summary; }
+  .reading-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; color: var(--ink-soft); font-size: 0.88rem; font-weight: 650; }
+  .reading-meta span + span::before { content: "·"; margin-right: 16px; color: var(--grey); }
+  .product-boundary {
+    border-left: 4px solid var(--purple);
+    background: rgba(231, 227, 253, 0.58);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    font-size: 0.98rem !important;
   }
   .hero-summary {
     background: rgba(255,255,255,0.78); border: 1px solid var(--line);
@@ -169,7 +200,7 @@
   }
   .hero .ladder {
     display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-    margin-top: 26px; font-size: 0.92rem; color: var(--ink-soft);
+    margin-top: 8px; font-size: 0.92rem; color: var(--ink-soft);
   }
   .hero .ladder .here {
     background: var(--ink); color: #fff; border-radius: 999px;
@@ -191,14 +222,16 @@
     box-shadow: var(--shadow-sm);
     margin-top: 34px;
   }
-  .vocab b.h { color: var(--ink); display: block; margin-bottom: 12px; }
+  .vocab summary { color: var(--ink); font-weight: 750; cursor: pointer; }
+  .vocab summary::marker { color: var(--purple-deep); }
+  .vocab[open] summary { margin-bottom: 16px; }
   .vocab dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; }
   .vocab dt { font-family: var(--mono); font-size: 0.82rem; color: var(--purple-deep); font-weight: 600; white-space: nowrap; }
   .vocab dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
 
   /* ---------- invariant banner ---------- */
   .invariant {
-    background: linear-gradient(135deg, var(--coral-deep), var(--coral));
+    background: linear-gradient(135deg, #8f291f, var(--coral-deep));
     color: #fff;
     border-radius: var(--radius);
     padding: 50px 46px;
@@ -210,7 +243,7 @@
     opacity: 0.9; text-transform: uppercase;
   }
   .invariant h2 { font-size: clamp(1.4rem, 4vw, 2.1rem); margin: 14px 0 16px; max-width: 720px; }
-  .invariant p { font-size: 1.06rem; max-width: 700px; margin: 0 0 12px; opacity: 0.96; }
+  .invariant p { font-size: 1.06rem; max-width: var(--measure); margin: 0 0 16px; opacity: 0.96; }
   .invariant code { background: rgba(255,255,255,0.2); padding: 1px 7px; border-radius: 6px; font-size: 0.9em; }
   .invariant .pill {
     display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
@@ -308,7 +341,7 @@
   .value .file {
     display: inline-block;
     max-width: 100%;
-    font-family: var(--mono); font-size: 0.76rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
+    font-family: var(--mono); font-size: 0.84rem; color: var(--teal-deep); background: var(--teal-soft); padding: 2px 8px; border-radius: 6px;
     overflow-wrap: anywhere;
   }
   .value p { margin: 12px 0 0; color: var(--ink-soft); font-size: 0.95rem; overflow-wrap: anywhere; }
@@ -330,6 +363,7 @@
     max-width: 100%;
     min-width: 0;
   }
+  .visual-frame:focus-visible, .table-scroll:focus-visible { outline: 3px solid var(--teal-deep); outline-offset: 4px; }
   .alt .visual-frame { background: var(--bg); }
   .visual-frame img {
     display: block;
@@ -461,19 +495,27 @@
   footer { text-align: center; padding: 38px 24px 54px; color: var(--ink-soft); font-size: 0.86rem; border-top: 1px solid var(--line); }
 
   @media (max-width: 900px) {
-    :root { --nav-h: 104px; }
+    :root { --nav-h: 96px; }
     .page-nav { height: auto; min-height: var(--nav-h); }
-    .page-nav .wrap { align-items: flex-start; flex-direction: column; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
-    .nav-links { width: 100%; padding-bottom: 2px; }
-    .hero-grid { grid-template-columns: 1fr; }
+    .page-nav .wrap { align-items: flex-start; flex-direction: column; gap: 4px; padding-top: 7px; padding-bottom: 7px; }
+    .nav-links { width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+    .nav-links::-webkit-scrollbar { display: block; height: 3px; }
+    .nav-links::-webkit-scrollbar-thumb { background: var(--grey); border-radius: 999px; }
+    .nav-links a { display: flex; align-items: center; min-height: 44px; padding: 5px 9px; }
+    .hero-grid { grid-template-columns: 1fr; grid-template-areas: "heading" "summary" "copy"; gap: 18px; }
     .hero-summary { max-width: 640px; }
   }
 
   @media (max-width: 720px) {
     :root { font-size: 16px; }
-    section { padding: 52px 0; }
+    section { padding: 56px 0; }
     .wrap { padding: 0 18px; }
-    .hero { padding: 48px 0 44px; }
+    .hero { padding: 38px 0 44px; }
+    .hero h1 { margin-bottom: 12px; }
+    .hero p.sub { font-size: 1.06rem; }
+    .reading-meta { gap: 4px 12px; }
+    .reading-meta span + span::before { margin-right: 12px; }
+    .hero-summary { padding: 16px 18px; }
     .arch { grid-template-columns: 1fr; }
     .arch-seam { padding: 16px 0; }
     .arch-seam .seam-box { max-width: none; width: 100%; }
@@ -487,6 +529,11 @@
     .hero .ladder .sep { display: none; }
     .hero .ladder .here, .hero .ladder .other { flex: 1 1 100%; }
     .prov-art { overflow: visible; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .page-nav, .page-nav::after { transition: none; }
   }
 </style>
 </head>
@@ -516,21 +563,12 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero" id="top">
   <div class="wrap">
-    <p style="font-size:0.86rem; color:var(--ink-soft); margin:0 0 18px;">English (current) · <a href="onboarding.html" style="color:var(--teal-deep); font-weight:600;">繁體中文</a></p>
+    <p class="language-switch">English (current) · <a href="onboarding.html" lang="zh-Hant-TW" hreflang="zh-Hant-TW">繁體中文</a></p>
     <div class="hero-grid">
-      <div>
+      <div class="hero-heading">
         <span class="eyebrow">Technical Tour · For New Engineering Teammates</span>
         <h1>loop-apidoc is a <span class="hl">source-grounded</span> API documentation pipeline</h1>
-        <p class="sub"><strong>New product boundary:</strong> Evidence Ledger, Grounded Claim Graph, Canonical API Contract IR, deterministic assurance, and governed releases. Agent-native execution below is the current CLI compatibility adapter, not a Core invariant.</p>
-        <p class="sub">It turns each vendor's messy integration docs (PDF / Markdown / HTML / OpenAPI JSON / public URLs) into a standardized, traceable set of artifacts. This page walks you through how the whole pipeline runs and why it's designed this way, so that by the end you're ready to move on to <code class="inline">ARCHITECTURE.md</code> and <code class="inline">SKILL.md</code>.</p>
-
-        <div class="ladder">
-          <span class="other">introduction.html<br>Non-technical · Value</span>
-          <span class="sep">→</span>
-          <span class="here">You are here<br>New hire · Full technical picture</span>
-          <span class="sep">→</span>
-          <span class="other">ARCHITECTURE.md<br>Maintainer · seam details</span>
-        </div>
+        <p class="reading-meta" aria-label="Reading information"><span>About 18 minutes</span><span>13 topics</span><span>Read in sections</span></p>
       </div>
 
       <aside class="hero-summary" aria-label="Key takeaways">
@@ -541,17 +579,29 @@
           <li>Every run leaves behind validation, scoring, diff, and handoff evidence.</li>
         </ul>
       </aside>
+
+      <div class="hero-copy">
+        <p class="sub">It turns each vendor's messy integration docs (PDF / Markdown / HTML / OpenAPI JSON / public URLs) into a standardized, traceable set of artifacts. This page walks you through how the whole pipeline runs and why it's designed this way, so that by the end you're ready to move on to <code class="inline">ARCHITECTURE.md</code> and <code class="inline">SKILL.md</code>.</p>
+        <p class="sub product-boundary"><strong>New product boundary:</strong> Evidence Ledger, Grounded Claim Graph, Canonical API Contract IR, deterministic assurance, and governed releases. Agent-native execution below is the current CLI compatibility adapter, not a Core invariant.</p>
+        <div class="ladder">
+          <a class="other" href="introduction.en.html">introduction.en.html<br>Non-technical · Value</a>
+          <span class="sep">→</span>
+          <span class="here">You are here<br>New hire · Full technical picture</span>
+          <span class="sep">→</span>
+          <a class="other" href="ARCHITECTURE.md">ARCHITECTURE.md<br>Maintainer · seam details</a>
+        </div>
+      </div>
     </div>
 
-    <div class="vocab">
-      <b class="h">Before we start, let's align on a few terms that come up repeatedly</b>
+    <details class="vocab">
+      <summary>Before we start: 4 terms used throughout this tour</summary>
       <dl>
         <dt>OpenAPI</dt><dd>The industry-standard format for describing REST APIs (this project outputs OpenAPI 3.1 YAML); both toolchains and engineers can consume it directly.</dd>
         <dt>agent</dt><dd>The current coding agent itself (Claude Code or Codex); in this project, it is the extraction engine.</dd>
         <dt>subagent</dt><dd>A read-only helper dispatched by the main agent, responsible only for "read the sources, return JSON" — it never writes files.</dd>
         <dt>run-dir</dt><dd>The output directory produced by a single run, holding all the artifacts from that run (OpenAPI, guide, provenance, reports).</dd>
       </dl>
-    </div>
+    </details>
   </div>
 </header>
 
@@ -583,8 +633,8 @@
     <p class="section-lead">loop-apidoc's engineering focus is to make source, quality, version, and handoff all machine-reproducible, human-verifiable, and pickup-ready for downstream users — not just to produce a document.</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/loop-layers.jpg" alt="Four closed loops" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="Scrollable four-loop diagram">
+        <img src="assets/onboarding/loop-layers.jpg" alt="Four closed loops" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>The four loops are four protective layers of the same pipeline, not four unrelated processes.</figcaption>
     </figure>
@@ -634,8 +684,8 @@
     <p class="section-lead">This is the mental model you most need to build first. The whole pipeline is split in two, with two JSON files as the only boundary in between; each side can be tested and swapped independently.</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/two-stage-architecture.jpg" alt="Two-stage architecture" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="Scrollable two-stage architecture diagram">
+        <img src="assets/onboarding/two-stage-architecture.jpg" alt="Two-stage architecture" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>The uncertainty is concentrated in the extraction front half; the deterministic back half only reads the seam JSON and produces re-runnable artifacts.</figcaption>
     </figure>
@@ -689,8 +739,8 @@
     <p class="section-lead">Every stage has explicit inputs / outputs (artifacts). Raw PDF/Word must be converted into scannable text, and the manifest-bound source-risk gate must pass before agent extraction starts. The ones marked in grey are optional; preparation, score, diff, review, and handoff extend a run from mere "generation" into a reviewable, comparable, handoff-ready engineering asset.</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/end-to-end-flow.jpg" alt="End-to-end data flow" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="Scrollable end-to-end flow diagram">
+        <img src="assets/onboarding/end-to-end-flow.jpg" alt="End-to-end data flow" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>The main pipeline produces the run-dir; score, diff, and review extend the finished product into quality, version, and human-decision signals.</figcaption>
     </figure>
@@ -962,8 +1012,8 @@
     <p class="section-lead">This is the key mechanism by which "never guess" is machine-enforced: the <code class="inline">target</code> strings in <code class="inline">provenance.json</code> align one-to-one with OpenAPI locations.</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/provenance-target-align.jpg" alt="one-to-one target alignment" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="Scrollable target-alignment diagram">
+        <img src="assets/onboarding/provenance-target-align.jpg" alt="one-to-one target alignment" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>The provenance target strings align one-to-one with OpenAPI locations, serving as the reference for the no-speculation check.</figcaption>
     </figure>
@@ -982,8 +1032,8 @@
     <p class="section-lead">There is no CLI built-in correction loop. <code class="inline">assemble</code> reports the classification result, and correction is <b>driven by the agent itself</b>: go back and re-read the sources, overwrite the corresponding JSON, and run again, for up to 3 rounds. Issues fall into two categories:</p>
 
     <figure class="visual-figure">
-      <div class="visual-frame">
-        <img src="assets/onboarding/validation-correction-loop.jpg" alt="Correction loop" loading="lazy" />
+      <div class="visual-frame" tabindex="0" aria-label="Scrollable correction-loop diagram">
+        <img src="assets/onboarding/validation-correction-loop.jpg" alt="Correction loop" width="1376" height="768" loading="lazy" />
       </div>
       <figcaption>Target alignment first decides whether an output is source-grounded; the classification result then decides whether to fix the seam or fail-closed.</figcaption>
     </figure>
@@ -1179,6 +1229,46 @@
 <footer>
   loop-apidoc Technical Tour · For New Engineering Teammates · Source-grounded API documentation pipeline
 </footer>
+
+<script>
+  (() => {
+    const nav = document.querySelector(".page-nav");
+    const links = [...document.querySelectorAll(".nav-links a[href^='#']")];
+    const sections = [...document.querySelectorAll("main section[id]")];
+
+    const setCurrent = (id) => {
+      let currentLink = null;
+      links.forEach((link) => {
+        if (link.getAttribute("href") === `#${id}`) {
+          link.setAttribute("aria-current", "location");
+          currentLink = link;
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+      if (currentLink && window.matchMedia("(max-width: 900px)").matches) {
+        currentLink.scrollIntoView({ block: "nearest", inline: "center" });
+      }
+    };
+
+    const updateProgress = () => {
+      const distance = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = distance > 0 ? Math.min(100, Math.max(0, (window.scrollY / distance) * 100)) : 0;
+      nav.style.setProperty("--reading-progress", `${progress}%`);
+      nav.classList.toggle("is-scrolled", window.scrollY > 8);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.find((entry) => entry.isIntersecting);
+      if (visible) setCurrent(visible.target.id);
+    }, { rootMargin: "-24% 0px -66% 0px" });
+
+    sections.forEach((section) => observer.observe(section));
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+    updateProgress();
+  })();
+</script>
 
 </body>
 </html>
