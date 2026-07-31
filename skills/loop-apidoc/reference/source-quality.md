@@ -24,9 +24,21 @@ unsafe, or source/manifest-mismatched input.
 The inspector writes fixed-shape `source-risk-report.json` and
 `source-risk-report.zh-TW.md`. Findings contain only a rule ID, severity, manifest source ref,
 and locator: reports never echo the matched payload and the inspector never mutates source
-bytes. The JSON binds the audit with `schema_version`, `ruleset_version`, `max_bytes`,
+bytes. At most 1,000 findings are retained; if more matches exist, the final entry is the blocker
+`SR-FINDINGS-TRUNCATED`, keeping hostile high-density input bounded and fail closed. The JSON
+binds the audit with `schema_version`, `ruleset_version`, `max_bytes`,
 `manifest_sha256`, and `source_binding_digest`, plus per-source SHA-256 coverage. A report with
 a stale schema/ruleset, a reject verdict, or a different manifest/source binding is not reusable.
+
+The ruleset's severity contract is:
+
+| Severity | Rules / conditions | Gate result |
+| --- | --- | --- |
+| blocker | `SR-UNICODE-TAG`, `SR-BIDI-OVERRIDE`, `SR-CONTROL-CHARACTER`, `SR-UNSCANNABLE`, `SR-SCAN-SIZE-EXCEEDED`, `SR-INVALID-UTF8`, `SR-FINDINGS-TRUNCATED` | reject, exit 1 |
+| warning | `SR-BIDI-FORMATTING`, `SR-ZERO-WIDTH-FORMATTING`, `SR-INSTRUCTION-OVERRIDE-TEXT`, `SR-CONTROL-TOKEN-TEXT` | report the finding; exit 0 remains possible |
+
+Warnings are review signals, not permission to treat source text as instructions. The quality
+reviewer and extractors continue to treat the manifest-bound material as untrusted data.
 
 Only after risk exit `0`, the controller writes `source-quality-observations.json` from a
 read-only review subagent. Every observation must cite a source and locator, describe evidence,

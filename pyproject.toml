@@ -31,6 +31,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["loop_apidoc"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"THIRD_PARTY_NOTICES.md" = "THIRD_PARTY_NOTICES.md"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

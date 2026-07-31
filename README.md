@@ -365,7 +365,7 @@ uv run loop-apidoc inspect-source-risk \
 在來源文字進入模型 context 前，掃描 manifest 精確綁定的來源包。支援 UTF-8
 Markdown、HTML、OpenAPI JSON/YAML；PDF、Word、無效 UTF-8、超過上限的文字與其他不可掃描
 pending source 都是 blocker，需先轉換再重建 manifest。預設每檔 5 MiB。固定格式的
-`source-risk-report.{json,zh-TW.md}` 只記 rule ID、severity、source ref 與 locator，絕不回顯
+`source-risk-report.{json,zh-TW.md}` 最多保留 1,000 筆 finding；若尚有更多命中，最後一筆固定為 blocker `SR-FINDINGS-TRUNCATED`，讓高密度惡意輸入 fail closed 而不放大成無上限報告。報告只記 rule ID、severity、source ref 與 locator，絕不回顯
 命中的 payload，也不改寫來源 bytes。schema/ruleset 版本、`max_bytes`、manifest digest、逐來源
 SHA-256 coverage 與穩定 source-binding digest 會阻止 stale audit 重用。退出碼：`0` = pass、
 `1` = reject、`2` = 無效、不安全、無法讀取或綁定不符的輸入。
@@ -500,7 +500,7 @@ uv run loop-apidoc review --project ./my-api --docset payment --run ./output/<ru
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-PDF 使用 pymupdf4llm，`.docx` 使用內建 fail-closed OOXML normalizer；兩者都保留標題與表格並輸出 `<原檔名>.md`。DOCX 另寫 deterministic `.source.json` sidecar，綁定原始與正規化後 SHA-256。此首個 slice 支援 UTF-8-compatible Transitional OOXML textual DOCX；ZIP 路徑／資源上限、巨集與 active content、外部 relationship、DTD/entity、損壞的 OPC/XML、`altChunk`、embedded media，以及帶實質內容的 header/footer/note/comment part 都會在批次輸出前被拒絕，避免靜默漏掉來源證據。舊式 `.doc` 維持 passthrough，須先用可信任的外部工具轉檔。目錄輸入保留來源相對路徑，`--sources` 也可指定單一檔案。之後務必針對精確的 `--out` 目錄建立 manifest 並通過 `inspect-source-risk`，agent 才能讀取。
+PDF 使用 pymupdf4llm，`.docx` 使用內建 fail-closed OOXML normalizer；受支援的文件會保留標題與表格並輸出 `<原檔名>.md`。DOCX 另寫 deterministic `.source.json` sidecar，記錄 schema／security-policy version、原始與正規化檔名、大小及 SHA-256。壓縮檔上限為 25 MiB、最多 2,048 entries、每個 member 最多 10 MiB、解壓總量最多 50 MiB、壓縮比最多 100:1。此首個 slice 支援 UTF-8-compatible Transitional OOXML textual DOCX；ZIP 路徑／資源上限、巨集與 active DDE field code、markup-compatibility alternate content、外部 relationship、DTD/entity、損壞的 OPC/XML、`altChunk`、embedded media、帶實質內容的 header/footer/note/comment part，以及目前無法忠實輸出的合併儲存格語意，都會在批次輸出前被拒絕，避免靜默漏掉證據或把欄位移到錯誤位置。既有 Markdown／sidecar、衍生路徑碰撞或 normalization error 一律不覆寫並使 `preprocess` 以 exit 2 結束。舊式 `.doc` 維持 passthrough，須先用可信任的外部工具轉檔。目錄輸入保留來源相對路徑，`--sources` 也可指定單一檔案。之後務必針對精確的 `--out` 目錄建立 manifest 並通過 `inspect-source-risk`，agent 才能讀取。
 
 ### `verify-extraction` — 檢查擷取 JSON 是否符合契約
 
@@ -661,18 +661,18 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | 來源掃描與 manifest 建立 |
 | `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF／DOCX→markdown 編排) |
-| `loop_apidoc/docx_normalization.py` | bounded、fail-closed OOXML 驗證與 deterministic DOCX→Markdown／provenance 產生；不執行或解析外部 package relationship |
+| `loop_apidoc/docx_normalization.py` + `docx_{models,validation,render,publish}.py` | 穩定 facade 加上 bounded 驗證、deterministic rendering 與分段暫存、寫入失敗回滾的 DOCX→Markdown／provenance 發布；每個 Word XML part 都會掃描，不支援的 active DDE field、markup alternative、合併儲存格與外部內容一律 fail closed |
 | `loop_apidoc/domain/` | protocol-neutral canonical contract、evidence relationship、領域 profiles，以及純 GraphQL／AsyncAPI projection compilers；目前沒有這兩種格式的公開 run integration |
 | `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |
-| `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(唯一檔案 I/O 出口) |
+| `loop_apidoc/generate/` | OpenAPI / Markdown / provenance 生成(檔案 I/O 出口之一) |
 | `loop_apidoc/validate/` | 結構／完整性／一致性／禁止推測驗證與報告 |
 | `loop_apidoc/run/` | run-id 產生、結果／狀態 models、將計畫寫入 run 目錄 |
 | `loop_apidoc/diff/` | 比較兩個 run 目錄的版本差異，依 impact 分類並輸出報告 |
 | `loop_apidoc/preparation/` | 在 assemble 內把 manifest 與 plan 評成準備度報告 |
 | `loop_apidoc/score/` | 既有 run-dir 文件品質評分(JSON/Markdown report, CI gate 狀態) |
-| `loop_apidoc/source_risk/` | agent 讀來源前，對 manifest 綁定的 UTF-8 Markdown/HTML/OpenAPI 文字做確定性檢查；固定 no-payload finding、版本化 schema/rules、bounded read、穩定來源綁定、已驗證 report loader 與 `source-risk-report.{json,zh-TW.md}` |
+| `loop_apidoc/source_risk/` | agent 讀來源前，對 manifest 綁定的 UTF-8 Markdown/HTML/OpenAPI 文字做確定性檢查；固定 no-payload finding、1,000 筆報告上限與 fail-closed truncation、版本化 schema/rules、bounded read、穩定來源綁定、已驗證 report loader 與 `source-risk-report.{json,zh-TW.md}` |
 | `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；要求並嵌入已驗證的 source-risk audit，通過報告可隨 run-dir 稽核保存 |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
 | `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
@@ -685,3 +685,12 @@ uv run ruff check .
 - 架構總覽與資料流(含流程圖):[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - 產品設計決策:[`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md)
 - 貢獻指南:[`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+## 上游致謝與第三方授權
+
+DOCX ingestion 的設計與 ZIP/XML fallback 改作自
+[`virgiliojr94/book-to-skill`](https://github.com/virgiliojr94/book-to-skill)
+revision `efda3b2212ce1b2c052126e85e14de40a32442e8`。`loop-apidoc` 不把它當作 runtime
+dependency，也不承諾其 EPUB／RTF／MOBI 等格式；本地實作另加入 bounded package
+validation、整批 preflight、deterministic provenance 與 fail-closed rendering。
+完整上游 MIT notice 見 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。

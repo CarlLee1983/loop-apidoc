@@ -104,9 +104,15 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
 - **Word (`.docx`)** → `<APIDOC> preprocess --sources "<SOURCES>" --out
   "<WORK>/sources_text"`, set `<EXTRACT_SOURCES>=<WORK>/sources_text`. The built-in
   normalizer writes `<name>.docx.md` plus deterministic `<name>.docx.md.source.json`
-  provenance, preserves headings/tables and content controls, and rejects unsafe OOXML packages
-  before any output. This first slice supports UTF-8-compatible Transitional OOXML textual DOCX only; embedded media
-  and visible header/footer/note/comment parts fail closed instead of being silently omitted.
+  provenance (schema/security-policy versions plus source/normalized names, sizes, and SHA-256),
+  preserves headings/tables and content controls for supported documents, and rejects unsafe
+  OOXML packages before any output. Policy limits are 25 MiB compressed, 2,048 entries, 10 MiB
+  per member, 50 MiB total uncompressed, and a 100:1 compression ratio; an existing Markdown or
+  sidecar, a derived-path collision, or a normalization error is never overwritten and exits 2.
+  This first slice supports UTF-8-compatible Transitional
+  OOXML textual DOCX only; active DDE field codes, markup-compatibility alternate content, merged-cell
+  table semantics, embedded media, and visible header/footer/note/comment parts fail closed instead
+  of being silently omitted or rendered into a different meaning.
   Legacy `.doc` remains passthrough and must be converted with a trusted external tool before
   the risk gate. Raw Word is intentionally an unscannable source-risk blocker.
 - **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
@@ -245,7 +251,9 @@ OpenAPI JSON/YAML. PDF, Word, invalid UTF-8, oversized text, and other unscannab
 sources are blockers: convert them into the exact readable package, rebuild the manifest, and
 re-run. Exit `0` is pass, `1` is a risk reject, and `2` is invalid/stale input. The fixed
 `source-risk-report.{json,zh-TW.md}` records rule IDs, source refs, and locators only; it never
-copies a matched payload or mutates source bytes. Its `schema_version`, `ruleset_version`,
+copies a matched payload or mutates source bytes. The report retains at most 1,000 findings; a
+final `SR-FINDINGS-TRUNCATED` blocker records additional matches without unbounded amplification.
+Its `schema_version`, `ruleset_version`,
 `max_bytes`, manifest digest, and stable source binding make the audit replayable.
 
 If deterministic Markdown drafts or a scaffold were produced during acquisition, only now may

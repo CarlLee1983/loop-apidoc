@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import heapq
 import json
 import os
 import re
 import stat
+from collections.abc import Iterator
 from pathlib import Path
 
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceFormat
@@ -18,7 +20,9 @@ from loop_apidoc.source_risk.models import (
 )
 
 SCHEMA_VERSION = "1"
-RULESET_VERSION = "1"
+RULESET_VERSION = "2"
+MAX_REPORTED_FINDINGS = 1_000
+_TRUNCATION_RULE_ID = "SR-FINDINGS-TRUNCATED"
 
 _SCANNABLE_FORMATS = {
     SourceFormat.MARKDOWN,
@@ -84,10 +88,85 @@ def source_binding_digest(manifest: Manifest) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _locator(text: str, offset: int) -> str:
-    line = text.count("\n", 0, offset) + 1
-    line_start = text.rfind("\n", 0, offset) + 1
-    return f"line {line}, column {offset - line_start + 1}"
+def _rule_matches(
+    text: str,
+    rule_id: str,
+    pattern: re.Pattern[str],
+) -> Iterator[re.Match[str]]:
+    for match in pattern.finditer(text):
+        if (
+            rule_id == "SR-ZERO-WIDTH-FORMATTING"
+            and match.start() == 0
+            and match.group() == "\ufeff"
+        ):
+            continue
+        yield match
+
+
+def _scan_source_findings(
+    text: str,
+    source_ref: str,
+    *,
+    limit: int,
+) -> tuple[list[SourceRiskFinding], bool]:
+    match_heap: list[
+        tuple[
+            int,
+            str,
+            int,
+            RiskSeverity,
+            Iterator[re.Match[str]],
+            re.Match[str],
+        ]
+    ] = []
+    for rule_index, (rule_id, severity, pattern) in enumerate(_RULES):
+        matches = _rule_matches(text, rule_id, pattern)
+        try:
+            match = next(matches)
+        except StopIteration:
+            continue
+        heapq.heappush(
+            match_heap,
+            (match.start(), rule_id, rule_index, severity, matches, match),
+        )
+
+    findings: list[SourceRiskFinding] = []
+    line = 1
+    line_start = 0
+    previous_offset = 0
+    while match_heap and len(findings) < limit:
+        offset, rule_id, rule_index, severity, matches, match = heapq.heappop(
+            match_heap
+        )
+        newlines = text.count("\n", previous_offset, offset)
+        if newlines:
+            line += newlines
+            line_start = text.rfind("\n", previous_offset, offset) + 1
+        previous_offset = offset
+        findings.append(
+            SourceRiskFinding(
+                rule_id=rule_id,
+                severity=severity,
+                source_ref=source_ref,
+                locator=f"line {line}, column {offset - line_start + 1}",
+            )
+        )
+        try:
+            next_match = next(matches)
+        except StopIteration:
+            continue
+        heapq.heappush(
+            match_heap,
+            (
+                next_match.start(),
+                rule_id,
+                rule_index,
+                severity,
+                matches,
+                next_match,
+            ),
+        )
+    return findings, bool(match_heap)
 
 
 def _read_manifest_source(
@@ -189,6 +268,7 @@ def inspect_source_risks(
     """Inspect every manifest source before any model reads source content."""
     findings: list[SourceRiskFinding] = []
     coverage: list[SourceRiskCoverage] = []
+    truncated_source_ref: str | None = None
 
     for source_index, source in enumerate(manifest.local_sources):
         source_ref = f"/local_sources/{source_index}"
@@ -211,14 +291,16 @@ def inspect_source_risks(
                     reason=f"source format: {source.source_format.value}",
                 )
             )
-            findings.append(
-                SourceRiskFinding(
-                    rule_id="SR-UNSCANNABLE",
-                    severity=RiskSeverity.BLOCKER,
-                    source_ref=source_ref,
-                    locator="file",
-                )
+            finding = SourceRiskFinding(
+                rule_id="SR-UNSCANNABLE",
+                severity=RiskSeverity.BLOCKER,
+                source_ref=source_ref,
+                locator="file",
             )
+            if len(findings) < MAX_REPORTED_FINDINGS - 1:
+                findings.append(finding)
+            elif truncated_source_ref is None:
+                truncated_source_ref = source_ref
             continue
         if source.size_bytes > max_bytes:
             coverage.append(
@@ -229,14 +311,16 @@ def inspect_source_risks(
                     reason="source exceeds max_bytes",
                 )
             )
-            findings.append(
-                SourceRiskFinding(
-                    rule_id="SR-SCAN-SIZE-EXCEEDED",
-                    severity=RiskSeverity.BLOCKER,
-                    source_ref=source_ref,
-                    locator="file",
-                )
+            finding = SourceRiskFinding(
+                rule_id="SR-SCAN-SIZE-EXCEEDED",
+                severity=RiskSeverity.BLOCKER,
+                source_ref=source_ref,
+                locator="file",
             )
+            if len(findings) < MAX_REPORTED_FINDINGS - 1:
+                findings.append(finding)
+            elif truncated_source_ref is None:
+                truncated_source_ref = source_ref
             continue
 
         content = _read_manifest_source(
@@ -257,14 +341,16 @@ def inspect_source_risks(
                     reason="source is not valid UTF-8",
                 )
             )
-            findings.append(
-                SourceRiskFinding(
-                    rule_id="SR-INVALID-UTF8",
-                    severity=RiskSeverity.BLOCKER,
-                    source_ref=source_ref,
-                    locator="file",
-                )
+            finding = SourceRiskFinding(
+                rule_id="SR-INVALID-UTF8",
+                severity=RiskSeverity.BLOCKER,
+                source_ref=source_ref,
+                locator="file",
             )
+            if len(findings) < MAX_REPORTED_FINDINGS - 1:
+                findings.append(finding)
+            elif truncated_source_ref is None:
+                truncated_source_ref = source_ref
             continue
         coverage.append(
             SourceRiskCoverage(
@@ -273,32 +359,22 @@ def inspect_source_risks(
                 status=RiskCoverageStatus.SCANNED,
             )
         )
-        source_findings: list[tuple[int, str, SourceRiskFinding]] = []
-        for rule_id, severity, pattern in _RULES:
-            for match in pattern.finditer(text):
-                if (
-                    rule_id == "SR-ZERO-WIDTH-FORMATTING"
-                    and match.start() == 0
-                    and match.group() == "\ufeff"
-                ):
-                    continue
-                source_findings.append(
-                    (
-                        match.start(),
-                        rule_id,
-                        SourceRiskFinding(
-                            rule_id=rule_id,
-                            severity=severity,
-                            source_ref=source_ref,
-                            locator=_locator(text, match.start()),
-                        ),
-                    )
-                )
-        findings.extend(
-            finding
-            for _, _, finding in sorted(
-                source_findings,
-                key=lambda item: (item[0], item[1]),
+        source_findings, source_truncated = _scan_source_findings(
+            text,
+            source_ref,
+            limit=max(0, MAX_REPORTED_FINDINGS - 1 - len(findings)),
+        )
+        findings.extend(source_findings)
+        if source_truncated and truncated_source_ref is None:
+            truncated_source_ref = source_ref
+
+    if truncated_source_ref is not None:
+        findings.append(
+            SourceRiskFinding(
+                rule_id=_TRUNCATION_RULE_ID,
+                severity=RiskSeverity.BLOCKER,
+                source_ref=truncated_source_ref,
+                locator="file",
             )
         )
 

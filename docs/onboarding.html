@@ -1116,7 +1116,8 @@
         <tbody>
           <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
           <tr class="io"><td><code>rendered_url.py</code></td><td>離線 rendered-source import 與只讀 provenance 驗證；寫入 immutable source/sidecar/coverage，並防止匹配的 protected origin probe</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF／DOCX→markdown 編排)；<code>docx_normalization.py</code> 負責 bounded、fail-closed OOXML 驗證與 provenance</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(typed PDF／DOCX→markdown 編排)</td></tr>
+          <tr class="io"><td><code>docx_*.py</code></td><td><code>docx_normalization.py</code> 是穩定 facade；package-wide fail-closed OOXML 驗證／rendering 維持 pure，<code>docx_publish.py</code> 負責分段暫存且於可回報寫入失敗時回滾的 provenance publication</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
@@ -1137,7 +1138,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、rendered URL import、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">agentcli/preprocess.py</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、<code class="inline">docx_publish.py</code>、rendered URL import、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">docx_normalization.py</code>、<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
   </div>
 </section>
 

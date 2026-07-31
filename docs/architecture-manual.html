@@ -831,7 +831,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <code>cli.py</code> 提供 28 個來源、URL evidence、風險、品質、freshness、run、<code>foundry</code> 與 <code>review</code> 工作台命令；後者只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_risk/report.py</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>source_risk/inspect.py</code> 與 <code>adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>agentcli/preprocess.py</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_risk/report.py</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、<code>docx_publish.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>docx_normalization.py</code>、<code>source_risk/inspect.py</code> 與 <code>adapters/fragments.py</code> 是 read-side I/O exit；<code>docx_validation.py</code>/<code>docx_render.py</code>、Core 與 Domain 維持 pure。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>：<code>assemble --architecture-mode shadow</code> 會在 legacy validation 後呼叫 compatibility-only 的 <code>shadow/</code> 套件。Pure bridge 把 manifest/plan 映成 Core evidence 與 claims，in-memory runner 只執行到 Core validation，且只有 <code>shadow/report.py</code> 會寫入觀測性的 <code>&lt;run-dir&gt;/core/</code> 產物或 <code>core/error.json</code>。Legacy validation、score、approval、Foundry、status 與退出碼仍具權威。
@@ -895,7 +895,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "生成產物 (Generate)",
       pillClass: "io",
       pillLabel: "File Output",
-      desc: "將規格化計畫轉換為實際交付的產物檔案。本模組與 run 是唯二具有寫入檔案（I/O）職責的出口。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
+      desc: "將規格化計畫轉換為實際交付的產物檔案。本模組是數個明確界定的檔案寫入（I/O）出口之一。若有 OpenAPI 必填但來源缺失的欄位，會以最小合法占位值填入，並自動加上 <code>x-loop-status: missing-source</code> 自訂欄位與對應日誌。",
       details: "<p>導出產物包含：</p><ul><li><b>openapi.yaml</b>: 標準 OpenAPI 3.1 規範檔案（含 webhooks 等 3.1 結構）；來源有錯誤碼對照時，以 <code>x-loop-error-code-map</code> 延伸欄位無損保留來源依據的錯誤碼→意義對照（0.9.2 起）</li><li><b>integration-contract.json</b>: 固定產生的機讀契約，保存 typed transport、金額方向、冪等、線路幣別、operational 規則、applies_to 關聯與整合機制；request 缺少 currency 欄位不會被推論成單幣別</li><li><b>api-guide.zh-TW.md</b>: 繁體中文 API 串接指南手冊</li><li><b>review.html</b>: 自帶樣式、可離線開啟的人工核對頁，彙整來源／端點／schema，並把缺漏、衝突與未確認事項列為可持續追蹤的治理項目，而非一律標成整合風險</li><li><b>provenance.json</b>: 詳細記錄每個 OpenAPI 及 Markdown 欄位的來源追溯 mapping</li></ul>",
       seam: "generate_outputs(plan, manifest, run_dir)",
       inputs: "normalization-plan.json, manifest.json",

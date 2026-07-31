@@ -387,7 +387,10 @@ uv run loop-apidoc inspect-source-risk \
 Scans the exact manifest-bound text package before it enters model context. UTF-8 Markdown,
 HTML, and OpenAPI JSON/YAML are supported; PDF, Word, invalid UTF-8, oversized text, and other
 unscannable pending sources are blockers, so convert them and rebuild the manifest first. The
-default limit is 5 MiB per file. The fixed `source-risk-report.{json,zh-TW.md}` records only rule
+default limit is 5 MiB per file. A report retains at most 1,000 findings; when additional
+matches exist, the final entry is the blocker `SR-FINDINGS-TRUNCATED`, so dense hostile input
+fails closed without amplifying into an unbounded report. The fixed
+`source-risk-report.{json,zh-TW.md}` records only rule
 IDs, severities, source refs, and locators—never the matched payload—and source bytes are not
 changed. Its schema/ruleset versions, `max_bytes`, manifest digest, per-source SHA-256 coverage,
 and stable source-binding digest prevent stale audit reuse. Exit codes: `0` = pass, `1` = reject,
@@ -522,7 +525,7 @@ Starts a single-user workbench on `127.0.0.1`. It automatically imports a comple
 uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 ```
 
-Uses pymupdf4llm for PDF and the built-in fail-closed OOXML normalizer for `.docx`; both preserve headings and tables and produce `<original-name>.md`. DOCX output also gets a deterministic `.source.json` sidecar binding source and normalized SHA-256 values. This first slice accepts UTF-8-compatible Transitional OOXML textual DOCX: it rejects unsafe ZIP paths or limits, macros/active content, external relationships, DTD/entities, malformed OPC/XML, `altChunk`, embedded media, and visible header/footer/note/comment parts before batch outputs are written, so unsupported evidence is never silently omitted. Legacy `.doc` stays passthrough and requires trusted external conversion. Directory input preserves source-relative paths; `--sources` can also name one file. Build the manifest and run `inspect-source-risk` against the exact `--out` directory before any agent reads it.
+Uses pymupdf4llm for PDF and the built-in fail-closed OOXML normalizer for `.docx`; supported documents preserve headings and tables and produce `<original-name>.md`. DOCX output also gets a deterministic `.source.json` sidecar recording schema/security-policy versions plus source and normalized names, sizes, and SHA-256 values. Policy limits are 25 MiB compressed, 2,048 archive entries, 10 MiB per member, 50 MiB total uncompressed, and a 100:1 maximum compression ratio. This first slice accepts UTF-8-compatible Transitional OOXML textual DOCX: it rejects unsafe ZIP paths or limits, macros and active DDE field codes, markup-compatibility alternate content, external relationships, DTD/entities, malformed OPC/XML, `altChunk`, embedded media, visible header/footer/note/comment parts, and merged-cell table semantics that cannot yet be rendered faithfully. Rejection happens before batch outputs are written, so unsupported evidence is never silently omitted or moved between columns. Existing Markdown/sidecars, derived-path collisions, and normalization errors are never overwritten and make `preprocess` exit 2. Legacy `.doc` stays passthrough and requires trusted external conversion. Directory input preserves source-relative paths; `--sources` can also name one file. Build the manifest and run `inspect-source-risk` against the exact `--out` directory before any agent reads it.
 
 ### `verify-extraction` — check the extraction JSON against the contract
 
@@ -684,7 +687,7 @@ uv run ruff check .
 | --- | --- |
 | `loop_apidoc/manifest/` | Source scanning and manifest building |
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `evidence.py` (read-side materialization and digest verification for optional v1 exact-evidence references), `gate.py` (`check_extraction`: the single gate aggregator shared by `assemble` and `verify-extraction`, including the source-facts semantic completeness check), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF/DOCX→markdown orchestration) |
-| `loop_apidoc/docx_normalization.py` | bounded, fail-closed OOXML validation and deterministic DOCX→Markdown/provenance generation; it never executes or resolves package relationships |
+| `loop_apidoc/docx_normalization.py` + `docx_{models,validation,render,publish}.py` | stable facade plus bounded validation, deterministic rendering, and staged DOCX→Markdown/provenance publication with rollback on reported write failures; every Word XML part is scanned so unsupported active DDE fields, markup alternatives, merged cells, and external content fail closed |
 | `loop_apidoc/domain/` | Protocol-neutral canonical contract, evidence relationships, domain profiles, and pure GraphQL/AsyncAPI projection compilers; neither format currently has a public run integration |
 | `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
@@ -695,7 +698,7 @@ uv run ruff check .
 | `loop_apidoc/diff/` | run-to-run version diff: load run artifacts, classify changes (`breaking` / `additive` / `changed` / `source_only`), render and write `diff/report.{json,md}` |
 | `loop_apidoc/preparation/` | preparation readiness reporting inside assemble |
 | `loop_apidoc/score/` | documentation quality scoring for completed run-dirs |
-| `loop_apidoc/source_risk/` | deterministic pre-agent inspection of manifest-bound UTF-8 Markdown/HTML/OpenAPI text; fixed no-payload findings, versioned schema/rules, bounded reads, stable source binding, verified report loading, and `source-risk-report.{json,zh-TW.md}` |
+| `loop_apidoc/source_risk/` | deterministic pre-agent inspection of manifest-bound UTF-8 Markdown/HTML/OpenAPI text; fixed no-payload findings, a 1,000-entry report cap with fail-closed truncation, versioned schema/rules, bounded reads, stable source binding, verified report loading, and `source-risk-report.{json,zh-TW.md}` |
 | `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; it requires and embeds a verified source-risk audit, and passing reports can be retained with a run-dir |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | bounded URL navigation cataloging, page caching, and related-page candidates for local-evidence web reading |
 | `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
@@ -710,3 +713,12 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.
 - Architecture overview and data flow (with diagrams): [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Product design decisions: [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md)
 - Contributing guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+## Upstream acknowledgement and third-party license
+
+The DOCX ingestion design and ZIP/XML fallback were adapted from
+[`virgiliojr94/book-to-skill`](https://github.com/virgiliojr94/book-to-skill) at revision
+`efda3b2212ce1b2c052126e85e14de40a32442e8`. `loop-apidoc` does not depend on that project at
+runtime or inherit its EPUB/RTF/MOBI format support; the local implementation adds bounded
+package validation, full-batch preflight, deterministic provenance, and fail-closed rendering.
+See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the complete upstream MIT notice.

@@ -92,6 +92,16 @@ Generate one representative run and eyeball the products (validation PASS does
   recorded in `missing`; fail-closed gaps are reported, never guessed.
 - [ ] Any defect fixed in this release has a regression test, benchmark fixture,
   quality-gate scenario, or documented follow-up in `docs/PIPELINE_FOLLOWUPS.md`.
+- [ ] When document preprocessing or source-risk behavior changes, exercise a supported DOCX and
+  a rejected DOCX before release: confirm full-batch preflight, deterministic Markdown plus
+  `.source.json` hashes/policy version, no-overwrite behavior, and exit `2` on unsafe or colliding
+  input.
+- [ ] Exercise `inspect-source-risk` with one warning-only source and one blocker source; confirm
+  exit `0`/`1`, no payload echo, the 1,000-finding cap, and that `assess-sources`/`assemble` reject a
+  stale or mismatched embedded audit before creating a run directory.
+- [ ] Review `THIRD_PARTY_NOTICES.md` whenever implementation or design is adapted from another
+  project; keep the upstream URL/revision, copyright, license text, and README/design attribution
+  accurate.
 
 ## Completing the release publication
 
