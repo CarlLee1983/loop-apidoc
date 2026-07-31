@@ -27,8 +27,11 @@
     --red: #ef5350;
     --grey: #b6bccb;
     --line: #ece5d8;
-    --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
-    --shadow-sm: 0 4px 14px -6px rgba(44, 48, 67, 0.18);
+    --line-strong: #ddd4c4;
+    --surface: rgba(255, 255, 255, 0.88);
+    --shadow: 0 2px 4px rgba(44, 48, 67, 0.06), 0 20px 48px -24px rgba(44, 48, 67, 0.34);
+    --shadow-sm: 0 1px 2px rgba(44, 48, 67, 0.05), 0 12px 30px -20px rgba(44, 48, 67, 0.32);
+    --focus-ring: rgba(21, 163, 154, 0.34);
     --radius: 22px;
     --radius-sm: 14px;
     font-size: 17px;
@@ -40,19 +43,39 @@
 
   body {
     margin: 0;
-    background: var(--bg);
+    background: linear-gradient(180deg, #fffdf9 0%, var(--bg) 30%, #fbf7ef 100%);
     color: var(--ink);
     font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
       -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     line-height: 1.75;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  ::selection { background: var(--teal-soft); color: var(--ink); }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
 
   section { padding: 78px 0; }
 
-  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.005em; text-wrap: balance; }
+
+  a { text-underline-offset: 0.18em; text-decoration-thickness: 0.08em; }
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 4px;
+  }
+
+  p code, li code {
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+    padding: 0.08em 0.38em;
+    border-radius: 0.38em;
+    font-size: 0.86em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
 
   .eyebrow {
     display: inline-block;
@@ -60,7 +83,8 @@
     font-weight: 700;
     letter-spacing: 0.18em;
     color: var(--teal-deep);
-    background: var(--teal-soft);
+    background: rgba(216, 243, 240, 0.72);
+    border: 1px solid rgba(15, 122, 115, 0.1);
     padding: 6px 16px;
     border-radius: 999px;
     margin-bottom: 22px;
@@ -74,8 +98,9 @@
   .section-lead {
     font-size: 1.08rem;
     color: var(--ink-soft);
-    max-width: 640px;
+    max-width: 700px;
     margin: 0 0 40px;
+    text-wrap: pretty;
   }
 
   /* ---------- icon system (no emoji) ---------- */
@@ -95,17 +120,48 @@
       radial-gradient(900px 480px at -5% 110%, var(--coral-soft) 0%, transparent 50%);
     padding: 92px 0 64px;
   }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal), var(--amber), var(--coral), var(--purple));
+  }
+  .hero .wrap { position: relative; z-index: 1; }
   .hero h1 {
     font-size: clamp(1.9rem, 5.4vw, 3rem);
     margin: 0 0 20px;
-    max-width: 760px;
+    max-width: 880px;
+    letter-spacing: -0.018em;
   }
   .hero h1 .hl { color: var(--teal-deep); }
   .hero p.sub {
     font-size: 1.18rem;
     color: var(--ink-soft);
-    max-width: 620px;
+    max-width: 720px;
+    margin: 0 0 22px;
+    text-wrap: pretty;
+  }
+  .hero-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: fit-content;
+    max-width: 760px;
     margin: 0 0 38px;
+    padding: 12px 16px;
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(15, 122, 115, 0.14);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    backdrop-filter: blur(8px);
+  }
+  .hero-note b {
+    flex: none;
+    color: var(--teal-deep);
   }
   .hero-art {
     width: 100%;
@@ -140,7 +196,11 @@
   .def span { color: var(--ink-soft); font-size: 0.98rem; }
 
   /* ---------- alt section background ---------- */
-  .alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .alt {
+    background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76));
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
 
   /* ---------- pain cards ---------- */
   .cards {
@@ -149,15 +209,13 @@
     gap: 22px;
   }
   .card {
-    background: var(--bg-soft);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     padding: 30px 26px;
     box-shadow: var(--shadow-sm);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
   .alt .card { background: var(--bg); }
-  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
   .card .badge {
     width: 56px; height: 56px;
     display: grid; place-items: center;
@@ -169,11 +227,12 @@
 
   /* ---------- promise banner ---------- */
   .promise {
-    background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+    background: linear-gradient(135deg, #0d6863 0%, var(--teal-deep) 48%, var(--teal) 100%);
     color: #fff;
     border-radius: 30px;
     padding: 54px 48px;
-    box-shadow: 0 24px 50px -20px rgba(15, 122, 115, 0.6);
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 2px 4px rgba(15, 122, 115, 0.18), 0 30px 60px -28px rgba(15, 122, 115, 0.72), inset 0 1px rgba(255,255,255,0.16);
     position: relative;
     overflow: hidden;
   }
@@ -238,6 +297,102 @@
   .step p { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
   .step-arrow { display: grid; place-items: center; color: var(--grey); margin: -6px 0; }
   .step-arrow svg { width: 26px; height: 26px; }
+  .process-flow { gap: 12px; }
+  .process-flow .step {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+    padding: 28px 32px;
+    border: 1px solid rgba(221, 212, 196, 0.72);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .process-flow .step::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: var(--step-accent, var(--teal));
+  }
+  .process-flow .step:nth-of-type(1) { --step-accent: var(--teal); }
+  .process-flow .step:nth-of-type(3) { --step-accent: var(--amber); }
+  .process-flow .step:nth-of-type(5) { --step-accent: var(--purple); }
+  .process-flow .step:nth-of-type(7) { --step-accent: var(--teal); }
+  .process-flow .step:nth-of-type(9) { --step-accent: var(--coral); }
+  .process-flow .num { width: 72px; height: 72px; }
+  .process-flow .step-copy { min-width: 0; }
+  .process-flow .step-kicker {
+    display: block;
+    margin: 1px 0 5px;
+    color: var(--step-accent, var(--teal-deep));
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+  .process-flow .step h3 { margin-bottom: 8px; font-size: 1.24rem; }
+  .process-flow .step p { max-width: 700px; line-height: 1.78; }
+  .process-flow .step-arrow {
+    height: 30px;
+    margin: -3px 0;
+    color: var(--teal-deep);
+    opacity: 0.55;
+  }
+  .step-details {
+    margin-top: 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg);
+  }
+  .step-details summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 44px 12px 16px;
+    color: var(--teal-deep);
+    font-size: 0.86rem;
+    font-weight: 750;
+    position: relative;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+  .step-details summary::-webkit-details-marker { display: none; }
+  .step-details summary::after {
+    content: "+";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 0.18s ease, background-color 0.18s ease;
+  }
+  .step-details[open] summary::after { content: "−"; }
+  .step-details[open] summary { border-bottom: 1px solid var(--line); }
+  .step-details[open] summary::after { transform: translateY(-50%) rotate(180deg); }
+  .detail-list {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 16px 18px 18px 36px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .detail-list strong { color: var(--ink); }
+  .detail-list code { overflow-wrap: anywhere; }
+  .detail-list a {
+    color: var(--teal-deep);
+    font-weight: 650;
+    text-decoration-color: rgba(15, 122, 115, 0.34);
+    text-decoration-thickness: 0.09em;
+  }
+  .detail-list a:visited { color: var(--teal-deep); }
+  .detail-list a:hover { color: #0b645f; text-decoration-color: var(--coral); }
 
   /* ---------- value cards ---------- */
   .value-grid {
@@ -294,14 +449,15 @@
   /* ---------- project entry ---------- */
   .repo-cta {
     display: flex; align-items: center; gap: 20px;
-    background: var(--bg-soft); border: 1px solid var(--line);
+    background: var(--surface); border: 1px solid var(--line-strong);
     border-left: 6px solid var(--teal);
     border-radius: var(--radius); padding: 22px 26px;
     box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
     transition: transform 0.18s ease, box-shadow 0.18s ease;
     margin-bottom: 22px;
   }
-  .repo-cta:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .repo-cta:hover { transform: translateY(-3px); border-color: rgba(15, 122, 115, 0.42); box-shadow: var(--shadow); }
+  .repo-cta:active { transform: translateY(-1px); }
   .repo-cta .repo-ico {
     flex: none; width: 52px; height: 52px; border-radius: 14px;
     display: grid; place-items: center;
@@ -310,7 +466,15 @@
   .repo-cta .repo-txt { flex: 1 1 auto; min-width: 0; }
   .repo-cta .repo-txt b { display: block; font-size: 1.06rem; margin-bottom: 3px; }
   .repo-cta .repo-txt span { color: var(--ink-soft); font-size: 0.95rem; }
-  .repo-cta .repo-go { flex: none; font-weight: 700; color: var(--teal-deep); white-space: nowrap; }
+  .repo-cta .repo-go {
+    flex: none;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--teal-soft);
+    font-weight: 750;
+    color: var(--teal-deep);
+    white-space: nowrap;
+  }
 
   .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
   .install {
@@ -408,22 +572,45 @@
   .deep-cta { margin-top: 32px; }
   .deep-link {
     display: inline-flex; align-items: center; gap: 10px;
-    background: var(--purple-deep); color: #fff;
+    background: linear-gradient(135deg, var(--teal-deep), var(--teal)); color: #fff;
     text-decoration: none; font-weight: 700; font-size: 1rem;
     padding: 14px 26px; border-radius: 999px;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255,255,255,0.24);
+    box-shadow: var(--shadow-sm), inset 0 1px rgba(255,255,255,0.16);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
   .deep-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .deep-link:active { transform: translateY(0); }
   .deep-link svg { width: 18px; height: 18px; flex: none; }
   .deep-note { margin: 12px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
 
   /* ---------- language switcher ---------- */
   .lang-switch {
-    font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0 0 22px;
+    padding: 4px;
+    color: var(--ink-soft);
+    background: rgba(255,255,255,0.68);
+    border: 1px solid rgba(221, 212, 196, 0.84);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.86rem;
+    backdrop-filter: blur(8px);
+    width: fit-content;
   }
-  .lang-switch a { color: var(--teal-deep); text-decoration: none; font-weight: 600; }
-  .lang-switch a:hover { text-decoration: underline; }
+  .lang-switch a,
+  .lang-switch span {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 13px;
+    border-radius: 999px;
+  }
+  .lang-switch span[aria-current="page"] { color: #fff; background: var(--teal-deep); font-weight: 700; }
+  .lang-switch a { color: var(--teal-deep); text-decoration: none; font-weight: 650; }
+  .lang-switch a:hover { background: var(--teal-soft); }
 
   /* ---------- image placeholder slots ---------- */
   .img-slot { margin: 36px auto 0; max-width: 780px; }
@@ -464,7 +651,17 @@
   .img-ph .prompt b { color: var(--ink); }
   .img-ph .hint {
     display: block; margin-top: 12px;
-    font-size: 0.78rem; color: var(--grey);
+    font-size: 0.78rem; color: var(--ink-soft);
+  }
+
+  @media (hover: hover) {
+    .step-details summary:hover { color: #0b645f; background: rgba(216, 243, 240, 0.42); }
+    .step-details summary:hover::after { background: #c8ebe7; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
   }
 
   footer {
@@ -480,6 +677,21 @@
     .ba-mid { transform: rotate(90deg); padding: 4px 0; }
     .def { flex-direction: column; gap: 12px; }
     .who { flex-direction: column; text-align: center; gap: 10px; }
+    .hero { padding-top: 68px; }
+    .hero-note { display: block; padding: 12px 14px; }
+    .hero-note b { display: block; margin-bottom: 3px; }
+    .lang-switch a, .lang-switch span { min-height: 44px; padding: 0 14px; }
+    .deep-link { max-width: 100%; justify-content: center; text-align: center; line-height: 1.45; }
+    .process-flow .step {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding: 24px 22px 24px 26px;
+    }
+    .process-flow .num { width: 62px; height: 62px; }
+    .process-flow .step h3 { font-size: 1.16rem; }
+    .process-flow .step p { font-size: 0.96rem; }
+    .step-details summary { padding-left: 14px; }
+    .detail-list { padding: 14px 14px 16px 32px; }
   }
 </style>
 </head>
@@ -488,11 +700,14 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero">
   <div class="wrap">
-    <p class="lang-switch">English (current) · <a href="introduction.html">繁體中文</a></p>
+    <nav class="lang-switch" aria-label="Language">
+      <a href="introduction.html" lang="zh-Hant-TW">繁體中文</a>
+      <span aria-current="page">English</span>
+    </nav>
     <span class="eyebrow">MEET LOOP-APIDOC</span>
     <h1>Turn messy technical docs into a manual anyone can read and <span class="hl">trust</span></h1>
-    <p class="sub"><strong>Architecture update:</strong> the stable product is now an evidence-to-contract core. Models and agent workflows are replaceable Runtime Adapters; deterministic Core and Domain code own grounding, assurance, and governed releases. The workflow below remains the current CLI adapter.</p>
     <p class="sub">Vendor integration docs come in a mess of formats, and they're often incomplete. loop-apidoc works like a first-stage refinery: it distills tangled material into a clean, source-traceable standard spec — and never makes anything up.</p>
+    <p class="hero-note"><b>Architecture update</b><span>The stable product is now an evidence-to-contract core. Models and agent workflows are replaceable Runtime Adapters; deterministic Core and Domain code own grounding, assurance, and governed releases. The workflow below remains the current CLI adapter.</span></p>
 
     <!-- hero illustration: raw docs -> alchemical refinement -> clean output -->
     <svg class="hero-art" viewBox="0 0 820 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mixed source documents pass through a first-stage refinery and are distilled into a clean, unified, traceable manual">
@@ -764,15 +979,29 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">HOW IT WORKS</span>
     <h2 class="section-title">How does it pull that off?</h2>
-    <p class="section-lead">The whole process is like a diligent organizer, turning messy material into a clean result step by step.</p>
+    <p class="section-lead">Five clear stages turn messy source material into a traceable, verified result that is ready to hand off.</p>
 
-    <div class="steps">
+    <div class="steps process-flow">
       <div class="step">
         <div class="num tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>Collect and inspect the sources</h3><p>Feed it PDFs, web pages, ready-made spec files, or public URLs. Built-in <code>preprocess</code> converts PDF/DOCX into scannable text; DOCX first passes a bounded fail-closed OOXML gate and receives source-hash provenance. The DOCX ZIP/XML fallback is adapted from MIT-licensed <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a> at pinned revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>, but this project adds stricter gates and does not claim its EPUB/RTF/MOBI scope; see the <a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">third-party notice</a>. Then <code>inspect-source-risk</code> checks the exact manifest-bound bytes before any agent reads them. It never rewrites the sources or echoes matched payloads. If direct HTTP access is blocked but an interactive browser can render the page, <code>import-rendered-url</code> preserves the saved bytes with capture provenance; only a verified URL/path/method/SHA-256 match suppresses the protected-origin fetch. When GitBook exposes <code>llms.txt</code>, deterministic Markdown caching, line-cited drafts, and <code>scaffold-extraction</code> create review-only extraction-shaped JSON. Copy, verify, and complete the scaffold in the work directory; never pass it directly to <code>--extraction</code>.</p></div>
+        <div class="step-copy">
+          <span class="step-kicker">SOURCE INTAKE</span>
+          <h3>Collect and inspect the sources</h3>
+          <p>Give it PDF, DOCX, web, OpenAPI, or public-URL sources. Every source is converted into safely scannable text, then checked for risk and completeness before any agent is allowed to read it.</p>
+          <details class="step-details">
+            <summary>Source-safety and licensing details</summary>
+            <ul class="detail-list">
+              <li><strong>Document conversion:</strong> <code>preprocess</code> converts PDF/DOCX into scannable text. DOCX first passes a bounded, fail-closed OOXML gate and receives source-hash provenance.</li>
+              <li><strong>Source risk:</strong> <code>inspect-source-risk</code> checks the exact manifest-bound bytes before any agent reads them. It neither rewrites source bytes nor echoes a matched payload.</li>
+              <li><strong>Protected pages:</strong> When direct HTTP is blocked but a browser can render the page, <code>import-rendered-url</code> preserves the bytes and capture provenance. Origin fetch is skipped only when URL, path, method, and SHA-256 all match.</li>
+              <li><strong>GitBook and scaffolds:</strong> When <code>llms.txt</code> is available, the pipeline caches in-scope Markdown and creates a line-cited extraction scaffold for human review. It must be copied, verified, and completed before use as the real extraction.</li>
+              <li><strong>Third-party license:</strong> The DOCX ZIP/XML fallback is adapted from MIT-licensed <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a> at revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>. This project adds stricter gates and does not claim EPUB/RTF/MOBI support; see the <a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">third-party notice</a>.</li>
+            </ul>
+          </details>
+        </div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -781,7 +1010,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.4-4.4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>Read it closely, section by section</h3><p>It extracts the content one section at a time, like a diligent reader taking notes — but it only copies what the docs really say, never filling in from imagination.</p></div>
+        <div class="step-copy"><span class="step-kicker">GROUND FACTS</span><h3>Read it closely, section by section</h3><p>It extracts facts within each source scope like a diligent reader taking notes—recording only what the documents state, never filling gaps with conventions.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -790,7 +1019,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>Assemble it into a standard format</h3><p>It reassembles the scattered information into a single, unified standard spec that both machines and people can read.</p></div>
+        <div class="step-copy"><span class="step-kicker">NORMALIZE</span><h3>Assemble it into a standard format</h3><p>Information scattered across pages and formats becomes one contract that people can review and tools can consume directly.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -799,7 +1028,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">4</span>
         </div>
-        <div><h3>Check its own work</h3><p>It automatically validates the result: if something's missing, it goes back and re-reads to fill it in; if it truly can't find it, it honestly marks it "missing / conflict" rather than forcing a fill.</p></div>
+        <div class="step-copy"><span class="step-kicker">QUALITY GATE</span><h3>Check its own work</h3><p>Deterministic rules check completeness, consistency, and source support. Missing facts trigger a re-read; facts that remain unavailable are clearly marked “missing / conflict.”</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -808,7 +1037,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.2L12 12l8.7-4.8"/><path d="M12 12v10"/></svg>
           <span class="n">5</span>
         </div>
-        <div><h3>Deliver the results</h3><p>It produces a standard spec, a readable Traditional-Chinese manual, source traceability, and a quality-check report.</p></div>
+        <div class="step-copy"><span class="step-kicker">HANDOFF</span><h3>Deliver the results</h3><p>It delivers the standard spec, Traditional-Chinese guide, provenance, and quality report together, ready for implementation and human review.</p></div>
       </div>
     </div>
   </div>
