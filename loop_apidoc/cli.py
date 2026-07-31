@@ -1198,11 +1198,14 @@ def preprocess(
         ..., "--out", help="markdown 輸出目錄（衍生位置，勿放 sources/ 內）"
     ),
 ) -> None:
-    """把 sources 下每個 PDF 轉成 markdown（pymupdf4llm，保留表格／標題結構），
-    非 PDF 文字檔原樣複製。供 agent-native 擷取時 subagent 讀取高保真 markdown。"""
+    """把 PDF／DOCX 轉成可掃描 markdown，非 PDF/DOCX 文字檔原樣複製。"""
     from loop_apidoc.agentcli.preprocess import prepare_markdown
 
-    result = prepare_markdown(sources, out)
+    try:
+        result = prepare_markdown(sources, out)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"preprocess error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
     typer.echo(
         "已前處理 "
         f"converted {len(result.converted)} / "

@@ -698,7 +698,7 @@
     <div class="flow">
       <div class="flow-row">
         <span class="stage"><span class="n tint-purple">0</span>preprocess / normalize</span>
-        <span class="desc">原始 PDF／Word 在風險掃描前先轉成支援的文字；內建 preprocess 處理 PDF → 高保真 Markdown。</span>
+        <span class="desc">原始 PDF／Word 在風險掃描前先轉成支援的文字；內建 preprocess 處理 PDF／DOCX → Markdown，DOCX 並經 bounded、fail-closed OOXML 驗證。</span>
         <span class="out">可掃描來源目錄</span>
       </div>
       <div class="flow-row">
@@ -770,7 +770,7 @@
     <div class="cmds">
       <div class="cmd">
         <span class="name"><span class="kw">preprocess</span></span>
-        <div><p>PDF → markdown 前處理(可選),供 agent 更易讀取。</p></div>
+        <div><p>PDF／DOCX → markdown；DOCX 另產生 deterministic source-hash provenance，並在輸出前拒絕 unsafe OOXML。</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">manifest</span></span>
@@ -1116,7 +1116,7 @@
         <tbody>
           <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
           <tr class="io"><td><code>rendered_url.py</code></td><td>離線 rendered-source import 與只讀 provenance 驗證；寫入 immutable source/sidecar/coverage，並防止匹配的 protected origin probe</td></tr>
-          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF→markdown)</td></tr>
+          <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(PDF／DOCX→markdown 編排)；<code>docx_normalization.py</code> 負責 bounded、fail-closed OOXML 驗證與 provenance</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>

@@ -771,7 +771,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>收集並檢查來源</h3><p>把 PDF、網頁、現成規格檔或公開網址交給它。原始 PDF／Word 須先轉成可掃描文字，再由 <code>inspect-source-risk</code> 在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中 payload。直接 HTTP 被擋、但互動式瀏覽器可顯示時，<code>import-rendered-url</code> 會保留已儲存位元組與 capture provenance；只有 URL／path／method／SHA-256 驗證匹配才省略 protected-origin fetch。GitBook 若提供 <code>llms.txt</code>，會先工程化快取同範圍 Markdown，再以具行號草稿與 <code>scaffold-extraction</code> 產生待覆核的 extraction-shaped JSON。scaffold 必須複製、核對、補齊到 workdir，不能直接當成 <code>--extraction</code>。</p></div>
+        <div><h3>收集並檢查來源</h3><p>把 PDF、網頁、現成規格檔或公開網址交給它。內建 <code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先經 bounded、fail-closed OOXML 驗證並附 source-hash provenance。再由 <code>inspect-source-risk</code> 在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中 payload。直接 HTTP 被擋、但互動式瀏覽器可顯示時，<code>import-rendered-url</code> 會保留已儲存位元組與 capture provenance；只有 URL／path／method／SHA-256 驗證匹配才省略 protected-origin fetch。GitBook 若提供 <code>llms.txt</code>，會先工程化快取同範圍 Markdown，再以具行號草稿與 <code>scaffold-extraction</code> 產生待覆核的 extraction-shaped JSON。scaffold 必須複製、核對、補齊到 workdir，不能直接當成 <code>--extraction</code>。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 

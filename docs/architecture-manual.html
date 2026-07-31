@@ -851,7 +851,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "提供來源與前處理",
       pillClass: "prep",
       pillLabel: "Required gate",
-      desc: "啟動擷取前，操作者須準備可掃描來源、建立 <code>manifest.json</code>，並執行 <code>inspect-source-risk</code>。原始 PDF 與 Word 無法掃描，必須先轉成支援文字；內建 <code>preprocess</code> 處理 PDF → 高保真 Markdown。Manifest-bound risk report 通過前，任何 agent 都不能讀取來源內容。",
+      desc: "啟動擷取前，操作者須準備可掃描來源、建立 <code>manifest.json</code>，並執行 <code>inspect-source-risk</code>。原始 PDF 與 Word 無法掃描；內建 <code>preprocess</code> 處理 PDF／DOCX → Markdown，並以 bounded、fail-closed OOXML gate 在輸出前拒絕 unsafe DOCX。Manifest-bound risk report 通過前，任何 agent 都不能讀取來源內容。",
       details: "<p>Risk gate 把 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則找出高風險 Unicode、控制字元與 instruction/control-token pattern。它不改寫來源，也不回顯命中 payload；report 只列 rule ID、source reference 與 locator。</p><p>退出碼：0 pass、1 reject、2 invalid/stale/unsafe input。<code>assess-sources --source-risk</code> 驗證並嵌入 pass audit，<code>assemble --source-quality</code> 再驗證 source binding。</p>",
       seam: "prepare_markdown(...) / build_manifest(...) / inspect_source_risks(...) / load_verified_source_risk_report(...) ",
       inputs: "API 原始文件來源 (本機目錄), 公開 URL",

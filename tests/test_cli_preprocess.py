@@ -16,10 +16,10 @@ def test_prepare_markdown_returns_categorized_relative_paths_and_passthrough_byt
     sources = tmp_path / "sources"
     sources.mkdir()
     (sources / "notes.md").write_text("# Hello\nGET /ping", encoding="utf-8")
-    docx_bytes = b"PK\x03\x04docx\x00\xff"
+    doc_bytes = b"legacy-doc\x00\xff"
     json_bytes = b'{"openapi":"3.1.0"}\n'
     yaml_bytes = b"openapi: 3.1.0\n"
-    (sources / "manual.docx").write_bytes(docx_bytes)
+    (sources / "manual.doc").write_bytes(doc_bytes)
     (sources / "openapi.json").write_bytes(json_bytes)
     (sources / "openapi.yaml").write_bytes(yaml_bytes)
     out = tmp_path / "md"
@@ -31,12 +31,12 @@ def test_prepare_markdown_returns_categorized_relative_paths_and_passthrough_byt
     assert result.converted == []
     assert result.copied == [Path("notes.md")]
     assert result.passthrough == [
-        Path("manual.docx"),
+        Path("manual.doc"),
         Path("openapi.json"),
         Path("openapi.yaml"),
     ]
     assert (out / "notes.md").read_text(encoding="utf-8") == "# Hello\nGET /ping"
-    assert (out / "manual.docx").read_bytes() == docx_bytes
+    assert (out / "manual.doc").read_bytes() == doc_bytes
     assert (out / "openapi.json").read_bytes() == json_bytes
     assert (out / "openapi.yaml").read_bytes() == yaml_bytes
 
@@ -131,7 +131,7 @@ def test_preprocess_converts_pdf_to_markdown(tmp_path: Path):
 def test_preprocess_cli_lists_passthrough_files(tmp_path: Path):
     sources = tmp_path / "sources"
     sources.mkdir()
-    (sources / "guide.docx").write_bytes(b"docx bytes")
+    (sources / "guide.doc").write_bytes(b"doc bytes")
     (sources / "contract.json").write_bytes(b'{"paths":{}}')
     out = tmp_path / "md"
 
@@ -139,10 +139,10 @@ def test_preprocess_cli_lists_passthrough_files(tmp_path: Path):
 
     assert res.exit_code == 0
     assert "converted 0 / copied 0 / passthrough 2" in res.stdout
-    assert "passthrough guide.docx (not converted; agent must read source format)" in res.stdout
+    assert "passthrough guide.doc (not converted; agent must read source format)" in res.stdout
     assert (
         "passthrough contract.json (not converted; agent must read source format)"
         in res.stdout
     )
-    assert (out / "guide.docx").read_bytes() == b"docx bytes"
+    assert (out / "guide.doc").read_bytes() == b"doc bytes"
     assert (out / "contract.json").read_bytes() == b'{"paths":{}}'
