@@ -26,8 +26,11 @@
     --red: #ef5350;
     --grey: #b6bccb;
     --line: #ece5d8;
-    --shadow: 0 10px 30px -12px rgba(44, 48, 67, 0.22);
-    --shadow-sm: 0 4px 14px -6px rgba(44, 48, 67, 0.18);
+    --line-strong: #ddd4c4;
+    --surface: rgba(255, 255, 255, 0.88);
+    --shadow: 0 2px 4px rgba(44, 48, 67, 0.06), 0 20px 48px -24px rgba(44, 48, 67, 0.34);
+    --shadow-sm: 0 1px 2px rgba(44, 48, 67, 0.05), 0 12px 30px -20px rgba(44, 48, 67, 0.32);
+    --focus-ring: rgba(21, 163, 154, 0.34);
     --radius: 22px;
     --radius-sm: 14px;
     font-size: 17px;
@@ -39,19 +42,39 @@
 
   body {
     margin: 0;
-    background: var(--bg);
+    background: linear-gradient(180deg, #fffdf9 0%, var(--bg) 30%, #fbf7ef 100%);
     color: var(--ink);
     font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
       -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     line-height: 1.75;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  ::selection { background: var(--teal-soft); color: var(--ink); }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
 
   section { padding: 78px 0; }
 
-  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.01em; }
+  h1, h2, h3 { line-height: 1.3; letter-spacing: 0.005em; text-wrap: balance; }
+
+  a { text-underline-offset: 0.18em; text-decoration-thickness: 0.08em; }
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 4px;
+  }
+
+  p code, li code {
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+    padding: 0.08em 0.38em;
+    border-radius: 0.38em;
+    font-size: 0.86em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
 
   .eyebrow {
     display: inline-block;
@@ -59,7 +82,8 @@
     font-weight: 700;
     letter-spacing: 0.18em;
     color: var(--teal-deep);
-    background: var(--teal-soft);
+    background: rgba(216, 243, 240, 0.72);
+    border: 1px solid rgba(15, 122, 115, 0.1);
     padding: 6px 16px;
     border-radius: 999px;
     margin-bottom: 22px;
@@ -73,8 +97,9 @@
   .section-lead {
     font-size: 1.08rem;
     color: var(--ink-soft);
-    max-width: 640px;
+    max-width: 700px;
     margin: 0 0 40px;
+    text-wrap: pretty;
   }
 
   /* ---------- icon system (no emoji) ---------- */
@@ -94,17 +119,48 @@
       radial-gradient(900px 480px at -5% 110%, var(--coral-soft) 0%, transparent 50%);
     padding: 92px 0 64px;
   }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal), var(--amber), var(--coral), var(--purple));
+  }
+  .hero .wrap { position: relative; z-index: 1; }
   .hero h1 {
     font-size: clamp(1.9rem, 5.4vw, 3rem);
     margin: 0 0 20px;
-    max-width: 760px;
+    max-width: 880px;
+    letter-spacing: -0.018em;
   }
   .hero h1 .hl { color: var(--teal-deep); }
   .hero p.sub {
     font-size: 1.18rem;
     color: var(--ink-soft);
-    max-width: 620px;
+    max-width: 720px;
+    margin: 0 0 22px;
+    text-wrap: pretty;
+  }
+  .hero-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: fit-content;
+    max-width: 760px;
     margin: 0 0 38px;
+    padding: 12px 16px;
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(15, 122, 115, 0.14);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    backdrop-filter: blur(8px);
+  }
+  .hero-note b {
+    flex: none;
+    color: var(--teal-deep);
   }
   .hero-art {
     width: 100%;
@@ -139,7 +195,11 @@
   .def span { color: var(--ink-soft); font-size: 0.98rem; }
 
   /* ---------- alt section background ---------- */
-  .alt { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .alt {
+    background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.76));
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
 
   /* ---------- pain cards ---------- */
   .cards {
@@ -148,15 +208,13 @@
     gap: 22px;
   }
   .card {
-    background: var(--bg-soft);
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     padding: 30px 26px;
     box-shadow: var(--shadow-sm);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
   .alt .card { background: var(--bg); }
-  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
   .card .badge {
     width: 56px; height: 56px;
     display: grid; place-items: center;
@@ -168,11 +226,12 @@
 
   /* ---------- promise banner ---------- */
   .promise {
-    background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+    background: linear-gradient(135deg, #0d6863 0%, var(--teal-deep) 48%, var(--teal) 100%);
     color: #fff;
     border-radius: 30px;
     padding: 54px 48px;
-    box-shadow: 0 24px 50px -20px rgba(15, 122, 115, 0.6);
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 2px 4px rgba(15, 122, 115, 0.18), 0 30px 60px -28px rgba(15, 122, 115, 0.72), inset 0 1px rgba(255,255,255,0.16);
     position: relative;
     overflow: hidden;
   }
@@ -237,6 +296,102 @@
   .step p { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
   .step-arrow { display: grid; place-items: center; color: var(--grey); margin: -6px 0; }
   .step-arrow svg { width: 26px; height: 26px; }
+  .process-flow { gap: 12px; }
+  .process-flow .step {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+    padding: 28px 32px;
+    border: 1px solid rgba(221, 212, 196, 0.72);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .process-flow .step::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: var(--step-accent, var(--teal));
+  }
+  .process-flow .step:nth-of-type(1) { --step-accent: var(--teal); }
+  .process-flow .step:nth-of-type(3) { --step-accent: var(--amber); }
+  .process-flow .step:nth-of-type(5) { --step-accent: var(--purple); }
+  .process-flow .step:nth-of-type(7) { --step-accent: var(--teal); }
+  .process-flow .step:nth-of-type(9) { --step-accent: var(--coral); }
+  .process-flow .num { width: 72px; height: 72px; }
+  .process-flow .step-copy { min-width: 0; }
+  .process-flow .step-kicker {
+    display: block;
+    margin: 1px 0 5px;
+    color: var(--step-accent, var(--teal-deep));
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+  .process-flow .step h3 { margin-bottom: 8px; font-size: 1.24rem; }
+  .process-flow .step p { max-width: 700px; line-height: 1.78; }
+  .process-flow .step-arrow {
+    height: 30px;
+    margin: -3px 0;
+    color: var(--teal-deep);
+    opacity: 0.55;
+  }
+  .step-details {
+    margin-top: 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg);
+  }
+  .step-details summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 44px 12px 16px;
+    color: var(--teal-deep);
+    font-size: 0.86rem;
+    font-weight: 750;
+    position: relative;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+  .step-details summary::-webkit-details-marker { display: none; }
+  .step-details summary::after {
+    content: "+";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 0.18s ease, background-color 0.18s ease;
+  }
+  .step-details[open] summary::after { content: "−"; }
+  .step-details[open] summary { border-bottom: 1px solid var(--line); }
+  .step-details[open] summary::after { transform: translateY(-50%) rotate(180deg); }
+  .detail-list {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 16px 18px 18px 36px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .detail-list strong { color: var(--ink); }
+  .detail-list code { overflow-wrap: anywhere; }
+  .detail-list a {
+    color: var(--teal-deep);
+    font-weight: 650;
+    text-decoration-color: rgba(15, 122, 115, 0.34);
+    text-decoration-thickness: 0.09em;
+  }
+  .detail-list a:visited { color: var(--teal-deep); }
+  .detail-list a:hover { color: #0b645f; text-decoration-color: var(--coral); }
 
   /* ---------- value cards ---------- */
   .value-grid {
@@ -293,14 +448,15 @@
   /* ---------- project entry ---------- */
   .repo-cta {
     display: flex; align-items: center; gap: 20px;
-    background: var(--bg-soft); border: 1px solid var(--line);
+    background: var(--surface); border: 1px solid var(--line-strong);
     border-left: 6px solid var(--teal);
     border-radius: var(--radius); padding: 22px 26px;
     box-shadow: var(--shadow-sm); text-decoration: none; color: inherit;
     transition: transform 0.18s ease, box-shadow 0.18s ease;
     margin-bottom: 22px;
   }
-  .repo-cta:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .repo-cta:hover { transform: translateY(-3px); border-color: rgba(15, 122, 115, 0.42); box-shadow: var(--shadow); }
+  .repo-cta:active { transform: translateY(-1px); }
   .repo-cta .repo-ico {
     flex: none; width: 52px; height: 52px; border-radius: 14px;
     display: grid; place-items: center;
@@ -309,7 +465,15 @@
   .repo-cta .repo-txt { flex: 1 1 auto; min-width: 0; }
   .repo-cta .repo-txt b { display: block; font-size: 1.06rem; margin-bottom: 3px; }
   .repo-cta .repo-txt span { color: var(--ink-soft); font-size: 0.95rem; }
-  .repo-cta .repo-go { flex: none; font-weight: 700; color: var(--teal-deep); white-space: nowrap; }
+  .repo-cta .repo-go {
+    flex: none;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--teal-soft);
+    font-weight: 750;
+    color: var(--teal-deep);
+    white-space: nowrap;
+  }
 
   .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
   .install {
@@ -407,22 +571,45 @@
   .deep-cta { margin-top: 32px; }
   .deep-link {
     display: inline-flex; align-items: center; gap: 10px;
-    background: var(--purple-deep); color: #fff;
+    background: linear-gradient(135deg, var(--teal-deep), var(--teal)); color: #fff;
     text-decoration: none; font-weight: 700; font-size: 1rem;
     padding: 14px 26px; border-radius: 999px;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255,255,255,0.24);
+    box-shadow: var(--shadow-sm), inset 0 1px rgba(255,255,255,0.16);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
   .deep-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .deep-link:active { transform: translateY(0); }
   .deep-link svg { width: 18px; height: 18px; flex: none; }
   .deep-note { margin: 12px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
 
   /* ---------- language switcher ---------- */
   .lang-switch {
-    font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0 0 22px;
+    padding: 4px;
+    color: var(--ink-soft);
+    background: rgba(255,255,255,0.68);
+    border: 1px solid rgba(221, 212, 196, 0.84);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.86rem;
+    backdrop-filter: blur(8px);
+    width: fit-content;
   }
-  .lang-switch a { color: var(--teal-deep); text-decoration: none; font-weight: 600; }
-  .lang-switch a:hover { text-decoration: underline; }
+  .lang-switch a,
+  .lang-switch span {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 13px;
+    border-radius: 999px;
+  }
+  .lang-switch span[aria-current="page"] { color: #fff; background: var(--teal-deep); font-weight: 700; }
+  .lang-switch a { color: var(--teal-deep); text-decoration: none; font-weight: 650; }
+  .lang-switch a:hover { background: var(--teal-soft); }
 
   /* ---------- image placeholder slots ---------- */
   .img-slot { margin: 36px auto 0; max-width: 780px; }
@@ -463,7 +650,17 @@
   .img-ph .prompt b { color: var(--ink); }
   .img-ph .hint {
     display: block; margin-top: 12px;
-    font-size: 0.78rem; color: var(--grey);
+    font-size: 0.78rem; color: var(--ink-soft);
+  }
+
+  @media (hover: hover) {
+    .step-details summary:hover { color: #0b645f; background: rgba(216, 243, 240, 0.42); }
+    .step-details summary:hover::after { background: #c8ebe7; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
   }
 
   footer {
@@ -479,6 +676,21 @@
     .ba-mid { transform: rotate(90deg); padding: 4px 0; }
     .def { flex-direction: column; gap: 12px; }
     .who { flex-direction: column; text-align: center; gap: 10px; }
+    .hero { padding-top: 68px; }
+    .hero-note { display: block; padding: 12px 14px; }
+    .hero-note b { display: block; margin-bottom: 3px; }
+    .lang-switch a, .lang-switch span { min-height: 44px; padding: 0 14px; }
+    .deep-link { max-width: 100%; justify-content: center; text-align: center; line-height: 1.45; }
+    .process-flow .step {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding: 24px 22px 24px 26px;
+    }
+    .process-flow .num { width: 62px; height: 62px; }
+    .process-flow .step h3 { font-size: 1.16rem; }
+    .process-flow .step p { font-size: 0.96rem; }
+    .step-details summary { padding-left: 14px; }
+    .detail-list { padding: 14px 14px 16px 32px; }
   }
 </style>
 </head>
@@ -487,11 +699,14 @@
 <!-- ===================== HERO ===================== -->
 <header class="hero">
   <div class="wrap">
-    <p class="lang-switch">繁體中文(目前) · <a href="introduction.en.html">English</a></p>
+    <nav class="lang-switch" aria-label="語言切換">
+      <span aria-current="page">繁體中文</span>
+      <a href="introduction.en.html" lang="en">English</a>
+    </nav>
     <span class="eyebrow">認識 LOOP-APIDOC</span>
-    <h1>把雜亂的技術文件,<br />變成人人看得懂、<span class="hl">可信賴</span>的說明書</h1>
-    <p class="sub"><strong>架構更新：</strong>穩定的產品核心已是 evidence-to-contract core；模型與 agent workflow 都是可替換的 Runtime Adapter，由確定性的 Core 與 Domain 負責 grounding、assurance 與 release 治理。下方流程仍是現行 CLI adapter。</p>
-    <p class="sub">各家廠商的串接文件,格式亂、又常缺漏。loop-apidoc 像一座初步精煉爐,把混雜素材萃取成乾淨、查得到出處的標準說明,而且絕不自己亂編。</p>
+    <h1>把雜亂的技術文件，<br />變成人人看得懂、<span class="hl">可信賴</span>的說明書</h1>
+    <p class="sub">各家廠商的串接文件格式雜亂，又常有缺漏。loop-apidoc 像一座初步精煉爐，把混雜素材萃取成乾淨、查得到出處的標準說明，而且絕不自己亂編。</p>
+    <p class="hero-note"><b>架構更新</b><span>穩定的產品核心已是 evidence-to-contract core；模型與 agent workflow 都是可替換的 Runtime Adapter，由確定性的 Core 與 Domain 負責 grounding、assurance 與 release 治理。下方流程仍是現行 CLI adapter。</span></p>
 
     <!-- hero illustration: raw docs -> alchemical refinement -> clean output -->
     <svg class="hero-art" viewBox="0 0 820 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="混雜來源文件經過初步精煉,萃取成乾淨統一且可追溯的說明書">
@@ -763,15 +978,29 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">它怎麼運作</span>
     <h2 class="section-title">它是怎麼做到的?</h2>
-    <p class="section-lead">整個過程就像一位認真的整理師,把雜亂的資料一步步變成乾淨的成果。</p>
+    <p class="section-lead">五個清楚的階段，把雜亂來源收斂成可追溯、可驗證、能直接交付的成果。</p>
 
-    <div class="steps">
+    <div class="steps process-flow">
       <div class="step">
         <div class="num tint-teal">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>收集並檢查來源</h3><p>把 PDF、網頁、現成規格檔或公開網址交給它。內建 <code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先經 bounded、fail-closed OOXML 驗證並附 source-hash provenance。DOCX ZIP/XML fallback 改編自 MIT 授權的 <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a>（固定 revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>），但本專案另加嚴格 gate，且不宣稱其 EPUB／RTF／MOBI 支援；授權全文見<a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">第三方公告</a>。再由 <code>inspect-source-risk</code> 在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中 payload。直接 HTTP 被擋、但互動式瀏覽器可顯示時，<code>import-rendered-url</code> 會保留已儲存位元組與 capture provenance；只有 URL／path／method／SHA-256 驗證匹配才省略 protected-origin fetch。GitBook 若提供 <code>llms.txt</code>，會先工程化快取同範圍 Markdown，再以具行號草稿與 <code>scaffold-extraction</code> 產生待覆核的 extraction-shaped JSON。scaffold 必須複製、核對、補齊到 workdir，不能直接當成 <code>--extraction</code>。</p></div>
+        <div class="step-copy">
+          <span class="step-kicker">取得來源</span>
+          <h3>收集並檢查來源</h3>
+          <p>把 PDF、DOCX、網頁、OpenAPI 或公開網址交給它。所有來源會先轉成可安全掃描的文字，再完成風險與完整性檢查；不合格的來源不會交給 agent 閱讀。</p>
+          <details class="step-details">
+            <summary>查看來源安全與授權細節</summary>
+            <ul class="detail-list">
+              <li><strong>文件轉換：</strong><code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先通過 bounded、fail-closed OOXML 驗證，並附上 source-hash provenance。</li>
+              <li><strong>來源風險：</strong><code>inspect-source-risk</code> 會在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中的 payload。</li>
+              <li><strong>受保護頁面：</strong>直接 HTTP 被擋、但瀏覽器可顯示時，<code>import-rendered-url</code> 會保存原始位元組與 capture provenance；只有 URL、path、method 與 SHA-256 全數吻合，才會略過 origin fetch。</li>
+              <li><strong>GitBook 與草稿：</strong>若提供 <code>llms.txt</code>，系統會快取同範圍 Markdown，再產生具行號、待人工覆核的 extraction scaffold；它必須複製、核對並補齊後，才能作為正式 extraction。</li>
+              <li><strong>第三方授權：</strong>DOCX ZIP/XML fallback 改編自 MIT 授權的 <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a>（固定 revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>）。本專案另加嚴格 gate，且不宣稱支援 EPUB／RTF／MOBI；詳見<a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">第三方公告</a>。</li>
+            </ul>
+          </details>
+        </div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -780,7 +1009,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.4-4.4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>逐段仔細閱讀</h3><p>一段一段擷取內容,像認真的讀者抄重點,但只抄文件真的寫的,絕不腦補。</p></div>
+        <div class="step-copy"><span class="step-kicker">擷取事實</span><h3>逐段仔細閱讀</h3><p>按來源範圍逐段擷取，像認真的讀者抄重點；只記錄文件明確寫出的內容，不用慣例補空白。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -789,7 +1018,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>整理成標準格式</h3><p>把零散資訊重新拼組成一份統一、機器與人都能讀懂的標準規格。</p></div>
+        <div class="step-copy"><span class="step-kicker">統一結構</span><h3>整理成標準格式</h3><p>把分散在不同頁面與格式中的資訊，整理成一套人能審、工具也能直接讀取的契約。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -798,7 +1027,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">4</span>
         </div>
-        <div><h3>自我檢查</h3><p>自動驗證成果:有缺漏就回頭重讀補齊;真的查不到,就誠實標成「缺漏／衝突」,不硬填。</p></div>
+        <div class="step-copy"><span class="step-kicker">品質閘門</span><h3>自我檢查</h3><p>確定性規則會核對完整性、一致性與來源依據。有缺漏就回頭重讀；真的查不到，就明確標示「缺漏／衝突」。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -807,7 +1036,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.2L12 12l8.7-4.8"/><path d="M12 12v10"/></svg>
           <span class="n">5</span>
         </div>
-        <div><h3>交付成果</h3><p>產出標準規格、看得懂的中文說明書、來源追溯,以及一份品質檢查報告。</p></div>
+        <div class="step-copy"><span class="step-kicker">交付使用</span><h3>交付成果</h3><p>一次產出標準規格、繁體中文說明書、來源追溯與品質報告，讓工程實作和人工複核都能直接開始。</p></div>
       </div>
     </div>
   </div>
