@@ -7,6 +7,17 @@ from loop_apidoc.source_quality.models import SourceDiffReport, SourceQualityRep
 
 def render_markdown(report: SourceQualityReport) -> str:
     lines = ["# 來源品質報告", "", f"結論：**{report.verdict.value}**", ""]
+    if report.source_risk is not None:
+        lines.extend(
+            [
+                "## 前置來源風險稽核",
+                "",
+                f"- 結論：{report.source_risk.verdict.value}",
+                f"- 規則版本：{report.source_risk.ruleset_version}",
+                f"- 風險結果：{len(report.source_risk.findings)}",
+                "",
+            ]
+        )
     if report.required_source_refs:
         lines.extend(["## 待補來源連結", ""])
         lines.extend(f"- {reference}" for reference in report.required_source_refs)

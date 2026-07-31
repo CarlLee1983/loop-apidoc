@@ -772,7 +772,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M8 9l4 4 4-4"/><path d="M12 3v10"/></svg>
           <span class="n">1</span>
         </div>
-        <div><h3>Collect the sources</h3><p>Feed it documents in any format — PDFs, web pages, ready-made spec files, even a single public URL will do. If direct HTTP access is blocked but an interactive browser can render the page, <code>import-rendered-url</code> preserves the saved bytes with capture provenance; only a verified URL/path/method/SHA-256 match suppresses the protected-origin fetch.</p></div>
+        <div><h3>Collect and inspect the sources</h3><p>Feed it PDFs, web pages, ready-made spec files, or public URLs. Raw PDF/Word is converted into scannable text first; then <code>inspect-source-risk</code> checks the exact manifest-bound bytes before any agent reads them. It never rewrites the sources or echoes matched payloads. If direct HTTP access is blocked but an interactive browser can render the page, <code>import-rendered-url</code> preserves the saved bytes with capture provenance; only a verified URL/path/method/SHA-256 match suppresses the protected-origin fetch.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -1099,7 +1099,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
         Want the technical deep dive? Read the full tour for engineers
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
-      <p class="deep-note">The two-stage architecture, the seam JSON, the sixteen CLI commands, and the validation-and-correction loop — the whole pipeline on one page.</p>
+      <p class="deep-note">The two-stage architecture, the seam JSON, the 28 CLI commands, and the risk, validation, and correction gates — the whole pipeline on one page.</p>
     </div>
   </div>
 </section>

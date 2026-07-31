@@ -50,7 +50,35 @@ def _enable_shadow_metadata(extraction: Path) -> None:
     )
 
 
-def _source_quality_dir(tmp_path: Path, *, verdict: str = "pass") -> Path:
+def _source_quality_dir(
+    tmp_path: Path,
+    sources: Path,
+    *,
+    verdict: str = "pass",
+) -> Path:
+    manifest = tmp_path / "quality-manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+    risk = tmp_path / "source-risk"
+    risk_result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(risk),
+        ],
+    )
+    assert risk_result.exit_code == 0, risk_result.stdout
+    risk_report = json.loads(
+        (risk / "source-risk-report.json").read_text(encoding="utf-8")
+    )
     quality = tmp_path / "source-quality"
     quality.mkdir()
     (quality / "source-quality-report.json").write_text(
@@ -58,6 +86,7 @@ def _source_quality_dir(tmp_path: Path, *, verdict: str = "pass") -> Path:
             "verdict": verdict,
             "source_set": "demo-v1",
             "findings": [],
+            "source_risk": risk_report,
         }),
         encoding="utf-8",
     )
@@ -453,7 +482,7 @@ def test_assemble_rejects_invalid_architecture_mode(tmp_path):
 
 def test_assemble_persists_passing_source_quality_artifacts(tmp_path):
     sources, extraction, out = _setup(tmp_path)
-    quality = _source_quality_dir(tmp_path)
+    quality = _source_quality_dir(tmp_path, sources)
 
     res = runner.invoke(app, [
         "assemble", "--sources", str(sources), "--extraction", str(extraction),
@@ -471,7 +500,7 @@ def test_assemble_persists_passing_source_quality_artifacts(tmp_path):
 
 def test_assemble_rejects_source_quality_blocker_without_creating_run_dir(tmp_path):
     sources, extraction, out = _setup(tmp_path)
-    quality = _source_quality_dir(tmp_path, verdict="reject")
+    quality = _source_quality_dir(tmp_path, sources, verdict="reject")
 
     res = runner.invoke(app, [
         "assemble", "--sources", str(sources), "--extraction", str(extraction),
@@ -480,6 +509,90 @@ def test_assemble_rejects_source_quality_blocker_without_creating_run_dir(tmp_pa
 
     assert res.exit_code == 2
     assert "reject" in res.output
+    assert not out.exists() or not any(out.iterdir())
+
+
+def test_assemble_rejects_stale_source_risk_binding_without_creating_run_dir(
+    tmp_path: Path,
+) -> None:
+    sources, extraction, out = _setup(tmp_path)
+    quality = _source_quality_dir(tmp_path, sources)
+    manual = sources / "manual.md"
+    manual.write_text(manual.read_text(encoding="utf-8").replace("Demo", "D3mo"), encoding="utf-8")
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--source-quality",
+            str(quality),
+        ],
+    )
+
+    assert res.exit_code == 2
+    assert "source binding mismatch" in res.output
+    assert not out.exists() or not any(out.iterdir())
+
+
+def test_assemble_rejects_source_quality_without_risk_audit(tmp_path: Path) -> None:
+    sources, extraction, out = _setup(tmp_path)
+    quality = _source_quality_dir(tmp_path, sources)
+    report_path = quality / "source-quality-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report.pop("source_risk")
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--source-quality",
+            str(quality),
+        ],
+    )
+
+    assert res.exit_code == 2
+    assert "no verified source-risk audit" in res.output
+    assert not out.exists() or not any(out.iterdir())
+
+
+def test_assemble_rejects_tampered_embedded_risk_audit(tmp_path: Path) -> None:
+    sources, extraction, out = _setup(tmp_path)
+    quality = _source_quality_dir(tmp_path, sources)
+    report_path = quality / "source-quality-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["source_risk"]["coverage"] = []
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    res = runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--source-quality",
+            str(quality),
+        ],
+    )
+
+    assert res.exit_code == 2
+    assert "does not match deterministic inspection" in res.output
     assert not out.exists() or not any(out.iterdir())
 
 

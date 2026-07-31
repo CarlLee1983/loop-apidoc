@@ -5,6 +5,20 @@ Use this when any source is a public URL. The goal is not "how to fetch" but
 findings, matching the pipeline's fail-closed spirit. Write the result to
 `<WORK>/url_sources/coverage.json` and pass it to assemble via `--url-coverage`.
 
+All URL acquisition lanes end in local immutable evidence. Before a router, quality reviewer,
+or extractor reads any cached body, build a manifest over the exact local text package and run:
+
+```bash
+<APIDOC> inspect-source-risk --sources "<EXTRACT_SOURCES>" \
+  --manifest "<WORK>/manifest.preflight.json" \
+  --output "<WORK>/source-risk" [--max-bytes 5242880]
+```
+
+Continue only on exit 0. Exit 1 is a risk reject; exit 2 is an input/binding failure. The fixed
+report never echoes matched payload text. Raw PDF/Word and other unscannable formats are
+blockers, so convert them into supported UTF-8 Markdown first, then rebuild the manifest and
+audit. URL coverage proves acquisition completeness; it does not replace this pre-model gate.
+
 ## Direct machine-readable OpenAPI URL
 
 When the entry URL itself returns OpenAPI JSON or YAML, it is a single immutable document,
@@ -23,9 +37,10 @@ not a navigation entry point. Do **not** call `catalog-url`, `cache-url-pages`,
    `openapi: "3.x"`, writes the original bytes, prints their SHA-256, and creates the one-entry
    ledger with `status: "fetched"` and `method: "direct"`. It fails rather than overwriting a
    snapshot or coverage file.
-2. Read the local snapshot as the source of endpoints, components, servers, security, and
-   examples; do not copy it directly to the final output or assume omitted integration details.
-   Cite the local filename plus JSON Pointer during extraction.
+2. Build the manifest and obtain a passing `inspect-source-risk` audit for the local snapshot.
+   Only then read it as the source of endpoints, components, servers, security, and examples;
+   do not copy it directly to the final output or assume omitted integration details. Cite the
+   local filename plus JSON Pointer during extraction.
 
 The local snapshot is the only evidence subagents read. Re-fetch only when intentionally
 creating a new source-set version.
@@ -55,6 +70,10 @@ method, and bytes before treating the local file as URL evidence; verified evide
 redundant origin request. Any mismatch fails closed. The command does not solve challenges,
 handle credentials, infer omitted contracts, or follow links.
 
+Run `inspect-source-risk` against this manifest before any agent reads the imported HTML or its
+normalized Markdown. Capture provenance verifies where the bytes came from; the risk audit
+separately binds the local text package that is allowed to enter model context.
+
 ## GitBook LLMS Markdown corpus
 
 When a GitBook-style entry point publishes `llms.txt`, prefer the deterministic Markdown
@@ -83,6 +102,10 @@ is a non-authoritative, line-cited aid: explicit endpoint headings, explicitly l
 Header/Query/Request/Response tables, and fenced examples. It does not produce extraction
 JSON, infer missing details, or replace source reading, endpoint-agent extraction,
 `verify-extraction`, or `assemble`.
+
+These deterministic tools may run before model review, but no agent may read the cached
+Markdown, draft text, catalog cards, or related-page cards until the final local package has a
+passing source-risk audit.
 
 ## 1. Catalog the navigation; do not crawl it
 

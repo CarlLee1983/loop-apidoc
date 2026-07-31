@@ -8,6 +8,7 @@ from loop_apidoc.source_quality.models import (
     QualityVerdict,
     SourceQualityReport,
 )
+from loop_apidoc.source_risk.models import SourceRiskReport
 
 
 def _finding(identifier: int, observation: QualityObservation) -> QualityFinding:
@@ -20,6 +21,7 @@ def assess_source_quality(
     source_set: str,
     observations: list[QualityObservation],
     base_report: SourceQualityReport | None,
+    source_risk: SourceRiskReport,
 ) -> SourceQualityReport:
     findings: list[QualityFinding] = []
     usable = [
@@ -66,4 +68,5 @@ def assess_source_quality(
         base_source_set=base_report.source_set if base_report else None,
         findings=findings,
         required_source_refs=required_source_refs,
+        source_risk=source_risk,
     )

@@ -119,6 +119,21 @@ No in-code automatic correction loop may invent values. Agents re-read the relev
 source, revise the extraction JSON, and reassemble; unresolved source gaps and
 conflicts remain visible.
 
+Supplier document content is also untrusted model input. The compatibility workflow must
+therefore finish acquisition/preprocessing, build a manifest for the exact readable package,
+and pass deterministic `inspect-source-risk` before any router, quality reviewer, or extractor
+reads source-derived text. The inspector supports bounded UTF-8 Markdown, HTML, and OpenAPI
+JSON/YAML; PDF, Word, invalid UTF-8, oversized text, and other unscannable pending sources fail
+closed until converted and re-manifested. It never rewrites evidence or echoes a matched payload.
+
+The audit contract is versioned and source-bound: schema/ruleset, `max_bytes`, manifest digest,
+per-source SHA-256, and a stable source-binding digest are all checked.
+`assess-sources --source-risk` reinspects current bytes and embeds the matching verified audit
+in the quality report, and `assemble --source-quality` repeats that deterministic inspection
+and revalidates its stable binding against the newly built manifest
+before creating a run directory. Risk findings govern whether text may enter model context;
+they are not evidence for an API claim and do not become another source of factual truth.
+
 ### 5. Keep evidence acquisition bounded and reproducible
 
 URL navigation first creates a bounded catalog, then explicitly selects URLs, then
@@ -260,3 +275,4 @@ backed acceptance criteria here or in a dedicated ADR before implementation begi
 9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游；transport、金額方向、冪等與線路幣別使用專屬 typed collection，且 request 缺少 currency 欄位絕不視為單幣別證據。
 10. 產品維持領域中立；支付／錢包是重要的首個垂直領域，但不是整個產品定義。transport policy 與 idempotency 屬通用整合語意，amount direction 與 line-currency policy 則屬選填 Payment Profile。新的產業專屬 typed concept 必須符合跨供應商重現、具名下游 consumer、無法由既有通用 constraint 忠實表達及具來源支撐 benchmark 等准入條件。
 11. GraphQL／AsyncAPI 保留確定性、可測試的 Core compiler seam，但在具名下游 consumer 提供真實來源集與明確驗收契約前，凍結 CLI、run、validation、diff／score 與 Foundry 整合；公開 fixture 只能證明格式 compiler 可測，不能代替產品需求或端到端 exact-evidence coverage。
+12. 供應商文件同時是 untrusted model input：來源取得／前處理後，必須對 agent 實際會讀的 manifest 綁定文字包執行 `inspect-source-risk`。報告不回顯命中 payload、不改寫來源，並由 schema/ruleset、大小上限、manifest／逐來源 digest 與 stable source binding 防止 stale reuse；`assess-sources` 內嵌 audit，`assemble` 在建立 run-dir 前重驗綁定。risk finding 決定文字能否進模型，不是 API claim 的事實證據。

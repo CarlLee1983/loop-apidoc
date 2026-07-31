@@ -43,6 +43,10 @@ def load_assessment_reports(path: Path) -> tuple[SourceQualityReport, SourceDiff
             report_path.read_text(encoding="utf-8")
         )
         diff = SourceDiffReport.model_validate_json(diff_path.read_text(encoding="utf-8"))
+        if report.source_risk is None:
+            raise SourceQualityInputError(
+                "source quality report has no verified source-risk audit"
+            )
         return report, diff
     except (OSError, ValidationError) as exc:
         raise SourceQualityInputError(

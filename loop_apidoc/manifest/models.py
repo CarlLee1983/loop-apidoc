@@ -30,7 +30,7 @@ class LocalSource(BaseModel):
     relative_path: str
     mime_type: str | None
     source_format: SourceFormat
-    size_bytes: int
+    size_bytes: int = Field(ge=0)
     sha256: str
     scanned_at: datetime
     supported: bool

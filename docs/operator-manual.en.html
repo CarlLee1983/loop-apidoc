@@ -82,6 +82,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#manifest-manifest">manifest — build the source manifest</a>
   <a class="lvl-3" href="#url-corpus">URL navigation and caching (catalog / select / cache)</a>
   <a class="lvl-3" href="#import-rendered-url">import-rendered-url — protected rendered evidence</a>
+  <a class="lvl-3" href="#inspect-source-risk">inspect-source-risk — pre-agent source-risk gate</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — source quality gate</a>
   <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — scheduled source freshness gate</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — extraction contract check</a>
@@ -120,13 +121,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <p>Core principle: <strong>the source documents are the only source of truth</strong>. Anything a source does not state is never inferred; when required information is missing, validation fails and lists the gaps explicitly rather than filling them with conventions.</p>
 <hr />
 <h2 id="_1">How it works</h2>
-<p>The extraction engine is <strong>the current coding agent itself</strong>. Inside a Claude Code plugin or OpenAI Codex CLI session, the agent follows <code>skills/loop-apidoc/SKILL.md</code> to read the sources and extract via a <strong>read-only subagent fan-out</strong> (each subagent only reads files and searches, returning JSON without writing files); the orchestrating agent writes the results into <code>inventory.json</code> + <code>endpoints/*.json</code>, then calls the deterministic CLI <code>assemble</code> to run the back half of plan → generate → validate.</p>
+<p>The extraction engine is <strong>the current coding agent itself</strong>. Before any agent reads source content, the operator normalizes raw binary inputs, builds the manifest, and runs the deterministic <code>inspect-source-risk</code> gate. Only after that report passes does a Claude Code plugin or OpenAI Codex CLI session follow <code>skills/loop-apidoc/SKILL.md</code> and extract via a <strong>read-only subagent fan-out</strong> (each subagent only reads files and searches, returning JSON without writing files); the orchestrating agent writes the results into <code>inventory.json</code> + <code>endpoints/*.json</code>, then calls the deterministic CLI <code>assemble</code> to run the back half of plan → generate → validate.</p>
 <p>The CLI itself does <strong>not</strong> create sessions, log in to private sites, or drive a browser — it only assembles and validates after the agent has written the extraction JSON.</p>
 <blockquote>
 <p>An earlier <code>run-agent</code> CLI mode that extracted via the <code>claude -p</code> subprocess was retired in 2026-06 (together with the NotebookLM extraction backend); agent-native is now the only extraction path.</p>
 </blockquote>
 <h3 id="_2">Full pipeline</h3>
-<pre><code>preprocess (optional) → URL navigation/caching (optional: catalog-url → select-url → cache-url-pages) → assess-sources quality gate (optional) → extraction (agent read-only subagent fan-out) → verify-extraction → manifest → normalization plan → generate (OpenAPI + Markdown) → validate → correction (agent-driven)
+<pre><code>URL navigation/caching (optional) → preprocess/normalize raw PDF or Word when required → manifest → inspect-source-risk (required, before agent reads) → assess-sources → extraction (agent read-only subagent fan-out) → verify-extraction → assemble manifest → normalization plan → generate (OpenAPI + Markdown) → validate → correction (agent-driven)
 </code></pre>
 <p>When validation fails, <code>assemble</code> reports the classified issues via <code>--json</code>; <strong>correction is agent-driven</strong>: guided by the report, the agent re-reads the relevant sources, overwrites the corresponding extraction JSON, and re-runs <code>assemble</code>, for up to 3 rounds. If it still fails after three rounds, or it hits a gap/conflict that cannot be fixed, it reports the gap/conflict instead of filling it in.</p>
 <h3 id="_codex">Using it with the OpenAI Codex CLI</h3>
@@ -153,19 +154,19 @@ uv run loop-apidoc --help
 <p>Before the agent extracts, the operator only needs to have the sources ready:</p>
 <ol>
 <li>Put local source files into a source directory (referred to as <code>&lt;SOURCES&gt;</code>).</li>
-<li>Pass public URLs directly with <code>--url</code>; the agent fetches them as text.</li>
-<li>For table-heavy or large PDFs, first convert them to high-fidelity markdown with <code>preprocess</code> (see below), then point the extraction at the output directory.</li>
+<li>Acquire public URLs into local HTML, Markdown, or OpenAPI snapshots; only manifest-bound artifacts that pass <code>inspect-source-risk</code> may be read by an agent.</li>
+<li>Convert every raw PDF or Word source to UTF-8 Markdown before inspection; raw binary documents fail closed.</li>
 </ol>
 <p>No external Notebook to create, no browser login needed — source reading is done by the current agent within the session.</p>
 <h3 id="_5">Supported source formats</h3>
-<p>PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, public URLs.</p>
+<p>Markdown, HTML, and OpenAPI JSON/YAML are directly scannable. PDF, Microsoft Word, and public URLs are supported only after conversion or acquisition into a manifest-bound local scannable artifact.</p>
 <hr />
 <h2 id="_6">Usage</h2>
 <p>The CLI provides source processing, URL evidence, draft extraction, quality and extraction, scheduled source freshness, run processing, Foundry asset governance, and the local human-review <code>review</code> workbench. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
-<h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (optional)</h3>
+<h3 id="preprocess"><code>preprocess</code> — convert PDF to high-fidelity markdown (required for raw PDF input)</h3>
 <pre><code class="language-bash">uv run loop-apidoc preprocess --sources ./sources --out ./work/sources_md
 </code></pre>
-<p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Directory input preserves source-relative paths; <code>guide.pdf</code> becomes <code>guide.pdf.md</code>, avoiding a collision with a sibling <code>guide.md</code>. <code>--sources</code> can also name one file, in which case only that file is processed. Converting table-heavy or large PDFs before extraction avoids the table distortion of reading the raw PDF; afterwards, point the extraction subagents at the <code>--out</code> directory.</p>
+<p>Uses pymupdf4llm to convert each PDF in the <code>--sources</code> directory into markdown that preserves table and heading structure (non-PDF text sources are copied as-is). Directory input preserves source-relative paths; <code>guide.pdf</code> becomes <code>guide.pdf.md</code>, avoiding a collision with a sibling <code>guide.md</code>. <code>--sources</code> can also name one file. Every raw PDF must be converted before the risk gate; afterwards, build the manifest over <code>--out</code>, pass it through <code>inspect-source-risk</code>, and point extraction subagents at that exact directory.</p>
 <h3 id="manifest-manifest"><code>manifest</code> — build the source manifest</h3>
 <pre><code class="language-bash">uv run loop-apidoc manifest --sources ./sources-or-file [--url &lt;URL&gt; ...] [--url-coverage &lt;coverage.json&gt;] [--output manifest.json]
 </code></pre>
@@ -180,10 +181,10 @@ uv run loop-apidoc select-url --catalog ./work/url_sources/catalog.json --branch
 # Cache all catalog pages and build local body/link/entity indexes (no model involved)
 uv run loop-apidoc cache-url-pages --catalog ./work/url_sources/catalog.json --output ./work/url_corpus
 
-# Emit candidate page cards from body links and shared entities; the model only reads a candidate's body when needed
+# Emit candidate page cards from body links and shared entities; this does not authorize model reads
 uv run loop-apidoc related-url-pages --corpus ./work/url_corpus/corpus.json --url &lt;page URL&gt; --output ./work/candidates.json
 </code></pre>
-<p>A token-efficient web-doc reading flow: <code>catalog.json</code> is the complete navigation coverage universe; <code>corpus.json</code> embeds no body text, only pointing at the local <code>raw/</code> and <code>body/</code> files. When the catalog is empty or the document is a single page, use <code>cache-url-entry --url ... --output ...</code> to cache the entry page directly; already-downloaded HTML can be converted to supported Markdown with <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code>, which also writes a <code>.source.json</code> provenance sidecar carrying the original URL and SHA-256.</p>
+<p>A token-efficient web-doc reading flow: <code>catalog.json</code> is the complete navigation coverage universe; <code>corpus.json</code> embeds no body text, only pointing at local <code>raw/</code> and <code>body/</code> files. Candidate cards are routing metadata only. Before any model reads a selected page, materialize its raw HTML or normalized Markdown inside <code>&lt;EXTRACT_SOURCES&gt;</code>, rebuild the manifest, and pass <code>inspect-source-risk</code>; never give an agent an unmanifested corpus body. When the catalog is empty or the document is a single page, use <code>cache-url-entry --url ... --output ...</code>; downloaded HTML can be converted with <code>normalize-html-snapshot --input page.html --url ... --output sources/page.md</code>, which also writes a provenance sidecar.</p>
 <h3 id="import-rendered-url"><code>import-rendered-url</code> — import protected browser-rendered evidence</h3>
 <pre><code class="language-bash">uv run loop-apidoc import-rendered-url --input ./captures/page.html --url &lt;original URL&gt; \
   --captured-at "2026-07-29T08:30:00+08:00" --capture-method browser_save \
@@ -201,14 +202,21 @@ uv run loop-apidoc manifest --sources ./sources --url &lt;original URL&gt; \
 <pre><code class="language-bash">uv run loop-apidoc cache-gitbook-llms --url https://example.gitbook.io/docs \\
   --sources ./sources --coverage ./work/url_sources/coverage.json
 uv run loop-apidoc manifest --sources ./sources --url https://example.gitbook.io/docs --output ./work/manifest.json
+uv run loop-apidoc inspect-source-risk --sources ./sources --manifest ./work/manifest.json --output ./work/source-risk
 uv run loop-apidoc extract-markdown-drafts --sources ./sources --manifest ./work/manifest.json --output ./work/markdown-api-facts.json
 </code></pre>
-<p>The GitBook command fetches <code>llms.txt</code> once and caches every safe, same-origin, entry-prefix <code>.md</code> URL under the source directory, with URL/SHA-256/timestamp sidecars. Index/collision errors write no partial corpus; page failures stay visible in coverage. The facts JSON contains only line-cited, explicit endpoint headings, labelled tables and fenced examples. It is an aid, not extraction JSON or source authority; agents still read sources and run <code>verify-extraction</code>.</p>
+<p>The GitBook command fetches <code>llms.txt</code> once and caches every safe, same-origin, entry-prefix <code>.md</code> URL under the source directory, with URL/SHA-256/timestamp sidecars. Index/collision errors write no partial corpus; page failures stay visible in coverage. Do not inspect drafts or re-read citations until the risk gate passes. The facts JSON is an aid, not extraction JSON or source authority.</p>
+<h3 id="inspect-source-risk"><code>inspect-source-risk</code> — deterministic pre-agent source-risk gate</h3>
+<pre><code class="language-bash">uv run loop-apidoc inspect-source-risk --sources ./sources --manifest ./work/manifest.json \
+  --output ./work/source-risk [--max-bytes 5242880]
+</code></pre>
+<p>Run this <strong>after preprocessing and manifest creation, but before any agent reads source content</strong>. It scans manifest-bound Markdown, HTML, and OpenAPI JSON/YAML as text for deterministic risky Unicode, control characters, and instruction/control-token patterns. Raw PDF and Word files are deliberately <code>unscannable</code> and reject the gate: convert them to a supported text form first, then rebuild the manifest over those exact bytes. The command writes <code>source-risk-report.{json,zh-TW.md}</code>, never rewrites a source, and never echoes a matched payload; findings contain only the rule identifier, manifest source reference, and locator. Exit codes: <code>0</code> = pass (warnings allowed), <code>1</code> = reject (a blocker or unscannable source), <code>2</code> = invalid, stale, unsafe, or unreadable input.</p>
 <h3 id="assess-sources"><code>assess-sources</code> — pre-extraction source quality gate</h3>
 <pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
-  --observations &lt;observations.json&gt; --source-set &lt;name&gt; --output ./work/source-quality [--base-manifest &lt;old manifest&gt;]
+  --source-risk ./work/source-risk --observations &lt;observations.json&gt; \
+  --source-set &lt;name&gt; --output ./work/source-quality [--base-manifest &lt;old manifest&gt;]
 </code></pre>
-<p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. Blocker observations may list explicit HTTP(S) links in <code>required_source_refs</code>; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed and never crawls it. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
+<p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. <code>--source-risk</code> is required: the command verifies the binding, re-runs deterministic inspection against the current source bytes, and requires the complete audit to match before embedding it. Blocker observations may list explicit HTTP(S) links in <code>required_source_refs</code>; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed and never crawls it. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
 <h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> — scheduled source freshness gate</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 
@@ -257,7 +265,7 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
   --output ./output \
   [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;model name&gt;] [--architecture-mode legacy|shadow] [--json] [--score]
 </code></pre>
-<p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally a typed <code>integration.json</code>) into outputs: manifest → plan → generate → validate. The optional contract preserves source-stated <code>transport</code>, <code>amount_direction</code>, <code>idempotency</code>, and <code>line_currency_policy</code>; a missing request currency field never establishes a single-currency policy. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, a reject verdict aborts before the run-dir is created, while a passing report is retained in the run-dir; <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, <code>report</code>, and <code>toolchain</code> to stdout for the agent to parse and drive the correction loop. The run directory also gets a <code>run.json</code> descriptor recording the <code>toolchain</code> (<code>cli_version</code>, <code>extraction_contract_version</code>, <code>skill_version</code>, <code>model</code>) so a run can later be attributed to the versions that produced it; <code>--extractor-model</code> is the extraction model name, passed explicitly by the agent — omit it and the field stays <code>null</code>, because the CLI never guesses it. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
+<p><strong>Does not extract</strong>; it only assembles the extraction directory the agent has already produced (<code>inventory.json</code> + <code>endpoints/*.json</code>, optionally a typed <code>integration.json</code>) into outputs: manifest → plan → generate → validate. The optional contract preserves source-stated <code>transport</code>, <code>amount_direction</code>, <code>idempotency</code>, and <code>line_currency_policy</code>; a missing request currency field never establishes a single-currency policy. If you pass the <code>--source-quality</code> directory produced by <code>assess-sources</code>, <code>assemble</code> rebuilds the manifest and revalidates the embedded source-risk binding before creating a run-dir; a missing, stale, or mismatched audit aborts, while a passing quality report is retained in the run-dir. <code>--url-coverage</code> checks fetch coverage when there are URL sources (warning only). <code>--json</code> prints <code>run_id</code>, <code>run_dir</code>, <code>review_html</code>, <code>ok</code>, <code>status</code>, <code>report</code>, and <code>toolchain</code> to stdout for the agent to parse and drive the correction loop. The run directory also gets a <code>run.json</code> descriptor recording the <code>toolchain</code> (<code>cli_version</code>, <code>extraction_contract_version</code>, <code>skill_version</code>, <code>model</code>) so a run can later be attributed to the versions that produced it; <code>--extractor-model</code> is the extraction model name, passed explicitly by the agent — omit it and the field stays <code>null</code>, because the CLI never guesses it. Exit codes: <code>0</code> = validation PASS, <code>1</code> = validation FAIL, <code>2</code> = extraction input file error. Adding <code>--score</code> also writes <code>score/score.{json,md}</code> after assembly (see below); the score does not affect the exit codes above.</p>
 <p><code>--architecture-mode shadow</code> opts into a non-authoritative Core observation after the legacy validation report is written. Success writes source-set, evidence, runtime result, claims, contract, decision, workflow, events, and comparison JSON under <code>&lt;run-dir&gt;/core/</code>; failure writes <code>core/error.json</code> and a warning. Neither result changes legacy validation, score, approval, Foundry, <code>ok</code>/<code>status</code>, or exit codes. The default is <code>legacy</code> and creates no <code>core/</code>.</p>
 <p>Shadow evidence is claim-level: each material claim path is connected by <code>explicit_support</code>, <code>derived_support</code>, <code>contradicts</code>, or <code>insufficient</code> to an exact fragment and source artifact. Core uses deterministic value, table-cell, structured-path, enum, and source-fact verification; runtime confidence does not decide status. A prose v1 reference without a parsed scalar can support only its one bound claim after source identity, locator, digest, and claim path all pass. OpenAPI structural derivations are limited to a versioned allowlist and recomputed from the exact fragment plus every required local-reference context fragment. A filename-only or whole-document legacy citation still becomes <code>insufficient</code> and remains unverified. Inspect <code>relationships.json</code> and <code>projections/provenance.json</code> for the claim → relationship → fragment → artifact trace.</p>
 <h3 id="validate-run"><code>validate</code> — validate an existing run directory</h3>
@@ -449,8 +457,12 @@ uv run ruff check .
 <td>deterministic documentation-quality score for a completed run-dir, computing 0–100 from five weighted categories, output to <code>score/score.{json,md}</code> (one of the file-I/O exits)</td>
 </tr>
 <tr>
+<td><code>loop_apidoc/source_risk/</code></td>
+<td>manifest-bound pre-agent text inspection and verified report loading (<code>inspect-source-risk</code>); reads exact source bytes and writes the risk audit without rewriting or echoing source payloads</td>
+</tr>
+<tr>
 <td><code>loop_apidoc/source_quality/</code></td>
-<td>pre-extraction source quality assessment and source version-diff report (<code>assess-sources</code>); a passing report can be retained with the run-dir for audit</td>
+<td>pre-extraction source quality assessment and source version-diff report (<code>assess-sources</code>); requires and embeds a verified source-risk audit, and a passing report can be retained with the run-dir</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/freshness/</code></td>

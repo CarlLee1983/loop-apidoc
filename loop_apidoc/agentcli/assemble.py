@@ -293,6 +293,24 @@ def run_assemble_pipeline(
         )
     except ManifestInputError as exc:
         raise AssembleInputError(str(exc)) from exc
+    if source_quality_report is not None:
+        from loop_apidoc.source_risk import (
+            SourceRiskInputError,
+            verify_source_risk_report,
+        )
+
+        if source_quality_report.source_risk is None:
+            raise AssembleInputError(
+                "source quality report has no verified source-risk audit"
+            )
+        try:
+            verify_source_risk_report(
+                source_quality_report.source_risk,
+                manifest=manifest,
+                sources_root=sources_root,
+            )
+        except SourceRiskInputError as exc:
+            raise AssembleInputError(str(exc)) from exc
     if url_coverage is not None:
         # 有帳本才回填 URL→快照檔映射;無帳本行為與現狀完全相同。
         manifest = backfill_snapshot_files(manifest, url_coverage)

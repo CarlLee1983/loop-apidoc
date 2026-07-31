@@ -21,7 +21,8 @@ The repository already provides more than document conversion:
 
 - bounded and reproducible source acquisition for local files, URLs, GitBook,
   and direct OpenAPI snapshots;
-- deterministic assembly, validation, scoring, source quality, and run diffs;
+- deterministic pre-agent source-risk inspection, assembly, validation, scoring,
+  source quality, and run diffs;
 - source freshness fingerprints and batch checks;
 - derived developer handoff material (Postman collection, SDK hints, and
   integration tasks);
@@ -33,6 +34,22 @@ The repository already provides more than document conversion:
 
 The following priorities build on those foundations instead of duplicating
 them.
+
+### Delivered security boundary: inspect untrusted source text before model use
+
+The compatibility workflow now treats supplier documents as untrusted data before they
+enter any agent context. After acquisition/preprocess, a manifest binds the exact readable
+package and `inspect-source-risk` deterministically scans UTF-8 Markdown, HTML, and OpenAPI
+JSON/YAML. Raw PDF/Word, invalid UTF-8, oversized text, and other unscannable pending sources
+are blockers rather than implicit exceptions. Fixed findings identify only rules, source refs,
+and locators; they never reproduce the matched payload or rewrite evidence.
+
+The versioned report records schema/ruleset, `max_bytes`, manifest digest, per-source SHA-256,
+and a stable source-binding digest. `assess-sources --source-risk` verifies and embeds that
+audit before extraction, and `assemble --source-quality` revalidates the embedded binding
+against its rebuilt manifest before creating a run directory. This is a narrow prompt-injection
+and hidden-control-text boundary for model-facing document text, not a malware scanner, content
+moderation system, or new authority for API facts.
 
 ## Product and domain boundary
 

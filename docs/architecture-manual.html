@@ -736,6 +736,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">import-rendered-url</div>
           <div class="command-chip">related-url-pages</div>
+          <div class="command-chip">inspect-source-risk</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
           <div class="command-chip">snapshot-openapi-url</div>
@@ -743,6 +744,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">check-freshness</div>
           <div class="command-chip">check-freshness-batch</div>
           <div class="command-chip">governance-scan</div>
+          <div class="command-chip">governance-review-plan</div>
           <div class="command-chip">assemble</div>
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
@@ -802,7 +804,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           </button>
           <button type="button" class="module-card io-boundary" data-module="source-quality">
             <div class="module-name">source_quality/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">擷取前來源品質評估與差異報告；reject 可輸出明確 bounded required_source_refs 且不 crawl，通過報告可隨 run-dir 保存。</div>
+            <div class="module-role">要求並嵌入已驗證的 source-risk audit，再評估可追溯來源品質；assemble 會重新驗證 binding 才保存 pass report。</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="source-risk">
+            <div class="module-name">source_risk/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">Agent 接觸前的 manifest-bound 文字掃描；只寫 locator audit，不改寫來源或回顯 payload。</div>
           </button>
           <button type="button" class="module-card io-boundary" data-module="freshness">
             <div class="module-name">freshness/ <span class="pill io">File I/O</span></div>
@@ -824,8 +830,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 提供來源、URL evidence、品質、freshness、run、<code>foundry</code> 與 <code>review</code> 工作台操作；後者只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>adapters/fragments.py</code> 是把來源內容 materialize 成 exact fragment 的 read-side I/O exit；Core 與 Domain 維持 pure。
+      <code>cli.py</code> 提供 28 個來源、URL evidence、風險、品質、freshness、run、<code>foundry</code> 與 <code>review</code> 工作台命令；後者只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_risk/report.py</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>source_risk/inspect.py</code> 與 <code>adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>：<code>assemble --architecture-mode shadow</code> 會在 legacy validation 後呼叫 compatibility-only 的 <code>shadow/</code> 套件。Pure bridge 把 manifest/plan 映成 Core evidence 與 claims，in-memory runner 只執行到 Core validation，且只有 <code>shadow/report.py</code> 會寫入觀測性的 <code>&lt;run-dir&gt;/core/</code> 產物或 <code>core/error.json</code>。Legacy validation、score、approval、Foundry、status 與退出碼仍具權威。
@@ -844,10 +850,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       num: "PREP",
       title: "提供來源與前處理",
       pillClass: "prep",
-      pillLabel: "Manual / Optional",
-      desc: "啟動擷取前，操作者把來源備妥：本機檔案放進一個來源目錄（<code>&lt;SOURCES&gt;</code>），公開 URL 以 <code>--url</code> 傳入。表格密集或大型 PDF 建議先用 <code>preprocess</code> 轉成高保真 markdown（pymupdf4llm 保留表格與標題結構），避免原始 PDF 讀取扭曲表格。無需建立任何外部 Notebook 或瀏覽器登入。",
-      details: "<p>第一版支援的來源格式：PDF、Markdown、Word、OpenAPI JSON/YAML 及公開網頁 URL。</p><p><code>preprocess</code> 是<b>可選</b>的本機 I/O 步驟；非 PDF 文字來源會原樣複製到輸出目錄，之後把擷取 subagent 指向轉出的 <code>sources_md</code> 目錄即可。</p>",
-      seam: "prepare_markdown(sources_dir, dest_dir) / pdf_to_markdown(pdf_path)",
+      pillLabel: "Required gate",
+      desc: "啟動擷取前，操作者須準備可掃描來源、建立 <code>manifest.json</code>，並執行 <code>inspect-source-risk</code>。原始 PDF 與 Word 無法掃描，必須先轉成支援文字；內建 <code>preprocess</code> 處理 PDF → 高保真 Markdown。Manifest-bound risk report 通過前，任何 agent 都不能讀取來源內容。",
+      details: "<p>Risk gate 把 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則找出高風險 Unicode、控制字元與 instruction/control-token pattern。它不改寫來源，也不回顯命中 payload；report 只列 rule ID、source reference 與 locator。</p><p>退出碼：0 pass、1 reject、2 invalid/stale/unsafe input。<code>assess-sources --source-risk</code> 驗證並嵌入 pass audit，<code>assemble --source-quality</code> 再驗證 source binding。</p>",
+      seam: "prepare_markdown(...) / build_manifest(...) / inspect_source_risks(...) / load_verified_source_risk_report(...) ",
       inputs: "API 原始文件來源 (本機目錄), 公開 URL",
       outputs: "&lt;SOURCES&gt;, &lt;WORK&gt;/sources_md (可選)"
     },
@@ -856,7 +862,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "資料擷取 (Extraction)",
       pillClass: "agent",
       pillLabel: "Agent",
-      desc: "擷取引擎是<b>當前的 coding agent 自己</b>（Claude Code plugin 或 OpenAI Codex CLI）。agent 依 <code>skills/loop-apidoc/SKILL.md</code>，以<b>唯讀 subagent fan-out</b> 分段擷取：每個 subagent 只讀檔與搜尋、回傳 JSON（不寫檔、不連網），由主 agent 把回傳結果寫成 <code>inventory.json</code> 與逐 endpoint 的 <code>endpoints/*.json</code>。",
+      desc: "Manifest-bound source-risk report 通過後，擷取引擎才由<b>當前的 coding agent 自己</b>（Claude Code plugin 或 OpenAI Codex CLI）執行。agent 依 <code>skills/loop-apidoc/SKILL.md</code>，以<b>唯讀 subagent fan-out</b> 分段擷取：每個 subagent 只讀檔與搜尋、回傳 JSON（不寫檔、不連網），由主 agent 把回傳結果寫成 <code>inventory.json</code> 與逐 endpoint 的 <code>endpoints/*.json</code>。",
       details: "<h4>10 大擷取分段主題</h4><ul><li>01 來源盤點</li><li>02 API 系統概覽與術語</li><li>03 環境 / base URL / 版本</li><li>04 驗證 / 授權 / 簽章</li><li>05 Endpoint 清單</li><li>06 逐 endpoint 細節（method/path/參數/req/resp/範例）</li><li>07 共用 schema / enum / 資料限制</li><li>08 錯誤碼與失敗行為</li><li>09 operational 限制、跨端點業務規則、欄位語意與公式</li><li>10 來源衝突、缺漏、無法確認事項</li></ul><p>分段避免單一回答承載全部內容而漏失欄位；唯一 grounding 規則：來源未述者一律 null 並記入 <code>missing</code>，不推測、不套 REST/OAuth 慣例。</p>",
       seam: "skills/loop-apidoc/SKILL.md（agent 寫出 inventory.json + endpoints/*.json）",
       inputs: "&lt;SOURCES&gt; 或 &lt;WORK&gt;/sources_md, 目標 JSON schema",
@@ -924,10 +930,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露來源／URL evidence、來源品質、擷取驗證、組裝、驗證、評分、版本差異與本機 review 工作台；foundry 子群組負責資產治理。",
+      description: "Typer CLI 入口，對外暴露 28 個來源／URL evidence、agent 讀取前風險、來源品質、擷取驗證、組裝、驗證、評分、版本差異與本機 review 命令；foundry 子群組負責資產治理。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, quality, assemble, validate, score, diff, review, and Foundry commands",
+      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -1034,11 +1040,21 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_quality/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "在擷取前根據可追溯 observation 評估來源品質並輸出 pass/reject。若把 pass 報告目錄傳給 assemble 的 --source-quality，系統會將報告與來源差異保存在 run-dir；reject 則不建立 run-dir。",
+      description: "要求 --source-risk、驗證其 manifest／source binding、嵌入 audit，再評估可追溯 observation。若把 pass 報告目錄傳給 assemble --source-quality，assemble 會重建 manifest 並重新驗證 binding 才保存報告；audit 缺失、過期或 reject 都不建立 run-dir。",
       seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
-      inputs: "manifest, grounded observations, optional base manifest",
+      inputs: "manifest, verified source-risk report directory, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",
       sideEffect: "File I/O: writes quality reports; assessment logic is pure"
+    },
+    "source-risk": {
+      title: "source_risk/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "任何 agent 讀來源前執行的確定性 manifest-bound 文字風險閘。掃描 Markdown、HTML、OpenAPI JSON/YAML；原始 PDF／Word 無法掃描，轉檔前一律 reject。報告不改寫來源或回顯命中 payload。",
+      seam: "inspect_source_risks(...) / load_verified_source_risk_report(...) / inspect-source-risk",
+      inputs: "exact source directory, manifest.json, optional max-bytes",
+      outputs: "source-risk-report.json, source-risk-report.zh-TW.md",
+      sideEffect: "Read-side I/O verifies exact source bytes; report.py writes the audit only"
     },
     "freshness": {
       title: "freshness/",
