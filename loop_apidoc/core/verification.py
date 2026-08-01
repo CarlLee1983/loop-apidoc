@@ -167,7 +167,14 @@ def verify_claim_support(
         proposal.subject,
         proposal.predicate,
     )
-    fragments = {fragment.id: fragment for fragment in bundle.fragments}
+    fragments: dict[str, EvidenceFragment] = {}
+    conflicting_fragment_ids: set[str] = set()
+    for fragment in bundle.fragments:
+        previous = fragments.get(fragment.id)
+        if previous is not None and previous != fragment:
+            conflicting_fragment_ids.add(fragment.id)
+        else:
+            fragments[fragment.id] = fragment
     relationships = tuple(
         _verify_one(
             claim_identity=identity,
@@ -175,6 +182,7 @@ def verify_claim_support(
             value=proposal.value,
             support=support,
             fragments=fragments,
+            conflicting_fragment_ids=conflicting_fragment_ids,
         )
         for support in proposal.support_proposals
     )
@@ -199,7 +207,19 @@ def _verify_one(
     value: Any,
     support: ClaimSupportProposal,
     fragments: Mapping[str, EvidenceFragment],
+    conflicting_fragment_ids: set[str],
 ) -> ClaimEvidenceRelationship:
+    if (
+        support.fragment_id in conflicting_fragment_ids
+        or conflicting_fragment_ids.intersection(support.context_fragment_ids)
+    ):
+        return _insufficient_relationship(
+            claim_identity=claim_identity,
+            claim_value=value,
+            support=support,
+            fragment=None,
+            reason_code="DUPLICATE_FRAGMENT_ID",
+        )
     fragment = fragments.get(support.fragment_id)
     if fragment is None:
         return _insufficient_relationship(
@@ -485,6 +505,11 @@ def _openapi_pointer_derivation(
     }
     if derivation not in ref_linked_derivations and context_fragments:
         return None, "DERIVATION_CONTEXT_INVALID"
+    if derivation in ref_linked_derivations and any(
+        context.source_artifact_id != fragment.source_artifact_id
+        for context in context_fragments
+    ):
+        return None, "DERIVATION_CONTEXT_ARTIFACT_MISMATCH"
     if derivation == ("openapi_response_status_from_pointer", "1"):
         derived_value = _openapi_response_status_from_pointer(fragment.locator.pointer)
         expected_claim_path = (
@@ -751,7 +776,10 @@ def _openapi_response_status_from_pointer(pointer: str) -> str | None:
         status is not None
         and len(status) == 3
         and status[0] in "12345"
-        and all("0" <= character <= "9" for character in status[1:])
+        and (
+            status[1:] == "XX"
+            or all("0" <= character <= "9" for character in status[1:])
+        )
     ):
         return status
     return None
@@ -1286,7 +1314,12 @@ def _openapi_schema_property_required_from_pointer(
         return None
     property_name = field_name.removesuffix("[]")
     properties = source_schema.get("properties")
-    if not isinstance(properties, Mapping) or property_name not in properties:
+    source_property = (
+        properties.get(property_name) if isinstance(properties, Mapping) else None
+    )
+    if not isinstance(source_property, Mapping):
+        return None
+    if field_name.endswith("[]") != (source_property.get("type") == "array"):
         return None
     required = source_schema.get("required", ())
     if not isinstance(required, (list, tuple)) or not all(

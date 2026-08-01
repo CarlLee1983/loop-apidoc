@@ -24,7 +24,10 @@ extraction metadata is retained.
   as the `servers` completeness warning.
 - Endpoint examples are preserved only where source-declared. Missing request or
   response examples deliberately remain completeness warnings, including the
-  expanded FreeSpin operations.
+  expanded FreeSpin operations. The current response-contract validator also
+  records one hollow-success-response warning for each of the 25 operations
+  because the PDF provides no usable response schema fields. Together with the
+  18 example gaps and one missing-server warning, the expected total is 44.
 
 ## Exclusions
 

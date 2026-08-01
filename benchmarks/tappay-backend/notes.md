@@ -5,6 +5,7 @@
 - Official URL: https://docs.tappaysdk.com/tutorial/en/back.html
 - Downloaded at: 2026-06-28
 - Document version: 無(來源未標 API 版本)
+- Source SHA-256: `70f26749a7b4ba5239f641974d0bd74dec73cc68e945877b02b2c799c597ddc6`
 - Source format: HTML → defuddle-cli 轉 markdown(468 行;參數表為原始 HTML <table>,含巢狀子表)
 
 ## Scope
