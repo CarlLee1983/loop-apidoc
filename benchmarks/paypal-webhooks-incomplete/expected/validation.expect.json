@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": false
   },
-  "current_issue_classes": { "SOURCE_UNVERIFIED.error": 2, "REQUIRED_INFO_MISSING.warning": 3 },
+  "current_issue_classes": { "SOURCE_UNVERIFIED.error": 8, "REQUIRED_INFO_MISSING.warning": 3 },
   "acceptable_warnings": "3 webhook 各一筆『缺少 request/response 範例』:來源未附 payload 範例(忠實缺漏)。",
   "fail_closed_demonstration": {
     "kind": "expected-fail (not a bug)",
@@ -16,7 +16,9 @@
       {"code": "SOURCE_UNVERIFIED", "location": "components.schemas.WebhookEvent",
        "why": "payload schema 的 source 指向未提供的 PayPal REST API reference → 無 supported 依據 → 被 no-speculation 檢查擋下,不臆造欄位。"},
       {"code": "SOURCE_UNVERIFIED", "location": "unverified.07",
-       "why": "同一 schema 在 completeness 的 unverified_items 也被記錄(同根因的另一視角)。"}
+       "why": "同一 schema 在 completeness 的 unverified_items 也被記錄(同根因的另一視角)。"},
+      {"code": "SOURCE_UNVERIFIED", "location": "components.schemas.WebhookEvent.properties.*",
+       "why": "欄位級 provenance 會把同一個未接地 schema 的 6 個 material properties 各自擋下；這是 claim-level fail-closed 展開，不是六個不同來源根因。"}
     ],
     "correctly_not_fabricated": [
       "base URL 缺失 → environments 空 + missing,未補 REST 慣例 host。",

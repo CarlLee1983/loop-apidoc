@@ -109,7 +109,17 @@ def import_rendered_url(
     name = _source_name(input_file, filename)
     source_path = sources / name
     provenance_path = source_path.with_suffix(source_path.suffix + ".source.json")
-    for output in (source_path, provenance_path, coverage_output):
+    outputs = (source_path, provenance_path, coverage_output)
+    output_identities = {output.resolve(strict=False) for output in outputs}
+    if len(output_identities) != len(outputs):
+        raise RenderedUrlImportError("output destinations must be distinct")
+    sources_identity = sources.resolve(strict=False)
+    coverage_identity = coverage_output.resolve(strict=False)
+    if coverage_identity.is_relative_to(
+        sources_identity
+    ) or sources_identity.is_relative_to(coverage_identity):
+        raise RenderedUrlImportError("output destinations must not overlap")
+    for output in outputs:
         if output.exists() or output.is_symlink():
             raise RenderedUrlImportError(f"output already exists: {output}")
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Protocol
 
 from pydantic import BaseModel
@@ -72,6 +73,7 @@ class Projection:
 
 
 _MISSING_SOURCE_STATUS = "missing-source"
+_COMPONENT_SCHEMA_NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 class OpenApiProjectionCompiler:
@@ -86,6 +88,7 @@ class OpenApiProjectionCompiler:
     ) -> Projection:
         projection_input = _projection_input(contract)
         contract = projection_input.contract
+        _require_component_schema_names(contract.schemas)
         schemas = {
             schema.name: {
                 "type": "object",
@@ -111,9 +114,12 @@ class OpenApiProjectionCompiler:
             claim_map = _operation_claim_map(operation)
             if projection_input.evidence is not None and claim_map:
                 operation_payload["x-loop-claim-map"] = claim_map
-            paths.setdefault(operation.path, {})[
-                operation.method.lower()
-            ] = operation_payload
+            _add_openapi_operation(
+                paths,
+                method=operation.method,
+                path=operation.path,
+                payload=operation_payload,
+            )
         for interaction in contract.interactions:
             binding = interaction.binding
             if not isinstance(binding, HttpTransportBinding):
@@ -121,8 +127,11 @@ class OpenApiProjectionCompiler:
                     "openapi projection does not support "
                     f"{binding.transport!r} interactions"
                 )
-            paths.setdefault(binding.path, {})[binding.method.lower()] = (
-                _openapi_interaction_payload(interaction)
+            _add_openapi_operation(
+                paths,
+                method=binding.method,
+                path=binding.path,
+                payload=_openapi_interaction_payload(interaction),
             )
         info = {
             "title": contract.metadata.title,
@@ -152,6 +161,23 @@ class OpenApiProjectionCompiler:
             media_type="application/vnd.oai.openapi+json;version=3.1",
             content=_canonical_json(payload),
         )
+
+
+def _add_openapi_operation(
+    paths: dict[str, dict],
+    *,
+    method: str,
+    path: str,
+    payload: dict,
+) -> None:
+    path_item = paths.setdefault(path, {})
+    method_key = method.lower()
+    if method_key in path_item:
+        raise UnsupportedProjectionError(
+            "openapi projection cannot represent two HTTP operations on "
+            f"{method.upper()} {path}"
+        )
+    path_item[method_key] = payload
 
 
 class GraphqlProjectionCompiler:
@@ -245,6 +271,7 @@ class AsyncApiProjectionCompiler:
         contract: GroundedApiContract | ProjectionInput,
     ) -> Projection:
         contract = _projection_input(contract).contract
+        _require_component_schema_names(contract.schemas)
         schema_names = {schema.name for schema in contract.schemas}
         channels: dict[str, dict] = {}
         operations: dict[str, dict] = {}
@@ -275,6 +302,9 @@ class AsyncApiProjectionCompiler:
                     "asyncapi projection cannot represent two interactions on "
                     f"channel {binding.channel!r}"
                 )
+            payload_schema_token = binding.payload_schema_ref.replace(
+                "~", "~0"
+            ).replace("/", "~1")
             channels[binding.channel] = {
                 "address": binding.channel_address,
                 "messages": {
@@ -282,15 +312,16 @@ class AsyncApiProjectionCompiler:
                         "payload": {
                             "$ref": (
                                 "#/components/schemas/"
-                                f"{binding.payload_schema_ref}"
+                                f"{payload_schema_token}"
                             )
                         }
                     }
                 },
             }
+            channel_token = binding.channel.replace("~", "~0").replace("/", "~1")
             operations[binding.channel] = {
                 "action": _asyncapi_action(binding.direction),
-                "channel": {"$ref": f"#/channels/{binding.channel}"},
+                "channel": {"$ref": f"#/channels/{channel_token}"},
             }
         info = {
             "title": contract.metadata.title,
@@ -378,8 +409,21 @@ class ProvenanceProjectionCompiler:
 
 def _field_schema(field_type: str | None, schema_ref: str | None) -> dict:
     if schema_ref:
-        return {"$ref": f"#/components/schemas/{schema_ref}"}
+        return {"$ref": _component_schema_ref(schema_ref)}
     return {"type": field_type} if field_type else {}
+
+
+def _require_component_schema_names(schemas: tuple[Schema, ...]) -> None:
+    for schema in schemas:
+        if _COMPONENT_SCHEMA_NAME_RE.fullmatch(schema.name) is None:
+            raise UnsupportedProjectionError(
+                f"invalid component schema name: {schema.name!r}"
+            )
+
+
+def _component_schema_ref(schema_name: str) -> str:
+    schema_token = schema_name.replace("~", "~0").replace("/", "~1")
+    return f"#/components/schemas/{schema_token}"
 
 
 def _graphql_root_block(
@@ -440,6 +484,7 @@ def _openapi_operation_payload(operation) -> dict:
     return _openapi_payload(
         summary=operation.summary,
         parameters=operation.parameters,
+        request_schema_ref=operation.request_schema_ref,
         responses=operation.responses,
         security=operation.security,
     )
@@ -450,12 +495,15 @@ def _openapi_interaction_payload(interaction) -> dict:
     return _openapi_payload(
         summary=interaction.summary,
         parameters=binding.parameters,
+        request_schema_ref=binding.request_schema_ref,
         responses=binding.responses,
         security=binding.security,
     )
 
 
-def _openapi_payload(*, summary, parameters, responses, security) -> dict:
+def _openapi_payload(
+    *, summary, parameters, responses, security, request_schema_ref=None
+) -> dict:
     response_payload = {
         response.status_code: {
             "description": response.description or "",
@@ -464,7 +512,7 @@ def _openapi_payload(*, summary, parameters, responses, security) -> dict:
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": f"#/components/schemas/{response.schema_ref}"
+                                "$ref": _component_schema_ref(response.schema_ref)
                             }
                         }
                     }
@@ -491,9 +539,8 @@ def _openapi_payload(*, summary, parameters, responses, security) -> dict:
                         **(
                             {
                                 "schema": {
-                                    "$ref": (
-                                        "#/components/schemas/"
-                                        f"{parameter.schema_ref}"
+                                    "$ref": _component_schema_ref(
+                                        parameter.schema_ref
                                     )
                                 }
                             }
@@ -505,6 +552,21 @@ def _openapi_payload(*, summary, parameters, responses, security) -> dict:
                 ]
             }
             if parameters
+            else {}
+        ),
+        **(
+            {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": _component_schema_ref(request_schema_ref)
+                            }
+                        }
+                    }
+                }
+            }
+            if request_schema_ref
             else {}
         ),
         "responses": response_payload,

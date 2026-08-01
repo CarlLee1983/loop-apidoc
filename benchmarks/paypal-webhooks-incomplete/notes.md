@@ -8,6 +8,9 @@
   - https://developer.paypal.com/api/rest/webhooks/ （overview:交付、簽章「延後到 Integration guide」、2xx + 重送 25 次/3 天）
   - https://developer.paypal.com/api/rest/webhooks/event-names/ （事件型別清單;明言不含 payload schema）
 - Source format：HTML → WebFetch 逐字 → 操作者整理成兩份 markdown 存 `sources/`
+- Source SHA-256：
+  - `paypal-webhook-event-names.md`: `f24fc7b0d57f1f21eee021775ada9f7fbad8a66e888545cc0a29d1c2d13bb533`
+  - `paypal-webhooks-overview.md`: `ea93d9308e958f754a9b0d69a82b3d1d66a4787194a7497ba6e01b09dd1bca8f`
 - 取材原則:依計畫「官方文件中刻意挑缺 base URL / 缺 response / 簽章描述不完整者」。
   PayPal 這兩頁**本身就真實不完整**:base URL 未提供、簽章 header/演算法延後到他頁、
   payload 欄位明言需查其他文件。無需人工裁切即具備 fail-closed 所需的缺口。
@@ -30,15 +33,18 @@
 
 ## Run Log
 
-- assemble：**2 error / 3 warning → FAIL（如預期)**
-  - SOURCE_UNVERIFIED × 2(同根因:WebhookEvent schema source 未在 manifest)
+- assemble：**8 error / 3 warning → FAIL（如預期)**
+  - SOURCE_UNVERIFIED × 8(同根因:WebhookEvent schema source 未在 manifest；
+    completeness/schema 各一筆，加上欄位級 provenance 對 6 個 material properties
+    分別 fail-closed)
   - REQUIRED_INFO_MISSING.warning × 3(webhook 無範例)
 - run_dir：`benchmarks/paypal-webhooks-incomplete/output/<ts>`（gitignore）
 - OpenAPI 3.1 valid（失敗 run 仍產出合法 OpenAPI:3 webhooks、1 schema、無 servers）
 
 ## Result
 
-- Status: **EXPECTED_FAIL**（正確 fail-closed,非 bug)
+- Status: **EXPECTED_FAIL**（正確 fail-closed,非 bug；8 errors 為同一未接地
+  schema 在 root、schema 與 6 個 material properties 的 claim-level 展開)
 - 證明不臆造:
   - base URL 缺 → environments 空 + missing,未補 host。
   - 簽章細節延後 → algorithm=null + missing,未發明 PAYPAL-TRANSMISSION-* / 演算法。

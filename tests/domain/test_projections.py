@@ -85,6 +85,174 @@ def test_openapi_projection_is_reproducible():
     assert payload["paths"]["/health"]["get"]["responses"]["200"]["description"] == "OK"
 
 
+def test_openapi_projection_preserves_operation_request_schema_reference():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="1",
+        ),
+        schemas=(Schema(name="CreatePayment"),),
+        operations=(
+            Operation(
+                method="POST",
+                path="/payments",
+                request_schema_ref="CreatePayment",
+                responses=(Response(status_code="200", description="OK"),),
+            ),
+        ),
+    )
+
+    payload = json.loads(
+        OpenApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert payload["paths"]["/payments"]["post"]["requestBody"] == {
+        "content": {
+            "application/json": {
+                "schema": {"$ref": "#/components/schemas/CreatePayment"}
+            }
+        }
+    }
+
+
+def test_openapi_projection_rejects_invalid_component_schema_names():
+    schema_name = "Create/Payment"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="1",
+        ),
+        schemas=(Schema(name=schema_name),),
+        operations=(
+            Operation(
+                method="POST",
+                path="/payments",
+                request_schema_ref=schema_name,
+                responses=(Response(status_code="200", description="OK"),),
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        UnsupportedProjectionError,
+        match="invalid component schema name",
+    ):
+        OpenApiProjectionCompiler(version="1").compile(contract)
+
+
+def test_openapi_projection_preserves_response_schema_reference():
+    schema_name = "PaymentResult"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="1",
+        ),
+        schemas=(Schema(name=schema_name),),
+        operations=(
+            Operation(
+                method="POST",
+                path="/payments",
+                responses=(
+                    Response(
+                        status_code="200",
+                        description="OK",
+                        schema_ref=schema_name,
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    payload = json.loads(
+        OpenApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert schema_name in payload["components"]["schemas"]
+    assert payload["paths"]["/payments"]["post"]["responses"]["200"][
+        "content"
+    ]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/PaymentResult"
+    }
+
+
+def test_openapi_projection_preserves_parameter_schema_reference():
+    schema_name = "FilterValue"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="1",
+        ),
+        schemas=(Schema(name=schema_name),),
+        operations=(
+            Operation(
+                method="GET",
+                path="/payments",
+                parameters=(
+                    Parameter(
+                        name="filter",
+                        location="query",
+                        schema_ref=schema_name,
+                    ),
+                ),
+                responses=(Response(status_code="200", description="OK"),),
+            ),
+        ),
+    )
+
+    payload = json.loads(
+        OpenApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert schema_name in payload["components"]["schemas"]
+    assert payload["paths"]["/payments"]["get"]["parameters"][0]["schema"] == {
+        "$ref": "#/components/schemas/FilterValue"
+    }
+
+
+def test_openapi_projection_rejects_duplicate_legacy_operations():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="1",
+        ),
+        operations=tuple(
+            Operation(
+                method="POST",
+                path="/payments",
+                summary=summary,
+                responses=(Response(status_code="200", description="OK"),),
+            )
+            for summary in ("first", "second")
+        ),
+    )
+
+    with pytest.raises(
+        UnsupportedProjectionError,
+        match="cannot represent two HTTP operations",
+    ):
+        OpenApiProjectionCompiler(version="1").compile(contract)
+
+
 def test_openapi_projection_compiles_a_http_interaction_through_the_protocol_seam():
     contract = GroundedApiContract(
         metadata=ContractMetadata(
@@ -113,6 +281,76 @@ def test_openapi_projection_compiles_a_http_interaction_through_the_protocol_sea
     assert payload["paths"] == {
         "/health": {"get": {"responses": {"200": {"description": "OK"}}}}
     }
+
+
+def test_openapi_projection_preserves_http_interaction_request_schema_reference():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments-v2",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        schemas=(Schema(name="CreatePayment"),),
+        interactions=(
+            Interaction(
+                identity="interaction:http:POST:/payments",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="POST",
+                    path="/payments",
+                    request_schema_ref="CreatePayment",
+                    responses=(Response(status_code="200", description="OK"),),
+                ),
+            ),
+        ),
+    )
+
+    payload = json.loads(
+        OpenApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert payload["paths"]["/payments"]["post"]["requestBody"] == {
+        "content": {
+            "application/json": {
+                "schema": {"$ref": "#/components/schemas/CreatePayment"}
+            }
+        }
+    }
+
+
+def test_openapi_projection_rejects_duplicate_http_interactions():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="payments-v2",
+            title="Payments API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        interactions=tuple(
+            Interaction(
+                identity=f"interaction:http:POST:/payments:{summary}",
+                mode=InteractionMode.REQUEST_REPLY,
+                summary=summary,
+                binding=HttpTransportBinding(
+                    method="POST",
+                    path="/payments",
+                    responses=(Response(status_code="200", description="OK"),),
+                ),
+            )
+            for summary in ("first", "second")
+        ),
+    )
+
+    with pytest.raises(
+        UnsupportedProjectionError,
+        match="cannot represent two HTTP operations",
+    ):
+        OpenApiProjectionCompiler(version="1").compile(contract)
 
 
 def test_openapi_projection_rejects_a_graphql_interaction_without_inventing_http():
@@ -363,6 +601,120 @@ def test_asyncapi_projection_compiles_the_source_backed_collection_notification(
         "id",
         "href",
     ]
+
+
+def test_asyncapi_projection_escapes_channel_tokens_in_operation_references():
+    channel = "orders/created~v1"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="events",
+            title="Events API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        interactions=(
+            Interaction(
+                identity="interaction:asyncapi:orders-created",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel=channel,
+                    channel_address="orders/created",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name="Event",
+                    payload_schema_ref="Event",
+                ),
+            ),
+        ),
+        schemas=(Schema(name="Event"),),
+    )
+
+    payload = yaml.safe_load(
+        AsyncApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert channel in payload["channels"]
+    assert payload["operations"][channel]["channel"] == {
+        "$ref": "#/channels/orders~1created~0v1"
+    }
+
+
+def test_asyncapi_projection_rejects_invalid_component_schema_names():
+    schema_name = "Event/Created"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="events",
+            title="Events API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        interactions=(
+            Interaction(
+                identity="interaction:asyncapi:events",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel="events",
+                    channel_address="events",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name="Event",
+                    payload_schema_ref=schema_name,
+                ),
+            ),
+        ),
+        schemas=(Schema(name=schema_name),),
+    )
+
+    with pytest.raises(
+        UnsupportedProjectionError,
+        match="invalid component schema name",
+    ):
+        AsyncApiProjectionCompiler(version="1").compile(contract)
+
+
+def test_asyncapi_projection_preserves_nested_schema_reference():
+    nested_schema_name = "EventCreated"
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="events",
+            title="Events API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        interactions=(
+            Interaction(
+                identity="interaction:asyncapi:events",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel="events",
+                    channel_address="events",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name="Envelope",
+                    payload_schema_ref="Envelope",
+                ),
+            ),
+        ),
+        schemas=(
+            Schema(
+                name="Envelope",
+                fields=(SchemaField(name="event", schema_ref=nested_schema_name),),
+            ),
+            Schema(name=nested_schema_name),
+        ),
+    )
+
+    payload = yaml.safe_load(
+        AsyncApiProjectionCompiler(version="1").compile(contract).content
+    )
+
+    assert nested_schema_name in payload["components"]["schemas"]
+    assert payload["components"]["schemas"]["Envelope"]["properties"]["event"] == {
+        "$ref": "#/components/schemas/EventCreated"
+    }
 
 
 def test_asyncapi_payload_evidence_traces_to_its_message_payload_target():
