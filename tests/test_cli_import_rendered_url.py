@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from loop_apidoc.cli import app
@@ -276,3 +277,114 @@ def test_import_rendered_url_rejects_malformed_capture_time_and_overwrite(
     assert second.exit_code == 2
     assert "output already exists" in second.output
     assert (sources / "rendered.html").read_bytes() == before
+
+
+def test_import_rendered_url_rejects_overlapping_outputs_without_partial_artifacts(
+    tmp_path: Path,
+) -> None:
+    rendered = tmp_path / "rendered.html"
+    raw = b"<main>Protected contract</main>"
+    rendered.write_bytes(raw)
+    sources = tmp_path / "sources"
+    imported_source = sources / rendered.name
+
+    result = runner.invoke(
+        app,
+        [
+            "import-rendered-url",
+            "--input",
+            str(rendered),
+            "--url",
+            "https://protected.example.com/contract",
+            "--captured-at",
+            "2026-07-29T00:30:00Z",
+            "--capture-method",
+            "browser_save",
+            "--sources",
+            str(sources),
+            "--coverage",
+            str(imported_source),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert rendered.read_bytes() == raw
+    assert not imported_source.exists()
+    assert not imported_source.with_suffix(".html.source.json").exists()
+
+
+def test_import_rendered_url_rejects_coverage_at_sources_before_writing(
+    tmp_path: Path,
+) -> None:
+    rendered = tmp_path / "rendered.html"
+    raw = b"<main>Protected contract</main>"
+    rendered.write_bytes(raw)
+    sources = tmp_path / "sources"
+
+    result = runner.invoke(
+        app,
+        [
+            "import-rendered-url",
+            "--input",
+            str(rendered),
+            "--url",
+            "https://protected.example.com/contract",
+            "--captured-at",
+            "2026-07-29T00:30:00Z",
+            "--capture-method",
+            "browser_save",
+            "--sources",
+            str(sources),
+            "--coverage",
+            str(sources),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "output destinations must not overlap" in result.output
+    assert rendered.read_bytes() == raw
+    assert not sources.exists()
+
+
+@pytest.mark.parametrize(
+    "coverage_is_ancestor",
+    [True, False],
+    ids=["coverage-ancestor", "sources-ancestor"],
+)
+def test_import_rendered_url_rejects_ancestor_overlap_before_writing(
+    tmp_path: Path,
+    coverage_is_ancestor: bool,
+) -> None:
+    rendered = tmp_path / "rendered.html"
+    raw = b"<main>Protected contract</main>"
+    rendered.write_bytes(raw)
+    if coverage_is_ancestor:
+        coverage = tmp_path / "output"
+        sources = coverage / "sources"
+    else:
+        sources = tmp_path / "sources"
+        coverage = sources / "url_sources" / "coverage.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "import-rendered-url",
+            "--input",
+            str(rendered),
+            "--url",
+            "https://protected.example.com/contract",
+            "--captured-at",
+            "2026-07-29T00:30:00Z",
+            "--capture-method",
+            "browser_save",
+            "--sources",
+            str(sources),
+            "--coverage",
+            str(coverage),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "output destinations must not overlap" in result.output
+    assert rendered.read_bytes() == raw
+    assert not sources.exists()

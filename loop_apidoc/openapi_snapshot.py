@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
@@ -23,6 +26,40 @@ class OpenApiSnapshot:
     snapshot_path: Path
     coverage_path: Path
     sha256: str
+
+
+StageFile = Callable[[Path, bytes], Path]
+
+
+def _stage_file(target: Path, content: bytes) -> Path:
+    with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
+        staged = Path(handle.name)
+        handle.write(content)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return staged
+
+
+def _publish_no_clobber(staged: Path, target: Path) -> None:
+    try:
+        os.link(staged, target)
+    except FileExistsError as exc:
+        raise OpenApiSnapshotError(
+            f"snapshot output already exists: {target}"
+        ) from exc
+
+
+def _rollback_if_owned(staged: Path, target: Path) -> None:
+    try:
+        staged_metadata = staged.stat()
+        target_metadata = target.stat(follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    if (staged_metadata.st_dev, staged_metadata.st_ino) == (
+        target_metadata.st_dev,
+        target_metadata.st_ino,
+    ):
+        target.unlink()
 
 
 def _snapshot_name(url: str, content_type: str, filename: str | None) -> str:
@@ -64,6 +101,7 @@ def snapshot_openapi_url(
     confirmed_by_user: bool = False,
     max_bytes: int = 5 * 1024 * 1024,
     client: httpx.Client | None = None,
+    stage_file: StageFile | None = None,
 ) -> OpenApiSnapshot:
     """Fetch one OpenAPI JSON/YAML URL and write source evidence plus coverage.
 
@@ -97,9 +135,22 @@ def snapshot_openapi_url(
     name = _snapshot_name(str(response.url), content_type, filename)
     document = _parse_openapi(raw, content_type, name)
     snapshot_path = sources / name
-    if snapshot_path.exists():
+    snapshot_identity = snapshot_path.resolve(strict=False)
+    coverage_identity = coverage_output.resolve(strict=False)
+    if snapshot_identity == coverage_identity:
+        raise OpenApiSnapshotError(
+            "snapshot and coverage destinations must be distinct"
+        )
+    sources_identity = sources.resolve(strict=False)
+    if coverage_identity.is_relative_to(
+        sources_identity
+    ) or sources_identity.is_relative_to(coverage_identity):
+        raise OpenApiSnapshotError(
+            "snapshot and coverage destinations must not overlap"
+        )
+    if snapshot_path.exists() or snapshot_path.is_symlink():
         raise OpenApiSnapshotError(f"snapshot already exists: {snapshot_path}")
-    if coverage_output.exists():
+    if coverage_output.exists() or coverage_output.is_symlink():
         raise OpenApiSnapshotError(f"coverage file already exists: {coverage_output}")
 
     title = document.get("info", {}).get("title") if isinstance(document.get("info"), dict) else None
@@ -116,8 +167,29 @@ def snapshot_openapi_url(
     )
     sources.mkdir(parents=True, exist_ok=True)
     coverage_output.parent.mkdir(parents=True, exist_ok=True)
-    snapshot_path.write_bytes(raw)
-    coverage_output.write_text(ledger.model_dump_json(indent=2, exclude_none=True), encoding="utf-8")
+    coverage_bytes = ledger.model_dump_json(
+        indent=2,
+        exclude_none=True,
+    ).encode("utf-8")
+    stage = stage_file or _stage_file
+    snapshot_temp: Path | None = None
+    coverage_temp: Path | None = None
+    snapshot_published = False
+    try:
+        snapshot_temp = stage(snapshot_path, raw)
+        coverage_temp = stage(coverage_output, coverage_bytes)
+        _publish_no_clobber(snapshot_temp, snapshot_path)
+        snapshot_published = True
+        _publish_no_clobber(coverage_temp, coverage_output)
+    except (OpenApiSnapshotError, OSError):
+        if snapshot_published and snapshot_temp is not None:
+            _rollback_if_owned(snapshot_temp, snapshot_path)
+        raise
+    finally:
+        if snapshot_temp is not None:
+            snapshot_temp.unlink(missing_ok=True)
+        if coverage_temp is not None:
+            coverage_temp.unlink(missing_ok=True)
     return OpenApiSnapshot(
         snapshot_path=snapshot_path,
         coverage_path=coverage_output,

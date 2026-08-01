@@ -11,6 +11,9 @@
 - Document version：docs.github.com（無語意版號 → inventory.version=null）
 - Source format：HTML → 以 WebFetch 取得逐字內容,操作者整理成兩份 markdown 存入 `sources/`
   （`webhook-delivery-and-signing.md`、`webhook-events-and-payloads.md`）
+- Source SHA-256：
+  - `webhook-delivery-and-signing.md`: `6d9ba350dbe286142144855d2f733041c96a5391871be6913707ccc4794db46a`
+  - `webhook-events-and-payloads.md`: `040236998b9210ef0dabd579b35dc001856b834a56f691b7beb845f876798d62`
 
 > defuddle 對 docs.github.com 回 0 bytes（JS 渲染）;WebFetch 可取。內容為官方文件逐字引用。
 

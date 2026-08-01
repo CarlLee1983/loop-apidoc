@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import zipfile
 from pathlib import Path
 
@@ -9,7 +10,11 @@ import pytest
 from typer.testing import CliRunner
 
 from loop_apidoc.cli import app
-from loop_apidoc.docx_normalization import prepare_docx, write_prepared_docx
+from loop_apidoc.docx_normalization import (
+    DocxNormalizationError,
+    prepare_docx,
+    write_prepared_docx,
+)
 
 
 runner = CliRunner()
@@ -642,6 +647,202 @@ def test_preprocess_rejects_docx_provenance_output_collision_before_writing(
     assert "preprocess output collision" in result.output
     assert not (output_dir / "manual.docx.md").exists()
     assert not (output_dir / "manual.docx.md.source.json").exists()
+
+
+@pytest.mark.parametrize("blocked_claim", ["markdown", "provenance"])
+def test_preprocess_rejects_dangling_docx_output_symlink_before_batch_writes(
+    tmp_path: Path,
+    blocked_claim: str,
+) -> None:
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    document = """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>"""
+    safe_source = sources / "a-safe.docx"
+    linked_source = sources / "z-linked.docx"
+    _write_docx(safe_source, document)
+    _write_docx(linked_source, document)
+    safe_bytes = safe_source.read_bytes()
+    linked_bytes = linked_source.read_bytes()
+    output_dir = tmp_path / "sources_text"
+    output_dir.mkdir()
+    linked_output = output_dir / "z-linked.docx.md"
+    blocked_output = (
+        linked_output
+        if blocked_claim == "markdown"
+        else linked_output.with_suffix(linked_output.suffix + ".source.json")
+    )
+    blocked_output.symlink_to("missing-output")
+
+    result = runner.invoke(
+        app,
+        ["preprocess", "--sources", str(sources), "--out", str(output_dir)],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert "DOCX normalization output already exists" in result.output
+    assert blocked_output.is_symlink()
+    assert blocked_output.readlink() == Path("missing-output")
+    assert not (output_dir / "a-safe.docx.md").exists()
+    assert not (output_dir / "a-safe.docx.md.source.json").exists()
+    if blocked_claim == "markdown":
+        assert not linked_output.with_suffix(
+            linked_output.suffix + ".source.json"
+        ).exists()
+    else:
+        assert not linked_output.exists()
+    assert safe_source.read_bytes() == safe_bytes
+    assert linked_source.read_bytes() == linked_bytes
+
+
+@pytest.mark.parametrize("blocked_claim", ["markdown", "provenance"])
+def test_write_prepared_docx_rejects_dangling_output_symlink(
+    tmp_path: Path,
+    blocked_claim: str,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output_dir.mkdir()
+    output = output_dir / "manual.docx.md"
+    sidecar = output.with_suffix(output.suffix + ".source.json")
+    blocked_output = output if blocked_claim == "markdown" else sidecar
+    blocked_output.symlink_to("missing-output")
+    prepared = prepare_docx(source, output.name)
+
+    with pytest.raises(
+        DocxNormalizationError,
+        match="DOCX normalization output already exists",
+    ):
+        write_prepared_docx(prepared, output)
+
+    assert blocked_output.is_symlink()
+    assert blocked_output.readlink() == Path("missing-output")
+    counterpart = sidecar if blocked_claim == "markdown" else output
+    assert not counterpart.exists()
+
+
+@pytest.mark.parametrize("raced_claim", ["markdown", "provenance"])
+def test_write_prepared_docx_preserves_output_created_during_staging(
+    tmp_path: Path,
+    raced_claim: str,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output_dir.mkdir()
+    output = output_dir / "manual.docx.md"
+    sidecar = output.with_suffix(output.suffix + ".source.json")
+    raced_output = output if raced_claim == "markdown" else sidecar
+    prepared = prepare_docx(source, output.name)
+    competing_bytes = b"created by another process"
+
+    def stage_with_competing_output(target: Path, content: bytes) -> Path:
+        staged = target.with_name(f".{target.name}.staged")
+        staged.write_bytes(content)
+        if target == raced_output:
+            target.write_bytes(competing_bytes)
+        return staged
+
+    with pytest.raises(
+        DocxNormalizationError,
+        match="DOCX normalization output already exists",
+    ):
+        write_prepared_docx(
+            prepared,
+            output,
+            stage_file=stage_with_competing_output,
+        )
+
+    assert raced_output.read_bytes() == competing_bytes
+    counterpart = sidecar if raced_claim == "markdown" else output
+    assert not counterpart.exists()
+    assert list(output_dir.iterdir()) == [raced_output]
+
+
+def test_write_prepared_docx_rollback_preserves_replaced_output(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+    sidecar = output.with_suffix(output.suffix + ".source.json")
+    prepared = prepare_docx(source, output.name)
+    replacement_bytes = b"replacement from another process"
+    competing_sidecar_bytes = b"competing provenance"
+    real_link = os.link
+
+    def link_with_replacement(source_path: Path, target_path: Path) -> None:
+        target = Path(target_path)
+        if target == sidecar:
+            output.unlink()
+            output.write_bytes(replacement_bytes)
+            sidecar.write_bytes(competing_sidecar_bytes)
+        real_link(source_path, target_path)
+
+    monkeypatch.setattr("loop_apidoc.docx_publish.os.link", link_with_replacement)
+
+    with pytest.raises(
+        DocxNormalizationError,
+        match="DOCX normalization output already exists",
+    ):
+        write_prepared_docx(prepared, output)
+
+    assert output.read_bytes() == replacement_bytes
+    assert sidecar.read_bytes() == competing_sidecar_bytes
+    assert sorted(path.name for path in output_dir.iterdir()) == [
+        "manual.docx.md",
+        "manual.docx.md.source.json",
+    ]
+
+
+def test_write_prepared_docx_rollback_tolerates_removed_output(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    source = tmp_path / "manual.docx"
+    _write_docx(
+        source,
+        """<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>API</w:t></w:r></w:p></w:body></w:document>""",
+    )
+    output_dir = tmp_path / "sources_text"
+    output = output_dir / "manual.docx.md"
+    sidecar = output.with_suffix(output.suffix + ".source.json")
+    prepared = prepare_docx(source, output.name)
+    competing_sidecar_bytes = b"competing provenance"
+    real_link = os.link
+
+    def link_after_output_removal(source_path: Path, target_path: Path) -> None:
+        target = Path(target_path)
+        if target == sidecar:
+            output.unlink()
+            sidecar.write_bytes(competing_sidecar_bytes)
+        real_link(source_path, target_path)
+
+    monkeypatch.setattr(
+        "loop_apidoc.docx_publish.os.link",
+        link_after_output_removal,
+    )
+
+    with pytest.raises(
+        DocxNormalizationError,
+        match="DOCX normalization output already exists",
+    ):
+        write_prepared_docx(prepared, output)
+
+    assert not output.exists()
+    assert sidecar.read_bytes() == competing_sidecar_bytes
+    assert list(output_dir.iterdir()) == [sidecar]
 
 
 def test_write_prepared_docx_cleans_staged_file_when_provenance_staging_fails(

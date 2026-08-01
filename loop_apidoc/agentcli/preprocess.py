@@ -125,7 +125,10 @@ def prepare_markdown(sources: Path, dest_dir: Path) -> PreprocessResult:
     for item in planned:
         if not item.kind.requires_docx_preflight:
             continue
-        if any((dest_dir / claim).exists() for claim in item.claimed_outputs):
+        if any(
+            (dest_dir / claim).exists() or (dest_dir / claim).is_symlink()
+            for claim in item.claimed_outputs
+        ):
             raise ValueError("DOCX normalization output already exists")
 
     prepared_docx: dict[Path, PreparedDocx] = {

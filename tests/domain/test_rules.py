@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from loop_apidoc.domain.models import (
+    AsyncApiDirection,
+    AsyncApiTransportBinding,
     ClaimStatus,
     ContractClaim,
     ContractMetadata,
+    Environment,
     EvidenceBinding,
     GraphqlOperationKind,
     GraphqlTransportBinding,
@@ -12,7 +15,10 @@ from loop_apidoc.domain.models import (
     Interaction,
     InteractionMode,
     Operation,
+    Parameter,
     Response,
+    Schema,
+    SecurityScheme,
 )
 from loop_apidoc.domain.evidence import SupportRelationshipType
 from loop_apidoc.domain.rules import ApiDomainRulePack
@@ -77,6 +83,98 @@ def test_rules_apply_response_and_evidence_requirements_to_http_interactions():
     }
 
 
+def test_rules_report_only_dangling_http_interaction_schema_references():
+    evidence = (EvidenceBinding(fragment_id="fragment-1"),)
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        schemas=(Schema(name="Existing"),),
+        interactions=(
+            Interaction(
+                identity="interaction:http:POST:/payments",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="POST",
+                    path="/payments",
+                    request_schema_ref="MissingRequest",
+                    parameters=(
+                        Parameter(
+                            name="missing",
+                            location="query",
+                            schema_ref="MissingParam",
+                        ),
+                        Parameter(
+                            name="existing",
+                            location="query",
+                            schema_ref="Existing",
+                        ),
+                    ),
+                    responses=(
+                        Response(status_code="200", schema_ref="Existing"),
+                        Response(status_code="400", schema_ref="MissingResponse"),
+                    ),
+                ),
+                evidence=evidence,
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.message, finding.location)
+        for finding in findings
+    ] == [
+        ("SCHEMA_REFERENCE_UNRESOLVED", "MissingParam", "interactions[0]"),
+        ("SCHEMA_REFERENCE_UNRESOLVED", "MissingRequest", "interactions[0]"),
+        ("SCHEMA_REFERENCE_UNRESOLVED", "MissingResponse", "interactions[0]"),
+    ]
+
+
+def test_rules_report_only_dangling_http_interaction_server_and_security_refs():
+    evidence = (EvidenceBinding(fragment_id="fragment-1"),)
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        environments=(Environment(name="ExistingServer"),),
+        security=(SecurityScheme(name="ExistingAuth", type="http"),),
+        interactions=(
+            Interaction(
+                identity="interaction:http:GET:/missing",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="GET",
+                    path="/missing",
+                    server="MissingServer",
+                    security=("MissingAuth",),
+                    responses=(Response(status_code="200"),),
+                ),
+                evidence=evidence,
+            ),
+            Interaction(
+                identity="interaction:http:GET:/existing",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="GET",
+                    path="/existing",
+                    server="ExistingServer",
+                    security=("ExistingAuth",),
+                    responses=(Response(status_code="200"),),
+                ),
+                evidence=evidence,
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.message, finding.location)
+        for finding in findings
+    ] == [
+        ("SECURITY_REFERENCE_UNRESOLVED", "MissingAuth", "interactions[0]"),
+        ("SERVER_REFERENCE_UNRESOLVED", "MissingServer", "interactions[0]"),
+    ]
+
+
 def test_rules_apply_common_evidence_requirement_to_graphql_interactions():
     contract = GroundedApiContract(
         metadata=_metadata(),
@@ -95,6 +193,82 @@ def test_rules_apply_common_evidence_requirement_to_graphql_interactions():
     findings = ApiDomainRulePack(version="1").evaluate(contract)
 
     assert {finding.code for finding in findings} == {"INTERACTION_EVIDENCE_REQUIRED"}
+
+
+def test_rules_report_only_dangling_graphql_output_schema_references():
+    evidence = (EvidenceBinding(fragment_id="fragment-1"),)
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        schemas=(Schema(name="Existing"),),
+        interactions=(
+            Interaction(
+                identity="interaction:graphql:query:missing",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=GraphqlTransportBinding(
+                    operation_kind=GraphqlOperationKind.QUERY,
+                    root_field="missing",
+                    output_schema_ref="Missing",
+                ),
+                evidence=evidence,
+            ),
+            Interaction(
+                identity="interaction:graphql:query:existing",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=GraphqlTransportBinding(
+                    operation_kind=GraphqlOperationKind.QUERY,
+                    root_field="existing",
+                    output_schema_ref="Existing",
+                ),
+                evidence=evidence,
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.message, finding.location)
+        for finding in findings
+    ] == [("SCHEMA_REFERENCE_UNRESOLVED", "Missing", "interactions[0]")]
+
+
+def test_rules_report_only_dangling_asyncapi_payload_schema_references():
+    evidence = (EvidenceBinding(fragment_id="fragment-1"),)
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        schemas=(Schema(name="Existing"),),
+        interactions=(
+            Interaction(
+                identity="interaction:asyncapi:missing",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel="missing",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name="missing",
+                    payload_schema_ref="Missing",
+                ),
+                evidence=evidence,
+            ),
+            Interaction(
+                identity="interaction:asyncapi:existing",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel="existing",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name="existing",
+                    payload_schema_ref="Existing",
+                ),
+                evidence=evidence,
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.message, finding.location)
+        for finding in findings
+    ] == [("SCHEMA_REFERENCE_UNRESOLVED", "Missing", "interactions[0]")]
 
 
 def test_fragment_id_only_binding_does_not_satisfy_semantic_rule():

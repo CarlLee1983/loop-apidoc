@@ -252,7 +252,7 @@ general-purpose helper and could mislead if reused elsewhere (e.g. against xdist
 - The four existing cases still return `[True, True, True, False]`.
 - `--strict-local` skip detection behavior is unchanged on real benchmark output.
 
-## 8. Run Version Diff — Deferred Minor Findings — partially resolved (2026-07-02)
+## 8. Run Version Diff — Deferred Minor Findings — resolved (2026-07-02)
 
 > Deferred from the `loop-apidoc diff` subagent-driven build (branch
 > `feat/run-version-diff`, commits `519a321`..`786086c`). The final whole-branch
