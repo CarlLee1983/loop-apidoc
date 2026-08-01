@@ -9,8 +9,10 @@ from loop_apidoc.domain.identity import (
     canonical_operation_identity,
 )
 from loop_apidoc.domain.models import (
+    AsyncApiTransportBinding,
     ClaimStatus,
     FrozenModel,
+    GraphqlTransportBinding,
     GroundedApiContract,
     HttpTransportBinding,
 )
@@ -128,6 +130,64 @@ class ApiDomainRulePack(FrozenModel):
                             identity,
                         )
                     )
+                if binding.server and binding.server not in environment_names:
+                    findings.append(
+                        _finding(
+                            "SERVER_REFERENCE_UNRESOLVED",
+                            binding.server,
+                            location,
+                            binding.server,
+                        )
+                    )
+                refs = [binding.request_schema_ref]
+                refs.extend(parameter.schema_ref for parameter in binding.parameters)
+                refs.extend(response.schema_ref for response in binding.responses)
+                for ref in sorted({ref for ref in refs if ref}):
+                    if ref not in schema_names:
+                        findings.append(
+                            _finding(
+                                "SCHEMA_REFERENCE_UNRESOLVED",
+                                ref,
+                                location,
+                                f"schema:{ref}",
+                            )
+                        )
+                for ref in binding.security:
+                    if ref not in security_names:
+                        findings.append(
+                            _finding(
+                                "SECURITY_REFERENCE_UNRESOLVED",
+                                ref,
+                                location,
+                                f"security:{ref}",
+                            )
+                        )
+            if (
+                isinstance(binding, GraphqlTransportBinding)
+                and binding.output_schema_ref
+                and binding.output_schema_ref not in schema_names
+            ):
+                findings.append(
+                    _finding(
+                        "SCHEMA_REFERENCE_UNRESOLVED",
+                        binding.output_schema_ref,
+                        location,
+                        f"schema:{binding.output_schema_ref}",
+                    )
+                )
+            if (
+                isinstance(binding, AsyncApiTransportBinding)
+                and binding.payload_schema_ref
+                and binding.payload_schema_ref not in schema_names
+            ):
+                findings.append(
+                    _finding(
+                        "SCHEMA_REFERENCE_UNRESOLVED",
+                        binding.payload_schema_ref,
+                        location,
+                        f"schema:{binding.payload_schema_ref}",
+                    )
+                )
             if not interaction.evidence:
                 findings.append(
                     _finding(

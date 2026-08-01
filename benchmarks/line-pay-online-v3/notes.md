@@ -5,6 +5,7 @@
 - Official URL: https://developers-pay.line.me/online-api-v3
 - Downloaded at: 2026-06-28
 - Document version: Online API v3
+- Source SHA-256: `592eedd758006f74ec95a61bf099ea1671ae140d9a5b65b799e66a6ce204c5a0`
 - Source format: HTML(JS SPA)→ defuddle-cli 轉 markdown(online-api-v3-overview.md,221 行)
 
 ## Scope

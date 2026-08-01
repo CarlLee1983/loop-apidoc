@@ -5,6 +5,7 @@
 - Official URL: https://www.newebpay.com/website/Page/content/download_api
 - Downloaded at: 2026-06-26
 - Document version: NDNF-1.2.2(線上交易─幕前支付技術串接手冊)
+- Source SHA-256: `d34f231b746b625cce182588309d4fce20740447c54183ace3fa4c69315a3553`
 - Source format: PDF(表格密集 → preprocess 轉 markdown)
 
 ## Scope
