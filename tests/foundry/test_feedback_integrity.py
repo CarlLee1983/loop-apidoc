@@ -104,12 +104,61 @@ def test_submit_rejects_release_not_bound_to_approved_asset(tmp_path: Path) -> N
         contract_digest=contract_digest(forged_contract),
     )
     bundle = _bundle().model_copy(update={"base": forged_base})
-    assessment = _assessment(bundle)
+    assessment = _assessment(_bundle())
 
     with pytest.raises(FoundryInputError, match="approved normative base"):
         feedback.persist_feedback_case(
             tmp_path, "payments", bundle, assessment
         )
+
+
+def test_persist_feedback_case_rejects_proposal_not_derived_from_assessment(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    forged = proposal.model_copy(
+        update={"proposal_id": "forged-proposal", "proposed_value": "418"}
+    )
+
+    with pytest.raises(FoundryInputError, match="deterministic proposal"):
+        feedback.persist_feedback_case(
+            tmp_path, "payments", bundle, assessment, forged
+        )
+
+    assert not (
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / assessment.assessment_id
+    ).exists()
+
+
+def test_persist_feedback_case_rejects_assessment_not_derived_from_bundle(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    forged_relationship = assessment.relationships[0].model_copy(
+        update={"observed_value": "418"}
+    )
+    forged = assessment.model_copy(
+        update={
+            "assessment_id": "forged-assessment",
+            "relationships": (forged_relationship,),
+        }
+    )
+
+    with pytest.raises(FoundryInputError, match="deterministic reassessment"):
+        feedback.persist_feedback_case(tmp_path, "payments", bundle, forged)
+
+    assert not (
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / forged.assessment_id
+    ).exists()
 
 
 def test_review_rejects_symlinked_destination_directory(tmp_path: Path) -> None:
@@ -460,13 +509,10 @@ def test_new_reviewed_amendment_can_replace_expired_current_lineage(
 
     second_time = _LATER + timedelta(minutes=2)
     second_bundle = _bundle(suffix="2")
-    second_assessment = _assessment(
-        second_bundle, assessment_id="assessment-2"
-    )
+    second_assessment = _assessment(second_bundle)
     second_proposal = _proposal(
         second_bundle,
         second_assessment,
-        proposal_id="proposal-2",
         created_at=second_time,
     )
     second_case = feedback.persist_feedback_case(
@@ -572,13 +618,10 @@ def test_normative_drift_surfaces_stale_amendment_count_in_current_asset(
     second_bundle = _bundle(suffix="2").model_copy(
         update={"base": second_base}
     )
-    second_assessment = _assessment(
-        second_bundle, assessment_id="assessment-2"
-    )
+    second_assessment = _assessment(second_bundle)
     second_proposal = _proposal(
         second_bundle,
         second_assessment,
-        proposal_id="proposal-2",
         created_at=second_time,
     )
     second_case = feedback.persist_feedback_case(

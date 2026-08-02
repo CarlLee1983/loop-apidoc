@@ -12,18 +12,13 @@ from loop_apidoc.core.governance import contract_digest
 from loop_apidoc.domain.conformance import (
     AmendmentApproval,
     ApplicabilityEnvelope,
-    BoundedVerification,
     CompatibilityAmendment,
     CompatibilityAmendmentProposal,
-    ConformanceCoverage,
-    ConformanceRelationship,
-    ConformanceRelationshipType,
     EffectiveContract,
     FeedbackAssessment,
     FeedbackRoute,
     IdentityVersion,
     ImplementationObservation,
-    MaterialClaimReference,
     NormativeRelease,
     NormativeBaseBinding,
     ObservationAttempt,
@@ -34,17 +29,17 @@ from loop_apidoc.domain.conformance import (
     ObservationOutcome,
     ReplayRecipe,
     SanitizedObservationFact,
-    normative_release_digest,
 )
 from loop_apidoc.domain.models import (
     ClaimStatus,
     ContractClaim,
     ContractMetadata,
+    EvidenceBinding,
     GroundedApiContract,
     Operation,
     Response,
 )
-from loop_apidoc.domain.evidence import EvidenceBundle
+from loop_apidoc.domain.evidence import EvidenceBundle, EvidenceFragment
 from loop_apidoc.feedback.loader import (
     load_current_scope_amendments,
 )
@@ -104,6 +99,13 @@ def _contract() -> GroundedApiContract:
                 claim_kind="operation",
                 status=ClaimStatus.SUPPORTED,
                 value=operation.model_dump(mode="json", exclude={"evidence"}),
+                evidence=(
+                    EvidenceBinding(
+                        fragment_id="normative-fragment",
+                        claim_identity="response:charges",
+                        claim_path="/responses/200/status_code",
+                    ),
+                ),
             ),
         ),
     )
@@ -176,53 +178,29 @@ def _bundle(*, observed: object = "201", suffix: str = "1") -> ObservationBundle
     )
 
 
-def _assessment(
-    bundle: ObservationBundle, *, assessment_id: str = "assessment-1"
-) -> FeedbackAssessment:
-    observation = bundle.observations[0]
-    relationship = ConformanceRelationship(
-        observation_id=observation.id,
-        claim_identity="response:charges",
-        claim_path="/responses/200/status_code",
-        operation_ref="POST /charges",
-        kind=ObservationKind.RESPONSE_STATUS,
-        claim_kind="operation",
-        relationship=ConformanceRelationshipType.CONTRADICTS,
-        normative_value="200",
-        observed_value=observation.attempts[0].observed,
-        evidence_refs=(observation.evidence[0].fragment_id,),
-        reason="observed behavior differs",
+def _normative_fragments() -> tuple[EvidenceFragment, ...]:
+    return (
+        EvidenceFragment(
+            id="normative-fragment",
+            source_artifact_id="normative-source",
+            locator={"kind": "whole_document"},
+            fragment_digest="sha256:" + "0" * 64,
+        ),
     )
-    return FeedbackAssessment(
-        assessment_id=assessment_id,
-        base=bundle.base,
-        normative_release_digest=normative_release_digest(
-            NormativeRelease(base=bundle.base, contract=_contract())
+
+
+def _assessment(
+    bundle: ObservationBundle,
+) -> FeedbackAssessment:
+    return ContractConformance().assess(
+        NormativeRelease(
+            base=bundle.base,
+            contract=_contract(),
+            fragments=_normative_fragments(),
         ),
-        observation_bundle_id=bundle.bundle_id,
-        observation_bundle_digest=canonical_digest(bundle),
-        policy_version=bundle.policy_version,
-        redaction_policy_version=bundle.redaction_policy_version,
-        producer=bundle.producer,
-        runner=bundle.runner,
-        applicability=bundle.applicability,
-        relationships=(relationship,),
-        route=FeedbackRoute.AMENDMENT_PROPOSAL,
-        coverage=ConformanceCoverage(
-            material_claim_count=1,
-            assessed_claim_count=1,
-            confirmed_claim_count=0,
-            conformance_ratio=0,
-            suite_version=bundle.runner.version,
-        ),
-        open_discrepancy_count=1,
-        fully_verified=BoundedVerification(
-            verified=False,
-            applicability=bundle.applicability,
-            as_of=bundle.applicability.observed_until,
-            suite_version=bundle.runner.version,
-            reasons=("contradiction",),
-        ),
+        bundle,
+        provider=bundle.applicability.provider,
+        product=bundle.applicability.product,
     )
 
 
@@ -278,7 +256,7 @@ def _publish_normative_base(
             source_set_id="sources",
             source_set_version="1",
             artifacts=(),
-            fragments=(),
+            fragments=_normative_fragments(),
         ).model_dump_json(indent=2),
         encoding="utf-8",
     )
@@ -309,11 +287,15 @@ def test_persist_feedback_case_writes_immutable_inputs_without_changing_normativ
 
     case = feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
 
-    assert case.case_id == "assessment-1"
+    assert case.case_id == assessment.assessment_id
     assert case.status == "candidate"
     assert case.bundle_digest == canonical_digest(bundle)
     assert case.assessment_digest == canonical_digest(assessment)
-    case_dir = tmp_path / ".foundry/api/docsets/payments/feedback/cases/assessment-1"
+    case_dir = (
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / case.case_id
+    )
     assert (case_dir / "case.json").is_file()
     assert (case_dir / "observation-bundle.json").read_bytes() == (
         bundle.model_dump_json(indent=2).encode()
@@ -354,7 +336,9 @@ def test_persist_feedback_case_rejects_conventional_sensitive_key_spellings(
         feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
 
     assert not (
-        tmp_path / ".foundry/api/docsets/payments/feedback/cases/assessment-1"
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / assessment.assessment_id
     ).exists()
 
 
@@ -429,7 +413,9 @@ def test_feedback_review_rejects_raw_secret_fields(tmp_path: Path) -> None:
 
     assert not (
         tmp_path
-        / ".foundry/api/docsets/payments/feedback/cases/assessment-1/review/decision.json"
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / case.case_id
+        / "review/decision.json"
     ).exists()
 
 
@@ -456,7 +442,9 @@ def test_feedback_submit_rejects_free_text_pii(
         feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
 
     assert not (
-        tmp_path / ".foundry/api/docsets/payments/feedback/cases/assessment-1"
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / assessment.assessment_id
     ).exists()
 
 
@@ -464,34 +452,11 @@ def _proposal(
     bundle: ObservationBundle,
     assessment: FeedbackAssessment,
     *,
-    proposal_id: str = "proposal-1",
     created_at: datetime = _LATER,
 ) -> CompatibilityAmendmentProposal:
-    relationship = assessment.relationships[0]
-    return CompatibilityAmendmentProposal(
-        proposal_id=proposal_id,
-        base=bundle.base,
-        normative_release_digest=assessment.normative_release_digest,
-        assessment_id=assessment.assessment_id,
-        assessment_digest=canonical_digest(assessment),
-        observation_bundle_id=bundle.bundle_id,
-        observation_bundle_digest=canonical_digest(bundle),
-        policy_version=bundle.policy_version,
-        redaction_policy_version=bundle.redaction_policy_version,
-        target=MaterialClaimReference(
-            claim_identity="response:charges",
-            claim_path="/responses/200/status_code",
-        ),
-        claim_kind="operation",
-        normative_value="200",
-        proposed_value="201",
-        scope=bundle.applicability,
-        observation_ids=(relationship.observation_id,),
-        observation_evidence_refs=relationship.evidence_refs,
-        producer=bundle.producer,
-        runner=bundle.runner,
-        created_at=created_at,
-    )
+    proposals = ContractConformance().propose(assessment, now=created_at)
+    assert len(proposals) == 1
+    return proposals[0]
 
 
 def _decision(
@@ -563,7 +528,11 @@ def _effective(
 
 
 def _release(amendment: CompatibilityAmendment) -> NormativeRelease:
-    return NormativeRelease(base=amendment.proposal.base, contract=_contract())
+    return NormativeRelease(
+        base=amendment.proposal.base,
+        contract=_contract(),
+        fragments=_normative_fragments(),
+    )
 
 
 def test_review_rejects_stale_digest_and_self_approval(tmp_path: Path) -> None:
@@ -713,7 +682,11 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
         query.load_current_effective_asset(
             tmp_path, "payments", _scope(), now=_NOW
         )
-    case_dir = tmp_path / ".foundry/api/docsets/payments/feedback/cases/assessment-1"
+    case_dir = (
+        tmp_path
+        / ".foundry/api/docsets/payments/feedback/cases"
+        / case.case_id
+    )
     assert (case_dir / "approved-amendment.json").is_file()
     effective_path = query.resolve_current_effective_artifact(
         tmp_path, "payments", _scope(), "effective_contract", now=_LATER
