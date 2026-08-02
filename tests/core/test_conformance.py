@@ -13,10 +13,14 @@ from loop_apidoc.core.conformance import (
     canonical_digest,
 )
 from loop_apidoc.core.governance import contract_digest
+from loop_apidoc.core.conformance_policy import route_feedback
 from loop_apidoc.domain.conformance import (
     AmendmentApproval,
     ApplicabilityEnvelope,
     CompatibilityAmendment,
+    ConformanceRelationship,
+    ConformanceRelationshipType,
+    FeedbackRoute,
     IdentityVersion,
     ImplementationObservation,
     MaterialClaimReference,
@@ -430,6 +434,112 @@ def test_repeated_transport_failure_routes_to_provider_runtime_review() -> None:
     )
 
     assert assessment.route == "provider_runtime_regression_review"
+
+
+@pytest.mark.parametrize(
+    (
+        "expected_route",
+        "relationship",
+        "kind",
+        "outcome",
+        "attempt_count",
+        "normative_refs",
+    ),
+    (
+        (
+            FeedbackRoute.CLOSED_NO_CHANGE,
+            ConformanceRelationshipType.CONFIRMS,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.API_RESPONSE,
+            1,
+            ("normative-fragment",),
+        ),
+        (
+            FeedbackRoute.NEEDS_EVIDENCE,
+            ConformanceRelationshipType.INCONCLUSIVE,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.TIMEOUT,
+            1,
+            (),
+        ),
+        (
+            FeedbackRoute.PROVIDER_CLARIFICATION,
+            ConformanceRelationshipType.CONTRADICTS,
+            ObservationKind.RESPONSE_FIELD,
+            ObservationOutcome.API_RESPONSE,
+            1,
+            ("normative-fragment",),
+        ),
+        (
+            FeedbackRoute.IMPLEMENTATION_CORRECTION,
+            ConformanceRelationshipType.INCONCLUSIVE,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.HARNESS_FAILURE,
+            1,
+            (),
+        ),
+        (
+            FeedbackRoute.ENVIRONMENT_CONFIGURATION_CORRECTION,
+            ConformanceRelationshipType.OUT_OF_SCOPE,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.API_RESPONSE,
+            1,
+            (),
+        ),
+        (
+            FeedbackRoute.EXTRACTION_CORRECTION,
+            ConformanceRelationshipType.CONTRADICTS,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.API_RESPONSE,
+            1,
+            (),
+        ),
+        (
+            FeedbackRoute.PROVIDER_RUNTIME_REGRESSION_REVIEW,
+            ConformanceRelationshipType.INCONCLUSIVE,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.TIMEOUT,
+            2,
+            (),
+        ),
+        (
+            FeedbackRoute.AMENDMENT_PROPOSAL,
+            ConformanceRelationshipType.CONTRADICTS,
+            ObservationKind.RESPONSE_STATUS,
+            ObservationOutcome.API_RESPONSE,
+            1,
+            ("normative-fragment",),
+        ),
+    ),
+)
+def test_every_feedback_route_is_reachable(
+    expected_route: FeedbackRoute,
+    relationship: ConformanceRelationshipType,
+    kind: ObservationKind,
+    outcome: ObservationOutcome,
+    attempt_count: int,
+    normative_refs: tuple[str, ...],
+) -> None:
+    result = route_feedback(
+        (
+            ConformanceRelationship(
+                observation_id="observation-1",
+                claim_identity=CLAIM_ID,
+                claim_path="/responses/200/status_code",
+                operation_ref="GET /ping",
+                kind=kind,
+                outcome=outcome,
+                attempt_count=attempt_count,
+                claim_kind="operation",
+                relationship=relationship,
+                normative_value="200",
+                observed_value="201",
+                normative_evidence_refs=normative_refs,
+            ),
+        )
+    )
+
+    assert result is expected_route
 
 
 def test_ungrounded_normative_contradiction_routes_to_extraction_correction() -> None:

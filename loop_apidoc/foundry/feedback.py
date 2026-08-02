@@ -7,7 +7,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from loop_apidoc.core.conformance import ContractConformance, canonical_digest
+from loop_apidoc.core.conformance import (
+    ConformanceInputError,
+    ContractConformance,
+    canonical_digest,
+)
 from loop_apidoc.core.governance import contract_digest
 from loop_apidoc.domain.conformance import (
     CompatibilityAmendment,
@@ -74,16 +78,24 @@ def persist_feedback_case(
         raise FoundryInputError(
             "assessment is not bound to the approved normative base release"
         )
+    if proposal is not None and not isinstance(proposal, CompatibilityAmendmentProposal):
+        raise FoundryInputError(
+            "unsupported compatibility amendment proposal schema"
+        )
     for value in (bundle, assessment, proposal):
         if value is not None:
             _reject_sensitive_values(value.model_dump(mode="json"))
 
+    _validate_deterministic_feedback(
+        docset,
+        governed_release,
+        bundle,
+        assessment,
+        proposal,
+    )
+
     proposal_digest = canonical_digest(proposal) if proposal is not None else None
     if proposal is not None:
-        if not isinstance(proposal, CompatibilityAmendmentProposal):
-            raise FoundryInputError(
-                "unsupported compatibility amendment proposal schema"
-            )
         _validate_proposal(proposal, bundle, assessment)
     case = FeedbackCase(
         case_id=assessment.assessment_id,
@@ -211,6 +223,13 @@ def approve_feedback_case(
         raise FoundryInputError("normative release binding is stale")
     if normative_release_digest(release) != proposal.normative_release_digest:
         raise FoundryInputError("normative release evidence binding is stale")
+    _validate_deterministic_feedback(
+        store.load_docset(project_root, docset_id),
+        release,
+        bundle,
+        assessment,
+        proposal,
+    )
     governed_amendments = query.load_bound_effective_amendments(
         project_root, docset_id, proposal.scope
     )
@@ -555,6 +574,42 @@ def _validate_proposal(
             raise FoundryInputError(
                 f"compatibility amendment proposal has stale {label}"
             )
+
+
+def _validate_deterministic_feedback(
+    docset,
+    release: NormativeRelease,
+    bundle: ObservationBundle,
+    assessment: FeedbackAssessment,
+    proposal: CompatibilityAmendmentProposal | None,
+) -> None:
+    """Re-derive feedback before any governed case or release can be accepted."""
+    try:
+        expected_assessment = ContractConformance().assess(
+            release,
+            bundle,
+            provider=docset.provider,
+            product=docset.product,
+        )
+    except ConformanceInputError as exc:
+        raise FoundryInputError(f"feedback assessment is not deterministic: {exc}") from exc
+    if assessment != expected_assessment:
+        raise FoundryInputError(
+            "feedback assessment does not match deterministic reassessment"
+        )
+    if proposal is None:
+        return
+    try:
+        expected_proposals = ContractConformance().propose(
+            expected_assessment,
+            now=proposal.created_at,
+        )
+    except ConformanceInputError as exc:
+        raise FoundryInputError(f"feedback proposal is not deterministic: {exc}") from exc
+    if proposal not in expected_proposals:
+        raise FoundryInputError(
+            "feedback proposal does not match deterministic proposal"
+        )
 
 
 def _validate_amendment(
