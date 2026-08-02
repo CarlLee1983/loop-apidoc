@@ -48,6 +48,7 @@ from loop_apidoc.domain.evidence import EvidenceBundle
 from loop_apidoc.feedback.loader import (
     load_current_scope_amendments,
 )
+from loop_apidoc.feedback.report import write_proposal_reports
 from loop_apidoc.foundry import feedback, query, register, store
 from loop_apidoc.foundry.models import (
     Asset,
@@ -59,6 +60,7 @@ from loop_apidoc.foundry.models import (
     FeedbackReviewDecision,
     FoundryInputError,
 )
+from loop_apidoc.privacy import redact_sensitive
 
 _NOW = datetime(2026, 8, 2, 10, 0, tzinfo=timezone.utc)
 _LATER = datetime(2026, 8, 2, 10, 5, tzinfo=timezone.utc)
@@ -323,6 +325,74 @@ def test_persist_feedback_case_writes_immutable_inputs_without_changing_normativ
 
     with pytest.raises(FoundryInputError, match="already exists"):
         feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
+
+
+@pytest.mark.parametrize(
+    "sensitive_key",
+    (
+        "accessToken",
+        "clientSecret",
+        "setCookie",
+        "token",
+        "x-api-key",
+        "accesstoken",
+        "clientsecret",
+    ),
+)
+def test_persist_feedback_case_rejects_conventional_sensitive_key_spellings(
+    tmp_path: Path, sensitive_key: str
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    relationship = assessment.relationships[0].model_copy(
+        update={"normative_value": {sensitive_key: "guessable-secret"}}
+    )
+    assessment = assessment.model_copy(update={"relationships": (relationship,)})
+
+    with pytest.raises(FoundryInputError, match="secret"):
+        feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
+
+    assert not (
+        tmp_path / ".foundry/api/docsets/payments/feedback/cases/assessment-1"
+    ).exists()
+
+
+def test_sensitive_key_spellings_use_the_same_display_redaction_policy() -> None:
+    sensitive = {
+        key: "guessable-secret"
+        for key in ("accessToken", "x-api-key", "accesstoken")
+    }
+
+    assert redact_sensitive(sensitive) == {
+        key: "[redacted]" for key in sensitive
+    }
+
+
+def test_proposal_markdown_redacts_sensitive_values_without_changing_json(
+    tmp_path: Path,
+) -> None:
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment).model_copy(
+        update={
+            "normative_value": {"accessToken": "normative-secret"},
+            "proposed_value": {"clientsecret": "proposed-secret"},
+        }
+    )
+
+    output_dir = tmp_path / "proposal-report"
+    write_proposal_reports((proposal,), output_dir)
+
+    markdown = (output_dir / "amendment-proposals.md").read_text(encoding="utf-8")
+    machine_json = (output_dir / "amendment-proposals.json").read_text(
+        encoding="utf-8"
+    )
+    assert "[redacted]" in markdown
+    assert "normative-secret" not in markdown
+    assert "proposed-secret" not in markdown
+    assert "normative-secret" in machine_json
+    assert "proposed-secret" in machine_json
 
 
 def test_feedback_review_rejects_raw_secret_fields(tmp_path: Path) -> None:
