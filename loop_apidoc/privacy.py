@@ -14,8 +14,10 @@ FORBIDDEN_KEYS = frozenset(
         "client_secret",
         "access_token",
         "refresh_token",
+        "token",
         "api_key",
         "apikey",
+        "x_api_key",
         "credential",
         "credentials",
         "email",
@@ -36,6 +38,9 @@ FORBIDDEN_KEYS = frozenset(
         "dob",
     }
 )
+_FORBIDDEN_COMPACT_KEYS = frozenset(key.replace("_", "") for key in FORBIDDEN_KEYS)
+_CAMEL_CASE_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+_KEY_SEPARATOR = re.compile(r"[^A-Za-z0-9]+")
 _SECRET_VALUE = re.compile(
     r"(?i)(?:\bbearer\s+\S+|\bbasic\s+\S+|-----BEGIN [A-Z ]*PRIVATE KEY-----|"
     r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b|"
@@ -59,8 +64,7 @@ def find_sensitive_value(value: object, *, path: str = "$") -> tuple[str, str] |
     """Return the first forbidden value kind and path in a JSON-compatible tree."""
     if isinstance(value, dict):
         for key, item in value.items():
-            normalized = key.casefold().replace("-", "_")
-            if normalized in FORBIDDEN_KEYS:
+            if _is_forbidden_key(key):
                 return "secret or PII field", f"{path}.{key}"
             finding = find_sensitive_value(item, path=f"{path}.{key}")
             if finding is not None:
@@ -89,7 +93,7 @@ def redact_sensitive(value: object) -> object:
         return {
             key: (
                 "[redacted]"
-                if key.casefold().replace("-", "_") in FORBIDDEN_KEYS
+                if _is_forbidden_key(key)
                 else redact_sensitive(item)
             )
             for key, item in value.items()
@@ -99,6 +103,16 @@ def redact_sensitive(value: object) -> object:
     if isinstance(value, str) and find_sensitive_value(value) is not None:
         return "[redacted]"
     return value
+
+
+def _is_forbidden_key(key: str) -> bool:
+    normalized = _KEY_SEPARATOR.sub(
+        "_", _CAMEL_CASE_BOUNDARY.sub("_", key)
+    ).strip("_").casefold()
+    return (
+        normalized in FORBIDDEN_KEYS
+        or normalized.replace("_", "") in _FORBIDDEN_COMPACT_KEYS
+    )
 
 
 def _contains_payment_card_number(value: str) -> bool:

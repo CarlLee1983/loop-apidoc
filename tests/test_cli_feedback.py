@@ -283,6 +283,7 @@ def test_feedback_assess_confirms_observation_deterministically_without_governed
     assert report["open_discrepancy_count"] == 0
     assert report["coverage"]["confirmed_claim_count"] == 1
     review = (first / "feedback-assessment.md").read_text()
+    assert "# 實作回饋評估" in review
     assert "GET /ping returns HTTP 200." in review
     assert "fragment-source-ping" in review
     assert "fragment-ping-1" in review
@@ -346,44 +347,44 @@ def test_feedback_assessment_markdown_contains_complete_safe_review_context(
 
     assert result.exit_code == 0, result.output
     review = (output / "feedback-assessment.md").read_text(encoding="utf-8")
-    assert "## Applicability scope" in review
+    assert "## 適用範圍" in review
     for field in (
-        "Provider",
-        "Product",
-        "API version",
-        "Environment",
-        "Region",
-        "Endpoint identity",
-        "Account class",
-        "Feature flags",
-        "Authentication role",
-        "Client version",
-        "Harness version",
-        "Test data class",
-        "Observed from",
-        "Observed until",
+        "供應商",
+        "產品",
+        "API 版本",
+        "環境",
+        "區域",
+        "端點識別",
+        "帳戶類別",
+        "功能旗標",
+        "驗證角色",
+        "用戶端版本",
+        "測試框架版本",
+        "測試資料類別",
+        "觀測開始",
+        "觀測結束",
     ):
         assert f"- {field}:" in review
-    assert "Producer: `integration-team` / `client/1.2.3`" in review
-    assert "Runner: `contract-suite` / `suite/1`" in review
-    assert "Probe digest: `sha256:" in review
-    assert "Fixture digest: `sha256:" in review
-    assert "Observation lineage: `independent`" in review
-    assert "Replay executor: `contract-suite`" in review
+    assert "產生者：`integration-team` / `client/1.2.3`" in review
+    assert "執行者：`contract-suite` / `suite/1`" in review
+    assert "探針摘要：`sha256:" in review
+    assert "測試資料摘要：`sha256:" in review
+    assert "觀測沿革：`independent`" in review
+    assert "重播執行者：`contract-suite`" in review
     assert "1. `prepare the synthetic fixture`" in review
     assert "2. `assert the response status`" in review
     assert "attempt-ping-1" in review
     assert "api_response @ `2026-08-02T09:59:30+00:00`" in review
     assert "attempt-ping-2" in review
     assert "api_response @ `2026-08-02T09:59:45+00:00`" in review
-    assert "Normative fragment: `fragment-source-ping`" in review
-    assert "Fragment digest: `" in review
-    assert "Locator: `" in review
-    assert "Claim: `operation:GET:/ping/responses/200/status_code`" in review
-    assert "Implementation fragment: `fragment-ping-1`" in review
-    assert "Media type: `application/json`" in review
-    assert "Size bytes: `18`" in review
-    assert "Proposed disposition: `closed_no_change`" in review
+    assert "規範片段：`fragment-source-ping`" in review
+    assert "片段摘要：`" in review
+    assert "定位資訊：`" in review
+    assert "宣告：`operation:GET:/ping/responses/200/status_code`" in review
+    assert "實作片段：`fragment-ping-1`" in review
+    assert "媒體類型：`application/json`" in review
+    assert "位元組數：`18`" in review
+    assert "建議處置：`closed_no_change`" in review
 
 
 @pytest.mark.parametrize(
@@ -674,6 +675,9 @@ def test_feedback_propose_submit_approve_compose_and_current_exact_scope(
         ],
     )
     assert proposed.exit_code == 0, proposed.output
+    assert "# 相容性修訂提案" in (
+        proposals_dir / "amendment-proposals.md"
+    ).read_text(encoding="utf-8")
     proposal_files = list(proposals_dir.glob("proposal-*.json"))
     assert len(proposal_files) == 1
 
@@ -742,6 +746,9 @@ def test_feedback_propose_submit_approve_compose_and_current_exact_scope(
         ],
     )
     assert composed.exit_code == 1, composed.output
+    assert "# 有效契約組合" in (
+        composed_dir / "effective-contract.md"
+    ).read_text(encoding="utf-8")
     effective = json.loads((composed_dir / "effective-contract.json").read_text())
     assert len(effective["applied_amendment_ids"]) == 1
     assert effective["untested_material_claim_count"] > 0

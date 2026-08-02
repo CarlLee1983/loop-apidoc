@@ -22,23 +22,23 @@ def render_markdown(
     bundle: ObservationBundle | None = None,
 ) -> str:
     lines = [
-        "# Implementation Feedback Assessment",
+        "# 實作回饋評估",
         "",
-        f"- Assessment: `{_safe_text(report.assessment_id)}`",
-        f"- Normative asset: `{_safe_text(report.base.asset_id)}`",
-        f"- Applicability: `{_safe_text(report.applicability.environment)}` / "
+        f"- 評估：`{_safe_text(report.assessment_id)}`",
+        f"- 規範資產：`{_safe_text(report.base.asset_id)}`",
+        f"- 適用範圍：`{_safe_text(report.applicability.environment)}` / "
         f"`{_safe_text(report.applicability.endpoint_identity)}`",
-        f"- Route: `{report.route.value}`",
-        f"- Proposed disposition: `{report.route.value}`",
-        f"- Open discrepancies: `{report.open_discrepancy_count}`",
+        f"- 處置路徑：`{report.route.value}`",
+        f"- 建議處置：`{report.route.value}`",
+        f"- 未解差異：`{report.open_discrepancy_count}`",
         "",
-        "## Applicability scope",
+        "## 適用範圍",
         "",
         *_scope_lines(report),
-        f"- Producer: `{_safe_text(report.producer.id)}` / `{_safe_text(report.producer.version)}`",
-        f"- Runner: `{_safe_text(report.runner.id)}` / `{_safe_text(report.runner.version)}`",
+        f"- 產生者：`{_safe_text(report.producer.id)}` / `{_safe_text(report.producer.version)}`",
+        f"- 執行者：`{_safe_text(report.runner.id)}` / `{_safe_text(report.runner.version)}`",
         "",
-        "| Observation | Claim path | Relationship |",
+        "| 觀測項目 | 宣告路徑 | 關係 |",
         "| --- | --- | --- |",
     ]
     lines.extend(
@@ -50,28 +50,28 @@ def render_markdown(
     if release is not None and bundle is not None:
         fragments = {fragment.id: fragment for fragment in release.fragments}
         observations = {item.id: item for item in bundle.observations}
-        lines.extend(["", "## Review subjects", ""])
+        lines.extend(["", "## 審閱項目", ""])
         for relationship in report.relationships:
             observation = observations[relationship.observation_id]
             lines.extend(
                 [
                     f"### {_safe_text(relationship.observation_id)}",
                     "",
-                    f"- Target: `{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
-                    f"- Expected: `{_safe_json_inline(relationship.normative_value)}`",
-                    f"- Observed: `{_safe_json_inline(relationship.observed_value)}`",
-                    f"- Probe digest: `{observation.probe_digest}`",
-                    f"- Fixture digest: `{observation.fixture_digest}`",
-                    f"- Observation lineage: `{observation.lineage.value}`",
-                    f"- Attempts: `{len(observation.attempts)}`",
-                    f"- Replay executor: `{_safe_text(observation.replay.executor)}`",
-                    "- Replay steps:",
+                    f"- 目標：`{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
+                    f"- 預期值：`{_safe_json_inline(relationship.normative_value)}`",
+                    f"- 觀測值：`{_safe_json_inline(relationship.observed_value)}`",
+                    f"- 探針摘要：`{observation.probe_digest}`",
+                    f"- 測試資料摘要：`{observation.fixture_digest}`",
+                    f"- 觀測沿革：`{observation.lineage.value}`",
+                    f"- 嘗試次數：`{len(observation.attempts)}`",
+                    f"- 重播執行者：`{_safe_text(observation.replay.executor)}`",
+                    "- 重播步驟：",
                     *(
                         f"  {index}. `{_safe_text(step)}`"
                         for index, step in enumerate(observation.replay.steps, start=1)
                     ),
                     "",
-                    "Attempts:",
+                    "嘗試紀錄：",
                     "",
                     *(
                         f"- `{_safe_text(attempt.id)}` — {attempt.outcome.value} @ "
@@ -79,7 +79,7 @@ def render_markdown(
                         for attempt in observation.attempts
                     ),
                     "",
-                    "Normative supplier evidence:",
+                    "規範供應商證據：",
                     "",
                 ]
             )
@@ -93,8 +93,8 @@ def render_markdown(
                 if fragment is None:
                     lines.extend(
                         [
-                            f"- Normative fragment: `{_safe_text(fragment_id)}`",
-                            f"  - Claim: `{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
+                            f"- 規範片段：`{_safe_text(fragment_id)}`",
+                            f"  - 宣告：`{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
                             f"<pre>{escape(_safe_text(excerpt))}</pre>",
                             "",
                         ]
@@ -102,33 +102,33 @@ def render_markdown(
                     continue
                 lines.extend(
                     [
-                        f"- Normative fragment: `{_safe_text(fragment.id)}`",
-                        f"  - Fragment digest: `{fragment.fragment_digest}`",
-                        f"  - Locator: `{_safe_json_inline(fragment.locator.model_dump(mode='json'))}`",
-                        f"  - Claim: `{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
+                        f"- 規範片段：`{_safe_text(fragment.id)}`",
+                        f"  - 片段摘要：`{fragment.fragment_digest}`",
+                        f"  - 定位資訊：`{_safe_json_inline(fragment.locator.model_dump(mode='json'))}`",
+                        f"  - 宣告：`{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
                         f"<pre>{escape(_safe_text(excerpt))}</pre>",
                         "",
                     ]
                 )
-            lines.extend(["Sanitized implementation evidence:", ""])
+            lines.extend(["已遮罩的實作證據：", ""])
             for item in observation.evidence:
                 facts = [fact.model_dump(mode="json") for fact in item.sanitized_facts]
                 lines.extend(
                     [
-                        f"- Implementation fragment: `{_safe_text(item.fragment_id)}`",
-                        f"  - Fragment digest: `{item.digest}`",
-                        f"  - Media type: `{item.media_type}`",
-                        f"  - Size bytes: `{item.size_bytes}`",
-                        f"  - Claim: `{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
-                        f"  - Sanitized facts: `{_safe_json_inline(facts)}`",
+                        f"- 實作片段：`{_safe_text(item.fragment_id)}`",
+                        f"  - 片段摘要：`{item.digest}`",
+                        f"  - 媒體類型：`{item.media_type}`",
+                        f"  - 位元組數：`{item.size_bytes}`",
+                        f"  - 宣告：`{_safe_text(relationship.claim_identity + relationship.claim_path)}`",
+                        f"  - 已遮罩事實：`{_safe_json_inline(facts)}`",
                     ]
                 )
             lines.append("")
     lines.extend(
         [
             "",
-            "Documentary source support and implementation conformance are separate authority axes.",
-            "This report does not mutate or publish the Normative Contract.",
+            "文件來源支持與實作符合性是兩條獨立的權威軸線。",
+            "本報告不會變更或發布規範契約。",
             "",
         ]
     )
@@ -165,10 +165,10 @@ def write_proposal_reports(
         encoding="utf-8",
     )
     lines = [
-        "# Compatibility Amendment Proposals",
+        "# 相容性修訂提案",
         "",
-        f"- Proposal count: `{len(proposals)}`",
-        "- Human review required: `true`",
+        f"- 提案數量：`{len(proposals)}`",
+        "- 需要人工審閱：`true`",
         "",
     ]
     for proposal in proposals:
@@ -180,16 +180,16 @@ def write_proposal_reports(
             [
                 f"## {proposal.proposal_id}",
                 "",
-                f"- Target: `{proposal.target.claim_identity}{proposal.target.claim_path}`",
-                f"- Normative: `{_json_inline(proposal.normative_value)}`",
-                f"- Proposed: `{_json_inline(proposal.proposed_value)}`",
-                f"- Artifact: `{filename}`",
+                f"- 目標：`{proposal.target.claim_identity}{proposal.target.claim_path}`",
+                f"- 規範值：`{_safe_json_inline(proposal.normative_value)}`",
+                f"- 建議值：`{_safe_json_inline(proposal.proposed_value)}`",
+                f"- 成品：`{filename}`",
                 "",
             ]
         )
     lines.extend(
         [
-            "A proposal is a review subject, not authority. It has no effect until an independent named human approves it for the exact scope.",
+            "提案僅供審閱，不構成權威；必須由具名且獨立的人員針對完全相同的範圍核准後才會生效。",
             "",
         ]
     )
@@ -206,21 +206,21 @@ def write_effective_contract_report(
         contract.model_dump_json(indent=2), encoding="utf-8"
     )
     lines = [
-        "# Effective Contract Composition",
+        "# 有效契約組合",
         "",
-        f"- Effective contract: `{contract.effective_contract_id}`",
-        f"- Base asset: `{contract.base.asset_id}`",
-        f"- Target: `{contract.target.environment}` / `{contract.target.endpoint_identity}`",
-        f"- Applied amendments: `{len(contract.applied_amendment_ids)}`",
-        f"- Superseded amendments: `{len(contract.superseded_amendment_ids)}`",
-        f"- Expired amendments: `{len(contract.expired_amendment_ids)}`",
-        f"- Inapplicable amendments: `{len(contract.inapplicable_amendment_ids)}`",
-        f"- Stale amendments: `{len(contract.stale_amendment_ids)}`",
-        f"- Untested material claims: `{contract.untested_material_claim_count}`",
-        f"- Unresolved contradictions: `{contract.unresolved_contradiction_count}`",
-        f"- Open discrepancies: `{contract.open_discrepancy_count}`",
+        f"- 有效契約：`{contract.effective_contract_id}`",
+        f"- 基礎資產：`{contract.base.asset_id}`",
+        f"- 目標：`{contract.target.environment}` / `{contract.target.endpoint_identity}`",
+        f"- 已套用修訂：`{len(contract.applied_amendment_ids)}`",
+        f"- 已取代修訂：`{len(contract.superseded_amendment_ids)}`",
+        f"- 已過期修訂：`{len(contract.expired_amendment_ids)}`",
+        f"- 不適用修訂：`{len(contract.inapplicable_amendment_ids)}`",
+        f"- 已失效修訂：`{len(contract.stale_amendment_ids)}`",
+        f"- 未測試重大宣告：`{contract.untested_material_claim_count}`",
+        f"- 未解矛盾：`{contract.unresolved_contradiction_count}`",
+        f"- 未解差異：`{contract.open_discrepancy_count}`",
         "",
-        "This dry-run does not publish an Effective Contract or change the Normative Contract.",
+        "本次乾跑不會發布有效契約或變更規範契約。",
         "",
     ]
     (output_dir / "effective-contract.md").write_text(
@@ -236,14 +236,14 @@ def write_provider_erratum_handoff(
         handoff.model_dump_json(indent=2), encoding="utf-8"
     )
     lines = [
-        "# Provider Erratum Handoff",
+        "# 供應商勘誤交接",
         "",
-        f"- Erratum: `{handoff.erratum.erratum_id}`",
-        f"- Artifact digest: `{handoff.verified_artifact_digest}`",
-        "- Source role: `supplemental`",
-        "- Immediate mutation or publication: `none`",
+        f"- 勘誤：`{handoff.erratum.erratum_id}`",
+        f"- 成品摘要：`{handoff.verified_artifact_digest}`",
+        "- 來源角色：`supplemental`",
+        "- 立即變更或發布：`none`",
         "",
-        "## Ordered pipeline",
+        "## 處理流程",
         "",
     ]
     lines.extend(
@@ -268,20 +268,20 @@ def _json_inline(value: object) -> str:
 def _scope_lines(report: FeedbackAssessment) -> list[str]:
     scope = report.applicability
     values = (
-        ("Provider", scope.provider),
-        ("Product", scope.product),
-        ("API version", scope.api_version),
-        ("Environment", scope.environment),
-        ("Region", scope.region),
-        ("Endpoint identity", scope.endpoint_identity),
-        ("Account class", scope.account_class),
-        ("Feature flags", scope.feature_flags),
-        ("Authentication role", scope.authentication_role),
-        ("Client version", scope.client_version),
-        ("Harness version", scope.harness_version),
-        ("Test data class", scope.test_data_class),
-        ("Observed from", scope.observed_from.isoformat()),
-        ("Observed until", scope.observed_until.isoformat()),
+        ("供應商", scope.provider),
+        ("產品", scope.product),
+        ("API 版本", scope.api_version),
+        ("環境", scope.environment),
+        ("區域", scope.region),
+        ("端點識別", scope.endpoint_identity),
+        ("帳戶類別", scope.account_class),
+        ("功能旗標", scope.feature_flags),
+        ("驗證角色", scope.authentication_role),
+        ("用戶端版本", scope.client_version),
+        ("測試框架版本", scope.harness_version),
+        ("測試資料類別", scope.test_data_class),
+        ("觀測開始", scope.observed_from.isoformat()),
+        ("觀測結束", scope.observed_until.isoformat()),
     )
     return [f"- {label}: `{_safe_json_inline(value)}`" for label, value in values]
 

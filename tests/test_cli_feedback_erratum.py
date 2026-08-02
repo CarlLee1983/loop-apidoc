@@ -46,6 +46,9 @@ def test_feedback_provider_erratum_verifies_local_artifact_and_only_writes_hando
     )
 
     assert result.exit_code == 0, result.output
+    assert "# 供應商勘誤交接" in (
+        output / "provider-erratum-handoff.md"
+    ).read_text(encoding="utf-8")
     report = json.loads((output / "provider-erratum-handoff.json").read_text())
     assert report["verified_artifact_digest"] == f"sha256:{digest}"
     assert [item["stage"] for item in report["pipeline"]][:3] == [
