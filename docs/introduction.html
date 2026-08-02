@@ -527,6 +527,163 @@
   .light .en { font-size: 0.78rem; color: var(--ink-soft); font-weight: 400; }
   .light p { margin: 0; color: var(--ink-soft); font-size: 0.94rem; }
 
+  /* ---------- implementation feedback ---------- */
+  .feedback-section {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(760px 380px at 92% 6%, rgba(231, 227, 253, 0.7) 0%, transparent 68%),
+      linear-gradient(180deg, #fffdf9, #f7fbfa);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .feedback-section::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--teal), var(--purple));
+  }
+  .feedback-section .wrap { position: relative; }
+  .feedback-authority {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+    margin: 0 0 28px;
+  }
+  .authority-card {
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+  .authority-card.normative { background: var(--teal-soft); border-color: #bce8e3; }
+  .authority-card.observation { background: var(--purple-soft); border-color: #d6d1fb; }
+  .authority-card .authority-icon {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+    border-radius: 14px;
+  }
+  .normative .authority-icon { color: var(--teal-deep); background: rgba(255,255,255,0.72); }
+  .observation .authority-icon { color: var(--purple-deep); background: rgba(255,255,255,0.72); }
+  .authority-card svg { width: 26px; height: 26px; }
+  .authority-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+  }
+  .normative .authority-label { color: var(--teal-deep); }
+  .observation .authority-label { color: var(--purple-deep); }
+  .authority-card h3 { margin: 0 0 8px; font-size: 1.12rem; }
+  .authority-card p { margin: 0; color: var(--ink-soft); font-size: 0.93rem; }
+  .authority-divider {
+    display: grid;
+    place-items: center;
+    color: var(--ink-soft);
+  }
+  .authority-divider span {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: var(--bg-soft);
+    box-shadow: var(--shadow-sm);
+  }
+  .authority-divider svg { width: 29px; height: 29px; }
+  .feedback-rule {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 0 0 32px;
+    padding: 15px 18px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--teal-deep), #168f88);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+  }
+  .feedback-rule svg { flex: none; width: 23px; height: 23px; margin-top: 2px; }
+  .feedback-rule b { display: block; margin-bottom: 2px; }
+  .feedback-rule span { font-size: 0.91rem; opacity: 0.92; }
+  .feedback-journey {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    position: relative;
+  }
+  .feedback-phase {
+    position: relative;
+    min-width: 0;
+    padding: 24px 22px 22px;
+    background: rgba(255,255,255,0.88);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+  .feedback-phase::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    border-radius: var(--radius) 0 0 var(--radius);
+    background: var(--phase-accent, var(--teal));
+  }
+  .feedback-phase.assess { --phase-accent: var(--teal); --phase-soft: var(--teal-soft); --phase-deep: var(--teal-deep); }
+  .feedback-phase.govern { --phase-accent: var(--amber); --phase-soft: var(--amber-soft); --phase-deep: var(--amber-deep); }
+  .feedback-phase.resolve { --phase-accent: var(--purple); --phase-soft: var(--purple-soft); --phase-deep: var(--purple-deep); }
+  .phase-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .phase-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: var(--phase-soft, var(--teal-soft));
+    color: var(--phase-deep, var(--teal-deep));
+  }
+  .phase-icon svg { width: 23px; height: 23px; }
+  .phase-kicker { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.13em; color: var(--phase-deep, var(--teal-deep)); }
+  .feedback-phase h3 { margin: 2px 0 0; font-size: 1.08rem; }
+  .feedback-phase > p { margin: 0 0 15px; color: var(--ink-soft); font-size: 0.93rem; }
+  .command-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 15px; }
+  .command-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    color: var(--phase-deep, var(--teal-deep));
+    background: var(--phase-soft, var(--teal-soft));
+    border-radius: 999px;
+    font: 700 0.72rem/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace;
+    overflow-wrap: anywhere;
+  }
+  .feedback-points { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .feedback-points li { position: relative; padding-left: 18px; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.58; }
+  .feedback-points li::before { content: ""; position: absolute; left: 1px; top: 0.63em; width: 7px; height: 7px; border-radius: 50%; background: var(--phase-accent, var(--teal)); }
+  .feedback-readout {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: rgba(44, 48, 67, 0.96);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+  }
+  .feedback-readout svg { width: 27px; height: 27px; color: #8ee2dc; }
+  .feedback-readout b { display: block; font-size: 0.9rem; }
+  .feedback-readout span { display: block; margin-top: 2px; color: #d7dbe5; font: 0.76rem/1.55 ui-monospace, "SFMono-Regular", Menlo, monospace; }
+
   /* ---------- before / after ---------- */
   .ba {
     display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch;
@@ -691,6 +848,12 @@
     .process-flow .step p { font-size: 0.96rem; }
     .step-details summary { padding-left: 14px; }
     .detail-list { padding: 14px 14px 16px 32px; }
+    .feedback-authority, .feedback-journey { grid-template-columns: 1fr; }
+    .authority-divider { min-height: 36px; transform: rotate(90deg); }
+    .feedback-authority { gap: 10px; }
+    .authority-card { padding: 20px; }
+    .feedback-phase { padding: 22px 18px 20px 22px; }
+    .feedback-readout { grid-template-columns: 1fr; gap: 8px; }
   }
 </style>
 </head>
@@ -1260,17 +1423,56 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 </section>
 
 <!-- ===================== IMPLEMENTATION FEEDBACK ===================== -->
-<section class="alt">
+<section class="feedback-section" id="implementation-feedback">
   <div class="wrap">
     <span class="eyebrow">實作回饋 · 權威分離</span>
     <h2 class="section-title">供應商寫了什麼，和某個 deployment 觀察到什麼，不是同一種 claim</h2>
-    <p class="section-lead">供應商來源仍是 Normative Contract 的唯一權威。被動、正規化的觀察可以在一個精確 Applicability Envelope 內確認或挑戰 material claim，但永遠不會變成文件支持，也不會改寫已核准 base。</p>
-    <div class="steps">
-      <div class="step"><div class="num tint-teal"><span class="n">1</span></div><div><h3>不呼叫 API 也能評估</h3><p><code>feedback assess</code> 比對已核准 asset 與 normalized JSON Observation Bundle；不做 network I/O，確定性報告寫在 Foundry governed state 之外。</p></div></div>
-      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
-      <div class="step"><div class="num tint-amber"><span class="n">2</span></div><div><h3>先提交 candidate，再分開審查或核准</h3><p><code>feedback propose</code> 準備綁定完整 Normative release digest（contract、documentary fragments、support relationships）的審查材料，<code>feedback submit</code> 保存 immutable candidate inputs。<code>feedback review</code> 可對有／無 proposal 的 case 寫入一次 non-approval decision 與 corrective route；只有獨立人工執行 <code>feedback approve</code>，才會附加 approval／amendment，並發布同 scope 下另一份 immutable、有期限的 Effective release。衝突、drift 與高風險語意都會 fail closed；明確的同 scope supersession 會保留既有 lineage。</p></div></div>
-      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
-      <div class="step"><div class="num tint-purple"><span class="n">3</span></div><div><h3>預覽或解析一份 exact-scope view</h3><p><code>feedback compose</code> 重驗完整 release digest，只預覽、不發布。<code>feedback current --at &lt;timezone-aware ISO8601&gt;</code> 只有在 exact target 已 approved／effective、未過期、仍以 normative current 為 base 且 digest fresh 時才解析，並回傳 validity、open／untested、stale amendment 與 unresolved contradiction counters。「完整驗證」必須說明 scope、時間與 suite version，不能宣稱普遍 100% 真實。<code>feedback provider-erratum</code> 則準備交棒至完整 source pipeline。</p></div></div>
+    <p class="section-lead">供應商來源仍是 Normative Contract 的唯一權威。被動、正規化的觀察可以在精確 Applicability Envelope 內確認或挑戰 material claim；以下流程讓回饋可用，卻不混淆兩種 authority。</p>
+
+    <div class="feedback-authority" aria-label="文件權威與實作觀察的分離">
+      <div class="authority-card normative">
+        <div class="authority-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div>
+        <span class="authority-label">NORMATIVE CONTRACT</span>
+        <h3>供應商文件定義應有的契約</h3>
+        <p>source-grounded、immutable；所有 documentary support 都留在這條軸上。</p>
+      </div>
+      <div class="authority-divider" aria-hidden="true"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5"/></svg></span></div>
+      <div class="authority-card observation">
+        <div class="authority-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></svg></div>
+        <span class="authority-label">IMPLEMENTATION OBSERVATION</span>
+        <h3>deployment 在某個 scope 的實際觀察</h3>
+        <p>被動、正規化；只在匹配的 envelope 內評估 conformance。</p>
+      </div>
+    </div>
+
+    <div class="feedback-rule">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 4.8-3.3 7.7-8 9-4.7-1.3-8-4.2-8-9V7z"/><path d="M9 12h6M12 9v6"/></svg>
+      <div><b>觀察不會自動改寫文件</b><span>它可確認、挑戰或指出缺口；只有獨立人工核准的 amendment 才能產生另一份有期限的 exact-scope Effective release。</span></div>
+    </div>
+
+    <div class="feedback-journey">
+      <article class="feedback-phase assess">
+        <div class="phase-top"><span class="phase-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4M8.5 11l1.7 1.7 3.4-3.5"/></svg></span><div><div class="phase-kicker">01 · ASSESS</div><h3>先量測，不呼叫 API</h3></div></div>
+        <p>以已核准 asset 比對 normalized JSON Observation Bundle，輸出 deterministic report。</p>
+        <div class="command-chips"><span class="command-chip">feedback assess</span></div>
+        <ul class="feedback-points"><li>不做 provider network I/O</li><li>報告留在 Foundry governed state 外</li><li>confirm／contradict／inconclusive／out-of-scope 都保留可見</li></ul>
+      </article>
+      <article class="feedback-phase govern">
+        <div class="phase-top"><span class="phase-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="phase-kicker">02 · GOVERN</div><h3>候選、審查、核准各自獨立</h3></div></div>
+        <p>完整 Normative release digest 綁定每個 candidate；人與系統各守自己的關卡。</p>
+        <div class="command-chips"><span class="command-chip">feedback propose</span><span class="command-chip">submit</span><span class="command-chip">review</span><span class="command-chip">approve</span></div>
+        <ul class="feedback-points"><li>candidate inputs 與 decision 都是 immutable</li><li>只有獨立人工 approve 能發布 amendment</li><li>衝突、drift、高風險語意一律 fail closed</li></ul>
+      </article>
+      <article class="feedback-phase resolve">
+        <div class="phase-top"><span class="phase-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7h14M5 17h14"/><circle cx="12" cy="12" r="4"/></svg></span><div><div class="phase-kicker">03 · RESOLVE</div><h3>只讀取當時、當地適用的 view</h3></div></div>
+        <p>預覽或解析時，必須同時符合 target scope、時間、base 與完整性條件。</p>
+        <div class="command-chips"><span class="command-chip">feedback compose</span><span class="command-chip">current --at</span><span class="command-chip">provider-erratum</span></div>
+        <ul class="feedback-points"><li>compose 只預覽，不發布</li><li>current 只接受 approved、effective、未過期且 digest fresh 的 asset</li><li>文件需要更正時，交回完整 source pipeline</li></ul>
+      </article>
+    </div>
+    <div class="feedback-readout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 12h8M8 8h5M8 16h3"/></svg>
+      <div><b>Effective view 的承諾是有邊界的</b><span>exact Applicability Envelope · timezone-aware as-of · validity · open / untested / stale / unresolved counters</span></div>
     </div>
   </div>
 </section>
