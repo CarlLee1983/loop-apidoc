@@ -41,8 +41,14 @@ from loop_apidoc.domain.models import (
 )
 from loop_apidoc.domain.evidence import EvidenceBundle, EvidenceFragment
 from loop_apidoc.feedback.loader import (
+    FeedbackInputError,
+    load_approved_contract,
     load_current_scope_amendments,
+    load_feedback_assessment,
+    load_observation_bundle,
+    load_provider_erratum_inputs,
 )
+from loop_apidoc.feedback.erratum import ProviderErratumMetadata
 from loop_apidoc.feedback.report import write_proposal_reports
 from loop_apidoc.foundry import feedback, query, register, store
 from loop_apidoc.foundry.models import (
@@ -307,6 +313,230 @@ def test_persist_feedback_case_writes_immutable_inputs_without_changing_normativ
 
     with pytest.raises(FoundryInputError, match="already exists"):
         feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    (
+        ("base", "assessment base binding"),
+        ("bundle_id", "assessment bundle identity"),
+        ("bundle_digest", "assessment observation bundle digest"),
+        ("applicability", "assessment applicability"),
+        ("policy", "assessment policy"),
+        ("redaction", "assessment redaction policy"),
+        ("release", "assessment is not bound"),
+    ),
+)
+def test_persist_feedback_case_rejects_stale_assessment_bindings(
+    tmp_path: Path, change: str, message: str
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    replacements = {
+        "base": {"base": bundle.base.model_copy(update={"asset_id": "other-base"})},
+        "bundle_id": {"observation_bundle_id": "other-bundle"},
+        "bundle_digest": {"observation_bundle_digest": "sha256:" + "0" * 64},
+        "applicability": {
+            "applicability": bundle.applicability.model_copy(
+                update={"environment": "production"}
+            )
+        },
+        "policy": {"policy_version": "conformance/v0"},
+        "redaction": {"redaction_policy_version": "redaction/v0"},
+        "release": {"normative_release_digest": "sha256:" + "0" * 64},
+    }
+
+    with pytest.raises(FoundryInputError, match=message):
+        feedback.persist_feedback_case(
+            tmp_path, "payments", bundle, assessment.model_copy(update=replacements[change])
+        )
+
+
+@pytest.mark.parametrize(
+    ("bundle_update", "proposal", "message"),
+    (
+        (
+            {"base": _bundle().base.model_copy(update={"docset_id": "other-docset"})},
+            None,
+            "bundle docset does not match",
+        ),
+        (
+            {"base": _bundle().base.model_copy(update={"contract_digest": "0" * 64})},
+            None,
+            "not bound to the approved normative base",
+        ),
+        ({}, object(), "unsupported compatibility amendment proposal schema"),
+    ),
+)
+def test_persist_feedback_case_rejects_unbound_bundle_or_unknown_proposal_schema(
+    tmp_path: Path, bundle_update: dict[str, object], proposal: object, message: str
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle().model_copy(update=bundle_update)
+    assessment = _assessment(_bundle())
+
+    with pytest.raises(FoundryInputError, match=message):
+        feedback.persist_feedback_case(
+            tmp_path, "payments", bundle, assessment, proposal
+        )
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    (
+        (b"{not json", "observation bundle is invalid"),
+        (b"[]", "observation bundle is invalid"),
+    ),
+)
+def test_load_observation_bundle_reports_safe_schema_errors(
+    tmp_path: Path, payload: bytes, message: str
+) -> None:
+    path = tmp_path / "bundle.json"
+    path.write_bytes(payload)
+
+    with pytest.raises(FeedbackInputError, match=message):
+        load_observation_bundle(path)
+
+
+def test_load_observation_bundle_rejects_sensitive_persisted_value(tmp_path: Path) -> None:
+    payload = _bundle().model_dump(mode="json")
+    payload["observations"][0]["replay"]["steps"] = [
+        "Authorization: Bearer guessable-secret"
+    ]
+    path = tmp_path / "bundle.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(FeedbackInputError, match="raw secret"):
+        load_observation_bundle(path)
+
+
+def test_feedback_loaders_reject_unsafe_or_oversized_persisted_inputs(tmp_path: Path) -> None:
+    target = tmp_path / "bundle.json"
+    target.write_text("{}", encoding="utf-8")
+    link = tmp_path / "bundle-link.json"
+    link.symlink_to(target)
+    with pytest.raises(FeedbackInputError, match="must not be a symlink"):
+        load_observation_bundle(link)
+
+    oversized = tmp_path / "oversized.json"
+    oversized.write_bytes(b" " * (2 * 1024 * 1024 + 1))
+    with pytest.raises(FeedbackInputError, match="exceeds the"):
+        load_observation_bundle(oversized)
+
+    with pytest.raises(FeedbackInputError, match="feedback assessment is invalid"):
+        load_feedback_assessment(target)
+
+
+@pytest.mark.parametrize(
+    ("artifact_name", "digest", "message"),
+    (
+        ("other.txt", "sha256:" + "0" * 64, "filename does not match"),
+        ("erratum.txt", "sha256:" + "0" * 64, "digest mismatch"),
+    ),
+)
+def test_provider_erratum_loader_binds_the_declared_artifact(
+    tmp_path: Path, artifact_name: str, digest: str, message: str
+) -> None:
+    artifact = tmp_path / "erratum.txt"
+    artifact.write_text("supplier correction", encoding="utf-8")
+    metadata = ProviderErratumMetadata(
+        schema_version="provider-erratum/v1",
+        erratum_id="erratum-1",
+        docset_id="payments",
+        base_asset_id="payments-base",
+        provider="provider",
+        product="payments",
+        artifact_name=artifact_name,
+        artifact_digest=digest,
+        issued_at=_NOW,
+    )
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(metadata.model_dump_json(), encoding="utf-8")
+
+    with pytest.raises(FeedbackInputError, match=message):
+        load_provider_erratum_inputs(metadata_path, artifact)
+
+
+def test_load_approved_contract_returns_immutable_release_from_governed_artifacts(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+
+    asset, release = load_approved_contract(tmp_path, "payments", "payments-base")
+
+    assert asset.asset_id == "payments-base"
+    assert release.base.contract_digest == contract_digest(_contract())
+    assert release.contract == _contract()
+    assert release.fragments == _normative_fragments()
+
+
+@pytest.mark.parametrize(
+    ("corruption", "message"),
+    (
+        ("missing_asset", "required file missing"),
+        ("unapproved_asset", "requires an approved normative asset"),
+        ("missing_approval", "missing approval lineage"),
+        ("invalid_contract", "Canonical Contract artifact is invalid"),
+        ("wrong_contract_identity", "Canonical Contract identity"),
+        ("invalid_evidence", "Canonical evidence artifacts are invalid"),
+        ("wrong_source_set", "evidence bundle does not match"),
+        ("wrong_fragment_digest", "evidence fragment digest mismatch"),
+    ),
+)
+def test_load_approved_contract_fails_closed_for_governed_artifact_corruption(
+    tmp_path: Path, corruption: str, message: str
+) -> None:
+    _setup_base(tmp_path)
+    asset_id = "payments-base"
+    core_dir = (
+        tmp_path
+        / ".foundry/api/docsets/payments/assets"
+        / asset_id
+        / "artifacts/core"
+    )
+    contract_path = core_dir / "contract.json"
+    evidence_path = core_dir / "evidence.json"
+
+    if corruption == "missing_asset":
+        asset_id = "missing-asset"
+    elif corruption == "unapproved_asset":
+        asset = store.load_asset(tmp_path, "payments", asset_id)
+        store.save_asset(tmp_path, asset.model_copy(update={"status": AssetStatus.CANDIDATE}))
+    elif corruption == "missing_approval":
+        asset = store.load_asset(tmp_path, "payments", asset_id)
+        store.save_asset(
+            tmp_path,
+            asset.model_copy(update={"approved_at": None, "approved_by": None}),
+        )
+    elif corruption == "invalid_contract":
+        contract_path.write_text("{not json", encoding="utf-8")
+    elif corruption == "wrong_contract_identity":
+        payload = json.loads(contract_path.read_text(encoding="utf-8"))
+        payload["metadata"]["contract_id"] = "other-docset"
+        contract_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif corruption == "invalid_evidence":
+        evidence_path.write_text("{not json", encoding="utf-8")
+    elif corruption == "wrong_source_set":
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+        payload["source_set_id"] = "other-sources"
+        evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif corruption == "wrong_fragment_digest":
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+        payload["fragments"][0]["normalized_excerpt"] = "documented response"
+        payload["fragments"][0]["fragment_digest"] = "sha256:" + "0" * 64
+        evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(FeedbackInputError, match=message):
+        load_approved_contract(tmp_path, "payments", asset_id)
+
+
+@pytest.mark.parametrize("unsafe_id", ("", ".", "..", "nested/docset"))
+def test_load_approved_contract_rejects_unsafe_docset_identity(
+    tmp_path: Path, unsafe_id: str
+) -> None:
+    with pytest.raises(FeedbackInputError, match="unsafe docset id"):
+        load_approved_contract(tmp_path, unsafe_id, "payments-base")
 
 
 @pytest.mark.parametrize(
@@ -733,4 +963,59 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
     with pytest.raises(FoundryInputError, match="digest is stale"):
         query.load_current_effective_asset(
             tmp_path, "payments", _scope(), now=_LATER
+        )
+
+
+@pytest.mark.parametrize(
+    ("corruption", "message"),
+    (
+        ("non_approval_decision", "does not approve an amendment"),
+        ("normative_current", "no longer the normative current"),
+        ("release", "does not match the approved base artifacts"),
+        ("composition", "composition does not match"),
+        ("effective", "does not match deterministic composition"),
+    ),
+)
+def test_approve_feedback_case_rejects_stale_governance_bindings(
+    tmp_path: Path, corruption: str, message: str
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment, proposal)
+    decision = _decision(case, proposal)
+    amendment = _amendment(proposal, decision)
+    release = _release(amendment)
+    effective = _effective(amendment)
+    composition = (amendment,)
+
+    if corruption == "non_approval_decision":
+        decision = decision.model_copy(
+            update={
+                "disposition": "needs_evidence",
+                "requested_route": FeedbackRoute.NEEDS_EVIDENCE,
+            }
+        )
+    elif corruption == "normative_current":
+        current = store.load_current(tmp_path, "payments")
+        assert current is not None
+        store.save_current(tmp_path, "payments", current.model_copy(update={"current_asset": "other-base"}))
+    elif corruption == "release":
+        release = release.model_copy(update={"fragments": ()})
+    elif corruption == "composition":
+        composition = ()
+    elif corruption == "effective":
+        effective = effective.model_copy(update={"open_discrepancy_count": 99})
+
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    with pytest.raises(FoundryInputError, match=message):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=release,
+            composition_amendments=composition,
         )
