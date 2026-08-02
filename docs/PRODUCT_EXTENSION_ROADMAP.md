@@ -4,16 +4,18 @@
 source-backed benchmarks; 5 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
-**Updated:** 2026-07-31
+**Updated:** 2026-08-02
 
 ## Purpose
 
 This roadmap records the next product extensions for `loop-apidoc` beyond its
 current use as a source-grounded API-document analysis and generation pipeline.
 It is a prioritisation aid, not a commitment to ship every item. All work here
-remains constrained by the product's non-negotiable rule: source material is
-the only authority for factual API claims; an unstated value must remain a gap
-or `null`, never be inferred from convention.
+remains constrained by the product's non-negotiable authority split: supplier
+sources are the sole authority for normative, provider-documented API claims;
+an unstated value must remain a gap or `null`, never be inferred from convention.
+Implementation observations are a separate empirical axis and apply only inside
+their declared Applicability Envelope.
 
 ## Current foundation
 
@@ -30,10 +32,53 @@ The repository already provides more than document conversion:
   workbench; and
 - a model-independent `domain/`, `core/`, and `evaluation/` architecture,
   currently exercised by the CLI through observational `--architecture-mode
-  shadow` compatibility work.
+  shadow` compatibility work; and
+- passive normalized-JSON implementation feedback with a staged candidate/approval
+  workflow plus pure conformance/amendment/exact-scope Effective Contract domain
+  operations, without changing normative documentary support.
 
 The following priorities build on those foundations instead of duplicating
 them.
+
+### Delivered authority boundary: implementation feedback and scoped effectiveness
+
+The product now models Normative Contract, Implementation Observation, Applicability
+Envelope, Conformance Finding, Compatibility Amendment, and Effective Contract as
+distinct concepts. `ContractConformance` provides deterministic `assess`, `propose`, and
+`compose` operations. The public workflow exposes `feedback assess`, `propose`, `submit`,
+`review`, `approve`, `compose`, `current`, and `provider-erratum`. Assessment, proposal,
+composition, and erratum handoff write outside `.foundry`; `submit` persists immutable inputs
+as an explicit `candidate` case. `review` may append one non-approval decision and corrective
+route with or without a proposal, while a separate independent-human `approve` appends
+write-once approval/amendment records and publishes an immutable exact-scope Effective
+release. No feedback command performs provider network I/O.
+
+Proposal and Effective composition bind the digest of the complete Normative release:
+canonical contract, documentary fragments, and support relationships. Exact-target current
+resolution requires a timezone-aware as-of value and fails closed when the query precedes
+approval/composition, the Effective release is expired, its base no longer matches normative
+current, or the pointer/bounded artifact
+digest is stale. Successful reads expose `valid_until`, `open_discrepancy_count`, and
+`untested_material_claim_count`.
+
+Documentary grounding and implementation conformance remain separate assurance axes.
+An approved, expiring amendment is an exact-scope overlay with evidence and approval
+lineage; it cannot rewrite its normative base. Effective composition accepts only active
+amendments matching the complete target Applicability Envelope and rejects conflicting
+applicable overrides. Same-target conflict is resolved only through an explicit same-scope
+supersession link that preserves prior lineage. Normative and Effective releases remain
+immutable: a new release records `supersedes`, then its matching pointer advances; prior
+asset bytes are not rewritten. The global current pointer remains normative, while any
+effective selection is deployment/scope-specific. Bounded verification reports the
+envelope, time, suite version, material-claim coverage, open discrepancies, and stale
+amendments instead of claiming universal or permanent 100% truth.
+
+A formal Provider Erratum returns to the full supplier-source pipeline before it can
+supersede a Normative Contract release. Unconfirmed observed behavior can affect only a
+reviewed scoped Effective Contract. Passive normalized JSON is the only observation input
+in this delivery; live probes, traffic capture, and vendor-specific adapters remain
+deferred. Implementation-backed benchmark results remain separate from the source-backed
+strict-local lane.
 
 ### Delivered security boundary: inspect untrusted source text before model use
 
@@ -340,6 +385,24 @@ shared evidence contract is established.
 所有延伸均受同一原則約束：來源沒有明示的資訊，一律保留為缺口或 `null`，不可用慣例推測。
 產品維持領域中立；支付／錢包是重要的首個垂直領域，其中 amount direction 與 line-currency
 policy 屬選填 Payment Profile，不因現有 benchmark 組成而變成通用核心的必要語意。
+
+實作回饋已加入為獨立的 conformance 權威軸：`feedback assess`／`propose`／`submit`／
+`review`／`approve`／`compose`／`current`／`provider-erratum` 形成完整 public workflow；不做
+provider network I/O。`submit` 建立 immutable `candidate` case；`review` 可對有／無 proposal
+的 case 附加一次 non-approval decision 與 corrective route，另一個獨立人工 `approve` 階段
+才附加 write-once approval／amendment 並發布 immutable exact-scope Effective release。
+`ContractConformance` 的純 `assess`／`propose`／`compose` 邊界維持 exact scope、expiry、
+conflict 與 lineage；同 target 衝突只允許明確同 scope supersession。Normative／Effective
+舊 asset bytes 不改寫，新 asset 記錄 `supersedes` 後 pointer 才前進。Compatibility
+Amendment 不改寫 normative base，Effective Contract 只對一個精確 Applicability Envelope
+成立；proposal／composition 綁定完整 Normative release digest（contract + documentary
+fragments + support relationships）。`feedback current` 要求 timezone-aware as-of，拒絕
+query time 早於 approval／composition、expired、base 非 normative current 或
+pointer／bounded artifact digest stale，成功結果揭露
+`valid_until`、open／untested、stale amendment 與 unresolved contradiction counters。全域
+`current` 維持 normative。正式 Provider Erratum 重走完整 source pipeline，而
+implementation-backed benchmark 與 source-backed strict-local 分開計算；有限測試不會被
+描述成普遍、永久的「100% 真實」。
 
 1. **先讓精確證據成為 extraction 正式契約，再逐步讓 Core 接管。**
    目前 CLI 的 legacy citation 常停留在文件層級；應加入來源 identity、locator、fragment

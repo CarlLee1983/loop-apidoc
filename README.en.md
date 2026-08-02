@@ -26,7 +26,7 @@ CLI compatibility adapter. See the
 - **Source provenance** (`provenance.json`)
 - **Validation & gap report** (`validation/report.{json,md}`)
 
-Core principle: **source documents are the only source of truth**. Anything the sources do not provide is never guessed; when required information is missing, validation fails and lists the gaps explicitly rather than filling them in by convention.
+Core principle: **supplier sources are the sole authority for normative, provider-documented claims**. Anything the sources do not provide is never guessed; when required information is missing, validation fails and lists the gaps explicitly rather than filling them in by convention. Passive implementation observations are a separate empirical authority axis: they can describe behavior witnessed inside one exact Applicability Envelope, but never become supplier-source support.
 
 ---
 
@@ -71,6 +71,10 @@ skips. A discovered or skipped case has not passed source-backed revalidation. S
 For exact-evidence changes, `scripts/quality_gate.py --sanitized-fixtures` adds a
 reviewed, line-preserving CI replay of retained source fragments. It is a narrower
 fixture-backed assurance and never counts as source-backed or strict-local success.
+Implementation-backed conformance benchmarks form a third, separately reported assurance
+lane. They measure observed behavior only for their declared Applicability Envelope, time,
+and suite version; they never count as source-backed `--strict-local` passes or documentary
+grounding coverage.
 
 **Both approaches have their place — honestly:**
 
@@ -94,6 +98,146 @@ acquisition/preprocess → manifest → inspect-source-risk → agent source-qua
 ```
 
 Validation emits a classified issue report. Correction is **agent-driven**: `assemble` reports results via `--json`, the agent re-reads the affected sources, overwrites the extraction JSON, and re-runs `assemble` — until it passes or an issue is deemed an unfixable gap/conflict.
+
+### Implementation feedback and Effective Contracts
+
+An approved Foundry asset is a **Normative Contract**: an immutable statement of what the
+provider's sources document. `feedback assess` compares that approved base with a passive,
+normalized Observation Bundle. It computes `confirms`, `contradicts`, `inconclusive`, or
+`out_of_scope` relationships and conformance coverage without changing documentary support,
+the base asset, candidates, or any current pointer:
+
+Observation kinds are a semantic allowlist, not merely accepted enum values.
+`operation_success`/`response_status` must bind the selected operation and that operation
+claim's `/responses/<status>/status_code`; `response_field`/`response_json_type` must bind a
+schema referenced by that operation's response and the matching `/fields/.../name` or
+`/fields/.../type`. Cross-operation or mismatched field/type bindings fail closed.
+
+```bash
+uv run loop-apidoc feedback assess \
+  --project ./my-api --docset payment --asset <asset-id> \
+  --bundle ./feedback-bundle.json --output ./feedback-assessment
+```
+
+The command performs no network I/O and `--output` must remain outside `.foundry`. It writes
+`feedback-assessment.{json,md}`. Exit `0` means the case closes with no change, exit `1`
+means valid evidence still needs review or is inconclusive, and exit `2` means the input or
+integrity check failed.
+
+The governed workflow is explicit and does not silently publish assessment output:
+
+```bash
+# Turn reviewable assessment findings into amendment proposal files.
+uv run loop-apidoc feedback propose \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  --at 2026-08-02T10:00:00+08:00 --output ./feedback-proposals
+
+# Persist the immutable, digest-bound case; --proposal is optional at submission time.
+uv run loop-apidoc feedback submit \
+  --project ./my-api --docset payment --bundle ./feedback-bundle.json \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  --proposal ./feedback-proposals/<proposal-id>.json
+
+# Or record one write-once non-approval decision, with or without a proposal.
+uv run loop-apidoc feedback review \
+  --project ./my-api --docset payment --case <case-id> \
+  --reviewed-by reviewer-001 --reviewer-version 1 \
+  --at 2026-08-02T10:30:00+08:00 --disposition needs_evidence \
+  --route provider_clarification
+
+# An independent named human approves one expiring amendment and publishes exact-scope current.
+uv run loop-apidoc feedback approve \
+  --project ./my-api --docset payment --case <case-id> \
+  --approved-by approver-001 --approver-version 1 \
+  --at 2026-08-02T10:30:00+08:00 --expires-at 2026-09-02T10:30:00+08:00
+
+# Resolve the current Effective asset for one exact target Applicability Envelope.
+uv run loop-apidoc feedback current \
+  --project ./my-api --docset payment --target ./target-envelope.json \
+  --at 2026-08-02T11:00:00+08:00
+```
+
+`feedback compose` is the non-publishing preview: pass `--target`, repeat `--amendment`
+for each candidate amendment, and write `effective-contract.{json,md}` outside `.foundry`.
+It returns `0` when there is no open discrepancy, `1` when the composition still has open
+discrepancies, and `2` for input or integrity failure. `feedback propose` returns `0` when
+it creates at least one proposal, `1` when none is warranted, and `2` on error; persisted
+commands (`submit`, `review`, `approve`, `current`) return `0` on success and `2` on error.
+The proposal `--at` must not precede the Observation Bundle's `observed_until`. A case
+submitted without `--proposal` remains auditable but cannot be approved. `submit`
+creates the immutable `candidate` case stage. `review` works with or without a proposal and
+records its one non-approval decision: `--disposition` is `rejected` or `needs_evidence`, and
+the required corrective `--route` cannot be `closed_no_change` or `amendment_proposal`.
+Its `--at` must not precede observation completion and, when a proposal exists, must not
+precede `proposal.created_at`. Before any feedback report, proposal, case, decision, or amendment persists, the deterministic
+privacy gate rejects sensitive field names and obvious email, phone, national-ID, SSN, passport,
+and Luhn-valid payment-card values;
+low-entropy PII is omitted, never retained as a hash.
+`approve` is the separate transition for a proposed amendment; it appends the bound write-once
+decision/amendment and publishes a separate immutable approved Effective release. Approval requires
+an independent named human and a timezone-aware expiry; it changes only the exact-scope
+Effective pointer, never the global normative `current`. Same-target conflicts fail closed
+unless `--supersedes-amendment` explicitly identifies the same-scope amendment being
+replaced; approval then composes and records that prior lineage. Optional `--rationale` and
+repeatable `--revalidation-trigger` capture the remaining decision context. The latter are
+free-text review declarations only: no external trigger-signal contract exists, so they do not
+imply automatic revalidation or execution.
+Approval lineage loading starts from the same bound exact-scope integrity read used by `current`.
+The pointer's `effective_asset_digest` binds the complete strict-validated canonical
+`EffectiveAsset`, including every declared field; unknown fields fail closed. Every
+successor supplies `supersedes` together with `supersedes_asset_digest`, forming an immutable
+hash chain. Governed and user-facing traversal verifies each predecessor asset digest and its
+amendment artifact digest. A new reviewed amendment may explicitly supersede and recover expired
+lineage, but historical asset metadata, amendment, or supersession tampering fails closed and
+cannot be laundered into the next approval/composition.
+
+Assessment reaches all eight deterministic routes. Confirmed-only evidence closes with
+`closed_no_change`; ordinary inconclusive evidence uses `needs_evidence`; high-risk
+contradictions use `provider_clarification`; harness/fixture failures use
+`implementation_correction`; out-of-scope or DNS/proxy/gateway failures use
+`environment_configuration_correction`; policy-safe contradictions without documentary
+evidence use `extraction_correction`; repeated network/timeout/rate-limit failures use
+`provider_runtime_regression_review`; and policy-safe documentary-grounded contradictions use
+`amendment_proposal`. Only `confirms` and `contradicts` count as assessed claims;
+`inconclusive` and `out_of_scope` remain untested and open.
+
+Proposals and Effective composition bind the digest of the complete Normative release—not
+just the projected contract, but its documentary fragments and support relationships too.
+`feedback current` is therefore an as-of validity check, not a blind pointer read. It
+rejects a query before approval/composition time, an expired Effective release, one whose
+base is no longer global normative
+`current`, or a stale pointer/bounded-artifact binding. The pointer also binds the complete
+strict-validated canonical `EffectiveAsset`, including every declared field, through
+`effective_asset_digest`; unknown fields fail closed. The asset and pointer bind
+`effective-contract.json`, `compatibility-amendment.json`, and `provenance.json`.
+`current` bounds, parses, verifies, and cross-checks these bindings. On success its JSON exposes
+`valid_until`, `open_discrepancy_count`, `stale_amendment_count`,
+`untested_material_claim_count`, and
+`unresolved_contradiction_count` so downstream consumers retain the bounded assurance signal.
+Governed feedback/Effective JSON models reject unknown fields. Current accepts only `APPROVED`
+and cross-validates contract identity, amendment IDs, validity/counts, approval actor/time, and
+provenance approval/assessment/bundle bindings. Stale amendments represent verifiable
+release/contract/source/policy/approval-time drift; expired and inapplicable remain separate.
+All governed lineage reads converge on `foundry.query`.
+
+Reproducible behavior that differs from the sources may be proposed for human review as an
+expiring, scope-bound **Compatibility Amendment**. An **Effective Contract** is a
+deterministic composition of one approved Normative Contract release and only the active,
+approved amendments matching one exact target Applicability Envelope; it never mutates the
+normative base. The global Foundry `current` remains normative. Effective selections are
+deployment/scope-specific, and every overridden value retains normative and observation
+lineage. Conflicts, expiry, scope mismatch, drift, open discrepancies, and untested material
+claims stay visible and fail closed—there is no global Effective current and no claim of
+universal or permanent “100% truth.”
+
+A formal **Provider Erratum** follows a different path: acquire it as supplemental supplier
+source material, then run source-risk → source-quality → extraction → verification →
+assembly → review → Foundry approval. That source-authorized release supersedes the prior
+normative asset; an unconfirmed local observation can affect only a reviewed scoped
+Effective Contract. `feedback provider-erratum --metadata <path> --artifact <path>
+--output <dir>` verifies the local artifact binding and writes a non-mutating
+`provider-erratum-handoff.{json,md}` with that ordered pipeline; it does not execute or
+bypass the pipeline itself.
 
 ---
 
@@ -689,6 +833,8 @@ uv run ruff check .
 | `loop_apidoc/agentcli/` | `assemble.py` (assemble agent-written extraction JSON → plan→generate→validate), `verify.py` (`verify-extraction`: check the extraction JSON with assemble's input gate, writes nothing), `evidence.py` (read-side materialization and digest verification for optional v1 exact-evidence references), `gate.py` (`check_extraction`: the single gate aggregator shared by `assemble` and `verify-extraction`, including the source-facts semantic completeness check), `extraction.py` (convert `inventory.json` into plan stage answers), `preprocess.py` (PDF/DOCX→markdown orchestration) |
 | `loop_apidoc/docx_normalization.py` + `docx_{models,validation,render,publish}.py` | stable facade plus bounded validation, deterministic rendering, and staged DOCX→Markdown/provenance publication with rollback on reported write failures; every Word XML part is scanned so unsupported active DDE fields, markup alternatives, merged cells, and external content fail closed |
 | `loop_apidoc/domain/` | Protocol-neutral canonical contract, evidence relationships, domain profiles, and pure GraphQL/AsyncAPI projection compilers; neither format currently has a public run integration |
+| `loop_apidoc/core/conformance.py` | Pure `ContractConformance` boundary for all eight deterministic routes, assessment where inconclusive/out-of-scope stays untested/open, full-Normative-release-digest-bound amendment proposals, and exact-scope Effective Contract composition with unresolved-contradiction accounting; documentary support never changes |
+| `loop_apidoc/feedback/` | Passive normalized-JSON assessment/proposal/composition, governed submit/write-once non-approval review/approval adapters, timezone-aware exact-target Effective lookup that verifies all three digest-bound artifacts and returns bounded open/untested/unresolved counters, and Provider Erratum handoff; dry-run reports stay outside `.foundry`, governed writes go through Foundry, and no command performs provider network I/O |
 | `loop_apidoc/source_facts/` | Source-fact inventory and the semantic completeness gate (issue #14): `markdown.py` mechanically scans Markdown for endpoint declarations, parameter tables, and example blocks; `collect.py` reads the manifest-named sources; `gate.py` compares the extraction JSON and fails closed when a source-proven field or example is absent; `deferral.py` rejects placeholder answers such as "requires further extraction" |
 | `loop_apidoc/extraction/` | Shared models and utilities for agent extraction (models, stages, questions, store, jsonblock) |
 | `loop_apidoc/plan/` | Normalization plan building and source-matching classification |
@@ -701,7 +847,7 @@ uv run ruff check .
 | `loop_apidoc/source_risk/` | deterministic pre-agent inspection of manifest-bound UTF-8 Markdown/HTML/OpenAPI text; fixed no-payload findings, a 1,000-entry report cap with fail-closed truncation, versioned schema/rules, bounded reads, stable source binding, verified report loading, and `source-risk-report.{json,zh-TW.md}` |
 | `loop_apidoc/source_quality/` | pre-extraction source-quality assessment and source-version diffs; it requires and embeds a verified source-risk audit, and passing reports can be retained with a run-dir |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | bounded URL navigation cataloging, page caching, and related-page candidates for local-evidence web reading |
-| `loop_apidoc/foundry/` | local asset governance, managing docsets, candidates, and approved assets |
+| `loop_apidoc/foundry/` | Local asset governance for docsets and candidates; normative assets stay immutable, with supersession recorded only on the new asset before pointers advance. Feedback cases retain one bound decision, and approval creates a separate immutable Effective release. Global `current` remains normative; Effective current is exact-scope/time, its pointer binds the full current asset plus three artifact digests, and successor ID/digest pairs form a verified immutable hash chain that fails closed on historical tampering |
 | `loop_apidoc/review/` | local single-user review workbench: auto-import a candidate, compare with current/baseline, persist structured handoff, and ask Foundry to update current only after explicit human approval |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flow.

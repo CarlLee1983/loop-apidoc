@@ -56,10 +56,11 @@ def test_docsentry_document_governance_is_configured_and_runs_in_ci():
     assert config == {
         "$schema": "./node_modules/@carllee1983/docsentry/schema.json",
         "documents": [
-            "README.md",
-            "README.en.md",
-            "CONTRIBUTING.md",
-            "AGENTS.md",
+                "README.md",
+                "README.en.md",
+                "CONTRIBUTING.md",
+                "CONTEXT.md",
+                "AGENTS.md",
             "CLAUDE.md",
             "docs/**/*.md",
         ],

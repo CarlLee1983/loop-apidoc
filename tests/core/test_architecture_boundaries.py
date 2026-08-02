@@ -24,7 +24,7 @@ FORBIDDEN = {
 
 def _forbidden_imports(root: str) -> set[str]:
     found: set[str] = set()
-    for path in Path(root).glob("*.py"):
+    for path in Path(root).rglob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             names: list[str] = []
@@ -47,7 +47,7 @@ def test_core_and_domain_do_not_import_platform_packages():
 
 def test_core_does_not_read_the_system_clock_directly():
     violations: list[str] = []
-    for path in Path("loop_apidoc/core").glob("*.py"):
+    for path in Path("loop_apidoc/core").rglob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if (
@@ -74,7 +74,7 @@ def test_core_and_domain_do_not_call_direct_io_apis():
         "post",
     }
     for root in ("loop_apidoc/core", "loop_apidoc/domain"):
-        for path in Path(root).glob("*.py"):
+        for path in Path(root).rglob("*.py"):
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):

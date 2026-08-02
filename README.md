@@ -24,7 +24,7 @@ model-independent 邊界。下方 agent-native 流程仍是現行 CLI 的相容 
 - **來源追溯資料**（`provenance.json`）
 - **驗證與缺漏報告**（`validation/report.{json,md}`）
 
-核心原則:**以來源文件為唯一事實依據**。來源未提供的資訊一律不推測;必要資訊缺漏時,驗證會失敗並明確列出缺項,而非以慣例補寫。
+核心原則：**供應商來源是規範性、供應商文件明載 claim 的唯一權威**。來源未提供的內容絕不推測；若必填資訊缺失，驗證會失敗並明確列出缺口，不會拿慣例補空白。被動匯入的實作觀察屬於另一條經驗性權威軸：它只能描述某個精確 Applicability Envelope 內實際觀察到的行為，永遠不會變成供應商來源支持。
 
 ---
 
@@ -68,6 +68,9 @@ skip。已探索或被 skip 的 case，並未通過來源支撐的重新驗證�
 exact-evidence 相關變更可另跑 `scripts/quality_gate.py --sanitized-fixtures`，在 CI
 重播經審核、保留原始行號的來源片段；這是範圍較窄的 fixture-backed 保證，不能稱為
 source-backed 或 strict-local PASS。
+Implementation-backed conformance benchmark 是第三條、分開回報的 assurance lane；它只衡量
+宣告的 Applicability Envelope、時間與 suite version 內觀察到的行為，不能算成 source-backed
+`--strict-local` pass，也不能增加 documentary grounding coverage。
 
 **兩種做法各有適用場景,誠實地說:**
 
@@ -91,6 +94,134 @@ source-backed 或 strict-local PASS。
 ```
 
 驗證會輸出分類後的問題報告。修正由 agent 自行驅動:`assemble` 以 `--json` 回報結果,agent 依報告回頭重讀來源、覆寫擷取 JSON,再重新執行 `assemble`,直到通過或判定為無法修正的缺漏／衝突。
+
+### 實作回饋與 Effective Contract
+
+已核准的 Foundry asset 是 **Normative Contract**：不可變更地記錄供應商來源明載的
+內容。`feedback assess` 會把該 base 與被動、正規化的 Observation Bundle 比對，計算
+`confirms`、`contradicts`、`inconclusive` 或 `out_of_scope` 關係及 conformance coverage；
+它不會改變文件依據、base asset、candidate 或任何 current pointer：
+
+Observation kind 是語意 allowlist，不只是允許的 enum 值。`operation_success`／
+`response_status` 必須綁定同一 selected operation 與該 operation claim 的
+`/responses/<status>/status_code`；`response_field`／`response_json_type` 必須綁定該
+operation response 引用的 schema，以及相符的 `/fields/.../name` 或 `/fields/.../type`。
+跨 operation 或 field/type 不相符時一律 fail closed。
+
+```bash
+uv run loop-apidoc feedback assess \
+  --project ./my-api --docset payment --asset <asset-id> \
+  --bundle ./feedback-bundle.json --output ./feedback-assessment
+```
+
+命令不做 network I/O，且 `--output` 必須位於 `.foundry` 之外；會寫出
+`feedback-assessment.{json,md}`。退出碼 `0` 代表無需變更、case 可結案，`1` 代表輸入
+有效但仍有 discrepancy、inconclusive 或待人工處理事項，`2` 代表輸入或完整性檢查失敗。
+
+治理流程是明確的，不會把 assessment 結果偷偷發布：
+
+```bash
+# 把可審查 finding 轉成 amendment proposal 檔。
+uv run loop-apidoc feedback propose \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  --at 2026-08-02T10:00:00+08:00 --output ./feedback-proposals
+
+# 保存 immutable、digest-bound case；submit 時 --proposal 可省略。
+uv run loop-apidoc feedback submit \
+  --project ./my-api --docset payment --bundle ./feedback-bundle.json \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  --proposal ./feedback-proposals/<proposal-id>.json
+
+# 或對有／無 proposal 的 case 寫入一次 non-approval decision。
+uv run loop-apidoc feedback review \
+  --project ./my-api --docset payment --case <case-id> \
+  --reviewed-by reviewer-001 --reviewer-version 1 \
+  --at 2026-08-02T10:30:00+08:00 --disposition needs_evidence \
+  --route provider_clarification
+
+# 由具名的獨立人工核准有期限 amendment，並發布 exact-scope current。
+uv run loop-apidoc feedback approve \
+  --project ./my-api --docset payment --case <case-id> \
+  --approved-by approver-001 --approver-version 1 \
+  --at 2026-08-02T10:30:00+08:00 --expires-at 2026-09-02T10:30:00+08:00
+
+# 依一個精確 target Applicability Envelope 解析 current Effective asset。
+uv run loop-apidoc feedback current \
+  --project ./my-api --docset payment --target ./target-envelope.json \
+  --at 2026-08-02T11:00:00+08:00
+```
+
+`feedback compose` 是不發布的預覽：傳入 `--target`、針對每個候選 amendment 重複
+`--amendment`，並在 `.foundry` 外寫出 `effective-contract.{json,md}`。沒有 open
+discrepancy 時退出 `0`，仍有 open discrepancy 時退出 `1`，輸入或完整性錯誤則退出 `2`。
+`feedback propose` 有至少一份 proposal 時退出 `0`、不需提案時退出 `1`、錯誤時退出
+`2`；會讀寫治理狀態的 `submit`、`review`、`approve`、`current` 成功時退出 `0`，錯誤時
+退出 `2`。Proposal 的 `--at` 不得早於 Observation Bundle 的 `observed_until`。沒有
+`--proposal` 的 case 仍可稽核，但不能 approve。`submit` 建立 immutable
+`candidate` case stage。`review` 可處理有或無 proposal 的 case，只寫入一次 non-approval
+decision：`--disposition` 必須是 `rejected` 或 `needs_evidence`，必填的 corrective `--route`
+不得為 `closed_no_change` 或 `amendment_proposal`。其 `--at` 不得早於 observation
+completion；若有 proposal，也不得早於 `proposal.created_at`。任何 feedback report／proposal／
+case／decision／amendment 持久化前，deterministic privacy gate 都會拒絕敏感欄位名稱，以及明顯 email／phone／
+national-ID／SSN／passport／Luhn-valid payment-card 值；低 entropy PII 必須省略，不能改以 hash 保留。`approve` 則是 proposal 的另一個階段，
+會附加綁定的 write-once decision／amendment，再發布另一份 immutable approved Effective
+release。核准必須由具名且獨立的人工執行，
+並指定含時區的 expiry；它只更新 exact-scope Effective pointer，不會改動全域 normative
+`current`。同 target 衝突會 fail closed；只有 `--supersedes-amendment` 明確指定同 scope
+被取代的 amendment 時，核准才會把既有 lineage 納入 composition 並記錄。選填的
+`--rationale` 與可重複的 `--revalidation-trigger` 可保存其餘決策脈絡；後者只是自由文字
+review declaration。目前沒有外部 trigger-signal contract，因此不代表會自動重驗或執行。
+Approval lineage 從 `current` 共用的 bound exact-scope integrity read 開始。Pointer 的
+`effective_asset_digest` 綁定完整、strict-validated canonical 的 current
+`EffectiveAsset`（包含所有宣告欄位）；未知欄位會 fail closed。每個 successor 的
+`supersedes` 必須與 `supersedes_asset_digest` 成對，形成 immutable hash chain。Governed 與
+user-facing traversal 逐節驗證 predecessor asset digest 與 amendment artifact digest。新的
+reviewed amendment 可明確 supersede 並恢復 expired lineage；任何歷史 asset metadata、
+amendment 或 supersession 竄改都 fail closed，絕不能污染下一次 approval／composition。
+
+Assessment 的八條 deterministic route 全部可達：全數確認走 `closed_no_change`；一般
+inconclusive 走 `needs_evidence`；高風險 contradiction 走 `provider_clarification`；
+harness／fixture failure 走 `implementation_correction`；out-of-scope 或 DNS／proxy／gateway
+failure 走 `environment_configuration_correction`；沒有 documentary evidence 的安全
+contradiction 走 `extraction_correction`；重複 network／timeout／rate-limit failure 走
+`provider_runtime_regression_review`；有 documentary grounding 的安全 contradiction 走
+`amendment_proposal`。只有 `confirms`／`contradicts` 計入 assessed claim；`inconclusive`／
+`out_of_scope` 仍是 untested 且 open。
+
+Proposal 與 Effective composition 綁定的是完整 Normative release digest，不只 projected
+contract，也包含 documentary fragments 與 support relationships。`feedback current` 因此是
+as-of validity check，不是盲目讀 pointer；若 query time 早於 approval／composition、
+Effective release 已過期、其 base 已不是全域
+normative `current`，或 pointer／bounded artifact binding stale，就會拒絕。Pointer 另以
+`effective_asset_digest` 綁定完整、strict-validated canonical 的 current
+`EffectiveAsset`（包含所有宣告欄位）；未知欄位會 fail closed。asset／pointer 也綁定
+`effective-contract.json`、`compatibility-amendment.json`、`provenance.json`。`current` 會對
+這些 binding 執行 bounded path／parse／digest／lineage cross-check。
+成功時 JSON 會揭露 `valid_until`、`open_discrepancy_count`、`stale_amendment_count`、
+`untested_material_claim_count`、`unresolved_contradiction_count`，讓下游保留 bounded
+assurance 訊號。
+Governed feedback／Effective JSON model 會拒絕未知欄位。Current 只接受 `APPROVED`，並
+cross-validate contract identity、amendment IDs、validity／counts、approval actor／time 與
+provenance approval／assessment／bundle bindings。Stale amendment 只指可驗證的
+release／contract／source／policy／approval-time drift；expired 與 inapplicable 分開。
+所有 governed lineage read 收斂至 `foundry.query`。
+
+若可重現行為與來源不同，只能提出一個待人工審查、有期限且綁定 scope 的
+**Compatibility Amendment**。**Effective Contract** 是一份確定性組合：一個已核准
+Normative Contract release，加上只適用於某個精確目標 Applicability Envelope 的有效、
+已核准 amendments；它不改寫 normative base。Foundry 的全域 `current` 仍只指向
+normative asset，effective 選擇則綁定 deployment／scope，每個 override 都保留規範性與
+觀察證據 lineage。衝突、到期、scope 不符、drift、未解 discrepancy 與未測 material
+claim 都會明確揭露並 fail closed；系統沒有 global Effective current，也不宣稱普遍、永久的
+「100% 真實」。
+
+正式 **Provider Erratum** 走另一條路：把它當補充供應商來源取得，再完整經過
+source-risk → source-quality → extraction → verification → assembly → review → Foundry
+approval。這份具來源權威的新 release 才能 supersede 前一個 normative asset；尚未獲供應商
+確認的本機觀察，只能影響經審查且有 scope 的 Effective Contract。
+`feedback provider-erratum --metadata <path> --artifact <path> --output <dir>` 會驗證本機 artifact
+binding，寫出不改動治理狀態的 `provider-erratum-handoff.{json,md}` 與上述有序流程；它不會
+自行執行或繞過該流程。
 
 ---
 
@@ -663,6 +794,8 @@ uv run ruff check .
 | `loop_apidoc/agentcli/` | `assemble.py`(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、`verify.py`(`verify-extraction`:以 assemble 的輸入閘檢查擷取 JSON,不寫檔)、`evidence.py`(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、`gate.py`(`check_extraction`:`assemble` 與 `verify-extraction` 共用的純閘門聚合點,含來源事實語意完整度檢查)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 答案)、`preprocess.py`(PDF／DOCX→markdown 編排) |
 | `loop_apidoc/docx_normalization.py` + `docx_{models,validation,render,publish}.py` | 穩定 facade 加上 bounded 驗證、deterministic rendering 與分段暫存、寫入失敗回滾的 DOCX→Markdown／provenance 發布；每個 Word XML part 都會掃描，不支援的 active DDE field、markup alternative、合併儲存格與外部內容一律 fail closed |
 | `loop_apidoc/domain/` | protocol-neutral canonical contract、evidence relationship、領域 profiles，以及純 GraphQL／AsyncAPI projection compilers；目前沒有這兩種格式的公開 run integration |
+| `loop_apidoc/core/conformance.py` | 純 `ContractConformance` 邊界，負責八條 deterministic route、讓 inconclusive／out-of-scope 保持 untested/open 的 assessment、綁定完整 Normative-release digest 的 amendment proposal，以及含 unresolved-contradiction accounting 的 exact-scope Effective Contract composition；documentary support 永不被改寫 |
+| `loop_apidoc/feedback/` | 被動 normalized-JSON assessment／proposal／composition、治理 submit／write-once non-approval review／approval adapters、驗證三份 digest-bound artifacts 並回傳 bounded open／untested／unresolved counters 的 timezone-aware exact-target Effective 查詢，以及 Provider Erratum handoff；dry-run report 位於 `.foundry` 外，治理寫入透過 Foundry，所有命令都不做 provider network I/O |
 | `loop_apidoc/source_facts/` | 來源事實索引與語意完整性閘門(issue #14):`markdown.py` 機械掃描 Markdown 的端點宣告 / 參數表 / 範例區塊,`collect.py` 依 manifest 讀取來源,`gate.py` 比對擷取 JSON 並在來源已證實存在的欄位或範例缺席時 fail closed,`deferral.py` 拒絕「需進一步擷取」這類佔位答案 |
 | `loop_apidoc/extraction/` | agent 擷取共用的 models 與工具(models、stages、questions、store、jsonblock) |
 | `loop_apidoc/plan/` | 規格化計畫建構與來源比對分類 |
@@ -675,7 +808,7 @@ uv run ruff check .
 | `loop_apidoc/source_risk/` | agent 讀來源前，對 manifest 綁定的 UTF-8 Markdown/HTML/OpenAPI 文字做確定性檢查；固定 no-payload finding、1,000 筆報告上限與 fail-closed truncation、版本化 schema/rules、bounded read、穩定來源綁定、已驗證 report loader 與 `source-risk-report.{json,zh-TW.md}` |
 | `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；要求並嵌入已驗證的 source-risk audit，通過報告可隨 run-dir 稽核保存 |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
-| `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset、candidate 匯入與 asset 核准 |
+| `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset 與 candidate；normative assets 保持 immutable，新 asset 先記錄 supersession，成功後 pointer 才前進，不改寫舊 asset。Feedback case 保留一次綁定的 decision，核准會建立另一份 immutable Effective release。全域 `current` 維持 normative；Effective current 綁定 exact scope／time，pointer 綁定完整 current asset 與三份 artifact digest，successor ID／digest pair 形成逐節驗證的 immutable hash chain，歷史竄改一律 fail closed |
 | `loop_apidoc/review/` | 本機單使用者 review 工作台：自動匯入 candidate、以 current/baseline 比對、保存結構化 handoff，並在人工明確核准後交由 Foundry 更新 current |
 
 ---

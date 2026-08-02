@@ -4,6 +4,7 @@
     "README.md",
     "README.en.md",
     "CONTRIBUTING.md",
+    "CONTEXT.md",
     "AGENTS.md",
     "CLAUDE.md",
     "docs/**/*.md"

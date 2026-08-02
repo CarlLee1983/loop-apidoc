@@ -52,6 +52,11 @@ signal for retained claims, but they neither replace original snapshots nor
 qualify for strict-local. `--strict-local` and `--sanitized-fixtures` are
 mutually exclusive.
 
+Implementation-backed conformance benchmarks are another distinct assurance lane. They
+must report the exact Applicability Envelope, observation time, runner/suite version,
+material-claim coverage, and open discrepancies. They do not increase documentary
+grounding coverage and never count as source-backed or strict-local passes.
+
 ## Deep local benchmark revalidation (when source snapshots are available)
 
 The benchmark *case* assertions in `tests/test_benchmarks.py`
@@ -102,6 +107,86 @@ Generate one representative run and eyeball the products (validation PASS does
 - [ ] Review `THIRD_PARTY_NOTICES.md` whenever implementation or design is adapted from another
   project; keep the upstream URL/revision, copyright, license text, and README/design attribution
   accurate.
+
+When implementation-feedback or Effective Contract behavior changes:
+
+- [ ] Confirm supplier sources remain the sole authority for normative/provider-documented
+  claims; `confirms` and `contradicts` never alter documentary support relationships.
+- [ ] Run the public `feedback assess` seam against conforming, contradictory, inconclusive,
+  tampered, stale-base, unknown-claim, and scope-mismatched bundles. Confirm exit `0`/`1`/`2`,
+  byte-stable reports, no network access, and rejection of output inside `.foundry`.
+- [ ] Run `feedback propose`, `submit`, `review`, `approve`, `compose`, `current`, and
+  `provider-erratum` at their public CLI seams. Confirm documented required flags, outputs,
+  and exit `0`/`1`/`2` semantics; dry-run/handoff output must stay outside `.foundry`, and no
+  feedback command may perform provider network I/O.
+- [ ] Confirm proposal `--at` cannot precede the Observation Bundle's `observed_until`;
+  non-approval review `--at` cannot precede observation completion and, when a proposal exists,
+  cannot precede `proposal.created_at`.
+- [ ] Confirm `submit` creates an explicit immutable `candidate` case with write-once inputs;
+  `feedback review` accepts cases with or without proposals and records one non-approval
+  decision using required reviewer identity/version, timezone-aware `--at`, disposition
+  `rejected|needs_evidence`, and a corrective route other than `closed_no_change` or
+  `amendment_proposal`; approval remains a separate independent-human stage that requires a
+  proposal, appends write-once decision/amendment records, and creates a separate immutable
+  exact-scope Effective release.
+- [ ] Exercise all eight deterministic feedback routes: confirmed-only → closed; ordinary
+  inconclusive → needs evidence; high-risk contradiction → provider clarification;
+  harness/fixture → implementation correction; out-of-scope and DNS/proxy/gateway →
+  environment correction; safe contradiction without documentary evidence → extraction
+  correction; repeated network/timeout/rate-limit → provider-runtime regression review; safe
+  grounded contradiction → amendment proposal.
+- [ ] Confirm only confirms/contradicts count as assessed claims; inconclusive/out-of-scope
+  targets remain untested/open, and unapplied contradictions increment
+  `unresolved_contradiction_count`.
+- [ ] Confirm observation semantic allowlisting: status/success binds the selected operation's
+  response-status path; response field/type binds a matching name/type path in that operation's
+  response-referenced schema. Cross-operation and mismatched paths must fail closed.
+- [ ] Confirm credentials, cookies, tokens, secrets, and PII are absent from persisted fixtures
+  and feedback cases. The deterministic persistence gate must reject sensitive field names and
+  obvious email, phone, national-ID, SSN, passport, and Luhn-valid payment-card values; low-entropy secrets and PII must be omitted rather
+  than hashed.
+- [ ] Confirm the global current pointer remains normative. Effective selection must require an
+  exact deployment/scope, reject conflicting active amendments, exclude expired/inapplicable
+  amendments, and retain per-value authority plus full evidence/approval lineage.
+- [ ] Confirm same-target active amendment conflicts fail closed unless explicit same-scope
+  `--supersedes-amendment` preserves prior lineage. Confirm new normative/Effective releases
+  record supersession and advance their pointer last without rewriting prior asset bytes.
+- [ ] Confirm proposal and Effective composition bind the complete Normative release digest
+  (contract + documentary fragments + support relationships), and reject a change to any one
+  of those authority-bearing inputs.
+- [ ] Confirm `feedback current` requires timezone-aware `--at`, rejects query times before
+  approval/composition, expired assets, bases that are no longer normative current, and stale
+  pointer/asset bindings. The pointer's `effective_asset_digest` must bind the complete
+  strict-validated canonical EffectiveAsset, including all declared fields; unknown fields must
+  fail closed. Asset/pointer records must also independently digest-bind, and current
+  must bound, parse, digest-check, and lineage-check, `effective-contract.json`,
+  `compatibility-amendment.json`, and `provenance.json`. Successful JSON must expose
+  `valid_until`, `open_discrepancy_count`, `stale_amendment_count`,
+  `untested_material_claim_count`, and
+  `unresolved_contradiction_count`.
+- [ ] Confirm governed feedback/Effective JSON rejects unknown fields, current accepts only
+  `APPROVED`, and it cross-validates Effective Contract IDs/counts/validity/amendment IDs,
+  approval actor/time, and provenance approval/assessment/bundle bindings.
+- [ ] Confirm `stale_amendment_count` is pointer-visible and digest-bound; verifiable
+  release/contract/source/policy/approval-time drift is stale, while expiry and inapplicability
+  remain separate. Free-text revalidation triggers must not imply automatic execution without an
+  external trigger-signal contract.
+- [ ] Confirm observation/routing policy remains pure in `core/conformance_policy.py`, and all
+  governed Effective lineage traversal uses `foundry.query` as its single read-side I/O.
+- [ ] Confirm every Effective successor provides `supersedes` together with
+  `supersedes_asset_digest`. Approval and user-facing lineage traversal must start with the same
+  bound current-head read used by `feedback current`, then verify every predecessor asset digest
+  and amendment artifact digest before following the next link. Explicitly superseding an
+  expired lineage with a newly reviewed amendment may recover it; any historical asset metadata,
+  amendment, or supersession tampering must fail before traversal and never contaminate the next
+  approval/composition.
+- [ ] Confirm a formal Provider Erratum re-enters source-risk → source-quality → extraction →
+  verification → assembly → review → Foundry approval; no empirical shortcut may update the
+  normative release.
+- [ ] Review both language versions of `docs/index*`, `docs/introduction*`,
+  `docs/onboarding*`, `docs/operator-manual*`, and `docs/architecture-manual*`, plus both
+  READMEs, architecture, design decisions, roadmap, context/glossary, repository guidance,
+  and the accepted ADR. Never describe bounded verification as universal “100% truth.”
 
 ## Completing the release publication
 

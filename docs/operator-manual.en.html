@@ -118,7 +118,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <li><strong>Source provenance data</strong> (<code>provenance.json</code>)</li>
 <li><strong>Validation and gap report</strong> (<code>validation/report.{json,md}</code>)</li>
 </ul>
-<p>Core principle: <strong>the source documents are the only source of truth</strong>. Anything a source does not state is never inferred; when required information is missing, validation fails and lists the gaps explicitly rather than filling them with conventions.</p>
+<p>Core principle: <strong>supplier sources are the sole authority for normative, provider-documented claims</strong>. Anything a source does not state is never inferred; when required information is missing, validation fails and lists the gaps explicitly rather than filling them with conventions. Implementation conformance is a separate empirical, exact-scope axis.</p>
 <hr />
 <h2 id="_1">How it works</h2>
 <p>The extraction engine is <strong>the current coding agent itself</strong>. Before any agent reads source content, the operator normalizes raw binary inputs, builds the manifest, and runs the deterministic <code>inspect-source-risk</code> gate. Only after that report passes does a Claude Code plugin or OpenAI Codex CLI session follow <code>skills/loop-apidoc/SKILL.md</code> and extract via a <strong>read-only subagent fan-out</strong> (each subagent only reads files and searches, returning JSON without writing files); the orchestrating agent writes the results into <code>inventory.json</code> + <code>endpoints/*.json</code>, then calls the deterministic CLI <code>assemble</code> to run the back half of plan → generate → validate.</p>
@@ -281,6 +281,67 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 <pre><code class="language-bash">uv run loop-apidoc evaluate --baseline ./baseline-replay.json --candidate ./candidate-replay.json --output ./evaluation [--json]
 </code></pre>
 <p>Compares two persisted <code>ReplayReport</code> JSON files for the same case and version, writing <code>evaluation-report.{json,md}</code>. It reports candidate-minus-baseline deltas for every quality metric plus cost and latency; missing measurements remain <code>null</code>. This command produces an immutable evaluation artifact only: it never assembles, imports to Foundry, or approves a contract. Exit codes: <code>0</code> = complete, <code>2</code> = bad input or mismatched case version.</p>
+<h3 id="feedback-assess"><code>feedback assess</code> — compare passive observations with an approved Normative Contract</h3>
+<pre><code class="language-bash">uv run loop-apidoc feedback assess \
+  --project ./my-api --docset payment --asset &lt;asset-id&gt; \
+  --bundle ./feedback-bundle.json --output ./feedback-assessment
+</code></pre>
+<p>Reads one approved Foundry asset and one normalized Observation Bundle, rejects sensitive fields or values before creating the output directory, validates the exact base/contract digests, policy and redaction versions, operation and material-claim paths, replay lineage, attempts, evidence digests, and complete Applicability Envelope, then writes deterministic <code>feedback-assessment.{json,md}</code>. Observation kinds are a semantic allowlist: status/success must bind the same operation's <code>/responses/&lt;status&gt;/status_code</code>, while response field/type must bind a matching <code>/fields/.../name</code> or <code>/fields/.../type</code> in a response-referenced schema; mismatches fail closed. This pure policy lives in <code>core/conformance_policy.py</code>. It performs no network I/O and <code>--output</code> must remain outside <code>.foundry</code>. Exit <code>0</code> = closed/no change, <code>1</code> = valid discrepancy, inconclusive result, or review subject, <code>2</code> = input/integrity/privacy error.</p>
+<p>The relationship (<code>confirms</code>, <code>contradicts</code>, <code>inconclusive</code>, or <code>out_of_scope</code>) is an implementation-conformance result, never documentary support. Only confirms/contradicts count as assessed material claims; inconclusive/out-of-scope targets remain untested and open. Deterministic routing is exhaustive: confirmed-only → <code>closed_no_change</code>; other inconclusive → <code>needs_evidence</code>; high-risk contradiction → <code>provider_clarification</code>; harness/fixture failure → <code>implementation_correction</code>; out-of-scope or DNS/proxy/gateway failure → <code>environment_configuration_correction</code>; policy-safe contradiction without documentary evidence → <code>extraction_correction</code>; repeated network/timeout/rate-limit failure → <code>provider_runtime_regression_review</code>; policy-safe grounded contradiction → <code>amendment_proposal</code>.</p>
+<p>A reviewed Compatibility Amendment is expiring and exact-scope. An Effective Contract composes one immutable normative release with applicable active amendments and preserves authority lineage per value; the global <code>current</code> remains normative. Conflicts, expiry, drift, open discrepancies, untested material claims, and <code>unresolved_contradiction_count</code> stay visible. “Fully verified” always names the exact envelope, time, suite version, and coverage—never universal 100% truth.</p>
+<h4 id="feedback-propose"><code>feedback propose</code> — create reviewable amendment proposals</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback propose \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  --at 2026-08-02T10:00:00+08:00 --output ./feedback-proposals
+</code></pre>
+<p>Reads an assessment and writes <code>amendment-proposals.{json,md}</code> plus one <code>&lt;proposal-id&gt;.json</code> per proposed amendment. Every proposal carries the digest of the complete Normative release—contract plus documentary fragments and support relationships—so later approval fails if any authority-bearing input changed. The timezone-aware <code>--at</code> is required, must not precede the assessment Applicability Envelope's <code>observed_until</code>, and <code>--output</code> must stay outside every <code>.foundry</code> directory. Exit <code>0</code> = one or more proposals, <code>1</code> = no proposal warranted, <code>2</code> = bad input or write failure. This step proposes only; it does not persist a case or publish an Effective Contract.</p>
+<h4 id="feedback-submit"><code>feedback submit</code> — persist the immutable candidate case stage</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback submit \
+  --project ./my-api --docset payment \
+  --bundle ./feedback-bundle.json \
+  --assessment ./feedback-assessment/feedback-assessment.json \
+  [--proposal ./feedback-proposals/&lt;proposal-id&gt;.json]
+</code></pre>
+<p>Stores the digest-bound bundle, assessment, optional proposal, and case manifest with explicit status <code>candidate</code> under <code>.foundry/api/docsets/&lt;docset&gt;/feedback/cases/&lt;case-id&gt;/</code>. These inputs are write-once. Before persistence, a deterministic privacy gate rejects sensitive field names and obvious email, phone, national-ID, SSN, passport, and Luhn-valid payment-card values; low-entropy PII must be omitted rather than retained as a hash. No current pointer changes. A case submitted without <code>--proposal</code> remains auditable but cannot be approved. Exit <code>0</code> = persisted candidate, <code>2</code> = input, integrity, privacy/policy, collision, or I/O failure.</p>
+<h4 id="feedback-review"><code>feedback review</code> — record one non-approval decision</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback review \
+  --project ./my-api --docset payment --case &lt;case-id&gt; \
+  --reviewed-by reviewer-001 --reviewer-version 1 \
+  --at 2026-08-02T10:30:00+08:00 \
+  --disposition needs_evidence --route provider_clarification \
+  [--rationale "..."]
+</code></pre>
+<p>Works for an immutable candidate with or without a proposal and records one write-once non-approval decision. The timezone-aware <code>--at</code> and all identity, disposition, and route flags shown above are required. It must not precede observation completion and, when the case has a proposal, must not precede <code>proposal.created_at</code>. <code>--disposition</code> must be <code>rejected</code> or <code>needs_evidence</code>; <code>--route</code> must be one of the deterministic corrective routes and cannot be <code>closed_no_change</code> or <code>amendment_proposal</code>. It revalidates the persisted assessment and all case bindings, applies the same deterministic privacy gate, does not publish an amendment or Effective asset, and cannot replace an existing different decision. Exit <code>0</code> = decision recorded (or identical decision already present), <code>2</code> = invalid/stale or temporally impossible input, forbidden route/disposition, privacy failure, prior different decision, or I/O failure.</p>
+<h4 id="feedback-approve"><code>feedback approve</code> — approve an expiring exact-scope amendment</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback approve \
+  --project ./my-api --docset payment --case &lt;case-id&gt; \
+  --approved-by approver-001 --approver-version 1 \
+  --at 2026-08-02T10:30:00+08:00 \
+  --expires-at 2026-09-02T10:30:00+08:00 \
+  [--rationale "..."] [--revalidation-trigger trigger ...] \
+  [--supersedes-amendment &lt;amendment-id&gt;]
+</code></pre>
+<p>This is the separate immutable approved-release stage. A named independent human approves the candidate proposal; the producer or runner cannot self-approve. Approval requires timezone-aware decision and expiry timestamps, appends the write-once decision and amendment, derives the Effective Contract, publishes the immutable matching scope-specific Effective asset/current pointer, and leaves global normative <code>current</code> unchanged. <code>--revalidation-trigger</code> may be repeated, but these free-text values are review declarations only; no external trigger-signal contract exists, so they do not schedule automatic execution. Same-target active amendment conflicts fail closed unless <code>--supersedes-amendment</code> explicitly links the same-scope amendment being replaced; prior lineage is then included in composition and recorded. Approval lineage starts with the same bound integrity read used by <code>current</code>: the pointer's <code>effective_asset_digest</code> binds the complete strict-validated canonical EffectiveAsset including all declared fields, so unknown fields fail closed. Every successor pairs <code>supersedes</code> with <code>supersedes_asset_digest</code> to form an immutable hash chain. Governed traversal verifies every predecessor asset digest and amendment artifact digest. A new reviewed amendment may recover expired lineage, but historical asset metadata/amendment/supersession tampering fails before composition and cannot be laundered. Exit <code>0</code> = approved Effective release published for that exact scope, <code>2</code> = rejected input, independence/integrity/privacy failure, conflict, or I/O failure.</p>
+<h4 id="feedback-compose"><code>feedback compose</code> — preview exact-target composition without publishing</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback compose \
+  --project ./my-api --docset payment --asset &lt;asset-id&gt; \
+  --target ./target-envelope.json \
+  --amendment ./amendment-a.json [--amendment ./amendment-b.json] \
+  --at 2026-08-02T10:30:00+08:00 --output ./effective-preview
+</code></pre>
+<p>Deterministically composes one normative release and the active amendments matching the exact target, then writes <code>effective-contract.{json,md}</code> outside <code>.foundry</code>. Composition verifies each amendment against the complete Normative-release digest (contract + documentary fragments + support relationships), not only the projected contract digest. It does not create an asset or current pointer. Exit <code>0</code> = no open discrepancy, <code>1</code> = composition is valid but still has open discrepancies, <code>2</code> = input/integrity/composition failure.</p>
+<h4 id="feedback-current"><code>feedback current</code> — resolve the current Effective asset for one exact target</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback current \
+  --project ./my-api --docset payment --target ./target-envelope.json \
+  --at 2026-08-02T11:00:00+08:00
+</code></pre>
+<p>Requires a timezone-aware <code>--at</code> and prints the exact-scope current Effective asset as JSON only while it is effective at that time. Governed models reject unknown fields; lookup accepts only <code>APPROVED</code> and cross-validates Effective Contract identity, applied amendment IDs, validity/counts, approval actor/time, and provenance approval/assessment/bundle bindings. It rejects a query time earlier than approval/composition (<em>not yet effective</em>), an expired release, a release whose base asset is no longer global normative <code>current</code>, and any stale pointer or bounded artifact binding. The pointer's <code>effective_asset_digest</code> verifies the complete strict-validated canonical EffectiveAsset including all declared fields. Asset/pointer records also bind <code>effective-contract.json</code>, <code>compatibility-amendment.json</code>, and <code>provenance.json</code>. Lookup bounds, parses, digest-checks, and cross-checks these bindings. <code>foundry.query</code> is the single read-side I/O for governed lineage traversal, which follows the same <code>supersedes</code>/<code>supersedes_asset_digest</code> hash chain and verifies every predecessor asset and amendment digest. A successful result exposes <code>valid_until</code>, <code>open_discrepancy_count</code>, <code>stale_amendment_count</code>, <code>untested_material_claim_count</code>, and <code>unresolved_contradiction_count</code>. Stale means verifiable release/contract/source/policy/approval-time drift; expiry and inapplicability remain separate. It does not fall back to or replace global normative <code>current</code>. Exit <code>0</code> = valid asset resolved, <code>2</code> = malformed target/time, not-yet-effective or expired asset, stale base/digest/artifact/lineage, integrity error, or no matching scope-specific pointer.</p>
+<h4 id="feedback-provider-erratum"><code>feedback provider-erratum</code> — prepare a non-mutating normative-pipeline handoff</h4>
+<pre><code class="language-bash">uv run loop-apidoc feedback provider-erratum \
+  --metadata ./provider-erratum.json --artifact ./provider-erratum.pdf \
+  --output ./provider-erratum-handoff
+</code></pre>
+<p>Verifies the local metadata/artifact digest binding and writes <code>provider-erratum-handoff.{json,md}</code> outside <code>.foundry</code>. The handoff orders: register supplemental source → acquire/preprocess the immutable readable package → manifest and pre-agent source-risk → agent quality review and <code>assess-sources</code> → extract, verify, and assemble → human review/import/approval of a new Normative release → reassess feedback against that new base. The command does not execute those stages or mutate Foundry. Exit <code>0</code> = verified handoff written, <code>2</code> = input, digest, path, or write failure.</p>
 <h3 id="diff-run"><code>diff</code> — compare the version difference between two runs</h3>
 <pre><code class="language-bash">uv run loop-apidoc diff --base ./output/&lt;old-run&gt; --head ./output/&lt;new-run&gt;
 </code></pre>
@@ -288,7 +349,7 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 <h3 id="foundry-cli"><code>foundry</code> — project-local asset governance for an API project</h3>
 <pre><code class="language-bash">uv run loop-apidoc foundry [init|import|approve|list|current] --help
 </code></pre>
-<p>Manages the project-local <code>.foundry/api/</code> asset layer: import a completed run as a docset candidate (<code>import</code>), approve it into a versioned, self-contained official asset (<code>approve</code>, with the prior version auto-retired), and use a deterministic <code>current</code> pointer so downstream always uses the latest approved version (<code>current</code> / <code>list</code>).</p>
+<p>Manages the project-local <code>.foundry/api/</code> asset layer: import a completed run as a docset candidate (<code>import</code>), approve it into a versioned, self-contained normative asset (<code>approve</code>), and use deterministic <code>current</code> / <code>list</code> reads. A new asset records <code>supersedes</code> and the current pointer advances only after publication; the prior asset's bytes are never rewritten. This one global <code>current</code> is always normative; Effective Contract selection is deployment/scope-specific and never replaces it.</p>
 <h3 id="review-workbench"><code>review</code> — local comparison, handoff, and human approval</h3>
 <pre><code class="language-bash">uv run loop-apidoc review --project ./my-api --docset payment --run ./output/&lt;run-id&gt;
 </code></pre>
@@ -396,6 +457,7 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 </code></pre>
 <p>Run this only on a machine holding all 13 original, dated source snapshots. The preflight rejects any required <code>sources/</code> directory that is missing or empty, then runs the source-backed benchmark module. Any pytest skip fails the gate. Passing means required and committed inventories match, every source-backed assertion executed, and the run had zero skips.</p>
 <p><code>--strict-local</code> never accepts <code>sanitized_sources/</code> as original evidence and cannot be combined with <code>--sanitized-fixtures</code>, preventing the two assurance claims from being confused.</p>
+<p><strong>Implementation-backed conformance is a separate lane.</strong> Report its exact Applicability Envelope, observation time, suite version, claim coverage, and open discrepancies. It never counts as documentary grounding or a source-backed strict-local pass.</p>
 <p>If a historical source cannot be obtained lawfully and reproducibly, record the missing snapshot, complete deterministic CI-safe checks, and perform a legitimate source-backed spot-check for the change. Never substitute newer documentation, synthetic fixtures, or an upstream error page, and never claim strict-local passed.</p>
 <hr />
 <h2 id="_9">Development</h2>
@@ -428,6 +490,14 @@ uv run ruff check .
 <tr>
 <td><code>loop_apidoc/docx_*.py</code></td>
 <td><code>docx_normalization.py</code> is the stable facade, package-wide fail-closed OOXML validation/rendering stays pure, and <code>docx_publish.py</code> owns staged provenance publication with rollback on reported write failures</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/core/conformance.py</code> + <code>domain/conformance.py</code></td>
+<td>pure ContractConformance assessment, full-Normative-release-digest-bound proposal, and exact-scope composition plus immutable observation/amendment/authority models</td>
+</tr>
+<tr>
+<td><code>loop_apidoc/feedback/</code></td>
+<td>passive normalized-JSON assessment/proposal/composition across all eight deterministic routes, governed submit/write-once non-approval review/approval adapters, timezone-aware exact-target Effective lookup that verifies all three digest-bound artifacts and exposes open/untested/unresolved counters, and Provider Erratum handoff; dry-run outputs remain outside <code>.foundry</code>, governed writes go through Foundry, and no command performs provider network I/O</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/extraction/</code></td>
@@ -487,7 +557,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/foundry/</code></td>
-<td>project-local <code>.foundry/api/</code> asset governance: docsets, candidate import and asset approval, maintaining the <code>current</code> pointer and <code>review.state</code></td>
+<td>project-local <code>.foundry/api/</code> governance: normative assets are immutable and feedback cases retain one bound decision; Effective current pointers bind the complete strict-validated canonical asset including all declared fields plus three artifact digests, while successor ID/digest pairs form a per-hop verified immutable hash chain that rejects unknown fields and historical tampering; global <code>current</code> remains normative</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/review/</code></td>

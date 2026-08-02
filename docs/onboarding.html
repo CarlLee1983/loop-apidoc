@@ -574,7 +574,7 @@
       <aside class="hero-summary" aria-label="閱讀重點">
         <h2>讀完要掌握</h2>
         <ul>
-          <li>來源文件是唯一真實來源，缺漏就標記缺漏。</li>
+          <li>供應商來源是 normative claim 的唯一權威；實作 conformance 是另一條 scoped 軸。</li>
           <li>agent 只負責擷取，CLI 後段負責可重現組裝。</li>
           <li>每次 run 都留下驗證、評分、差異與交接證據。</li>
         </ul>
@@ -612,9 +612,10 @@
   <div class="wrap">
     <div class="invariant">
       <span class="tag">不可協商的核心不變式</span>
-      <h2>來源文件是唯一的真實來源。</h2>
+      <h2>供應商來源是「供應商文件明載內容」的唯一權威。</h2>
       <p>來源沒寫的東西，一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
       <p>驗證遇到缺漏會大聲失敗（fail loudly），而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策，都是為了守住這條線。</p>
+      <p>被動 Implementation Observation 不會削弱這條規則。它只回報精確 Applicability Envelope 內的經驗行為，使用獨立的 <code>confirms</code>／<code>contradicts</code>／<code>inconclusive</code>／<code>out_of_scope</code> 軸；任何結果都不會變成供應商來源支持。</p>
       <p>反過來說，<b>「來源沒寫」也必須拿得出證據</b>：<code>source_facts/</code> 會機械掃描 Markdown 來源的參數表與範例區塊，來源明明寫了、擷取卻空著就擋下；「之後再擷取」「需進一步擷取」這類佔位答案同樣擋下。要主張某欄位來源真的沒寫，就在 <code>missing</code> 裡具名——所以這道閘只逼出具名缺口，不會逼出捏造。</p>
       <p>但要清楚它的界線：掃描只認得<b>結構良好的 Markdown</b>（標題、GFM 表格、圍籬區塊）。來源若被壓成一行行超長文字，掃出零筆事實，這道閘等於沒作用。<b>閘門乾淨通過 ≠ 擷取完整</b>——它擋掉的是「機械證明得了的遺漏」，其餘仍要人工核對。</p>
       <span class="pill">
@@ -673,6 +674,23 @@
         <p>OpenAPI 與固定產生的 integration-contract 是機讀契約；後者保留 typed transport、金額方向、冪等、線路幣別與跨端點 operational 規則，衍生的 Postman、SDK hints、任務清單與 examples 幫下一位工程師接手。</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===================== IMPLEMENTATION CONFORMANCE ===================== -->
+<section id="conformance">
+  <div class="wrap">
+    <span class="eyebrow">第五個 loop · 權威分離</span>
+    <h2 class="section-title">回饋可以改善 exact-scope operational view，但不會改寫供應商文件</h2>
+    <p class="section-lead"><code>feedback</code> 命令群組會評估被動 normalized observations、提出並保存 review case、要求獨立人工核准有期限 amendment，並解析 exact-scope Effective Contract。assessment 與 preview 不做 network I/O，輸出寫在 <code>.foundry</code> 外；只有明確的 submit／review／approve 會改動受治理狀態。</p>
+    <div class="value-grid">
+      <div class="value"><h3>Normative Contract</h3><span class="file">供應商來源權威</span><p>不可變的已核准版本，記錄供應商文件明載內容。Foundry 全域 <code>current</code> 永遠指向此軸。</p></div>
+      <div class="value"><h3>Implementation Observation</h3><span class="file">empirical · exact envelope</span><p>經消毒、digest-bound 的行為證據，記錄 producer、runner、replay、attempt、時間、環境、region、identity 與設定 scope。</p></div>
+      <div class="value"><h3>Compatibility Amendment</h3><span class="file">reviewed · expiring · scoped</span><p>安全、可重現的差異可以提出，但必須由獨立人工核准；proposal 綁定完整 Normative release digest：contract、documentary fragments 與 support relationships。</p></div>
+      <div class="value"><h3>Effective Contract</h3><span class="file">deterministic composition</span><p>一份 normative release 加上精確 target 適用的 active amendments；composition 會重驗完整 release digest，每個值都保留 normative 或 observed-override authority 及 lineage。</p></div>
+    </div>
+    <div class="arch-note"><b>Provider Erratum：</b>正式供應商更正是補充來源，必須重走 source-risk → source-quality → extraction → verification → assembly → review → Foundry approval，不能走 Compatibility Amendment 捷徑。</div>
+    <div class="arch-note"><b>Bounded assurance：</b>「fully verified」只代表這個精確 Applicability Envelope、這個時間、這個 suite version 與已宣告 material-claim coverage；有限測試無法證明普遍、永久的 100% 真實。</div>
   </div>
 </section>
 
@@ -893,6 +911,10 @@
         <div><p>比較同案例版本的兩份 runtime replay JSON，產出品質、成本與延遲 delta 的 immutable 報告；不會組裝、匯入或核准契約。</p></div>
       </div>
       <div class="cmd">
+        <span class="name"><span class="kw">feedback</span></span>
+        <div><p>實作 conformance 命令群組：<code class="inline">assess</code>（0 結案、1 可審查／未解、2 錯誤）、<code class="inline">propose</code>（0 有提案、1 無提案、2 錯誤）、<code class="inline">submit</code>（immutable <code class="inline">candidate</code> case stage）、<code class="inline">review</code>（有／無 proposal 都可寫入一次 non-approval decision 與 corrective route）、<code class="inline">approve</code>（分開的 immutable approved Effective release；獨立人工、expiry 必填、exact-scope 發布）、<code class="inline">compose</code>（不發布的預覽）、<code class="inline">current</code>（要求 timezone-aware <code class="inline">--at</code> 的 exact-target Effective 查詢），以及 <code class="inline">provider-erratum</code>（不改動狀態、交棒至完整 normative source pipeline）。Current lookup 會拒絕 not-yet-effective／expired asset、非 current normative base、stale pointer／artifact digest，並揭露 validity、open／untested、stale amendment 與 unresolved contradiction counters。同 target 衝突會 fail closed，除非明確記錄同 scope supersession。Foundry 全域 <code class="inline">current</code> 維持 normative。</p></div>
+      </div>
+      <div class="cmd">
         <span class="name"><span class="kw">governance-scan</span></span>
         <div><p>把 freshness watchlist 的批次結果轉成受控的人工處理觸發：變動來源為 <code class="inline">review_required</code>，無法判定或讀取錯誤為 <code class="inline">attention_required</code>。選填 <code class="inline">--snapshot-dir</code> 僅保存同次掃描中已變動的原始 bytes，作為不可覆寫、內容定址的 evidence pack；不會重新擷取、生成、匯入 Foundry 或核准契約。</p></div>
       </div>
@@ -1101,6 +1123,9 @@
     <div class="arch-note">
       <b>補充 sanitized-fixture lane：</b> <code class="inline">scripts/quality_gate.py --sanitized-fixtures</code> 可在 CI 重播經審核、保留原始行號的 exact-evidence 片段。目前 pilot 是 <code class="inline">rsg-game-transfer-wallet</code>。它在四層之外，只證明 retained claims 的 fixture-backed parity；不能替代原始 <code class="inline">sources/</code>，也不能稱為 source-backed 或 strict-local PASS。
     </div>
+    <div class="arch-note">
+      <b>Implementation-backed conformance lane：</b>runtime observation 會以 Applicability Envelope、時間、suite version 與 open discrepancy 分開回報，不能算 documentary grounding，也不能算 source-backed strict-local PASS。
+    </div>
   </div>
 </section>
 
@@ -1169,6 +1194,8 @@
           <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(typed PDF／DOCX→markdown 編排)</td></tr>
           <tr class="io"><td><code>docx_*.py</code></td><td><code>docx_normalization.py</code> 是穩定 facade；package-wide fail-closed OOXML 驗證／rendering 維持 pure，<code>docx_publish.py</code> 負責分段暫存且於可回報寫入失敗時回滾的 provenance publication</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
+          <tr><td><code>core/conformance.py</code> + <code>domain/conformance.py</code></td><td>純 ContractConformance assess/propose/compose 邊界，以及不可變的 authority、observation、amendment 與 Effective Contract models。</td></tr>
+          <tr class="io"><td><code>feedback/</code></td><td>normalized-JSON 載入、綁定完整 Normative-release digest 的 assessment／proposal／composition、治理 workflow adapters、timezone-aware exact-target 查詢與 Provider Erratum handoff。Current lookup 拒絕 not-yet-effective／expired asset 與 stale base／pointer／artifact binding，並揭露 bounded validity／discrepancy counters。dry-run 輸出位於 <code>.foundry</code> 外，submit／review／approve 持久化委派給 Foundry，所有命令都不做 provider network I/O。</td></tr>
           <tr><td><code>extraction/</code></td><td>共用 models + 工具(stages / questions / store / jsonblock)</td></tr>
           <tr><td><code>plan/</code></td><td>規格化計畫 + 來源比對分類</td></tr>
           <tr class="io"><td><code>preparation/</code></td><td>產生前就緒度評估 + preparation-report(report.py 寫檔)</td></tr>
@@ -1183,12 +1210,12 @@
           <tr><td><code>source_facts/</code></td><td>來源事實盤點:markdown.py 機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,collect.py 讀取 manifest 指名的來源(本套件唯一讀檔出口),gate.py 比對擷取 JSON(並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,讓共用型別算去重複而非遺漏)、deferral.py 攔截佔位式延後答案</td></tr>
           <tr><td><code>gitbook_llms.py</code> / <code>markdown_drafts/</code> / <code>extraction_scaffold/</code></td><td>GitBook 工程化取源只抓一次 <code>llms.txt</code>，安全快取範圍內 Markdown 與 provenance/coverage；再從 manifest 指名 Markdown 產生具行號的非權威端點／表格／範例草稿，並可投影為 extraction-shaped scaffold。scaffold 必須複製、覆核、補齊至 workdir；不能取代 <code>source_facts/</code>、最終擷取或直接作為 <code>--extraction</code>。</td></tr>
           <tr class="io"><td><code>url_catalog.py</code> / <code>url_corpus.py</code></td><td>受限 URL 導航索引、頁面快取與關聯候選,讓 agent 以本機證據讀取網頁文件(寫檔)</td></tr>
-          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理:docset、candidate 匯入與 asset 核准,維護 <code>current</code> 指標與 <code>review.state</code>(寫檔)</td></tr>
+          <tr class="io"><td><code>foundry/</code></td><td>專案本地資產治理：normative assets 保持 immutable，新 asset 記錄 supersession 後 pointer 才前進。Feedback inputs 是 write-once candidate stage；綁定的 decision／amendment records 為 append-only，核准會建立另一份 immutable Effective release。全域 <code>current</code> 維持 normative；Effective selection 綁定 exact scope／time、驗證 digest，在 approval／composition 前、expiry 後或 normative-base supersession 後拒絕。</td></tr>
           <tr class="io"><td><code>review/</code></td><td>本機單使用者工作台：自動匯入 candidate、比對 current／baseline、保存結構化 handoff，人工明確核准後才透過 Foundry 更新 current(寫檔)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">agentcli/preprocess.py</code>、<code class="inline">shadow/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、<code class="inline">docx_publish.py</code>、rendered URL import、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">docx_normalization.py</code>、<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">agentcli/preprocess.py</code>、<code class="inline">shadow/report.py</code>、<code class="inline">feedback/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、<code class="inline">docx_publish.py</code>、rendered URL import、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">feedback/loader.py</code>、<code class="inline">docx_normalization.py</code>、<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
   </div>
 </section>
 
@@ -1208,6 +1235,8 @@
           <dt>preparation</dt><dd>生成前就緒度評估,在品質 loop 裡先標出阻塞與注意事項。</dd>
           <dt>score</dt><dd>完成 run-dir 的品質分數,用於 CI 或 review profile 的後段判讀。</dd>
           <dt>handoff</dt><dd>從 OpenAPI 與 integration-contract 衍生的工程交接包,不是新的契約來源。</dd>
+          <dt>Normative / Effective Contract</dt><dd>前者是已核准的供應商來源 release（contract + documentary fragments + support relationships），後者則是它與適用 amendments 的 deterministic exact-scope composition；兩者是不同的 digest-bound artifact 與 authority view。</dd>
+          <dt>Applicability Envelope</dt><dd>用來解讀一個 observation 或 amendment 的完整 provider、deployment、environment、identity、configuration、client、test-data 與 time boundary。</dd>
           <dt>fail-closed</dt><dd>遇到無法確認 / 衝突時,選擇「不輸出」而非「猜一個」。</dd>
           <dt>run-dir</dt><dd>單次執行的輸出目錄,裝著該次全部產物。</dd>
         </dl>
