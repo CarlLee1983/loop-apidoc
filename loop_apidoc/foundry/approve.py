@@ -48,6 +48,9 @@ def _build_artifacts(artifacts_dir: Path) -> AssetArtifacts:
         score=rel("score", "score.json"),
         handoff=handoff,
         review_decision=rel("review", "decision.json"),
+        core_contract=rel("core", "contract.json"),
+        core_evidence=rel("core", "evidence.json"),
+        core_relationships=rel("core", "relationships.json"),
     )
 
 
@@ -126,12 +129,6 @@ def approve_candidate(
             ),
         ),
     )
-
-    if docset.current_asset:
-        prior = store.load_asset(project_root, docset_id, docset.current_asset)
-        store.save_asset(
-            project_root, prior.model_copy(update={"status": AssetStatus.SUPERSEDED})
-        )
 
     # This is the externally consumed promotion signal. All remaining writes happen
     # before it so any earlier failure leaves the existing current pointer intact.

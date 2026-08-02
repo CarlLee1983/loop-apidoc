@@ -62,3 +62,59 @@ def asset_manifest_path(project_root: Path, docset_id: str, asset_id: str) -> Pa
 
 def asset_artifacts_dir(project_root: Path, docset_id: str, asset_id: str) -> Path:
     return asset_dir(project_root, docset_id, asset_id) / "artifacts"
+
+
+def feedback_cases_dir(project_root: Path, docset_id: str) -> Path:
+    return docset_dir(project_root, docset_id) / "feedback" / "cases"
+
+
+def feedback_case_dir(project_root: Path, docset_id: str, case_id: str) -> Path:
+    return feedback_cases_dir(project_root, docset_id) / case_id
+
+
+def feedback_case_manifest_path(
+    project_root: Path, docset_id: str, case_id: str
+) -> Path:
+    return feedback_case_dir(project_root, docset_id, case_id) / "case.json"
+
+
+def effective_scopes_dir(project_root: Path, docset_id: str) -> Path:
+    return docset_dir(project_root, docset_id) / "effective" / "scopes"
+
+
+def effective_scope_dir(project_root: Path, docset_id: str, scope_digest: str) -> Path:
+    return effective_scopes_dir(project_root, docset_id) / scope_digest
+
+
+def effective_assets_dir(project_root: Path, docset_id: str, scope_digest: str) -> Path:
+    return effective_scope_dir(project_root, docset_id, scope_digest) / "assets"
+
+
+def effective_asset_dir(
+    project_root: Path, docset_id: str, scope_digest: str, asset_id: str
+) -> Path:
+    return effective_assets_dir(project_root, docset_id, scope_digest) / asset_id
+
+
+def effective_asset_manifest_path(
+    project_root: Path, docset_id: str, scope_digest: str, asset_id: str
+) -> Path:
+    return (
+        effective_asset_dir(project_root, docset_id, scope_digest, asset_id)
+        / "asset.json"
+    )
+
+
+def effective_asset_artifacts_dir(
+    project_root: Path, docset_id: str, scope_digest: str, asset_id: str
+) -> Path:
+    return (
+        effective_asset_dir(project_root, docset_id, scope_digest, asset_id)
+        / "artifacts"
+    )
+
+
+def effective_current_path(
+    project_root: Path, docset_id: str, scope_digest: str
+) -> Path:
+    return effective_scope_dir(project_root, docset_id, scope_digest) / "current.json"

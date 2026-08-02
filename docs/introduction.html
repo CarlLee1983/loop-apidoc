@@ -1240,7 +1240,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>核准並標版</h3><p>人在工作台確認後才核准；系統把它複製成一份自足、標上版本號的正式資產,並讓舊版自動退位。尚有風險可核准，但會標示為待後續追蹤。</p></div>
+        <div><h3>核准並標版</h3><p>人在工作台確認後才核准；系統把它複製成一份自足、標上版本號的正式資產，在新 asset 的 <code>supersedes</code> lineage 記錄前一版，再前進 <code>current</code>；舊 asset bytes 永不改寫。尚有風險可核准，但會標示為待後續追蹤。</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -1249,13 +1249,29 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>永遠取用現行版</h3><p>下游只要問「現在該用哪一份?」,系統就穩定指向最新核准的版本,大家永遠對齊同一份。</p></div>
+        <div><h3>永遠取用現行 normative 版</h3><p>下游可查詢目前供應商文件明載的契約；這個全域 pointer 保持 normative，deployment-specific Effective Contract 則依精確 scope 另外選取。</p></div>
       </div>
     </div>
 
     <figure class="img-slot">
       <img src="images/foundry-asset-shelf.jpg" alt="核准、版本化的文件資產櫃,書籤指向現行版" />
     </figure>
+  </div>
+</section>
+
+<!-- ===================== IMPLEMENTATION FEEDBACK ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">實作回饋 · 權威分離</span>
+    <h2 class="section-title">供應商寫了什麼，和某個 deployment 觀察到什麼，不是同一種 claim</h2>
+    <p class="section-lead">供應商來源仍是 Normative Contract 的唯一權威。被動、正規化的觀察可以在一個精確 Applicability Envelope 內確認或挑戰 material claim，但永遠不會變成文件支持，也不會改寫已核准 base。</p>
+    <div class="steps">
+      <div class="step"><div class="num tint-teal"><span class="n">1</span></div><div><h3>不呼叫 API 也能評估</h3><p><code>feedback assess</code> 比對已核准 asset 與 normalized JSON Observation Bundle；不做 network I/O，確定性報告寫在 Foundry governed state 之外。</p></div></div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step"><div class="num tint-amber"><span class="n">2</span></div><div><h3>先提交 candidate，再分開審查或核准</h3><p><code>feedback propose</code> 準備綁定完整 Normative release digest（contract、documentary fragments、support relationships）的審查材料，<code>feedback submit</code> 保存 immutable candidate inputs。<code>feedback review</code> 可對有／無 proposal 的 case 寫入一次 non-approval decision 與 corrective route；只有獨立人工執行 <code>feedback approve</code>，才會附加 approval／amendment，並發布同 scope 下另一份 immutable、有期限的 Effective release。衝突、drift 與高風險語意都會 fail closed；明確的同 scope supersession 會保留既有 lineage。</p></div></div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step"><div class="num tint-purple"><span class="n">3</span></div><div><h3>預覽或解析一份 exact-scope view</h3><p><code>feedback compose</code> 重驗完整 release digest，只預覽、不發布。<code>feedback current --at &lt;timezone-aware ISO8601&gt;</code> 只有在 exact target 已 approved／effective、未過期、仍以 normative current 為 base 且 digest fresh 時才解析，並回傳 validity、open／untested、stale amendment 與 unresolved contradiction counters。「完整驗證」必須說明 scope、時間與 suite version，不能宣稱普遍 100% 真實。<code>feedback provider-erratum</code> 則準備交棒至完整 source pipeline。</p></div></div>
+    </div>
   </div>
 </section>
 

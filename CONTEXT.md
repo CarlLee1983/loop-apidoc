@@ -15,6 +15,41 @@ An optional vocabulary of source-stated semantics for one industry or integratio
 domain, governed by the same evidence and fail-closed rules as the core.
 _Avoid_: Core extension field, vendor special case
 
+**Normative Contract**:
+The supplier-source-grounded Canonical Contract describing what the provider states.
+Supplier sources are its sole authority.
+_Avoid_: Effective contract, observed contract
+
+**Implementation Observation**:
+Immutable empirical evidence of behavior witnessed within one declared Applicability
+Envelope; it is not supplier-source support.
+_Avoid_: Runtime truth, normative evidence
+
+**Applicability Envelope**:
+The declared provider, deployment, environment, identity, configuration, client, data,
+and time boundaries within which an Implementation Observation may be interpreted.
+_Avoid_: Global scope, universal applicability
+
+**Conformance Finding**:
+A deterministic relationship between a material Normative Contract claim and an
+Implementation Observation, reported without changing either claim's authority.
+_Avoid_: Contract correction, source finding
+
+**Provider Erratum**:
+A formal provider correction that is supplemental supplier source material and may
+change a Normative Contract only through the governed source pipeline.
+_Avoid_: Compatibility amendment, local workaround
+
+**Compatibility Amendment**:
+A reviewed, approved, expiring, and scope-bound addition or correction supported by
+reproducible Implementation Observations when no Provider Erratum exists.
+_Avoid_: Normative update, automatic patch
+
+**Effective Contract**:
+The deterministic composition of one approved Normative Contract release and the
+active Compatibility Amendments applicable to one exact target Applicability Envelope.
+_Avoid_: Mutated canonical contract, global effective truth
+
 **Payment Profile**:
 The Domain Profile for payment and wallet semantics that are not meaningful to every
 API contract. It owns Amount Direction and Line Currency Policy; contracts without

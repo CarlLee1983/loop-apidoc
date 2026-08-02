@@ -593,6 +593,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   </header>
   <p><strong>Canonical 架構：</strong><code>domain/</code> + <code>core/</code> 定義 model-independent evidence-to-contract 產品；<code>adapters/</code> 放可替換 runtime/platform 細節，<code>evaluation/</code> 與 production mutation 隔離。下方 pipeline dashboard 記錄現行 CLI 相容 adapter。</p>
   <p><strong>Domain Profile seam：</strong>Canonical Contract Core 維持領域中立；支付專屬的 amount direction 與 line-currency 值只存在一個選填 <code>PaymentProfile</code>，沒有這些語意的契約不建立 profile。v0.27 top-level collection 名稱保留為衍生的讀寫相容 view，不形成平行狀態。</p>
+  <p><strong>Authority seam：</strong>供應商來源是 Normative Contract claim 的唯一權威。被動 Implementation Observation 使用獨立 conformance 軸，且只適用精確 Applicability Envelope；永遠不會變成 documentary support。<code>ContractConformance</code> 以單一 pure interface 封裝 assessment、經審查 amendment proposal、expiry／conflict policy 與 Effective Contract composition；pure <code>core/conformance_policy.py</code> 則負責 observation 語意 allowlist 與 routing。Status／success 必須綁同一 operation 的 response-status path；response field／type 必須綁 response 所引用 schema 中相符的 field path。Proposal／composition integrity 綁定完整 Normative release digest：contract、documentary fragments、support relationships。</p>
+  <p><strong>Deterministic review：</strong>八條 Feedback route 全部可達：全數確認即 closed；一般 inconclusive 要求更多 evidence；高風險 contradiction 要求 provider clarification；harness／fixture failure 要求 implementation correction；out-of-scope 或 DNS／proxy／gateway failure 要求 environment correction；沒有 documentary evidence 的安全 contradiction 要求 extraction correction；重複 network／timeout／rate-limit failure 進 provider-runtime regression review；有 documentary grounding 的安全 contradiction 才形成 amendment proposal。只有 confirms／contradicts 計入 assessed；inconclusive／out-of-scope 維持 untested 且 open。Proposal time 不得早於 observation completion。<code>feedback review</code> 可對有／無 proposal 的 case 寫入一次 non-approval decision，corrective route 不得結案或提出 amendment，decision time 不得早於 observation completion 或既有 proposal creation。治理持久化會 deterministic 拒絕敏感欄位名稱與明顯 email／phone／national-ID／SSN／passport／Luhn-valid payment-card 值，絕不 hash 低 entropy PII。</p>
+  <p><strong>Scoped composition：</strong>Effective Contract 是一個不可變已核准 normative release，加上只匹配完整 target scope 的 active approved amendments。Foundry 全域 <code>current</code> 保持 normative；Effective selection 綁定 deployment／scope。Governed feedback／Effective JSON 拒絕未知欄位。<code>feedback current</code> 只接受 <code>APPROVED</code>，要求 timezone-aware as-of，cross-validate contract identity、amendment IDs、validity／counts、approval actor／time 與 provenance approval／assessment／bundle bindings，並拒絕 query time 早於 approval／composition、expiry、非 current base 或 stale binding。Pointer 的 <code>effective_asset_digest</code> 綁定包含所有宣告欄位、經 strict validation 後的 canonical EffectiveAsset。<code>stale_amendment_count</code> 可見且 digest-bound；stale 只指可驗證的 release／contract／source／policy／approval-time drift，expired 與 inapplicable 分開。<code>foundry.query</code> 是 lineage traversal 唯一 read-side I/O，逐節驗證 immutable successor chain 的 predecessor asset／amendment digest。自由文字 revalidation triggers 只是 review declaration，不是自動外部 signal。正式 Provider Erratum 重走完整 source pipeline。「Fully verified」永遠受 scope、時間、suite version 與 coverage 限定，不能宣稱普遍 100% 真實。</p>
 
   <div class="dashboard">
     <!-- Left Timeline Navigation -->
@@ -749,6 +752,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
           <div class="command-chip">evaluate</div>
+          <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">feedback *</div>
           <div class="command-chip">diff</div>
           <div class="command-chip">review</div>
           <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">foundry *</div>
@@ -818,9 +822,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
             <div class="module-role">機械掃描 Markdown 來源的參數表與範例，對照擷取結果攔下靜默遺漏。</div>
           </button>
+          <button type="button" class="module-card" data-module="conformance">
+            <div class="module-name">core/conformance.py + domain/conformance.py <span class="pill pure">Pure</span></div>
+            <div class="module-role">分開 documentary support 與 scoped implementation conformance，確定性 assess、propose、compose。</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="feedback">
+            <div class="module-name">feedback/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">載入被動 normalized bundle，在 governed state 外寫出 deterministic assessment；不做 network I/O。</div>
+          </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">API 專案本地資產治理，管理 docset、candidate 與 asset。</div>
+            <div class="module-role">immutable normative assets（supersession lineage 記在新 asset），以及 write-once feedback candidate inputs／一次 non-approval 或 approval decision／附加 approved Effective releases 的專案本地治理；exact-scope／time Effective read 會拒絕 not-yet-effective／expired asset，並驗證 normative base 與三份 artifact digest／lineage。</div>
           </button>
         </div>
       </div>
@@ -830,8 +842,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> 提供 28 個來源、URL evidence、風險、品質、freshness、run、<code>foundry</code> 與 <code>review</code> 工作台命令；後者只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
-      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>agentcli/preprocess.py</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_risk/report.py</code>、<code>source_quality/</code>、<code>shadow/report.py</code>、<code>docx_publish.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>docx_normalization.py</code>、<code>source_risk/inspect.py</code> 與 <code>adapters/fragments.py</code> 是 read-side I/O exit；<code>docx_validation.py</code>/<code>docx_render.py</code>、Core 與 Domain 維持 pure。
+      <code>cli.py</code> 提供來源、URL evidence、風險、品質、freshness、run、受治理的 <code>feedback</code>、<code>foundry</code> 與 <code>review</code> 工作台命令。feedback 群組含 assess、propose、submit、write-once non-approval review、approve、compose、timezone-aware exact-target current 與 Provider Erratum handoff；只有明確的 submit／review／approve 會改動受治理狀態，global current 保持 normative。Current lookup 拒絕 not-yet-effective／expired／stale／非 current-base Effective asset，驗證三份 bounded Effective artifacts，並揭露包含 unresolved contradiction 的 bounded validity／discrepancy counters。review 工作台只在 <code>127.0.0.1</code> 提供單使用者介面，自動匯入 candidate、與 current／baseline 比對、保存結構化 handoff，並只在人工明確核准後更新 normative current。它不呼叫模型，也不取代 validation。GitBook 快取與草稿 facts 仍是本機、非權威的擷取輔助。
+      <strong>檔案 I/O 出口</strong>：<code>generate/</code>、<code>run/</code>、<code>agentcli/preprocess.py</code>、<code>diff/</code>、<code>preparation/</code>、<code>score/</code>、<code>source_risk/report.py</code>、<code>source_quality/</code>、<code>feedback/report.py</code>、<code>shadow/report.py</code>、<code>docx_publish.py</code>、URL corpus 快取、<code>foundry/</code> 與透過 Foundry 寫入的 <code>review/workflow.py</code> 負責寫入。<code>feedback/loader.py</code>、<code>docx_normalization.py</code>、<code>source_risk/inspect.py</code> 與 <code>adapters/fragments.py</code> 是 read-side I/O exit；<code>core/conformance.py</code>、<code>domain/conformance.py</code>、<code>docx_validation.py</code>/<code>docx_render.py</code>、Core 與 Domain 維持 pure。Feedback commands 不做 provider network I/O。
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>：<code>assemble --architecture-mode shadow</code> 會在 legacy validation 後呼叫 compatibility-only 的 <code>shadow/</code> 套件。Pure bridge 把 manifest/plan 映成 Core evidence 與 claims，in-memory runner 只執行到 Core validation，且只有 <code>shadow/report.py</code> 會寫入觀測性的 <code>&lt;run-dir&gt;/core/</code> 產物或 <code>core/error.json</code>。Legacy validation、score、approval、Foundry、status 與退出碼仍具權威。
@@ -930,10 +942,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "Typer CLI 入口，對外暴露 28 個來源／URL evidence、agent 讀取前風險、來源品質、擷取驗證、組裝、驗證、評分、版本差異與本機 review 命令；foundry 子群組負責資產治理。",
+      description: "Typer CLI 入口，對外暴露來源／URL evidence、agent 讀取前風險、來源品質、擷取驗證、組裝、驗證、評分、版本差異、受治理的 feedback workflow 與本機 review 命令；foundry 子群組負責資產治理。",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, review, and Foundry commands",
+      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, feedback, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -1035,6 +1047,26 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",
       sideEffect: "File I/O: writes score report files; evaluation logic is pure"
+    },
+    conformance: {
+      title: "core/conformance.py + domain/conformance.py",
+      badgeClass: "pure",
+      badgeLabel: "Pure Logic",
+      description: "單一 deep ContractConformance 邊界讓 documentary support 與 implementation conformance 分離，驗證 exact scope／integrity，把 proposal／composition 綁定完整 Normative release digest（contract + fragments + relationships），只提出 policy-eligible review subject，並在不改寫 normative base 下組合 Effective Contract。",
+      seam: "ContractConformance.assess(...) / propose(...) / compose(...)",
+      inputs: "approved Normative Contract release, passive Observation Bundle, approved amendments, exact target Applicability Envelope",
+      outputs: "FeedbackAssessment, CompatibilityAmendmentProposal, EffectiveContract",
+      sideEffect: "Pure；無 filesystem、network、process、model 或 database I/O"
+    },
+    feedback: {
+      title: "feedback/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "被動 JSON adapter 以八條 deterministic route 評估 observation、提出 amendment、透過 Foundry 保存 immutable candidate case stage、對有／無 proposal 的 case 寫入一次具 corrective route 的 non-approval review、要求獨立人工核准另一個 immutable exact-scope Effective release、預覽 digest-bound composition、解析 timezone-aware exact-target Effective current，並產生不改動狀態的 Provider Erratum handoff。Current lookup 拒絕 not-yet-effective／expired asset 與非 current base，驗證 bounded effective-contract／amendment／provenance digest 與 lineage，並回傳 validity、open／untested counters 與 unresolved contradiction。同 target 衝突會 fail closed，除非明確記錄同 scope supersession；不呼叫 provider API。",
+      seam: "feedback assess / propose / submit / review / approve / compose / current / provider-erratum",
+      inputs: "approved normative release（contract + documentary fragments + relationships）、normalized bundle、assessment／proposal、exact target envelope、timezone-aware query time、approved amendments，或本機 erratum metadata／artifact",
+      outputs: ".foundry 外的 assessment／proposal／effective／handoff reports，或由 Foundry 持有的 candidate case、附加 decision／amendment 與 scope-specific approved Effective asset",
+      sideEffect: "不做 provider network I/O；dry run 寫在 .foundry 外；submit／review／approve 把治理持久化委派給 Foundry"
     },
     "source-quality": {
       title: "source_quality/",

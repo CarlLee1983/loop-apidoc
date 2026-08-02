@@ -1241,7 +1241,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4-3 6.7-7 8.5-4-1.8-7-4.5-7-8.5V6l7-3z"/><path d="M9 11.5l2 2 4-4"/></svg>
           <span class="n">2</span>
         </div>
-        <div><h3>Approve and version it</h3><p>Only a human approval in the workbench promotes it. The system copies it into a self-contained, version-numbered official asset and retires the previous version; an approval with known risks stays visibly marked for follow-up.</p></div>
+        <div><h3>Approve and version it</h3><p>Only a human approval in the workbench promotes it. The system copies it into a self-contained, version-numbered official asset, records the prior asset in the new asset's <code>supersedes</code> lineage, then advances <code>current</code>; prior asset bytes are never rewritten. An approval with known risks stays visibly marked for follow-up.</p></div>
       </div>
       <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
 
@@ -1250,13 +1250,29 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           <span class="n">3</span>
         </div>
-        <div><h3>Always use the current version</h3><p>Downstream just asks "which one should I use now?" and the system steadily points to the latest approved version, so everyone stays aligned on the same document.</p></div>
+        <div><h3>Always use the current normative version</h3><p>Downstream can ask which provider-documented contract is current. This global pointer remains normative; deployment-specific Effective Contracts are selected separately by exact scope.</p></div>
       </div>
     </div>
 
     <figure class="img-slot">
       <img src="images/foundry-asset-shelf.jpg" alt="An approved, versioned document-asset shelf with a bookmark pointing to the current version" />
     </figure>
+  </div>
+</section>
+
+<!-- ===================== IMPLEMENTATION FEEDBACK ===================== -->
+<section class="alt">
+  <div class="wrap">
+    <span class="eyebrow">IMPLEMENTATION FEEDBACK · SEPARATE AUTHORITY</span>
+    <h2 class="section-title">What the provider documents and what one deployment observes are not the same claim</h2>
+    <p class="section-lead">Supplier sources remain the sole authority for the Normative Contract. Passive normalized observations can confirm or challenge one material claim inside an exact Applicability Envelope, but they never become documentary support or rewrite the approved base.</p>
+    <div class="steps">
+      <div class="step"><div class="num tint-teal"><span class="n">1</span></div><div><h3>Assess without calling the API</h3><p><code>feedback assess</code> compares an approved asset with a normalized JSON Observation Bundle. It performs no network I/O and writes its deterministic report outside governed Foundry state.</p></div></div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step"><div class="num tint-amber"><span class="n">2</span></div><div><h3>Submit a candidate, then review or approve separately</h3><p><code>feedback propose</code> prepares review material bound to the complete Normative release digest—contract, documentary fragments, and support relationships—and <code>feedback submit</code> persists immutable candidate inputs. <code>feedback review</code> can record one non-approval decision and corrective route for a case with or without a proposal; only an independent human <code>feedback approve</code> appends an approval/amendment and publishes a separate immutable, expiring Effective release for the same scope. Conflicts, drift, and high-risk meanings fail closed; explicit same-scope supersession preserves prior lineage.</p></div></div>
+      <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step"><div class="num tint-purple"><span class="n">3</span></div><div><h3>Compose or resolve one exact-scope view</h3><p><code>feedback compose</code> rechecks the full release digest and previews without publishing. <code>feedback current --at &lt;timezone-aware ISO8601&gt;</code> resolves one exact target only when it is already approved/effective, unexpired, still based on normative current, and digest-fresh; it returns validity plus open/untested, stale-amendment, and unresolved-contradiction counters. “Fully verified” always names its scope, time, and suite version—never universal 100% truth. <code>feedback provider-erratum</code> instead prepares a handoff into the full source pipeline.</p></div></div>
+    </div>
   </div>
 </section>
 

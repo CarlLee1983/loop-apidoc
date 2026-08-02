@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 from typing import TypeVar
 
@@ -12,6 +14,9 @@ from loop_apidoc.foundry.models import (
     CatalogDocsetEntry,
     CurrentPointer,
     Docset,
+    EffectiveAsset,
+    EffectiveCurrentPointer,
+    FeedbackCase,
     FoundryInputError,
 )
 
@@ -61,7 +66,9 @@ def save_docset(project_root: Path, docset: Docset) -> None:
 
 def load_asset(project_root: Path, docset_id: str, asset_id: str) -> Asset:
     return _read_model(
-        Asset, paths.asset_manifest_path(project_root, docset_id, asset_id), "asset.json"
+        Asset,
+        paths.asset_manifest_path(project_root, docset_id, asset_id),
+        "asset.json",
     )
 
 
@@ -101,6 +108,63 @@ def save_review_decision(
     _write_model(
         paths.candidate_review_decision_path(project_root, docset_id, run_id), decision
     )
+
+
+def load_feedback_case(
+    project_root: Path, docset_id: str, case_id: str
+) -> FeedbackCase:
+    return _read_model(
+        FeedbackCase,
+        paths.feedback_case_manifest_path(project_root, docset_id, case_id),
+        "feedback case manifest",
+    )
+
+
+def load_effective_asset(
+    project_root: Path, docset_id: str, scope_digest: str, asset_id: str
+) -> EffectiveAsset:
+    return _read_model(
+        EffectiveAsset,
+        paths.effective_asset_manifest_path(
+            project_root, docset_id, scope_digest, asset_id
+        ),
+        "effective asset manifest",
+    )
+
+
+def load_effective_current(
+    project_root: Path, docset_id: str, scope_digest: str
+) -> EffectiveCurrentPointer | None:
+    path = paths.effective_current_path(project_root, docset_id, scope_digest)
+    if not path.is_file():
+        return None
+    return _read_model(EffectiveCurrentPointer, path, "effective current pointer")
+
+
+def save_effective_current(
+    project_root: Path,
+    docset_id: str,
+    scope_digest: str,
+    pointer: EffectiveCurrentPointer,
+) -> None:
+    """Atomically publish the externally consumed scope-specific pointer."""
+    path = paths.effective_current_path(project_root, docset_id, scope_digest)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=".current-", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(pointer.model_dump_json(indent=2))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def upsert_catalog_entry(catalog: Catalog, entry: CatalogDocsetEntry) -> Catalog:

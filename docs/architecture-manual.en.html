@@ -599,6 +599,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   </header>
   <p><strong>Canonical architecture:</strong> <code>domain/</code> + <code>core/</code> define the model-independent evidence-to-contract product; <code>adapters/</code> contains replaceable runtime/platform details and <code>evaluation/</code> is isolated from production mutation. The pipeline dashboard below documents the current CLI compatibility adapter.</p>
   <p><strong>Domain profile seam:</strong> the Canonical Contract Core remains domain-neutral. Payment-only amount-direction and line-currency values live in one optional <code>PaymentProfile</code>; contracts without those semantics have no profile. Legacy v0.27 top-level collection names remain derived read/write compatibility views, not parallel state.</p>
+  <p><strong>Authority seam:</strong> supplier sources are the sole authority for Normative Contract claims. Passive Implementation Observations use a separate conformance axis and apply only inside their exact Applicability Envelope; they never become documentary support. <code>ContractConformance</code> keeps assessment, reviewed amendment proposals, expiry/conflict policy, and Effective Contract composition behind one pure interface, while pure <code>core/conformance_policy.py</code> owns semantic observation allowlisting and routing. Status/success must bind the same operation's response-status path; response field/type must bind a matching field path in a response-referenced schema. Proposal and composition integrity bind the complete Normative release digest: contract, documentary fragments, and support relationships.</p>
+  <p><strong>Deterministic review:</strong> all eight Feedback routes are reachable: confirmed-only closes; ordinary inconclusive evidence needs evidence; high-risk contradictions request provider clarification; harness/fixture failures request implementation correction; out-of-scope or DNS/proxy/gateway failures request environment correction; policy-safe ungrounded contradictions request extraction correction; repeated network/timeout/rate-limit failures request provider-runtime regression review; and policy-safe grounded contradictions become amendment proposals. Only confirms/contradicts count as assessed; inconclusive/out-of-scope remain untested and open. Proposal time cannot precede observation completion. <code>feedback review</code> records one non-approval decision for a case with or without a proposal, with a corrective route that cannot close the case or propose an amendment; its time cannot precede observation completion or an existing proposal's creation. Governed persistence deterministically rejects sensitive field names and obvious email, phone, national-ID, SSN, passport, and Luhn-valid payment-card values, and never hashes low-entropy PII.</p>
+  <p><strong>Scoped composition:</strong> an Effective Contract is one immutable approved normative release plus only the active approved amendments matching one complete target scope. Global Foundry <code>current</code> remains normative; Effective selection is deployment/scope-specific. Governed feedback/Effective JSON rejects unknown fields. <code>feedback current</code> accepts only <code>APPROVED</code>, requires a timezone-aware as-of value, cross-validates contract identity, amendment IDs, validity/counts, approval actor/time, and provenance approval/assessment/bundle bindings, and rejects a query before approval/composition, expiry, a non-current base, or stale bindings. Pointer <code>effective_asset_digest</code> binds the complete strict-validated canonical EffectiveAsset including all declared fields. <code>stale_amendment_count</code> is visible and digest-bound; stale is verifiable release/contract/source/policy/approval-time drift, while expired and inapplicable remain separate. <code>foundry.query</code> is the single read-side I/O for lineage traversal and verifies every predecessor asset/amendment digest along the immutable successor chain. Free-text revalidation triggers are review declarations only, not automatic external signals. A formal Provider Erratum re-enters the full source pipeline. “Fully verified” is always bounded by scope, time, suite version, and coverage—never universal 100% truth.</p>
 
   <div class="dashboard">
     <!-- Left Timeline Navigation -->
@@ -755,6 +758,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">validate</div>
           <div class="command-chip">score</div>
           <div class="command-chip">evaluate</div>
+          <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">feedback *</div>
           <div class="command-chip">diff</div>
           <div class="command-chip">review</div>
           <div class="command-chip" style="border-color: var(--accent); color: var(--accent);">foundry *</div>
@@ -824,9 +828,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
             <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
             <div class="module-role">Mechanically scans Markdown sources for parameter tables and examples, catching silent omissions in the extraction.</div>
           </button>
+          <button type="button" class="module-card" data-module="conformance">
+            <div class="module-name">core/conformance.py + domain/conformance.py <span class="pill pure">Pure</span></div>
+            <div class="module-role">Separates documentary support from scoped implementation conformance; assesses, proposes, and composes deterministically.</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="feedback">
+            <div class="module-name">feedback/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">Loads passive normalized bundles and writes deterministic assessments outside governed state; no network I/O.</div>
+          </button>
           <button type="button" class="module-card io-boundary" data-module="foundry">
             <div class="module-name">foundry/ <span class="pill io">File I/O</span></div>
-            <div class="module-role">Project-local asset governance for the API, managing docsets, candidates and assets.</div>
+            <div class="module-role">Immutable normative assets with new-asset supersession lineage; write-once feedback candidate inputs plus one non-approval or approval decision and appended approved Effective releases; exact-scope/time Effective reads reject not-yet-effective or expired assets and verify the normative base plus all three artifact digests/lineage.</div>
           </button>
         </div>
       </div>
@@ -836,8 +848,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <!-- Rendered dynamically -->
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
-      <code>cli.py</code> provides 28 source, URL-evidence, risk, quality, freshness, run, <code>foundry</code>, and <code>review</code>-workbench commands. The latter is a single-user interface bound only to <code>127.0.0.1</code>: it auto-imports a candidate, compares current/baseline, saves structured handoff, and updates current only after an explicit human approval. It never calls a model or replaces validation. GitBook caching and draft facts remain local, non-authoritative extraction aids.
-      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>agentcli/preprocess.py</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_risk/report.py</code>, <code>source_quality/</code>, <code>shadow/report.py</code>, <code>docx_publish.py</code>, the URL corpus cache, <code>foundry/</code>, and <code>review/workflow.py</code> writing through Foundry are responsible for writing. <code>docx_normalization.py</code>, <code>source_risk/inspect.py</code>, and <code>adapters/fragments.py</code> are read-side I/O exits; <code>docx_validation.py</code>/<code>docx_render.py</code>, Core, and Domain stay pure.
+      <code>cli.py</code> provides source, URL-evidence, risk, quality, freshness, run, governed <code>feedback</code>, <code>foundry</code>, and <code>review</code>-workbench commands. The feedback group exposes assess, propose, submit, write-once non-approval review, approve, compose, timezone-aware exact-target current, and Provider Erratum handoff; only explicit submit/review/approve steps mutate governed state, and global current remains normative. Current lookup rejects not-yet-effective, expired, stale, or non-current-base Effective assets, verifies all three bounded Effective artifacts, and exposes bounded validity/discrepancy counters including unresolved contradictions. The review workbench is a single-user interface bound only to <code>127.0.0.1</code>: it auto-imports a candidate, compares current/baseline, saves structured handoff, and updates normative current only after an explicit human approval. It never calls a model or replaces validation. GitBook caching and draft facts remain local, non-authoritative extraction aids.
+      <strong>File I/O exits</strong>: <code>generate/</code>, <code>run/</code>, <code>agentcli/preprocess.py</code>, <code>diff/</code>, <code>preparation/</code>, <code>score/</code>, <code>source_risk/report.py</code>, <code>source_quality/</code>, <code>feedback/report.py</code>, <code>shadow/report.py</code>, <code>docx_publish.py</code>, the URL corpus cache, <code>foundry/</code>, and <code>review/workflow.py</code> writing through Foundry are responsible for writing. <code>feedback/loader.py</code>, <code>docx_normalization.py</code>, <code>source_risk/inspect.py</code>, and <code>adapters/fragments.py</code> are read-side I/O exits; <code>core/conformance.py</code>, <code>domain/conformance.py</code>, <code>docx_validation.py</code>/<code>docx_render.py</code>, Core, and Domain stay pure. Feedback commands perform no provider network I/O.
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; line-height: 1.6;">
       <strong>Core shadow integration</strong>: <code>assemble --architecture-mode shadow</code> invokes the compatibility-only <code>shadow/</code> package after legacy validation. Its pure bridge maps manifest/plan values into Core evidence and claims, the in-memory runner stops after Core validation, and only <code>shadow/report.py</code> writes the observational <code>&lt;run-dir&gt;/core/</code> artifacts or <code>core/error.json</code>. Legacy validation, score, approval, Foundry, status, and exit codes remain authoritative.
@@ -936,10 +948,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "cli.py",
       badgeClass: "prep",
       badgeLabel: "Entry",
-      description: "The Typer CLI entry point exposes 28 commands for source / URL evidence, pre-agent risk, source quality, extraction verification, assembly, validation, scoring, version diff, and local review; the foundry sub-group governs assets.",
+      description: "The Typer CLI entry point exposes source / URL evidence, pre-agent risk, source quality, extraction verification, assembly, validation, scoring, version diff, the governed feedback workflow, and local review; the foundry sub-group governs assets.",
       seam: "loop_apidoc.cli",
       inputs: "CLI arguments: sources, extraction-dir, output-root, run-id, urls",
-      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, review, and Foundry commands",
+      outputs: "Delegates to source, URL evidence, risk, quality, assemble, validate, score, diff, feedback, review, and Foundry commands",
       sideEffect: "Dispatch only; side effects depend on selected command"
     },
     agentcli: {
@@ -1041,6 +1053,26 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "completed run-dir artifacts (openapi.yaml, provenance.json, validation report)",
       outputs: "score/score.json, score/score.md",
       sideEffect: "File I/O: writes score report files; evaluation logic is pure"
+    },
+    conformance: {
+      title: "core/conformance.py + domain/conformance.py",
+      badgeClass: "pure",
+      badgeLabel: "Pure Logic",
+      description: "One deep ContractConformance boundary keeps documentary support separate from implementation conformance, validates exact scope and integrity, binds proposal/composition to the complete Normative release digest (contract + fragments + relationships), proposes only policy-eligible review subjects, and composes Effective Contracts without mutating the normative base.",
+      seam: "ContractConformance.assess(...) / propose(...) / compose(...)",
+      inputs: "approved Normative Contract release, passive Observation Bundle, approved amendments, exact target Applicability Envelope",
+      outputs: "FeedbackAssessment, CompatibilityAmendmentProposal, EffectiveContract",
+      sideEffect: "Pure; no filesystem, network, process, model, or database I/O"
+    },
+    feedback: {
+      title: "feedback/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "The passive JSON adapter assesses observations through all eight deterministic routes, proposes amendments, submits the immutable candidate case stage through Foundry, records one non-approval review with a corrective route for cases with or without proposals, requires independent human approval for a separate immutable exact-scope Effective release, previews digest-bound composition, resolves timezone-aware exact-target Effective current, and emits a non-mutating Provider Erratum handoff. Current lookup rejects not-yet-effective or expired assets and a non-current base, verifies the bounded effective-contract/amendment/provenance digests and lineage, and returns validity, open/untested counters, and unresolved contradictions. Same-target conflicts fail closed unless explicit same-scope supersession is recorded. It never calls a provider API.",
+      seam: "feedback assess / propose / submit / review / approve / compose / current / provider-erratum",
+      inputs: "approved normative release (contract + documentary fragments + relationships), normalized bundle, assessment/proposal, exact target envelope, timezone-aware query time, approved amendments, or local erratum metadata/artifact",
+      outputs: "assessment/proposal/effective/handoff reports outside .foundry, or a Foundry-owned candidate case plus appended decision/amendment and scope-specific approved Effective asset",
+      sideEffect: "No provider network I/O; dry runs write outside .foundry; submit/review/approve delegate governed persistence to Foundry"
     },
     "source-quality": {
       title: "source_quality/",

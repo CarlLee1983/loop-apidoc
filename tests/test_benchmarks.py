@@ -1100,8 +1100,8 @@ def _score_candidate(run_dir: Path) -> int:
 
 
 def test_benchmark_foundry_supersession(tmp_path_factory, tmp_path) -> None:
-    """Approving a second asset for the same docset supersedes the first and
-    moves the `current` pointer. Two distinct timestamps are required because
+    """A second asset records supersession without rewriting the first and moves
+    the `current` pointer. Two distinct timestamps are required because
     make_asset_id is one-second-resolution; identical timestamps would collide."""
     case = _case_by_name(_STRIPE)
     run = _assemble_case(case, tmp_path_factory)  # skips if sources absent
@@ -1125,10 +1125,11 @@ def test_benchmark_foundry_supersession(tmp_path_factory, tmp_path) -> None:
         root, "bench", "v2", approved_by="bench", now=_FIXED_TS + timedelta(seconds=1),
     )
 
-    superseded = foundry_store.load_asset(root, "bench", asset_v1.asset_id)
-    assert superseded.status is AssetStatus.SUPERSEDED, (
-        f"v1 asset should be superseded, got {superseded.status.value}"
+    prior = foundry_store.load_asset(root, "bench", asset_v1.asset_id)
+    assert prior.status is AssetStatus.APPROVED, (
+        f"v1 immutable approval status changed to {prior.status.value}"
     )
+    assert asset_v2.supersedes == asset_v1.asset_id
     current = load_current_asset(root, "bench")
     assert current.asset_id == asset_v2.asset_id, "current pointer should resolve to v2"
 

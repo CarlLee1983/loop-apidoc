@@ -21,8 +21,10 @@ app = typer.Typer(
 )
 
 from loop_apidoc.foundry.cli import foundry_app  # noqa: E402  (must follow `app` definition)
+from loop_apidoc.feedback.cli import feedback_app  # noqa: E402
 
 app.add_typer(foundry_app, name="foundry")
+app.add_typer(feedback_app, name="feedback")
 
 
 def _print_version(value: bool) -> None:

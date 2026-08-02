@@ -69,6 +69,117 @@ explicitly ordered two-hop array chain (primary, parent→child `$ref`, child→
 `$ref`), but Core never follows arbitrary reference depth. Malformed, mismatched,
 out-of-order, or incomplete inputs remain `insufficient`.
 
+### Documentary authority and implementation conformance
+
+The source-grounded claim graph remains the **Normative Contract**. Supplier sources are
+the sole authority for what the provider documents; the documentary relationship axis
+(`explicit_support` / `derived_support` / `contradicts` / `insufficient`) retains that
+meaning. Runtime evidence enters a second, independent conformance axis:
+
+```text
+approved Normative Contract + passive normalized Observation Bundle
+  → ContractConformance.assess
+  → confirms | contradicts | inconclusive | out_of_scope
+  → bounded coverage + one of eight deterministic review routes
+```
+
+`feedback/` is the adapter/report boundary. Its MVP loader accepts normalized JSON only,
+performs bounded schema and digest checks, and never calls a provider network. The command
+group is an explicit governed workflow:
+
+```text
+assess → propose? → submit immutable candidate case inputs
+       ├→ review → append one bound non-approval decision + corrective route
+       └→ independent human approve → append bound decision/amendment
+                                     → publish separate immutable exact-scope Effective asset/current
+compose = non-publishing preview     current = exact-target read
+provider-erratum = verified non-mutating handoff to the normative source pipeline
+```
+
+Assessment, proposal, composition, and erratum-handoff reports are written outside
+`.foundry`; only `submit`, `review`, and `approve` delegate governed writes to Foundry. Domain models
+and `core/conformance.py` remain pure: `ContractConformance.assess`, `propose`, and
+`compose` hide integrity binding, exact scope comparison, safe proposal policy, expiry,
+conflict detection, coverage, and deterministic composition.
+Proposal time cannot precede the observation window's completion. A non-approval review time
+cannot precede observation completion and, when a proposal exists, cannot precede its
+`created_at`. Before any feedback report or governed artifact is persisted, a deterministic privacy gate rejects sensitive field
+names and obvious email/phone/national-ID/SSN/passport/Luhn-valid payment-card values; low-entropy PII is omitted rather than
+hashed.
+
+All eight `FeedbackRoute` values are reachable through deterministic policy: confirmed-only
+evidence closes without change; other inconclusive evidence needs evidence; high-risk
+contradictions request provider clarification; harness/fixture failures request implementation
+correction; out-of-scope or DNS/proxy/gateway failures request environment configuration
+correction; policy-safe contradictions without documentary evidence request extraction
+correction; repeated network/timeout/rate-limit failures request provider-runtime regression
+review; and policy-safe grounded contradictions become amendment proposals. Only `confirms`
+and `contradicts` count as assessed material claims. `inconclusive` and `out_of_scope` targets
+remain untested and open.
+
+Observation kind validation is semantic policy in pure `core/conformance_policy.py`, not only
+type validation. Status/success observations must bind the selected operation and its
+`/responses/<status>/status_code`; response-field/type observations must bind a schema referenced
+by that operation's response and a matching `/fields/.../name` or `/fields/.../type` path.
+
+The integrity unit for proposal and Effective composition is the complete Normative
+release digest: canonical contract + documentary fragments + support relationships.
+Binding only the projected contract would miss an authority-bearing evidence or
+relationship change, so proposal approval and amendment composition compare the complete
+release digest and fail closed on mismatch.
+
+An Implementation Observation is immutable empirical evidence only for its declared
+Applicability Envelope. It cannot upgrade documentary support or prove provider intent.
+A contradictory, independently reproducible, policy-eligible observation may become a
+human-review subject and then an approved, expiring **Compatibility Amendment**. Ordinary
+observations cannot infer high-risk or closed-world semantics such as authentication,
+cryptography, money movement, idempotency, transaction guarantees, requiredness, or closed
+enums.
+
+An **Effective Contract** is an exact-scope view, not mutable canonical state:
+
+```text
+one immutable approved Normative Contract release
++ active approved amendments matching the complete target Applicability Envelope
+→ Effective Contract with per-value normative | observed_override authority and lineage
+```
+
+Scope mismatch, expiry, stale binding, or conflicting active amendments is surfaced or
+fails closed. The global Foundry `current.json` stays normative; effective selection is
+deployment/scope-specific and must never become one global Effective current. “Fully
+verified” is bounded to the reported envelope, observation time, material-claim coverage,
+and suite version. Finite evidence never establishes universal or permanent 100% truth.
+An exact-scope current read also has an explicit timezone-aware query time. It rejects a
+not-yet-effective or expired Effective release, a base that is no longer normative current,
+or a stale
+pointer/bounded-artifact bindings. The pointer's `effective_asset_digest` binds the complete
+strict-validated canonical current `EffectiveAsset`, including all declared fields; unknown
+fields fail closed. Asset/pointer records also bind `effective-contract.json`,
+`compatibility-amendment.json`, and `provenance.json`. Current lookup bounds, parses,
+digest-verifies, and lineage-checks these bindings. It returns `valid_until`,
+`open_discrepancy_count`, `stale_amendment_count`, `untested_material_claim_count`, and
+`unresolved_contradiction_count` with the asset.
+Governed feedback and Effective JSON models reject unknown fields. Current accepts only an
+`APPROVED` asset and cross-validates Effective Contract identity, applied amendment IDs,
+validity/counts, approval actor/time, and provenance approval/assessment/bundle bindings.
+`stale_amendment_count` is pointer-visible and digest-bound. Stale is reserved for verifiable
+release/contract/source/policy/approval-time drift; expired and inapplicable remain distinct.
+Free-text `revalidation_triggers` are review declarations only; without an external trigger-signal
+contract they do not execute or schedule revalidation automatically.
+Approval lineage uses that same bound current-head integrity read before walking supersession.
+Every successor carries `supersedes` together with `supersedes_asset_digest`, forming an
+immutable hash chain; governed and user-facing traversal verifies each predecessor asset digest
+and amendment artifact digest. This permits a new reviewed amendment to recover expired lineage,
+while making any historical asset-metadata, amendment, or supersession tampering fail closed
+before it can contaminate a later approval/composition.
+All governed lineage traversal is centralized in `foundry.query`, the single read-side I/O for
+this chain; adapters do not implement a parallel traversal.
+
+A formal **Provider Erratum** has documentary authority and therefore bypasses empirical
+composition: acquire it as supplemental supplier material and run the complete existing
+source-risk → source-quality → extraction → verification → assembly → review → Foundry
+release loop. The resulting new immutable normative release supersedes its predecessor.
+
 ## Current CLI compatibility architecture / 現行 CLI 相容架構
 
 The agent-native pipeline described below remains the shipping CLI workflow in v0.14 and is
@@ -183,6 +294,7 @@ flowchart TD
     cli --> score[score/<br/>run-dir 評分 + 報告 + loop verdict]
     cli --> sourcerisk[source_risk/<br/>pre-agent 來源風險稽核]
     cli --> sourcequality[source_quality/<br/>來源品質 + 嵌入 risk audit]
+    cli --> feedback[feedback/<br/>passive bundle loader + assessment reports]
     cli --> urltools[url_catalog.py / url_corpus.py /<br/>html_snapshot.py<br/>URL 目錄·快取·快照正規化]
 
     agentcli --> manifest
@@ -193,11 +305,13 @@ flowchart TD
     agentcli --> run[run/<br/>run-id + 寫入 run-dir]
     agentcli --> preparation[preparation/<br/>產生前就緒度評估]
     agentcli --> sourcequality
+    feedback --> conformance[core/conformance.py<br/>pure assess + propose + compose]
+    conformance --> domain[domain/conformance.py<br/>immutable authority + scope models]
 
     plan --> manifest
 
     classDef io fill:#fde,stroke:#c69
-    class generate,run,diff,score,preparation,sourcerisk,sourcequality,urltools io
+    class generate,run,diff,score,preparation,sourcerisk,sourcequality,urltools,feedback io
 ```
 
 `cli.py`(Typer)另有 `cache-gitbook-llms` 與 `extract-markdown-drafts`：前者從一份 `llms.txt` 安全快取同網域、入口前綴下的 Markdown、sidecar 與 coverage；後者只讀 manifest 指名 Markdown，輸出具行號、非權威的端點／表格／範例草稿。兩者都不取代 agent 最終擷取與 `verify-extraction`。
@@ -216,7 +330,7 @@ source-quality blocker observation 可攜帶來源明確連出的 `required_sour
 
 `assess-sources` 現在必須帶 `--source-risk`；它只接受同 manifest/source binding 的 current pass audit，並對目前 bytes 重跑 deterministic inspection、要求完整 report 相符後才嵌入 `source-quality-report.json`。`assemble --source-quality` 重建 manifest 後再次重跑檢查並驗證嵌入 audit，避免遭竄改或來源 bytes 在審查後替換；不符時 exit 2 且不建立 run-dir。
 
-**檔案 I/O 出口**:`generate/`、`run/`、`agentcli/preprocess.py`、report writers（含 `source_risk/report.py`）、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot`、`rendered_url.import_rendered_url` 與 `docx_publish.py` 會寫檔；`docx_normalization.py`、`source_risk/inspect.py`／`loader.py`、`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外，`docx_validation.py`／`docx_render.py`、其餘 draft scanner 與 GraphQL／AsyncAPI compiler 保持純函式。
+**檔案 I/O 出口**:`generate/`、`run/`、`agentcli/preprocess.py`、report writers（含 `source_risk/report.py` 與 `feedback/report.py`）、Foundry persistence（含 write-once feedback inputs 與後續附加的 governance records）、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot`、`rendered_url.import_rendered_url` 與 `docx_publish.py` 會寫檔；`feedback/loader.py`、`docx_normalization.py`、`source_risk/inspect.py`／`loader.py`、`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外。`core/conformance.py`、`domain/conformance.py`、`docx_validation.py`／`docx_render.py`、其餘 draft scanner 與 GraphQL／AsyncAPI compiler 保持純函式，且 feedback／conformance Core 不做 provider network I/O。
 
 ## 資料流與關鍵 seam
 
@@ -236,6 +350,10 @@ source-quality blocker observation 可攜帶來源明確連出的 `required_sour
 | 驗證 | `validate_outputs(plan, result, manifest)`(純）／ `validate_run_dir(run_dir)`(讀檔) | `validation/report.{json,md}` |
 | 評分(可選) | `load_score_inputs(run_dir)` → `evaluate_score(inputs, profile, min_score)` → `write_reports(report, score_dir)` | `<run-dir>/score/score.{json,md}` |
 | 版本差異(可選) | `load_run_artifacts(run_dir)` → `build_diff_report(base, head)`(純）→ `write_reports(report, out_dir)` | `<head>/diff/report.{json,md}` |
+| 實作回饋評估／提案(可選、被動) | `feedback assess --project --docset --asset --bundle --output` → `ContractConformance.assess(...)`(純）；`feedback propose --assessment --at --output` → `ContractConformance.propose(...)`(純） | `.foundry` 外的 `feedback-assessment.{json,md}` 與 `amendment-proposals.{json,md}`／`<proposal-id>.json`；兩者 exit 0/1/2 = closed-or-produced / valid-open-or-none / input-integrity error |
+| 回饋 candidate 保存／人工決策／Effective 核准 | `feedback submit --project --docset --bundle --assessment [--proposal]` → Foundry；`feedback review --project --docset --case --reviewed-by --reviewer-version --at --disposition <rejected\|needs_evidence> --route <corrective-route> [--rationale]`；`feedback approve --project --docset --case --approved-by --approver-version --at --expires-at [--rationale] [--revalidation-trigger ...] [--supersedes-amendment]` | 明確 `status: candidate` 的 write-once digest-bound case inputs；proposal/review time 不得早於 observation completion，且 review 不得早於既有 proposal；有／無 proposal 都可寫入一次 non-approval review，route 不得為 `closed_no_change`／`amendment_proposal`；sensitive-field/email/phone/national-ID/SSN/passport/payment-card privacy gate 先於寫入，低 entropy PII 不 hash；只有 proposal 可走獨立人工 approval。三命令成功 `0`、輸入／治理／I/O 錯誤 `2`；global normative current 不變 |
+| Effective 預覽／查詢 | `feedback compose --project --docset --asset --target --amendment ... --at --output`；`feedback current --project --docset --target --at <timezone-aware ISO8601>` | composition 以完整 Normative release digest（contract + documentary fragments + relationships）綁定 amendment，並在 `.foundry` 外寫 `effective-contract.{json,md}`（exit 0 no-open / 1 open / 2 error）；current 以 `effective_asset_digest` 綁定完整 current asset，另驗證三份 artifact digest；lineage 以成對 `supersedes`／`supersedes_asset_digest` 形成 hash chain，逐節驗證 predecessor asset／amendment digest，歷史竄改 fail closed；成功 stdout 揭露 `valid_until`／`open_discrepancy_count`／`untested_material_claim_count`／`unresolved_contradiction_count`（0/2） |
+| Provider Erratum handoff | `feedback provider-erratum --metadata --artifact --output` | `.foundry` 外的 `provider-erratum-handoff.{json,md}`（0 success / 2 error）；只驗證 digest 並列出完整 normative pipeline，不執行、不改動 Foundry |
 
 `handoff/`(`integration-tasks.md`/`postman_collection.json`/`sdk-hints.json`)為衍生工程導引,由 `build_handoff(openapi, plan, integration)` 純函式產出,不做檔案 I/O、不重讀 `openapi.yaml`、不複製 schema;契約來源仍為 OpenAPI 與 integration-contract。
 
@@ -260,6 +378,20 @@ output/<run-id>/
 - **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)。
 - **approve** 將候選資產複製到自含、不可變的 `assets/<asset-id>/artifacts/` 目錄,記錄 `asset.json`(狀態、驗證、評分、來源雜湊、產物路徑、取代關係(supersedes)、批准元資料),取代先前的已批准資產,並更新 `current.json` / `docset.json` / `catalog.json`。
 - 下游工作(SDK 編寫、CI 契約檢查、整合)經由 `foundry current` / `query.load_current_asset` 讀取**當前**資產,而不是任意的 run 目錄。
+
+Implementation feedback does not alter that normative promotion path. A persisted case
+lives under `.foundry/api/docsets/<docset-id>/feedback/cases/<case-id>/`: its digest-bound
+Observation Bundle, assessment, optional proposal, and case manifest are write-once inputs
+with explicit status `candidate`; an approval appends a bound write-once review decision
+and approved amendment instead of rewriting those inputs. Approval then publishes a
+separate immutable scope-specific Effective asset/current pointer. Same-target active
+amendments conflict and fail closed unless an explicit same-scope supersession link carries
+the prior amendment lineage into composition.
+Assessment, proposal, composition preview, and Provider Erratum handoff write only to the
+caller's ungoverned output directory. Every governed artifact retains base/evidence/policy
+lineage. The one global `current.json` remains the Normative Contract pointer; Effective
+Contract current pointers are named by an exact deployment/scope identity and cannot
+replace it.
 
 `openapi.yaml` 與 `integration-contract.json` 保持為權威契約;Foundry 逐字複製它們並加入治理,不改寫契約。
 

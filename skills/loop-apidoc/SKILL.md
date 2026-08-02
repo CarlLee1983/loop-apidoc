@@ -6,9 +6,11 @@ description: Use when the user wants to convert messy API integration sources (P
 # loop-apidoc: source-grounded API doc generation
 
 You turn the user's API documentation sources into standardized, traceable artifacts.
-**The source is the only ground truth**: anything a source does not state is `null` and
-recorded in `missing`. **Never speculate; never apply REST/OAuth conventions.** Validation
-fails loudly on missing required info rather than guessing.
+**Supplier sources are the sole authority for normative claims**: anything a source does not
+state is `null` and recorded in `missing`. **Never speculate; never apply REST/OAuth
+conventions.** Validation fails loudly on missing required info rather than guessing. Passive
+Implementation Observations are a separate empirical axis for one exact Applicability
+Envelope; they never become supplier-source support or mutate the Normative Contract.
 
 Two reference files hold the heavy detail — load each when you reach that phase:
 
@@ -28,6 +30,10 @@ Two reference files hold the heavy detail — load each when you reach that phas
 - **`reference/freshness-scheduling.md`** — the `record-fingerprint` / `check-freshness`
   scheduled-freshness gate (load when setting up scheduled re-checks so they skip
   extraction when sources are unchanged).
+- **`reference/implementation-feedback.md`** — passive observation assessment, immutable
+  feedback candidates, write-once non-approval review or independent approval, scoped Effective
+  Contract composition/query, and Provider Erratum routing (load when implementation evidence
+  is submitted, reviewed, or queried).
 
 ## CLI invocation (`<APIDOC>`)
 
@@ -421,6 +427,12 @@ bill arrives. Hosts with no per-subagent model control report the single session
   baseline), and writes only structured handoff JSON; the human may explicitly approve it.
   Do not invoke it automatically, do not treat approval as validation PASS, and do not use it
   to call a model.
+- `<APIDOC> feedback ...` — when the user supplies a normalized passive Implementation
+  Observation Bundle or asks for an exact-scope Effective Contract, load
+  **`reference/implementation-feedback.md`** and follow its assess → propose? → submit →
+  write-once non-approval review or independent approve → current workflow. Never call the
+  provider API, auto-approve a proposal, or describe implementation conformance as documentary
+  source support.
 
 ## Important
 

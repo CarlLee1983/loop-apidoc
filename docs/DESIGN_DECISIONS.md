@@ -262,6 +262,89 @@ They do not establish product demand, end-to-end exact-evidence coverage, or ade
 format validation. Resuming integration requires recording the consumer and its source-
 backed acceptance criteria here or in a dedicated ADR before implementation begins.
 
+### 12. Separate documentary authority from implementation conformance
+
+Supplier sources are the sole authority for normative, provider-documented claims.
+Implementation Observations are immutable empirical evidence only for behavior witnessed
+inside their declared Applicability Envelope. Conformance relationships (`confirms`,
+`contradicts`, `inconclusive`, `out_of_scope`) therefore form a separate axis and never
+change `explicit_support`, `derived_support`, or any other documentary status. This
+authority split is recorded in
+[ADR 0002](adr/0002-separate-documentary-and-empirical-authority.md).
+
+The public `feedback` workflow is deliberately staged. `assess`, `propose`, and `compose`
+write deterministic artifacts outside `.foundry`; `submit` persists immutable inputs as an
+explicit `candidate` case; `review` can append one bound non-approval decision and corrective
+route to a case with or without a proposal; a separate independent-human `approve` appends
+write-once decision/amendment records and publishes an immutable exact-scope Effective release;
+`current` resolves only an exact target; and `provider-erratum` writes a non-mutating
+handoff to the normative pipeline. None performs provider network calls. The domain and
+Core define the `ContractConformance` boundary—assess, propose, compose—while adapters own
+acquisition and report/persistence I/O. Input binding, scope, conflicts, redaction version,
+replay lineage, and material-claim coverage fail closed. Same-target active conflicts are
+not resolved by ordering: only explicit same-scope supersession may carry prior lineage
+into a replacement amendment.
+Proposal time cannot precede observation completion. Non-approval review time cannot precede
+observation completion or, when present, proposal creation. Governed persistence rejects
+sensitive field names and obvious email/phone/national-ID/SSN/passport/Luhn-valid payment-card values; low-entropy PII is omitted, not
+hashed.
+
+Assessment makes all eight `FeedbackRoute` values reachable. Harness/fixture failures route to
+implementation correction; out-of-scope and DNS/proxy/gateway failures route to environment
+configuration correction; repeated network/timeout/rate-limit failures route to provider-runtime
+regression review; and a policy-safe contradiction without documentary evidence routes to
+extraction correction. Confirmed-only, other inconclusive, high-risk contradiction, and safe
+grounded contradiction retain closed, needs-evidence, provider-clarification, and amendment-
+proposal routes respectively. Only confirms/contradicts count as assessed; inconclusive and
+out-of-scope targets remain untested/open.
+
+Observation kinds are also a semantic allowlist enforced by pure
+`core/conformance_policy.py`: status/success must bind the same operation's response-status
+path, while response field/type must bind a matching field path in a response-referenced schema.
+
+Proposal and Effective composition integrity uses one complete Normative-release digest:
+the canonical contract, documentary fragments, and support relationships. A projected
+contract digest alone is insufficient because a fragment or relationship change can alter
+documentary authority without changing the projection. Exact-scope `current` resolution is
+also time-bound: callers supply a timezone-aware `--at`; lookup rejects a query before
+approval/composition, expiry, a base that is no longer normative current, and stale
+pointer/asset bindings. Pointer `effective_asset_digest` binds the complete strict-validated
+canonical EffectiveAsset, including all declared fields; unknown fields fail closed.
+Asset/pointer records also digest-bind `effective-contract.json`,
+`compatibility-amendment.json`, and `provenance.json`. Lookup bounds, parses, digest-checks, and
+lineage-checks these bindings. Successful reads carry `valid_until`, `open_discrepancy_count`,
+`stale_amendment_count`,
+`untested_material_claim_count`, and `unresolved_contradiction_count`.
+Governed feedback/Effective JSON is strict (`extra="forbid"`). Current accepts only `APPROVED`
+and cross-validates Effective Contract identity, amendment IDs, validity/counts, approval
+actor/time, and provenance approval/assessment/bundle bindings. Stale amendments represent
+verifiable release/contract/source/policy/approval-time drift; expired and inapplicable are
+separate. Free-text revalidation triggers remain review declarations because no external
+trigger-signal contract exists. `foundry.query` is the single read-side I/O for lineage traversal.
+Approval and user-facing lineage traversal begin with this same bound current-head read. Each
+successor pairs `supersedes` with `supersedes_asset_digest`; every hop verifies the predecessor
+asset digest and amendment artifact digest. A new reviewed amendment may supersede expired
+lineage, but historical asset metadata/amendment/supersession tampering fails closed before it
+can contaminate a later approval/composition.
+
+A reviewed Compatibility Amendment is an expiring, exact-scope overlay, never a mutation
+or a second normative source. An Effective Contract composes one immutable approved
+Normative Contract release with only applicable active amendments and preserves authority
+and evidence lineage on every value. The global Foundry `current` remains normative;
+effective current selections are deployment/scope-specific. Conflicts, drift, expiry,
+untested claims, and open discrepancies remain visible. No finite suite permits a global,
+permanent, or universal “100% true” claim.
+
+Foundry never rewrites prior normative asset bytes. A newly approved normative asset owns
+its `supersedes` link and the global pointer advances only after publication. The same
+write-new-then-advance rule applies to immutable scope-specific Effective releases.
+
+A formal Provider Erratum has supplier documentary authority, so it must re-enter the full
+source-risk, source-quality, extraction, verification, assembly, review, and Foundry release
+pipeline. Unconfirmed but reproducible behavior can affect only a reviewed scoped Effective
+Contract. Implementation-backed benchmarks remain a separate assurance lane and never
+count as source-backed strict-local passes.
+
 ## Canonical operational references
 
 - [Architecture](ARCHITECTURE.md) — component boundaries, data flow, and seams.
@@ -279,7 +362,7 @@ backed acceptance criteria here or in a dedicated ADR before implementation begi
 
 這份文件是 `loop-apidoc` 長期有效的設計決策摘要；歷史實作細節由 Git 保留。核心原則如下：
 
-1. 供應商來源是唯一事實依據；未明示資訊一律保留缺口或 `null`，不可用慣例補寫。
+1. 供應商來源是 normative、provider-documented claim 的唯一權威；未明示資訊一律保留缺口或 `null`，不可用慣例補寫。Implementation Observation 是另一條 exact-scope empirical conformance 軸。
 2. 穩定產品架構以 Evidence Ledger、Grounded Claim Graph、Canonical API Contract IR、Deterministic Assurance Engine 與 Governed Contract Registry 為核心；runtime 是可替換 adapter。
 3. 每一項 material claim 都必須可追到 exact evidence fragment；整份文件引用只能是 `insufficient`，不是來源支持。
 4. 現行 agent-native CLI 是相容層：agent 擷取 JSON，CLI 確定性地組裝、生成與驗證；`assemble` 不擷取也不自動修正。
@@ -290,4 +373,7 @@ backed acceptance criteria here or in a dedicated ADR before implementation begi
 9. coverage 必須雙向：無來源支持的 claim 要攔截，supported/readable 卻零實質引用的來源也要告警；成功 response 無可用 schema 欄位同樣要在 validation／score 可見。跨端點 operational 規則則透過驗證過的 `applies_to[]` 與固定產生的 `integration-contract.json` 交付下游；transport、金額方向、冪等與線路幣別使用專屬 typed collection，且 request 缺少 currency 欄位絕不視為單幣別證據。
 10. 產品維持領域中立；支付／錢包是重要的首個垂直領域，但不是整個產品定義。transport policy 與 idempotency 屬通用整合語意，amount direction 與 line-currency policy 則屬選填 Payment Profile。新的產業專屬 typed concept 必須符合跨供應商重現、具名下游 consumer、無法由既有通用 constraint 忠實表達及具來源支撐 benchmark 等准入條件。
 11. GraphQL／AsyncAPI 保留確定性、可測試的 Core compiler seam，但在具名下游 consumer 提供真實來源集與明確驗收契約前，凍結 CLI、run、validation、diff／score 與 Foundry 整合；公開 fixture 只能證明格式 compiler 可測，不能代替產品需求或端到端 exact-evidence coverage。
-12. 供應商文件同時是 untrusted model input：來源取得／前處理後，必須對 agent 實際會讀的 manifest 綁定文字包執行 `inspect-source-risk`。報告不回顯命中 payload、不改寫來源，並由 schema/ruleset、大小上限、manifest／逐來源 digest 與 stable source binding 防止 stale reuse；`assess-sources` 內嵌 audit，`assemble` 在建立 run-dir 前重驗綁定。risk finding 決定文字能否進模型，不是 API claim 的事實證據。
+12. 文件權威與實作 conformance 是兩條獨立軸：供應商來源只支援 Normative Contract；Implementation Observation 只描述精確 Applicability Envelope 內的行為，不能升格成來源支持。`feedback assess`／`propose`／`compose` 只處理被動 normalized JSON 並在 `.foundry` 外寫出產物；proposal 與 composition 綁定完整 Normative release digest（contract + documentary fragments + support relationships）。`submit` 建立 immutable `candidate` case；`review` 可對有／無 proposal 的 case 附加一次 non-approval decision 與 corrective route；另一個獨立人工 `approve` 階段才附加 write-once approval／amendment並發布 immutable exact-scope Effective release。Proposal time 不得早於 observation completion；non-approval review time 不得早於 observation completion 或既有 proposal creation。治理持久化會拒絕敏感欄位名稱與明顯 email／phone／national-ID／SSN／passport／Luhn-valid payment-card 值；低 entropy PII 省略而不 hash。八條 deterministic route 全部可達：harness／fixture、out-of-scope 或 DNS／proxy／gateway、重複 network／timeout／rate-limit、沒有 documentary evidence 的安全 contradiction 分別交給 implementation、environment、provider-runtime regression、extraction correction；其餘維持 closed／needs-evidence／provider-clarification／amendment-proposal。只有 confirms／contradicts 計入 assessed；inconclusive／out-of-scope 仍是 untested/open。Compatibility Amendment 必須有期限且綁定 scope；同 target 衝突 fail closed，除非明確同 scope supersession 保留既有 lineage。`feedback current` 要求 timezone-aware `--at`，拒絕 query time 早於 approval／composition、expired、base 非 normative current 或 stale binding；pointer 的 `effective_asset_digest` 綁定完整 current asset，另驗證三份 artifacts，成功回傳 `valid_until`、open／untested counters 與 `unresolved_contradiction_count`。每個 successor 的 `supersedes`／`supersedes_asset_digest` 成對形成 hash chain；approval 與 user-facing traversal 逐節驗證 predecessor asset／amendment digest。新 reviewed amendment 可恢復 expired lineage，但任何歷史 metadata／amendment／supersession 竄改都 fail closed，不得污染下次 approval／composition。Foundry 不改寫舊 normative asset bytes，新 asset 記錄 `supersedes` 後 pointer 才前進。全域 `current` 保持 normative，無 global Effective current，也不宣稱有限測試能證明「100% 真實」。Provider Erratum 必須重走完整 source pipeline；implementation-backed benchmark 與 source-backed strict-local lane 分開回報。
+
+    Issue #36 的 hardened contract 另要求：Observation kind 由 pure `core/conformance_policy.py` 做語意 allowlist；governed feedback／Effective JSON 拒絕未知欄位；`current` 只接受 `APPROVED` 並 cross-validate contract identity、amendment IDs、validity/counts、approval actor/time 與 provenance approval/assessment/bundle bindings。Pointer digest 綁定包含所有宣告欄位、經 strict validation 後的 canonical asset，並揭露 digest-bound `stale_amendment_count`。Stale 只指可驗證的 release／contract／source／policy／approval-time drift，expired 與 inapplicable 分開；自由文字 revalidation triggers 只是 review declaration，沒有外部 signal contract 就不自動執行。所有 governed lineage traversal 收斂至 `foundry.query`。
+13. 供應商文件同時是 untrusted model input：來源取得／前處理後，必須對 agent 實際會讀的 manifest 綁定文字包執行 `inspect-source-risk`。報告不回顯命中 payload、不改寫來源，並由 schema/ruleset、大小上限、manifest／逐來源 digest 與 stable source binding 防止 stale reuse；`assess-sources` 內嵌 audit，`assemble` 在建立 run-dir 前重驗綁定。risk finding 決定文字能否進模型，不是 API claim 的事實證據。

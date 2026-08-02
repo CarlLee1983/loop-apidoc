@@ -63,11 +63,19 @@ def test_approve_creates_asset_and_current(tmp_path: Path) -> None:
     assert store.load_catalog(tmp_path).docsets[0].current_asset == asset.asset_id
 
 
-def test_approve_supersedes_previous_asset(tmp_path: Path) -> None:
+def test_approve_records_supersession_without_mutating_previous_asset(tmp_path: Path) -> None:
     _setup(tmp_path)
     first = approve.approve_candidate(
         tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
     )
+    first_dir = (
+        tmp_path / ".foundry/api/docsets/tappay-backend/assets" / first.asset_id
+    )
+    prior_bytes = {
+        path.relative_to(first_dir): path.read_bytes()
+        for path in first_dir.rglob("*")
+        if path.is_file()
+    }
     # import + approve a second run
     run_dir2 = write_run_dir(tmp_path / "output" / _RUN_ID_2)
     importer.import_run(tmp_path, "tappay-backend", run_dir2)
@@ -77,7 +85,12 @@ def test_approve_supersedes_previous_asset(tmp_path: Path) -> None:
 
     assert second.supersedes == first.asset_id
     reloaded_first = store.load_asset(tmp_path, "tappay-backend", first.asset_id)
-    assert reloaded_first.status is AssetStatus.SUPERSEDED
+    assert reloaded_first.status is AssetStatus.APPROVED
+    assert {
+        path.relative_to(first_dir): path.read_bytes()
+        for path in first_dir.rglob("*")
+        if path.is_file()
+    } == prior_bytes
     assert store.load_current(tmp_path, "tappay-backend").current_asset == second.asset_id
 
 
