@@ -16,6 +16,7 @@ from typing import Any
 from loop_apidoc.adapters.fragments import FragmentRequest, acquire_fragment_bundle
 from loop_apidoc.domain.evidence import (
     EvidenceFragment,
+    FragmentLocator,
     FragmentPrecision,
     SourceDescriptor,
     SourceSet,
@@ -106,9 +107,20 @@ def verify_extraction_evidence(
     artifact_sources = {
         artifact.id: artifact.source_id for artifact in bundle.artifacts
     }
+    exact_fragments: dict[
+        tuple[str, FragmentLocator],
+        list[EvidenceFragment],
+    ] = {}
+    for fragment in bundle.fragments:
+        source_id = artifact_sources.get(fragment.source_artifact_id)
+        if source_id is None or fragment.precision is not FragmentPrecision.EXACT:
+            continue
+        exact_fragments.setdefault((source_id, fragment.locator), []).append(fragment)
+
     for label, reference, source_id in valid:
-        matches = _matching_fragments(
-            bundle.fragments, artifact_sources, source_id, reference
+        matches = exact_fragments.get(
+            (source_id, reference.locator),
+            (),
         )
         if not matches:
             violations.append(
@@ -193,21 +205,6 @@ def _descriptor(kind: str, locator: str, media_type: str | None) -> SourceDescri
     digest = hashlib.sha256(f"{kind}:{locator}".encode("utf-8")).hexdigest()[:20]
     return SourceDescriptor(
         id=f"source-{digest}", kind=kind, locator=locator, media_type=media_type
-    )
-
-
-def _matching_fragments(
-    fragments: tuple[EvidenceFragment, ...],
-    artifact_sources: dict[str, str],
-    source_id: str,
-    reference: ExtractionEvidenceReference,
-) -> tuple[EvidenceFragment, ...]:
-    return tuple(
-        fragment
-        for fragment in fragments
-        if fragment.precision is FragmentPrecision.EXACT
-        and fragment.locator == reference.locator
-        and artifact_sources.get(fragment.source_artifact_id) == source_id
     )
 
 

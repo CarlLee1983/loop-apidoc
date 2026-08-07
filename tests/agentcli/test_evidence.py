@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import statistics
 from datetime import datetime, timezone
 from pathlib import Path
+from time import perf_counter
 
 import pytest
 
@@ -98,6 +100,68 @@ def test_exact_evidence_verifier_accepts_matching_fragment(tmp_path):
     assert verify_extraction_evidence(
         _inventory(), [("ep00.json", _ENDPOINT)], None, manifest, facts, NOW
     ) == []
+
+
+def test_exact_evidence_verifier_scales_near_linearly_with_unique_references(
+    tmp_path: Path,
+) -> None:
+    def build_case(name: str, count: int):
+        sources = tmp_path / name
+        sources.mkdir()
+        lines = [f"evidence line {index}" for index in range(count)]
+        (sources / "manual.md").write_text(
+            "\n".join(lines) + "\n",
+            encoding="utf-8",
+        )
+        manifest = build_manifest(sources_root=sources, urls=[], generated_at=NOW)
+        facts = collect_facts(sources, manifest)
+        inventory = {
+            "endpoints": [
+                {
+                    "evidence": [
+                        {
+                            "version": 1,
+                            "source": "manual.md",
+                            "locator": {
+                                "kind": "line_range",
+                                "start_line": index + 1,
+                                "end_line": index + 1,
+                            },
+                            "fragment_digest": fragment_digest(line),
+                            "claim_path": "/summary",
+                        }
+                        for index, line in enumerate(lines)
+                    ]
+                }
+            ]
+        }
+        return inventory, manifest, facts
+
+    def median_elapsed(case) -> float:
+        inventory, manifest, facts = case
+        samples: list[float] = []
+        for sample_index in range(4):
+            started = perf_counter()
+            assert verify_extraction_evidence(
+                inventory,
+                [],
+                None,
+                manifest,
+                facts,
+                NOW,
+            ) == []
+            elapsed = perf_counter() - started
+            if sample_index:
+                samples.append(elapsed)
+        return statistics.median(samples)
+
+    small_elapsed = median_elapsed(build_case("small", 250))
+    large_elapsed = median_elapsed(build_case("large", 1_000))
+
+    assert large_elapsed < small_elapsed * 6, (
+        "quadrupling exact evidence references should remain near-linear; "
+        f"small={small_elapsed:.4f}s, large={large_elapsed:.4f}s"
+    )
 
 
 def test_exact_evidence_verifier_reports_stale_digest_and_unknown_source(tmp_path):
@@ -227,3 +291,61 @@ def test_shadow_uses_verified_v1_evidence_for_its_declared_claim_path(tmp_path):
     ]
     assert len(summary) == 1
     assert summary[0]["reason_code"] == "CLAIM_BOUND_EXACT_REFERENCE"
+
+
+def test_shadow_assembly_scales_near_linearly_with_exact_references(
+    tmp_path: Path,
+) -> None:
+    def median_elapsed_for(count: int) -> float:
+        case_root = tmp_path / f"case-{count}"
+        sources = case_root / "sources"
+        extraction = case_root / "extraction"
+        sources.mkdir(parents=True)
+        lines = ["# Demo API", "GET", "/ping", "Ping"] + [
+            f"evidence line {index}" for index in range(count - 1)
+        ]
+        (sources / "manual.md").write_text(
+            "\n".join(lines) + "\n",
+            encoding="utf-8",
+        )
+        evidence = [
+            {
+                "version": 1,
+                "source": "manual.md",
+                "locator": {
+                    "kind": "line_range",
+                    "start_line": index + 4,
+                    "end_line": index + 4,
+                },
+                "fragment_digest": fragment_digest(line),
+                "claim_path": "/summary",
+            }
+            for index, line in enumerate(lines[3:])
+        ]
+        _write_extraction(extraction, _inventory(evidence=evidence))
+
+        samples: list[float] = []
+        for sample_index in range(4):
+            started = perf_counter()
+            result = run_assemble_pipeline(
+                sources_root=sources,
+                extraction_dir=extraction,
+                output_root=case_root / "output",
+                run_id=f"shadow-{sample_index}",
+                generated_at=NOW,
+                architecture_mode=ArchitectureMode.SHADOW,
+            )
+            elapsed = perf_counter() - started
+            assert result.shadow is not None
+            assert result.shadow.status == "ok"
+            if sample_index:
+                samples.append(elapsed)
+        return statistics.median(samples)
+
+    small_elapsed = median_elapsed_for(200)
+    large_elapsed = median_elapsed_for(1_600)
+
+    assert large_elapsed < small_elapsed * 10, (
+        "8x more exact references should not trigger quadratic shadow lookup; "
+        f"small={small_elapsed:.4f}s, large={large_elapsed:.4f}s"
+    )

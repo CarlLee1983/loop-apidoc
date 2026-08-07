@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -45,6 +47,50 @@ class FragmentRequest(FrozenModel):
     source_id: str
     locator: FragmentLocator
     parent_fragment_id: str | None = None
+
+
+_UNPREPARED = object()
+
+
+@dataclass(frozen=True)
+class _PreparedSource:
+    content_digest: str
+    lines: tuple[str, ...] | None
+    marked_pages: dict[int, str] | None
+    pdf_pages: dict[int, str] | None
+    structured: Any
+    text_error: ValueError | None
+    structured_error: ValueError | None
+
+    def materialize(
+        self,
+        locator: FragmentLocator,
+    ) -> tuple[str, Any, str | None]:
+        if self.text_error is not None and isinstance(
+            locator,
+            (PageLocator, LineRangeLocator, JsonPointerLocator),
+        ):
+            raise self.text_error
+        if isinstance(locator, PageLocator):
+            pages = self.pdf_pages if self.pdf_pages is not None else self.marked_pages
+            if pages is None or locator.page not in pages:
+                raise FragmentAcquisitionError("requested page was not found")
+            return pages[locator.page], None, None
+        if isinstance(locator, LineRangeLocator):
+            if self.lines is None or locator.end_line > len(self.lines):
+                raise FragmentAcquisitionError("line range is out of bounds")
+            excerpt = normalize_excerpt(
+                "\n".join(self.lines[locator.start_line - 1 : locator.end_line])
+            )
+            return excerpt, None, None
+        if isinstance(locator, JsonPointerLocator):
+            if self.structured_error is not None:
+                raise self.structured_error
+            if self.structured is _UNPREPARED:
+                raise FragmentAcquisitionError("structured source was not prepared")
+            selected = _resolve_pointer(self.structured, locator.pointer)
+            return canonical_json(selected), selected, "structured.value"
+        raise FragmentAcquisitionError("locator cannot be materialized safely")
 
 
 _PAGE = re.compile(r"^.+?\s+(?:p\.|page\s+)(?P<page>\d+)$", re.IGNORECASE)
@@ -133,14 +179,13 @@ def acquire_fragment_bundle(
                     parent.id,
                 ):
                     fragments[fragment.id] = fragment
-            for request in requests_by_source.get(descriptor.id, ()):
-                fragment = _requested_fragment(
-                    request,
-                    local.source_format,
-                    content,
-                    artifact.id,
-                    parent.id,
-                )
+            for fragment in _requested_fragments(
+                requests_by_source.get(descriptor.id, ()),
+                local.source_format,
+                content,
+                artifact.id,
+                parent.id,
+            ):
                 fragments[fragment.id] = fragment
             continue
 
@@ -157,14 +202,13 @@ def acquire_fragment_bundle(
             )
             artifacts.append(artifact)
             fragments[parent.id] = parent
-            for request in requests_by_source.get(descriptor.id, ()):
-                fragment = _requested_fragment(
-                    request,
-                    _format_from_path(remote.snapshot_file),
-                    content,
-                    artifact.id,
-                    parent.id,
-                )
+            for fragment in _requested_fragments(
+                requests_by_source.get(descriptor.id, ()),
+                _format_from_path(remote.snapshot_file),
+                content,
+                artifact.id,
+                parent.id,
+            ):
                 fragments[fragment.id] = fragment
             continue
 
@@ -234,26 +278,42 @@ def _document_fragment(artifact: SourceArtifact) -> EvidenceFragment:
     )
 
 
-def _requested_fragment(
-    request: FragmentRequest,
+def _requested_fragments(
+    requests: Sequence[FragmentRequest],
     source_format: SourceFormat,
     content: bytes,
+    artifact_id: str,
+    document_fragment_id: str,
+) -> tuple[EvidenceFragment, ...]:
+    if not requests:
+        return ()
+    prepared = _prepare_source(source_format, content, requests)
+    return tuple(
+        _requested_fragment(
+            request,
+            prepared,
+            artifact_id,
+            document_fragment_id,
+        )
+        for request in requests
+    )
+
+
+def _requested_fragment(
+    request: FragmentRequest,
+    prepared: _PreparedSource,
     artifact_id: str,
     document_fragment_id: str,
 ) -> EvidenceFragment:
     parent_id = request.parent_fragment_id or document_fragment_id
     try:
-        excerpt, semantic_value, semantic_role = _materialize_request(
-            request.locator,
-            source_format,
-            content,
-        )
+        excerpt, semantic_value, semantic_role = prepared.materialize(request.locator)
     except (FragmentAcquisitionError, KeyError, IndexError, ValueError):
         return _degraded_fragment(
             request.locator,
             artifact_id,
             parent_id,
-            hashlib.sha256(content).hexdigest(),
+            prepared.content_digest,
         )
     digest = fragment_digest(excerpt)
     return EvidenceFragment(
@@ -274,46 +334,80 @@ def _requested_fragment(
     )
 
 
-def _materialize_request(
-    locator: FragmentLocator,
+def _prepare_source(
     source_format: SourceFormat,
     content: bytes,
-) -> tuple[str, Any, str | None]:
-    if isinstance(locator, PageLocator):
-        if source_format is SourceFormat.PDF:
+    requests: Sequence[FragmentRequest],
+) -> _PreparedSource:
+    locators = tuple(request.locator for request in requests)
+    needs_text = any(
+        isinstance(locator, (LineRangeLocator, JsonPointerLocator))
+        or isinstance(locator, PageLocator) and source_format is not SourceFormat.PDF
+        for locator in locators
+    )
+    text: str | None = None
+    text_error: ValueError | None = None
+    if needs_text:
+        try:
+            text = content.decode("utf-8")
+        except ValueError as exc:
+            text_error = exc
+    lines = (
+        tuple(text.splitlines())
+        if text is not None
+        and any(isinstance(locator, LineRangeLocator) for locator in locators)
+        else None
+    )
+    marked_pages = (
+        _marked_pages(text)
+        if text is not None
+        and any(isinstance(locator, PageLocator) for locator in locators)
+        else None
+    )
+
+    structured: Any = _UNPREPARED
+    structured_error: ValueError | None = None
+    if text is not None and any(
+        isinstance(locator, JsonPointerLocator) for locator in locators
+    ):
+        try:
+            structured = (
+                yaml.safe_load(text)
+                if source_format is SourceFormat.OPENAPI_YAML
+                else json.loads(text)
+            )
+        except ValueError as exc:
+            structured_error = exc
+
+    pdf_pages: dict[int, str] | None = None
+    if source_format is SourceFormat.PDF:
+        requested_pages = {
+            locator.page for locator in locators if isinstance(locator, PageLocator)
+        }
+        if requested_pages:
+            pdf_pages = {}
             document = pymupdf.open(stream=content, filetype="pdf")
             try:
-                if locator.page > document.page_count:
-                    raise FragmentAcquisitionError("PDF page is out of range")
-                excerpt = normalize_excerpt(
-                    document.load_page(locator.page - 1).get_text()
-                )
+                for page in sorted(requested_pages):
+                    if page <= document.page_count:
+                        pdf_pages[page] = normalize_excerpt(
+                            document.load_page(page - 1).get_text()
+                        )
             finally:
                 document.close()
-            return excerpt, None, None
-        text = content.decode("utf-8")
-        return _marked_page(text, locator.page), None, None
-    if isinstance(locator, LineRangeLocator):
-        lines = content.decode("utf-8").splitlines()
-        if locator.end_line > len(lines):
-            raise FragmentAcquisitionError("line range is out of bounds")
-        excerpt = normalize_excerpt(
-            "\n".join(lines[locator.start_line - 1 : locator.end_line])
-        )
-        return excerpt, None, None
-    if isinstance(locator, JsonPointerLocator):
-        text = content.decode("utf-8")
-        value = (
-            yaml.safe_load(text)
-            if source_format is SourceFormat.OPENAPI_YAML
-            else json.loads(text)
-        )
-        selected = _resolve_pointer(value, locator.pointer)
-        return canonical_json(selected), selected, "structured.value"
-    raise FragmentAcquisitionError("locator cannot be materialized safely")
+
+    return _PreparedSource(
+        content_digest=hashlib.sha256(content).hexdigest(),
+        lines=lines,
+        marked_pages=marked_pages,
+        pdf_pages=pdf_pages,
+        structured=structured,
+        text_error=text_error,
+        structured_error=structured_error,
+    )
 
 
-def _marked_page(text: str, page: int) -> str:
+def _marked_pages(text: str) -> dict[int, str]:
     pages: dict[int, list[str]] = {}
     current: int | None = None
     for line in text.splitlines():
@@ -322,9 +416,10 @@ def _marked_page(text: str, page: int) -> str:
             pages.setdefault(current, [])
         elif current is not None:
             pages[current].append(line)
-    if page not in pages:
-        raise FragmentAcquisitionError("preprocessed page marker was not found")
-    return normalize_excerpt("\n".join(pages[page]))
+    return {
+        page: normalize_excerpt("\n".join(lines))
+        for page, lines in pages.items()
+    }
 
 
 def _resolve_pointer(value: Any, pointer: str) -> Any:
@@ -476,4 +571,3 @@ def _format_from_path(path: str) -> SourceFormat:
     if lowered.endswith(".pdf"):
         return SourceFormat.PDF
     return SourceFormat.MARKDOWN
-
