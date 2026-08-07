@@ -24,6 +24,7 @@ from loop_apidoc.domain.claim_paths import (
 )
 from loop_apidoc.domain.evidence import (
     DerivationStep,
+    FragmentLocator,
     FragmentPrecision,
     JsonPointerLocator,
     LineRangeLocator,
@@ -75,6 +76,80 @@ class BridgeInputs(FrozenModel):
         ids = set(self.resolve_citation(manifest_source))
         return tuple(
             fragment for fragment in self.evidence.fragments if fragment.id in ids
+        )
+
+
+@dataclass(frozen=True)
+class _BridgeLookup:
+    fragment_ids_by_citation: dict[str, tuple[str, ...]]
+    fragments_by_citation: dict[str, tuple[EvidenceFragment, ...]]
+    exact_fragments_by_reference: dict[
+        tuple[str, FragmentLocator, str],
+        tuple[EvidenceFragment, ...],
+    ]
+
+    @classmethod
+    def build(cls, bridge: BridgeInputs) -> _BridgeLookup:
+        fragment_ids_by_citation = dict(bridge.citation_fragments)
+        fragments_by_id = {
+            fragment.id: fragment for fragment in bridge.evidence.fragments
+        }
+        fragment_order = {
+            fragment.id: index
+            for index, fragment in enumerate(bridge.evidence.fragments)
+        }
+        fragments_by_citation = {
+            source: tuple(
+                fragments_by_id[fragment_id]
+                for fragment_id in sorted(
+                    (
+                        fragment_id
+                        for fragment_id in fragment_ids
+                        if fragment_id in fragments_by_id
+                    ),
+                    key=fragment_order.__getitem__,
+                )
+            )
+            for source, fragment_ids in fragment_ids_by_citation.items()
+        }
+        indexed: dict[
+            tuple[str, FragmentLocator, str],
+            list[EvidenceFragment],
+        ] = {}
+        for source, fragments in fragments_by_citation.items():
+            for fragment in fragments:
+                if fragment.precision is not FragmentPrecision.EXACT:
+                    continue
+                key = (source, fragment.locator, fragment.fragment_digest)
+                indexed.setdefault(key, []).append(fragment)
+        return cls(
+            fragment_ids_by_citation=fragment_ids_by_citation,
+            fragments_by_citation=fragments_by_citation,
+            exact_fragments_by_reference={
+                key: tuple(fragments) for key, fragments in indexed.items()
+            },
+        )
+
+    def resolve_citation(self, manifest_source: str | None) -> tuple[str, ...]:
+        if manifest_source is None:
+            return ()
+        return self.fragment_ids_by_citation.get(manifest_source, ())
+
+    def fragments_for_citation(
+        self,
+        manifest_source: str | None,
+    ) -> tuple[EvidenceFragment, ...]:
+        if manifest_source is None:
+            return ()
+        return self.fragments_by_citation.get(manifest_source, ())
+
+    def exact_fragments_for_reference(
+        self,
+        reference: ExtractionEvidenceReference,
+    ) -> tuple[EvidenceFragment, ...]:
+        return self.exact_fragments_by_reference.get(
+            (reference.source, reference.locator, reference.fragment_digest),
+            (),
         )
 
 
@@ -245,7 +320,7 @@ def build_runtime_result(
     plan: NormalizationPlan,
     bridge: BridgeInputs,
 ) -> RuntimeResult:
-    candidates = _proposal_candidates(plan, bridge)
+    candidates = _proposal_candidates(plan, bridge, _BridgeLookup.build(bridge))
     diagnostics: list[BridgeDiagnostic] = [
         diagnostic
         for candidate in candidates
@@ -337,6 +412,7 @@ class _ProposalCandidate:
 def _proposal_candidates(
     plan: NormalizationPlan,
     bridge: BridgeInputs,
+    lookup: _BridgeLookup,
 ) -> list[_ProposalCandidate]:
     candidates: list[_ProposalCandidate] = []
     for projection in iter_plan_claim_projections(plan):
@@ -348,6 +424,7 @@ def _proposal_candidates(
                 subject=projection.subject,
                 value=projection.value,
                 bridge=bridge,
+                lookup=lookup,
             )
         )
     return candidates
@@ -361,11 +438,12 @@ def _candidate(
     subject: str,
     value: dict[str, Any],
     bridge: BridgeInputs,
+    lookup: _BridgeLookup,
 ) -> _ProposalCandidate:
     evidence_refs, diagnostics = _resolve_citations(
         entry.citations,
         plan_location,
-        bridge,
+        lookup,
         require_citation=entry.status
         in {PlanItemStatus.SUPPORTED, PlanItemStatus.CONFLICTING},
     )
@@ -379,6 +457,7 @@ def _candidate(
             claim_kind=claim_kind,
             value=value,
             bridge=bridge,
+            lookup=lookup,
         )
     if status is PlanItemStatus.MISSING:
         value = None
@@ -401,7 +480,7 @@ def _candidate(
 def _resolve_citations(
     citations: list[SourceCitation],
     plan_location: str,
-    bridge: BridgeInputs,
+    lookup: _BridgeLookup,
     *,
     require_citation: bool,
 ) -> tuple[tuple[str, ...], tuple[BridgeDiagnostic, ...]]:
@@ -428,7 +507,7 @@ def _resolve_citations(
                 )
             )
             continue
-        resolved = bridge.resolve_citation(source)
+        resolved = lookup.resolve_citation(source)
         if not resolved:
             diagnostics.append(
                 BridgeDiagnostic(
@@ -495,6 +574,7 @@ def _semantic_support_proposals(
     claim_kind: str,
     value: Any,
     bridge: BridgeInputs,
+    lookup: _BridgeLookup,
 ) -> tuple[
     tuple[ClaimSupportProposal, ...],
     tuple[BridgeDiagnostic, ...],
@@ -514,13 +594,7 @@ def _semantic_support_proposals(
         direct = _direct_evidence_for_path(citations, path)
         if direct:
             for citation, reference in direct:
-                selected = [
-                    fragment
-                    for fragment in bridge.fragments_for_citation(reference.source)
-                    if fragment.locator == reference.locator
-                    and fragment.fragment_digest == reference.fragment_digest
-                    and fragment.precision is FragmentPrecision.EXACT
-                ]
+                selected = lookup.exact_fragments_for_reference(reference)
                 if selected:
                     exact.extend(
                         (fragment, _verification_method(fragment), reference)
@@ -542,7 +616,7 @@ def _semantic_support_proposals(
                 )
         else:
             for citation in citations:
-                fragments = bridge.fragments_for_citation(citation.manifest_source)
+                fragments = lookup.fragments_for_citation(citation.manifest_source)
                 document = [
                     fragment
                     for fragment in fragments

@@ -218,6 +218,137 @@ def test_line_range_fragment_is_exact_child_of_document(tmp_path):
     assert fragment.parent_fragment_id is not None
 
 
+def test_invalid_utf8_request_degrades_without_aborting_other_sources(tmp_path):
+    invalid = tmp_path / "invalid.md"
+    invalid.write_bytes(bytes([255]))
+    valid = tmp_path / "valid.md"
+    valid.write_text("usable\n", encoding="utf-8")
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            _local_source("invalid.md", SourceFormat.MARKDOWN, invalid.read_bytes()),
+            _local_source("valid.md", SourceFormat.MARKDOWN, valid.read_bytes()),
+        ],
+    )
+    source_set = SourceSet(
+        id="sources",
+        version="1",
+        sources=(
+            SourceDescriptor(
+                id="invalid",
+                kind="file",
+                locator="invalid.md",
+                media_type="text/markdown",
+            ),
+            SourceDescriptor(
+                id="valid",
+                kind="file",
+                locator="valid.md",
+                media_type="text/markdown",
+            ),
+        ),
+    )
+
+    bundle = acquire_fragment_bundle(
+        source_set,
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(
+                source_id="invalid",
+                locator=LineRangeLocator(start_line=1, end_line=1),
+            ),
+            FragmentRequest(
+                source_id="valid",
+                locator=LineRangeLocator(start_line=1, end_line=1),
+            ),
+        ),
+        NOW,
+    )
+
+    source_by_artifact = {
+        artifact.id: artifact.source_id for artifact in bundle.artifacts
+    }
+    requested = {
+        source_by_artifact[fragment.source_artifact_id]: fragment
+        for fragment in bundle.fragments
+        if isinstance(fragment.locator, LineRangeLocator)
+    }
+    assert requested["invalid"].precision is FragmentPrecision.UNRESOLVED
+    assert requested["valid"].precision is FragmentPrecision.EXACT
+    assert requested["valid"].normalized_excerpt == "usable"
+
+
+@pytest.mark.parametrize(
+    ("source_format", "suffix", "valid_content"),
+    [
+        (SourceFormat.OPENAPI_JSON, "json", b'{"usable":true}'),
+        (SourceFormat.OPENAPI_YAML, "yaml", b"usable: true\n"),
+    ],
+)
+def test_invalid_utf8_pointer_degrades_without_aborting_other_sources(
+    tmp_path,
+    source_format,
+    suffix,
+    valid_content,
+):
+    invalid_name = f"invalid.{suffix}"
+    valid_name = f"valid.{suffix}"
+    (tmp_path / invalid_name).write_bytes(bytes([255]))
+    (tmp_path / valid_name).write_bytes(valid_content)
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            _local_source(invalid_name, source_format, bytes([255])),
+            _local_source(valid_name, source_format, valid_content),
+        ],
+    )
+    source_set = SourceSet(
+        id="sources",
+        version="1",
+        sources=(
+            SourceDescriptor(
+                id="invalid",
+                kind="file",
+                locator=invalid_name,
+                media_type="application/octet-stream",
+            ),
+            SourceDescriptor(
+                id="valid",
+                kind="file",
+                locator=valid_name,
+                media_type="application/octet-stream",
+            ),
+        ),
+    )
+    locator = JsonPointerLocator(pointer="/usable")
+
+    bundle = acquire_fragment_bundle(
+        source_set,
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(source_id="invalid", locator=locator),
+            FragmentRequest(source_id="valid", locator=locator),
+        ),
+        NOW,
+    )
+
+    source_by_artifact = {
+        artifact.id: artifact.source_id for artifact in bundle.artifacts
+    }
+    requested = {
+        source_by_artifact[fragment.source_artifact_id]: fragment
+        for fragment in bundle.fragments
+        if isinstance(fragment.locator, JsonPointerLocator)
+    }
+    assert requested["invalid"].precision is FragmentPrecision.UNRESOLVED
+    assert requested["valid"].precision is FragmentPrecision.EXACT
+    assert requested["valid"].semantic_value is True
+
+
 def test_pdf_page_fragment_contains_only_requested_page(tmp_path):
     source = tmp_path / "manual.pdf"
     document = pymupdf.open()
