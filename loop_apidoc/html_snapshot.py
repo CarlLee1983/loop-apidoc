@@ -15,19 +15,59 @@ def html_to_markdown(html: str) -> str:
     parser = _TreeParser()
     parser.feed(html)
     parser.close()
-    root = next((item for item in _walk(parser.root) if item.tag == "main"), parser.root)
-    lines: list[str] = []
+    elements = list(_walk(parser.root))
+    root = next(
+        (
+            item
+            for tag in ("main", "article", "body")
+            for item in elements
+            if item.tag == tag
+        ),
+        parser.root,
+    )
+    lines: list[tuple[str, bool]] = []
     ignored = {"aside", "footer", "nav", "script", "style", "template"}
 
-    def text(item: _Element) -> str:
-        """Inline text with whitespace collapsed (headings, cells, paragraphs)."""
+    def add_line(value: str, *, deduplicate: bool = True) -> None:
+        if value:
+            lines.append((value, deduplicate))
+
+    def plain_text(item: _Element, *, exclude_lists: bool = False) -> str:
         parts: list[str] = []
-        for child in item.children:
-            if isinstance(child, str):
-                parts.append(child)
-            elif child.tag not in ignored:
-                parts.append(text(child))
-        return " ".join(" ".join(parts).split())
+
+        def visit(node: _Element | str) -> None:
+            if isinstance(node, str):
+                parts.append(node)
+                return
+            if node.tag in ignored or (exclude_lists and node.tag in {"ul", "ol"}):
+                return
+            for child in node.children:
+                visit(child)
+
+        visit(item)
+        return " ".join("".join(parts).split())
+
+    def inline_text(item: _Element, *, exclude_lists: bool = False) -> str:
+        """Render readable inline content without resolving or inventing links."""
+        parts: list[str] = []
+
+        def visit(node: _Element | str) -> None:
+            if isinstance(node, str):
+                parts.append(node)
+                return
+            if node.tag in ignored or (exclude_lists and node.tag in {"ul", "ol"}):
+                return
+            if node.tag == "a":
+                label = plain_text(node)
+                href = node.attrs.get("href", "")
+                if label:
+                    parts.append(f"[{label}]({href})" if href else label)
+                return
+            for child in node.children:
+                visit(child)
+
+        visit(item)
+        return " ".join("".join(parts).split())
 
     def raw_text(item: _Element) -> str:
         """Descendant text with line breaks preserved (code blocks)."""
@@ -43,7 +83,7 @@ def html_to_markdown(html: str) -> str:
         rows: list[list[str]] = []
         for row in (e for e in _walk(table) if e.tag == "tr"):
             cells = [
-                text(cell).replace("|", r"\|")
+                inline_text(cell).replace("|", r"\|")
                 for cell in row.children
                 if isinstance(cell, _Element) and cell.tag in {"th", "td"}
             ]
@@ -61,34 +101,78 @@ def html_to_markdown(html: str) -> str:
         out += ["| " + " | ".join(row) + " |" for row in body]
         return "\n".join(out)
 
-    consumed: set[int] = set()
-    for item in _walk(root):
-        if id(item) in consumed or item.tag in ignored:
-            continue
+    def render_list(list_element: _Element, depth: int) -> list[str]:
+        list_lines: list[str] = []
+
+        def nested_lists(item: _Element) -> list[_Element]:
+            found: list[_Element] = []
+
+            def visit(node: _Element) -> None:
+                for child in node.children:
+                    if not isinstance(child, _Element):
+                        continue
+                    if child.tag in {"ul", "ol"}:
+                        found.append(child)
+                    else:
+                        visit(child)
+
+            visit(item)
+            return found
+
+        marker = "-" if list_element.tag == "ul" else None
+        index = 0
+        for item in list_element.children:
+            if not isinstance(item, _Element) or item.tag != "li":
+                continue
+            index += 1
+            value = inline_text(item, exclude_lists=True)
+            if value:
+                prefix = marker or f"{index}."
+                list_lines.append(f"{'  ' * depth}{prefix} {value}")
+            for nested_list in nested_lists(item):
+                list_lines.extend(render_list(nested_list, depth + 1))
+        return list_lines
+
+    def visit(item: _Element) -> None:
+        if item.tag in ignored:
+            return
         if item.tag == "table":
-            for descendant in _walk(item):
-                consumed.add(id(descendant))
             rendered = render_table(item)
             if rendered:
-                lines.append(rendered)
-            continue
+                add_line(rendered)
+            return
         if item.tag == "pre":
-            for descendant in _walk(item):
-                consumed.add(id(descendant))
             code = raw_text(item).strip("\n")
             if code:
-                lines.append(f"```\n{code}\n```")
-            continue
-        value = text(item)
-        if not value:
-            continue
+                add_line(f"```\n{code}\n```")
+            return
+        if item.tag in {"ul", "ol"}:
+            rendered = render_list(item, 0)
+            if rendered:
+                add_line("\n".join(rendered), deduplicate=False)
+            return
+        value = inline_text(item)
         if item.tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
-            lines.append(f"{'#' * int(item.tag[1])} {value}")
-        elif item.tag == "li":
-            lines.append(f"- {value}")
-        elif item.tag == "p":
-            lines.append(value)
-    return "\n\n".join(dict.fromkeys(line for line in lines if line)) + ("\n" if lines else "")
+            if value:
+                add_line(f"{'#' * int(item.tag[1])} {value}")
+            return
+        if item.tag == "p" and value:
+            add_line(value)
+            return
+        for child in item.children:
+            if isinstance(child, _Element):
+                visit(child)
+
+    visit(root)
+    unique_lines: list[str] = []
+    seen: set[str] = set()
+    for line, deduplicate in lines:
+        if deduplicate and line in seen:
+            continue
+        if deduplicate:
+            seen.add(line)
+        unique_lines.append(line)
+    return "\n\n".join(unique_lines) + ("\n" if unique_lines else "")
 
 
 def normalize_html_snapshot(input_file: Path, url: str, output: Path) -> Path:
