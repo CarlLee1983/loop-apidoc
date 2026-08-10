@@ -245,6 +245,15 @@ legacy validation、score、approval、Foundry、run status 或 exit code。預�
 `legacy` 不建立 `core/`。`shadow/report.py` 是這個 compatibility package
 唯一的 file-I/O exit；Core 與 Domain 仍不依賴 CLI 或 run directory。
 
+`assemble --architecture-mode strict` 使用相同的 legacy-plan bridge，但它是 blocking
+adapter，不會呼叫 shadow 的 safe wrapper。strict 僅在 legacy validation 通過後執行，
+並逐一要求每個 legacy `supported` plan item 的所有 material claim path 都由 exact
+evidence relationship 支援；未滿足時只產生 `core/grounding-report.json`，不產生
+candidate release，run 失敗。成功的 `core/execution.json` 記錄 candidate eligibility
+與零 approval/publication side effect，`core/release.json` 仍是未核准 candidate。
+Foundry import/approval 會重新驗證這些 strict artifacts，且 `allow_failing` 不得繞過
+strict 的拒絕或錯誤。legacy 與 shadow 的既有輸入與退出語意維持不變。
+
 Shadow 的 `adapters/fragments.py` 是 read-side I/O exit：它把來源實際內容具體化為
 page／line range／section／table cell／JSON Pointer／CSS／XPath locator，並以片段
 內容計算 digest。`core/relationships.json` 保存 claim-level relationship，

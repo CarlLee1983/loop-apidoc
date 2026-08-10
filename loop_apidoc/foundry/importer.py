@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from loop_apidoc.diff.loader import DiffInputError, load_run_artifacts
+from loop_apidoc.foundry.strict_artifacts import (
+    StrictCoreExecutionError,
+    require_eligible_strict_candidate,
+)
 from loop_apidoc.foundry import paths, store
 from loop_apidoc.foundry.models import FoundryInputError
 
@@ -30,6 +34,10 @@ def import_run(
         load_run_artifacts(run_dir)
     except DiffInputError as exc:
         raise FoundryInputError(f"run directory is not a valid run: {exc}") from exc
+    try:
+        require_eligible_strict_candidate(run_dir)
+    except StrictCoreExecutionError as exc:
+        raise FoundryInputError(str(exc)) from exc
 
     run_id = run_dir.name
     dest = paths.candidate_dir(project_root, docset_id, run_id)

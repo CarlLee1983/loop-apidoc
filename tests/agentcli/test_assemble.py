@@ -14,6 +14,8 @@ from loop_apidoc.agentcli.assemble import (
     load_extraction_inputs,
     run_assemble_pipeline,
 )
+from loop_apidoc.core.models import StrictExecutionSummary
+from loop_apidoc.domain.evidence import canonical_json, fragment_digest
 from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.manifest.models import (
     LocalSource,
@@ -233,6 +235,165 @@ def test_shadow_assemble_writes_complete_core_artifacts(tmp_path):
     }
 
 
+def test_strict_assemble_rejects_supported_claim_without_exact_evidence(
+    tmp_path, monkeypatch
+):
+    """Legacy support never becomes a candidate through a whole-document citation."""
+    _write_extraction(tmp_path / "extraction")
+    _add_title_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    monkeypatch.setattr(
+        "loop_apidoc.agentcli.assemble.validate_outputs",
+        lambda *_args: ValidationReport(),
+    )
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-strict",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.STRICT,
+    )
+
+    assert result.strict is not None
+    assert result.status is RunStatus.FAILED
+    assert result.strict.status == "rejected"
+    core_dir = Path(result.strict.core_dir)
+    report = json.loads((core_dir / "grounding-report.json").read_text(encoding="utf-8"))
+    assert report["status"] == "rejected"
+    assert report["code"] == "LEGACY_SUPPORTED_CLAIM_NOT_EXACTLY_GROUNDED"
+    assert not (core_dir / "release.json").exists()
+    assert not (core_dir / "contract.json").exists()
+
+
+def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
+    tmp_path, monkeypatch
+):
+    """A strict candidate remains reviewable and is never implicitly approved."""
+    response = {}
+    operation = {"responses": {"200": response}}
+    evidence = [
+        {
+            "version": 1,
+            "source": "openapi.json",
+            "locator": {"kind": "json_pointer", "pointer": "/paths/~1ping/get"},
+            "fragment_digest": fragment_digest(canonical_json(operation)),
+            "claim_path": path,
+        }
+        for path in ("/method", "/path")
+    ]
+    evidence.append(
+        {
+            "version": 1,
+            "source": "openapi.json",
+            "locator": {
+                "kind": "json_pointer",
+                "pointer": "/paths/~1ping/get/responses/200",
+            },
+            "fragment_digest": fragment_digest(canonical_json(response)),
+            "claim_path": "/responses/200/status_code",
+        }
+    )
+    extraction = tmp_path / "extraction"
+    extraction.mkdir()
+    inventory = {
+        "title": "Demo API",
+        "version": "1",
+        "overview": "Demo API",
+        "environments": [],
+        "security_schemes": [],
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/ping",
+                "summary": None,
+                "source": "openapi.json",
+                "evidence": evidence,
+            }
+        ],
+        "schemas": [],
+        "errors": [],
+        "operational": [],
+        "missing": [],
+    }
+    endpoint = {
+        "method": "GET",
+        "path": "/ping",
+        "parameters": [],
+        "request": None,
+        "responses": [{"status": "200", "description": None, "schema": None}],
+        "examples": [],
+        "missing": [],
+        "source": "openapi.json",
+        "evidence": evidence,
+    }
+    (extraction / "inventory.json").write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8"
+    )
+    (extraction / "endpoints").mkdir()
+    (extraction / "endpoints" / "ep0.json").write_text(
+        json.dumps(endpoint, ensure_ascii=False), encoding="utf-8"
+    )
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "openapi.json").write_text(
+        json.dumps({"paths": {"/ping": {"get": operation}}}), encoding="utf-8"
+    )
+    monkeypatch.setattr(
+        "loop_apidoc.agentcli.assemble.validate_outputs",
+        lambda *_args: ValidationReport(),
+    )
+
+    result = run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=extraction,
+        output_root=tmp_path / "out",
+        run_id="run-strict-exact",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.STRICT,
+    )
+
+    assert result.status is RunStatus.PASSED
+    assert result.strict is not None
+    assert result.strict.status == "ok"
+    core_dir = Path(result.strict.core_dir)
+    release = json.loads((core_dir / "release.json").read_text(encoding="utf-8"))
+    execution = json.loads((core_dir / "execution.json").read_text(encoding="utf-8"))
+    assert release["status"] == "candidate"
+    assert release["validation"]["policy_profile"] == "strict"
+    assert execution["candidate_eligible"] is True
+    assert execution["approval_requests"] == 0
+    assert execution["artifact_publications"] == 0
+    assert not (core_dir / "approval.json").exists()
+    assert not (core_dir / "current.json").exists()
+
+    from loop_apidoc.foundry import approve, importer, register
+    from loop_apidoc.foundry.models import Docset
+
+    foundry_root = tmp_path / "foundry"
+    register.register_docset(
+        foundry_root,
+        Docset(docset_id="demo", title="Demo", provider="demo", product="api"),
+    )
+    importer.import_run(foundry_root, "demo", Path(result.run_dir))
+    asset = approve.approve_candidate(
+        foundry_root,
+        "demo",
+        Path(result.run_dir).name,
+        approved_by="human-review",
+        now=datetime(2026, 7, 20, tzinfo=timezone.utc),
+    )
+    approved_release = json.loads(
+        (foundry_root / ".foundry" / "api" / "docsets" / "demo" / "assets" / asset.asset_id
+         / "artifacts" / "core" / "release.json").read_text(encoding="utf-8")
+    )
+    assert approved_release["status"] == "approved"
+    assert approved_release["approved_by"] == "human-review"
+
+
 def test_shadow_assemble_preserves_source_missing_version_as_metadata_gap(tmp_path):
     """Core preserves an unstated version; its OpenAPI projection marks its placeholder."""
     _write_extraction(tmp_path / "extraction")
@@ -302,6 +463,92 @@ def test_shadow_runs_after_failed_legacy_validation(tmp_path, monkeypatch):
     assert result.shadow is not None
     assert result.shadow.status == "ok"
     assert (Path(result.run_dir) / "core" / "comparison.json").is_file()
+
+
+def test_strict_assemble_blocks_before_core_when_legacy_validation_fails(
+    tmp_path, monkeypatch
+):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    _add_title_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    failed_report = ValidationReport(
+        issues=[
+            Issue(
+                code=IssueCode.REQUIRED_INFO_MISSING,
+                severity=Severity.ERROR,
+                location="paths./ping.get",
+                evidence="source",
+                suggested_fix="fill",
+            )
+        ]
+    )
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: failed_report)
+
+    result = assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-strict-legacy-fail",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.STRICT,
+    )
+
+    assert result.status is RunStatus.FAILED
+    assert result.strict is not None
+    assert result.strict.status == "blocked"
+    execution = json.loads(
+        (Path(result.run_dir) / "core" / "execution.json").read_text(encoding="utf-8")
+    )
+    assert execution["mode"] == "strict"
+    assert execution["candidate_eligible"] is False
+
+    from loop_apidoc.foundry import importer, register
+    from loop_apidoc.foundry.models import Docset, FoundryInputError
+
+    foundry_root = tmp_path / "foundry"
+    register.register_docset(
+        foundry_root,
+        Docset(docset_id="demo", title="Demo", provider="demo", product="api"),
+    )
+    with pytest.raises(FoundryInputError, match="strict Core execution"):
+        importer.import_run(foundry_root, "demo", Path(result.run_dir))
+
+
+def test_strict_execution_error_blocks_the_run(tmp_path, monkeypatch):
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    _add_title_version(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    strict_error = StrictExecutionSummary(
+        status="error",
+        core_dir=str(tmp_path / "out" / "run-strict-error" / "core"),
+        message="safe",
+    )
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: ValidationReport())
+    monkeypatch.setattr(
+        assemble_mod,
+        "run_strict_core_safely",
+        lambda **_kwargs: strict_error,
+    )
+
+    result = assemble_mod.run_assemble_pipeline(
+        sources_root=sources,
+        extraction_dir=tmp_path / "extraction",
+        output_root=tmp_path / "out",
+        run_id="run-strict-error",
+        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        architecture_mode=ArchitectureMode.STRICT,
+    )
+
+    assert result.status is RunStatus.BLOCKED
+    assert result.strict == strict_error
 
 
 def test_shadow_error_preserves_legacy_run_result(tmp_path, monkeypatch):

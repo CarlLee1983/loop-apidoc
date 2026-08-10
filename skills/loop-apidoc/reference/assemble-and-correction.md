@@ -25,6 +25,20 @@ Treat every shadow artifact as observational. It never changes the legacy `ok`, 
 validation report, score, approval, Foundry state, correction routing, or exit code. A
 `shadow error` warning is not a validation round and must not cause source-silent fixes.
 
+## Strict Core candidate
+
+Use `--architecture-mode strict` only when a downstream Foundry review needs a blocking,
+exact-evidence Core candidate. Legacy validation must pass first. Every material claim on
+each legacy plan item marked `supported` must then have an `explicit_support` or
+`derived_support` relationship to its exact fragment. A gap writes
+`core/grounding-report.json` and exits `1`; an execution error writes `core/error.json`,
+marks the run `blocked`, and exits `2`.
+
+A successful strict run writes `core/execution.json` and an unapproved
+`core/release.json`. It performs no approval, publication, or Foundry mutation. Foundry
+accepts the run only when its strict artifacts prove candidate eligibility and zero
+approval/publication side effects; `--allow-failing` cannot bypass that check.
+
 ## `verify-extraction`
 
 Runs `assemble`'s input boundary standalone: builds a manifest, checks the agent-written

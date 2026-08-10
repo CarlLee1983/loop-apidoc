@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import approve, importer, register, store
+from loop_apidoc.foundry import approve, importer, paths, register, store
 from loop_apidoc.foundry.models import (
     AssetStatus,
     Docset,
@@ -150,6 +151,38 @@ def test_approve_allow_failing_overrides_gate(tmp_path: Path) -> None:
     )
     assert asset.validation.ok is False
     assert asset.status is AssetStatus.APPROVED
+
+
+def test_approve_never_overrides_ineligible_strict_execution(tmp_path: Path) -> None:
+    _setup(tmp_path, validation_ok=False)
+    candidate = paths.candidate_dir(tmp_path, "tappay-backend", _RUN_ID)
+    core_dir = candidate / "core"
+    core_dir.mkdir()
+    (core_dir / "execution.json").write_text(
+        json.dumps(
+            {
+                "mode": "strict",
+                "blocking": True,
+                "legacy_status": "passed",
+                "core_verdict": "reject",
+                "exact_supported_claims": 0,
+                "candidate_eligible": False,
+                "approval_requests": 0,
+                "artifact_publications": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FoundryApprovalError, match="strict Core execution"):
+        approve.approve_candidate(
+            tmp_path,
+            "tappay-backend",
+            _RUN_ID,
+            approved_by="a",
+            now=_NOW,
+            allow_failing=True,
+        )
 
 
 def test_approve_refuses_below_min_score(tmp_path: Path) -> None:

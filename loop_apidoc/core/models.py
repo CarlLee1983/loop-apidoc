@@ -159,6 +159,17 @@ class ValidationDecision(FrozenModel):
     corrections: tuple[CorrectionRequest, ...] = ()
 
 
+class StrictExecutionSummary(FrozenModel):
+    """Persisted outcome of one blocking legacy-to-Core strict execution."""
+
+    status: str
+    core_dir: str
+    candidate_path: str | None = None
+    error_path: str | None = None
+    decision_verdict: ValidationVerdict | None = None
+    message: str | None = None
+
+
 class ApprovalDecision(FrozenModel):
     approved: bool
     actor: Actor

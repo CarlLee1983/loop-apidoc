@@ -696,7 +696,7 @@ uv run loop-apidoc assemble \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
   [--source-quality ./work/source-quality] [--extractor-model <model-name>] \
-  [--architecture-mode legacy|shadow] [--json] [--score]
+  [--architecture-mode legacy|shadow|strict] [--json] [--score]
 ```
 
 Does **not** extract; it assembles outputs from an extraction directory the agent already produced (`inventory.json` + `endpoints/*.json`, plus an optional `integration.json` typed domain/integration contract): manifest → plan → generate → validate. The optional contract carries source-stated `transport`, `amount_direction`, `idempotency`, and `line_currency_policy` sections; absence of a request currency field never establishes a single-currency policy. Inventory `operational[]` entries cover remaining source-stated global and cross-endpoint rules; optional `applies_to[]` links each rule to a validated operation or field, and the always-written `integration-contract.json` exposes all of these rules to downstream tools. When passed an `assess-sources` output directory through `--source-quality`, a `reject` verdict stops before a run directory is created; a `pass` report and source diff are preserved in the run directory for audit and Foundry retention. `--json` prints `run_id`, `run_dir`, `review_html`, `ok`, `status`, `report`, and `toolchain` to stdout for the agent to parse and drive the correction loop. The run directory also gets a `run.json` descriptor recording `toolchain` (`cli_version`, `extraction_contract_version`, `skill_version`, `model`) so a later regression can be attributed to a version from the artifacts alone; `--extractor-model` lets the agent state the extraction model explicitly — omitted means `null` (the CLI never guesses). Exit codes: `0` = validation PASS, `1` = validation FAIL, `2` = bad extraction input file. This is the command the [agent-native plugin](#run-as-a-claude-code-plugin-agent-native) mode invokes. With `--score`, `assemble` additionally writes `score/score.json` and `score/score.md` after assembling; the exit code keeps its validation semantics. When the run has URL sources, pass the agent-recorded `url_sources/coverage.json` fetch ledger via `--url-coverage` and `assemble` performs a warning-only URL coverage check (it never affects the validation severity gate). The score self-loop flags `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` let the agent use the reported loop verdict to decide whether to run another correction round.
@@ -708,6 +708,18 @@ legacy/Core comparison under `<run-dir>/core/`; a shadow failure writes
 `core/error.json`. Shadow output never changes legacy validation, score, approval,
 Foundry state, `ok`/`status`, or the assemble exit code. The default remains `legacy` and
 creates no `core/` directory.
+
+`--architecture-mode strict` is the blocking Core-candidate path. Legacy
+validation must pass first, and every material claim path on every legacy plan
+item marked `supported` must be re-verified against exact fragment evidence.
+Otherwise it writes only `core/grounding-report.json`, never writes
+`core/release.json`, and exits `1`. A successful run atomically writes its
+unapproved candidate `core/release.json` plus `core/execution.json`; it never
+approves, publishes, or changes Foundry. A strict execution error writes
+`core/error.json`, sets the run to `blocked`, and exits `2`. Foundry accepts a
+strict run only when its execution record is candidate-eligible, records zero
+approval/publication side effects, and has a candidate release; `--allow-failing`
+cannot bypass that gate.
 
 In shadow mode, evidence is claim-level rather than document-level. Each material claim
 path is linked through an `explicit_support`, `derived_support`, `contradicts`, or
@@ -765,7 +777,7 @@ output/
     ├── score/                       # documentation quality score (loop-apidoc score or assemble --score)
     │   ├── score.json
     │   └── score.md
-    ├── core/                        # optional observational Core artifacts (--architecture-mode shadow)
+    ├── core/                        # optional Core artifacts (shadow or strict)
     │   ├── source-set.json
     │   ├── evidence.json
     │   ├── runtime-result.json
@@ -775,6 +787,9 @@ output/
     │   ├── decision.json
     │   ├── workflow.json
     │   ├── events.json
+    │   ├── execution.json            # strict: blocking result and Foundry eligibility
+    │   ├── release.json              # strict success: unapproved candidate
+    │   ├── grounding-report.json     # strict evidence-parity rejection
     │   ├── comparison.json
     │   └── projections/
     │       ├── openapi.json

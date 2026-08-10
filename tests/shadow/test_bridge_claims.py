@@ -40,6 +40,7 @@ from loop_apidoc.shadow.bridge import (
     build_evidence,
     build_runtime_result,
 )
+from loop_apidoc.plan.claim_projection import iter_plan_claim_projections
 
 
 NOW = datetime(2026, 7, 20, 8, 0, tzinfo=timezone.utc)
@@ -386,6 +387,30 @@ def test_operational_applicability_survives_canonical_claim_projection():
     assert result.claim_proposals[0].value["applies_to"] == [
         {"operation": "POST /cancel", "field": "request.amount"}
     ]
+
+
+def test_pathless_endpoint_projects_as_webhook_for_core_governance():
+    endpoint = EndpointEntry(
+        status=PlanItemStatus.SUPPORTED,
+        citations=[CITATION],
+        method="POST",
+        path=None,
+        summary="Payment result notification",
+        parameters=[
+            {"name": "CheckMacValue", "description": "Verify signature"}
+        ],
+        responses=[{"status": "default", "description": "1|OK"}],
+    )
+
+    projection = iter_plan_claim_projections(_plan(endpoints=[endpoint]))[0]
+
+    assert projection.claim_kind == "webhook"
+    assert projection.subject == "Payment result notification"
+    assert projection.value == {
+        "name": "Payment result notification",
+        "verification": "Verify signature",
+        "expected_response": "1|OK",
+    }
 
 
 def test_domain_semantics_have_distinct_canonical_claim_kinds():

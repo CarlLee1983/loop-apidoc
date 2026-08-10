@@ -8,6 +8,10 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from loop_apidoc.agentcli.extraction import _expand_methods, inventory_to_stage_answers
+from loop_apidoc.agentcli.strict import (
+    run_strict_core_safely,
+    write_strict_blocked_marker,
+)
 from loop_apidoc.agentcli.evidence import (
     verify_evidence_claim_paths,
     verify_extraction_evidence,
@@ -379,6 +383,7 @@ def run_assemble_pipeline(
 
     status = RunStatus.PASSED if report.ok else RunStatus.FAILED
     shadow = None
+    strict = None
     if architecture_mode is ArchitectureMode.SHADOW:
         shadow = run_shadow_safely(
             manifest=manifest,
@@ -390,10 +395,30 @@ def run_assemble_pipeline(
             generated_at=generated_at,
             run_dir=run_dir,
         )
+    elif architecture_mode is ArchitectureMode.STRICT:
+        if report.ok:
+            strict = run_strict_core_safely(
+                manifest=manifest,
+                plan=plan,
+                facts=facts,
+                sources_root=sources_root,
+                legacy_report=report,
+                generated_at=generated_at,
+                run_dir=run_dir,
+            )
+            if strict.status == "error":
+                status = RunStatus.BLOCKED
+            elif strict.status != "ok":
+                status = RunStatus.FAILED
+        else:
+            strict = write_strict_blocked_marker(
+                run_dir=run_dir,
+                legacy_status=status,
+            )
     toolchain = build_toolchain(model=extractor_model)
     persist_run_descriptor(run_dir, RunDescriptor(
         run_id=run_id, status=status, generated_at=generated_at,
-        toolchain=toolchain,
+        toolchain=toolchain, architecture_mode=architecture_mode.value,
     ))
 
     return RunResult(
@@ -404,4 +429,5 @@ def run_assemble_pipeline(
         status=status,
         toolchain=toolchain,
         shadow=shadow,
+        strict=strict,
     )

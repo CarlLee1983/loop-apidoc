@@ -180,6 +180,12 @@ The optional `--architecture-mode shadow` runs legacy manifest/plan input throug
 model-independent Core and writes observational artifacts under `core/`. Shadow success
 or failure never changes legacy validation, score, approval, run status, or exit code.
 
+`--architecture-mode strict` is the separate blocking adapter: only a passing legacy run
+whose supported plan claims all re-verify against exact evidence can produce an
+unapproved Core candidate. The strict execution record and candidate release are
+revalidated by Foundry before import or approval, so `--allow-failing` cannot promote a
+partial, failed, or non-exact run.
+
 ### 7. Govern approved contracts without mutating them
 
 Foundry imports a completed run as a candidate, and explicit approval copies it to a

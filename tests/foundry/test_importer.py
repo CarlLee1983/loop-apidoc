@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,31 @@ def test_import_incomplete_run_raises(tmp_path: Path) -> None:
     run_dir = write_run_dir(tmp_path / "output" / _RUN_ID)
     (run_dir / "openapi.yaml").unlink()
     with pytest.raises(FoundryInputError, match="openapi.yaml"):
+        importer.import_run(tmp_path, "tappay-backend", run_dir)
+
+
+def test_import_rejects_ineligible_strict_core_execution(tmp_path: Path) -> None:
+    _register(tmp_path)
+    run_dir = write_run_dir(tmp_path / "output" / _RUN_ID)
+    core_dir = run_dir / "core"
+    core_dir.mkdir()
+    (core_dir / "execution.json").write_text(
+        json.dumps(
+            {
+                "mode": "strict",
+                "blocking": True,
+                "legacy_status": "passed",
+                "core_verdict": "accept",
+                "exact_supported_claims": 0,
+                "candidate_eligible": False,
+                "approval_requests": 0,
+                "artifact_publications": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FoundryInputError, match="strict Core execution"):
         importer.import_run(tmp_path, "tappay-backend", run_dir)
 
 

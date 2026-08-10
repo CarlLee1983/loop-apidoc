@@ -319,6 +319,9 @@ def build_fragment_requests(
 def build_runtime_result(
     plan: NormalizationPlan,
     bridge: BridgeInputs,
+    *,
+    runtime_identity: str = SHADOW_RUNTIME_IDENTITY,
+    runtime_version: str = SHADOW_RUNTIME_VERSION,
 ) -> RuntimeResult:
     candidates = _proposal_candidates(plan, bridge, _BridgeLookup.build(bridge))
     diagnostics: list[BridgeDiagnostic] = [
@@ -361,14 +364,14 @@ def build_runtime_result(
         emitted.extend(distinct[key] for key in sorted(distinct))
 
     proposals = tuple(
-        _to_claim_proposal(candidate)
+        _to_claim_proposal(candidate, runtime_identity=runtime_identity)
         for candidate in emitted
     )
     return RuntimeResult(
         claim_proposals=proposals,
         diagnostics=tuple(_diagnostic_text(item) for item in diagnostics),
-        runtime_identity=SHADOW_RUNTIME_IDENTITY,
-        runtime_version=SHADOW_RUNTIME_VERSION,
+        runtime_identity=runtime_identity,
+        runtime_version=runtime_version,
     )
 
 
@@ -524,7 +527,9 @@ def _resolve_citations(
     return tuple(sorted(refs)), tuple(diagnostics)
 
 
-def _to_claim_proposal(candidate: _ProposalCandidate) -> ClaimProposal:
+def _to_claim_proposal(
+    candidate: _ProposalCandidate, *, runtime_identity: str
+) -> ClaimProposal:
     stable_input = {
         "plan_location": candidate.plan_location,
         "claim_kind": candidate.claim_kind,
@@ -545,7 +550,7 @@ def _to_claim_proposal(candidate: _ProposalCandidate) -> ClaimProposal:
         value=candidate.value,
         evidence_refs=candidate.evidence_refs,
         support_proposals=candidate.support_proposals,
-        runtime_identity=SHADOW_RUNTIME_IDENTITY,
+        runtime_identity=runtime_identity,
         runtime_observation=candidate.plan_location,
     )
 
