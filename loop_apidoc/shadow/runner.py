@@ -15,6 +15,7 @@ from loop_apidoc.adapters.memory import (
 )
 from loop_apidoc.adapters.runtime import CallableRuntimeAdapter
 from loop_apidoc.core.models import ContractRelease, PolicyProfile
+from loop_apidoc.core.governance import release_id_for_contract
 from loop_apidoc.core.service import EvidenceToContractService
 from loop_apidoc.domain.projections import (
     OpenApiProjectionCompiler,
@@ -72,6 +73,9 @@ def execute_shadow(
     legacy_report: ValidationReport,
     legacy_status: RunStatus,
     generated_at: datetime,
+    policy_profile: PolicyProfile | None = None,
+    runtime_identity: str = SHADOW_RUNTIME_IDENTITY,
+    runtime_version: str = SHADOW_RUNTIME_VERSION,
 ) -> ShadowArtifacts:
     try:
         bridge = build_source_set(manifest, generated_at)
@@ -95,7 +99,12 @@ def execute_shadow(
             raise ShadowExecutionFailure(ShadowStage.ACQUISITION, exc) from exc
 
     try:
-        runtime_result = build_runtime_result(plan, bridge)
+        runtime_result = build_runtime_result(
+            plan,
+            bridge,
+            runtime_identity=runtime_identity,
+            runtime_version=runtime_version,
+        )
         metadata = build_contract_metadata(plan, bridge)
     except Exception as exc:
         raise ShadowExecutionFailure(ShadowStage.BRIDGE, exc) from exc
@@ -108,8 +117,8 @@ def execute_shadow(
     service = EvidenceToContractService(
         source=StaticSourceAdapter(bridge.evidence),
         runtime=CallableRuntimeAdapter(
-            SHADOW_RUNTIME_IDENTITY,
-            SHADOW_RUNTIME_VERSION,
+            runtime_identity,
+            runtime_version,
             lambda _work_item: runtime_result,
         ),
         evidence_store=evidence_store,
@@ -119,7 +128,7 @@ def execute_shadow(
         events=event_sink,
         clock=FixedClock(generated_at),
         domain_rules=ApiDomainRulePack(version=SHADOW_DOMAIN_VERSION),
-        policy_profile=PolicyProfile(name="shadow"),
+        policy_profile=policy_profile or PolicyProfile(name="shadow"),
     )
     source_set_id = bridge.source_set.id
     try:
@@ -165,6 +174,11 @@ def execute_shadow(
         claims = contract_store.get_claims(source_set_id)
         contract = contract_store.get_contract(source_set_id)
         workflow = contract_store.get_workflow(source_set_id)
+        release = (
+            contract_store.get_release(release_id_for_contract(contract))
+            if decision.verdict.value != "reject"
+            else None
+        )
     except Exception as exc:
         raise ShadowExecutionFailure(ShadowStage.SERVICE, exc) from exc
 
@@ -211,6 +225,7 @@ def execute_shadow(
         workflow=workflow,
         events=tuple(event_sink.events),
         comparison=comparison,
+        release=release,
         projections=projections,
         artifact_publications=len(artifact_sink.publications),
         approval_requests=approval.requests,

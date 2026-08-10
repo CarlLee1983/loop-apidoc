@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from loop_apidoc.core.models import (
     ClaimEvidenceRelationship,
+    ContractRelease,
     DomainEvent,
     EvidenceBundle,
     GroundedClaim,
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 class ArchitectureMode(str, Enum):
     LEGACY = "legacy"
     SHADOW = "shadow"
+    STRICT = "strict"
 
 
 class ShadowStage(str, Enum):
@@ -100,6 +102,7 @@ class ShadowArtifacts(FrozenModel):
     workflow: WorkflowRecord
     events: tuple[DomainEvent, ...]
     comparison: ShadowComparison
+    release: ContractRelease | None = None
     projections: tuple[ShadowProjection, ...] = ()
     artifact_publications: int = 0
     approval_requests: int = 0

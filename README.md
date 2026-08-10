@@ -657,7 +657,7 @@ uv run loop-apidoc assemble \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
   [--source-quality ./work/source-quality] [--extractor-model <模型名稱>] \
-  [--architecture-mode legacy|shadow] [--json] [--score]
+  [--architecture-mode legacy|shadow|strict] [--json] [--score]
 ```
 
 **不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 typed `integration.json`)組裝成輸出:manifest → plan → generate → validate。`integration.json` 可保存來源明載的 `transport`、`amount_direction`、`idempotency` 與 `line_currency_policy`；request 沒有 currency 欄位不會被當成單幣別證據。`inventory.operational[]` 用來記錄其餘來源明載的全域／跨端點規則；選填的 `applies_to[]` 會把規則連到經閘門驗證的 operation 或欄位，並由固定產生的 `integration-contract.json` 交給下游工具。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
@@ -669,6 +669,15 @@ canonical contract、policy decision、workflow/events 與 legacy/Core compariso
 寫入 `<run-dir>/core/`，失敗時寫入 `core/error.json`。Shadow 結果不會改變
 legacy validation、score、approval、Foundry、`ok`/`status` 或 assemble 退出碼。
 預設仍為 `legacy`，不會建立 `core/`。
+
+`--architecture-mode strict` 則是阻斷式的 Core candidate 路徑：legacy validation
+必須先通過；每個 legacy plan 中標為 `supported` 的 material claim path 都必須以
+精確 fragment evidence 重新驗證，否則只寫 `core/grounding-report.json` 並以 exit
+`1` 結束，不會寫入 `core/release.json`。成功才會 atomically 寫入 candidate
+`core/release.json` 與 `core/execution.json`；它不會自動核准、發布或改動 Foundry。
+strict 執行錯誤會寫 `core/error.json`、run status 為 `blocked` 並以 exit `2` 結束。
+Foundry 只會接受 `candidate_eligible=true`、零 approval/publication side effect、且
+存在 strict candidate release 的 strict run；`--allow-failing` 不能繞過此閘門。
 
 Shadow mode 的 evidence 是 claim-level，而不是文件級引用。每個 material claim
 path 會透過 `explicit_support`、`derived_support`、`contradicts` 或
@@ -726,7 +735,8 @@ output/
     ├── score/                       # 文件品質評分（使用 loop-apidoc score 或 assemble --score）
     │   ├── score.json
     │   └── score.md
-    ├── core/                        # 選用的觀測性 Core 產物（--architecture-mode shadow）
+    ├── core/                        # 選用 Core 產物（shadow 或 strict）
+    │   ├── execution.json            # strict: blocking 結果與 Foundry eligibility
     │   ├── source-set.json
     │   ├── evidence.json
     │   ├── runtime-result.json
@@ -736,6 +746,8 @@ output/
     │   ├── decision.json
     │   ├── workflow.json
     │   ├── events.json
+    │   ├── release.json              # strict 成功時的未核准 candidate
+    │   ├── grounding-report.json     # strict evidence parity 不成立時
     │   ├── comparison.json
     │   └── projections/
     │       ├── openapi.json

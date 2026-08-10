@@ -4,7 +4,13 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from loop_apidoc.core.governance import approve_release
+from loop_apidoc.core.models import Actor, ActorKind, ApprovalDecision
 from loop_apidoc.diff.loader import DiffInputError, load_run_artifacts
+from loop_apidoc.foundry.strict_artifacts import (
+    StrictCoreExecutionError,
+    require_eligible_strict_candidate,
+)
 from loop_apidoc.foundry import paths, store
 from loop_apidoc.foundry.models import (
     Asset,
@@ -76,6 +82,12 @@ def approve_candidate(
         run = load_run_artifacts(candidate)
     except DiffInputError as exc:
         raise FoundryInputError(f"candidate is not a valid run: {exc}") from exc
+    try:
+        strict_release = require_eligible_strict_candidate(candidate)
+    except StrictCoreExecutionError as exc:
+        raise FoundryApprovalError(str(exc)) from exc
+    if strict_release is not None and not approved_by:
+        raise FoundryApprovalError("strict Core approval requires a named approver")
 
     validation_ok = run.validation.ok
     score = _read_score(candidate)
@@ -95,6 +107,23 @@ def approve_candidate(
         raise FoundryApprovalError(f"asset already exists: {asset_id}")
     artifacts_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(candidate, artifacts_dir)
+    if strict_release is not None:
+        try:
+            approved_release = approve_release(
+                strict_release,
+                ApprovalDecision(
+                    approved=True,
+                    actor=Actor(id=approved_by, kind=ActorKind.APPROVER),
+                    decided_at=now,
+                    reason="Foundry human approval",
+                ),
+            )
+        except ValueError as exc:
+            shutil.rmtree(artifacts_dir)
+            raise FoundryApprovalError(str(exc)) from exc
+        (artifacts_dir / "core" / "release.json").write_text(
+            approved_release.model_dump_json(indent=2), encoding="utf-8"
+        )
 
     source_hashes = [src.sha256 for src in run.manifest.local_sources]
     asset = Asset(

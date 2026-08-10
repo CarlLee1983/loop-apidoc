@@ -37,7 +37,7 @@ def test_agent_guides_name_shadow_report_as_file_io_exit():
 @pytest.mark.parametrize("path", ["README.en.md", "README.md"])
 def test_readme_assemble_synopsis_includes_architecture_mode(path: str):
     text = Path(path).read_text(encoding="utf-8")
-    assert "[--architecture-mode legacy|shadow]" in text
+    assert "[--architecture-mode legacy|shadow|strict]" in text
 
 
 @pytest.mark.parametrize(

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.plan.models import NormalizationPlan
+from loop_apidoc.core.models import StrictExecutionSummary
 from loop_apidoc.shadow.models import ShadowExecutionSummary
 from loop_apidoc.validate.models import ValidationReport
 
@@ -48,6 +49,7 @@ class RunDescriptor(BaseModel):
     status: RunStatus
     generated_at: datetime
     toolchain: Toolchain
+    architecture_mode: str = "legacy"
 
 
 class RunResult(BaseModel):
@@ -58,6 +60,7 @@ class RunResult(BaseModel):
     status: RunStatus
     toolchain: Toolchain | None = None
     shadow: ShadowExecutionSummary | None = None
+    strict: StrictExecutionSummary | None = None
 
     @property
     def ok(self) -> bool:

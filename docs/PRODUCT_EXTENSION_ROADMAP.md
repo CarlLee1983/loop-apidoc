@@ -31,8 +31,8 @@ The repository already provides more than document conversion:
 - Foundry candidate/version/current-asset governance and a local review
   workbench; and
 - a model-independent `domain/`, `core/`, and `evaluation/` architecture,
-  currently exercised by the CLI through observational `--architecture-mode
-  shadow` compatibility work; and
+  currently exercised by the CLI through observational `--architecture-mode shadow`
+  and blocking exact-evidence `--architecture-mode strict` compatibility work; and
 - passive normalized-JSON implementation feedback with a staged candidate/approval
   workflow plus pure conformance/amendment/exact-scope Effective Contract domain
   operations, without changing normative documentary support.

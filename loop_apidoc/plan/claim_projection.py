@@ -53,7 +53,6 @@ def iter_plan_claim_projections(
     projections: list[PlanClaimProjection] = []
     areas = (
         ("environments", "environment", _environment_value),
-        ("endpoints", "operation", _operation_value),
         ("schemas", "schema", _schema_value),
         ("security_schemes", "security", _security_value),
         ("errors", "error", _error_value),
@@ -71,6 +70,24 @@ def iter_plan_claim_projections(
                     value=value_builder(entry),
                 )
             )
+
+    # A merchant-defined callback URL has no OpenAPI path.  It is not a
+    # malformed HTTP operation: Core models it as a webhook so its path-less
+    # identity can be governed without fabricating a route.
+    for index, entry in enumerate(plan.endpoints):
+        location = f"endpoints[{index}]"
+        callback = entry.path is None
+        projections.append(
+            PlanClaimProjection(
+                plan_location=location,
+                entry=entry,
+                claim_kind="webhook" if callback else "operation",
+                subject=(entry.summary or location) if callback
+                else _subject(entry, location),
+                value=_webhook_endpoint_value(entry) if callback
+                else _operation_value(entry),
+            )
+        )
 
     integration = plan.integration
     if integration is not None:
@@ -149,6 +166,30 @@ def _operation_value(entry: EndpointEntry) -> dict[str, Any]:
     value["responses"] = [_response_value(raw) for raw in entry.responses]
     if entry.security:
         value["security"] = list(entry.security)
+    return value
+
+
+def _webhook_endpoint_value(entry: EndpointEntry) -> dict[str, Any]:
+    """Project a path-less legacy endpoint into Core's webhook vocabulary.
+
+    Detailed callback payload fields remain part of the generated OpenAPI
+    webhook; the Core governance model records only the callback identity and
+    the documented acknowledgement, which are its current material fields.
+    """
+    value: dict[str, Any] = {}
+    _put(value, "name", entry.summary)
+    for parameter in entry.parameters:
+        if parameter.get("name") != "CheckMacValue":
+            continue
+        verification = parameter.get("description")
+        if verification is not None:
+            value["verification"] = verification
+        break
+    for response in entry.responses:
+        description = response.get("description")
+        if description is not None:
+            value["expected_response"] = description
+            break
     return value
 
 

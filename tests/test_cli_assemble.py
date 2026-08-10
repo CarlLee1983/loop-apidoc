@@ -8,7 +8,9 @@ from typer.testing import CliRunner
 
 from loop_apidoc import __version__
 from loop_apidoc.cli import app
+from loop_apidoc.core.models import StrictExecutionSummary
 from loop_apidoc.run.toolchain import EXTRACTION_CONTRACT_VERSION
+from loop_apidoc.validate.models import ValidationReport
 
 runner = CliRunner()
 
@@ -452,6 +454,56 @@ def test_assemble_shadow_plain_output_appends_status(tmp_path):
 
     assert res.exit_code in (0, 1)
     assert "shadow ok" in res.stdout
+
+
+def test_assemble_strict_json_reports_ungrounded_legacy_support(tmp_path, monkeypatch):
+    sources, extraction, out = _setup(tmp_path)
+    _enable_shadow_metadata(extraction)
+    monkeypatch.setattr(
+        "loop_apidoc.agentcli.assemble.validate_outputs",
+        lambda *_args: ValidationReport(),
+    )
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "strict", "--json",
+    ])
+
+    payload = json.loads(res.stdout)
+    assert res.exit_code == 1
+    assert payload["ok"] is False
+    assert payload["strict"]["status"] == "rejected"
+    assert Path(payload["strict"]["core_dir"]).is_dir()
+    assert (Path(payload["strict"]["core_dir"]) / "grounding-report.json").is_file()
+    assert not (Path(payload["strict"]["core_dir"]) / "release.json").exists()
+
+
+def test_assemble_strict_error_uses_distinct_exit_code(tmp_path, monkeypatch):
+    sources, extraction, out = _setup(tmp_path)
+    _enable_shadow_metadata(extraction)
+    monkeypatch.setattr(
+        "loop_apidoc.agentcli.assemble.validate_outputs",
+        lambda *_args: ValidationReport(),
+    )
+    monkeypatch.setattr(
+        "loop_apidoc.agentcli.assemble.run_strict_core_safely",
+        lambda **_kwargs: StrictExecutionSummary(
+            status="error",
+            core_dir=str(out / "run" / "core"),
+            message="safe",
+        ),
+    )
+
+    res = runner.invoke(app, [
+        "assemble", "--sources", str(sources), "--extraction", str(extraction),
+        "--output", str(out), "--architecture-mode", "strict", "--json",
+    ])
+
+    assert res.exit_code == 2
+    payload = json.loads(res.stdout)
+    assert payload["status"] == "blocked"
+    assert payload["strict"]["status"] == "error"
+    assert "strict Core error:safe" in res.stderr
 
 
 def test_assemble_shadow_error_does_not_change_legacy_exit_code(tmp_path):
