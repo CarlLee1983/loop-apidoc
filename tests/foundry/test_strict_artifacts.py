@@ -140,6 +140,24 @@ def test_strict_candidate_requires_a_valid_release_when_marker_is_eligible(
         require_eligible_strict_candidate(run_dir)
 
 
+def test_strict_candidate_allows_an_unspecified_run_architecture(tmp_path: Path) -> None:
+    execution = {
+        "mode": "strict",
+        "blocking": True,
+        "legacy_status": "passed",
+        "candidate_eligible": True,
+        "approval_requests": 0,
+        "artifact_publications": 0,
+        "core_verdict": "accept",
+        "exact_supported_claims": 1,
+    }
+    run_dir = _run_dir(tmp_path, execution=execution)
+    (run_dir / "run.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(StrictCoreExecutionError, match="missing a valid candidate release"):
+        require_eligible_strict_candidate(run_dir)
+
+
 def test_strict_candidate_rejects_invalid_run_descriptors(tmp_path: Path) -> None:
     unreadable = _run_dir(tmp_path / "unreadable")
     (unreadable / "run.json").write_text("{", encoding="utf-8")

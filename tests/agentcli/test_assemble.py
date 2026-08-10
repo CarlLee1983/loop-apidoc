@@ -363,7 +363,9 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
     release = json.loads((core_dir / "release.json").read_text(encoding="utf-8"))
     execution = json.loads((core_dir / "execution.json").read_text(encoding="utf-8"))
     claims_json = (core_dir / "claims.json").read_text(encoding="utf-8")
+    evidence_json = (core_dir / "evidence.json").read_text(encoding="utf-8")
     relationships_json = (core_dir / "relationships.json").read_text(encoding="utf-8")
+    contract_digest = release["contract_digest"]
     assert release["status"] == "candidate"
     assert release["validation"]["policy_profile"] == "strict"
     assert execution["candidate_eligible"] is True
@@ -456,6 +458,20 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
     release["contract_digest"] = "0" * 64
     (core_dir / "release.json").write_text(json.dumps(release), encoding="utf-8")
     with pytest.raises(StrictCoreExecutionError, match="release is not bound to contract"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    release["contract_digest"] = contract_digest
+    (core_dir / "release.json").write_text(json.dumps(release), encoding="utf-8")
+    evidence = json.loads(evidence_json)
+    evidence["fragments"][0]["source_artifact_id"] = "missing-artifact"
+    (core_dir / "evidence.json").write_text(json.dumps(evidence), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="evidence bundle is invalid"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    evidence = json.loads(evidence_json)
+    evidence["source_set_id"] = "wrong-source-set"
+    (core_dir / "evidence.json").write_text(json.dumps(evidence), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="evidence is not bound to contract"):
         require_eligible_strict_candidate(Path(result.run_dir))
 
 
