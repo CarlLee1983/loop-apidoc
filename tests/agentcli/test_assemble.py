@@ -362,11 +362,18 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
     core_dir = Path(result.strict.core_dir)
     release = json.loads((core_dir / "release.json").read_text(encoding="utf-8"))
     execution = json.loads((core_dir / "execution.json").read_text(encoding="utf-8"))
+    claims_json = (core_dir / "claims.json").read_text(encoding="utf-8")
+    relationships_json = (core_dir / "relationships.json").read_text(encoding="utf-8")
     assert release["status"] == "candidate"
     assert release["validation"]["policy_profile"] == "strict"
     assert execution["candidate_eligible"] is True
     assert execution["approval_requests"] == 0
     assert execution["artifact_publications"] == 0
+    from loop_apidoc.foundry.strict_artifacts import require_eligible_strict_candidate
+
+    eligible_release = require_eligible_strict_candidate(Path(result.run_dir))
+    assert eligible_release is not None
+    assert eligible_release.release_id == release["release_id"]
     assert not (core_dir / "approval.json").exists()
     assert not (core_dir / "current.json").exists()
 
@@ -392,6 +399,64 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
     )
     assert approved_release["status"] == "approved"
     assert approved_release["approved_by"] == "human-review"
+
+    from loop_apidoc.foundry.strict_artifacts import StrictCoreExecutionError
+
+    release["status"] = "approved"
+    (core_dir / "release.json").write_text(
+        json.dumps(release), encoding="utf-8"
+    )
+    with pytest.raises(StrictCoreExecutionError, match="not a candidate"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    release["status"] = "candidate"
+    release["validation"]["policy_profile"] = "shadow"
+    (core_dir / "release.json").write_text(
+        json.dumps(release), encoding="utf-8"
+    )
+    with pytest.raises(StrictCoreExecutionError, match="wrong policy profile"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    release["validation"]["policy_profile"] = "strict"
+    (core_dir / "release.json").write_text(
+        json.dumps(release), encoding="utf-8"
+    )
+    (core_dir / "relationships.json").write_text("[]", encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="relationships are not bound"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    (core_dir / "relationships.json").write_text(relationships_json, encoding="utf-8")
+    execution["core_verdict"] = "review"
+    (core_dir / "execution.json").write_text(json.dumps(execution), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="verdict does not match execution"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    execution["core_verdict"] = release["validation"]["verdict"]
+    (core_dir / "execution.json").write_text(json.dumps(execution), encoding="utf-8")
+    (core_dir / "claims.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="artifacts are incomplete"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    (core_dir / "claims.json").write_text(claims_json, encoding="utf-8")
+    decision = json.loads((core_dir / "decision.json").read_text(encoding="utf-8"))
+    decision["policy_profile"] = "shadow"
+    (core_dir / "decision.json").write_text(json.dumps(decision), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="decision does not match release"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    decision["policy_profile"] = "strict"
+    (core_dir / "decision.json").write_text(json.dumps(decision), encoding="utf-8")
+    execution["exact_supported_claims"] += 1
+    (core_dir / "execution.json").write_text(json.dumps(execution), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="count does not match claims"):
+        require_eligible_strict_candidate(Path(result.run_dir))
+
+    execution["exact_supported_claims"] -= 1
+    (core_dir / "execution.json").write_text(json.dumps(execution), encoding="utf-8")
+    release["contract_digest"] = "0" * 64
+    (core_dir / "release.json").write_text(json.dumps(release), encoding="utf-8")
+    with pytest.raises(StrictCoreExecutionError, match="release is not bound to contract"):
+        require_eligible_strict_candidate(Path(result.run_dir))
 
 
 def test_shadow_assemble_preserves_source_missing_version_as_metadata_gap(tmp_path):
