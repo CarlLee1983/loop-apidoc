@@ -1,0 +1,35 @@
+{
+  "schema_version": "1",
+  "ruleset_version": "2",
+  "max_bytes": 5242880,
+  "manifest_sha256": "0fdc96168afa457a4958bf6a49d6157bbcdafab287289d27458266fb47ed814f",
+  "source_binding_digest": "d827a66b8266de731c4c6ab5d82ed0666e1828a816b772242f48b1ffe52d1a7d",
+  "verdict": "pass",
+  "findings": [],
+  "coverage": [
+    {
+      "source_ref": "/local_sources/0",
+      "sha256": "1cc77e60fcee8c4392cc52a2fdd1d9129beed4e6af97aca1b78ea61362c85247",
+      "status": "skipped",
+      "reason": "manifest status: unsupported"
+    },
+    {
+      "source_ref": "/local_sources/1",
+      "sha256": "ccd39df76d83d9e77964f826797ea18d2622d3d1c287d336999520ab94fcbb36",
+      "status": "scanned",
+      "reason": null
+    },
+    {
+      "source_ref": "/local_sources/2",
+      "sha256": "bd1b877528173dea6044d78af18a030148f417bbcdf63ca67a92c95d47e6bc95",
+      "status": "scanned",
+      "reason": null
+    },
+    {
+      "source_ref": "/local_sources/3",
+      "sha256": "a66eabbdb894d214c71a76d7cca2d18807fad38094256e91fb1f2f5309481517",
+      "status": "scanned",
+      "reason": null
+    }
+  ]
+}

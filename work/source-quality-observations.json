@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "source": "raw/a66eabbdb894d214c71a76d7cca2d18807fad38094256e91fb1f2f5309481517.html",
+    "locator": "lines 1-15",
+    "category": "unusable_source",
+    "evidence": "Target URL is a Client-Side Single Page Application (SPA) shell rendered by JavaScript (<div id=\"root\"></div>). Raw HTTP response contains no static API documentation content or OpenAPI contract definitions.",
+    "severity": "blocker",
+    "affected_scope": ["https://alpha.helloholyfa.com/apidoc-website/#/afa/quickStart/introduction"],
+    "required_supplement": "Browser-rendered HTML / Markdown static snapshot or direct OpenAPI JSON/YAML spec file.",
+    "acceptance_criteria": "Source contains full static endpoint documentation or valid OpenAPI spec.",
+    "required_source_refs": [
+      "https://alpha.helloholyfa.com/apidoc-website/#/afa/quickStart/introduction"
+    ]
+  }
+]

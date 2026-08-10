@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "entry_url": "https://alpha.helloholyfa.com/apidoc-website",
+  "pages": [
+    {
+      "url": "https://alpha.helloholyfa.com/apidoc-website",
+      "status": "fetched",
+      "source_kind": "document",
+      "discovered_from": [],
+      "raw_file": "raw/a66eabbdb894d214c71a76d7cca2d18807fad38094256e91fb1f2f5309481517.html",
+      "body_file": "body/a66eabbdb894d214c71a76d7cca2d18807fad38094256e91fb1f2f5309481517.txt",
+      "content_sha256": "a66eabbdb894d214c71a76d7cca2d18807fad38094256e91fb1f2f5309481517",
+      "byte_size": 509,
+      "title": "API Documentation",
+      "headings": [],
+      "breadcrumb": [],
+      "internal_links": [],
+      "entities": [],
+      "sections": [],
+      "body_characters": 17,
+      "spa_shell_detected": false,
+      "note": null
+    }
+  ]
+}
