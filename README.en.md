@@ -294,19 +294,19 @@ synchronizes Python/plugin/documentation metadata, refreshes the lock file, and
 creates a non-overwritable release-note skeleton:
 
 ```bash
-# Synchronize metadata and create docs/RELEASE_NOTES_0.11.0.md.
-npm run release:prepare -- --version 0.11.0 --summary "Add release workflow"
+# Replace <next-version> with SemVer greater than the current version; it creates matching release notes.
+npm run release:prepare -- --version <next-version> --summary "Add release workflow"
 
 # Complete release notes, select exactly one Strategy impact option,
 # run validation, and commit the metadata.
-git add . && git commit -m "release: publish 0.11.0"
+git add . && git commit -m "release: publish <next-version>"
 
 # Read the committed package version, push HEAD to origin/main, create and push the matching tag,
 # then create the GitHub Release from its committed release notes.
-npm run release:tag -- --message "loop-apidoc 0.11.0"
+npm run release:tag -- --message "loop-apidoc <next-version>"
 
 # Preview the tag operation only; this never writes a GitHub Release.
-npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+npm run release:tag -- --message "loop-apidoc <next-version>" --dry-run
 
 # Recovery only: publish the GitHub Release for an already existing Tagsmith tag.
 npm run release:github

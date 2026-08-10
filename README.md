@@ -275,18 +275,18 @@ uv run loop-apidoc --help
 骨架：
 
 ```bash
-# 同步版本 metadata 與建立 docs/RELEASE_NOTES_0.11.0.md
-npm run release:prepare -- --version 0.11.0 --summary "新增發佈流程"
+# 將 <next-version> 替換為大於目前版本的 SemVer，並建立對應的 release notes
+npm run release:prepare -- --version <next-version> --summary "新增發佈流程"
 
 # 補齊 release notes、只選一項 Strategy impact，執行完整驗證後提交 metadata
-git add . && git commit -m "release: publish 0.11.0"
+git add . && git commit -m "release: publish <next-version>"
 
 # 讀取 pyproject.toml 的已提交版本，先推送 HEAD 到 origin/main，以 Tagsmith 建立相同 tag，
 # 再依已提交的 release notes 建立 GitHub Release
-npm run release:tag -- --message "loop-apidoc 0.11.0"
+npm run release:tag -- --message "loop-apidoc <next-version>"
 
 # 只預覽 tag 動作；不會寫入 GitHub Release
-npm run release:tag -- --message "loop-apidoc 0.11.0" --dry-run
+npm run release:tag -- --message "loop-apidoc <next-version>" --dry-run
 
 # 僅限補救：已由 Tagsmith 發布 tag，但最後 GitHub Release 步驟失敗時使用
 npm run release:github
