@@ -252,7 +252,7 @@ skill 在讀取來源前會先說明並詢問交付層級：`minimal`（預設�
 契約；未選取的衍生產物不會載入 agent context 或在 agent 間傳遞，以減少 token 消耗。
 這是 agent 交付策略，不改變 CLI 的來源依據、驗證或相容 run-dir 結構。
 
-發行說明：[`0.33.0`](docs/RELEASE_NOTES_0.33.0.md)。
+發行說明：[`0.33.1`](docs/RELEASE_NOTES_0.33.1.md)。
 
 ---
 
