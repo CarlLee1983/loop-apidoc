@@ -195,7 +195,8 @@ worktree, takes the version once, synchronizes every release metadata location,
 refreshes `uv.lock`, and creates a non-overwritable release-note skeleton:
 
 ```bash
-npm run release:prepare -- --version 0.11.0 --summary "Describe the release"
+# Replace <next-version> with SemVer greater than the current version.
+npm run release:prepare -- --version <next-version> --summary "Describe the release"
 ```
 
 Complete the notes and select exactly one `Strategy impact` option: either explain why
@@ -208,7 +209,7 @@ package's committed version instead of manually choosing a tag or creating a Git
 # Fetches origin tags first, pushes HEAD to origin/main, validates strict semver
 # ordering and uniqueness, creates the annotated tag for pyproject.toml's version,
 # then publishes the matching GitHub Release from docs/RELEASE_NOTES_<version>.md.
-npm run release:tag -- --message "loop-apidoc 0.11.0"
+npm run release:tag -- --message "loop-apidoc <next-version>"
 ```
 
 `release:tag --dry-run`, `release:tag`, and the recovery-only `release:github` reject a
