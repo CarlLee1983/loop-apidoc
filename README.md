@@ -615,7 +615,7 @@ generated examples。退出碼：完成回傳 `0`，輸入 run-dir 缺檔或格�
 uv run loop-apidoc foundry [init|import|approve|list|current] --help
 ```
 
-提供管理 docset、將 run 目錄匯入為 candidate、以及核准 asset 以更新 `current` 指標的子指令。適用於需要對文件版本進行人為審核與發布管理的場景。
+提供管理 docset、將 run 目錄匯入為 candidate、以及核准 asset 以更新 `current` 指標的子指令。適用於需要對文件版本進行人為審核與發布管理的場景。Normative `asset.json`／`current.json` 是 strict、versioned 的 `normative-asset/v1`／`normative-current/v1` 格式；current 綁定完整 asset manifest digest 與每個可解析產物的 deterministic digest，讀取會拒絕未知欄位、非 `APPROVED`、缺少 approver lineage、summary／identity 不一致、absolute／traversal／symlink／越界路徑、缺失或 bytes 改變。未綁定的舊格式不會 silent fallback；operator 必須以新 candidate 明確執行 `approve --reapprove-legacy --by <operator> --legacy-current-sha256 <trusted-current-digest> --legacy-asset-sha256 <trusted-asset-digest>`。這兩個 raw-byte SHA-256 必須來自 trusted backup／release inventory；系統會在 legacy parsing 前比對兩份 exact binding，legacy asset bytes 保持不變。這個 flag 只接受未版本化且 summary 一致的 legacy head，遇到 v1 或未知版本會拒絕。Approve 先寫 immutable asset，再以 atomic pointer publication 推進 current；推進失敗會恢復舊的 pointer、docset 與 catalog head，供 retry。
 
 ### `review` — 本機比對、交棒與人工核准
 
@@ -820,7 +820,7 @@ uv run ruff check .
 | `loop_apidoc/source_risk/` | agent 讀來源前，對 manifest 綁定的 UTF-8 Markdown/HTML/OpenAPI 文字做確定性檢查；固定 no-payload finding、1,000 筆報告上限與 fail-closed truncation、版本化 schema/rules、bounded read、穩定來源綁定、已驗證 report loader 與 `source-risk-report.{json,zh-TW.md}` |
 | `loop_apidoc/source_quality/` | 擷取前來源品質評估與來源版本差異報告；要求並嵌入已驗證的 source-risk audit，通過報告可隨 run-dir 稽核保存 |
 | `loop_apidoc/url_catalog.py` / `url_corpus.py` | 受限 URL 導航索引、頁面快取與關聯候選，讓 agent 以本機證據讀取網頁文件 |
-| `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset 與 candidate；normative assets 保持 immutable，新 asset 先記錄 supersession，成功後 pointer 才前進，不改寫舊 asset。Feedback case 保留一次綁定的 decision，核准會建立另一份 immutable Effective release。全域 `current` 維持 normative；Effective current 綁定 exact scope／time，pointer 綁定完整 current asset 與三份 artifact digest，successor ID／digest pair 形成逐節驗證的 immutable hash chain，歷史竄改一律 fail closed |
+| `loop_apidoc/foundry/` | API 專案本地資產治理，管理 docset 與 candidate；strict/versioned normative asset 與 current pointer 綁定完整 asset manifest、每個 artifact digest 與安全 contained path，未知欄位與舊格式一律 fail closed。Normative assets 保持 immutable，新 asset 先記錄 supersession，成功後 pointer 才前進，不改寫舊 asset。Feedback case 保留一次綁定的 decision，核准會建立另一份 immutable Effective release。全域 `current` 維持 normative；Effective current 綁定 exact scope／time，pointer 綁定完整 current asset 與三份 artifact digest，successor ID／digest pair 形成逐節驗證的 immutable hash chain，歷史竄改一律 fail closed |
 | `loop_apidoc/review/` | 本機單使用者 review 工作台：自動匯入 candidate、以 current/baseline 比對、保存結構化 handoff，並在人工明確核准後交由 Foundry 更新 current |
 
 ---

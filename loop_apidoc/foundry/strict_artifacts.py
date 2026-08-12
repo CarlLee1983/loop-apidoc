@@ -37,14 +37,18 @@ def require_eligible_strict_candidate(run_dir: Path) -> ContractRelease | None:
     declared_mode = _declared_architecture_mode(run_dir)
     execution_path = run_dir / "core" / "execution.json"
     if not execution_path.exists():
-        if declared_mode == "strict":
+        if declared_mode == "strict" or (run_dir / "core" / "release.json").exists():
             raise StrictCoreExecutionError(
                 "strict Core execution marker is missing"
             )
         return None
-    if declared_mode not in {None, "strict"}:
+    if declared_mode is None:
         raise StrictCoreExecutionError(
-            "non-strict run contains a strict Core execution artifact"
+            "strict Core execution requires a strict run descriptor"
+        )
+    if declared_mode != "strict":
+        raise StrictCoreExecutionError(
+            "strict Core execution is present for a non-strict run"
         )
     try:
         payload = json.loads(execution_path.read_text(encoding="utf-8"))

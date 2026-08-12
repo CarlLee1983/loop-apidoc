@@ -30,8 +30,8 @@ from loop_apidoc.domain.models import (
     Operation,
     Response,
 )
-from loop_apidoc.foundry import approve, importer, register
-from loop_apidoc.foundry.models import Docset
+from loop_apidoc.foundry import approve, feedback as foundry_feedback, importer, register
+from loop_apidoc.foundry.models import Docset, FoundryPublicationError
 from tests.foundry._fixtures import write_run_dir
 
 
@@ -647,7 +647,7 @@ def test_feedback_assess_requires_digest_bound_sanitized_evidence_facts(
 
 
 def test_feedback_propose_submit_approve_compose_and_current_exact_scope(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     asset_id, contract = _approved_contract(tmp_path)
     bundle = tmp_path / "feedback-bundle.json"
@@ -699,15 +699,26 @@ def test_feedback_propose_submit_approve_compose_and_current_exact_scope(
         tmp_path / ".foundry/api/docsets/demo-api/current.json"
     ).read_bytes()
 
-    approved = runner.invoke(
-        app,
-        [
-            "feedback", "approve", "--project", str(tmp_path), "--docset", "demo-api",
-            "--case", case_id, "--approved-by", "human-reviewer", "--approver-version", "1",
-            "--at", "2026-08-02T10:10:00Z", "--expires-at", "2026-09-01T10:10:00Z",
-            "--rationale", "Sandbox compatibility exception.",
-        ],
+    approve_args = [
+        "feedback", "approve", "--project", str(tmp_path), "--docset", "demo-api",
+        "--case", case_id, "--approved-by", "human-reviewer", "--approver-version", "1",
+        "--at", "2026-08-02T10:10:00Z", "--expires-at", "2026-09-01T10:10:00Z",
+        "--rationale", "Sandbox compatibility exception.",
+    ]
+    original_approve = foundry_feedback.approve_feedback_case
+
+    def fail_publication(*_args: object, **_kwargs: object) -> None:
+        raise FoundryPublicationError("injected publication failure")
+
+    monkeypatch.setattr(foundry_feedback, "approve_feedback_case", fail_publication)
+    failed = runner.invoke(app, approve_args)
+    assert failed.exit_code == 2, failed.output
+    assert "feedback approve error: injected publication failure" in failed.output
+
+    monkeypatch.setattr(
+        foundry_feedback, "approve_feedback_case", original_approve
     )
+    approved = runner.invoke(app, approve_args)
     assert approved.exit_code == 0, approved.output
     assert (
         tmp_path / ".foundry/api/docsets/demo-api/current.json"

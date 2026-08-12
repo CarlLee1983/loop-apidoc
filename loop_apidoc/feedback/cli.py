@@ -41,7 +41,11 @@ from loop_apidoc.feedback.report import (
 )
 from loop_apidoc.foundry import feedback as foundry_feedback
 from loop_apidoc.foundry import paths, query, store
-from loop_apidoc.foundry.models import FeedbackReviewDecision, FoundryInputError
+from loop_apidoc.foundry.models import (
+    FeedbackReviewDecision,
+    FoundryInputError,
+    FoundryPublicationError,
+)
 
 
 feedback_app = typer.Typer(
@@ -85,6 +89,7 @@ def assess_feedback(
     except (
         FeedbackInputError,
         FoundryInputError,
+        FoundryPublicationError,
         ConformanceInputError,
         OSError,
     ) as exc:
@@ -165,6 +170,7 @@ def submit_feedback(
     except (
         FeedbackInputError,
         FoundryInputError,
+        FoundryPublicationError,
         ConformanceInputError,
         OSError,
         ValidationError,
@@ -324,6 +330,7 @@ def approve_feedback(
     except (
         FeedbackInputError,
         FoundryInputError,
+        FoundryPublicationError,
         ConformanceInputError,
         OSError,
         ValidationError,

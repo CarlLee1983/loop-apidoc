@@ -4,8 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import register, store
-from loop_apidoc.foundry.models import Docset, FoundryInputError, SourceRef, SourceRole
+from loop_apidoc.foundry import paths, register, store
+from loop_apidoc.foundry.models import (
+    Docset,
+    FoundryInputError,
+    FoundryPublicationError,
+    SourceRef,
+    SourceRole,
+)
 
 
 def _docset(**overrides: object) -> Docset:
@@ -49,3 +55,187 @@ def test_register_exist_ok_updates_and_preserves_current_asset(tmp_path: Path) -
     assert updated.title == "New Title"
     assert updated.current_asset == "tappay-backend-1"
     assert store.load_catalog(tmp_path).docsets[0].current_asset == "tappay-backend-1"
+
+
+def test_register_respects_an_active_cross_docset_catalog_transaction(
+    tmp_path: Path,
+) -> None:
+    register.register_docset(tmp_path, _docset())
+    transaction = store.begin_governance_transaction(tmp_path, "tappay-backend")
+    try:
+        with pytest.raises(
+            FoundryInputError, match="transaction is already in progress"
+        ):
+            register.register_docset(
+                tmp_path, _docset(docset_id="other-api", title="Other API")
+            )
+    finally:
+        transaction.close()
+
+    assert [
+        item.docset_id for item in store.load_catalog(tmp_path).docsets
+    ] == ["tappay-backend"]
+
+
+def test_register_rejects_a_docset_id_that_escapes_the_docsets_root(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(FoundryInputError, match="unsafe docset id"):
+        register.register_docset(
+            tmp_path, _docset(docset_id="../escaped", title="Escaped")
+        )
+
+    assert not (paths.foundry_api_root(tmp_path) / "escaped").exists()
+
+
+def test_register_catalog_failure_rolls_back_new_docset_for_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_save_catalog = store.save_catalog
+
+    def fail_catalog(*_args: object, **_kwargs: object) -> None:
+        raise OSError("catalog publication failed")
+
+    monkeypatch.setattr(store, "save_catalog", fail_catalog)
+    with pytest.raises(OSError, match="catalog publication failed"):
+        register.register_docset(tmp_path, _docset())
+
+    assert not paths.docset_dir(tmp_path, "tappay-backend").exists()
+    assert not paths.catalog_path(tmp_path).exists()
+    assert not (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+
+    monkeypatch.setattr(store, "save_catalog", original_save_catalog)
+    result = register.register_docset(tmp_path, _docset())
+    assert result.docset_id == "tappay-backend"
+
+
+def test_register_preflight_failure_preserves_captured_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    register.register_docset(tmp_path, _docset())
+    catalog_path = paths.catalog_path(tmp_path)
+    docset_path = paths.docset_manifest_path(tmp_path, "tappay-backend")
+    catalog_before = catalog_path.read_bytes()
+    docset_before = docset_path.read_bytes()
+    original_read_head = store.read_head_relative
+    reads = 0
+
+    def fail_second_snapshot(parent_fd: int, name: str) -> bytes | None:
+        nonlocal reads
+        reads += 1
+        if reads == 2:
+            raise OSError("docset snapshot failed")
+        return original_read_head(parent_fd, name)
+
+    monkeypatch.setattr(store, "read_head_relative", fail_second_snapshot)
+
+    with pytest.raises(OSError, match="docset snapshot failed"):
+        register.register_docset(
+            tmp_path, _docset(title="Updated title"), exist_ok=True
+        )
+
+    assert catalog_path.read_bytes() == catalog_before
+    assert docset_path.read_bytes() == docset_before
+    assert not (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+
+
+def test_register_namespace_replacement_preserves_foreign_directory_and_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_save_catalog = store.save_catalog
+    docset_root = paths.docset_dir(tmp_path, "tappay-backend")
+    displaced_root = docset_root.with_name("owned-docset-displaced")
+
+    def replace_namespace(*args: object, **kwargs: object) -> None:
+        original_save_catalog(*args, **kwargs)
+        docset_root.rename(displaced_root)
+        docset_root.mkdir()
+        (docset_root / "foreign.txt").write_text("foreign", encoding="utf-8")
+
+    monkeypatch.setattr(store, "save_catalog", replace_namespace)
+
+    with pytest.raises(
+        FoundryPublicationError, match="transaction-owned entry identity changed"
+    ):
+        register.register_docset(tmp_path, _docset())
+
+    assert (docset_root / "foreign.txt").read_text(encoding="utf-8") == "foreign"
+    assert (displaced_root / "docset.json").is_file()
+    assert (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+
+
+def test_register_rejects_existing_docset_replaced_between_stat_and_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    register.register_docset(tmp_path, _docset())
+    catalog_before = paths.catalog_path(tmp_path).read_bytes()
+    docset_root = paths.docset_dir(tmp_path, "tappay-backend")
+    displaced_root = docset_root.with_name("original-docset-displaced")
+    original_open = store.open_directory_relative
+    replaced = False
+
+    def replace_before_open(parent_fd: int, name: str) -> int:
+        nonlocal replaced
+        if name == "tappay-backend" and not replaced:
+            replaced = True
+            docset_root.rename(displaced_root)
+            docset_root.mkdir()
+            (docset_root / "foreign.txt").write_text("foreign", encoding="utf-8")
+        return original_open(parent_fd, name)
+
+    monkeypatch.setattr(store, "open_directory_relative", replace_before_open)
+
+    with pytest.raises(FoundryPublicationError, match="namespace changed"):
+        register.register_docset(
+            tmp_path, _docset(title="Updated title"), exist_ok=True
+        )
+
+    assert paths.catalog_path(tmp_path).read_bytes() == catalog_before
+    assert (docset_root / "foreign.txt").read_text(encoding="utf-8") == "foreign"
+    assert (displaced_root / "docset.json").is_file()
+    assert not (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+
+
+def test_register_api_namespace_replacement_rolls_back_and_retains_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_save_catalog = store.save_catalog
+    api_root = paths.foundry_api_root(tmp_path)
+    displaced_api = tmp_path / "displaced-api"
+
+    def replace_api_namespace(*args: object, **kwargs: object) -> None:
+        original_save_catalog(*args, **kwargs)
+        api_root.rename(displaced_api)
+        paths.docsets_root(tmp_path).mkdir(parents=True)
+
+    monkeypatch.setattr(store, "save_catalog", replace_api_namespace)
+
+    with pytest.raises(FoundryPublicationError, match="namespace changed"):
+        register.register_docset(tmp_path, _docset())
+
+    assert not paths.catalog_path(tmp_path).exists()
+    assert not paths.docset_dir(tmp_path, "tappay-backend").exists()
+    assert not (displaced_api / "catalog.json").exists()
+    assert not (displaced_api / "docsets" / "tappay-backend").exists()
+    assert (displaced_api / ".catalog-governance.lock").is_dir()
+
+
+def test_register_rejects_symlinked_foundry_before_creating_external_state(
+    tmp_path: Path,
+) -> None:
+    external = tmp_path / "external"
+    external.mkdir()
+    (tmp_path / ".foundry").symlink_to(external, target_is_directory=True)
+
+    with pytest.raises(FoundryInputError, match="governance"):
+        register.register_docset(tmp_path, _docset())
+
+    assert list(external.iterdir()) == []

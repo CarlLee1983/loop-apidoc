@@ -33,7 +33,11 @@ def init(
     exist_ok: bool = typer.Option(False, "--exist-ok", help="docset 已存在時更新而非報錯"),
 ) -> None:
     """建立或更新一個 docset。"""
-    from loop_apidoc.foundry.models import Docset, FoundryInputError
+    from loop_apidoc.foundry.models import (
+        Docset,
+        FoundryInputError,
+        FoundryPublicationError,
+    )
     from loop_apidoc.foundry.register import register_docset
 
     ds = Docset(
@@ -46,6 +50,12 @@ def init(
     )
     try:
         result = register_docset(project, ds, exist_ok=exist_ok)
+    except FoundryPublicationError as exc:
+        typer.echo(f"foundry init operational error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    except OSError as exc:
+        typer.echo(f"foundry init operational error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
     except FoundryInputError as exc:
         typer.echo(f"foundry init input error: {exc}", err=True)
         raise typer.Exit(code=2) from exc
@@ -79,12 +89,31 @@ def approve(
     by: str = typer.Option(..., "--by", help="核准者身分或自動化閘門，如 human-review / ci-score-90"),
     min_score: Annotated[int | None, typer.Option("--min-score", min=0, max=100, help="核准所需最低分數")] = None,
     allow_failing: bool = typer.Option(False, "--allow-failing", help="即使 validation 失敗仍核准"),
+    reapprove_legacy: bool = typer.Option(
+        False,
+        "--reapprove-legacy",
+        help="明確將未綁定 legacy current 重新核准為 v1 asset",
+    ),
+    legacy_current_sha256: str | None = typer.Option(
+        None,
+        "--legacy-current-sha256",
+        help="trusted backup SHA-256 of the exact legacy current.json",
+    ),
+    legacy_asset_sha256: str | None = typer.Option(
+        None,
+        "--legacy-asset-sha256",
+        help="trusted backup SHA-256 of the exact legacy asset.json",
+    ),
     known_gap: list[str] = typer.Option([], "--known-gap", help="已知缺口，可重複"),
     json_out: bool = typer.Option(False, "--json", help="以 JSON 輸出 asset"),
 ) -> None:
     """將 candidate 核准為版本化 asset 並更新 current 指標。"""
     from loop_apidoc.foundry.approve import approve_candidate
-    from loop_apidoc.foundry.models import FoundryApprovalError, FoundryInputError
+    from loop_apidoc.foundry.models import (
+        FoundryApprovalError,
+        FoundryInputError,
+        FoundryPublicationError,
+    )
 
     try:
         asset = approve_candidate(
@@ -93,8 +122,17 @@ def approve(
             now=datetime.now(timezone.utc),
             min_score=min_score,
             allow_failing=allow_failing,
+            reapprove_legacy=reapprove_legacy,
+            legacy_current_sha256=legacy_current_sha256,
+            legacy_asset_sha256=legacy_asset_sha256,
             known_gaps=list(known_gap),
         )
+    except FoundryPublicationError as exc:
+        typer.echo(f"foundry approve operational error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    except OSError as exc:
+        typer.echo(f"foundry approve operational error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
     except FoundryInputError as exc:
         typer.echo(f"foundry approve input error: {exc}", err=True)
         raise typer.Exit(code=2) from exc
@@ -131,11 +169,13 @@ def current(
     json_out: bool = typer.Option(False, "--json", help="以 JSON 輸出 current 指標"),
 ) -> None:
     """顯示 docset 的 current 指標。"""
-    from loop_apidoc.foundry import store
+    from loop_apidoc.foundry.models import FoundryInputError
+    from loop_apidoc.foundry.query import load_current_pointer
 
-    pointer = store.load_current(project, docset)
-    if pointer is None:
-        typer.echo(f"foundry current input error: no current asset for {docset}", err=True)
+    try:
+        pointer = load_current_pointer(project, docset)
+    except FoundryInputError as exc:
+        typer.echo(f"foundry current input error: {exc}", err=True)
         raise typer.Exit(code=2)
     if json_out:
         typer.echo(pointer.model_dump_json(indent=2))

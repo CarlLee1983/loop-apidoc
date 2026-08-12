@@ -17,16 +17,13 @@ from loop_apidoc.review.models import (
 )
 from loop_apidoc.validate.models import Issue
 
-_ARTIFACTS = (
+_REQUIRED_ARTIFACTS = (
     "openapi.yaml",
     "provenance.json",
     "validation/report.json",
     "manifest.json",
-    "integration-contract.json",
-    "preparation-report.json",
-    "core/evidence.json",
-    "core/projections/review-data.json",
 )
+_DECISION_ARTIFACT = "review/decision.json"
 
 _REVIEW_EVIDENCE = TypeAdapter(tuple[ReviewEvidence, ...])
 _HTTP_METHODS = frozenset({
@@ -42,17 +39,43 @@ def canonical_digest(value: Any) -> str:
 
 
 def artifact_digests(run_dir: Path) -> dict[str, str]:
-    digests: dict[str, str] = {}
-    for relative in _ARTIFACTS:
-        path = run_dir / relative
-        if path.exists():
-            if not path.is_file():
-                raise ReviewInputError(f"review artifact is not a file: {relative}")
-            digests[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
-    for required in _ARTIFACTS[:4]:
-        if required not in digests:
+    for required in _REQUIRED_ARTIFACTS:
+        path = run_dir / required
+        if path.exists() and not path.is_file():
+            raise ReviewInputError(f"review artifact is not a file: {required}")
+        if not path.is_file():
             raise ReviewInputError(f"required review artifact missing: {required}")
+
+    digests: dict[str, str] = {}
+    for path in sorted(run_dir.rglob("*")):
+        relative = path.relative_to(run_dir).as_posix()
+        if relative == _DECISION_ARTIFACT:
+            continue
+        if path.is_symlink():
+            raise ReviewInputError(f"review artifact is unsafe: {relative}")
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise ReviewInputError(f"review artifact is not a file: {relative}")
+        try:
+            digests[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise ReviewInputError(f"review artifact is unreadable: {relative}") from exc
     return digests
+
+
+def approval_artifact_digests(
+    run_dir: Path, reviewed_digests: dict[str, str]
+) -> dict[str, str]:
+    """Add the post-review decision without making its binding self-referential."""
+    decision_path = run_dir / _DECISION_ARTIFACT
+    if decision_path.is_symlink() or not decision_path.is_file():
+        raise ReviewInputError("review decision artifact is missing or unsafe")
+    try:
+        decision_digest = hashlib.sha256(decision_path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise ReviewInputError("review decision artifact is unreadable") from exc
+    return {**reviewed_digests, _DECISION_ARTIFACT: decision_digest}
 
 
 def build_binding(
@@ -63,14 +86,21 @@ def build_binding(
     base_asset_id: str | None,
     base_dir: Path | None,
     diff: DiffReport | None,
+    base_digests: dict[str, str] | None = None,
 ) -> ReviewBinding:
-    base_digests = artifact_digests(base_dir) if base_dir is not None else {}
+    resolved_base_digests = (
+        base_digests
+        if base_digests is not None
+        else artifact_digests(base_dir)
+        if base_dir is not None
+        else {}
+    )
     return ReviewBinding(
         docset_id=docset_id,
         candidate_run_id=candidate_run_id,
         candidate_artifact_digests=artifact_digests(candidate_dir),
         base_asset_id=base_asset_id,
-        base_artifact_digests=base_digests,
+        base_artifact_digests=resolved_base_digests,
         diff_digest=canonical_digest(diff.model_dump(mode="json")) if diff else None,
     )
 

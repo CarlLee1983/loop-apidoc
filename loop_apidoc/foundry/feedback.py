@@ -31,7 +31,9 @@ from loop_apidoc.foundry.models import (
     EffectiveProvenance,
     FeedbackCase,
     FeedbackReviewDecision,
+    FoundryCurrentStaleError,
     FoundryInputError,
+    FoundryPublicationError,
 )
 from loop_apidoc.privacy import find_sensitive_value
 
@@ -179,7 +181,7 @@ def record_feedback_review(
     return decision
 
 
-def approve_feedback_case(
+def _approve_feedback_case_locked(
     project_root: Path,
     docset_id: str,
     case_id: str,
@@ -188,6 +190,12 @@ def approve_feedback_case(
     *,
     release: NormativeRelease,
     composition_amendments: tuple[CompatibilityAmendment, ...],
+    docset_root: Path | None = None,
+    docset_parent_fd: int | None = None,
+    case_parent_fd: int | None = None,
+    scope_parent_fd: int | None = None,
+    effective_assets_fd: int | None = None,
+    owned_outputs: list[tuple[int, str, tuple[int, int], str]] | None = None,
 ) -> EffectiveAsset:
     """Publish an approved scoped release; the normative current stays untouched."""
     case, bundle, assessment, proposal = _load_bound_case(
@@ -209,8 +217,13 @@ def approve_feedback_case(
         )
     _validate_amendment(amendment, case, proposal, decision)
     _validate_effective_contract(effective_contract, case, amendment)
-    normative_current = store.load_current(project_root, docset_id)
-    if normative_current is None or normative_current.current_asset != case.base_asset_id:
+    try:
+        normative_current = query.load_current_asset(project_root, docset_id)
+    except FoundryCurrentStaleError as exc:
+        raise FoundryInputError(
+            "feedback base is no longer the normative current asset"
+        ) from exc
+    if normative_current.asset_id != case.base_asset_id:
         raise FoundryInputError("feedback base is no longer the normative current asset")
     _, governed_release = _load_governed_release(
         project_root, docset_id, case.base_asset_id
@@ -268,11 +281,23 @@ def approve_feedback_case(
         )
     _reject_sensitive_values(amendment.model_dump(mode="json"))
 
+    governed_docset_root = docset_root or paths.docset_dir(project_root, docset_id)
+    amendment_relative = f"feedback/cases/{case_id}/approved-amendment.json"
     amendment_path = (
-        paths.feedback_case_dir(project_root, docset_id, case_id)
+        governed_docset_root / "feedback" / "cases" / case_id
         / "approved-amendment.json"
     )
-    _write_once_or_verify(amendment_path, amendment)
+    if case_parent_fd is not None:
+        amendment_existed, identity = store.write_once_model_relative(
+            case_parent_fd, "approved-amendment.json", amendment
+        )
+        if not amendment_existed and owned_outputs is not None:
+            owned_outputs.append(
+                (case_parent_fd, "approved-amendment.json", identity, amendment_relative)
+            )
+    else:
+        amendment_existed = amendment_path.exists()
+        _write_once_or_verify(amendment_path, amendment)
 
     scope_digest = canonical_digest(effective_contract.target)
     _safe_segment(scope_digest, "scope digest")
@@ -336,37 +361,126 @@ def approve_feedback_case(
         ),
         artifacts=artifacts,
     )
-    destination = paths.effective_asset_dir(
-        project_root, docset_id, scope_digest, effective_asset_id
+    assets_relative = f"effective/scopes/{scope_digest}/assets"
+    destination_relative = f"{assets_relative}/{effective_asset_id}"
+    local_effective_assets_fd = (
+        effective_assets_fd
+        if effective_assets_fd is not None
+        else store.ensure_directory_relative(docset_parent_fd, assets_relative)
+        if docset_parent_fd is not None
+        else -1
     )
-    if destination.exists():
-        _verify_existing_effective_asset(
-            destination,
-            asset=asset,
-            effective_contract=effective_contract,
-            amendment=amendment,
-            provenance=provenance,
-        )
-    else:
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        stage = Path(
-            tempfile.mkdtemp(prefix=f".{effective_asset_id}-", dir=destination.parent)
-        )
+    effective_assets_root = (
+        store.directory_fd_path(local_effective_assets_fd)
+        if local_effective_assets_fd >= 0
+        else governed_docset_root / assets_relative
+    )
+    destination = effective_assets_root / effective_asset_id
+    destination_existed = (
+        store.entry_identity_relative(local_effective_assets_fd, effective_asset_id)
+        is not None
+        if local_effective_assets_fd >= 0
+        else destination.exists()
+    )
+    if destination_existed:
         try:
-            artifact_dir = stage / "artifacts"
-            artifact_dir.mkdir()
-            _write_model(artifact_dir / "effective-contract.json", effective_contract)
-            _write_model(artifact_dir / "compatibility-amendment.json", amendment)
-            _write_model(
-                artifact_dir / "provenance.json",
-                provenance,
+            _verify_existing_effective_asset(
+                destination,
+                asset=asset,
+                effective_contract=effective_contract,
+                amendment=amendment,
+                provenance=provenance,
             )
-            _write_model(stage / "asset.json", asset)
-            os.replace(stage, destination)
+        finally:
+            if local_effective_assets_fd >= 0 and effective_assets_fd is None:
+                os.close(local_effective_assets_fd)
+                local_effective_assets_fd = -1
+    else:
+        publication = store.AssetPublication()
+        if local_effective_assets_fd < 0:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            stage = Path(
+                tempfile.mkdtemp(prefix=f".{effective_asset_id}-", dir=destination.parent)
+            )
+            stage_fd = -1
+            stage_identity = None
+        else:
+            stage_name, stage_fd, stage_identity = store.create_owned_directory_relative(
+                local_effective_assets_fd, prefix=f".{effective_asset_id}-"
+            )
+            stage = store.directory_fd_path(stage_fd)
+        try:
+            if stage_fd >= 0:
+                artifact_fd = store.ensure_directory_relative(stage_fd, "artifacts")
+                os.close(artifact_fd)
+                store.write_model_relative(
+                    stage_fd, "artifacts/effective-contract.json", effective_contract
+                )
+                store.write_model_relative(
+                    stage_fd, "artifacts/compatibility-amendment.json", amendment
+                )
+                store.write_model_relative(
+                    stage_fd, "artifacts/provenance.json", provenance
+                )
+                store.write_model_relative(stage_fd, "asset.json", asset)
+                store.publish_asset(
+                    Path(stage_name),
+                    destination,
+                    outcome=publication,
+                    parent_fd=local_effective_assets_fd,
+                    expected_identity=stage_identity,
+                )
+            else:
+                artifact_dir = stage / "artifacts"
+                artifact_dir.mkdir()
+                _write_model(
+                    artifact_dir / "effective-contract.json", effective_contract
+                )
+                _write_model(
+                    artifact_dir / "compatibility-amendment.json", amendment
+                )
+                _write_model(artifact_dir / "provenance.json", provenance)
+                _write_model(stage / "asset.json", asset)
+                os.replace(stage, destination)
+                publication = store.AssetPublication()
         except BaseException:
-            if stage.exists():
+            if (
+                publication.owned_root
+                and publication.identity is not None
+                and owned_outputs is not None
+            ):
+                owned_outputs.append(
+                    (
+                        local_effective_assets_fd,
+                        effective_asset_id,
+                        publication.identity,
+                        destination_relative,
+                    )
+                )
+            if stage_fd >= 0 and stage_identity is not None:
+                store.remove_owned_entry_relative(
+                    local_effective_assets_fd, stage_name, stage_identity
+                )
+            elif stage.exists():
                 shutil.rmtree(stage)
+            if local_effective_assets_fd >= 0 and effective_assets_fd is None:
+                os.close(local_effective_assets_fd)
+                local_effective_assets_fd = -1
             raise
+        finally:
+            if stage_fd >= 0:
+                os.close(stage_fd)
+        if owned_outputs is not None and publication.identity is not None:
+            owned_outputs.append(
+                (
+                    local_effective_assets_fd,
+                    effective_asset_id,
+                    publication.identity,
+                    destination_relative,
+                )
+            )
+    if local_effective_assets_fd >= 0 and effective_assets_fd is None:
+        os.close(local_effective_assets_fd)
 
     # This is the sole externally consumed promotion signal and therefore last.
     store.save_effective_current(
@@ -394,8 +508,155 @@ def approve_feedback_case(
             ),
             artifacts=asset.artifacts,
         ),
+        parent_fd=docset_parent_fd,
+        scope_parent_fd=scope_parent_fd,
     )
     return asset
+
+
+def approve_feedback_case(
+    project_root: Path,
+    docset_id: str,
+    case_id: str,
+    amendment: CompatibilityAmendment,
+    effective_contract: EffectiveContract,
+    *,
+    release: NormativeRelease,
+    composition_amendments: tuple[CompatibilityAmendment, ...],
+) -> EffectiveAsset:
+    """Publish feedback-derived state under the same docset governance lock."""
+    _safe_segment(case_id, "case id")
+    _safe_segment(effective_contract.effective_contract_id, "effective asset id")
+    transaction = store.begin_governance_transaction(project_root, docset_id)
+    scope_digest = canonical_digest(effective_contract.target)
+    current_bytes: bytes | None = None
+    preflight_complete = False
+    owned_outputs: list[tuple[int, str, tuple[int, int], str]] = []
+    scope_parent_fd = case_parent_fd = effective_assets_fd = -1
+    try:
+        scope_parent_fd = store.ensure_directory_relative(
+            transaction.docset_fd, f"effective/scopes/{scope_digest}"
+        )
+        transaction.own_fd(scope_parent_fd)
+        effective_assets_fd = store.ensure_directory_relative(
+            scope_parent_fd, "assets"
+        )
+        transaction.own_fd(effective_assets_fd)
+        case_parent_fd = store.open_directory_relative(
+            transaction.docset_fd, f"feedback/cases/{case_id}"
+        )
+        transaction.own_fd(case_parent_fd)
+        current_bytes = store.read_head_relative(scope_parent_fd, "current.json")
+        preflight_complete = True
+        asset = _approve_feedback_case_locked(
+            transaction.project_root,
+            docset_id,
+            case_id,
+            amendment,
+            effective_contract,
+            release=release,
+            composition_amendments=composition_amendments,
+            docset_root=store.directory_fd_path(transaction.docset_fd),
+            docset_parent_fd=transaction.docset_fd,
+            case_parent_fd=case_parent_fd,
+            scope_parent_fd=scope_parent_fd,
+            effective_assets_fd=effective_assets_fd,
+            owned_outputs=owned_outputs,
+        )
+        store.validate_directory_relative(
+            transaction.docset_fd,
+            f"feedback/cases/{case_id}",
+            case_parent_fd,
+        )
+        store.validate_directory_relative(
+            transaction.docset_fd,
+            f"effective/scopes/{scope_digest}",
+            scope_parent_fd,
+        )
+        store.validate_directory_relative(
+            scope_parent_fd, "assets", effective_assets_fd
+        )
+        store.validate_governance_namespace(
+            transaction.project_root,
+            docset_id,
+            api_fd=transaction.api_fd,
+            docset_fd=transaction.docset_fd,
+            assets_fd=transaction.assets_fd,
+        )
+    except BaseException as primary:
+        if getattr(primary, "recovery_required", False):
+            transaction.abandon()
+            raise
+        failures = (
+            _rollback_feedback_outputs(
+                transaction,
+                current_parent_fd=scope_parent_fd,
+                current_bytes=current_bytes,
+                owned_outputs=owned_outputs,
+            )
+            if preflight_complete
+            else []
+        )
+        if failures:
+            transaction.abandon()
+            details = "; ".join(
+                f"{label}: {type(error).__name__}: {error}"
+                for label, error in failures
+            )
+            raise FoundryPublicationError(
+                f"feedback approval failed: {primary}; "
+                f"rollback/cleanup failures: {details}"
+            ) from primary
+        try:
+            transaction.close()
+        except FoundryPublicationError:
+            transaction.force_close()
+        raise
+    try:
+        transaction.close()
+    except FoundryPublicationError as lock_error:
+        failures = _rollback_feedback_outputs(
+            transaction,
+            current_parent_fd=scope_parent_fd,
+            current_bytes=current_bytes,
+            owned_outputs=owned_outputs,
+        )
+        if failures:
+            transaction.abandon()
+            details = "; ".join(
+                f"{label}: {type(error).__name__}: {error}"
+                for label, error in failures
+            )
+            raise FoundryPublicationError(
+                f"feedback lock cleanup failed: {lock_error}; "
+                f"rollback/cleanup failures: {details}"
+            ) from lock_error
+        transaction.force_close()
+        raise
+    return asset
+
+
+def _rollback_feedback_outputs(
+    transaction: store.GovernanceTransaction,
+    *,
+    current_parent_fd: int,
+    current_bytes: bytes | None,
+    owned_outputs: list[tuple[int, str, tuple[int, int], str]],
+) -> list[tuple[str, BaseException]]:
+    failures: list[tuple[str, BaseException]] = []
+    try:
+        store.restore_head_relative(
+            current_parent_fd, "current.json", current_bytes
+        )
+    except BaseException as exc:
+        failures.append(("effective current", exc))
+        return failures
+    for parent_fd, name, identity, label in reversed(owned_outputs):
+        try:
+            store.remove_owned_entry_relative(parent_fd, name, identity)
+        except BaseException as exc:
+            failures.append((label, exc))
+    return failures
 
 
 def _effective_provenance(

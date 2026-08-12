@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -7,6 +8,8 @@ import pytest
 from loop_apidoc.foundry import paths, store
 from loop_apidoc.foundry.models import (
     Asset,
+    AssetArtifactDigests,
+    AssetArtifactKinds,
     AssetArtifacts,
     AssetStatus,
     AssetValidation,
@@ -29,6 +32,7 @@ def _docset() -> Docset:
 
 def _asset() -> Asset:
     return Asset(
+        schema_version="normative-asset/v1",
         asset_id="tappay-backend-20260702-120000",
         docset_id="tappay-backend",
         status=AssetStatus.APPROVED,
@@ -40,6 +44,17 @@ def _asset() -> Asset:
             provenance="artifacts/provenance.json",
             validation="artifacts/validation/report.json",
         ),
+        artifact_digests=AssetArtifactDigests(
+            openapi="0" * 64,
+            provenance="1" * 64,
+            validation="2" * 64,
+        ),
+        artifact_kinds=AssetArtifactKinds(
+            openapi="file",
+            provenance="file",
+            validation="file",
+        ),
+        approved_by="fixture",
     )
 
 
@@ -78,14 +93,53 @@ def test_current_absent_returns_none(tmp_path: Path) -> None:
 
 def test_current_round_trip(tmp_path: Path) -> None:
     pointer = CurrentPointer(
+        schema_version="normative-current/v1",
+        docset_id="tappay-backend",
         current_asset="tappay-backend-20260702-120000",
+        asset_digest="3" * 64,
         status=AssetStatus.APPROVED,
         validation=AssetValidation(ok=True, score=92),
         generated_at="2026-07-02T12:00:00+00:00",
         artifacts=_asset().artifacts,
+        artifact_digests=_asset().artifact_digests,
+        artifact_kinds=_asset().artifact_kinds,
     )
     store.save_current(tmp_path, "tappay-backend", pointer)
     assert store.load_current(tmp_path, "tappay-backend") == pointer
+
+
+def test_save_current_failure_preserves_previous_pointer_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pointer = CurrentPointer(
+        schema_version="normative-current/v1",
+        docset_id="tappay-backend",
+        current_asset="tappay-backend-20260702-120000",
+        asset_digest="3" * 64,
+        status=AssetStatus.APPROVED,
+        validation=AssetValidation(ok=True, score=92),
+        generated_at="2026-07-02T12:00:00+00:00",
+        artifacts=_asset().artifacts,
+        artifact_digests=_asset().artifact_digests,
+        artifact_kinds=_asset().artifact_kinds,
+    )
+    store.save_current(tmp_path, "tappay-backend", pointer)
+    path = paths.current_path(tmp_path, "tappay-backend")
+    previous = path.read_bytes()
+
+    def fail_replace(*_args: object, **_kwargs: object) -> None:
+        raise OSError("pointer publication failed")
+
+    monkeypatch.setattr(store.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="pointer publication failed"):
+        store.save_current(
+            tmp_path,
+            "tappay-backend",
+            pointer.model_copy(update={"current_asset": "new"}),
+        )
+
+    assert path.read_bytes() == previous
+    assert not list(path.parent.glob(".current-*"))
 
 
 def test_invalid_json_raises_input_error(tmp_path: Path) -> None:
@@ -114,3 +168,72 @@ def test_upsert_catalog_entry_replaces_and_appends() -> None:
         base, CatalogDocsetEntry(docset_id="c", title="C", provider="p", product="z")
     )
     assert [d.docset_id for d in appended.docsets] == ["a", "b", "c"]
+
+
+def test_upsert_catalog_entry_collapses_existing_duplicates() -> None:
+    entry = CatalogDocsetEntry(
+        docset_id="a", title="A", provider="p", product="x", current_asset=None
+    )
+    catalog = Catalog(docsets=[entry, entry.model_copy()])
+
+    updated = store.upsert_catalog_entry(
+        catalog, entry.model_copy(update={"title": "A2"})
+    )
+
+    assert [item.docset_id for item in updated.docsets] == ["a"]
+    assert updated.docsets[0].title == "A2"
+
+
+def test_governance_transaction_serializes_catalog_updates_across_docsets(
+    tmp_path: Path,
+) -> None:
+    first = _docset()
+    second = first.model_copy(
+        update={"docset_id": "other-api", "title": "Other API"}
+    )
+    store.save_docset(tmp_path, first)
+    store.save_docset(tmp_path, second)
+
+    transaction = store.begin_governance_transaction(tmp_path, first.docset_id)
+    try:
+        with pytest.raises(
+            FoundryInputError, match="transaction is already in progress"
+        ):
+            store.begin_governance_transaction(tmp_path, second.docset_id)
+        assert (
+            paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+        ).is_dir()
+    finally:
+        transaction.close()
+
+    retry = store.begin_governance_transaction(tmp_path, second.docset_id)
+    retry.close()
+
+
+def test_owned_directory_creation_cleans_up_after_parent_fsync_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    original_fsync = os.fsync
+    calls = 0
+
+    def fail_first_fsync(descriptor: int) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise OSError("staging fsync failed")
+        original_fsync(descriptor)
+
+    monkeypatch.setattr(os, "fsync", fail_first_fsync)
+    try:
+        with pytest.raises(OSError, match="staging fsync failed"):
+            store.create_owned_directory_relative(parent_fd, prefix=".stage-")
+        assert list(tmp_path.iterdir()) == []
+
+        name, descriptor, _identity = store.create_owned_directory_relative(
+            parent_fd, prefix=".retry-"
+        )
+        os.close(descriptor)
+        assert (tmp_path / name).is_dir()
+    finally:
+        os.close(parent_fd)

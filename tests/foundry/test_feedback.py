@@ -50,9 +50,11 @@ from loop_apidoc.feedback.loader import (
 )
 from loop_apidoc.feedback.erratum import ProviderErratumMetadata
 from loop_apidoc.feedback.report import write_proposal_reports
-from loop_apidoc.foundry import feedback, query, register, store
+from loop_apidoc.foundry import feedback, paths, query, register, store
 from loop_apidoc.foundry.models import (
     Asset,
+    AssetArtifactDigests,
+    AssetArtifactKinds,
     AssetArtifacts,
     AssetStatus,
     AssetValidation,
@@ -60,6 +62,7 @@ from loop_apidoc.foundry.models import (
     Docset,
     FeedbackReviewDecision,
     FoundryInputError,
+    FoundryPublicationError,
 )
 from loop_apidoc.privacy import redact_sensitive
 
@@ -234,8 +237,48 @@ def _publish_normative_base(
         openapi="artifacts/openapi.yaml",
         provenance="artifacts/provenance.json",
         validation="artifacts/validation/report.json",
+        core_contract="artifacts/core/contract.json",
+        core_evidence="artifacts/core/evidence.json",
+        core_relationships="artifacts/core/relationships.json",
     )
+    asset_artifacts_dir = (
+        project_root
+        / ".foundry/api/docsets/payments/assets"
+        / asset_id
+        / "artifacts"
+    )
+    artifact_contents = {
+        "openapi.yaml": b"openapi\n",
+        "provenance.json": b"{}\n",
+        "validation/report.json": b"{}\n",
+        "core/contract.json": _contract().model_dump_json(indent=2).encode(),
+        "core/evidence.json": EvidenceBundle(
+            source_set_id="sources",
+            source_set_version="1",
+            artifacts=(),
+            fragments=_normative_fragments(),
+        )
+        .model_dump_json(indent=2)
+        .encode(),
+        "core/relationships.json": b"[]",
+    }
+    for relative, content in artifact_contents.items():
+        target = asset_artifacts_dir / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    digests = {
+        name: hashlib.sha256(content).hexdigest()
+        for name, content in {
+            "openapi": artifact_contents["openapi.yaml"],
+            "provenance": artifact_contents["provenance.json"],
+            "validation": artifact_contents["validation/report.json"],
+            "core_contract": artifact_contents["core/contract.json"],
+            "core_evidence": artifact_contents["core/evidence.json"],
+            "core_relationships": artifact_contents["core/relationships.json"],
+        }.items()
+    }
     asset = Asset(
+        schema_version="normative-asset/v1",
         asset_id=asset_id,
         docset_id="payments",
         status=AssetStatus.APPROVED,
@@ -243,40 +286,50 @@ def _publish_normative_base(
         generated_at=_NOW.isoformat(),
         validation=AssetValidation(ok=True),
         artifacts=artifacts,
+        artifact_digests=AssetArtifactDigests(**digests),
+        artifact_kinds=AssetArtifactKinds(
+            openapi="file",
+            provenance="file",
+            validation="file",
+            core_contract="file",
+            core_evidence="file",
+            core_relationships="file",
+        ),
         approved_at=_NOW.isoformat(),
         approved_by="normative-reviewer",
     )
     store.save_asset(project_root, asset)
-    core_dir = (
-        project_root
-        / ".foundry/api/docsets/payments/assets"
-        / asset_id
-        / "artifacts/core"
-    )
-    core_dir.mkdir(parents=True)
-    (core_dir / "contract.json").write_text(
-        _contract().model_dump_json(indent=2), encoding="utf-8"
-    )
-    (core_dir / "evidence.json").write_text(
-        EvidenceBundle(
-            source_set_id="sources",
-            source_set_version="1",
-            artifacts=(),
-            fragments=_normative_fragments(),
-        ).model_dump_json(indent=2),
-        encoding="utf-8",
-    )
-    (core_dir / "relationships.json").write_text("[]", encoding="utf-8")
     store.save_current(
         project_root,
         "payments",
         CurrentPointer(
+            schema_version="normative-current/v1",
+            docset_id="payments",
             current_asset=asset.asset_id,
+            asset_digest=canonical_digest(asset),
             status=asset.status,
             validation=asset.validation,
             generated_at=asset.generated_at,
             approved_at=asset.approved_at,
             artifacts=asset.artifacts,
+            artifact_digests=asset.artifact_digests,
+            artifact_kinds=asset.artifact_kinds,
+        ),
+    )
+    docset = store.load_docset(project_root, "payments")
+    store.save_docset(project_root, docset.model_copy(update={"current_asset": asset.asset_id}))
+    catalog = store.load_catalog(project_root)
+    store.save_catalog(
+        project_root,
+        catalog.model_copy(
+            update={
+                "docsets": [
+                    entry.model_copy(update={"current_asset": asset.asset_id})
+                    if entry.docset_id == "payments"
+                    else entry
+                    for entry in catalog.docsets
+                ]
+            }
         ),
     )
 
@@ -471,6 +524,61 @@ def test_load_approved_contract_returns_immutable_release_from_governed_artifact
     assert release.fragments == _normative_fragments()
 
 
+def test_load_approved_contract_resolves_core_contract_from_its_manifest_binding(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    asset_path = paths.asset_manifest_path(tmp_path, "payments", "payments-base")
+    payload = json.loads(asset_path.read_text(encoding="utf-8"))
+    artifacts_dir = asset_path.parent / "artifacts"
+    contract = artifacts_dir / "core" / "contract.json"
+    relocated = artifacts_dir / "bound" / "contract.json"
+    relocated.parent.mkdir()
+    relocated.write_bytes(contract.read_bytes())
+    contract.unlink()
+    payload["artifacts"]["core_contract"] = "artifacts/bound/contract.json"
+    payload["artifact_digests"]["core_contract"] = hashlib.sha256(
+        relocated.read_bytes()
+    ).hexdigest()
+    asset_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    _, release = load_approved_contract(tmp_path, "payments", "payments-base")
+
+    assert release.contract == _contract()
+
+
+@pytest.mark.parametrize("artifact", ("core_contract", "core_evidence", "core_relationships"))
+def test_load_approved_contract_rejects_absent_core_artifact_bindings(
+    tmp_path: Path, artifact: str
+) -> None:
+    _setup_base(tmp_path)
+    asset_path = paths.asset_manifest_path(tmp_path, "payments", "payments-base")
+    payload = json.loads(asset_path.read_text(encoding="utf-8"))
+    payload["artifacts"][artifact] = None
+    payload["artifact_digests"][artifact] = None
+    payload["artifact_kinds"][artifact] = None
+    asset_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(FeedbackInputError, match=f"not present.*{artifact}"):
+        load_approved_contract(tmp_path, "payments", "payments-base")
+
+
+def test_load_approved_contract_rejects_tampered_historical_artifact_binding(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    manifest_path = (
+        tmp_path
+        / ".foundry/api/docsets/payments/assets/payments-base/asset.json"
+    )
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["artifact_digests"]["openapi"] = "0" * 64
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(FeedbackInputError, match="artifact digest is stale"):
+        load_approved_contract(tmp_path, "payments", "payments-base")
+
+
 @pytest.mark.parametrize(
     ("corruption", "message"),
     (
@@ -526,6 +634,22 @@ def test_load_approved_contract_fails_closed_for_governed_artifact_corruption(
         payload["fragments"][0]["normalized_excerpt"] = "documented response"
         payload["fragments"][0]["fragment_digest"] = "sha256:" + "0" * 64
         evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    core_artifact_by_corruption = {
+        "invalid_contract": ("core_contract", contract_path),
+        "wrong_contract_identity": ("core_contract", contract_path),
+        "invalid_evidence": ("core_evidence", evidence_path),
+        "wrong_source_set": ("core_evidence", evidence_path),
+        "wrong_fragment_digest": ("core_evidence", evidence_path),
+    }
+    if corruption in core_artifact_by_corruption:
+        artifact, path = core_artifact_by_corruption[corruption]
+        manifest_path = paths.asset_manifest_path(tmp_path, "payments", asset_id)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_digests"][artifact] = hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(FeedbackInputError, match=message):
         load_approved_contract(tmp_path, "payments", asset_id)
@@ -963,6 +1087,348 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
     with pytest.raises(FoundryInputError, match="digest is stale"):
         query.load_current_effective_asset(
             tmp_path, "payments", _scope(), now=_LATER
+        )
+
+
+def test_effective_current_failure_rolls_back_owned_feedback_outputs_and_allows_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    scope_digest = canonical_digest(effective.target)
+    amendment_path = (
+        paths.feedback_case_dir(tmp_path, "payments", case.case_id)
+        / "approved-amendment.json"
+    )
+    asset_dir = paths.effective_asset_dir(
+        tmp_path,
+        "payments",
+        scope_digest,
+        effective.effective_contract_id,
+    )
+    current_path = paths.effective_current_path(
+        tmp_path, "payments", scope_digest
+    )
+    original_save_current = store.save_effective_current
+
+    def fail_current(*_args: object, **_kwargs: object) -> None:
+        raise OSError("effective current write failed")
+
+    monkeypatch.setattr(store, "save_effective_current", fail_current)
+
+    with pytest.raises(OSError, match="effective current write failed"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert not amendment_path.exists()
+    assert not asset_dir.exists()
+    assert not current_path.exists()
+
+    monkeypatch.setattr(store, "save_effective_current", original_save_current)
+    asset = feedback.approve_feedback_case(
+        tmp_path,
+        "payments",
+        case.case_id,
+        amendment,
+        effective,
+        release=_release(amendment),
+        composition_amendments=(amendment,),
+    )
+    assert asset.effective_asset_id == effective.effective_contract_id
+
+
+def test_feedback_preflight_failure_releases_both_governance_locks(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    effective_root = paths.docset_dir(tmp_path, "payments") / "effective"
+    foreign_root = tmp_path / "foreign-effective"
+    foreign_root.mkdir()
+    effective_root.symlink_to(foreign_root, target_is_directory=True)
+
+    with pytest.raises(FoundryInputError, match="unsafe governance path"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert not (
+        paths.docset_dir(tmp_path, "payments") / ".governance.lock"
+    ).exists()
+    assert not (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+    assert not list(foreign_root.iterdir())
+
+    effective_root.unlink()
+    asset = feedback.approve_feedback_case(
+        tmp_path,
+        "payments",
+        case.case_id,
+        amendment,
+        effective,
+        release=_release(amendment),
+        composition_amendments=(amendment,),
+    )
+    assert asset.effective_asset_id == effective.effective_contract_id
+
+
+def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    docset_root = paths.docset_dir(tmp_path, "payments")
+    moved_docset = tmp_path / "pinned-docset"
+    original_write_once = store.write_once_model_relative
+    replaced = False
+
+    def replace_then_write(*args: object, **kwargs: object):
+        nonlocal replaced
+        if not replaced:
+            replaced = True
+            docset_root.rename(moved_docset)
+            (docset_root / "assets").mkdir(parents=True)
+            (docset_root / "sentinel.txt").write_text("foreign", encoding="utf-8")
+        return original_write_once(*args, **kwargs)
+
+    monkeypatch.setattr(store, "write_once_model_relative", replace_then_write)
+
+    with pytest.raises(FoundryPublicationError, match="namespace changed"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert sorted(
+        path.relative_to(docset_root).as_posix()
+        for path in docset_root.rglob("*")
+    ) == ["assets", "sentinel.txt"]
+    assert (docset_root / "sentinel.txt").read_text(encoding="utf-8") == "foreign"
+    assert not (
+        moved_docset
+        / "feedback"
+        / "cases"
+        / case.case_id
+        / "approved-amendment.json"
+    ).exists()
+
+
+def test_feedback_nested_scope_replacement_rolls_back_the_pinned_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    effective_root = paths.docset_dir(tmp_path, "payments") / "effective"
+    moved_effective = tmp_path / "pinned-effective"
+    original_save_current = store.save_effective_current
+
+    def replace_then_save(*args: object, **kwargs: object) -> None:
+        effective_root.rename(moved_effective)
+        effective_root.mkdir()
+        (effective_root / "sentinel.txt").write_text("foreign", encoding="utf-8")
+        original_save_current(*args, **kwargs)
+
+    monkeypatch.setattr(store, "save_effective_current", replace_then_save)
+
+    with pytest.raises(FoundryPublicationError, match="namespace changed"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert sorted(path.name for path in effective_root.iterdir()) == ["sentinel.txt"]
+    assert not (
+        paths.feedback_case_dir(tmp_path, "payments", case.case_id)
+        / "approved-amendment.json"
+    ).exists()
+    assert not list(moved_effective.rglob("current.json"))
+    assert not list(moved_effective.rglob("asset.json"))
+
+
+def test_feedback_lock_cleanup_failure_rolls_back_publication_for_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    scope_digest = canonical_digest(effective.target)
+    original_close = store.GovernanceTransaction.close
+
+    def fail_close(_transaction: store.GovernanceTransaction) -> None:
+        raise FoundryPublicationError("injected lock cleanup failure")
+
+    monkeypatch.setattr(store.GovernanceTransaction, "close", fail_close)
+    with pytest.raises(FoundryPublicationError, match="lock cleanup failure"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert not (
+        paths.feedback_case_dir(tmp_path, "payments", case.case_id)
+        / "approved-amendment.json"
+    ).exists()
+    assert not paths.effective_asset_dir(
+        tmp_path, "payments", scope_digest, effective.effective_contract_id
+    ).exists()
+    assert not paths.effective_current_path(
+        tmp_path, "payments", scope_digest
+    ).exists()
+    assert not (
+        paths.docset_dir(tmp_path, "payments") / ".governance.lock"
+    ).exists()
+    assert not (
+        paths.foundry_api_root(tmp_path) / ".catalog-governance.lock"
+    ).exists()
+
+    monkeypatch.setattr(store.GovernanceTransaction, "close", original_close)
+    asset = feedback.approve_feedback_case(
+        tmp_path,
+        "payments",
+        case.case_id,
+        amendment,
+        effective,
+        release=_release(amendment),
+        composition_amendments=(amendment,),
+    )
+    assert asset.effective_asset_id == effective.effective_contract_id
+
+
+def test_effective_current_rejects_tampered_normative_pointer(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment, proposal)
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = feedback.approve_feedback_case(
+        tmp_path,
+        "payments",
+        case.case_id,
+        amendment,
+        _effective(amendment),
+        release=_release(amendment),
+        composition_amendments=(amendment,),
+    )
+    current = store.load_current(tmp_path, "payments")
+    assert current is not None
+    store.save_current(
+        tmp_path,
+        "payments",
+        current.model_copy(update={"status": AssetStatus.CANDIDATE}),
+    )
+
+    with pytest.raises(FoundryInputError, match="current asset is not approved"):
+        query.load_current_effective_asset(
+            tmp_path, "payments", effective.target, now=_LATER
+        )
+
+
+def test_feedback_approval_rejects_tampered_normative_pointer(
+    tmp_path: Path,
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment, proposal)
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    current = store.load_current(tmp_path, "payments")
+    assert current is not None
+    store.save_current(
+        tmp_path,
+        "payments",
+        current.model_copy(update={"status": AssetStatus.CANDIDATE}),
+    )
+
+    with pytest.raises(FoundryInputError, match="current asset is not approved"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            _effective(amendment),
+            release=_release(amendment),
+            composition_amendments=(amendment,),
         )
 
 

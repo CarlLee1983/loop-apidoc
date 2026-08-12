@@ -3,10 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+from loop_apidoc.core.conformance import canonical_digest
 from loop_apidoc.diff import DiffInputError, build_diff_report, load_run_artifacts
-from loop_apidoc.foundry import approve, importer, paths, store
+from loop_apidoc.foundry import approve, importer, paths, query, store
 from loop_apidoc.foundry.models import FoundryInputError, ReviewState, ReviewSummary
 from loop_apidoc.review.binding import (
+    approval_artifact_digests,
     artifact_digests,
     build_binding,
     diff_subject,
@@ -58,6 +60,7 @@ class ReviewWorkflow:
         self._validate_draft(snapshot, draft)
         decision = ReviewDecision(
             binding=snapshot.binding,
+            approved_by=draft.approved_by,
             items=draft.items,
             handoff=draft.handoff,
             waivers=draft.waivers,
@@ -72,6 +75,8 @@ class ReviewWorkflow:
     def approve_review(
         self, key: ReviewKey, draft: ReviewDraft, *, now: datetime
     ) -> ApprovalResult:
+        if not draft.approved_by or not draft.approved_by.strip():
+            raise ReviewInputError("review approval requires a named approver")
         saved = self.save_decision(key, draft)
         fresh = self._snapshot(key.docset_id, key.candidate_run_id)
         if fresh.binding != saved.binding:
@@ -84,15 +89,39 @@ class ReviewWorkflow:
             open_handoff_count=open_count,
         )
         try:
+            expected_base = (
+                query.load_governed_asset(
+                    self.project_root,
+                    key.docset_id,
+                    fresh.binding.base_asset_id,
+                )
+                if fresh.binding.base_asset_id is not None
+                else None
+            )
             asset = approve.approve_candidate(
                 self.project_root,
                 key.docset_id,
                 key.candidate_run_id,
                 now=now,
-                approved_by=None,
+                approved_by=draft.approved_by,
                 allow_failing=True,
                 known_gaps=known_gaps,
                 review=summary,
+                expected_base_asset_id=fresh.binding.base_asset_id,
+                expected_base_asset_digest=(
+                    canonical_digest(expected_base) if expected_base else None
+                ),
+                enforce_expected_base=True,
+                expected_candidate_artifact_digests=(
+                    approval_artifact_digests(
+                        paths.candidate_dir(
+                            self.project_root,
+                            key.docset_id,
+                            key.candidate_run_id,
+                        ),
+                        fresh.binding.candidate_artifact_digests,
+                    )
+                ),
             )
         except FoundryInputError as exc:
             raise ReviewInputError(str(exc)) from exc
@@ -141,23 +170,24 @@ class ReviewWorkflow:
         try:
             candidate = load_run_artifacts(candidate_dir)
             score = _load_score(candidate_dir)
-            current = store.load_current(self.project_root, docset_id)
-            if current is None:
+            asset = query.load_current_asset_optional(self.project_root, docset_id)
+            if asset is None:
                 mode = ReviewMode.BASELINE
                 base_asset_id = None
                 base_dir = None
                 diff = None
             else:
-                asset = store.load_asset(
-                    self.project_root, docset_id, current.current_asset
-                )
                 base_asset_id = asset.asset_id
                 base_dir = paths.asset_artifacts_dir(
                     self.project_root, docset_id, asset.asset_id
                 )
-                base = load_run_artifacts(base_dir)
+                base, base_digests = query.load_current_baseline_artifacts(
+                    self.project_root, docset_id
+                )
                 diff = build_diff_report(base, candidate)
                 mode = ReviewMode.UPDATE
+            if asset is None:
+                base_digests = None
             binding = build_binding(
                 docset_id=docset_id,
                 candidate_run_id=candidate_run_id,
@@ -165,6 +195,7 @@ class ReviewWorkflow:
                 base_asset_id=base_asset_id,
                 base_dir=base_dir,
                 diff=diff,
+                base_digests=base_digests,
             )
             decision = store.load_review_decision(
                 self.project_root, docset_id, candidate_run_id
