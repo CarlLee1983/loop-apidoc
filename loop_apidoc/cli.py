@@ -188,7 +188,11 @@ def cache_url_pages(
     output: Path = typer.Option(..., "--output", help="本機原始 HTML、正文與 corpus.json 目錄"),
     max_pages: Annotated[
         int,
-        typer.Option("--max-pages", min=1, help="本次可快取的最大唯一文件數"),
+        typer.Option(
+            "--max-pages",
+            min=1,
+            help="本次可快取的最大總頁數（含探測取得的 OpenAPI 規格）",
+        ),
     ] = 200,
     max_bytes_per_page: Annotated[
         int,
