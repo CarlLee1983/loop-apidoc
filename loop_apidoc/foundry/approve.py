@@ -81,7 +81,10 @@ class _LegacyCapture:
 @dataclass
 class _ApprovalTransactionState:
     governance_snapshot: list[tuple[int, str, str, bytes | None]] | None = None
-    staging_root: Path | None = None
+    # The directory entry name, not a pathname: `directory_fd_path` resolves a pinned
+    # fd to `/proc/self/fd/<n>` on Linux, whose basename is the descriptor number, so
+    # cleanup keyed on that pathname's basename silently removes nothing.
+    staging_name: str | None = None
     asset_root: Path | None = None
     published_asset_root: bool = False
     staging_identity: tuple[int, int] | None = None
@@ -292,7 +295,7 @@ def _restore_governance_snapshot(
 
 
 def _cleanup_approval_outputs(
-    staging_root: Path | None,
+    staging_name: str | None,
     asset_root: Path,
     *,
     published_asset_root: bool,
@@ -301,14 +304,14 @@ def _cleanup_approval_outputs(
     published_identity: tuple[int, int] | None,
 ) -> list[tuple[str, BaseException]]:
     failures: list[tuple[str, BaseException]] = []
-    targets: list[tuple[str, Path, tuple[int, int]]] = []
-    if staging_root is not None and staging_identity is not None:
-        targets.append(("staged asset root", staging_root, staging_identity))
+    targets: list[tuple[str, str, tuple[int, int]]] = []
+    if staging_name is not None and staging_identity is not None:
+        targets.append(("staged asset root", staging_name, staging_identity))
     if published_asset_root and published_identity is not None:
-        targets.append(("asset root", asset_root, published_identity))
-    for label, path, identity in targets:
+        targets.append(("asset root", asset_root.name, published_identity))
+    for label, name, identity in targets:
         try:
-            store.remove_owned_entry_relative(assets_parent_fd, path.name, identity)
+            store.remove_owned_entry_relative(assets_parent_fd, name, identity)
         except BaseException as exc:
             failures.append((label, exc))
     return failures
@@ -317,7 +320,7 @@ def _cleanup_approval_outputs(
 def _raise_approval_failure(
     primary: BaseException,
     snapshot: list[tuple[int, str, str, bytes | None]],
-    staging_root: Path | None,
+    staging_name: str | None,
     asset_root: Path,
     *,
     published_asset_root: bool,
@@ -329,7 +332,7 @@ def _raise_approval_failure(
         []
         if rollback_failures
         else _cleanup_approval_outputs(
-            staging_root,
+            staging_name,
             asset_root,
             published_asset_root=published_asset_root,
             assets_parent_fd=assets_parent_fd,
@@ -503,7 +506,7 @@ def _approve_candidate_locked(
         ),
     )
     state.governance_snapshot = governance_snapshot
-    staging_root: Path | None = None
+    staging_name: str | None = None
     staging_fd = -1
     publication = store.AssetPublication()
     try:
@@ -519,10 +522,9 @@ def _approve_candidate_locked(
                 assets_parent_fd, prefix=f".{asset_id}-"
             )
         )
-        staging_root = store.directory_fd_path(staging_fd)
-        state.staging_root = staging_root
+        state.staging_name = staging_name
         state.staging_identity = staging_identity
-        artifacts_dir = staging_root / "artifacts"
+        artifacts_dir = store.directory_fd_path(staging_fd) / "artifacts"
         if expected_candidate_artifact_digests is not None:
             _verify_candidate_binding(candidate, expected_candidate_artifact_digests)
         pinned_candidate = (
@@ -638,7 +640,7 @@ def _approve_candidate_locked(
         _raise_approval_failure(
             FoundryApprovalError(str(exc)),
             governance_snapshot,
-            staging_root,
+            staging_name,
             asset_root,
             published_asset_root=publication.owned_root,
             assets_parent_fd=assets_parent_fd,
@@ -652,7 +654,7 @@ def _approve_candidate_locked(
         _raise_approval_failure(
             exc,
             governance_snapshot,
-            staging_root,
+            staging_name,
             asset_root,
             published_asset_root=publication.owned_root,
             assets_parent_fd=assets_parent_fd,
@@ -730,7 +732,7 @@ def approve_candidate(
                         _raise_approval_failure(
                             lock_error,
                             state.governance_snapshot,
-                            state.staging_root,
+                            state.staging_name,
                             state.asset_root,
                             published_asset_root=state.published_asset_root,
                             assets_parent_fd=transaction.assets_fd,
