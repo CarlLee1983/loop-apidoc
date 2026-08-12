@@ -24,11 +24,13 @@ from loop_apidoc.domain.evidence import (
     normalize_excerpt,
 )
 from loop_apidoc.domain.models import GroundedApiContract
-from loop_apidoc.foundry import paths, query, store
+from loop_apidoc.foundry import query, store
 from loop_apidoc.foundry.models import (
     Asset,
     AssetStatus,
     FeedbackReviewDecision,
+    FoundryGovernedAssetApprovalLineageError,
+    FoundryGovernedAssetNotApprovedError,
     FoundryInputError,
 )
 from loop_apidoc.feedback.erratum import ProviderErratumMetadata
@@ -145,8 +147,14 @@ def load_approved_contract(
     _require_safe_identifier(docset_id, "docset id")
     _require_safe_identifier(asset_id, "asset id")
     try:
-        asset = store.load_asset(project_root, docset_id, asset_id)
+        asset = query.load_governed_asset(project_root, docset_id, asset_id)
         docset = store.load_docset(project_root, docset_id)
+    except FoundryGovernedAssetNotApprovedError as exc:
+        raise FeedbackInputError(
+            "feedback requires an approved normative asset"
+        ) from exc
+    except FoundryGovernedAssetApprovalLineageError as exc:
+        raise FeedbackInputError("base asset is missing approval lineage") from exc
     except FoundryInputError as exc:
         raise FeedbackInputError(str(exc)) from exc
     if asset.docset_id != docset_id or asset.asset_id != asset_id:
@@ -155,14 +163,32 @@ def load_approved_contract(
         raise FeedbackInputError("feedback requires an approved normative asset")
     if not asset.approved_at or not asset.approved_by:
         raise FeedbackInputError("base asset is missing approval lineage")
-    contract_path = paths.asset_artifacts_dir(
-        project_root, docset_id, asset_id
-    ) / "core" / "contract.json"
-    if contract_path.is_symlink():
-        raise FeedbackInputError("Canonical Contract artifact must not be a symlink")
-    raw = _bounded_read(contract_path, MAX_CONTRACT_BYTES, "Canonical Contract")
     try:
-        contract = GroundedApiContract.model_validate_json(raw)
+        contract_raw = query.read_governed_artifact(
+            project_root,
+            docset_id,
+            asset_id,
+            "core_contract",
+            max_bytes=MAX_CONTRACT_BYTES,
+        )
+        evidence_raw = query.read_governed_artifact(
+            project_root,
+            docset_id,
+            asset_id,
+            "core_evidence",
+            max_bytes=MAX_CONTRACT_BYTES,
+        )
+        relationships_raw = query.read_governed_artifact(
+            project_root,
+            docset_id,
+            asset_id,
+            "core_relationships",
+            max_bytes=MAX_CONTRACT_BYTES,
+        )
+    except FoundryInputError as exc:
+        raise FeedbackInputError(str(exc)) from exc
+    try:
+        contract = GroundedApiContract.model_validate_json(contract_raw)
     except ValidationError as exc:
         raise FeedbackInputError(
             f"Canonical Contract artifact is invalid: {_safe_validation_summary(exc)}"
@@ -173,8 +199,8 @@ def load_approved_contract(
         raise FeedbackInputError("Canonical Contract identity does not match the docset")
     fragments, relationships = _verify_normative_evidence(
         contract,
-        evidence_path=contract_path.with_name("evidence.json"),
-        relationships_path=contract_path.with_name("relationships.json"),
+        evidence_raw=evidence_raw,
+        relationships_raw=relationships_raw,
     )
     return asset, NormativeRelease(
         base=NormativeBaseBinding(
@@ -191,15 +217,9 @@ def load_approved_contract(
 def _verify_normative_evidence(
     contract: GroundedApiContract,
     *,
-    evidence_path: Path,
-    relationships_path: Path,
+    evidence_raw: bytes,
+    relationships_raw: bytes,
 ) -> tuple[tuple[EvidenceFragment, ...], tuple[ClaimEvidenceRelationship, ...]]:
-    evidence_raw = _bounded_read(
-        evidence_path, MAX_CONTRACT_BYTES, "Canonical evidence bundle"
-    )
-    relationships_raw = _bounded_read(
-        relationships_path, MAX_CONTRACT_BYTES, "Canonical evidence relationships"
-    )
     try:
         evidence = EvidenceBundle.model_validate_json(evidence_raw)
         relationships = TypeAdapter(

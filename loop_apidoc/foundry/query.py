@@ -1,25 +1,39 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
+from pathlib import PurePath
 
+import yaml
 from loop_apidoc.core.conformance import canonical_digest
+from loop_apidoc.diff.loader import RunArtifacts
 from loop_apidoc.domain.conformance import (
     ApplicabilityEnvelope,
     CompatibilityAmendment,
     EffectiveContract,
 )
 from loop_apidoc.foundry import paths, store
+from loop_apidoc.foundry.integrity import digest_artifact, read_verified_file
 from loop_apidoc.foundry.models import (
     Asset,
     AssetArtifacts,
     AssetStatus,
     Catalog,
+    CurrentPointer,
     EffectiveAsset,
     EffectiveAssetArtifacts,
     EffectiveProvenance,
+    FoundryCurrentStaleError,
+    FoundryGovernedAssetApprovalLineageError,
+    FoundryGovernedAssetNotApprovedError,
     FoundryInputError,
+    Docset,
 )
+from loop_apidoc.generate.models import ProvenanceDocument
+from loop_apidoc.manifest.models import Manifest
+from loop_apidoc.preparation.models import PreparationReport
+from loop_apidoc.validate.models import ValidationReport
 
 _ARTIFACT_FIELDS = frozenset(AssetArtifacts.model_fields)
 _EFFECTIVE_ARTIFACT_FIELDS = frozenset(EffectiveAssetArtifacts.model_fields)
@@ -27,24 +41,406 @@ _MAX_EFFECTIVE_CONTRACT_BYTES = 16 * 1024 * 1024
 
 
 def load_current_asset(project_root: Path, docset_id: str) -> Asset:
+    """Load the one normative current asset after verifying its full binding."""
+    asset, _ = _load_bound_current(project_root, docset_id)
+    _verify_normative_artifacts(asset, project_root)
+    return asset
+
+
+def load_current_asset_optional(project_root: Path, docset_id: str) -> Asset | None:
+    """Return no asset only when current is absent; malformed current fails closed."""
+    docset = validate_governance_baseline(project_root, docset_id)
     pointer = store.load_current(project_root, docset_id)
     if pointer is None:
-        raise FoundryInputError(f"no current asset for docset: {docset_id}")
-    return store.load_asset(project_root, docset_id, pointer.current_asset)
+        if docset.current_asset is not None:
+            raise FoundryInputError("current pointer is missing")
+        return None
+    asset, _ = _load_bound_current(project_root, docset_id, pointer=pointer)
+    _verify_normative_artifacts(asset, project_root)
+    return asset
+
+
+def load_current_pointer(project_root: Path, docset_id: str) -> CurrentPointer:
+    """Return the verified normative pointer used by read-only CLI consumers."""
+    asset, pointer = _load_bound_current(project_root, docset_id)
+    _verify_normative_artifacts(asset, project_root)
+    return pointer
+
+
+def _load_bound_current(
+    project_root: Path,
+    docset_id: str,
+    *,
+    pointer: CurrentPointer | None = None,
+) -> tuple[Asset, CurrentPointer]:
+    _require_safe_segment(docset_id, "docset id")
+    if pointer is None:
+        pointer = store.load_current(project_root, docset_id)
+    if pointer is None:
+        raise FoundryCurrentStaleError(f"no current asset for docset: {docset_id}")
+    try:
+        validate_governance_baseline(
+            project_root, docset_id, expected_current_asset=pointer.current_asset
+        )
+    except FoundryCurrentStaleError:
+        raise
+    except FoundryInputError as exc:
+        raise FoundryCurrentStaleError(str(exc)) from exc
+    if pointer.docset_id != docset_id:
+        raise FoundryCurrentStaleError("current pointer docset is stale")
+    _require_safe_segment(pointer.current_asset, "asset id")
+    try:
+        asset = store.load_asset(project_root, docset_id, pointer.current_asset)
+    except FoundryInputError as exc:
+        raise FoundryCurrentStaleError("current asset identity is stale") from exc
+    if asset.asset_id != pointer.current_asset or asset.docset_id != docset_id:
+        raise FoundryCurrentStaleError("current asset identity is stale")
+    if asset.status is not AssetStatus.APPROVED or pointer.status is not AssetStatus.APPROVED:
+        raise FoundryInputError("current asset is not approved")
+    if not asset.approved_at:
+        raise FoundryInputError("current asset approval time is missing")
+    if not asset.approved_by or not asset.approved_by.strip():
+        raise FoundryInputError("current asset approver is missing")
+    if pointer.asset_digest != canonical_digest(asset):
+        raise FoundryCurrentStaleError("current asset digest is stale")
+    if (
+        pointer.status != asset.status
+        or pointer.validation != asset.validation
+        or pointer.generated_at != asset.generated_at
+        or pointer.approved_at != asset.approved_at
+        or pointer.artifacts != asset.artifacts
+        or pointer.artifact_digests != asset.artifact_digests
+        or pointer.artifact_kinds != asset.artifact_kinds
+        or pointer.review != asset.review
+    ):
+        raise FoundryCurrentStaleError("current pointer summary is stale")
+    docset = store.load_docset(project_root, docset_id)
+    if docset.current_asset != asset.asset_id:
+        raise FoundryCurrentStaleError("current docset head is stale")
+    return asset, pointer
 
 
 def resolve_current_artifact(project_root: Path, docset_id: str, artifact: str) -> Path:
     if artifact not in _ARTIFACT_FIELDS:
         raise FoundryInputError(f"unknown artifact: {artifact}")
     asset = load_current_asset(project_root, docset_id)
+    return _resolve_asset_artifact(project_root, docset_id, asset, artifact)
+
+
+def load_governed_asset(
+    project_root: Path, docset_id: str, asset_id: str
+) -> Asset:
+    """Load one immutable historical v1 asset with its bound artifacts."""
+    _require_safe_segment(docset_id, "docset id")
+    _require_safe_segment(asset_id, "asset id")
+    asset = store.load_asset(project_root, docset_id, asset_id)
+    if asset.asset_id != asset_id or asset.docset_id != docset_id:
+        raise FoundryInputError("governed asset identity is stale")
+    if asset.status not in {AssetStatus.APPROVED, AssetStatus.SUPERSEDED}:
+        raise FoundryGovernedAssetNotApprovedError("governed asset is not approved")
+    if not asset.approved_at or not asset.approved_by or not asset.approved_by.strip():
+        raise FoundryGovernedAssetApprovalLineageError(
+            "governed asset approval lineage is missing"
+        )
+    _verify_normative_artifacts(asset, project_root)
+    return asset
+
+
+def resolve_governed_artifact(
+    project_root: Path, docset_id: str, asset_id: str, artifact: str
+) -> Path:
+    """Resolve a digest-bound artifact from an explicit immutable asset id."""
+    if artifact not in _ARTIFACT_FIELDS:
+        raise FoundryInputError(f"unknown artifact: {artifact}")
+    asset = load_governed_asset(project_root, docset_id, asset_id)
+    return _resolve_asset_artifact(project_root, docset_id, asset, artifact)
+
+
+def read_current_artifact(
+    project_root: Path,
+    docset_id: str,
+    artifact: str,
+    *,
+    max_bytes: int | None = None,
+) -> bytes:
+    """Capture bytes from the verified current artifact at point of use."""
+    if artifact not in _ARTIFACT_FIELDS:
+        raise FoundryInputError(f"unknown artifact: {artifact}")
+    asset = load_current_asset(project_root, docset_id)
+    return _read_verified_asset_artifact(
+        project_root, docset_id, asset, artifact, max_bytes=max_bytes
+    )
+
+
+def read_governed_artifact(
+    project_root: Path,
+    docset_id: str,
+    asset_id: str,
+    artifact: str,
+    *,
+    max_bytes: int | None = None,
+) -> bytes:
+    """Capture bytes from an immutable governed artifact at point of use."""
+    if artifact not in _ARTIFACT_FIELDS:
+        raise FoundryInputError(f"unknown artifact: {artifact}")
+    asset = load_governed_asset(project_root, docset_id, asset_id)
+    return _read_verified_asset_artifact(
+        project_root, docset_id, asset, artifact, max_bytes=max_bytes
+    )
+
+
+def load_current_baseline_artifacts(
+    project_root: Path, docset_id: str
+) -> tuple[RunArtifacts, dict[str, str]]:
+    """Load review baseline artifacts only through the current asset bindings."""
+    asset = load_current_asset(project_root, docset_id)
+    if asset.artifacts.manifest is None:
+        raise FoundryInputError("current baseline manifest binding is missing")
+
+    bound: dict[str, bytes] = {}
+    for name in ("openapi", "provenance", "validation", "manifest"):
+        bound[name] = _read_verified_asset_artifact(
+            project_root,
+            docset_id,
+            asset,
+            name,
+            max_bytes=_MAX_EFFECTIVE_CONTRACT_BYTES,
+        )
+    optional: dict[str, bytes | None] = {}
+    for name in ("integration_contract", "preparation"):
+        relative = getattr(asset.artifacts, name)
+        optional[name] = (
+            _read_verified_asset_artifact(
+                project_root,
+                docset_id,
+                asset,
+                name,
+                max_bytes=_MAX_EFFECTIVE_CONTRACT_BYTES,
+            )
+            if relative is not None
+            else None
+        )
+
+    try:
+        openapi = yaml.safe_load(bound["openapi"])
+    except yaml.YAMLError as exc:
+        raise FoundryInputError("bound baseline openapi.yaml is invalid") from exc
+    if not isinstance(openapi, dict):
+        raise FoundryInputError("bound baseline openapi.yaml must parse to an object")
+    try:
+        provenance = ProvenanceDocument.model_validate_json(
+            bound["provenance"]
+        )
+        validation = ValidationReport.model_validate_json(
+            bound["validation"]
+        )
+        manifest = Manifest.model_validate_json(bound["manifest"])
+    except ValueError as exc:
+        raise FoundryInputError("bound baseline metadata is invalid") from exc
+
+    integration: dict | None = None
+    if optional["integration_contract"] is not None:
+        try:
+            loaded = json.loads(
+                optional["integration_contract"]
+            )
+        except ValueError as exc:
+            raise FoundryInputError("bound baseline integration contract is invalid") from exc
+        if not isinstance(loaded, dict):
+            raise FoundryInputError("bound baseline integration contract must be an object")
+        integration = loaded
+
+    preparation: PreparationReport | None = None
+    if optional["preparation"] is not None:
+        try:
+            preparation = PreparationReport.model_validate_json(
+                optional["preparation"]
+            )
+        except ValueError as exc:
+            raise FoundryInputError("bound baseline preparation report is invalid") from exc
+
+    base_root = paths.asset_artifacts_dir(project_root, docset_id, asset.asset_id)
+    review_digests: dict[str, str] = {}
+    for name in _ARTIFACT_FIELDS:
+        relative = getattr(asset.artifacts, name)
+        digest = getattr(asset.artifact_digests, name)
+        if relative is None or digest is None:
+            continue
+        if relative.startswith("artifacts/"):
+            review_digests[relative.removeprefix("artifacts/")] = digest
+    return (
+        RunArtifacts(
+            run_dir=base_root,
+            openapi=openapi,
+            integration=integration,
+            provenance=provenance,
+            validation=validation,
+            manifest=manifest,
+            preparation=preparation,
+        ),
+        review_digests,
+    )
+
+
+def _resolve_asset_artifact(
+    project_root: Path, docset_id: str, asset: Asset, artifact: str
+) -> Path:
     rel = getattr(asset.artifacts, artifact)
     if rel is None:
         raise FoundryInputError(f"artifact not present in current asset: {artifact}")
-    return paths.asset_dir(project_root, docset_id, asset.asset_id) / rel
+    kind = getattr(asset.artifact_kinds, artifact)
+    expected_digest = getattr(asset.artifact_digests, artifact)
+    return _resolve_normative_artifact(
+        project_root,
+        docset_id,
+        asset.asset_id,
+        rel,
+        kind=kind,
+        expected_digest=expected_digest,
+        artifact=artifact,
+    )
+
+
+def _read_verified_asset_artifact(
+    project_root: Path,
+    docset_id: str,
+    asset: Asset,
+    artifact: str,
+    *,
+    max_bytes: int | None = None,
+) -> bytes:
+    path = _resolve_asset_artifact(project_root, docset_id, asset, artifact)
+    kind = getattr(asset.artifact_kinds, artifact)
+    expected_digest = getattr(asset.artifact_digests, artifact)
+    if kind != "file" or expected_digest is None:
+        raise FoundryInputError(f"artifact is not a readable file: {artifact}")
+    return read_verified_file(path, expected_digest, artifact, max_bytes=max_bytes)
+
+
+def _verify_normative_artifacts(asset: Asset, project_root: Path) -> None:
+    for artifact in _ARTIFACT_FIELDS:
+        relative = getattr(asset.artifacts, artifact)
+        if relative is None:
+            continue
+        _resolve_normative_artifact(
+            project_root,
+            asset.docset_id,
+            asset.asset_id,
+            relative,
+            kind=getattr(asset.artifact_kinds, artifact),
+            expected_digest=getattr(asset.artifact_digests, artifact),
+            artifact=artifact,
+        )
+
+
+def _resolve_normative_artifact(
+    project_root: Path,
+    docset_id: str,
+    asset_id: str,
+    relative: str,
+    *,
+    kind: str,
+    expected_digest: str,
+    artifact: str,
+) -> Path:
+    _require_safe_segment(docset_id, "docset id")
+    _require_safe_segment(asset_id, "asset id")
+    try:
+        relative_path = PurePath(relative)
+        unsafe_relative = (
+            not relative_path.parts
+            or relative_path.is_absolute()
+            or any(part in {"", ".", ".."} for part in relative_path.parts)
+        )
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise FoundryInputError(f"unsafe artifact path: {artifact}") from exc
+    if unsafe_relative:
+        raise FoundryInputError(f"unsafe artifact path: {artifact}")
+    if "\\" in relative or kind not in {"file", "tree"}:
+        raise FoundryInputError(f"unsafe artifact path: {artifact}")
+    asset_dir = paths.asset_dir(project_root, docset_id, asset_id)
+    _reject_symlinked_governed_root(project_root, asset_dir, artifact)
+    root = asset_dir.resolve()
+    candidate = root
+    for part in relative_path.parts:
+        candidate /= part
+        if candidate.is_symlink():
+            raise FoundryInputError(f"unsafe artifact path: {artifact}")
+    try:
+        resolved = candidate.resolve()
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise FoundryInputError(f"unsafe artifact path: {artifact}") from exc
+    if not resolved.is_relative_to(root):
+        raise FoundryInputError(f"unsafe artifact path: {artifact}")
+    if kind == "file" and not resolved.is_file():
+        raise FoundryInputError(f"artifact is missing or not a file: {artifact}")
+    if kind == "tree" and not resolved.is_dir():
+        raise FoundryInputError(f"artifact is missing or not a directory: {artifact}")
+    actual_digest = digest_artifact(resolved, kind, artifact)
+    if actual_digest != expected_digest:
+        raise FoundryInputError(f"artifact digest is stale: {artifact}")
+    return resolved
+
+
+def _reject_symlinked_governed_root(
+    project_root: Path, asset_dir: Path, artifact: str
+) -> None:
+    try:
+        relative = asset_dir.relative_to(project_root)
+    except ValueError as exc:
+        raise FoundryInputError(f"unsafe artifact path: {artifact}") from exc
+    current = project_root
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            raise FoundryInputError(f"unsafe artifact path: {artifact}")
 
 
 def list_docsets(project_root: Path) -> Catalog:
     return store.load_catalog(project_root)
+
+
+def validate_governance_baseline(
+    project_root: Path,
+    docset_id: str,
+    *,
+    expected_current_asset: str | None = None,
+) -> Docset:
+    """Validate the docset/catalog/head shape before projecting a baseline."""
+    _require_safe_segment(docset_id, "docset id")
+    docset = store.load_docset(project_root, docset_id)
+    if docset.docset_id != docset_id:
+        raise FoundryInputError("governance docset identity is stale")
+    catalog = store.load_catalog(project_root)
+    matching_entries = [
+        entry for entry in catalog.docsets if entry.docset_id == docset_id
+    ]
+    if len(matching_entries) != 1:
+        raise FoundryInputError("current catalog entry is not unique")
+    entry = matching_entries[0]
+    if (
+        entry.title != docset.title
+        or entry.provider != docset.provider
+        or entry.product != docset.product
+    ):
+        raise FoundryInputError("current catalog summary is stale")
+    if expected_current_asset is not None and docset.current_asset != expected_current_asset:
+        raise FoundryInputError("current docset head is stale")
+    if expected_current_asset is not None and entry.current_asset != expected_current_asset:
+        raise FoundryInputError("current catalog head is stale")
+    if entry.current_asset != docset.current_asset:
+        raise FoundryInputError("current catalog head is stale")
+    current_path = paths.current_path(project_root, docset_id)
+    if current_path.is_symlink() or (
+        current_path.exists() and not current_path.is_file()
+    ):
+        raise FoundryInputError("current.json path is unsafe")
+    if docset.current_asset is None:
+        if current_path.exists():
+            raise FoundryInputError("unpublished governance head is not absent")
+    elif not current_path.is_file():
+        raise FoundryInputError("current pointer is missing")
+    return docset
 
 
 def load_current_effective_asset(
@@ -58,8 +454,13 @@ def load_current_effective_asset(
     if now.tzinfo is None or now.utcoffset() is None:
         raise FoundryInputError("effective current query time must include a timezone")
     asset, contract = load_bound_effective_asset(project_root, docset_id, target)
-    normative_current = store.load_current(project_root, docset_id)
-    if normative_current is None or normative_current.current_asset != asset.base_asset_id:
+    try:
+        normative_current = load_current_asset(project_root, docset_id)
+    except FoundryCurrentStaleError as exc:
+        raise FoundryInputError(
+            "effective contract base is no longer normative current"
+        ) from exc
+    if normative_current.asset_id != asset.base_asset_id:
         raise FoundryInputError("effective contract base is no longer normative current")
     if asset.approved_at > now or contract.as_of > now:
         raise FoundryInputError("effective contract is not yet approved at query time")

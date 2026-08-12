@@ -200,6 +200,45 @@ approval to promote the candidate. Validation failures, low scores, high-impact
 differences, and unresolved work may be approved only as `needs_follow_up`; they never
 become a false validation pass.
 
+The normative Foundry read format is deliberately versioned and fail-closed. `asset.json`
+and `current.json` use strict `normative-asset/v1` and `normative-current/v1` models, and
+unknown fields or unversioned legacy records are rejected rather than silently interpreted.
+The current pointer binds the canonical digest of the complete asset manifest and mirrors
+its summary plus per-artifact SHA-256 bindings. File artifacts bind raw bytes; directory
+artifacts bind a deterministic sorted tree digest and declared kind. The shared query seam
+validates identity, `APPROVED` status, summary, safe identifiers, contained non-symlink paths,
+target kind, existence, and bytes before returning an asset or CLI pointer. Existing legacy
+state requires explicit operator intent: `foundry approve --reapprove-legacy --by <operator>
+--legacy-current-sha256 <trusted-current-digest> --legacy-asset-sha256 <trusted-asset-digest>`
+must build a fresh candidate-backed v1 asset. The two exact raw-byte SHA-256 values must come
+from a trusted backup/release inventory and are compared before legacy parsing. The path accepts
+only an unversioned, summary-consistent legacy head. It rejects v1 or unsupported versions, never
+rewrites legacy bytes, and reads never fall back to them. Normative approval publishes the new immutable asset
+first and atomically advances the pointer last; a failed advance restores the previous pointer,
+docset, and catalog heads so retry can proceed coherently.
+
+Human review binds the complete candidate file set rather than a maintenance-prone artifact
+allowlist. Because the persisted review decision contains that binding, its own bytes are bound
+separately after the decision is written. Approval compares the exact set before and after copy,
+revalidates copied strict eligibility, and includes the run descriptor plus strict execution,
+release, contract, decision, evidence, claims, and relationships in the immutable asset manifest.
+
+Every per-docset normative and feedback promotion holds a global catalog lock and a docset
+governance lock from baseline/predecessor capture through staging, publication, rollback, and
+cleanup. Registration participates in the same global serialization. Existing
+ancestors from the project root through the asset directory must be real contained directories,
+never symlinks. A lock-cleanup failure is an operational `FoundryPublicationError`, not an input
+rejection. Staging, immutable publication, head restoration, and owned-output cleanup are relative
+to directories pinned by the transaction. Publication ownership is captured before rename and
+verified afterward, and namespace identity is checked before commit. If rollback or ownership
+verification fails, both locks remain as recovery guards instead of deleting uncertain state.
+A synchronous feedback promotion
+failure restores the prior effective pointer and removes only the amendment and effective asset
+created by that attempt, so a complete rollback permits deterministic retry.
+Review baselines consume only artifact bytes resolved from the strict asset manifest, including
+the required `manifest.json` and optional preparation report bindings; generic loaders never
+reconstruct an unbound asset directory.
+
 ### 8. Treat benchmarks, releases, and documentation as contracts
 
 Benchmark fixtures have an explicit reviewed inventory. A skipped source-backed case is
@@ -326,7 +365,9 @@ and cross-validates Effective Contract identity, amendment IDs, validity/counts,
 actor/time, and provenance approval/assessment/bundle bindings. Stale amendments represent
 verifiable release/contract/source/policy/approval-time drift; expired and inapplicable are
 separate. Free-text revalidation triggers remain review declarations because no external
-trigger-signal contract exists. `foundry.query` is the single read-side I/O for lineage traversal.
+trigger-signal contract exists. `foundry.query` is the single public read-side I/O for lineage traversal;
+the deliberately shared `foundry.integrity` adapter is its bounded filesystem reader and is also
+used while approval stages a new asset, never as a second public reader or legacy fallback.
 Approval and user-facing lineage traversal begin with this same bound current-head read. Each
 successor pairs `supersedes` with `supersedes_asset_digest`; every hop verifies the predecessor
 asset digest and amendment artifact digest. A new reviewed amendment may supersede expired

@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from loop_apidoc.foundry import paths, register, store
-from loop_apidoc.foundry.models import Docset, ReviewState
+from loop_apidoc.foundry import approve, paths, query, register, store
+from loop_apidoc.foundry.models import AssetStatus, Docset, ReviewState
 from loop_apidoc.review import (
     HandoffTask,
     ReviewConflictError,
@@ -46,8 +46,13 @@ def _request(run: Path) -> ReviewRequest:
     return ReviewRequest(docset_id="vendor-payments", run_dir=run)
 
 
-def _draft(snapshot: ReviewSnapshot, **kwargs: object) -> ReviewDraft:
-    return ReviewDraft(binding=snapshot.binding, **kwargs)
+def _draft(
+    snapshot: ReviewSnapshot,
+    *,
+    approved_by: str | None = "reviewer@example.test",
+    **kwargs: object,
+) -> ReviewDraft:
+    return ReviewDraft(binding=snapshot.binding, approved_by=approved_by, **kwargs)
 
 
 def _write_needs_attention_score(run: Path) -> None:
@@ -235,6 +240,46 @@ def test_second_review_compares_candidate_against_current_asset(tmp_path: Path) 
     assert diff_subject.evidence[0].claim_path == "/method"
 
 
+def test_review_baseline_rejects_tampered_bound_manifest(tmp_path: Path) -> None:
+    workflow = _workflow(tmp_path)
+    first_run = _run(tmp_path, "20260723T120000.000000Z")
+    first = workflow.open_review(_request(first_run))
+    workflow.approve_review(first.key, _draft(first), now=_NOW)
+    current = store.load_current(tmp_path, "vendor-payments")
+    assert current is not None
+    manifest_path = (
+        paths.asset_artifacts_dir(tmp_path, "vendor-payments", current.current_asset)
+        / "manifest.json"
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sources_root"] = "tampered"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    second_run = _run(tmp_path, "20260724T120000.000000Z")
+    with pytest.raises(ReviewInputError, match="manifest"):
+        workflow.open_review(_request(second_run))
+
+
+def test_open_review_rejects_tampered_normative_current_instead_of_using_baseline(
+    tmp_path: Path,
+) -> None:
+    workflow = _workflow(tmp_path)
+    first_run = _run(tmp_path, "20260723T120000.000000Z")
+    first = workflow.open_review(_request(first_run))
+    workflow.approve_review(first.key, _draft(first), now=_NOW)
+    current = store.load_current(tmp_path, "vendor-payments")
+    assert current is not None
+    store.save_current(
+        tmp_path,
+        "vendor-payments",
+        current.model_copy(update={"status": AssetStatus.CANDIDATE}),
+    )
+
+    second_run = _run(tmp_path, "20260724T120000.000000Z")
+    with pytest.raises(ReviewInputError, match="current asset is not approved"):
+        workflow.open_review(_request(second_run))
+
+
 def test_field_diff_requires_an_exact_evidence_target() -> None:
     from loop_apidoc.review.binding import evidence_for_diff_location
 
@@ -293,6 +338,25 @@ def test_save_decision_rejects_unknown_subject_and_persists_valid_handoff(tmp_pa
     assert paths.candidate_review_decision_path(tmp_path, "vendor-payments", run.name).is_file()
 
 
+def test_save_decision_persists_explicit_approver_identity(tmp_path: Path) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+
+    saved = workflow.save_decision(
+        snapshot.key, _draft(snapshot, approved_by="named-reviewer")
+    )
+    decision_path = paths.candidate_review_decision_path(
+        tmp_path, "vendor-payments", run.name
+    )
+
+    assert saved.decision is not None
+    assert saved.decision.approved_by == "named-reviewer"
+    assert json.loads(decision_path.read_text(encoding="utf-8"))["approved_by"] == (
+        "named-reviewer"
+    )
+
+
 def test_approval_is_soft_but_marks_current_needs_follow_up_and_copies_decision(tmp_path: Path) -> None:
     workflow = _workflow(tmp_path)
     run = _run(tmp_path, "20260723T120000.000000Z", validation_ok=False)
@@ -321,11 +385,188 @@ def test_approval_is_soft_but_marks_current_needs_follow_up_and_copies_decision(
     assert current is not None
     assert current.review.state is ReviewState.NEEDS_FOLLOW_UP
     asset = store.load_asset(tmp_path, "vendor-payments", current.current_asset)
-    assert asset.approved_by is None
+    assert asset.approved_by == "reviewer@example.test"
     assert asset.review.open_handoff_count == 1
     assert asset.known_gaps
     assert asset.artifacts.review_decision == "artifacts/review/decision.json"
     assert (paths.asset_artifacts_dir(tmp_path, "vendor-payments", asset.asset_id) / "review" / "decision.json").is_file()
+
+
+def test_review_approval_publishes_a_query_readable_current_asset(tmp_path: Path) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+
+    result = workflow.approve_review(snapshot.key, _draft(snapshot), now=_NOW)
+
+    asset = query.load_current_asset(tmp_path, "vendor-payments")
+    assert asset.asset_id == result.asset_id
+    assert asset.approved_by == "reviewer@example.test"
+
+
+def test_review_approval_persists_explicit_approver_identity(tmp_path: Path) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+
+    workflow.approve_review(
+        snapshot.key,
+        _draft(snapshot, approved_by="reviewer@example.test"),
+        now=_NOW,
+    )
+
+    asset = query.load_current_asset(tmp_path, "vendor-payments")
+    assert asset.approved_by == "reviewer@example.test"
+
+
+def test_review_approval_rejects_predecessor_advanced_after_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _workflow(tmp_path)
+    first_run = _run(tmp_path, "20260723T120000.000000Z")
+    first_snapshot = workflow.open_review(_request(first_run))
+    workflow.approve_review(first_snapshot.key, _draft(first_snapshot), now=_NOW)
+
+    second_run = _run(tmp_path, "20260724T120000.000000Z")
+    second_snapshot = workflow.open_review(_request(second_run))
+    third_run = _run(tmp_path, "20260725T120000.000000Z")
+    workflow.open_review(_request(third_run))
+
+    original_load_governed_asset = query.load_governed_asset
+    advanced = False
+
+    def advance_then_load(*args: object, **kwargs: object):
+        nonlocal advanced
+        if not advanced:
+            advanced = True
+            approve.approve_candidate(
+                tmp_path,
+                "vendor-payments",
+                third_run.name,
+                now=datetime(2026, 7, 25, 12, 0, tzinfo=timezone.utc),
+                approved_by="concurrent-reviewer",
+            )
+        return original_load_governed_asset(*args, **kwargs)
+
+    monkeypatch.setattr(query, "load_governed_asset", advance_then_load)
+
+    with pytest.raises(ReviewInputError, match="reviewed predecessor is stale"):
+        workflow.approve_review(
+            second_snapshot.key,
+            _draft(second_snapshot),
+            now=datetime(2026, 7, 24, 12, 0, tzinfo=timezone.utc),
+        )
+
+    current = query.load_current_asset(tmp_path, "vendor-payments")
+    assert current.asset_id == "vendor-payments-20260725-120000"
+    assert not paths.asset_dir(
+        tmp_path, "vendor-payments", "vendor-payments-20260724-120000"
+    ).exists()
+
+
+def test_review_approval_rejects_candidate_mutated_before_copy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+    candidate = paths.candidate_dir(tmp_path, "vendor-payments", run.name)
+    original_approve = approve.approve_candidate
+
+    def mutate_then_approve(*args: object, **kwargs: object):
+        openapi = yaml.safe_load((candidate / "openapi.yaml").read_text(encoding="utf-8"))
+        openapi["info"]["version"] = "9.9.9"
+        (candidate / "openapi.yaml").write_text(
+            yaml.safe_dump(openapi), encoding="utf-8"
+        )
+        return original_approve(*args, **kwargs)
+
+    monkeypatch.setattr(approve, "approve_candidate", mutate_then_approve)
+
+    with pytest.raises(ReviewInputError, match="candidate artifact digest is stale"):
+        workflow.approve_review(snapshot.key, _draft(snapshot), now=_NOW)
+
+    assert query.load_current_asset_optional(tmp_path, "vendor-payments") is None
+    assert not paths.asset_dir(
+        tmp_path, "vendor-payments", "vendor-payments-20260723-120000"
+    ).exists()
+
+
+def test_review_approval_rejects_governed_core_artifact_mutated_after_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    core_dir = run / "core"
+    core_dir.mkdir()
+    (core_dir / "contract.json").write_text('{"version": 1}', encoding="utf-8")
+    snapshot = workflow.open_review(_request(run))
+    candidate = paths.candidate_dir(tmp_path, "vendor-payments", run.name)
+    original_approve = approve.approve_candidate
+
+    def mutate_then_approve(*args: object, **kwargs: object):
+        (candidate / "core" / "contract.json").write_text(
+            '{"version": 2}', encoding="utf-8"
+        )
+        return original_approve(*args, **kwargs)
+
+    monkeypatch.setattr(approve, "approve_candidate", mutate_then_approve)
+
+    with pytest.raises(ReviewInputError, match="candidate artifact digest is stale"):
+        workflow.approve_review(snapshot.key, _draft(snapshot), now=_NOW)
+
+    assert query.load_current_asset_optional(tmp_path, "vendor-payments") is None
+    assert not paths.asset_dir(
+        tmp_path, "vendor-payments", "vendor-payments-20260723-120000"
+    ).exists()
+
+
+def test_review_approval_rejects_candidate_artifact_added_after_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+    candidate = paths.candidate_dir(tmp_path, "vendor-payments", run.name)
+    original_approve = approve.approve_candidate
+
+    def mutate_then_approve(*args: object, **kwargs: object):
+        core_dir = candidate / "core"
+        core_dir.mkdir()
+        (core_dir / "claims.json").write_text("[]", encoding="utf-8")
+        return original_approve(*args, **kwargs)
+
+    monkeypatch.setattr(approve, "approve_candidate", mutate_then_approve)
+
+    with pytest.raises(ReviewInputError, match="candidate artifact set is stale"):
+        workflow.approve_review(snapshot.key, _draft(snapshot), now=_NOW)
+
+    assert query.load_current_asset_optional(tmp_path, "vendor-payments") is None
+
+
+def test_review_approval_rejects_decision_mutated_before_copy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _workflow(tmp_path)
+    run = _run(tmp_path, "20260723T120000.000000Z")
+    snapshot = workflow.open_review(_request(run))
+    decision_path = paths.candidate_review_decision_path(
+        tmp_path, "vendor-payments", run.name
+    )
+    original_approve = approve.approve_candidate
+
+    def mutate_then_approve(*args: object, **kwargs: object):
+        payload = json.loads(decision_path.read_text(encoding="utf-8"))
+        payload["approved_by"] = "substituted-reviewer"
+        decision_path.write_text(json.dumps(payload), encoding="utf-8")
+        return original_approve(*args, **kwargs)
+
+    monkeypatch.setattr(approve, "approve_candidate", mutate_then_approve)
+
+    with pytest.raises(ReviewInputError, match="candidate artifact digest is stale"):
+        workflow.approve_review(snapshot.key, _draft(snapshot), now=_NOW)
+
+    assert query.load_current_asset_optional(tmp_path, "vendor-payments") is None
 
 
 def test_clean_baseline_approval_marks_current_reviewed(tmp_path: Path) -> None:

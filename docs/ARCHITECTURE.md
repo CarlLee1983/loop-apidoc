@@ -252,7 +252,11 @@ evidence relationship 支援；未滿足時只產生 `core/grounding-report.json
 candidate release，run 失敗。成功的 `core/execution.json` 記錄 candidate eligibility
 與零 approval/publication side effect，`core/release.json` 仍是未核准 candidate。
 Foundry import/approval 會重新驗證這些 strict artifacts，且 `allow_failing` 不得繞過
-strict 的拒絕或錯誤。legacy 與 shadow 的既有輸入與退出語意維持不變。
+strict 的拒絕或錯誤。Review snapshot 綁定完整 candidate file set；decision 落盤後再
+獨立綁定自身 bytes。Approval 在 copy 前後比對同一組 digests，對 copied strict
+candidate 再跑 eligibility，並由 normative asset manifest 綁定 `run.json`、execution、
+release、contract、decision、evidence、claims 與 relationships。legacy 與 shadow 的
+既有輸入與退出語意維持不變。
 
 Shadow 的 `adapters/fragments.py` 是 read-side I/O exit：它把來源實際內容具體化為
 page／line range／section／table cell／JSON Pointer／CSS／XPath locator，並以片段
@@ -387,6 +391,44 @@ output/<run-id>/
 - **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)。
 - **approve** 將候選資產複製到自含、不可變的 `assets/<asset-id>/artifacts/` 目錄,記錄 `asset.json`(狀態、驗證、評分、來源雜湊、產物路徑、取代關係(supersedes)、批准元資料),取代先前的已批准資產,並更新 `current.json` / `docset.json` / `catalog.json`。
 - 下游工作(SDK 編寫、CI 契約檢查、整合)經由 `foundry current` / `query.load_current_asset` 讀取**當前**資產,而不是任意的 run 目錄。
+
+`foundry.query` remains the one public normative read seam.  The small
+`foundry.integrity` module is a deliberate shared bounded read adapter beneath that
+seam and the approval writer: it captures governed file bytes or deterministic tree
+entries, rejects unsafe filesystem objects, and computes the declared digest.  It is
+not a second public reader and it never supplies a legacy fallback; approval uses it
+only while staging a new immutable asset, while query performs the verified projection
+consumed by CLI, review, and feedback.
+
+Normative `asset.json` 與 `current.json` 使用 strict、versioned `normative-asset/v1`
+與 `normative-current/v1` schemas；未知欄位或缺少版本會拒絕讀取，不會默默 fallback
+舊格式。Asset manifest 的 canonical SHA-256 由 current pointer 綁定，且每個可解析產物
+都綁定其 raw-file 或 deterministic directory-tree digest 與 `file`／`tree` kind。`foundry`
+的 current query 會 cross-check docset／asset identity、`APPROVED` status、完整 summary
+與 manifest digest，再拒絕 absolute／traversal／symlink／越界／缺失或 digest 不符的產物
+路徑。既有未綁定資產必須由 operator 明確執行
+`foundry approve --reapprove-legacy --by <operator> --legacy-current-sha256 <trusted-current-digest>
+--legacy-asset-sha256 <trusted-asset-digest>`，以新的 candidate 建立 v1 資產；兩個
+exact raw-byte SHA-256 必須由 trusted backup／release inventory 提供，且會在 legacy
+parsing 前比對。這個一次性路徑只接受未版本化且 summary 一致的 legacy head，拒絕 v1／未知版本，也不
+改寫 legacy bytes。讀取路徑不提供 silent legacy fallback。Normative pointer 以 atomic
+write-new-then-advance 發布，publication failure 會恢復舊 pointer、docset 與 catalog head，
+讓 retry 保持一致。
+
+每個 docset 的 approval 與 feedback promotion 都同時持有全域 catalog lock 與 docset
+governance lock；registration 也持有同一把 catalog lock，因此跨 docset 的 catalog
+read-modify-write 會序列化。Lock 取得前會拒絕 project root 到 assets 的
+symlink／非目錄 ancestor，lock 會涵蓋
+baseline、predecessor、staging、head publication、rollback 與 cleanup。Lock cleanup failure
+會以 operational publication error 回報，並要求先確認沒有活躍交易再移除 stale lock。
+Staging、immutable publication、head rollback 與 owned-output cleanup 都相對於 transaction
+持有的 directory descriptors 執行；publication identity 在 rename 前取得並在 rename 後
+驗證，commit 前也會拒絕已被替換的 canonical namespace。任何 head restore 或 ownership
+驗證失敗都保留雙鎖供人工復原，不會猜測性刪除或把 rollback 寫入同名 replacement tree。
+Feedback final-pointer 失敗會恢復原 effective current，並移除只由
+本次 transaction 建立的 amendment 與 effective asset，使相同輸入可以重試。
+Review update baseline 只從 manifest 宣告且 digest/kind 綁定的 artifacts 建立；manifest 與
+preparation report 缺少 binding 或 bytes 改變都會 fail closed。
 
 Implementation feedback does not alter that normative promotion path. A persisted case
 lives under `.foundry/api/docsets/<docset-id>/feedback/cases/<case-id>/`: its digest-bound

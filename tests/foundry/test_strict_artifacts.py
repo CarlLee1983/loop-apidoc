@@ -132,15 +132,13 @@ def test_strict_candidate_requires_a_valid_release_when_marker_is_eligible(
         "core_verdict": "accept",
         "exact_supported_claims": 1,
     }
-    run_dir = _run_dir(
-        tmp_path, architecture_mode=None, execution=execution
-    )
+    run_dir = _run_dir(tmp_path, architecture_mode="strict", execution=execution)
 
     with pytest.raises(StrictCoreExecutionError, match="missing a valid candidate release"):
         require_eligible_strict_candidate(run_dir)
 
 
-def test_strict_candidate_allows_an_unspecified_run_architecture(tmp_path: Path) -> None:
+def test_strict_candidate_rejects_an_unspecified_run_architecture(tmp_path: Path) -> None:
     execution = {
         "mode": "strict",
         "blocking": True,
@@ -154,7 +152,19 @@ def test_strict_candidate_allows_an_unspecified_run_architecture(tmp_path: Path)
     run_dir = _run_dir(tmp_path, execution=execution)
     (run_dir / "run.json").write_text("{}", encoding="utf-8")
 
-    with pytest.raises(StrictCoreExecutionError, match="missing a valid candidate release"):
+    with pytest.raises(StrictCoreExecutionError, match="requires a strict run descriptor"):
+        require_eligible_strict_candidate(run_dir)
+
+
+def test_strict_release_cannot_be_downgraded_by_removing_execution_and_mode(
+    tmp_path: Path,
+) -> None:
+    run_dir = _run_dir(tmp_path)
+    core_dir = run_dir / "core"
+    core_dir.mkdir(exist_ok=True)
+    (core_dir / "release.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(StrictCoreExecutionError, match="marker is missing"):
         require_eligible_strict_candidate(run_dir)
 
 

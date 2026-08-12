@@ -66,6 +66,8 @@ def test_workbench_page_restores_saved_decisions_and_accepts_manual_items() -> N
     assert "select.value=item?.disposition||''" in page
     assert "id=\"manual-items\"" in page
     assert "id=\"waivers\"" in page
+    assert "id=\"approved-by\"" in page
+    assert "approved_by" in page
     assert "items:[...subjectItems,...manualItems]" in page
     assert "Candidate, current, and provenance artifacts" in page
     assert "renderArtifacts(s)" in page
@@ -103,6 +105,7 @@ def test_loopback_adapter_serves_fixed_snapshot_and_protects_writes(tmp_path: Pa
             token=adapter.token,
             body={
                 "binding": snapshot["binding"],
+                "approved_by": "named-web-reviewer",
                 "items": [{
                     "subject_id": subject["id"],
                     "subject_kind": subject["kind"],
@@ -113,6 +116,7 @@ def test_loopback_adapter_serves_fixed_snapshot_and_protects_writes(tmp_path: Pa
         )
         assert status == 200
         assert payload["decision"]["items"][0]["disposition"] == "needs_evidence"
+        assert payload["decision"]["approved_by"] == "named-web-reviewer"
 
         status, artifact = _request(f"{adapter.url}artifact/candidate/validation/report.json")
         assert status == 200
@@ -185,6 +189,7 @@ def test_loopback_adapter_rejects_bad_routes_and_can_approve(tmp_path: Path) -> 
             token=adapter.token,
             body={
                 "binding": adapter.snapshot.binding.model_dump(mode="json"),
+                "approved_by": "reviewer@example.test",
                 "items": [],
                 "handoff": [],
             },
@@ -208,7 +213,7 @@ def test_loopback_adapter_serves_base_artifacts_and_rejects_missing_candidate_fi
 
     workflow.approve_review(
         first.key,
-        ReviewDraft(binding=first.binding),
+        ReviewDraft(binding=first.binding, approved_by="reviewer@example.test"),
         now=datetime(2026, 7, 23, tzinfo=timezone.utc),
     )
     second_run = write_run_dir(tmp_path / "output" / "20260724T120000.000000Z")
@@ -220,6 +225,13 @@ def test_loopback_adapter_serves_base_artifacts_and_rejects_missing_candidate_fi
         status, artifact = _request(f"{adapter.url}artifact/base/openapi.yaml")
         assert status == 200
         assert "openapi" in artifact
+
+        base_openapi = paths.asset_artifacts_dir(
+            tmp_path, "vendor-payments", snapshot.binding.base_asset_id
+        ) / "openapi.yaml"
+        base_openapi.write_text("tampered", encoding="utf-8")
+        status, _ = _request(f"{adapter.url}artifact/base/openapi.yaml")
+        assert status == 404
 
         candidate = paths.candidate_dir(tmp_path, "vendor-payments", second_run.name)
         (candidate / "integration-contract.json").unlink()

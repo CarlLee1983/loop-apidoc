@@ -122,6 +122,7 @@ class ReviewWaiver(BaseModel):
 
 class ReviewDraft(BaseModel):
     binding: ReviewBinding
+    approved_by: str | None = None
     items: list[ReviewItem] = Field(default_factory=list)
     handoff: list[HandoffTask] = Field(default_factory=list)
     waivers: list[ReviewWaiver] = Field(default_factory=list)
