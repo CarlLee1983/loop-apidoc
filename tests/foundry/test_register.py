@@ -239,3 +239,65 @@ def test_register_rejects_symlinked_foundry_before_creating_external_state(
         register.register_docset(tmp_path, _docset())
 
     assert list(external.iterdir()) == []
+
+
+def test_reregistration_rejects_a_corrupt_docset_manifest(tmp_path: Path) -> None:
+    register.register_docset(tmp_path, _docset())
+    paths.docset_manifest_path(tmp_path, "tappay-backend").write_text(
+        "{ not json", encoding="utf-8"
+    )
+
+    with pytest.raises(FoundryInputError, match="invalid docset.json"):
+        register.register_docset(tmp_path, _docset(title="Renamed"), exist_ok=True)
+
+
+def test_registration_rejects_a_corrupt_catalog(tmp_path: Path) -> None:
+    register.register_docset(tmp_path, _docset())
+    paths.catalog_path(tmp_path).write_text("{ not json", encoding="utf-8")
+
+    with pytest.raises(FoundryInputError, match="invalid catalog.json"):
+        register.register_docset(tmp_path, _docset(docset_id="other-backend"))
+
+
+def test_reregistration_failure_restores_the_previous_docset_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An update that fails after rewriting docset.json must leave the old one."""
+    register.register_docset(tmp_path, _docset())
+    before = paths.docset_manifest_path(tmp_path, "tappay-backend").read_text(encoding="utf-8")
+
+    def fail_save_catalog(*_args: object, **_kwargs: object) -> None:
+        raise OSError("catalog write failed")
+
+    monkeypatch.setattr(store, "save_catalog", fail_save_catalog)
+    with pytest.raises(OSError, match="catalog write failed"):
+        register.register_docset(
+            tmp_path, _docset(title="Renamed Backend API"), exist_ok=True
+        )
+
+    assert paths.docset_manifest_path(tmp_path, "tappay-backend").read_text(
+        encoding="utf-8"
+    ) == before
+    assert store.load_docset(tmp_path, "tappay-backend").title == "TapPay Backend API"
+    catalog = store.load_catalog(tmp_path)
+    assert [entry.title for entry in catalog.docsets] == ["TapPay Backend API"]
+
+
+def test_registration_reports_a_lock_release_failure_after_a_clean_rollback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Releasing the lock validates the namespace; a change there is not silent."""
+    register.register_docset(tmp_path, _docset())
+    original_validate = store.validate_catalog_namespace
+    calls: list[int] = []
+
+    def fail_on_lock_release(*args: object, **kwargs: object) -> None:
+        calls.append(1)
+        # The register body validates first; the lock release validates last.
+        if len(calls) > 1:
+            raise FoundryPublicationError("governance namespace changed")
+        original_validate(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(store, "validate_catalog_namespace", fail_on_lock_release)
+    with pytest.raises(FoundryPublicationError, match="lock cleanup failed"):
+        register.register_docset(tmp_path, _docset(docset_id="other-backend"))
