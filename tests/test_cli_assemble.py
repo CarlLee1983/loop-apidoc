@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -11,8 +12,27 @@ from loop_apidoc.cli import app
 from loop_apidoc.core.models import StrictExecutionSummary
 from loop_apidoc.run.toolchain import EXTRACTION_CONTRACT_VERSION
 from loop_apidoc.validate.models import ValidationReport
+from tests.source_quality_support import write_passing_source_quality
 
-runner = CliRunner()
+
+class _AssembleRunner(CliRunner):
+    """Supply the explicit, valid quality fixture for ordinary assemble tests."""
+
+    def invoke(self, app, args=None, **kwargs):
+        command = list(args or [])
+        if command[:1] == ["assemble"] and "--source-quality" not in command:
+            sources = Path(command[command.index("--sources") + 1])
+            quality = write_passing_source_quality(
+                sources_root=sources,
+                output=sources.parent / "source-quality",
+                generated_at=datetime.now(timezone.utc),
+            )
+            command.extend(["--source-quality", str(quality)])
+        return super().invoke(app, command, **kwargs)
+
+
+runner = _AssembleRunner()
+raw_runner = CliRunner()
 
 _INVENTORY = {
     "overview": "Demo API",
@@ -52,49 +72,43 @@ def _enable_shadow_metadata(extraction: Path) -> None:
     )
 
 
+_BLOCKER_FINDING = {
+    "id": "SQ-001",
+    "source": "manual.md",
+    "locator": "GET /ping",
+    "category": "missing_response_contract",
+    "evidence": "The response schema is not documented.",
+    "severity": "blocker",
+    "affected_scope": ["GET /ping"],
+    "required_supplement": "Provide the response schema.",
+    "acceptance_criteria": "The documented response fields are cited.",
+    "required_source_refs": ["https://docs.example.com/response"],
+}
+
+
 def _source_quality_dir(
     tmp_path: Path,
     sources: Path,
     *,
     verdict: str = "pass",
 ) -> Path:
-    manifest = tmp_path / "quality-manifest.json"
-    manifest_result = runner.invoke(
-        app,
-        ["manifest", "--sources", str(sources), "--output", str(manifest)],
-    )
-    assert manifest_result.exit_code == 0, manifest_result.stdout
-    risk = tmp_path / "source-risk"
-    risk_result = runner.invoke(
-        app,
-        [
-            "inspect-source-risk",
-            "--sources",
-            str(sources),
-            "--manifest",
-            str(manifest),
-            "--output",
-            str(risk),
-        ],
-    )
-    assert risk_result.exit_code == 0, risk_result.stdout
-    risk_report = json.loads(
-        (risk / "source-risk-report.json").read_text(encoding="utf-8")
-    )
     quality = tmp_path / "source-quality"
-    quality.mkdir()
-    (quality / "source-quality-report.json").write_text(
-        json.dumps({
-            "verdict": verdict,
-            "source_set": "demo-v1",
-            "findings": [],
-            "source_risk": risk_report,
-        }),
-        encoding="utf-8",
+    write_passing_source_quality(
+        sources_root=sources,
+        output=quality,
+        generated_at=datetime.now(timezone.utc),
+        source_set="demo-v1",
     )
-    (quality / "source-diff.json").write_text(
-        json.dumps({"entries": []}), encoding="utf-8"
-    )
+    if verdict != "pass":
+        # A well-formed reject report carries the blocker that caused it; flipping
+        # only the verdict would exercise the report-consistency guard instead of
+        # the reject gate under test.
+        report_path = quality / "source-quality-report.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["verdict"] = verdict
+        report["findings"] = [_BLOCKER_FINDING]
+        report["required_source_refs"] = list(_BLOCKER_FINDING["required_source_refs"])
+        report_path.write_text(json.dumps(report), encoding="utf-8")
     return quality
 
 
@@ -117,6 +131,33 @@ def test_assemble_json_emits_run_dir_and_report(tmp_path):
     assert (Path(payload["run_dir"]) / "integration-contract.json").is_file()
     assert Path(payload["review_html"]).name == "review.html"
     assert Path(payload["review_html"]).is_file()
+
+
+@pytest.mark.parametrize("architecture_mode", ["legacy", "shadow", "strict"])
+def test_assemble_requires_source_quality_before_creating_run_dir(
+    tmp_path: Path,
+    architecture_mode: str,
+) -> None:
+    sources, extraction, out = _setup(tmp_path)
+
+    result = raw_runner.invoke(
+        app,
+        [
+            "assemble",
+            "--sources",
+            str(sources),
+            "--extraction",
+            str(extraction),
+            "--output",
+            str(out),
+            "--architecture-mode",
+            architecture_mode,
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--source-quality" in result.output
+    assert not out.exists()
 
 
 def test_assemble_preserves_source_grounded_transport_policy(tmp_path):

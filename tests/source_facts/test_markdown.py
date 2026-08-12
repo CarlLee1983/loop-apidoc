@@ -192,6 +192,107 @@ GET /not-an-endpoint
     assert facts.endpoints[0].example_blocks == 0
 
 
+def test_fence_marker_and_length_must_match_before_literal_tables_resume() -> None:
+    text = """## POST /real
+
+~~~~text
+```
+## POST /fake
+| Field | Type |
+| --- | --- |
+| fake | string |
+~~~
+| Name | Type |
+| --- | --- |
+| real | string |
+~~~~~
+"""
+
+    facts = scan_markdown("doc.md", text)
+
+    assert [endpoint.path for endpoint in facts.endpoints] == ["/real"]
+    assert facts.endpoints[0].parameter_names == []
+
+
+def test_inverse_fence_marker_inside_a_block_remains_literal_content() -> None:
+    text = """## POST /real
+
+```text
+~~~
+| Field | Type |
+| --- | --- |
+| fake | string |
+```
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.parameter_names == []
+
+
+def test_matching_longer_fence_closer_resumes_fact_extraction() -> None:
+    text = """## POST /real
+
+~~~~json
+{"ok": true}
+~~~~~
+| Name | Type |
+| --- | --- |
+| real | string |
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.example_blocks == 1
+    assert endpoint.parameter_names == ["real"]
+
+
+def test_unterminated_fence_excludes_its_contents_through_end_of_file() -> None:
+    text = """## POST /real
+
+~~~text
+| Name | Type |
+| fake | string |
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.parameter_names == []
+
+
+def test_a_multi_word_info_string_opens_a_payload_fence() -> None:
+    text = """## POST /real
+
+```json title="Request" showLineNumbers
+{"amount": 1}
+```
+| Name | Type |
+| --- | --- |
+| real | string |
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.example_blocks == 1
+    assert endpoint.parameter_names == ["real"]
+    assert endpoint.payload_fences[0].info == "json"
+
+
+def test_a_decorated_info_string_keeps_a_fenced_table_out_of_the_facts() -> None:
+    text = """## POST /real
+
+```text title="Not a parameter table"
+| Field | Type |
+| --- | --- |
+| fake | string |
+```
+"""
+
+    endpoint = scan_markdown("doc.md", text).endpoints[0]
+
+    assert endpoint.parameter_names == []
+
+
 def test_records_the_source_relative_path_and_section_heading() -> None:
     facts = scan_markdown("api/doc.md", ATG_LIKE)
     assert facts.relative_path == "api/doc.md"

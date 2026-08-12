@@ -98,8 +98,10 @@ case's `expected/` declarations. Among other things, the assertions cover:
 - preparation, scoring, diff, and Foundry behavior exercised by the case.
 
 These assertions execute only when the original, dated
-`benchmarks/<case>/sources/` snapshot is present. If the snapshot is absent,
-pytest reports the source-backed assertions as skipped.
+`benchmarks/<case>/sources/` snapshot **and** the passing
+`benchmarks/<case>/source-quality/` audit package generated from it are both
+present — `assemble` requires the audited package. If either is absent, pytest
+reports the source-backed assertions as skipped.
 
 **A skip is not a pass.** A skipped case was committed and discovered, but the
 source-backed assertions did not execute. Use “passed” only when the applicable
@@ -118,11 +120,14 @@ Strict-local is the strongest harness claim. It:
 1. runs the CI-safe lint and full pytest suite, including discovery and exact
    required-inventory parity;
 2. requires a non-empty `sources/` tree for every required case;
-3. runs `uv run pytest tests/test_benchmarks.py -q`; and
-4. rejects the run if pytest reports any benchmark skip.
+3. requires a `source-quality/` audit package for every required case, naming
+   the missing ones before pytest runs;
+4. runs `uv run pytest tests/test_benchmarks.py -q`; and
+5. rejects the run if pytest reports any benchmark skip.
 
 “Strict-local passed” therefore means every required case had a source
-snapshot, all source-backed benchmark checks ran, and no skip was reported.
+snapshot and its audit package, all source-backed benchmark checks ran, and no
+skip was reported.
 
 ## Supplemental sanitized-fixture lane
 
@@ -195,6 +200,10 @@ snapshot at:
 ```text
 benchmarks/<case>/sources/
 ```
+
+`benchmarks/<case>/source-quality/` holds the audit package derived from that
+snapshot (`manifest` → `inspect-source-risk` → `assess-sources`, see
+`benchmarks/README.md`); it is regenerable and likewise gitignored.
 
 The directory is gitignored because some upstream documents are copyrighted,
 access-controlled, or unsuitable for redistribution. Keep the case's

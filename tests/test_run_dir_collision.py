@@ -10,6 +10,7 @@ from loop_apidoc.agentcli.assemble import (
     RunDirectoryCollisionError,
     run_assemble_pipeline,
 )
+from tests.source_quality_support import write_passing_source_quality
 
 _INVENTORY = {
     "overview": "Demo API",
@@ -45,6 +46,11 @@ def _run(sources, extraction, out, run_id):
     return run_assemble_pipeline(
         sources_root=sources, extraction_dir=extraction, output_root=out,
         run_id=run_id, generated_at=now,
+        source_quality_dir=write_passing_source_quality(
+            sources_root=sources,
+            output=out.parent / "source-quality",
+            generated_at=now,
+        ),
     )
 
 

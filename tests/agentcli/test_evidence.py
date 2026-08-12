@@ -15,6 +15,7 @@ from loop_apidoc.domain.evidence import fragment_digest
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.source_facts.collect import collect_facts
+from tests.source_quality_support import write_passing_source_quality
 
 
 NOW = datetime(2026, 7, 23, tzinfo=timezone.utc)
@@ -257,6 +258,11 @@ def test_assemble_rejects_stale_exact_evidence_before_run_directory(tmp_path):
             output_root=tmp_path / "output",
             run_id="stale-evidence",
             generated_at=NOW,
+            source_quality_dir=write_passing_source_quality(
+                sources_root=sources,
+                output=tmp_path / "source-quality",
+                generated_at=NOW,
+            ),
         )
 
     assert not (tmp_path / "output" / "stale-evidence").exists()
@@ -273,6 +279,11 @@ def test_shadow_uses_verified_v1_evidence_for_its_declared_claim_path(tmp_path):
         output_root=tmp_path / "output",
         run_id="exact-evidence",
         generated_at=NOW,
+        source_quality_dir=write_passing_source_quality(
+            sources_root=sources,
+            output=tmp_path / "source-quality",
+            generated_at=NOW,
+        ),
         architecture_mode=ArchitectureMode.SHADOW,
     )
 
@@ -333,6 +344,11 @@ def test_shadow_assembly_scales_near_linearly_with_exact_references(
                 output_root=case_root / "output",
                 run_id=f"shadow-{sample_index}",
                 generated_at=NOW,
+                source_quality_dir=write_passing_source_quality(
+                    sources_root=sources,
+                    output=case_root / "source-quality",
+                    generated_at=NOW,
+                ),
                 architecture_mode=ArchitectureMode.SHADOW,
             )
             elapsed = perf_counter() - started

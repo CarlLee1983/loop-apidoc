@@ -74,6 +74,8 @@ googlepay…)。「同一路徑、不同交易類型」在國際金流即以此 
 ```bash
 C=benchmarks/adyen-payments-multimethod
 # (sources/ 需操作者本機提供:curl 上述 URL 存成 sources/CheckoutService-v71.json)
-uv run loop-apidoc assemble --sources "$C/sources" --extraction "$C/extraction" --output "$C/output" --json
+# source-quality/ 需先由 manifest → inspect-source-risk → assess-sources 產出(見 benchmarks/README.md)
+uv run loop-apidoc assemble --sources "$C/sources" --extraction "$C/extraction" --output "$C/output" \
+  --source-quality "$C/source-quality" --json
 uv run pytest tests/test_benchmarks.py -k adyen -q
 ```

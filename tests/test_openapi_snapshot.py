@@ -79,6 +79,191 @@ def test_snapshot_openapi_url_rejects_non_openapi_without_writing(tmp_path: Path
     assert not (tmp_path / "coverage.json").exists()
 
 
+@pytest.mark.parametrize(
+    ("url", "filename", "content_type", "content", "message"),
+    [
+        (
+            "https://spec.example.com/openapi.json",
+            "../escape.json",
+            "application/json",
+            b'{"openapi":"3.0.4"}',
+            "filename must be a single file name",
+        ),
+        (
+            "https://spec.example.com/openapi.json",
+            None,
+            "application/json",
+            b"{not json",
+            "response is not valid OpenAPI JSON/YAML",
+        ),
+        (
+            "https://spec.example.com/openapi.yaml",
+            None,
+            "application/yaml",
+            b"openapi: [unclosed",
+            "response is not valid OpenAPI JSON/YAML",
+        ),
+        (
+            "https://spec.example.com/openapi.json",
+            None,
+            "application/json",
+            b"\xff",
+            "response is not UTF-8 JSON/YAML",
+        ),
+        (
+            "https://spec.example.com/openapi.json",
+            None,
+            "application/json",
+            b"[]",
+            "OpenAPI document root must be an object",
+        ),
+    ],
+    ids=["nested-filename", "malformed-json", "malformed-yaml", "non-utf8", "list-root"],
+)
+def test_snapshot_openapi_url_rejects_malformed_documents_without_writing(
+    tmp_path: Path,
+    url: str,
+    filename: str | None,
+    content_type: str,
+    content: bytes,
+    message: str,
+) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=content, headers={"content-type": content_type})
+
+    sources = tmp_path / "sources"
+    coverage = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(OpenApiSnapshotError, match=message):
+            snapshot_openapi_url(
+                url,
+                sources=sources,
+                coverage_output=coverage,
+                filename=filename,
+                client=client,
+            )
+
+    assert not sources.exists()
+    assert not coverage.exists()
+
+
+def test_snapshot_openapi_url_uses_yaml_content_type_for_deterministic_default_name(
+    tmp_path: Path,
+) -> None:
+    content = b"openapi: 3.0.4\ninfo:\n  title: YAML API\npaths: {}\n"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=content, headers={"content-type": "application/yaml"})
+
+    sources = tmp_path / "sources"
+    coverage = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = snapshot_openapi_url(
+            "https://spec.example.com/v1/spec",
+            sources=sources,
+            coverage_output=coverage,
+            client=client,
+        )
+
+    assert result.snapshot_path == sources / "openapi.yaml"
+    assert result.snapshot_path.read_bytes() == content
+    assert json.loads(coverage.read_text(encoding="utf-8"))["results"][0]["file"] == (
+        "sources/openapi.yaml"
+    )
+
+
+def test_snapshot_openapi_url_honors_a_safe_explicit_filename(tmp_path: Path) -> None:
+    content = b'{"openapi":"3.0.4","info":{"title":"Explicit name"},"paths":{}}'
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=content, headers={"content-type": "application/json"})
+
+    sources = tmp_path / "sources"
+    coverage = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = snapshot_openapi_url(
+            "https://spec.example.com/v1/spec",
+            sources=sources,
+            coverage_output=coverage,
+            filename="provider-contract.json",
+            client=client,
+        )
+
+    assert result.snapshot_path == sources / "provider-contract.json"
+    assert result.snapshot_path.read_bytes() == content
+
+
+@pytest.mark.parametrize("url", ["spec.example.com/openapi.json", "file:///tmp/openapi.json"])
+def test_snapshot_openapi_url_rejects_non_http_absolute_urls_before_fetch(
+    tmp_path: Path,
+    url: str,
+) -> None:
+    with pytest.raises(OpenApiSnapshotError, match="absolute http\\(s\\) URL"):
+        snapshot_openapi_url(
+            url,
+            sources=tmp_path / "sources",
+            coverage_output=tmp_path / "coverage.json",
+        )
+
+
+def test_snapshot_openapi_url_rejects_nonpositive_byte_cap_before_fetch(tmp_path: Path) -> None:
+    with pytest.raises(OpenApiSnapshotError, match="max_bytes must be positive"):
+        snapshot_openapi_url(
+            "https://spec.example.com/openapi.json",
+            sources=tmp_path / "sources",
+            coverage_output=tmp_path / "coverage.json",
+            max_bytes=0,
+        )
+
+
+def test_snapshot_openapi_url_wraps_fetch_errors_and_closes_owned_client(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FailingClient:
+        closed = False
+
+        def get(self, *_args: object, **_kwargs: object) -> httpx.Response:
+            raise httpx.ConnectError("offline")
+
+        def close(self) -> None:
+            self.closed = True
+
+    client = FailingClient()
+    monkeypatch.setattr("loop_apidoc.openapi_snapshot.httpx.Client", lambda **_kwargs: client)
+
+    with pytest.raises(OpenApiSnapshotError, match="fetch failed: offline"):
+        snapshot_openapi_url(
+            "https://spec.example.com/openapi.json",
+            sources=tmp_path / "sources",
+            coverage_output=tmp_path / "coverage.json",
+        )
+
+    assert client.closed is True
+
+
+def test_snapshot_openapi_url_rejects_response_over_byte_cap_without_writing(
+    tmp_path: Path,
+) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b'{"openapi":"3.0.4"}')
+
+    sources = tmp_path / "sources"
+    coverage = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(OpenApiSnapshotError, match="response exceeded 1 byte cap"):
+            snapshot_openapi_url(
+                "https://spec.example.com/openapi.json",
+                sources=sources,
+                coverage_output=coverage,
+                max_bytes=1,
+                client=client,
+            )
+
+    assert not sources.exists()
+    assert not coverage.exists()
+
+
 def test_snapshot_openapi_url_rejects_overlapping_outputs_without_writing(
     tmp_path: Path,
 ):

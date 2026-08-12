@@ -1079,7 +1079,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_quality/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "Requires --source-risk, verifies its manifest/source binding, embeds the audit, then assesses traceable observations. If the pass-report directory is passed to assemble --source-quality, assemble rebuilds the manifest and revalidates that binding before retaining the report; a missing, stale, or rejected audit builds no run-dir.",
+      description: "Requires --source-risk, verifies its manifest/source binding, embeds the audit, then assesses traceable observations. Every assemble requires the pass-report directory through --source-quality and rebuilds the manifest to revalidate that binding before retaining the report; a missing, stale, or rejected audit builds no run-dir.",
       seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
       inputs: "manifest, verified source-risk report directory, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",

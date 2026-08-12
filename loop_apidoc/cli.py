@@ -188,7 +188,7 @@ def cache_url_pages(
     output: Path = typer.Option(..., "--output", help="本機原始 HTML、正文與 corpus.json 目錄"),
     max_pages: Annotated[
         int,
-        typer.Option("--max-pages", min=1, help="本次可快取的最大頁數"),
+        typer.Option("--max-pages", min=1, help="本次可快取的最大唯一文件數"),
     ] = 200,
     max_bytes_per_page: Annotated[
         int,
@@ -1038,9 +1038,13 @@ def assemble(
         help="agent 產出的 url_sources/coverage.json 路徑;有 URL 來源時檢核撈取涵蓋率",
     ),
     source_quality: Path = typer.Option(
-        None,
+        ...,
         "--source-quality",
-        help="assess-sources 產出的報告目錄;reject 會阻止組裝並把通過報告存入 run-dir",
+        help="必填: assess-sources 產出的 pass 報告目錄;會重驗並存入 run-dir",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
     ),
     extractor_model: str = typer.Option(
         None,

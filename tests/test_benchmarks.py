@@ -6,10 +6,11 @@ case's `expected/{validation.expect.json,minimum.json}`. This turns the
 benchmark validation set (docs/BENCHMARK_VALIDATION_PLAN.md) into a repeatable
 regression suite so the pipeline fixes the cases surfaced can't silently regress.
 
-Sources are operator-provided and gitignored (some are copyrighted), and the
-validator needs the cited sources present in the manifest to mark items verified.
-So a case whose `sources/` is absent is SKIPPED (run locally where sources exist);
-the committed `extraction/` + `expected/` are enough to define the assertions.
+Sources and their current passing source-quality package are operator-provided and
+gitignored (some sources are copyrighted). The validator needs the cited sources in
+the manifest and assembly requires the audited package, so a case missing either is
+SKIPPED (run locally where both are available); the committed `extraction/` +
+`expected/` are enough to define the assertions.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ import pytest
 import yaml
 from openapi_spec_validator import validate as validate_openapi
 
-from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from loop_apidoc.agentcli.assemble import run_assemble_pipeline as _run_assemble_pipeline
 from loop_apidoc.agentcli.verify import verify_extraction_dir
 from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
 from loop_apidoc.foundry import store as foundry_store
@@ -51,6 +52,17 @@ _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
+def run_assemble_pipeline(**kwargs) -> RunResult:
+    """Run benchmark assembly with its explicit, current quality prerequisite."""
+    source_quality_dir = kwargs["sources_root"].parent / "source-quality"
+    if not (source_quality_dir / "source-quality-report.json").is_file():
+        raise AssertionError(
+            "source-backed benchmark needs its explicit source-quality package"
+        )
+    kwargs["source_quality_dir"] = source_quality_dir
+    return _run_assemble_pipeline(**kwargs)
+
+
 def _operation_count(paths: dict) -> int:
     return sum(
         1
@@ -73,7 +85,12 @@ def _cases() -> list[Path]:
 
 def _has_sources(case: Path) -> bool:
     src = case / "sources"
-    return src.is_dir() and any(src.iterdir())
+    return (
+        src.is_dir()
+        and any(src.iterdir())
+        and (case / "source-quality" / "source-quality-report.json").is_file()
+        and (case / "source-quality" / "source-diff.json").is_file()
+    )
 
 
 def _issue_classes(report) -> dict[str, int]:
@@ -117,12 +134,15 @@ def test_operation_floor_counts_methods_separately_from_paths():
 def _assemble_case(case: Path, tmp_path_factory) -> RunResult:
     """Assemble a case at most once per session and memoize the RunResult.
 
-    Skips when the case's operator-provided sources are absent. The produced run
+    Skips when the case's operator-provided sources or explicit quality package are absent. The produced run
     dir is treated read-only by every consumer (score reads it; foundry/diff
     copytree FROM it), so a single shared dir is safe. Non-parametrized tests
     reuse this same helper via `_case_by_name` so they never re-assemble."""
     if not _has_sources(case):
-        pytest.skip(f"{case.name}: sources/ not present (operator-provided, gitignored)")
+        pytest.skip(
+            f"{case.name}: sources/ or valid source-quality package not present "
+            "(operator-provided, gitignored)"
+        )
     if case.name not in _ASSEMBLED:
         out = tmp_path_factory.mktemp(f"bench-{case.name}")
         _ASSEMBLED[case.name] = run_assemble_pipeline(

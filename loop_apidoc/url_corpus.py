@@ -287,8 +287,16 @@ def cache_catalog_pages(
     """Cache every catalog node as local evidence without involving a model."""
     if max_pages < 1 or max_bytes_per_page < 1:
         raise ValueError("max_pages and max_bytes_per_page must be positive")
-    if len(catalog.nodes) > max_pages:
-        raise ValueError(f"catalog has {len(catalog.nodes)} pages, above max_pages={max_pages}")
+    # Several sidebar anchors can identify sections in one static document.
+    # Fetch that document once, but retain all anchors as local section
+    # metadata so selection and later model reading stay precise.
+    nodes_by_url: dict[str, list] = {}
+    for node in catalog.nodes:
+        nodes_by_url.setdefault(node.url, []).append(node)
+    if len(nodes_by_url) > max_pages:
+        raise ValueError(
+            f"catalog has {len(nodes_by_url)} unique documents, above max_pages={max_pages}"
+        )
 
     raw_dir = output_dir / "raw"
     body_dir = output_dir / "body"
@@ -300,12 +308,6 @@ def cache_catalog_pages(
     pages: list[CorpusPage] = []
     shell_urls: list[str] = []
     try:
-        # Several sidebar anchors can identify sections in one static document.
-        # Fetch that document once, but retain all anchors as local section
-        # metadata so selection and later model reading stay precise.
-        nodes_by_url: dict[str, list] = {}
-        for node in catalog.nodes:
-            nodes_by_url.setdefault(node.url, []).append(node)
         for url, nodes in nodes_by_url.items():
             node = nodes[0]
             target = resolve_fetch_url(url)

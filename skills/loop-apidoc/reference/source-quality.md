@@ -88,10 +88,12 @@ pass verdict, then re-runs the deterministic inspection against the current mani
 bytes and requires the complete report to match before embedding it under `source_risk` in
 `source-quality-report.json`. Its verdict is `pass` (exit 0) or `reject` (exit 1); malformed,
 missing, rejected, stale, or mismatched risk/input data exits 2. A reject stops the run before
-`inventory.json`. Pass the report directory to `assemble --source-quality`: the passing
-assessment is retained in `<run_dir>/source-quality/`, and assemble rebuilds the manifest and
-revalidates the embedded audit's stable source binding before creating a run directory. A
-quality reject or stale binding aborts assemble (exit 2). Supplemental materials create a new
+`inventory.json`. `assemble` requires this report directory through `--source-quality`: the
+passing assessment is retained in `<run_dir>/source-quality/`, and assemble rebuilds the manifest
+and revalidates the embedded audit's stable source binding before creating a run directory. It
+therefore refuses an unaudited run, but cannot prove source-read chronology outside this process.
+A quality reject, stale binding, or internally inconsistent/unknown report field aborts assemble
+(exit 2). Supplemental materials create a new
 immutable source-set version and require a new manifest, risk inspection, and quality review.
 When a development sandbox issue occurs, trace it through provenance, the source-quality
 report, source diff, and contract diff before requesting a supplement or rerunning.

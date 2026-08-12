@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from loop_apidoc.agentcli.assemble import AssembleInputError, run_assemble_pipeline
+from tests.source_quality_support import write_passing_source_quality
 
 _NOW = datetime(2026, 7, 9, 10, 0, 0, tzinfo=timezone.utc)
 
@@ -48,9 +49,17 @@ def _setup(tmp_path: Path, *, inventory=None, endpoint=None, integration=None,
 
 
 def _run(sources, extraction, out, run_id="r1", **kw):
+    source_quality_dir = kw.pop("source_quality_dir", None)
+    if source_quality_dir is None:
+        source_quality_dir = write_passing_source_quality(
+            sources_root=sources,
+            output=out.parent / "source-quality",
+            generated_at=_NOW,
+            excludes=kw.get("excludes", ()),
+        )
     return run_assemble_pipeline(
         sources_root=sources, extraction_dir=extraction, output_root=out,
-        run_id=run_id, generated_at=_NOW, **kw,
+        run_id=run_id, generated_at=_NOW, source_quality_dir=source_quality_dir, **kw,
     )
 
 

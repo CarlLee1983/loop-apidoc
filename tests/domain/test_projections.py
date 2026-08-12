@@ -542,6 +542,81 @@ def test_graphql_projection_rejects_an_unresolved_output_schema_reference():
         GraphqlProjectionCompiler(version="1").compile(contract)
 
 
+def test_graphql_projection_requires_an_explicit_output_schema_reference():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="catalog",
+            title="Catalog API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        interactions=(
+            Interaction(
+                identity="interaction:graphql:query:product",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=GraphqlTransportBinding(
+                    operation_kind=GraphqlOperationKind.QUERY,
+                    root_field="product",
+                ),
+            ),
+        ),
+    )
+
+    with pytest.raises(UnsupportedProjectionError, match="explicit output schema"):
+        GraphqlProjectionCompiler(version="1").compile(contract)
+
+
+def test_graphql_projection_rejects_duplicate_root_fields():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="catalog",
+            title="Catalog API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        schemas=(Schema(name="Product"),),
+        interactions=tuple(
+            Interaction(
+                identity=f"interaction:graphql:query:product:{ordinal}",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=GraphqlTransportBinding(
+                    operation_kind=GraphqlOperationKind.QUERY,
+                    root_field="product",
+                    output_schema_ref="Product",
+                ),
+            )
+            for ordinal in ("first", "second")
+        ),
+    )
+
+    with pytest.raises(UnsupportedProjectionError, match="two query interactions"):
+        GraphqlProjectionCompiler(version="1").compile(contract)
+
+
+def test_graphql_projection_rejects_schema_fields_without_a_type():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="catalog",
+            title="Catalog API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        schemas=(Schema(name="Product", fields=(SchemaField(name="sku"),)),),
+    )
+
+    with pytest.raises(
+        UnsupportedProjectionError,
+        match="requires a type for schema field Product.sku",
+    ):
+        GraphqlProjectionCompiler(version="1").compile(contract)
+
+
 def test_asyncapi_projection_compiles_the_source_backed_collection_notification():
     # OGC pinned AsyncAPI snapshot: channel/message at lines 24-31,
     # receive operation at lines 61-65, and collection_msg fields at lines 83-101.
@@ -671,6 +746,87 @@ def test_asyncapi_projection_rejects_invalid_component_schema_names():
         UnsupportedProjectionError,
         match="invalid component schema name",
     ):
+        AsyncApiProjectionCompiler(version="1").compile(contract)
+
+
+@pytest.mark.parametrize(
+    ("binding", "message"),
+    [
+        (
+            AsyncApiTransportBinding(
+                channel="events",
+                direction=AsyncApiDirection.SUBSCRIBE,
+                message_name="Event",
+                payload_schema_ref="Event",
+            ),
+            "explicit channel address",
+        ),
+        (
+            AsyncApiTransportBinding(
+                channel="events",
+                channel_address="events",
+                direction=AsyncApiDirection.SUBSCRIBE,
+                message_name="Event",
+            ),
+            "explicit payload schema reference",
+        ),
+    ],
+)
+def test_asyncapi_projection_requires_source_stated_channel_and_payload(
+    binding: AsyncApiTransportBinding,
+    message: str,
+):
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="events",
+            title="Events API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        schemas=(Schema(name="Event"),),
+        interactions=(
+            Interaction(
+                identity="interaction:asyncapi:events",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=binding,
+            ),
+        ),
+    )
+
+    with pytest.raises(UnsupportedProjectionError, match=message):
+        AsyncApiProjectionCompiler(version="1").compile(contract)
+
+
+def test_asyncapi_projection_rejects_duplicate_channel_names():
+    contract = GroundedApiContract(
+        metadata=ContractMetadata(
+            contract_id="events",
+            title="Events API",
+            version="1",
+            source_set_id="sources",
+            source_set_version="1",
+            domain_version="2",
+        ),
+        schemas=(Schema(name="Event"),),
+        interactions=tuple(
+            Interaction(
+                identity=f"interaction:asyncapi:events:{ordinal}",
+                mode=InteractionMode.SUBSCRIBE,
+                binding=AsyncApiTransportBinding(
+                    channel="events",
+                    channel_address="events",
+                    direction=AsyncApiDirection.SUBSCRIBE,
+                    message_name=f"Event{ordinal}",
+                    payload_schema_ref="Event",
+                ),
+            )
+            for ordinal in ("first", "second")
+        ),
+    )
+
+    with pytest.raises(UnsupportedProjectionError, match="two interactions on channel"):
         AsyncApiProjectionCompiler(version="1").compile(contract)
 
 

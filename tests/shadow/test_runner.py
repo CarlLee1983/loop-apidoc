@@ -1011,3 +1011,302 @@ def test_shadow_derives_nested_inline_schema_field_claims_from_v1_evidence(
         SupportRelationshipType.DERIVED_SUPPORT
     )
     assert relationships["/fields/data[].playerId/type"].observed_value == "string"
+
+
+def test_shadow_derives_ref_linked_schema_fields_through_one_and_two_hops(
+    tmp_path,
+):
+    """Exact component and `$ref` fragments retain every structural source link."""
+    line_schema = {
+        "type": "object",
+        "required": ["id"],
+        "properties": {"id": {"type": "string"}},
+    }
+    level_property = {"type": "integer"}
+    source_document = {
+        "components": {
+            "schemas": {
+                "Batch": {
+                    "properties": {
+                        "rows": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/Row"},
+                        }
+                    }
+                },
+                "Row": {
+                    "properties": {
+                        "line": {"$ref": "#/components/schemas/Line"},
+                        "levels": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/Level"},
+                        },
+                    }
+                },
+                "Line": line_schema,
+                "Level": {"properties": {"code": level_property}},
+            }
+        }
+    }
+    source = tmp_path / "openapi.json"
+    source.write_text(json.dumps(source_document), encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+
+    def reference(pointer: str, value: object, claim_path: str):
+        return ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(pointer=pointer),
+            fragment_digest=fragment_digest(canonical_json(value)),
+            claim_path=claim_path,
+        )
+
+    one_hop_paths = (
+        "/fields/line.id/name",
+        "/fields/line.id/type",
+        "/fields/line.id/required",
+    )
+    two_hop_paths = (
+        "/fields/rows[].levels[].code/name",
+        "/fields/rows[].levels[].code/type",
+    )
+    one_hop = tuple(
+        item
+        for claim_path in one_hop_paths
+        for item in (
+            reference(
+                (
+                    "/components/schemas/Line"
+                    if claim_path.endswith("/required")
+                    else "/components/schemas/Line/properties/id"
+                ),
+                (
+                    line_schema
+                    if claim_path.endswith("/required")
+                    else {"type": "string"}
+                ),
+                claim_path,
+            ),
+            reference(
+                "/components/schemas/Row/properties/line/$ref",
+                "#/components/schemas/Line",
+                claim_path,
+            ),
+        )
+    )
+    two_hop = tuple(
+        item
+        for claim_path in two_hop_paths
+        for item in (
+            reference(
+                "/components/schemas/Level/properties/code",
+                level_property,
+                claim_path,
+            ),
+            reference(
+                "/components/schemas/Batch/properties/rows/items/$ref",
+                "#/components/schemas/Row",
+                claim_path,
+            ),
+            reference(
+                "/components/schemas/Row/properties/levels/items/$ref",
+                "#/components/schemas/Level",
+                claim_path,
+            ),
+        )
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        schemas=[
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="05-schema0",
+                        answer_path="inventory.json",
+                        manifest_source="openapi.json",
+                        evidence=one_hop + two_hop,
+                    )
+                ],
+                name="Row",
+                fields=[
+                    {"name": "line.id", "type": "string", "required": True},
+                ],
+            ),
+            SchemaEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="05-schema1",
+                        answer_path="inventory.json",
+                        manifest_source="openapi.json",
+                        evidence=two_hop,
+                    )
+                ],
+                name="Batch",
+                fields=[{"name": "rows[].levels[].code", "type": "integer"}],
+            ),
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    one_hop_relationships = {
+        relationship.claim_path: relationship
+        for relationship in next(
+            claim
+            for claim in artifacts.claims
+            if claim.canonical_identity == "claim:schema:Row:definition"
+        ).support_relationships
+        if relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    }
+    two_hop_relationships = {
+        relationship.claim_path: relationship
+        for relationship in next(
+            claim
+            for claim in artifacts.claims
+            if claim.canonical_identity == "claim:schema:Batch:definition"
+        ).support_relationships
+        if relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    }
+    assert one_hop_relationships["/fields/line.id/required"].observed_value is True
+    assert one_hop_relationships["/fields/line.id/name"].observed_value == "line.id"
+    assert two_hop_relationships["/fields/rows[].levels[].code/name"].observed_value == (
+        "rows[].levels[].code"
+    )
+    assert two_hop_relationships["/fields/rows[].levels[].code/type"].observed_value == "integer"
+
+
+def test_shadow_derives_ref_linked_request_array_requiredness(tmp_path):
+    """A request-array field's required flag needs its child schema and `$ref`."""
+    voucher_schema = {
+        "type": "object",
+        "required": ["playerId"],
+        "properties": {"playerId": {"type": "string"}},
+    }
+    document = {
+        "components": {
+            "schemas": {
+                "BatchRequest": {
+                    "properties": {
+                        "data": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/Voucher"},
+                        }
+                    }
+                },
+                "Voucher": voucher_schema,
+            }
+        }
+    }
+    source = tmp_path / "openapi.json"
+    source.write_text(json.dumps(document), encoding="utf-8")
+    content = source.read_bytes()
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        local_sources=[
+            LocalSource(
+                relative_path="openapi.json",
+                mime_type="application/json",
+                source_format=SourceFormat.OPENAPI_JSON,
+                size_bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                scanned_at=NOW,
+                supported=True,
+                status=ProcessingStatus.PENDING,
+            )
+        ],
+    )
+    claim_path = "/parameters/body/data[].playerId/required"
+    evidence = (
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(pointer="/components/schemas/Voucher"),
+            fragment_digest=fragment_digest(canonical_json(voucher_schema)),
+            claim_path=claim_path,
+        ),
+        ExtractionEvidenceReference(
+            version=1,
+            source="openapi.json",
+            locator=JsonPointerLocator(
+                pointer="/components/schemas/BatchRequest/properties/data/items/$ref"
+            ),
+            fragment_digest=fragment_digest(
+                canonical_json("#/components/schemas/Voucher")
+            ),
+            claim_path=claim_path,
+        ),
+    )
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=[
+                    SourceCitation(
+                        query_id="06-ep0",
+                        answer_path="answer.json",
+                        manifest_source="openapi.json",
+                        evidence=evidence,
+                    )
+                ],
+                method="POST",
+                path="/payments",
+                request={"schema_ref": "BatchRequest"},
+                parameters=[
+                    {
+                        "name": "data[].playerId",
+                        "in": "body",
+                        "required": True,
+                    }
+                ],
+            )
+        ],
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=FactIndex(),
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    relationship = next(
+        relationship
+        for relationship in artifacts.claims[0].support_relationships
+        if relationship.claim_path == claim_path
+        and relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    )
+    assert relationship.observed_value is True
+    assert len(relationship.context_fragment_ids) == 1

@@ -6,3 +6,6 @@
 # copyrighted; keep them local, never redistribute. Re-download via the URL
 # + date recorded in each case's notes.md.
 */sources/
+# Source-quality audit packages — derived from the operator-provided sources
+# above (assemble requires one), so they stay local and are never redistributed.
+*/source-quality/

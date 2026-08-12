@@ -11,14 +11,13 @@ from loop_apidoc.source_quality.models import (
 )
 
 
-def test_reject_report_counts_blockers() -> None:
-    report = SourceQualityReport(
-        verdict=QualityVerdict.REJECT,
-        source_set="v2",
-        findings=[],
-    )
-
-    assert report.blocker_count == 0
+def test_report_rejects_reject_verdict_without_blockers() -> None:
+    with pytest.raises(ValidationError, match="verdict"):
+        SourceQualityReport(
+            verdict=QualityVerdict.REJECT,
+            source_set="v2",
+            findings=[],
+        )
 
 
 def test_observation_requires_traceable_evidence() -> None:

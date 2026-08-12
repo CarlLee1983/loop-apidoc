@@ -109,6 +109,25 @@ def missing_benchmark_sources(
     return missing
 
 
+# `assemble` requires an audited source package, so the benchmark harness skips a
+# case without one. Naming that prerequisite here turns a strict-local skip into a
+# precise "generate this package" failure instead of a bare "skips reported".
+BENCHMARK_QUALITY_FILES = ("source-quality-report.json", "source-diff.json")
+
+
+def missing_benchmark_source_quality(
+    *,
+    benchmark_root: Path = BENCHMARK_ROOT,
+    cases: tuple[str, ...] | list[str] = REQUIRED_BENCHMARK_CASES,
+) -> list[str]:
+    missing: list[str] = []
+    for case in cases:
+        quality = benchmark_root / case / "source-quality"
+        if not all((quality / name).is_file() for name in BENCHMARK_QUALITY_FILES):
+            missing.append(case)
+    return missing
+
+
 def has_benchmark_skips(stdout: str) -> bool:
     """Detect skipped tests in ``pytest -q`` output.
 
@@ -192,14 +211,47 @@ def _write_valid_fixture(root: Path) -> tuple[Path, Path, Path]:
     return sources, extraction, out
 
 
+def _write_source_quality_package(
+    root: Path,
+    sources: Path,
+    *,
+    runner: Runner = _default_runner,
+) -> Path:
+    """Produce assemble's mandatory `--source-quality` package via the real CLI chain.
+
+    `assemble` refuses to build an unaudited run, so every assemble scenario needs
+    manifest → inspect-source-risk → assess-sources to have run first. Failures here
+    surface as the scenario's own exit code/signal instead of being swallowed.
+    """
+    manifest = root / "manifest.json"
+    risk = root / "source-risk"
+    observations = root / "source-quality-observations.json"
+    quality = root / "source-quality"
+    observations.write_text("[]", encoding="utf-8")
+    runner(["uv", "run", "loop-apidoc", "manifest", "--sources", str(sources),
+            "--output", str(manifest)])
+    runner(["uv", "run", "loop-apidoc", "inspect-source-risk", "--sources", str(sources),
+            "--manifest", str(manifest), "--output", str(risk)])
+    runner(["uv", "run", "loop-apidoc", "assess-sources", "--sources", str(sources),
+            "--manifest", str(manifest), "--source-risk", str(risk),
+            "--observations", str(observations), "--source-set", "quality-gate",
+            "--output", str(quality)])
+    # The path must exist for assemble's option check even when the chain wrote
+    # nothing; an empty package still fails assemble loudly, which is the point.
+    quality.mkdir(parents=True, exist_ok=True)
+    return quality
+
+
 def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[ScenarioResult]:
     results: list[ScenarioResult] = []
     with tempfile.TemporaryDirectory(prefix="loop-apidoc-adv-") as td:
         root = Path(td)
 
         sources, extraction, out = _write_valid_fixture(root / "normal")
+        quality = _write_source_quality_package(root / "normal", sources, runner=runner)
         cmd = ["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
-               "--extraction", str(extraction), "--output", str(out), "--json"]
+               "--extraction", str(extraction), "--output", str(out),
+               "--source-quality", str(quality), "--json"]
         res = runner(cmd)
         signal = res.stdout
         try:
@@ -212,29 +264,35 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
         results.append(ScenarioResult("ADV-001", res.returncode, 0, signal, "ok=True", out.exists()))
 
         sources, extraction, out = _write_valid_fixture(root / "bad-json")
+        quality = _write_source_quality_package(root / "bad-json", sources, runner=runner)
         (extraction / "inventory.json").write_text("{ not json", encoding="utf-8")
         res = runner(["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
-                      "--extraction", str(extraction), "--output", str(out), "--json"])
+                      "--extraction", str(extraction), "--output", str(out),
+                      "--source-quality", str(quality), "--json"])
         results.append(ScenarioResult(
             "ADV-002", res.returncode, 2, res.stderr,
             "inventory.json 不是合法 JSON", not out.exists()))
 
         sources, extraction, out = _write_valid_fixture(root / "localized-keys")
+        quality = _write_source_quality_package(root / "localized-keys", sources, runner=runner)
         inventory = dict(BASE_INVENTORY)
         inventory["schemas"] = [{"name": "Bad", "fields": [{"名稱": "id", "型別": "string"}],
                                  "source": "manual.md"}]
         (extraction / "inventory.json").write_text(
             json.dumps(inventory, ensure_ascii=False), encoding="utf-8")
         res = runner(["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
-                      "--extraction", str(extraction), "--output", str(out), "--json"])
+                      "--extraction", str(extraction), "--output", str(out),
+                      "--source-quality", str(quality), "--json"])
         results.append(ScenarioResult(
             "ADV-003", res.returncode, 2, res.stderr,
             "schemas[0].fields[0]", not out.exists()))
 
         sources, extraction, out = _write_valid_fixture(root / "bad-integration")
+        quality = _write_source_quality_package(root / "bad-integration", sources, runner=runner)
         (extraction / "integration.json").write_text("[]", encoding="utf-8")
         res = runner(["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
-                      "--extraction", str(extraction), "--output", str(out), "--json"])
+                      "--extraction", str(extraction), "--output", str(out),
+                      "--source-quality", str(quality), "--json"])
         results.append(ScenarioResult(
             "ADV-004", res.returncode, 2, res.stderr,
             "integration.json 必須是 JSON 物件", not out.exists()))
@@ -264,6 +322,15 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
         results.append(ScenarioResult(
             "ADV-006", res.returncode, 0, signal,
             '"status": "unreadable"', secret_absent))
+
+        # The audited-source prerequisite must be enforced by the CLI itself:
+        # a complete, otherwise-valid input set still builds no run directory.
+        sources, extraction, out = _write_valid_fixture(root / "no-quality")
+        res = runner(["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
+                      "--extraction", str(extraction), "--output", str(out), "--json"])
+        results.append(ScenarioResult(
+            "ADV-007", res.returncode, 2, f"{res.stdout}\n{res.stderr}",
+            "--source-quality", not out.exists()))
 
     return results
 
@@ -305,6 +372,13 @@ def main(argv: list[str] | None = None) -> int:
                 raise QualityGateFailure(
                     "strict-local benchmark sources missing or empty: "
                     + ", ".join(missing)
+                )
+            unaudited = missing_benchmark_source_quality()
+            if unaudited:
+                raise QualityGateFailure(
+                    "strict-local benchmark source-quality package missing "
+                    "(run manifest → inspect-source-risk → assess-sources into "
+                    "benchmarks/<case>/source-quality): " + ", ".join(unaudited)
                 )
         benchmark_result: _RunResult | None = None
         for name, cmd in command_plan(

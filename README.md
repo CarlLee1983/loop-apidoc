@@ -656,11 +656,11 @@ uv run loop-apidoc assemble \
   --extraction ./work \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
-  [--source-quality ./work/source-quality] [--extractor-model <模型名稱>] \
+  --source-quality ./work/source-quality [--extractor-model <模型名稱>] \
   [--architecture-mode legacy|shadow|strict] [--json] [--score]
 ```
 
-**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 typed `integration.json`)組裝成輸出:manifest → plan → generate → validate。`integration.json` 可保存來源明載的 `transport`、`amount_direction`、`idempotency` 與 `line_currency_policy`；request 沒有 currency 欄位不會被當成單幣別證據。`inventory.operational[]` 用來記錄其餘來源明載的全域／跨端點規則；選填的 `applies_to[]` 會把規則連到經閘門驗證的 operation 或欄位，並由固定產生的 `integration-contract.json` 交給下游工具。若傳入 `assess-sources` 已產出的 `--source-quality` 目錄，`reject` 結論會在建立 run-dir 前中止；`pass` 的來源品質報告與來源差異會被寫入 run-dir，供稽核與 Foundry 保留。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
+**不擷取**,只把 agent 已產出的擷取目錄(`inventory.json` + `endpoints/*.json`,以及選填的 typed `integration.json`)組裝成輸出:manifest → plan → generate → validate。`--source-quality` 為必要參數：其 `assess-sources` 套件必須通過目前來源 bytes 的 source-risk 重驗與 manifest binding，`assemble` 才會建立 run-dir，並把報告與來源差異保留供稽核與 Foundry 使用。這能拒絕產生未稽核的 run，但無法證明本流程外 agent 何時讀過來源文字。`integration.json` 可保存來源明載的 `transport`、`amount_direction`、`idempotency` 與 `line_currency_policy`；request 沒有 currency 欄位不會被當成單幣別證據。`inventory.operational[]` 用來記錄其餘來源明載的全域／跨端點規則；選填的 `applies_to[]` 會把規則連到經閘門驗證的 operation 或欄位，並由固定產生的 `integration-contract.json` 交給下游工具。`--json` 會把 `run_id`、`run_dir`、`review_html`、`ok`、`status`、`report`、`toolchain` 印到 stdout 供 agent 解析並驅動修正迴圈。run 目錄另會寫出 `run.json`，記錄 `toolchain`（`cli_version`、`extraction_contract_version`、`skill_version`、`model`），讓日後的回歸可單憑產物歸因到版本；`--extractor-model` 由 agent 明確帶入擷取所用的模型名稱，省略即為 `null`（CLI 不推測、不捏造）。退出碼:`0`=驗證 PASS、`1`=驗證 FAIL、`2`=擷取輸入檔錯誤。這是上方 [agent-native plugin](#以-claude-code-plugin-執行agent-native) 模式所呼叫的命令。加上 `--score` 時，`assemble` 完成後會額外寫出 `score/score.json` 與
 `score/score.md`；assemble 的退出碼仍維持既有驗證語意。有 URL 來源時，可用 `--url-coverage` 傳入 agent 記錄的 `url_sources/coverage.json` 撈取帳本，`assemble` 會做 warning-only 的 URL 涵蓋檢核（不影響驗證嚴重度閘）。搭配 `--score` 的自循環旗標 `--target-score` / `--prev-score` / `--round-index` / `--max-rounds` 可讓 agent 依回報的 loop verdict 決定是否再跑一輪修正。
 
 可用 `--architecture-mode shadow` 明確啟用觀測性的 model-independent Core
@@ -727,7 +727,7 @@ output/
     ├── validation/
     │   ├── report.json
     │   └── report.md
-    ├── source-quality/              # 傳入 --source-quality 時保留來源品質稽核
+    ├── source-quality/              # 必備且已驗證的來源品質稽核
     │   ├── source-quality-report.json # 內嵌已驗證的 source-risk audit
     │   ├── source-quality-report.zh-TW.md
     │   ├── source-diff.json

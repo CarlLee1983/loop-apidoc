@@ -27,7 +27,9 @@ _HTTP_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
 
 _HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$")
 _SETEXT = re.compile(r"^\s{0,3}(=+|-{2,})\s*$")
-_FENCE = re.compile(r"^\s{0,3}(?:```|~~~)\s*(?P<info>[^\s`]*)")
+# info string 可以有多個詞(```json title="Request"、```bash copy)。整行必須
+# 收下,否則那道圍籬會被當成內文,區塊裡的表格就會變成假事實。
+_FENCE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
 _ENDPOINT = re.compile(rf"^(?:{'|'.join(_HTTP_METHODS)})\s+(?P<path>/\S*)")
 _TABLE_SEPARATOR = re.compile(r"^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$")
 
@@ -70,11 +72,17 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
 
     for index, raw in enumerate(lines, start=1):
         fence = _FENCE.match(raw)
+        if state.in_fence:
+            if fence and state.closes_fence(
+                fence.group("marker"), fence.group("info")
+            ):
+                state.close_fence()
+            continue
         if fence:
             state.flush_table()
-            state.toggle_fence(fence.group("info"), lines, index)
-            continue
-        if state.in_fence:
+            state.open_fence(
+                fence.group("marker"), _fence_language(fence), lines, index
+            )
             continue
 
         if raw.lstrip().startswith("|"):
@@ -125,18 +133,38 @@ class _ScanState:
         # 宣告目前端點的那個標題層級。更深的子標題(「### 請求參數」)是同一個
         # 端點的內文,不是換段;把它當換段,參數表就不會歸屬任何端點。
         self.declaring_level = 0
-        self.in_fence = False
+        self.fence_marker: str | None = None
+        self.fence_length = 0
         self.table: list[tuple[int, str]] = []
         self.previous = ""
 
-    def toggle_fence(self, info: str, lines: list[str], index: int) -> None:
-        if not self.in_fence and self.current is not None:
-            if _is_payload_fence(info, lines, index):
+    @property
+    def in_fence(self) -> bool:
+        return self.fence_marker is not None
+
+    def open_fence(
+        self, marker: str, info: str, lines: list[str], index: int
+    ) -> None:
+        if self.current is not None:
+            if _is_payload_fence(info, lines, index, marker):
                 self.current.example_blocks += 1
                 self.current.payload_fences += (
-                    _payload_fence(info, lines, index),
+                    _payload_fence(info, lines, index, marker),
                 )
-        self.in_fence = not self.in_fence
+        self.fence_marker = marker[0]
+        self.fence_length = len(marker)
+        self.previous = ""
+
+    def closes_fence(self, marker: str, info: str) -> bool:
+        return (
+            not info.strip()
+            and marker[0] == self.fence_marker
+            and len(marker) >= self.fence_length
+        )
+
+    def close_fence(self) -> None:
+        self.fence_marker = None
+        self.fence_length = 0
         self.previous = ""
 
     def flush_table(self) -> None:
@@ -205,14 +233,17 @@ class _ScanState:
             )
 
 
-def _is_payload_fence(info: str, lines: list[str], index: int) -> bool:
+def _is_payload_fence(
+    info: str, lines: list[str], index: int, opening_marker: str
+) -> bool:
     if info.strip().lower() in _PAYLOAD_INFO:
         return True
     for line in lines[index:]:
         stripped = line.strip()
         if not stripped:
             continue
-        if _FENCE.match(line):
+        fence = _FENCE.match(line)
+        if fence and _matches_closing_fence(opening_marker, fence):
             return False
         return stripped[0] in "{[<"
     return False
@@ -222,6 +253,7 @@ def _payload_fence(
     info: str,
     lines: list[str],
     opening_line: int,
+    opening_marker: str,
 ) -> PayloadFenceFact:
     content: list[str] = []
     closing_line = opening_line
@@ -229,7 +261,8 @@ def _payload_fence(
         lines[opening_line:],
         start=opening_line + 1,
     ):
-        if _FENCE.match(line):
+        fence = _FENCE.match(line)
+        if fence and _matches_closing_fence(opening_marker, fence):
             closing_line = line_number
             break
         content.append(line)
@@ -240,6 +273,21 @@ def _payload_fence(
         end_line=closing_line,
         normalized_excerpt=normalize_excerpt("\n".join(content)),
     )
+
+
+def _matches_closing_fence(opening_marker: str, fence: re.Match[str]) -> bool:
+    marker = fence.group("marker")
+    return (
+        not fence.group("info").strip()
+        and marker[0] == opening_marker[0]
+        and len(marker) >= len(opening_marker)
+    )
+
+
+def _fence_language(fence: re.Match[str]) -> str:
+    """只有 info string 的第一個詞是語言;其餘是 title/highlight 等裝飾。"""
+    info = fence.group("info").strip().strip("`").strip()
+    return info.split()[0] if info else ""
 
 
 def _declared_endpoint(line: str) -> tuple[str, str] | None:

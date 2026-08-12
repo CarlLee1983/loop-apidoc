@@ -1073,7 +1073,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_quality/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "要求 --source-risk、驗證其 manifest／source binding、嵌入 audit，再評估可追溯 observation。若把 pass 報告目錄傳給 assemble --source-quality，assemble 會重建 manifest 並重新驗證 binding 才保存報告；audit 缺失、過期或 reject 都不建立 run-dir。",
+      description: "要求 --source-risk、驗證其 manifest／source binding、嵌入 audit，再評估可追溯 observation。每個 assemble 都必須把 pass 報告目錄傳給 --source-quality；assemble 會重建 manifest 並重新驗證 binding 才保存報告；audit 缺失、過期或 reject 都不建立 run-dir。",
       seam: "assess_source_quality(...) / load_assessment_reports(path) / assemble --source-quality",
       inputs: "manifest, verified source-risk report directory, grounded observations, optional base manifest",
       outputs: "source-quality-report.{json,zh-TW.md}, source-diff.{json,md}",

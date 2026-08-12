@@ -76,8 +76,9 @@ grounding or validation: the current CLI still builds the compatible run directo
 its validators. For every level, the agent must still parse `assemble --json`, inspect
 validation failures, and correct the extraction when necessary. To save tokens, for artifacts
 outside `<OUTPUT_LEVEL>` **do not open, summarize, or pass** their content between agents;
-refer only to their paths if a validation issue makes one relevant. `score`, `diff`, and
-source-quality reports remain opt-in commands/features, not an implication of `full`.
+refer only to their paths if a validation issue makes one relevant. `score` and `diff` remain
+opt-in commands/features, not an implication of `full`; the source-quality package is a
+required `assemble` input whose reports are always retained in the run directory.
 
 ## Model-neutral orchestration
 
@@ -287,11 +288,12 @@ names explicit linked contract pages, put only those absolute URLs in its
 `required_source_refs`; the rejected report returns their ordered, de-duplicated union as a
 bounded next-capture list and never crawls it. Do not create
 `inventory.json` or endpoint extraction files. Exit `0` permits extraction; warnings remain
-visible and must not be filled with assumptions. When these gates ran, pass
-`--source-quality "<WORK>/source-quality"` to `assemble` (step 6) — the passing report is
-retained in `<run_dir>/source-quality/`; `assemble` revalidates its embedded source-risk audit
-against the newly built manifest's stable source binding, so changed source bytes fail before a
-run directory is created. A `reject` verdict aborts assemble (exit 2).
+visible and must not be filled with assumptions. Step 6 requires
+`--source-quality "<WORK>/source-quality"`: `assemble` retains the passing report in
+`<run_dir>/source-quality/` and revalidates its embedded source-risk audit against the newly
+built manifest's stable source binding, so changed source bytes fail before a run directory is
+created. This refuses an unaudited run; it cannot prove the chronology of source reads outside
+this process. A `reject` verdict aborts assemble (exit 2).
 See `reference/source-quality.md`.
 
 ### 2–4. Extract → write the JSON
@@ -363,13 +365,14 @@ a round trip.
 ```bash
 <APIDOC> assemble \
   --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] \
-  [--source-quality "<WORK>/source-quality"] --json
+  --source-quality "<WORK>/source-quality" --json
 ```
 
 To iterate toward a **quality bar** (not just "no errors"), add the score-gated flags:
 
 ```bash
 <APIDOC> assemble --sources "<SOURCES>" --extraction "<WORK>" --output "<OUT>" \
+  --source-quality "<WORK>/source-quality" \
   --score --target-score 85 --round-index 1 --max-rounds 6 --json
 ```
 

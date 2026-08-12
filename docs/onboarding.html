@@ -892,7 +892,7 @@
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
-          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報;可加 <code class="inline">--score</code>、<code class="inline">--source-quality</code>、<code class="inline">--url-coverage</code>。傳入 source quality 時，assemble 會重建 manifest，並在建立 run-dir 前重新驗證內嵌 source-risk binding。</p>
+          <p>組裝 agent 寫出的 JSON → plan → preparation → generate → validate,以 <code class="inline">--json</code> 回報;可選 <code class="inline">--score</code>、<code class="inline">--url-coverage</code>，但必須帶 <code class="inline">--source-quality</code>。assemble 會重建 manifest，並在建立 run-dir 前重新驗證內嵌 source-risk binding，拒絕未稽核 run，但不宣稱能證明流程外讀取來源的時間順序。</p>
           <p class="codes">退出碼:<b>0</b> 驗證 PASS · <b>1</b> 驗證 FAIL · <b>2</b> 擷取輸入檔錯誤(不留孤兒目錄)。</p>
         </div>
       </div>

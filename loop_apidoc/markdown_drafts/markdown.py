@@ -79,7 +79,7 @@ def scan_markdown_drafts(relative_path: str, text: str) -> MarkdownDraft:
                             language=language,
                             label=current_label,
                             start_line=line_number,
-                            end_line=closing + 1,
+                            end_line=min(closing + 1, len(lines)),
                             content="\n".join(lines[index + 1:closing]),
                         )
                     )
