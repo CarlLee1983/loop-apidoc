@@ -12,6 +12,7 @@ from loop_apidoc.cli import app
 from loop_apidoc.core.models import StrictExecutionSummary
 from loop_apidoc.run.toolchain import EXTRACTION_CONTRACT_VERSION
 from loop_apidoc.validate.models import ValidationReport
+from tests.cli_output_support import strip_ansi
 from tests.source_quality_support import write_passing_source_quality
 
 
@@ -156,7 +157,7 @@ def test_assemble_requires_source_quality_before_creating_run_dir(
     )
 
     assert result.exit_code == 2
-    assert "--source-quality" in result.output
+    assert "--source-quality" in strip_ansi(result.output)
     assert not out.exists()
 
 

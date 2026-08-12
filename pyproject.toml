@@ -43,3 +43,10 @@ extend-exclude = ["work"]
 
 [tool.coverage.report]
 fail_under = 92.5
+# Both branches of every platform-specific syscall guard are excluded so the gate
+# measures one platform-independent denominator. Only such guards belong here; see
+# docs/adr/0003-measure-coverage-on-a-platform-independent-denominator.md.
+exclude_also = [
+    'if sys\.platform == "darwin":',
+    'elif sys\.platform\.startswith\("linux"\):',
+]
