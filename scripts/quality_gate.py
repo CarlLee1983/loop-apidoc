@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -75,7 +76,18 @@ def _default_runner(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, text=True, capture_output=True, timeout=STEP_TIMEOUT_SECONDS)
 
 
-def _excerpt(text: str, limit: int = 1200) -> str:
+# typer.rich_utils forces coloured output whenever GITHUB_ACTIONS / FORCE_COLOR /
+# PY_COLORS is set, and rich styles an option's leading dashes separately from its name.
+# A literal like "--source-quality" is then split across escape sequences, so a signal
+# check on raw output passes locally and fails on CI. Compare stripped text instead.
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_ESCAPE.sub("", text)
+
+
+def _excerpt(text: str, limit: int = 4000) -> str:
     text = text.strip()
     if len(text) <= limit:
         return text
@@ -329,7 +341,7 @@ def run_adversarial_cli_smoke(*, runner: Runner = _default_runner) -> list[Scena
         res = runner(["uv", "run", "loop-apidoc", "assemble", "--sources", str(sources),
                       "--extraction", str(extraction), "--output", str(out), "--json"])
         results.append(ScenarioResult(
-            "ADV-007", res.returncode, 2, f"{res.stdout}\n{res.stderr}",
+            "ADV-007", res.returncode, 2, _strip_ansi(f"{res.stdout}\n{res.stderr}"),
             "--source-quality", not out.exists()))
 
     return results
