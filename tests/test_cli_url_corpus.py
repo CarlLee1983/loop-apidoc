@@ -340,6 +340,31 @@ def test_spa_shell_page_carries_the_flag_and_a_remediation_note(tmp_path: Path):
     assert "SPA_SHELL_DETECTED" in (corpus.pages[0].note or "")
 
 
+def test_spa_shell_does_not_probe_when_document_exhausts_max_pages(tmp_path: Path):
+    requests: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        if request.url.path == "/page":
+            return httpx.Response(200, text=_SHELL_HTML)
+        return httpx.Response(200, json={"openapi": "3.1.0"})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(
+            UrlCatalog(
+                entry_url="https://docs.example.com/page",
+                nodes=[CatalogNode(url="https://docs.example.com/page", title="Doc")],
+            ),
+            tmp_path,
+            client=client,
+            max_pages=1,
+        )
+
+    assert requests == ["https://docs.example.com/page"]
+    assert [page.url for page in corpus.pages] == ["https://docs.example.com/page"]
+    assert corpus.pages[0].spa_shell_detected is True
+
+
 def test_spa_shell_caches_a_recognized_openapi_document_as_a_distinct_source(tmp_path: Path):
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/page":

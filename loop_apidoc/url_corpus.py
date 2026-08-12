@@ -219,6 +219,7 @@ def _probe_openapi_specs(
     shell_urls: list[str],
     output_dir: Path,
     max_bytes_per_page: int,
+    max_pages: int,
 ) -> list[CorpusPage]:
     """Cache only positively identified OpenAPI or Swagger JSON from SPA shells."""
     origins_by_candidate: dict[str, list[str]] = {}
@@ -228,6 +229,8 @@ def _probe_openapi_specs(
 
     pages: list[CorpusPage] = []
     for candidate, origins in origins_by_candidate.items():
+        if len(pages) >= max_pages:
+            break
         try:
             with active_client.stream(
                 "GET",
@@ -284,7 +287,7 @@ def cache_catalog_pages(
     max_pages: int = 200,
     max_bytes_per_page: int = 5 * 1024 * 1024,
 ) -> UrlCorpus:
-    """Cache every catalog node as local evidence without involving a model."""
+    """Cache catalog documents and discovered specs within one total page limit."""
     if max_pages < 1 or max_bytes_per_page < 1:
         raise ValueError("max_pages and max_bytes_per_page must be positive")
     # Several sidebar anchors can identify sections in one static document.
@@ -377,8 +380,15 @@ def cache_catalog_pages(
                     note=note,
                 )
             )
+        remaining_pages = max_pages - len(pages)
         pages.extend(
-            _probe_openapi_specs(active_client, shell_urls, output_dir, max_bytes_per_page)
+            _probe_openapi_specs(
+                active_client,
+                shell_urls,
+                output_dir,
+                max_bytes_per_page,
+                remaining_pages,
+            )
         )
     finally:
         if own_client:
