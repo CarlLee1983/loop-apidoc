@@ -43,11 +43,9 @@ extend-exclude = ["work"]
 
 [tool.coverage.report]
 fail_under = 92.5
-# The governed-asset publication and fd-resolution paths pick a platform-specific
-# syscall (renameatx_np/F_GETPATH on Darwin, renameat2//proc/self/fd on Linux). The
-# branch for the other platform can never run on the host doing the measuring, so
-# leaving it in makes the same tree score differently on macOS and on Linux CI.
-# Exclude both guards so the gate measures one platform-independent denominator.
+# Both branches of every platform-specific syscall guard are excluded so the gate
+# measures one platform-independent denominator. Only such guards belong here; see
+# docs/adr/0003-measure-coverage-on-a-platform-independent-denominator.md.
 exclude_also = [
     'if sys\.platform == "darwin":',
     'elif sys\.platform\.startswith\("linux"\):',
