@@ -63,6 +63,62 @@ def test_rules_report_dangling_schema_and_missing_evidence():
     }
 
 
+def test_rules_report_invalid_duplicate_and_incomplete_operation_identities():
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        operations=(
+            Operation(method="FETCH", path="health"),
+            Operation(
+                method="GET",
+                path="/payments",
+                responses=(Response(status_code="200", schema_ref="Missing"),),
+                security=("MissingAuth",),
+            ),
+            Operation(
+                method="get",
+                path=" /payments ",
+                responses=(Response(status_code="200"),),
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.location, finding.root_cause)
+        for finding in findings
+    ] == [
+        ("OPERATION_EVIDENCE_REQUIRED", "operations[0]", "operations[0]"),
+        ("OPERATION_IDENTITY_INVALID", "operations[0]", None),
+        ("RESPONSE_REQUIRED", "operations[0]", "operations[0]"),
+        (
+            "OPERATION_EVIDENCE_REQUIRED",
+            "operations[1]",
+            "operation:GET:/payments",
+        ),
+        (
+            "SCHEMA_REFERENCE_UNRESOLVED",
+            "operations[1]",
+            "schema:Missing",
+        ),
+        (
+            "SECURITY_REFERENCE_UNRESOLVED",
+            "operations[1]",
+            "security:MissingAuth",
+        ),
+        (
+            "OPERATION_EVIDENCE_REQUIRED",
+            "operations[2]",
+            "operation:GET:/payments",
+        ),
+        (
+            "OPERATION_IDENTITY_DUPLICATE",
+            "operations[2]",
+            "operation:GET:/payments",
+        ),
+    ]
+
+
 def test_rules_apply_response_and_evidence_requirements_to_http_interactions():
     contract = GroundedApiContract(
         metadata=_metadata(),

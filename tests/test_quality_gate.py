@@ -140,6 +140,24 @@ def test_missing_benchmark_sources_accepts_nested_only_sources(tmp_path):
     assert missing == []
 
 
+def test_missing_benchmark_source_quality_reports_incomplete_packages(tmp_path):
+    root = tmp_path / "benchmarks"
+    complete = root / "audited" / "source-quality"
+    complete.mkdir(parents=True)
+    for name in quality_gate.BENCHMARK_QUALITY_FILES:
+        (complete / name).write_text("{}", encoding="utf-8")
+    partial = root / "half-audited" / "source-quality"
+    partial.mkdir(parents=True)
+    (partial / "source-quality-report.json").write_text("{}", encoding="utf-8")
+
+    missing = quality_gate.missing_benchmark_source_quality(
+        benchmark_root=root,
+        cases=["audited", "half-audited", "unaudited"],
+    )
+
+    assert missing == ["half-audited", "unaudited"]
+
+
 def test_strict_local_does_not_accept_sanitized_sources_as_originals(tmp_path):
     root = tmp_path / "benchmarks"
     sanitized = root / "fixture-only" / "sanitized_sources"

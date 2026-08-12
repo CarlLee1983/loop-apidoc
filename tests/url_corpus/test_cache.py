@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import httpx
+import pytest
 
 from loop_apidoc.url_catalog import CatalogNode, UrlCatalog
 from loop_apidoc.url_corpus import cache_catalog_pages
@@ -59,3 +60,52 @@ def test_cache_catalog_pages_stores_a_markdown_source_verbatim_without_html_norm
     assert (tmp_path / page.body_file).read_text(encoding="utf-8") == markdown
     assert page.title == "ATG API"
     assert page.headings == ["ATG API", "GET /games"]
+
+
+def test_cache_catalog_pages_counts_anchored_sections_as_one_document_for_max_pages(tmp_path):
+    catalog = UrlCatalog(
+        entry_url="https://docs.example.com/transfer",
+        nodes=[
+            CatalogNode(url="https://docs.example.com/transfer", title="API", anchor="api"),
+            CatalogNode(
+                url="https://docs.example.com/transfer", title="Errors", anchor="errors"
+            ),
+        ],
+    )
+    requested: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(200, text="<main><h1>Transfer</h1></main>")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(catalog, tmp_path, client=client, max_pages=1)
+
+    assert requested == ["https://docs.example.com/transfer"]
+    assert [section.anchor for section in corpus.pages[0].sections] == ["api", "errors"]
+
+
+def test_cache_catalog_pages_rejects_too_many_unique_documents_before_writing(tmp_path):
+    catalog = UrlCatalog(
+        entry_url="https://docs.example.com/transfer/a",
+        nodes=[
+            CatalogNode(url="https://docs.example.com/transfer/a", title="A"),
+            CatalogNode(url="https://docs.example.com/transfer/b", title="B"),
+        ],
+    )
+    requested: list[str] = []
+    output = tmp_path / "corpus"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(200, text="<main><h1>Transfer</h1></main>")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(
+            ValueError,
+            match=r"^catalog has 2 unique documents, above max_pages=1$",
+        ):
+            cache_catalog_pages(catalog, output, client=client, max_pages=1)
+
+    assert requested == []
+    assert not output.exists()

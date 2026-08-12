@@ -92,6 +92,44 @@ def test_a_fence_between_tables_does_not_demand_a_header_cell() -> None:
     assert _gate(markdown, endpoint) == []
 
 
+def test_mixed_fence_marker_content_does_not_create_a_gate_violation() -> None:
+    markdown = """
+## POST /real
+
+~~~text
+```
+| Field | Type |
+| --- | --- |
+| fake | string |
+~~~
+```
+"""
+    endpoint = {"method": "POST", "path": "/real", "parameters": []}
+
+    assert _gate(markdown, endpoint) == []
+
+
+def test_a_decorated_info_string_still_hides_its_fenced_table() -> None:
+    """```json title="Request" 是常見寫法;認不出這道圍籬就會造出假事實。"""
+    markdown = """
+## POST /real
+
+```json title="Request" showLineNumbers
+| Field | Type |
+| --- | --- |
+| fake | string |
+```
+"""
+    endpoint = {
+        "method": "POST",
+        "path": "/real",
+        "parameters": [],
+        "examples": [{"body": "{}"}],
+    }
+
+    assert _gate(markdown, endpoint) == []
+
+
 def test_a_label_first_table_is_satisfied_by_the_wire_names() -> None:
     markdown = """
 ## POST /pay

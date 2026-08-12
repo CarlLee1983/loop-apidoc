@@ -18,6 +18,7 @@ from loop_apidoc.foundry.models import (
     CurrentPointer,
     Docset,
     FoundryInputError,
+    FoundryPublicationError,
 )
 
 
@@ -237,3 +238,112 @@ def test_owned_directory_creation_cleans_up_after_parent_fsync_failure(
         assert (tmp_path / name).is_dir()
     finally:
         os.close(parent_fd)
+
+
+def test_catalog_transaction_creates_namespace_serializes_and_releases_lock(
+    tmp_path: Path,
+) -> None:
+    transaction = store.begin_catalog_transaction(tmp_path)
+    try:
+        assert paths.docsets_root(tmp_path).is_dir()
+        with pytest.raises(
+            FoundryInputError, match="transaction is already in progress"
+        ):
+            store.begin_catalog_transaction(tmp_path)
+    finally:
+        transaction.close()
+
+    retry = store.begin_catalog_transaction(tmp_path)
+    retry.close()
+
+
+def test_catalog_transaction_fails_closed_when_namespace_is_replaced(
+    tmp_path: Path,
+) -> None:
+    transaction = store.begin_catalog_transaction(tmp_path)
+    api_root = paths.foundry_api_root(tmp_path)
+    moved_root = tmp_path / "api-before-replacement"
+    api_root.rename(moved_root)
+    api_root.mkdir()
+
+    with pytest.raises(FoundryPublicationError, match="namespace changed"):
+        transaction.close()
+
+    transaction.abandon()
+
+
+def test_write_once_model_relative_is_idempotent_and_rejects_conflicts(
+    tmp_path: Path,
+) -> None:
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        created, identity = store.write_once_model_relative(
+            parent_fd, "nested/docset.json", _docset()
+        )
+        assert not created
+        assert identity == store.entry_identity_relative(parent_fd, "nested/docset.json")
+
+        existing, existing_identity = store.write_once_model_relative(
+            parent_fd, "nested/docset.json", _docset()
+        )
+        assert existing
+        assert existing_identity == identity
+
+        with pytest.raises(FoundryInputError, match="already exists"):
+            store.write_once_model_relative(
+                parent_fd,
+                "nested/docset.json",
+                _docset().model_copy(update={"title": "Changed"}),
+            )
+    finally:
+        os.close(parent_fd)
+
+
+def test_copy_tree_to_directory_copies_nested_regular_files_and_rolls_back_unsafe_input(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "candidate"
+    (source / "nested").mkdir(parents=True)
+    (source / "asset.json").write_text("{}", encoding="utf-8")
+    (source / "nested" / "artifact.txt").write_text("payload", encoding="utf-8")
+    destination = tmp_path / "destination"
+    destination.mkdir()
+    destination_fd = os.open(
+        destination, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    )
+    try:
+        store.copy_tree_to_directory(source, destination_fd, "published")
+        assert (destination / "published" / "nested" / "artifact.txt").read_text(
+            encoding="utf-8"
+        ) == "payload"
+
+        unsafe_source = tmp_path / "unsafe-candidate"
+        unsafe_source.mkdir()
+        (unsafe_source / "link").symlink_to(source / "asset.json")
+        with pytest.raises(FoundryInputError, match="unsafe"):
+            store.copy_tree_to_directory(unsafe_source, destination_fd, "unsafe")
+        assert not (destination / "unsafe").exists()
+    finally:
+        os.close(destination_fd)
+
+
+def test_publish_asset_publishes_once_without_replacing_existing_root(
+    tmp_path: Path,
+) -> None:
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    staged = assets / ".stage"
+    staged.mkdir()
+    (staged / "asset.json").write_text("{}", encoding="utf-8")
+    published = assets / "asset-1"
+
+    outcome = store.publish_asset(staged, published)
+
+    assert outcome.owned_root
+    assert outcome.identity is not None
+    assert (published / "asset.json").is_file()
+
+    retry_stage = assets / ".retry-stage"
+    retry_stage.mkdir()
+    with pytest.raises(FoundryInputError, match="already exists"):
+        store.publish_asset(retry_stage, published)

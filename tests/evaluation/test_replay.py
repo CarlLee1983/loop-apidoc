@@ -27,11 +27,52 @@ from loop_apidoc.evaluation.models import (
     ExpectedClaim,
     ExpectedRelationship,
 )
-from loop_apidoc.evaluation.replay import ReplayRunner
+from loop_apidoc.evaluation.models import MetricReport, ReplayReport
+from loop_apidoc.evaluation.replay import ReplayRunner, compare_replays
 
 
 def test_replay_runner_has_no_production_mutation_ports():
     assert set(inspect.signature(ReplayRunner).parameters) == {"runtime", "domain_pack"}
+
+
+def test_compare_replays_reports_metric_resource_deltas_and_missing_costs():
+    metrics = MetricReport(
+        claim_precision=0.5,
+        claim_recall=0.4,
+        unsupported_assertion_rate=0.0,
+        evidence_reference_correctness=1.0,
+        field_omission_rate=0.0,
+        conflict_detection_recall=1.0,
+    )
+    baseline = ReplayReport(
+        case_id="case",
+        case_version="1",
+        runtime_identity="base",
+        runtime_version="1",
+        domain_version="1",
+        metrics=metrics,
+        cost=2.0,
+        latency_ms=None,
+    )
+    candidate = ReplayReport(
+        case_id="case",
+        case_version="1",
+        runtime_identity="candidate",
+        runtime_version="2",
+        domain_version="1",
+        metrics=metrics.model_copy(
+            update={"claim_precision": 0.8, "claim_recall": 0.9}
+        ),
+        cost=2.5,
+        latency_ms=10.0,
+    )
+
+    comparison = compare_replays(baseline, candidate)
+
+    assert comparison.precision_delta == pytest.approx(0.3)
+    assert comparison.recall_delta == pytest.approx(0.5)
+    assert comparison.cost_delta == 0.5
+    assert comparison.latency_delta_ms is None
 
 
 def test_replay_is_reproducible_for_fixed_runtime_result():

@@ -144,9 +144,10 @@ deterministic source provenance, and fail-closed rendering. Its MIT notice is re
 The audit contract is versioned and source-bound: schema/ruleset, `max_bytes`, manifest digest,
 per-source SHA-256, and a stable source-binding digest are all checked.
 `assess-sources --source-risk` reinspects current bytes and embeds the matching verified audit
-in the quality report, and `assemble --source-quality` repeats that deterministic inspection
-and revalidates its stable binding against the newly built manifest
-before creating a run directory. Risk findings govern whether text may enter model context;
+in the quality report, and every `assemble` requires `--source-quality`, repeats that deterministic
+inspection, and revalidates its stable binding against the newly built manifest before creating a
+run directory. This refuses unaudited runs but cannot prove source-read chronology outside this
+process. Risk findings govern whether text may enter model context;
 they are not evidence for an API claim and do not become another source of factual truth.
 
 ### 5. Keep evidence acquisition bounded and reproducible

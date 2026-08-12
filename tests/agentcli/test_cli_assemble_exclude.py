@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 from loop_apidoc.cli import app
+from tests.source_quality_support import write_passing_source_quality
 
 runner = CliRunner()
 
@@ -46,7 +48,14 @@ def test_assemble_exclude_marks_source_ignored(tmp_path: Path):
 
     result = runner.invoke(app, [
         "assemble", "--sources", str(sources), "--extraction", str(extraction),
-        "--output", str(out), "--exclude", "scratch.*",
+        "--output", str(out), "--exclude", "scratch.*", "--source-quality", str(
+            write_passing_source_quality(
+                sources_root=sources,
+                output=tmp_path / "source-quality",
+                generated_at=datetime.now(timezone.utc),
+                excludes=("scratch.*",),
+            )
+        ),
     ])
 
     assert result.exit_code in (0, 1), result.stdout
@@ -62,7 +71,13 @@ def test_assemble_without_exclude_treats_scratch_as_a_source(tmp_path: Path):
 
     result = runner.invoke(app, [
         "assemble", "--sources", str(sources), "--extraction", str(extraction),
-        "--output", str(out),
+        "--output", str(out), "--source-quality", str(
+            write_passing_source_quality(
+                sources_root=sources,
+                output=tmp_path / "source-quality",
+                generated_at=datetime.now(timezone.utc),
+            )
+        ),
     ])
 
     assert result.exit_code == 2

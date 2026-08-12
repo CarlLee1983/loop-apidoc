@@ -892,7 +892,7 @@
       <div class="cmd">
         <span class="name"><span class="kw">assemble</span></span>
         <div>
-          <p>Assemble the JSON the agent wrote → plan → preparation → generate → validate, reporting via <code class="inline">--json</code>; optional <code class="inline">--score</code>, <code class="inline">--source-quality</code>, <code class="inline">--url-coverage</code>. When source quality is supplied, assemble rebuilds the manifest and revalidates the embedded source-risk binding before creating a run-dir.</p>
+          <p>Assemble the JSON the agent wrote → plan → preparation → generate → validate, reporting via <code class="inline">--json</code>; optional <code class="inline">--score</code> and <code class="inline">--url-coverage</code>, with required <code class="inline">--source-quality</code>. Assemble rebuilds the manifest and revalidates the embedded source-risk binding before creating a run-dir, refusing unaudited runs without claiming to prove off-process source-read chronology.</p>
           <p class="codes">Exit codes: <b>0</b> validation PASS · <b>1</b> validation FAIL · <b>2</b> extraction input file error (leaves no orphan directory).</p>
         </div>
       </div>

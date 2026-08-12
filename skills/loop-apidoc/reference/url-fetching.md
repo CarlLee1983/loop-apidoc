@@ -138,7 +138,8 @@ When the site is public and bounded by the catalog, cache every catalog node loc
 The command stores raw HTML under `raw/` and navigation-free body text under `body/`.
 Its `corpus.json` stores only compact cards: title, breadcrumb, headings, internal links,
 Action/error-code entities, hashes, sizes, and paths to the local evidence. It never
-passes page bodies to a model. `--max-pages` and `--max-bytes-per-page` bound the work.
+passes page bodies to a model. `--max-pages` bounds unique document fetch targets after
+same-document anchors are collapsed; `--max-bytes-per-page` bounds each response.
 
 If the catalog has no navigation nodes (or the documentation is intentionally one
 page), use `cache-url-entry --url "<ENTRY_URL>" --output "<WORK>/url_corpus"` to cache

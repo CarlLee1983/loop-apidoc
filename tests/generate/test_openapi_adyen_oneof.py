@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
+from tests.source_quality_support import write_passing_source_quality
 
 _CASE = Path(__file__).resolve().parents[2] / "benchmarks" / "adyen-payments-multimethod"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -21,6 +22,11 @@ def test_adyen_payments_post_body_has_native_oneof(tmp_path):
         output_root=tmp_path,
         run_id="bench",
         generated_at=_FIXED_TS,
+        source_quality_dir=write_passing_source_quality(
+            sources_root=_CASE / "sources",
+            output=tmp_path / "source-quality",
+            generated_at=_FIXED_TS,
+        ),
     )
     doc = yaml.safe_load((Path(result.run_dir) / "openapi.yaml").read_text("utf-8"))
     body = doc["paths"]["/payments"]["post"]["requestBody"]["content"][

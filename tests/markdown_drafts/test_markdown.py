@@ -43,6 +43,29 @@ def test_scan_markdown_drafts_keeps_explicit_endpoint_tables_and_examples():
         ("json", "request", 16, 18, '{"amount": 10}'),
         ("xml", "response", 21, 23, "<ok>true</ok>"),
     ]
+    assert all(
+        1 <= locator.start_line <= locator.end_line <= len(source.splitlines())
+        for locator in (endpoint, *endpoint.fields, *endpoint.examples)
+    )
+
+
+def test_scan_markdown_drafts_bounds_unclosed_example_at_end_of_source():
+    source = """# Payments
+
+## POST /payments
+### Request
+```json
+{"amount": 1}"""
+
+    draft = scan_markdown_drafts("payments.md", source)
+
+    example = draft.endpoints[0].examples[0]
+    assert (example.start_line, example.end_line, example.content) == (
+        5,
+        len(source.splitlines()),
+        '{"amount": 1}',
+    )
+    assert 1 <= example.start_line <= example.end_line <= len(source.splitlines())
 
 
 def test_scan_markdown_drafts_supports_chinese_labels_and_omits_ambiguous_tables():

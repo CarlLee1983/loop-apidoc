@@ -10,6 +10,7 @@ import pytest
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline
 from loop_apidoc.shadow.models import ArchitectureMode
 from scripts.quality_gate import required_sanitized_benchmark_cases
+from tests.source_quality_support import write_passing_source_quality
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +52,11 @@ def test_sanitized_fixture_proves_fixture_backed_exact_evidence_parity(
         output_root=tmp_path,
         run_id="sanitized-fixture",
         generated_at=FIXED_TS,
+        source_quality_dir=write_passing_source_quality(
+            sources_root=source.parent,
+            output=tmp_path / "source-quality",
+            generated_at=FIXED_TS,
+        ),
         architecture_mode=ArchitectureMode.SHADOW,
     )
     run_dir = Path(result.run_dir)

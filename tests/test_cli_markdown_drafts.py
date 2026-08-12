@@ -55,6 +55,41 @@ def test_extract_markdown_drafts_writes_non_authoritative_fact_index(tmp_path: P
     assert payload["sources"][0]["endpoints"][0]["path"] == "/api/ping"
 
 
+def test_extract_markdown_drafts_bounds_unclosed_example_at_end_of_source(tmp_path: Path):
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = """# Payments
+
+## POST /payments
+### Request
+```json
+{"amount": 1}"""
+    (sources / "api.md").write_text(source, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    _write_manifest(manifest, sources)
+    output = tmp_path / "markdown-api-facts.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "extract-markdown-drafts",
+            "--sources", str(sources),
+            "--manifest", str(manifest),
+            "--output", str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    example = json.loads(output.read_text(encoding="utf-8"))["sources"][0]["endpoints"][0]["examples"][0]
+    assert example == {
+        "language": "json",
+        "label": "request",
+        "start_line": 5,
+        "end_line": len(source.splitlines()),
+        "content": '{"amount": 1}',
+    }
+
+
 def test_extract_markdown_drafts_refuses_to_overwrite_output(tmp_path: Path):
     sources = tmp_path / "sources"
     sources.mkdir()

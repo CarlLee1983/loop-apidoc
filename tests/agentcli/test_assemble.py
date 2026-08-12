@@ -43,6 +43,7 @@ from loop_apidoc.validate.models import (
     Severity,
     ValidationReport,
 )
+from tests.source_quality_support import write_passing_source_quality
 
 _INVENTORY = {
     "overview": "Demo API",
@@ -62,6 +63,14 @@ _ENDPOINT = {
     "responses": [{"status": "200", "description": "OK", "schema": None}],
     "examples": [], "missing": [],
 }
+
+
+def _quality(tmp_path: Path, sources: Path, generated_at: datetime) -> Path:
+    return write_passing_source_quality(
+        sources_root=sources,
+        output=tmp_path / "source-quality",
+        generated_at=generated_at,
+    )
 
 
 def _write_extraction(extraction_dir: Path) -> None:
@@ -149,12 +158,14 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
     out = tmp_path / "out"
 
+    generated_at = datetime(2026, 6, 27, tzinfo=timezone.utc)
     result = run_assemble_pipeline(
         sources_root=sources,
         extraction_dir=tmp_path / "extraction",
         output_root=out,
         run_id="run-test",
-        generated_at=datetime(2026, 6, 27, tzinfo=timezone.utc),
+        generated_at=generated_at,
+        source_quality_dir=_quality(tmp_path, sources, generated_at),
         urls=[],
     )
 
@@ -176,18 +187,39 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     assert result.run_dir == str(run_dir)
 
 
+def test_run_assemble_pipeline_requires_source_quality_argument(tmp_path: Path) -> None:
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    output = tmp_path / "out"
+
+    with pytest.raises(TypeError, match="source_quality_dir"):
+        run_assemble_pipeline(
+            sources_root=sources,
+            extraction_dir=tmp_path / "extraction",
+            output_root=output,
+            run_id="missing-quality",
+            generated_at=datetime(2026, 6, 27, tzinfo=timezone.utc),
+        )
+
+    assert not output.exists()
+
+
 def test_default_assemble_creates_no_core_directory(tmp_path):
     _write_extraction(tmp_path / "extraction")
     sources = tmp_path / "sources"
     sources.mkdir()
     (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
 
+    generated_at = datetime(2026, 7, 20, tzinfo=timezone.utc)
     result = run_assemble_pipeline(
         sources_root=sources,
         extraction_dir=tmp_path / "extraction",
         output_root=tmp_path / "out",
         run_id="run-legacy",
-        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        generated_at=generated_at,
+        source_quality_dir=_quality(tmp_path, sources, generated_at),
     )
 
     assert result.shadow is None
@@ -201,12 +233,14 @@ def test_shadow_assemble_writes_complete_core_artifacts(tmp_path):
     sources.mkdir()
     (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
 
+    generated_at = datetime(2026, 7, 20, tzinfo=timezone.utc)
     result = run_assemble_pipeline(
         sources_root=sources,
         extraction_dir=tmp_path / "extraction",
         output_root=tmp_path / "out",
         run_id="run-shadow",
-        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        generated_at=generated_at,
+        source_quality_dir=_quality(tmp_path, sources, generated_at),
         architecture_mode=ArchitectureMode.SHADOW,
     )
 
@@ -249,12 +283,14 @@ def test_strict_assemble_rejects_supported_claim_without_exact_evidence(
         lambda *_args: ValidationReport(),
     )
 
+    generated_at = datetime(2026, 7, 20, tzinfo=timezone.utc)
     result = run_assemble_pipeline(
         sources_root=sources,
         extraction_dir=tmp_path / "extraction",
         output_root=tmp_path / "out",
         run_id="run-strict",
-        generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        generated_at=generated_at,
+        source_quality_dir=_quality(tmp_path, sources, generated_at),
         architecture_mode=ArchitectureMode.STRICT,
     )
 
@@ -353,6 +389,9 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
         output_root=tmp_path / "out",
         run_id="run-strict-exact",
         generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 20, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.STRICT,
     )
 
@@ -489,6 +528,9 @@ def test_shadow_assemble_preserves_source_missing_version_as_metadata_gap(tmp_pa
         output_root=tmp_path / "out",
         run_id="run-shadow-missing-version",
         generated_at=datetime(2026, 7, 23, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 23, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.SHADOW,
     )
 
@@ -536,6 +578,9 @@ def test_shadow_runs_after_failed_legacy_validation(tmp_path, monkeypatch):
         output_root=tmp_path / "out",
         run_id="run-shadow-fail",
         generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 20, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.SHADOW,
     )
 
@@ -575,6 +620,9 @@ def test_strict_assemble_blocks_before_core_when_legacy_validation_fails(
         output_root=tmp_path / "out",
         run_id="run-strict-legacy-fail",
         generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 20, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.STRICT,
     )
 
@@ -625,6 +673,9 @@ def test_strict_execution_error_blocks_the_run(tmp_path, monkeypatch):
         output_root=tmp_path / "out",
         run_id="run-strict-error",
         generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 20, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.STRICT,
     )
 
@@ -659,6 +710,9 @@ def test_shadow_error_preserves_legacy_run_result(tmp_path, monkeypatch):
         output_root=tmp_path / "out",
         run_id="run-shadow-error",
         generated_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 20, tzinfo=timezone.utc)
+        ),
         architecture_mode=ArchitectureMode.SHADOW,
     )
 
@@ -683,6 +737,7 @@ def test_run_assemble_pipeline_bad_input_leaves_no_run_dir(tmp_path):
             output_root=out,
             run_id="run-test",
             generated_at=datetime(2026, 6, 27, tzinfo=timezone.utc),
+            source_quality_dir=tmp_path / "source-quality",
             urls=[],
         )
 
@@ -847,6 +902,9 @@ def test_pipeline_backfills_snapshot_file_into_manifest(tmp_path, monkeypatch):
         output_root=out,
         run_id="run-cov",
         generated_at=datetime(2026, 7, 4, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 4, tzinfo=timezone.utc)
+        ),
         urls=["https://a.example/overview"],
         url_coverage_path=cov,
     )
@@ -894,6 +952,9 @@ def test_pipeline_without_coverage_leaves_snapshot_file_none(tmp_path, monkeypat
         output_root=out,
         run_id="run-nocov",
         generated_at=datetime(2026, 7, 4, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 4, tzinfo=timezone.utc)
+        ),
         urls=["https://a.example/overview"],
         url_coverage_path=None,
     )
@@ -931,6 +992,9 @@ def test_pipeline_uses_verified_rendered_snapshot_without_origin_fetch(
         output_root=out,
         run_id="run-rendered",
         generated_at=datetime(2026, 7, 29, tzinfo=timezone.utc),
+        source_quality_dir=_quality(
+            tmp_path, sources, datetime(2026, 7, 29, tzinfo=timezone.utc)
+        ),
         urls=["https://protected.example.com/overview"],
         url_coverage_path=coverage,
     )

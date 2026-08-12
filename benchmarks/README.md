@@ -19,11 +19,13 @@
 ├── expected/                # 人工驗收基準(入庫)
 │   ├── minimum.json         # 此 case 至少必須抽到的重點
 │   └── validation.expect.json  # 預期 PASS/FAIL 與必要 issue 類型
+├── source-quality/         # assemble 必要的來源品質稽核套件(gitignore)
 ├── output/                  # assemble 實際輸出 run-dir(gitignore)
 └── notes.md                 # 來源網址、下載日、觀察、缺漏、決策(入庫)
 ```
 
-**入庫策略**:`sources/`、`work/`、`output/` 一律 gitignore(原文可能有版權、輸出可重生)。
+**入庫策略**:`sources/`、`source-quality/`、`work/`、`output/` 一律 gitignore
+(原文可能有版權;稽核套件與輸出都由原文重生)。
 只 commit `extraction/`、`expected/`、`notes.md` — 這些可重跑、可追溯,但不散布原文。
 
 ## 命名規約
@@ -46,11 +48,29 @@ uv run loop-apidoc preprocess \
 #    fan-out 讀來源,寫出 extraction/{inventory.json,endpoints/*.json,integration.json}
 #    (這步不是 CLI,是 agent 驅動)
 
-# 3. 組裝 + 驗證
+# 3. 來源品質稽核 — assemble 的必要前置(產出 benchmarks/<case-id>/source-quality)
+uv run loop-apidoc manifest \
+  --sources benchmarks/<case-id>/sources \
+  --output  benchmarks/<case-id>/work/manifest.json
+uv run loop-apidoc inspect-source-risk \
+  --sources  benchmarks/<case-id>/sources \
+  --manifest benchmarks/<case-id>/work/manifest.json \
+  --output   benchmarks/<case-id>/work/source-risk
+# observations 由 agent 依 reference/source-quality.md 撰寫;無可追溯發現時為 []
+uv run loop-apidoc assess-sources \
+  --sources      benchmarks/<case-id>/sources \
+  --manifest     benchmarks/<case-id>/work/manifest.json \
+  --source-risk  benchmarks/<case-id>/work/source-risk \
+  --observations benchmarks/<case-id>/work/source-quality-observations.json \
+  --source-set   "<case-id>" \
+  --output       benchmarks/<case-id>/source-quality
+
+# 4. 組裝 + 驗證
 uv run loop-apidoc assemble \
-  --sources    benchmarks/<case-id>/sources \
-  --extraction benchmarks/<case-id>/extraction \
-  --output     benchmarks/<case-id>/output \
+  --sources        benchmarks/<case-id>/sources \
+  --extraction     benchmarks/<case-id>/extraction \
+  --output         benchmarks/<case-id>/output \
+  --source-quality benchmarks/<case-id>/source-quality \
   --json
 # 取回傳 run_dir 後可再單獨驗證:
 uv run loop-apidoc validate --output <run_dir>
@@ -72,8 +92,9 @@ uv run pytest tests/test_benchmarks.py -v
 OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critical_operations
 存在、provenance/examples/integration-contract 齊備。
 
-> **需本機 `sources/`**:驗證器需 manifest 含被引用來源才會把項目標為 verified;
-> `sources/` 為操作者提供且 gitignore(部分有版權),故缺 `sources/` 的 case 會自動 **skip**。
+> **需本機 `sources/` 與 `source-quality/`**:驗證器需 manifest 含被引用來源才會把項目標為
+> verified,而 `assemble` 必須帶通過的來源品質稽核套件;兩者皆為操作者本機產出且 gitignore,
+> 故缺任一者的 case 會自動 **skip**。`--strict-local` 會在跑 pytest 前就明確指出缺哪一項。
 
 ### Sanitized exact-evidence lane
 

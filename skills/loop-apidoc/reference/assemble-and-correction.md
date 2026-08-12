@@ -211,8 +211,8 @@ user**. Never hard-code fill-ins; never fabricate to make validation pass.
   there is ≥1 endpoint. Values render as `<placeholder>` when the source states no example.
 - `validation/report.json` + `validation/report.md`
 - `preparation-report.json` + `preparation-report.md` — pre-generation readiness evidence.
-- `source-quality/` — only when assemble ran with `--source-quality`: the retained
-  pre-extraction assessment reports (a `reject` verdict aborts assemble at exit 2).
+- `source-quality/` — the required retained pre-extraction assessment reports (a `reject`
+  verdict aborts assemble at exit 2).
 
 **Scaffolding (present but not product):** `manifest.json`, `plan/normalization-plan.json`
 (also linked from review.html), `extraction/queries.jsonl`, `extraction/answers/*.txt`.

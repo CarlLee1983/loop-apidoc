@@ -263,8 +263,9 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] [--source-quality ./work/source-quality] [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;模型名稱&gt;] [--architecture-mode legacy|shadow|strict] [--json] [--score]
+  [--url &lt;URL&gt; ...] --source-quality ./work/source-quality [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;模型名稱&gt;] [--architecture-mode legacy|shadow|strict] [--json] [--score]
 </code></pre>
+<p><strong>必要前置條件：</strong><code>--source-quality</code> 必須指定 <code>assess-sources</code> 產出的 pass 套件。assemble 會拒絕建立未稽核 run，但無法證明本流程外 agent 讀取來源文字的時間順序。</p>
 <p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>,選用 typed <code>integration.json</code>)組裝成輸出:manifest → plan → generate → validate。選填契約保存來源明載的 <code>transport</code>、<code>amount_direction</code>、<code>idempotency</code> 與 <code>line_currency_policy</code>；request 沒有 currency 欄位不會被當成單幣別證據。若傳入 <code>assess-sources</code> 產出的 <code>--source-quality</code> 目錄，<code>assemble</code> 會重建 manifest，並在建立 run-dir 前重新驗證內嵌 source-risk binding；audit 缺失、過期或不匹配會中止，通過的 quality report 才保存進 run-dir。<code>--url-coverage</code> 在有 URL 來源時檢核撈取涵蓋率(僅 warning)。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>review_html</code>、<code>ok</code>、<code>status</code>、<code>report</code>、<code>toolchain</code> 印到 stdout,供 agent 解析並驅動修正迴圈。run 目錄另寫出 <code>run.json</code>,記錄 <code>toolchain</code>(<code>cli_version</code>、<code>extraction_contract_version</code>、<code>skill_version</code>、<code>model</code>)以便日後歸因;<code>--extractor-model</code> 由 agent 明確帶入擷取模型名稱,省略即 <code>null</code>(CLI 不推測)。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔或 strict 執行錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
 <p><code>--architecture-mode shadow</code> 會在 legacy validation report 寫出後啟用非權威的 Core 觀測旁路。成功時將 source-set、evidence、runtime result、claims、contract、decision、workflow、events 與 comparison JSON 寫入 <code>&lt;run-dir&gt;/core/</code>；失敗時寫出 <code>core/error.json</code> 並顯示 warning。兩者都不改變 legacy validation、score、approval、Foundry、<code>ok</code>/<code>status</code> 或退出碼。預設為 <code>legacy</code>，不建立 <code>core/</code>。</p>
 <p><code>--architecture-mode strict</code> 是阻斷式 Core candidate 路徑。它只在 legacy validation 通過後執行，並要求每個 legacy-supported plan item 的所有 material claim 都有 exact evidence。缺口會寫出 <code>core/grounding-report.json</code> 並以 <code>1</code> 結束；執行錯誤會寫出 <code>core/error.json</code>、run 標記為 <code>blocked</code> 並以 <code>2</code> 結束。成功會寫入未核准的 <code>core/release.json</code> 與 <code>core/execution.json</code>。strict 不會發布或改動 Foundry，且 Foundry 會在人工核准前獨立驗證 candidate eligibility。</p>
@@ -381,7 +382,7 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
     ├── validation/
     │   ├── report.json
     │   └── report.md
-    ├── source-quality/             # 傳入 --source-quality 時保留來源品質稽核
+    ├── source-quality/             # 必備來源品質稽核
     │   ├── source-quality-report.json
     │   ├── source-quality-report.zh-TW.md
     │   ├── source-diff.json
