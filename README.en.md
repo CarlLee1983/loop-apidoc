@@ -93,6 +93,8 @@ The extraction engine is **the current coding agent itself**: inside a Claude Co
 
 ### Full flow
 
+![loop-apidoc workflow from mixed sources through the pre-agent gate, agent claim proposal, deterministic verification, and reviewable outputs](docs/assets/loop-apidoc-flow-demo.gif)
+
 ```
 acquisition/preprocess → manifest → inspect-source-risk → agent source-quality review → assess-sources --source-risk → extraction (agent read-only subagent fan-out) → verify-extraction → assemble: manifest → normalization plan → generate (OpenAPI + Markdown) → validate
 ```

@@ -89,6 +89,8 @@ Implementation-backed conformance benchmark 是第三條、分開回報的 assur
 
 ### 完整流程
 
+![loop-apidoc 從異質來源、讀取前風險閘、agent claim 提案到確定性驗證與可審查產物的循環流程](docs/assets/loop-apidoc-flow-demo.gif)
+
 ```
 來源取得／preprocess → manifest → inspect-source-risk → agent 來源品質審查 → assess-sources --source-risk → 擷取(agent 唯讀 subagent fan-out) → verify-extraction → assemble: manifest → 規格化計畫 → 生成(OpenAPI + Markdown) → 驗證
 ```
