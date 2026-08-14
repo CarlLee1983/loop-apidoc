@@ -20,6 +20,9 @@ Two reference files hold the heavy detail — load each when you reach that phas
   model, and the correction strategy (load when handling assemble results, steps 6–8).
 - **`reference/url-fetching.md`** — the coverage-checked URL fetching SOP + `coverage.json`
   schema (load when any source is a public URL, before fetching).
+- **`reference/focus-directives.md`** — the `focus.json` / `focus-response.json` contract, the
+  two outcomes and why there is no third, and the exact-evidence rule for anchors (load when
+  the operator supplies `--focus`, before dispatching extraction subagents).
 - **`reference/model-orchestration.md`** — model-neutral role, capability-tier, artifact, and
   escalation contract (load **before dispatching any subagent**, not only when splitting work
   across Codex/Claude runtimes — it is what keeps a bounded extraction off a high-reasoning
@@ -239,6 +242,15 @@ locator available. Return only the JSON object."* Prefer `p.12` / `page 12`,
 for legacy validation compatibility, but semantic shadow treats it as degraded
 `insufficient` evidence and leaves the claim unverified.
 
+**When the operator supplied a `focus.json`, paste every directive verbatim into every
+extraction subagent's prompt** — inventory, endpoint, and integration alike. Directives are
+broadcast, not routed: a directive's own words carry its scope, and picking recipients would
+mean inventing a scope language. Tell each subagent to report, in its return payload, any
+directive it can answer and the exact fragment that answers it. Subagents never write
+`focus-response.json`; **you** write it once, after they return. A directive never licenses
+inventing anything — if the sources are silent the answer is `not_found`, and that is a
+correct answer. See `reference/focus-directives.md`.
+
 After writing any extraction file, parse it as JSON before continuing. Use the **English
 keys** exactly as the schemas show — localized machine keys are rejected at assemble (exit 2).
 
@@ -332,12 +344,19 @@ omitting endpoint subagents.
    not establish a single-currency line; leave `policy` null and record the gap
    unless the source explicitly states the policy.
    Omit the file entirely only when the sources describe no integration mechanics.
+5. **focus response** (only when the operator supplied `--focus`) — **you** write
+   `<WORK>/focus-response.json`, answering every directive exactly once with `satisfied`
+   (anchors, each carrying a v1 exact evidence reference — a filename alone is refused) or
+   `not_found` (listing **every** supported, readable manifest source you searched). There is
+   no third outcome: whether a directive applies is the operator's judgement, not yours.
+   Formats and rules: `reference/focus-directives.md`.
 
 ### 5. Verify the extraction
 
 ```bash
 <APIDOC> verify-extraction \
-  --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" [--url "<URL>" ...] --json
+  --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" [--url "<URL>" ...] \
+  [--focus "<FOCUS>"] --json
 ```
 
 Exit 0 → proceed. Exit 2 → the JSON array on stdout lists every violation (missing or
@@ -360,12 +379,20 @@ structure-preserving snapshot so the source keeps its tables, and still read eve
 yourself. `assemble` runs the same checks, so skipping this step is safe but wastes
 a round trip.
 
+With `--focus`, this step also checks the **shape** of your answers: every directive answered
+exactly once, each anchor resolving to an endpoint the extraction actually contains, each
+piece of evidence reopening from its manifest source with a matching digest. An honest
+`not_found` passes here and surfaces later as a `FOCUS_UNMET` validation issue instead — error
+for an Expectation Directive, warning for a Coverage Directive — with the run's artifacts
+still produced. `verify-extraction` prints a count of falsified expectations on stderr as a
+preview; it does not change the exit code.
+
 ### 6. Assemble + validate
 
 ```bash
 <APIDOC> assemble \
   --sources "<EXTRACT_SOURCES>" --extraction "<WORK>" --output "<OUT>" [--url "<URL>" ...] \
-  --source-quality "<WORK>/source-quality" --json
+  --source-quality "<WORK>/source-quality" [--focus "<FOCUS>"] --json
 ```
 
 To iterate toward a **quality bar** (not just "no errors"), add the score-gated flags:
