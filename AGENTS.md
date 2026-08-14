@@ -153,7 +153,7 @@ How the agent responds, by intent:
 - **Re-read & fill** (`REQUIRED_INFO_MISSING`, or `SOURCE_UNVERIFIED` from a missing citation): re-read the affected source scope and fill the JSON.
 - **Fail-closed** (`SOURCE_CONFLICT`, `UNSUPPORTED_ASSERTION`, or `SOURCE_UNVERIFIED` surviving re-verification): present the remaining gaps/conflicts — **never fabricate**.
 
-Per-code severity and the structured-routing fields (`target_file`/`field_path`/`requery_scope`) are documented in `skills/loop-apidoc/reference/assemble-and-correction.md`. The skill's other reference docs live alongside it in `skills/loop-apidoc/reference/`: `extraction-schemas.md`, `model-orchestration.md`, `source-quality.md`, and `url-fetching.md`.
+Per-code severity and the structured-routing fields (`target_file`/`field_path`/`requery_scope`) are documented in `skills/loop-apidoc/reference/assemble-and-correction.md`. The skill's other reference docs live alongside it in `skills/loop-apidoc/reference/`: `extraction-schemas.md`, `focus-directives.md`, `model-orchestration.md`, `source-quality.md`, and `url-fetching.md`.
 
 ## Provenance ↔ validation alignment
 
