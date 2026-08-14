@@ -284,7 +284,7 @@ def _error_rows(
         citation = _citation(relative_path, line, line, heading)
         results.append({
             "code": code,
-            "meaning": cells[meaning_index] or None,
+            "meaning": cells[meaning_index],
             "http_status": None,
             "applicable_to": [],
             "source": citation,
