@@ -36,11 +36,11 @@ once, an anchor resolves to an endpoint the extraction actually contains, its an
 agrees with the directive's intent, and its evidence materializes from a manifest source with
 a matching digest. Any of those failing stops the run before a run directory exists.
 
-Two checks the design calls for are not wired up yet, so do not rely on them:
+A falsified Expectation Directive then fails validation as a `FOCUS_UNMET` error — the run's
+artifacts are still written, so you can read the guide, the OpenAPI document, and the answer's
+searched-source list before deciding whether to gather better sources or re-run the
+extraction. A Coverage Directive coming back empty is a warning and blocks nothing.
 
-- A falsified Expectation Directive does not yet fail validation — `kind` is recorded but not
-  acted on.
-- `searched_sources` is accepted but not verified against the manifest, so a `not_found`
-  answer listing one source is currently taken at face value.
-
-Both arrive in the tickets that follow this one.
+One check the design calls for is not wired up yet, so do not rely on it: `searched_sources`
+is recorded but not verified against the manifest, so a `not_found` answer listing a single
+source is currently taken at face value. That arrives in a following ticket.

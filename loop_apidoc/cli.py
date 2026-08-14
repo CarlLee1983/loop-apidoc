@@ -750,7 +750,10 @@ def verify_extraction(
     exit 0 乾淨;exit 2 有違規或硬 schema 錯誤（不會是 1——1 代表 validate FAIL）。
     """
     from loop_apidoc.agentcli.assemble import AssembleInputError
-    from loop_apidoc.agentcli.verify import verify_extraction_dir
+    from loop_apidoc.agentcli.verify import (
+        preview_falsified_expectations,
+        verify_extraction_dir,
+    )
     from loop_apidoc.focus.loader import FocusInputError
 
     try:
@@ -777,6 +780,19 @@ def verify_extraction(
             typer.echo(f"  - {violation}", err=True)
     else:
         typer.echo("verify-extraction PASS:擷取輸入符合契約")
+    if not violations and focus is not None:
+        # 純預告:讓人在跑完整 assemble 之前就知道要不要先回頭補來源。
+        # 刻意不進 --json 輸出、不動 exit code —— 那個陣列的意義是「該擋的違規」,
+        # 而落空的斷言該留下 run 目錄與產物,是 validate 的結局。
+        falsified = preview_falsified_expectations(
+            extraction_dir=extraction, focus_file=focus)
+        if falsified and not json_out:
+            typer.echo(
+                f"預告:{len(falsified)} 條 expectation directive 落空"
+                f"({'、'.join(falsified)});assemble 會以 FOCUS_UNMET 判定驗證失敗,"
+                "但仍會產出 run 目錄供你判斷是來源真的沒有、還是查得不夠。",
+                err=True,
+            )
     raise typer.Exit(code=2 if violations else 0)
 
 

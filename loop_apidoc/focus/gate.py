@@ -43,6 +43,25 @@ def focus_evidence_references(
     ]
 
 
+def falsified_expectations(focus: FocusPackage | None) -> list[str]:
+    """回報哪些 Expectation Directive 落空 —— 純預告,不是違規。
+
+    `verify-extraction` 用它讓人在跑完整 assemble 之前就知道要不要回頭補來源。
+    它**不得**影響 exit code:落空的斷言該留下 run 目錄與產物,那是 validation
+    的結局,不是輸入閘的。
+    """
+    if focus is None:
+        return []
+    unmet = {
+        response.id for response in focus.responses
+        if response.outcome == "not_found"
+    }
+    return [
+        directive.id for directive in focus.directives
+        if directive.kind == "expectation" and directive.id in unmet
+    ]
+
+
 def _correspondence_violations(focus: FocusPackage) -> list[str]:
     declared = {directive.id for directive in focus.directives}
     answered = {response.id for response in focus.responses}

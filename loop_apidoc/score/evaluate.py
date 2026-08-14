@@ -27,6 +27,12 @@ _ISSUE_CATEGORY: dict[IssueCode, ScoreCategory] = {
 
 _WARNING_PENALTY = 12
 _ERROR_PENALTY = 40
+# 分數必須跨 run 可比,所以它只看來源說了什麼,不看誰問了什麼。FOCUS_UNMET 是
+# 提出者指令的結局,一旦計入,同一份來源就會因為 focus 不同而得到不同分數,而
+# 提出者也能靠寫寬鬆的 directive 把分數拉高 —— 那會讓這個數字的意義反轉。
+# 見 docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md。
+_UNSCORED_CODES: frozenset[IssueCode] = frozenset({IssueCode.FOCUS_UNMET})
+
 _CODE_ERROR_PENALTY: dict[IssueCode, int] = {
     IssueCode.OPENAPI_INVALID: 100,
     IssueCode.UNSUPPORTED_ASSERTION: 50,
@@ -208,6 +214,7 @@ def evaluate_score(
             score_impact=0 if _declared_example_gap(issue, inputs.plan) else None,
         )
         for issue in inputs.validation.issues
+        if issue.code not in _UNSCORED_CODES
     ]
     findings.extend(_reviewability_findings(inputs))
     category_scores = _category_scores(findings)

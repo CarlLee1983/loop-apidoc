@@ -379,7 +379,7 @@ def run_assemble_pipeline(
     )
     write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
-    report = validate_outputs(plan, result, manifest)
+    report = validate_outputs(plan, result, manifest, focus)
     write_validation_reports(report, run_dir / "validation")
 
     status = RunStatus.PASSED if report.ok else RunStatus.FAILED
