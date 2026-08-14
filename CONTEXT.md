@@ -83,6 +83,24 @@ A source-stated duplicate or in-progress outcome and the caller action associate
 with it, optionally scoped to operations or provider error codes.
 _Avoid_: Error-code meaning, retry guess
 
+**Coverage Directive**:
+A requester-authored instruction naming a scope of attention the extraction should sweep
+exhaustively. Reporting that no source states it is a complete answer, not a failure.
+_Avoid_: Hint, preference, soft requirement
+
+**Expectation Directive**:
+A requester-authored existence claim that supplier sources document a specific operation,
+field, or error code. It is falsified — not satisfied — when no source states it, and a
+falsified claim fails validation.
+_Avoid_: Required field, feature request, must-have
+
+**Focus Response**:
+The agent's one-to-one answer to each directive, resolved either to deterministic anchors
+carrying exact evidence, or to a not-found outcome naming every readable source searched.
+It has no third outcome; a directive's applicability is the requester's judgement, never
+the agent's.
+_Avoid_: Extraction result, missing list, directive status
+
 **Line Currency Policy**:
 A source-stated constraint on how a product line selects or binds currency. The
 absence of a request currency field is not evidence of a single-currency policy.
