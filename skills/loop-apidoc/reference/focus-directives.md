@@ -26,7 +26,7 @@ get a better-sounding answer.
 | --- | --- |
 | `id` | unique within the file; your answer is keyed on it |
 | `kind` | `expectation` = the operator asserts the sources document this; `coverage` = a scope to sweep where finding nothing is a complete answer. **Sole determinant of severity** |
-| `intent` | currently `find_operation`. **Sole determinant of anchor type** |
+| `intent` | `find_operation` → an `operation` anchor; `find_field` → a `field` anchor. **Sole determinant of anchor type** |
 | `text` | the operator's own words — read them, they carry the scope |
 | `rationale` | optional context; not checked |
 
@@ -78,9 +78,15 @@ against the manifest and the digest recomputed, so a guessed digest fails.
 `reported_by` names the subagent whose read produced the anchor. It exists so a wrong anchor
 stays traceable after you centralise the answers.
 
-Anchor `value` for `type: "operation"` is the endpoint identity string: `METHOD /path`, or
-`METHOD (webhook) <summary>` when a webhook's path is null. The anchor's `type` must be the one
-its directive's `intent` calls for.
+Anchor `value` depends on the type. An `operation` anchor is the endpoint identity string:
+`METHOD /path`, or `METHOD (webhook) <summary>` when a webhook's path is null. A `field` anchor
+is a field name, optionally qualified (`SettleBody.merchant_trade_no` or just
+`merchant_trade_no`); resolution follows `schema_ref` into the inventory's shared schemas and
+matches on the leaf name, the same rule the source-fact coverage check uses — so the two gates
+cannot disagree about whether a field was extracted. A name that appears only inside a
+description does not count: mentioning a field is not extracting it.
+
+The anchor's `type` must be the one its directive's `intent` calls for.
 
 ### `not_found` must account for every readable source
 
