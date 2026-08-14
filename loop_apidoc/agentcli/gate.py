@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from loop_apidoc.agentcli.cross_file import cross_file_violations
 from loop_apidoc.agentcli.source_guard import check_extraction_inputs
+from loop_apidoc.focus.gate import focus_violations
+from loop_apidoc.focus.models import FocusPackage
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.source_facts.deferral import deferral_violations
 from loop_apidoc.source_facts.gate import source_fact_violations
@@ -24,11 +26,13 @@ def check_extraction(
     integration: dict | None,
     manifest: Manifest,
     facts: FactIndex | None = None,
+    focus: FocusPackage | None = None,
 ) -> list[str]:
-    """一次列出所有違規(path / source / 跨檔 / 來源事實),讓 agent 一次改寫即可。"""
+    """一次列出所有違規(path / source / 跨檔 / 來源事實 / focus),讓 agent 一次改寫即可。"""
     return (
         check_extraction_inputs(inventory, endpoints, integration, manifest)
         + cross_file_violations(inventory, endpoints, integration)
         + source_fact_violations(facts or FactIndex(), endpoints, inventory)
         + deferral_violations(endpoints)
+        + focus_violations(focus, inventory, endpoints)
     )

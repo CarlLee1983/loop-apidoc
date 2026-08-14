@@ -736,6 +736,11 @@ def verify_extraction(
         [], "--exclude",
         help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
     ),
+    focus: Path | None = typer.Option(
+        None, "--focus",
+        help="擷取重點指令檔(focus.json);agent 的應答讀自 <extraction>/focus-response.json",
+        exists=True, file_okay=True, dir_okay=False, readable=True,
+    ),
     json_out: bool = typer.Option(
         False, "--json", help="把違規以 JSON 陣列印到 stdout(供 agent 解析)"
     ),
@@ -746,6 +751,7 @@ def verify_extraction(
     """
     from loop_apidoc.agentcli.assemble import AssembleInputError
     from loop_apidoc.agentcli.verify import verify_extraction_dir
+    from loop_apidoc.focus.loader import FocusInputError
 
     try:
         violations = verify_extraction_dir(
@@ -754,8 +760,9 @@ def verify_extraction(
             generated_at=datetime.now(timezone.utc),
             urls=list(url),
             excludes=tuple(exclude),
+            focus_file=focus,
         )
-    except AssembleInputError as exc:
+    except (AssembleInputError, FocusInputError) as exc:
         if json_out:
             typer.echo(json.dumps([str(exc)], ensure_ascii=False, indent=2))
         else:
@@ -1055,6 +1062,11 @@ def assemble(
         "--extractor-model",
         help="執行擷取的模型名稱,由 agent 明確帶入並記入 run.json;省略即 null(CLI 不推測)",
     ),
+    focus: Path | None = typer.Option(
+        None, "--focus",
+        help="擷取重點指令檔(focus.json);agent 的應答讀自 <extraction>/focus-response.json",
+        exists=True, file_okay=True, dir_okay=False, readable=True,
+    ),
     architecture_mode: ArchitectureMode = typer.Option(
         ArchitectureMode.LEGACY,
         "--architecture-mode",
@@ -1096,6 +1108,7 @@ def assemble(
         RunDirectoryCollisionError,
         run_assemble_pipeline,
     )
+    from loop_apidoc.focus.loader import FocusInputError
 
     now = datetime.now(timezone.utc)
     try:
@@ -1111,8 +1124,9 @@ def assemble(
             excludes=tuple(exclude),
             extractor_model=extractor_model,
             architecture_mode=architecture_mode,
+            focus_file=focus,
         )
-    except AssembleInputError as exc:
+    except (AssembleInputError, FocusInputError) as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)
         raise typer.Exit(code=2) from exc
     except RunDirectoryCollisionError as exc:
