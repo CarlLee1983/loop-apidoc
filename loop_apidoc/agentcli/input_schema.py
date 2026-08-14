@@ -10,7 +10,10 @@ degraded output or a validation gap.
 
 Design rules:
 - Nulls / empty arrays stay allowed wherever a source may genuinely omit info —
-  fail-closed gaps are surfaced by validation, not by rejecting the input.
+  fail-closed gaps are surfaced by validation, not by rejecting the input. The
+  exception is an identity a downstream artifact is keyed on: `errors[].code`
+  is the sole input to the generated `ErrorCode` enumeration, so an entry
+  without one is a malformed entry rather than a documented gap.
 - Only the localized-key hot spots (`schemas[].fields[]`, endpoint
   `parameters[]`) forbid unknown keys; `x-` extension keys are tolerated. Every
   other entry is permissive about extra keys to avoid false positives on
@@ -152,6 +155,31 @@ class SchemaEntry(EvidenceBearingInput):
     source: str | None = None
 
 
+class ErrorEntryInput(EvidenceBearingInput):
+    """The provider error catalogue — the only path into the generated
+    `ErrorCode` enumeration, so the code itself must be present and typed.
+
+    `meaning` may be empty: whether the text is *useful* is validation's
+    judgement, and enforcing it here too would report one gap from two layers.
+    Unknown keys stay tolerated (`_Lax`) because `source_facts` deliberately
+    reads nested field structures off an error entry to keep a shared error
+    table from being counted as an uncovered field on every endpoint.
+    """
+
+    code: str
+    meaning: str
+    http_status: str | None = None
+    applicable_to: list[str] = []
+    source: str | None = None
+
+    @field_validator("code")
+    @classmethod
+    def _code_is_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("錯誤碼不可為空白")
+        return value
+
+
 class OperationalApplicabilityInput(_Lax):
     operation: str
     field: str | None = None
@@ -238,7 +266,7 @@ class InventoryInput(_Lax):
     security_schemes: list[EvidenceBearingInput] = []
     endpoints: list[InventoryEndpointInput] = []
     schemas: list[SchemaEntry] = []
-    errors: list[EvidenceBearingInput] = []
+    errors: list[ErrorEntryInput] = []
     operational: list[OperationalInput] = []
     missing: list[Any] = []
 

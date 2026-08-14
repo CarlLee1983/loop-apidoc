@@ -254,6 +254,81 @@ def test_null_response_status_is_allowed(tmp_path):
     load_extraction_inputs(extraction)  # 不應拋出
 
 
+def _with_errors(*entries) -> dict:
+    inventory = json.loads(json.dumps(_INVENTORY))
+    inventory["errors"] = list(entries)
+    return inventory
+
+
+@pytest.mark.parametrize("entry, expected_path", [
+    ({"meaning": "餘額不足", "source": "§9"}, "errors[0].code"),
+    ({"code": 1001, "meaning": "餘額不足", "source": "§9"}, "errors[0].code"),
+    ({"code": "", "meaning": "餘額不足", "source": "§9"}, "errors[0].code"),
+    ({"code": "   ", "meaning": "餘額不足", "source": "§9"}, "errors[0].code"),
+    ({"code": "1001", "source": "§9"}, "errors[0].meaning"),
+])
+def test_error_entry_without_a_usable_code_or_meaning_is_rejected(
+        tmp_path, entry, expected_path):
+    # errors[] 是錯誤碼流進 OpenAPI ErrorCode enum 的唯一路徑;缺碼、非字串碼、
+    # 空白碼、缺語意都必須在建立 run 目錄之前擋下。
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=_with_errors(entry))
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "inventory.json" in str(exc.value)
+    assert expected_path in str(exc.value)
+
+
+def test_error_entry_with_empty_meaning_is_allowed(tmp_path):
+    # 語意是否完整由 validation 判斷,不在輸入邊界重複把關 —— 兩層都管同一件事
+    # 會讓同一個問題從兩個地方冒出來。
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=_with_errors(
+        {"code": "1001", "meaning": "", "http_status": None,
+         "applicable_to": [], "source": "§9"}))
+
+    load_extraction_inputs(extraction)  # 不應拋出
+
+
+def test_error_entry_keeps_extension_keys_and_typed_evidence(tmp_path):
+    # 收緊的是「code 一定在且是字串」,不是「禁止未知鍵」:x- 擴充鍵、v1 exact
+    # evidence,以及 source_facts 覆蓋檢查刻意讀取的巢狀欄位結構都必須通過。
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=_with_errors({
+        "code": "1001",
+        "meaning": "餘額不足",
+        "http_status": "400",
+        "applicable_to": ["POST /transfer"],
+        "source": "spec.md lines 10-20",
+        "fields": [{"name": "balance", "type": "int"}],
+        "x-vendor-note": "legacy",
+        "evidence": [{
+            "version": 1,
+            "source": "spec.md",
+            "locator": {"kind": "line_range", "start_line": 10, "end_line": 20},
+            "fragment_digest": "a" * 64,
+            "claim_path": "/code",
+        }],
+    }))
+
+    load_extraction_inputs(extraction)  # 不應拋出
+
+
+def test_error_entry_with_malformed_evidence_is_rejected(tmp_path):
+    extraction = tmp_path / "x"
+    _write(extraction, inventory=_with_errors({
+        "code": "1001", "meaning": "餘額不足", "source": "§9",
+        "evidence": [{"version": 1, "source": "spec.md"}],
+    }))
+
+    with pytest.raises(AssembleInputError) as exc:
+        load_extraction_inputs(extraction)
+
+    assert "errors[0].evidence[0]" in str(exc.value)
+
+
 _BENCH = Path(__file__).resolve().parents[2] / "benchmarks"
 
 
