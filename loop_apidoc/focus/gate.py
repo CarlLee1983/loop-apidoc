@@ -9,23 +9,28 @@ from __future__ import annotations
 from loop_apidoc.agentcli.identity import extraction_identities
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 from loop_apidoc.focus.models import FocusDirective, FocusPackage, FocusResponse
+from loop_apidoc.manifest.models import Manifest
 
 
 def focus_violations(
     focus: FocusPackage | None,
     inventory: dict,
     endpoints: list[tuple[str, dict]],
+    manifest: Manifest,
 ) -> list[str]:
     if focus is None:
         return []
     out = _correspondence_violations(focus)
     identities = extraction_identities(inventory, endpoints)
+    readable = manifest.readable_source_identities()
+    known = manifest.all_source_identities()
     by_id = {directive.id: directive for directive in focus.directives}
     for response in focus.responses:
         directive = by_id.get(response.id)
         if directive is None:
             continue  # 已由 _correspondence_violations 報過
-        out += _response_violations(directive, response, identities)
+        out += _response_violations(
+            directive, response, identities, readable, known)
     return out
 
 
@@ -62,6 +67,37 @@ def falsified_expectations(focus: FocusPackage | None) -> list[str]:
     ]
 
 
+def _searched_source_violations(
+    directive: FocusDirective,
+    response: FocusResponse,
+    readable: set[str],
+    known: set[str],
+) -> list[str]:
+    """`not_found` 宣稱的是「它不在任何一份來源裡」,列一份證明不了那件事。
+
+    Coverage 與 Expectation 同標準:`kind` 降低的是結局的 severity,不是達成那個
+    結局所需的答案品質。讀不到的來源(unsupported / unreadable / duplicate /
+    ignored)不要求列出 —— agent 無法查它沒辦法讀的東西 —— 但列了也不算錯,
+    manifest 覆蓋率本來就會另外報告它們。
+    """
+    searched = set(response.searched_sources)
+    out: list[str] = []
+    missing = sorted(readable - searched)
+    if missing:
+        out.append(
+            f"focus-response.json[{directive.id}]: not_found 必須交代每一份可讀來源,"
+            f"未列出:{'、'.join(missing)}"
+            "(宣稱「來源都沒寫」就必須查過全部,查一份證明不了)"
+        )
+    unknown = sorted(searched - known)
+    if unknown:
+        out.append(
+            f"focus-response.json[{directive.id}]: searched_sources 列出 manifest "
+            f"沒有的來源:{'、'.join(unknown)}"
+        )
+    return out
+
+
 def _correspondence_violations(focus: FocusPackage) -> list[str]:
     declared = {directive.id for directive in focus.directives}
     answered = {response.id for response in focus.responses}
@@ -81,11 +117,15 @@ def _response_violations(
     directive: FocusDirective,
     response: FocusResponse,
     identities: set[str],
+    readable: set[str],
+    known: set[str],
 ) -> list[str]:
     if response.outcome == "not_found":
-        return [
+        out = [
             f"focus-response.json[{directive.id}]: not_found 不得附帶錨點"
         ] if response.anchors else []
+        return out + _searched_source_violations(
+            directive, response, readable, known)
 
     if not response.anchors:
         return [

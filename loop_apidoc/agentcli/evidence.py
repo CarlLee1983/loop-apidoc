@@ -22,7 +22,7 @@ from loop_apidoc.domain.evidence import (
     SourceSet,
 )
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
-from loop_apidoc.manifest.models import Manifest, ProcessingStatus
+from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.domain.claim_paths import material_claim_paths
 from loop_apidoc.plan.claim_projection import iter_plan_claim_projections
 from loop_apidoc.plan.models import NormalizationPlan
@@ -182,17 +182,14 @@ def verify_evidence_claim_paths(plan: NormalizationPlan) -> list[str]:
 def _source_set(manifest: Manifest) -> tuple[SourceSet, dict[str, str]]:
     """Create the minimal adapter source set from presently materializable sources."""
 
-    descriptors: list[SourceDescriptor] = []
-    for source in manifest.local_sources:
-        if not source.supported or source.status is not ProcessingStatus.PENDING:
-            continue
-        descriptors.append(
-            _descriptor("file", source.relative_path, source.mime_type)
-        )
-    for source in manifest.url_sources:
-        if source.snapshot_file is None:
-            continue
-        descriptors.append(_descriptor("url", source.url, None))
+    descriptors: list[SourceDescriptor] = [
+        _descriptor("file", source.relative_path, source.mime_type)
+        for source in manifest.readable_local_sources()
+    ]
+    descriptors += [
+        _descriptor("url", source.url, None)
+        for source in manifest.readable_url_sources()
+    ]
 
     ordered = tuple(sorted(
         {item.id: item for item in descriptors}.values(), key=lambda item: item.id

@@ -34,5 +34,5 @@ def check_extraction(
         + cross_file_violations(inventory, endpoints, integration)
         + source_fact_violations(facts or FactIndex(), endpoints, inventory)
         + deferral_violations(endpoints)
-        + focus_violations(focus, inventory, endpoints)
+        + focus_violations(focus, inventory, endpoints, manifest)
     )

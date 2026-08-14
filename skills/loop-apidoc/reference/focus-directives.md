@@ -85,8 +85,14 @@ its directive's `intent` calls for.
 ### `not_found` must account for every readable source
 
 List **every** supported, readable manifest source in `searched_sources` — the claim you are
-making is "it is not in any of them", and one source proves nothing. Do not list sources the
-manifest records as unsupported or unreadable.
+making is "it is not in any of them", and one source proves nothing. This is checked: omitting
+any readable source fails the gate and names the ones you left out, as does naming a source the
+manifest has never heard of. Sources the manifest records as unsupported, unreadable,
+duplicate, or ignored are not required — you cannot search what you cannot read — and listing
+them anyway is tolerated but pointless.
+
+The identity strings are the same ones evidence references use: a manifest-relative path, or an
+acquired URL.
 
 ## What happens to your answer
 

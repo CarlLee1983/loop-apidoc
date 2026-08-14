@@ -41,6 +41,7 @@ artifacts are still written, so you can read the guide, the OpenAPI document, an
 searched-source list before deciding whether to gather better sources or re-run the
 extraction. A Coverage Directive coming back empty is a warning and blocks nothing.
 
-One check the design calls for is not wired up yet, so do not rely on it: `searched_sources`
-is recorded but not verified against the manifest, so a `not_found` answer listing a single
-source is currently taken at face value. That arrives in a following ticket.
+A `not_found` answer must account for every supported, readable source in the manifest —
+listing one and declaring the thing absent is refused, because the claim being made is that it
+is in none of them. Sources the manifest records as unreadable are not required (nothing can
+search what it cannot read) and are tolerated if listed.
