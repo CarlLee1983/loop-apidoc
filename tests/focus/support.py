@@ -69,7 +69,9 @@ def not_found(**overrides) -> dict:
 
 
 def setup(tmp_path: Path, *, directives=None, responses=None,
-          focus_body=None, response_body=None) -> tuple[Path, Path, Path]:
+          focus_body=None, response_body=None,
+          extra_sources: dict[str, str | bytes] | None = None,
+          ) -> tuple[Path, Path, Path]:
     extraction = tmp_path / "extraction"
     (extraction / "endpoints").mkdir(parents=True)
     (extraction / "inventory.json").write_text(
@@ -80,6 +82,13 @@ def setup(tmp_path: Path, *, directives=None, responses=None,
     sources = tmp_path / "sources"
     sources.mkdir()
     (sources / "manual.md").write_text(SOURCE, encoding="utf-8")
+    for name, body in (extra_sources or {}).items():
+        target = sources / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if isinstance(body, bytes):
+            target.write_bytes(body)
+        else:
+            target.write_text(body, encoding="utf-8")
 
     focus = tmp_path / "focus.json"
     if focus_body is not None:
