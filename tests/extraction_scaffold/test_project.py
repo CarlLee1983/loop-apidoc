@@ -108,3 +108,18 @@ def test_project_scaffold_uses_entry_h1_and_harvests_appendix_errors_without_hos
         "applicable_to": [], "source": "sources.md lines 6-6 # Error codes",
     }]
     assert "API base URL not stated in scanned sources" in bundle.inventory["missing"]
+
+
+def test_project_scaffold_writes_an_empty_meaning_rather_than_null():
+    # 錯誤碼表的說明欄為空時,scaffold 曾寫出 meaning: null,而 assemble 的輸入
+    # 邊界要求 meaning 是字串 —— scaffold 產出必須是可被複製後續用的形狀。
+    from loop_apidoc.extraction_scaffold.project import project_scaffold
+
+    index = "# Wallet API\n\n## Error codes\n| Code | 說明 |\n| --- | --- |\n| 1001 |  |\n"
+    bundle = project_scaffold(
+        MarkdownDraftIndex(sources=(scan_markdown_drafts("sources.md", index),)),
+        {"sources.md": index},
+        "sources",
+    )
+
+    assert bundle.inventory["errors"][0]["meaning"] == ""

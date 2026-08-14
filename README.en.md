@@ -677,10 +677,32 @@ Uses pymupdf4llm for PDF and the built-in fail-closed OOXML normalizer for `.doc
 
 ```bash
 uv run loop-apidoc verify-extraction \
-  --sources ./sources --extraction ./work [--url <URL> ...] [--json]
+  --sources ./sources --extraction ./work [--url <URL> ...] [--focus ./focus.json] [--json]
 ```
 
 Before calling `assemble`, checks the agent-produced extraction directory (`inventory.json` + `endpoints/*.json`, optional `integration.json`) with the same input gate `assemble` applies: schema, source citations, cross-file invariants, and a **semantic completeness gate**. Optional v1 `evidence[]` references are also reopened against the manifest snapshot: their exact source identity, typed locator, and normalized-fragment SHA-256 must match before assembly. The latter mechanically scans Markdown sources for endpoint declarations, parameter tables, and example blocks, then fails closed when an endpoint's source section documents fields or examples the extraction dropped — naming the exact fields — and rejects placeholder answers such as "requires further extraction". A field the source genuinely does not describe stays a gap: name it in `missing[]` and the check is satisfied, so the gate never pressures the model into fabricating. **Writes nothing and creates no run directory.** Exit codes: `0` = clean, `2` = violations or hard schema errors (never `1` — `1` is reserved for validate FAIL). `--json` prints the violations as a JSON array to stdout for the agent to parse.
+
+### `--focus` — requester-authored extraction focus directives
+
+Optional on both `verify-extraction` and `assemble`; omitting it leaves the pipeline
+exactly as it was. A `focus.json` file declares directives naming what this particular
+integration cannot ship without — a settlement callback, a wallet transfer operation — and
+the extraction agent answers each one exactly once in `<extraction>/focus-response.json`.
+
+A directive's `kind` is the sole determinant of severity: an **Expectation Directive**
+asserts that supplier sources document the thing, a **Coverage Directive** names a scope to
+sweep where finding nothing is a complete answer. Its `intent` is the sole determinant of
+anchor type. An answer resolves to `satisfied`, carrying anchors each pinned to an exact
+source fragment — a filename alone is refused — or to `not_found`, carrying the sources
+searched. There is deliberately no third outcome: whether a directive applies is the
+requester's judgement, not the agent's.
+
+Structural problems (an unanswered directive, an anchor resolving to no extracted endpoint,
+evidence naming a source outside the manifest) fail before a run directory exists. Focus
+material never reaches `provenance.json`, the score, or any Foundry-governed asset, so two
+runs over the same sources with different directives stay comparable — see
+`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`. Copyable examples live
+in [`examples/focus/`](examples/focus/), which also records which checks are wired up today.
 
 ### GraphQL and AsyncAPI status
 
@@ -698,6 +720,7 @@ uv run loop-apidoc assemble \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
   --source-quality ./work/source-quality [--extractor-model <model-name>] \
+  [--focus ./focus.json] \
   [--architecture-mode legacy|shadow|strict] [--json] [--score]
 ```
 

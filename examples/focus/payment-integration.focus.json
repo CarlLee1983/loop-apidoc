@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "directives": [
+    {
+      "id": "settlement-callback",
+      "kind": "expectation",
+      "intent": "find_operation",
+      "text": "一定要找到結算完成的回呼通知端點。供應商的對帳流程依賴它,若來源真的沒有記載,請在應答中列出已查過的每一份來源。",
+      "rationale": "對帳排程以此回呼為觸發點,缺了它整份契約無法上線。"
+    },
+    {
+      "id": "refund-operation",
+      "kind": "coverage",
+      "intent": "find_operation",
+      "text": "掃過所有與退款、取消、沖正相關的端點;不確定供應商是否提供,找不到不算失敗。",
+      "rationale": "退款流程排在第二期,先確認供應商有沒有。"
+    }
+  ]
+}

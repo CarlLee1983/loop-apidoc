@@ -283,7 +283,18 @@ def test_manifest_source_warnings_reduce_reviewability() -> None:
     assert report.findings[0].code == "SOURCE_UNSUPPORTED"
 
 
-def test_issue_category_mapping_covers_every_issue_code() -> None:
-    from loop_apidoc.score.evaluate import _ISSUE_CATEGORY
+def test_issue_category_mapping_covers_every_scored_issue_code() -> None:
+    # 每個「會計分」的 code 都必須有類別;刻意不計分的則必須明列在
+    # _UNSCORED_CODES,好讓新增 code 的人被迫二選一,而不是漏掉。
+    from loop_apidoc.score.evaluate import _ISSUE_CATEGORY, _UNSCORED_CODES
 
-    assert set(_ISSUE_CATEGORY) == set(IssueCode)
+    assert set(_ISSUE_CATEGORY) | _UNSCORED_CODES == set(IssueCode)
+    assert not set(_ISSUE_CATEGORY) & _UNSCORED_CODES
+
+
+def test_focus_outcomes_never_reach_the_score() -> None:
+    # ADR 0004:分數只看來源說了什麼,不看誰問了什麼。計入 FOCUS_UNMET 會讓同一
+    # 份來源因 focus 不同而得到不同分數,提出者也能靠寫寬鬆的 directive 拉高分數。
+    from loop_apidoc.score.evaluate import _UNSCORED_CODES
+
+    assert IssueCode.FOCUS_UNMET in _UNSCORED_CODES
