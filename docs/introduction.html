@@ -1427,6 +1427,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
   <div class="wrap">
     <span class="eyebrow">實作回饋 · 權威分離</span>
     <h2 class="section-title">供應商寫了什麼，和某個 deployment 觀察到什麼，不是同一種 claim</h2>
+    <p class="section-lead">選填的 <code>--focus</code> 讓你在跑之前對擷取下重點指令:金流的結算回呼、遊戲平台的錢包轉帳端點、供應商的錯誤碼。<b>斷言型</b>指令主張來源確實記載了它,落空就讓驗證失敗;<b>範圍型</b>只要求掃乾淨,查無記載也算完整回答。指令逐字進入每個擷取 subagent 的 prompt,而 agent 的每一條回答都要嘛指得出來源的哪一行、要嘛列出查過的每一份可讀來源——沒有第三條路,指令也從不授權捏造。焦點材料只留在 run 目錄,不進 provenance 與 score,所以同一份來源、不同重點的兩次 run 仍然可比。</p>
     <p class="section-lead">供應商來源仍是 Normative Contract 的唯一權威。被動、正規化的觀察可以在精確 Applicability Envelope 內確認或挑戰 material claim；以下流程讓回饋可用，卻不混淆兩種 authority。</p>
 
     <div class="feedback-authority" aria-label="文件權威與實作觀察的分離">
