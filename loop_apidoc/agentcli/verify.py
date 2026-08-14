@@ -20,7 +20,7 @@ from loop_apidoc.agentcli.evidence import (
     verify_extraction_evidence,
 )
 from loop_apidoc.agentcli.gate import check_extraction
-from loop_apidoc.focus.gate import focus_evidence_references
+from loop_apidoc.focus.gate import falsified_expectations, focus_evidence_references
 from loop_apidoc.focus.loader import load_focus_package
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
@@ -62,3 +62,14 @@ def verify_extraction_dir(
         plan = plan.model_copy(update={"integration": contract})
         violations += verify_evidence_claim_paths(plan)
     return violations
+
+
+def preview_falsified_expectations(
+    *, extraction_dir: Path, focus_file: Path
+) -> list[str]:
+    """哪些 Expectation Directive 落空 —— 給 `verify-extraction` 當預告用。
+
+    與 `verify_extraction_dir` 分開,是為了讓後者的回傳維持「違規字串清單」這個
+    單一意義:預告不是違規,混進同一個 list 就會被呼叫端當成該擋的東西。
+    """
+    return falsified_expectations(load_focus_package(focus_file, extraction_dir))

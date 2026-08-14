@@ -1,119 +1,19 @@
 """`--focus` 的結構閘門,在兩個 CLI 入口上驗。
 
-語意結局(Expectation 落空)不在這裡 —— 那走 ValidationReport,是另一張票。
-這裡只驗「應答的形狀對不對、錨點指得到東西、證據真的釘在來源上」。
+語意結局(Expectation 落空)不在這裡 —— 那走 ValidationReport,見
+`test_cli_focus_outcomes.py`。這裡只驗「應答的形狀對不對、錨點指得到東西、
+證據真的釘在來源上」。
 """
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
-from pathlib import Path
-
-from typer.testing import CliRunner
-
-from loop_apidoc.cli import app
-from loop_apidoc.domain.evidence import fragment_digest
-from tests.source_quality_support import write_passing_source_quality
-
-runner = CliRunner()
-
-NOW = datetime(2026, 8, 14, tzinfo=timezone.utc)
-_SOURCE = "# Demo API\nGET /ping\nPing the service\nPOST /notify\nSettle callback\n"
-
-_INVENTORY = {
-    "overview": "Demo API",
-    "environments": [{"name": "prod", "base_url": "https://api.example.com",
-                      "version": None, "source": "manual.md lines 1-1"}],
-    "security_schemes": [], "schemas": [], "errors": [], "operational": [],
-    "endpoints": [
-        {"method": "GET", "path": "/ping", "summary": "Ping the service",
-         "source": "manual.md lines 2-3"},
-        {"method": "POST", "path": None, "summary": "Settle callback",
-         "source": "manual.md lines 4-5"},
-    ],
-    "missing": [],
-}
-_ENDPOINTS = [
-    {"method": "GET", "path": "/ping", "summary": "Ping the service",
-     "source": "manual.md lines 2-3", "parameters": [], "request": None,
-     "responses": [{"status": "200", "description": "OK", "schema": None}],
-     "examples": [], "missing": []},
-    {"method": "POST", "path": None, "summary": "Settle callback",
-     "source": "manual.md lines 4-5", "parameters": [], "request": None,
-     "responses": [{"status": "200", "description": "OK", "schema": None}],
-     "examples": [], "missing": []},
-]
-
-
-def _evidence(*, source: str = "manual.md", line: int = 3,
-              text: str = "Ping the service") -> dict:
-    return {
-        "version": 1,
-        "source": source,
-        "locator": {"kind": "line_range", "start_line": line, "end_line": line},
-        "fragment_digest": fragment_digest(text),
-        "claim_path": "/summary",
-    }
-
-
-def _directive(**overrides) -> dict:
-    return {"id": "ping", "kind": "expectation", "intent": "find_operation",
-            "text": "一定要找到健康檢查端點", **overrides}
-
-
-def _response(**overrides) -> dict:
-    return {"id": "ping", "outcome": "satisfied", "reported_by": "ep0",
-            "anchors": [{"type": "operation", "value": "GET /ping",
-                         "evidence": [_evidence()]}], **overrides}
-
-
-def _setup(tmp_path: Path, *, directives=None, responses=None,
-           focus_body=None, response_body=None) -> tuple[Path, Path, Path]:
-    extraction = tmp_path / "extraction"
-    (extraction / "endpoints").mkdir(parents=True)
-    (extraction / "inventory.json").write_text(
-        json.dumps(_INVENTORY, ensure_ascii=False), encoding="utf-8")
-    for index, endpoint in enumerate(_ENDPOINTS):
-        (extraction / "endpoints" / f"ep{index}.json").write_text(
-            json.dumps(endpoint, ensure_ascii=False), encoding="utf-8")
-    sources = tmp_path / "sources"
-    sources.mkdir()
-    (sources / "manual.md").write_text(_SOURCE, encoding="utf-8")
-
-    focus = tmp_path / "focus.json"
-    if focus_body is not None:
-        focus.write_text(focus_body, encoding="utf-8")
-    elif directives is not None:
-        focus.write_text(json.dumps(
-            {"version": 1, "directives": directives}, ensure_ascii=False),
-            encoding="utf-8")
-
-    if response_body is not None:
-        (extraction / "focus-response.json").write_text(
-            response_body, encoding="utf-8")
-    elif responses is not None:
-        (extraction / "focus-response.json").write_text(json.dumps(
-            {"version": 1, "responses": responses}, ensure_ascii=False),
-            encoding="utf-8")
-    return sources, extraction, focus
-
-
-def _verify(sources: Path, extraction: Path, focus: Path | None = None):
-    args = ["verify-extraction", "--sources", str(sources),
-            "--extraction", str(extraction)]
-    if focus is not None:
-        args += ["--focus", str(focus)]
-    return runner.invoke(app, args)
-
-
-def _assemble(tmp_path: Path, sources: Path, extraction: Path, focus: Path):
-    quality = write_passing_source_quality(
-        sources_root=sources, output=tmp_path / "sq", generated_at=NOW)
-    return runner.invoke(app, [
-        "assemble", "--sources", str(sources), "--extraction", str(extraction),
-        "--output", str(tmp_path / "runs"), "--source-quality", str(quality),
-        "--focus", str(focus),
-    ])
+from tests.focus.support import (
+    assemble as _assemble,
+    directive as _directive,
+    evidence as _evidence,
+    response as _response,
+    setup as _setup,
+    verify as _verify,
+)
 
 
 # --- the flag is optional -------------------------------------------------

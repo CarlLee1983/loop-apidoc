@@ -28,6 +28,7 @@ def test_issue_code_values_match_spec():
         "OPENAPI_INVALID",
         "OUTPUT_MISMATCH",
         "UNSUPPORTED_ASSERTION",
+        "FOCUS_UNMET",
     }
 
 
