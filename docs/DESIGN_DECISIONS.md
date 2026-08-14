@@ -393,6 +393,31 @@ pipeline. Unconfirmed but reproducible behavior can affect only a reviewed scope
 Contract. Implementation-backed benchmarks remain a separate assurance lane and never
 count as source-backed strict-local passes.
 
+### 13. Let the requester direct attention without letting it direct the contract
+
+An operator integrating a specific API usually knows, before the run starts, what it
+cannot ship without. Optional focus directives carry that knowledge into the run: they
+are broadcast into every extraction subagent's prompt, and each is answered exactly once
+with either deterministic anchors bound to exact evidence, or a not-found outcome naming
+every readable source searched. A directive's `kind` alone determines severity and its
+`intent` alone determines anchor type; there is no override field, and there is no
+"not applicable" outcome, because whether a directive applies is the requester's
+judgement rather than the agent's.
+
+The instruction "look harder for X" is the shape most likely to invite fabrication, so
+it is paired with a deterministic gate rather than trusted. A directive never licenses
+inventing an operation, a field, or an error code: when the sources are silent the
+correct answer is not-found, and the resulting validation failure is the intended
+signal to gather better sources. Structural problems fail before a run directory exists;
+a falsified expectation fails validation instead, so the run's artifacts survive for the
+operator to judge whether the provider is silent or the extraction was shallow.
+
+Focus material is confined to the run directory and never reaches provenance, the score,
+or a governed asset, so two runs over the same sources with different directives stay
+comparable. That confinement, its alternatives, and the condition that would falsify it
+are recorded in
+[ADR 0004](adr/0004-focus-directives-never-enter-comparable-artifacts.md).
+
 ## Canonical operational references
 
 - [Architecture](ARCHITECTURE.md) — component boundaries, data flow, and seams.
@@ -425,3 +450,5 @@ count as source-backed strict-local passes.
 
     Issue #36 的 hardened contract 另要求：Observation kind 由 pure `core/conformance_policy.py` 做語意 allowlist；governed feedback／Effective JSON 拒絕未知欄位；`current` 只接受 `APPROVED` 並 cross-validate contract identity、amendment IDs、validity/counts、approval actor/time 與 provenance approval/assessment/bundle bindings。Pointer digest 綁定包含所有宣告欄位、經 strict validation 後的 canonical asset，並揭露 digest-bound `stale_amendment_count`。Stale 只指可驗證的 release／contract／source／policy／approval-time drift，expired 與 inapplicable 分開；自由文字 revalidation triggers 只是 review declaration，沒有外部 signal contract 就不自動執行。所有 governed lineage traversal 收斂至 `foundry.query`。
 13. 供應商文件同時是 untrusted model input：來源取得／前處理後，必須對 agent 實際會讀的 manifest 綁定文字包執行 `inspect-source-risk`。報告不回顯命中 payload、不改寫來源，並由 schema/ruleset、大小上限、manifest／逐來源 digest 與 stable source binding 防止 stale reuse；`assess-sources` 內嵌 audit，`assemble` 在建立 run-dir 前重驗綁定。risk finding 決定文字能否進模型，不是 API claim 的事實證據。
+
+14. 提出者可以指導注意力,但不能指導契約內容。選填的 focus directive 會逐字進入每個擷取 subagent 的 prompt,每條恰好應答一次:要嘛給出釘在 exact evidence 上的確定性錨點,要嘛回報 not-found 並列出查過的每一份可讀來源。`kind` 是 severity 的唯一來源、`intent` 是錨點型別的唯一來源,沒有覆寫欄位,也沒有「不適用」這個結局——一條指令適不適用是提出者的判斷,不是 agent 的。「再努力找找 X」正是最容易誘發捏造的指令形式,所以它配的是確定性閘門而不是信任:來源沒寫就是 not-found,由此產生的驗證失敗正是「該補來源」的訊號。結構問題在建立 run 目錄前失敗,落空的斷言則走 validation,產物因此留得下來供人判斷是供應商真的沒寫、還是擷取不夠深。focus 材料只留在 run 目錄,不進 provenance、score 或治理資產,故同一份來源、不同指令的兩次 run 仍可比對;該約束的取捨與否證條件記在 [ADR 0004](adr/0004-focus-directives-never-enter-comparable-artifacts.md)。
