@@ -10,11 +10,16 @@ is documented. They steer subagent attention during extraction and are checked
 deterministically afterwards, so a directive changes what the pipeline *looks at* and what
 it *reports*. It must not change what the pipeline *concludes*.
 
-Directives are therefore confined to the run directory: the `focus.json` input, the agent's
-`focus-response.json`, the `FOCUS_UNMET` validation issues, and `focus/focus-report.*`.
-They are excluded from `provenance.json`, from the score, and from every Foundry-governed
-asset. Two runs over the same sources with different directives must produce byte-identical
-provenance and an identical score; only their focus reports may differ.
+Directives are therefore confined to the run directory. They are excluded from
+`provenance.json`, from the score, and from every Foundry-governed asset. Two runs over the
+same sources with different directives must produce byte-identical provenance and an
+identical score; only their focus material may differ.
+
+The rule binds every artifact the feature produces, whenever it lands. Today that is the
+`focus.json` input and the agent's `focus-response.json`; the `FOCUS_UNMET` validation
+issues and the `focus/focus-report.*` pair arrive with the tickets that route semantic
+outcomes and write the report, and are covered by this decision on arrival rather than by a
+later one.
 
 The reason is that this project's whole claim is that supplier sources are the sole
 authority for what a contract says. The moment a directive is visible in provenance, a
@@ -42,8 +47,8 @@ not in provenance, which is a statement about the sources.
 ## Consequences
 
 Focus reporting has to be self-contained: everything a reviewer needs in order to judge
-whether a directive was honestly answered lives in `focus/focus-report.*`, because nothing
-downstream carries it. Reproducing a run's contract does not require its `focus.json`, which
+whether a directive was honestly answered has to live in the run's own focus material,
+because nothing downstream carries it. Reproducing a run's contract does not require its `focus.json`, which
 is the point — the file is an input to the process, not a part of the result. The cost is
 that a genuinely useful audit trail ("this field exists in the contract because someone
 asked us to hunt for it") is available only inside the run, and a consumer reading only the

@@ -24,7 +24,7 @@ DirectiveIntent = Literal["find_operation"]
 # 型別留在這裡,intent↔type 的相符檢查才報得出「這個 intent 要的是哪一種錨點」。
 AnchorType = Literal["operation", "field", "error_code"]
 
-_INTENT_ANCHOR: dict[str, str] = {"find_operation": "operation"}
+_INTENT_ANCHOR: dict[DirectiveIntent, AnchorType] = {"find_operation": "operation"}
 
 
 class _Strict(BaseModel):
