@@ -128,5 +128,9 @@ artifacts are produced either way, so the operator can read what you searched. D
 Write `focus-response.json` after the endpoint and integration subagents return, before step 5.
 Pass `--focus` on both `verify-extraction` and `assemble`; the two run the same checks.
 
-Focus material never reaches `provenance.json`, the score, or any Foundry-governed asset — see
+A focused run writes `<run-dir>/focus/focus-report.{json,zh-TW.md}`, listing every directive with
+its declaration, outcome, anchors and bound source fragments, or the sources searched. The
+Traditional-Chinese Markdown leads with falsified expectations, because that is what a reader
+opens it for. That report is the feature's complete audit surface: focus material never reaches
+`provenance.json`, the score, or any Foundry-governed asset — see
 `docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`.
