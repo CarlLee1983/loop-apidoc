@@ -10,8 +10,6 @@ from typing import Any
 
 from loop_apidoc.agentcli.extraction import _expand_methods
 
-expand_methods = _expand_methods
-
 
 def entries(payload: dict | None, section: str) -> list[dict]:
     if not isinstance(payload, dict):
@@ -56,10 +54,10 @@ def extraction_identities(
     聯集而非交集:兩邊不一致本身是 `cross_file` 要報的違規,不該在這裡被
     重複報成「錨點指不到」。
     """
-    declared = expand_methods(entries(inventory, "endpoints"))
+    declared = _expand_methods(entries(inventory, "endpoints"))
     declared += [
         expanded for _, endpoint in endpoints
-        for expanded in expand_methods([endpoint])
+        for expanded in _expand_methods([endpoint])
     ]
     return {
         key for key in (endpoint_identity(entry) for entry in declared)

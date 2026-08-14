@@ -313,7 +313,12 @@ def test_error_entry_keeps_extension_keys_and_typed_evidence(tmp_path):
         }],
     }))
 
-    load_extraction_inputs(extraction)  # 不應拋出
+    inventory, _, _ = load_extraction_inputs(extraction)
+
+    # 巢狀欄位結構必須原封不動傳到消費端 —— source_facts 的覆蓋檢查靠它,才不會
+    # 把共用錯誤表在每個端點上都算成未覆蓋欄位。
+    assert inventory["errors"][0]["fields"] == [{"name": "balance", "type": "int"}]
+    assert inventory["errors"][0]["x-vendor-note"] == "legacy"
 
 
 def test_error_entry_with_malformed_evidence_is_rejected(tmp_path):

@@ -18,10 +18,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from loop_apidoc.agentcli.extraction import _expand_methods
 from loop_apidoc.agentcli.identity import (
     endpoint_identity as _key,
     entries as _entries,
-    expand_methods as _expand_methods,
 )
 
 
