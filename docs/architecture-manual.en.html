@@ -748,6 +748,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">inspect-source-risk</div>
           <div class="command-chip">assess-sources</div>
           <div class="command-chip">verify-extraction</div>
+          <div class="command-chip">--focus</div>
           <div class="command-chip">snapshot-openapi-url</div>
           <div class="command-chip">record-fingerprint</div>
           <div class="command-chip">check-freshness</div>
@@ -827,6 +828,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <button type="button" class="module-card" data-module="source-facts">
             <div class="module-name">source_facts/ <span class="pill pure">Pure</span></div>
             <div class="module-role">Mechanically scans Markdown sources for parameter tables and examples, catching silent omissions in the extraction.</div>
+          </button>
+          <button type="button" class="module-card io-boundary" data-module="focus">
+            <div class="module-name">focus/ <span class="pill io">File I/O</span></div>
+            <div class="module-role">Requester-authored extraction focus directives: checks every answer deterministically and routes a falsified assertion to validation rather than the input gate.</div>
           </button>
           <button type="button" class="module-card" data-module="conformance">
             <div class="module-name">core/conformance.py + domain/conformance.py <span class="pill pure">Pure</span></div>
@@ -1114,6 +1119,16 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       inputs: "manifest-named Markdown sources, extraction endpoint JSON, inventory.schemas for schema_ref resolution",
       outputs: "violation messages aggregated by agentcli/gate.py",
       sideEffect: "collect.py reads sources; scanning and comparison are pure"
+    },
+    "focus": {
+      title: "focus/",
+      badgeClass: "io",
+      badgeLabel: "File I/O",
+      description: "In focus.json the requester declares what this particular integration cannot ship without; the directives go verbatim into every extraction subagent's prompt, and the agent answers each one exactly once. kind is the sole determinant of severity (expectation / coverage) and intent is the sole determinant of anchor type (operation / field / error_code); the two never interfere and no field overrides either. An answer has exactly two outcomes: satisfied, whose anchors must carry v1 exact evidence — a filename alone is refused — and not_found, which must list every readable source. There is deliberately no \"not applicable\": that is the requester's judgement, and giving the agent that button would give it one it could always press to get out. Structural problems fail closed before a run directory is created; an honest not_found travels through the ValidationReport as FOCUS_UNMET and the artifacts are written as usual, because the judgement to be made then is whether the source really is silent or the search was not thorough enough. A directive never licenses inventing anything.",
+      seam: "focus_violations(focus, inventory, endpoints, manifest) / falsified_expectations(focus) / check_focus_outcomes(focus) / write_reports(focus, run_dir)",
+      inputs: "focus.json, <extraction>/focus-response.json, manifest readable sources, extraction inventory/endpoints",
+      outputs: "gate violation messages, FOCUS_UNMET validation issues, <run-dir>/focus/focus-report.{json,zh-TW.md}",
+      sideEffect: "File I/O: loader.py reads the two inputs and report.py writes the reports; gate.py / fields.py / codes.py are pure. Focus material never enters provenance, the score, or Foundry (ADR 0004)"
     }
   };
 
