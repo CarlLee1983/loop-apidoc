@@ -19,6 +19,7 @@ from loop_apidoc.agentcli.evidence import (
 from loop_apidoc.agentcli.gate import check_extraction
 from loop_apidoc.focus.gate import focus_evidence_references
 from loop_apidoc.focus.loader import load_focus_package
+from loop_apidoc.focus.report import write_reports as write_focus_reports
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
     IntegrationInput,
@@ -381,6 +382,8 @@ def run_assemble_pipeline(
     result = generate_outputs(plan, manifest, run_dir)
     report = validate_outputs(plan, result, manifest, focus)
     write_validation_reports(report, run_dir / "validation")
+    if focus is not None:
+        write_focus_reports(focus, run_dir)
 
     status = RunStatus.PASSED if report.ok else RunStatus.FAILED
     shadow = None

@@ -214,6 +214,9 @@ user**. Never hard-code fill-ins; never fabricate to make validation pass.
 - `preparation-report.json` + `preparation-report.md` — pre-generation readiness evidence.
 - `source-quality/` — the required retained pre-extraction assessment reports (a `reject`
   verdict aborts assemble at exit 2).
+- `focus/focus-report.{json,zh-TW.md}` — **only when `--focus` was passed.** Every directive with
+  its declaration, outcome, anchors and bound source fragments, or the sources searched. It is the
+  feature's complete audit surface: no other artifact carries focus material.
 
 **Scaffolding (present but not product):** `manifest.json`, `plan/normalization-plan.json`
 (also linked from review.html), `extraction/queries.jsonl`, `extraction/answers/*.txt`.
