@@ -637,10 +637,28 @@ PDF 使用 pymupdf4llm，`.docx` 使用內建 fail-closed OOXML normalizer；受
 
 ```bash
 uv run loop-apidoc verify-extraction \
-  --sources ./sources --extraction ./work [--url <URL> ...] [--json]
+  --sources ./sources --extraction ./work [--url <URL> ...] [--focus ./focus.json] [--json]
 ```
 
 在呼叫 `assemble` 前，先以同一套輸入閘檢查 agent 產出的擷取目錄（`inventory.json` + `endpoints/*.json`，選填 `integration.json`）：schema、來源引用、跨檔不變式、選填 v1 `evidence[]` 的精確 source/typed locator/normalized fragment SHA-256 驗證，以及**語意完整性閘門**。後者會機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,當某端點的來源小節明明寫了欄位或範例、擷取卻交回空清單時直接 fail closed 並指名缺了哪些欄位,同時拒絕「需進一步擷取」這類佔位答案。來源真的沒寫的東西仍然只是缺口:在 `missing[]` 具名記下即可通過,閘門不會逼出捏造。**不寫檔、不建立 run 目錄**。退出碼：`0` = 乾淨、`2` = 有違規或硬 schema 錯誤（不會是 `1`——`1` 保留給 validate FAIL）。`--json` 把違規以 JSON 陣列印到 stdout 供 agent 解析。
+
+### `--focus` — 依任務對擷取下重點指令
+
+`verify-extraction` 與 `assemble` 皆可選用;不給就與現況完全相同。`focus.json` 裡寫的是
+「這次串接少了它就不能上線」的東西 —— 金流的結算回呼、遊戲平台的錢包轉帳端點 —— 擷取
+agent 對每一條恰好應答一次,寫進 `<extraction>/focus-response.json`。
+
+`kind` 是 severity 的唯一來源:**Expectation Directive** 斷言供應商來源確實記載了它,
+**Coverage Directive** 只指定一個要掃乾淨的範圍、找不到也算完整回答。`intent` 是錨點型別
+的唯一來源。應答只有兩種結局:`satisfied` 帶錨點,每個錨點釘在精確的來源片段上(只給檔名
+會被拒絕);`not_found` 帶查過的來源。刻意沒有第三種 —— 一條 directive 適不適用是提出者
+的判斷,不是 agent 的。
+
+結構性問題(某條 directive 沒人應答、錨點指不到任何已擷取端點、證據指向 manifest 以外的
+來源)在建立 run 目錄之前就失敗。focus 材料不會進入 `provenance.json`、score 或任何
+Foundry 治理資產,所以同一份來源、不同 focus 的兩次 run 仍可互相比對 —— 見
+`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`。可複製的範本在
+[`examples/focus/`](examples/focus/),該處也記錄了目前實際接上的檢查有哪些。
 
 ### GraphQL／AsyncAPI 狀態
 
@@ -657,6 +675,7 @@ uv run loop-apidoc assemble \
   --output ./output \
   [--url <URL> ...] [--url-coverage ./work/url_sources/coverage.json] \
   --source-quality ./work/source-quality [--extractor-model <模型名稱>] \
+  [--focus ./focus.json] \
   [--architecture-mode legacy|shadow|strict] [--json] [--score]
 ```
 
