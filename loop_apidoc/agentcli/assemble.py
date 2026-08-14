@@ -17,6 +17,8 @@ from loop_apidoc.agentcli.evidence import (
     verify_extraction_evidence,
 )
 from loop_apidoc.agentcli.gate import check_extraction
+from loop_apidoc.focus.gate import focus_evidence_references
+from loop_apidoc.focus.loader import load_focus_package
 from loop_apidoc.agentcli.input_schema import (
     EndpointDetailInput,
     IntegrationInput,
@@ -251,6 +253,7 @@ def run_assemble_pipeline(
     excludes: Sequence[str] = (),
     extractor_model: str | None = None,
     architecture_mode: ArchitectureMode = ArchitectureMode.LEGACY,
+    focus_file: Path | None = None,
 ) -> RunResult:
     """agent-native 組裝:manifest(原始來源)→ 由 agent 產出的擷取檔組 plan
     → generate → validate。不做擷取、不 spawn 任何 agent;
@@ -258,6 +261,10 @@ def run_assemble_pipeline(
     # 先驗證 agent 產出的擷取輸入,失敗就在建立任何輸出前 fail loudly,
     # 不留下孤兒 run 目錄。
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
+    focus = (
+        load_focus_package(focus_file, extraction_dir)
+        if focus_file is not None else None
+    )
     try:
         source_quality_report, source_diff_report = load_assessment_reports(
             source_quality_dir
@@ -314,7 +321,8 @@ def run_assemble_pipeline(
 
     facts = collect_facts(sources_root, manifest)
     endpoints = named_endpoints(extraction_dir, endpoint_texts)
-    violations = check_extraction(inventory, endpoints, integration, manifest, facts)
+    violations = check_extraction(
+        inventory, endpoints, integration, manifest, facts, focus)
     violations += verify_extraction_evidence(
         inventory,
         endpoints,
@@ -322,6 +330,7 @@ def run_assemble_pipeline(
         manifest,
         facts,
         generated_at,
+        extra_references=focus_evidence_references(focus),
     )
     if not violations:
         preflight_extraction = build_extraction_from_files(
@@ -370,7 +379,7 @@ def run_assemble_pipeline(
     )
     write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
-    report = validate_outputs(plan, result, manifest)
+    report = validate_outputs(plan, result, manifest, focus)
     write_validation_reports(report, run_dir / "validation")
 
     status = RunStatus.PASSED if report.ok else RunStatus.FAILED

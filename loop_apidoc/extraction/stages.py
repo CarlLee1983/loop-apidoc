@@ -103,7 +103,7 @@ STAGES: tuple[QueryStage, ...] = (
         "08", "Error codes and failure behavior",
         "List every error code, its meaning and HTTP status stated by the sources.",
         "errors",
-        '{"errors": [{"code": str|null, "meaning": str|null, "http_status": str|null, '
+        '{"errors": [{"code": str, "meaning": str, "http_status": str|null, '
         '"applicable_to": [str], "source": str|null}], "missing": [str]}',
     ),
     _structured(

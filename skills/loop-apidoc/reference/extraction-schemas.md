@@ -177,7 +177,11 @@ One object describing the whole API. **You** write what the single inventory sub
   citation format as its parent schema. In a multi-source run it must name a manifest
   source; when supplied, it becomes provenance for the exact generated OpenAPI property,
   so use it when the source distinguishes evidence for individual fields.
-- `errors[]` records `code`, `meaning`, and `http_status`. When the source explicitly
+- `errors[]` records `code`, `meaning`, and `http_status`. `code` and `meaning` are
+  **required strings** — `code` must be non-blank, since it is the only path into the
+  generated `ErrorCode` enumeration; `meaning` may be `""` when the source states a code
+  without explaining it, and validation reports the gap. Unknown keys are tolerated.
+  When the source explicitly
   limits an error to operations, add `applicable_to` as exact `METHOD /path` strings
   (for example `"POST /transfers"`); otherwise leave it as `[]`. Generated OpenAPI
   exposes the complete mapping as `components.schemas.ErrorCode`: `enum` constrains the

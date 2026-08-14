@@ -736,6 +736,11 @@ def verify_extraction(
         [], "--exclude",
         help="額外排除的 glob(可重複);預設已排除 README/LICENSE/CHANGELOG 等非規格檔",
     ),
+    focus: Path | None = typer.Option(
+        None, "--focus",
+        help="擷取重點指令檔(focus.json);agent 的應答讀自 <extraction>/focus-response.json",
+        exists=True, file_okay=True, dir_okay=False, readable=True,
+    ),
     json_out: bool = typer.Option(
         False, "--json", help="把違規以 JSON 陣列印到 stdout(供 agent 解析)"
     ),
@@ -745,7 +750,11 @@ def verify_extraction(
     exit 0 乾淨;exit 2 有違規或硬 schema 錯誤（不會是 1——1 代表 validate FAIL）。
     """
     from loop_apidoc.agentcli.assemble import AssembleInputError
-    from loop_apidoc.agentcli.verify import verify_extraction_dir
+    from loop_apidoc.agentcli.verify import (
+        preview_falsified_expectations,
+        verify_extraction_dir,
+    )
+    from loop_apidoc.focus.loader import FocusInputError
 
     try:
         violations = verify_extraction_dir(
@@ -754,8 +763,9 @@ def verify_extraction(
             generated_at=datetime.now(timezone.utc),
             urls=list(url),
             excludes=tuple(exclude),
+            focus_file=focus,
         )
-    except AssembleInputError as exc:
+    except (AssembleInputError, FocusInputError) as exc:
         if json_out:
             typer.echo(json.dumps([str(exc)], ensure_ascii=False, indent=2))
         else:
@@ -770,6 +780,19 @@ def verify_extraction(
             typer.echo(f"  - {violation}", err=True)
     else:
         typer.echo("verify-extraction PASS:擷取輸入符合契約")
+    if not violations and focus is not None:
+        # 純預告:讓人在跑完整 assemble 之前就知道要不要先回頭補來源。
+        # 刻意不進 --json 輸出、不動 exit code —— 那個陣列的意義是「該擋的違規」,
+        # 而落空的斷言該留下 run 目錄與產物,是 validate 的結局。
+        falsified = preview_falsified_expectations(
+            extraction_dir=extraction, focus_file=focus)
+        if falsified and not json_out:
+            typer.echo(
+                f"預告:{len(falsified)} 條 expectation directive 落空"
+                f"({'、'.join(falsified)});assemble 會以 FOCUS_UNMET 判定驗證失敗,"
+                "但仍會產出 run 目錄供你判斷是來源真的沒有、還是查得不夠。",
+                err=True,
+            )
     raise typer.Exit(code=2 if violations else 0)
 
 
@@ -1055,6 +1078,11 @@ def assemble(
         "--extractor-model",
         help="執行擷取的模型名稱,由 agent 明確帶入並記入 run.json;省略即 null(CLI 不推測)",
     ),
+    focus: Path | None = typer.Option(
+        None, "--focus",
+        help="擷取重點指令檔(focus.json);agent 的應答讀自 <extraction>/focus-response.json",
+        exists=True, file_okay=True, dir_okay=False, readable=True,
+    ),
     architecture_mode: ArchitectureMode = typer.Option(
         ArchitectureMode.LEGACY,
         "--architecture-mode",
@@ -1096,6 +1124,7 @@ def assemble(
         RunDirectoryCollisionError,
         run_assemble_pipeline,
     )
+    from loop_apidoc.focus.loader import FocusInputError
 
     now = datetime.now(timezone.utc)
     try:
@@ -1111,8 +1140,9 @@ def assemble(
             excludes=tuple(exclude),
             extractor_model=extractor_model,
             architecture_mode=architecture_mode,
+            focus_file=focus,
         )
-    except AssembleInputError as exc:
+    except (AssembleInputError, FocusInputError) as exc:
         typer.echo(f"擷取輸入錯誤:{exc}", err=True)
         raise typer.Exit(code=2) from exc
     except RunDirectoryCollisionError as exc:

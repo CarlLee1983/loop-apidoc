@@ -90,7 +90,7 @@ checks would be meaningless.
 ## The `Issue` object (9 fields)
 
 ```json
-{"code": "OPENAPI_INVALID|OUTPUT_MISMATCH|REQUIRED_INFO_MISSING|SOURCE_UNVERIFIED|SOURCE_CONFLICT|UNSUPPORTED_ASSERTION",
+{"code": "OPENAPI_INVALID|OUTPUT_MISMATCH|REQUIRED_INFO_MISSING|SOURCE_UNVERIFIED|SOURCE_CONFLICT|UNSUPPORTED_ASSERTION|FOCUS_UNMET",
  "severity": "error|warning",
  "location": "str (free text)",
  "evidence": "str",
@@ -144,6 +144,7 @@ your extraction JSON and re-running.
 | `SOURCE_UNVERIFIED` | error or warning | a target can't be traced to a cited source, or a supported/readable manifest source has zero material citations | usually a missing/incorrect `source` on the entry — add/correct it. If the assertion truly has no source, fail-closed (remove / report). Unsupported and supported-but-uncited sources surface as non-blocking warnings so silent source omission remains visible |
 | `SOURCE_CONFLICT` | error | two sources disagree about the same target | re-read both; **report the conflict** — do not silently pick one |
 | `UNSUPPORTED_ASSERTION` | error | the output asserts something no source states (speculation leaked in) | remove the unsupported content; fail-closed |
+| `FOCUS_UNMET` | error **or** warning | a focus directive was answered `not_found`. ERROR for an Expectation Directive (the requester asserted a source documents this and it was not found), WARNING for a Coverage Directive (finding nothing is a complete answer there). Severity comes from the directive's `kind` alone — there is no per-directive override | re-read the sources named in `requery_scope` and confirm nothing was missed. If the provider genuinely does not document it, **do not invent it**: report the gap to the requester, who either supplies better sources or rewrites the directive as `coverage`. `target_file` is `focus-response.json` and `field_path` is `/responses/<directive id>` |
 
 ## Driving a correction round (default max 3 rounds; `--score` uses `--max-rounds`, default 6)
 
@@ -193,7 +194,7 @@ still exits 1 and still needs fixing regardless of verdict.
 
 ## Fail-closed
 
-`SOURCE_CONFLICT`, `UNSUPPORTED_ASSERTION`, and `SOURCE_UNVERIFIED` (at `error`) that survive
+`SOURCE_CONFLICT`, `UNSUPPORTED_ASSERTION`, `FOCUS_UNMET` (at `error`), and `SOURCE_UNVERIFIED` (at `error`) that survive
 genuine re-verification are **not** something to patch over. After re-reading the source and
 confirming it truly doesn't support / conflicts, **present the remaining gaps/conflicts to the
 user**. Never hard-code fill-ins; never fabricate to make validation pass.
