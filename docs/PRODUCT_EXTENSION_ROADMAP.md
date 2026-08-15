@@ -342,16 +342,16 @@ semantics that cannot be rendered faithfully; every DOCX in a batch is validated
 are written. The resulting Markdown still passes through the existing manifest-bound
 `inspect-source-risk` gate. Legacy `.doc` remains an explicit passthrough gap.
 
-**Deferred, deliberately:** the documented error-code floor derived by
-`source_facts/markdown.py` is consumed only by focus directives. The general
-source-fact gate can see the same facts and could require every code a source
-tabulates to appear in `inventory.errors[]` on *every* run, with no directive
-present — a materially stronger completeness guarantee. It is not done here
-because it changes the verdict of runs nobody directed, so it needs its own
-impact assessment against the benchmark suite (whose ~113 skips are not passes
-and cannot be read as one) and its own trade-off discussion. Recorded here so
-the omission stays visible outside
-[ADR 0005](adr/0005-the-error-code-floor-comes-from-source-structure-alone.md).
+**Decided against (2026-08-15):** the documented error-code floor derived by
+`source_facts/markdown.py` is consumed only by focus directives, and stays that
+way. Extending the general source-fact gate to require every tabulated code on
+*every* run would be a stronger guarantee, but it cannot scope itself the way
+the parameter gate does — error codes are a document-level shared catalogue with
+no endpoint to match against, so an integration implementing three of forty
+operations would be required to account for the whole catalogue. Requiring
+exhaustiveness remains something a requester asks for, in one line of
+`focus.json`. Reasoning and rejected alternatives in
+[ADR 0006](adr/0006-requiring-exhaustive-error-codes-stays-a-directive.md).
 
 ## Defer protocol main-flow integration until preceding blockers are resolved
 
