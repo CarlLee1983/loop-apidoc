@@ -292,6 +292,19 @@ def test_issue_category_mapping_covers_every_scored_issue_code() -> None:
     assert not set(_ISSUE_CATEGORY) & _UNSCORED_CODES
 
 
+def test_an_unscanned_source_scores_against_source_grounding() -> None:
+    # 「無法對這份來源執行語意完整性檢查」講的是來源可信度,不是成品缺了資訊,
+    # 所以扣在 source_grounding;兩次 run 的分差因此能表達「這次有更多來源沒被檢查」。
+    report = evaluate_score(
+        _inputs([_issue(IssueCode.SOURCE_FACTS_UNSCANNED, Severity.WARNING,
+                        location="dump.md")]),
+        profile=ScoreProfile.CI,
+    )
+
+    assert report.category_scores[ScoreCategory.SOURCE_GROUNDING.value] < 100
+    assert report.findings[0].category is ScoreCategory.SOURCE_GROUNDING
+
+
 def test_focus_outcomes_never_reach_the_score() -> None:
     # ADR 0004:分數只看來源說了什麼,不看誰問了什麼。計入 FOCUS_UNMET 會讓同一
     # 份來源因 focus 不同而得到不同分數,提出者也能靠寫寬鬆的 directive 拉高分數。

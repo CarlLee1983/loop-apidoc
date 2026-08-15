@@ -30,6 +30,9 @@ def test_issue_code_values_match_spec():
         "UNSUPPORTED_ASSERTION",
         "FOCUS_UNMET",
         "FOCUS_INCOMPLETE",
+        # 與 SOURCE_UNVERIFIED 分開:那個 code 的補救是重讀來源填 JSON,
+        # 這個的補救是換前處理路徑,混用會誘導 agent 做無效的重讀。
+        "SOURCE_FACTS_UNSCANNED",
     }
 
 

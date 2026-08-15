@@ -365,6 +365,30 @@ def test_flattened_html_dumps_yield_no_facts() -> None:
     assert scan_markdown("dump.md", flattened).endpoints == []
 
 
+def test_a_flattened_dump_becomes_a_visible_warning_not_a_silent_pass() -> None:
+    """上一個測試釘住的限制,在成品裡必須看得見。
+
+    掃出零筆事實,閘門對這份來源就是 no-op;若報告照樣乾淨,operator 拿到的 run
+    與一份真的被逐條比對過的 run 無法區分。範圍限制寫在文件裡不夠,產物也要講。
+    """
+    from tests.validate.support import report, unscanned
+    from loop_apidoc.validate.fact_coverage import (
+        FactCoverage,
+        build_fact_coverage,
+    )
+    from loop_apidoc.source_facts.models import FactIndex
+    from tests.validate.support import manifest
+
+    flattened = "API 名稱 描述 參數 型態 說明 WebId string 站台代碼"
+    facts = FactIndex(sources=[scan_markdown("dump.md", flattened)])
+    coverage = build_fact_coverage(manifest("dump.md"), facts, identities=set())
+
+    assert coverage == {"dump.md": FactCoverage(facts=0, matched=0)}
+    issues = unscanned(report(coverage, source="dump.md"))
+    assert len(issues) == 1
+    assert issues[0].severity.value == "warning"
+
+
 def test_a_table_followed_by_a_fence_still_belongs_to_its_own_endpoint() -> None:
     """表格尚未結算就遇到圍籬時,不能延後歸屬到下一個端點。"""
     text = """
