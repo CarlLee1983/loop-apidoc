@@ -255,3 +255,105 @@ def test_an_error_code_table_inside_an_endpoint_section_leaves_parameters_alone(
 
     assert facts.endpoints[0].parameter_names == ["amount"]
     assert [f.code for f in facts.error_codes] == ["1001"]
+
+
+# --- 誤判與漏判的邊界 -----------------------------------------------------
+
+def test_a_row_whose_meaning_cell_is_blank_is_still_a_documented_code() -> None:
+    """`| 1001 | |` 是說明留白的真資料列,不是分組標題。
+
+    把它當標題跳過會安靜地把下界調低——正好是這道檢查存在的理由。
+    """
+    text = """## 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 1001 | |
+| 1002 | 簽章錯誤 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["1001", "1002"]
+
+
+def test_an_ambiguous_header_matches_only_as_a_whole_cell() -> None:
+    """「國家代碼」「幣別代碼」都包含「代碼」;放寬成包含會整批認錯。"""
+    text = """## 錯誤處理與代碼附錄
+
+| 國家代碼 | 國家 |
+| --- | --- |
+| TW | 臺灣 |
+| US | 美國 |
+"""
+
+    assert scan_markdown("manual.md", text).error_codes == []
+
+
+def test_an_english_substring_does_not_promote_a_column() -> None:
+    """`"code" in "encoded"` —— 包含比對在英文上更容易誤中。"""
+    text = """## Error Handling
+
+| Encoded Value | Note |
+| --- | --- |
+| A1 | x |
+"""
+
+    assert scan_markdown("manual.md", text).error_codes == []
+
+
+def test_an_exact_header_wins_over_a_column_that_merely_contains_it() -> None:
+    """碼欄是第二欄;照「第一個命中」會挑到分類欄,整張表跟著作廢。"""
+    text = """## 附錄
+
+| 錯誤碼分類 | 錯誤碼 | 說明 |
+| --- | --- | --- |
+| 支付 | 1001 | 餘額不足 |
+| 退款 | 2001 | 訂單不存在 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["1001", "2001"]
+
+
+def test_an_enclosing_heading_corroborates_a_grouped_error_table() -> None:
+    """`## 錯誤碼` → `### 支付類` → 表格是主流寫法,只看最近一層會全部漏掉。"""
+    text = """## 錯誤碼
+
+### 支付類
+
+| 代碼 | 說明 |
+| --- | --- |
+| 1001 | 餘額不足 |
+
+### 退款類
+
+| 代碼 | 說明 |
+| --- | --- |
+| 2001 | 訂單不存在 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["1001", "2001"]
+
+
+def test_a_sibling_section_does_not_inherit_the_error_heading() -> None:
+    """離開錯誤章節之後,同層的下一節不該還被它佐證。"""
+    text = """## 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 1001 | 餘額不足 |
+
+## 幣別
+
+| 代碼 | 幣別 |
+| --- | --- |
+| TWD | 新臺幣 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["1001"]
