@@ -56,6 +56,8 @@ from loop_apidoc.source_quality.models import QualityVerdict
 from loop_apidoc.source_quality.report import write_reports as write_source_quality_reports
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.shadow.report import run_shadow_safely
+from loop_apidoc.agentcli.identity import extraction_identities
+from loop_apidoc.validate.fact_coverage import build_fact_coverage
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 
@@ -381,7 +383,13 @@ def run_assemble_pipeline(
     write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
     report = validate_outputs(
-        plan, result, manifest, focus, facts.documented_error_codes()
+        plan, result, manifest, focus, facts.documented_error_codes(),
+        # 投影在此一處算出:`collect_facts` 的結果與 extraction 都在手上,讓
+        # validate 自行重掃會讓同一份來源在一次 run 內被掃兩次,可能給出
+        # 「閘門判過但報告說沒掃到」這種自相矛盾的輸出。
+        fact_coverage=build_fact_coverage(
+            manifest, facts, extraction_identities(inventory, endpoints)
+        ),
     )
     write_validation_reports(report, run_dir / "validation")
     if focus is not None:

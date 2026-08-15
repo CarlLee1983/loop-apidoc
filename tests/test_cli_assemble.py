@@ -503,7 +503,7 @@ def test_assemble_strict_json_reports_ungrounded_legacy_support(tmp_path, monkey
     _enable_shadow_metadata(extraction)
     monkeypatch.setattr(
         "loop_apidoc.agentcli.assemble.validate_outputs",
-        lambda *_args: ValidationReport(),
+        lambda *_args, **_kwargs: ValidationReport(),
     )
 
     res = runner.invoke(app, [
@@ -525,7 +525,7 @@ def test_assemble_strict_error_uses_distinct_exit_code(tmp_path, monkeypatch):
     _enable_shadow_metadata(extraction)
     monkeypatch.setattr(
         "loop_apidoc.agentcli.assemble.validate_outputs",
-        lambda *_args: ValidationReport(),
+        lambda *_args, **_kwargs: ValidationReport(),
     )
     monkeypatch.setattr(
         "loop_apidoc.agentcli.assemble.run_strict_core_safely",
