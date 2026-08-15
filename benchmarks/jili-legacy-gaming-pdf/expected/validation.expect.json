@@ -9,7 +9,8 @@
     "examples_present": true
   },
   "current_issue_classes": {
-    "REQUIRED_INFO_MISSING.warning": 44
+    "REQUIRED_INFO_MISSING.warning": 44,
+    "SOURCE_FACTS_UNSCANNED.warning": 1
   },
   "acceptable_warnings": "18 operations lack a complete request/response example in the source (including expanded GET/POST FreeSpin operations), all 25 operations expose the separately tracked hollow-success-response gap because the source provides no usable response schema fields, and one servers warning remains because the PDF supplies only <API URL> placeholders.",
   "observations": [

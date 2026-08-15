@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": false
   },
-  "current_issue_classes": { "SOURCE_UNVERIFIED.error": 8, "REQUIRED_INFO_MISSING.warning": 3 },
+  "current_issue_classes": { "SOURCE_UNVERIFIED.error": 8, "REQUIRED_INFO_MISSING.warning": 3, "SOURCE_FACTS_UNSCANNED.warning": 2 },
   "acceptable_warnings": "3 webhook 各一筆『缺少 request/response 範例』:來源未附 payload 範例(忠實缺漏)。",
   "fail_closed_demonstration": {
     "kind": "expected-fail (not a bug)",

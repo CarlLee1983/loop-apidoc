@@ -10,7 +10,8 @@
   },
   "current_issue_classes": {
     "REQUIRED_INFO_MISSING.warning": 23,
-    "SOURCE_UNVERIFIED.warning": 1
+    "SOURCE_UNVERIFIED.warning": 1,
+    "SOURCE_FACTS_UNSCANNED.warning": 1
   },
   "acceptable_warnings": "11 個端點缺 request/response 範例；12 個成功 response 無可用 schema 欄位；rsg-game-transfer-wallet.zh-TW.md 在 provenance 零實質引用。這些缺口維持可見，不推測補寫。",
   "validates": "錯誤碼 enum 與 x-loop-error-code-map 的 source-grounded 映射、DES-CBC + MD5 介接資訊，以及錯誤碼不被誤當成 HTTP response status。"
