@@ -29,6 +29,7 @@ def test_issue_code_values_match_spec():
         "OUTPUT_MISMATCH",
         "UNSUPPORTED_ASSERTION",
         "FOCUS_UNMET",
+        "FOCUS_INCOMPLETE",
     }
 
 

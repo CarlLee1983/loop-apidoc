@@ -697,6 +697,13 @@ source fragment — a filename alone is refused — or to `not_found`, carrying 
 searched. There is deliberately no third outcome: whether a directive applies is the
 requester's judgement, not the agent's.
 
+The `collect_error_codes` intent is additionally judged for completeness: the codes a source
+presents in an error-code table form a **documented error-code floor**, and an answer
+reporting fewer raises `FOCUS_INCOMPLETE`, naming the omitted codes and the line where each
+is documented, with severity again from `kind`. Reporting more still passes — it is a floor,
+not an equality — and sources with no recognisable table produce no floor and no judgement.
+See `docs/adr/0005-the-error-code-floor-comes-from-source-structure-alone.md`.
+
 Structural problems (an unanswered directive, an anchor resolving to no extracted endpoint,
 evidence naming a source outside the manifest) fail before a run directory exists. Focus
 material never reaches `provenance.json`, the score, or any Foundry-governed asset, so two

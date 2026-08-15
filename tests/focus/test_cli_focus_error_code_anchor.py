@@ -1,8 +1,8 @@
 """error_code 錨點:你點名的那個需求,終於接得上型別化的錯誤目錄。
 
-這裡驗的是「每個回報的碼都是真的、都有引用」,**不是**「收齊了沒有」。窮盡性
-沒有確定性下界可比,建立那個下界要在來源掃描器裡新增一整種錯誤碼表辨識,刻意
-留給後續。少了它 focus 仍然可用,只是這個 intent 沒有下界。
+這裡驗的是「每個回報的碼都是真的、都有引用」——這道檢查在輸入閘,報一個不存在
+的碼會在建立 run 目錄之前就中止。「收齊了沒有」是另一回事,走 validation,驗在
+`test_cli_focus_error_code_floor.py`。
 """
 from __future__ import annotations
 
@@ -96,8 +96,9 @@ def test_each_reported_code_needs_its_own_evidence(tmp_path):
     assert res.exit_code == 2
 
 
-def test_no_completeness_check_is_applied_to_the_reported_set(tmp_path):
-    # 目錄有兩個碼,只回報一個 —— 通過。窮盡性沒有下界可比,硬要判會製造假違規。
+def test_the_input_gate_never_judges_completeness(tmp_path):
+    # 目錄有兩個碼,只回報一個 —— 輸入閘照樣通過。收齊與否是實質而非結構問題,
+    # 由記載錯誤碼下界在 validation 判定,而下界來自來源的表格結構、不是目錄筆數。
     sources, extraction, focus = _setup_with_errors(
         tmp_path, directives=[_code_directive()],
         responses=[_code_response("1001")])
@@ -122,13 +123,22 @@ def test_a_field_anchor_is_refused_for_a_collect_error_codes_intent(tmp_path):
 def test_the_gate_never_reads_the_url_corpus_entities(tmp_path):
     # 那份 entities 是 `\b[1-9]\d{3,4}\b` 的正則產物:價格、時間戳、訂單號全中,
     # 無行號無出處、不受 manifest 綁定。拿它當閘門依據會製造大量假違規。
+    #
+    # 掃 source_facts 而不只掃 focus:記載錯誤碼下界的實作住在那裡,而它正是最
+    # 可能伸手拿這個捷徑的地方——那些 entities 看起來就像下界要的東西。
     from pathlib import Path
 
     import loop_apidoc.focus as focus_package
+    import loop_apidoc.source_facts as source_facts_package
 
-    package = Path(focus_package.__file__).parent
+    packages = [
+        Path(focus_package.__file__).parent,
+        Path(source_facts_package.__file__).parent,
+    ]
     offenders = [
-        path.name for path in sorted(package.glob("*.py"))
+        f"{package.name}/{path.name}"
+        for package in packages
+        for path in sorted(package.glob("*.py"))
         if "url_corpus" in path.read_text(encoding="utf-8")
     ]
 

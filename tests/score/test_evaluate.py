@@ -298,3 +298,5 @@ def test_focus_outcomes_never_reach_the_score() -> None:
     from loop_apidoc.score.evaluate import _UNSCORED_CODES
 
     assert IssueCode.FOCUS_UNMET in _UNSCORED_CODES
+    # 記載錯誤碼下界的短少同理:它是「提出者要求收齊」的結局,不是來源品質。
+    assert IssueCode.FOCUS_INCOMPLETE in _UNSCORED_CODES

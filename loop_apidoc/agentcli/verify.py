@@ -26,6 +26,7 @@ from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.source_facts.collect import collect_facts
+from loop_apidoc.validate.focus import omitted_error_codes
 
 
 def verify_extraction_dir(
@@ -73,3 +74,35 @@ def preview_falsified_expectations(
     單一意義:預告不是違規,混進同一個 list 就會被呼叫端當成該擋的東西。
     """
     return falsified_expectations(load_focus_package(focus_file, extraction_dir))
+
+
+def preview_error_code_shortfall(
+    *,
+    sources_root: Path,
+    extraction_dir: Path,
+    generated_at: datetime,
+    focus_file: Path,
+    excludes: Sequence[str] = (),
+) -> list[str]:
+    """哪些窮盡型指令報得比記載錯誤碼下界少 —— 同樣是預告,不是違規。
+
+    短少只在 `assemble` 才成為驗證問題,因為只有它跑 validate。少了這段預告,
+    agent 要等整趟 assemble 跑完才知道該回頭去讀錯誤碼表。
+
+    重建一次 manifest 與事實索引,而不是把它們從 `verify_extraction_dir` 傳出來:
+    那個函式的回傳值只有一個意義(該擋的違規字串),把預告需要的東西塞進去會
+    毀掉它。多掃一次來源目錄的代價,遠小於那個意義被稀釋。
+
+    刻意不帶 URL:`collect_facts` 只讀 `manifest.local_sources`,所以下界完全
+    不受 URL 來源影響,而帶了就得為一段預告把每個 URL 重新連網探測一次。這條
+    不變式由 `tests/source_facts/test_collect.py` 釘住。
+    """
+    focus = load_focus_package(focus_file, extraction_dir)
+    manifest = build_manifest(
+        sources_root=sources_root, urls=[],
+        generated_at=generated_at, excludes=excludes)
+    floor = collect_facts(sources_root, manifest).documented_error_codes()
+    return [
+        f"{directive.id}:{'、'.join(omitted)}"
+        for directive, omitted in omitted_error_codes(focus, floor)
+    ]

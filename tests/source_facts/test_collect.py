@@ -47,3 +47,26 @@ def test_unreadable_sources_do_not_abort_the_scan(tmp_path: Path) -> None:
 
 def test_no_sources_yields_an_empty_index(tmp_path: Path) -> None:
     assert collect_facts(tmp_path, _manifest(tmp_path)).all_endpoints() == []
+
+
+def test_url_sources_contribute_nothing(tmp_path: Path) -> None:
+    """只讀 `local_sources`。
+
+    `verify-extraction` 的短少預告靠這條不變式:它建 manifest 時刻意不帶 URL,
+    才不必為了一段預告把每個 URL 重新連網探測一次。這裡一旦改成也讀 URL 來源,
+    預告與 assemble 的驗證問題就會給出不同的下界。
+    """
+    from loop_apidoc.manifest.models import Manifest, UrlSource
+
+    manifest = Manifest(
+        generated_at=_TS,
+        sources_root=str(tmp_path),
+        url_sources=[UrlSource(
+            url="https://example.com/errors",
+            fetched_at=_TS,
+            http_status=200,
+            snapshot_file="snapshots/errors.md",
+        )],
+    )
+
+    assert collect_facts(tmp_path, manifest).documented_error_codes() == {}
