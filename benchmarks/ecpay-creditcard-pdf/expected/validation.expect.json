@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 6 },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 6, "SOURCE_FACTS_UNSCANNED.warning": 1 },
   "acceptable_warnings": "5 endpoint 各一筆缺少 request/response 範例；/Cashier/AioCheckOut/V5 另有 1 筆成功 response 無可用 schema 欄位。",
   "resolved_issue_was": {
     "kind": "pipeline-bug",

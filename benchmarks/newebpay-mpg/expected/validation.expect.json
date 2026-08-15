@@ -9,7 +9,8 @@
     "examples_present": true
   },
   "current_issue_classes": {
-    "REQUIRED_INFO_MISSING.warning": 7
+    "REQUIRED_INFO_MISSING.warning": 7,
+    "SOURCE_FACTS_UNSCANNED.warning": 1
   },
   "acceptable_warnings": "EWallet/BNPL×3 + ReturnURL/CustomerURL 缺 examples、ReturnURL/CustomerURL 無 responses(降為 warning) — 來源 4.6~4.8 無專屬範例、redirect callback 無接收端回應定義,皆 faithful。",
   "resolved_issues_were": [
