@@ -1121,7 +1121,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       description: "提出者在 focus.json 裡宣告「這次串接少了它就不能上線」的東西；指令逐字進入每個擷取 subagent 的 prompt，agent 對每條恰好應答一次。kind 是 severity 的唯一來源（expectation／coverage），intent 是錨點型別的唯一來源（operation／field／error_code），兩者互不干涉且沒有覆寫欄位。應答只有 satisfied（錨點必須帶 v1 exact evidence，只給檔名會被拒）與 not_found（必須列出每一份可讀來源）兩種結局——刻意沒有「不適用」，因為那是提出者的判斷，給 agent 那顆按鈕等於給它永遠能按的脫身鍵。結構問題在建立 run 目錄前 fail closed；誠實的 not_found 走 ValidationReport 成為 FOCUS_UNMET，產物照常寫出，因為此時要判斷的是「來源真的沒寫，還是查得不夠」。指令從不授權捏造。",
       seam: "focus_violations(focus, inventory, endpoints, manifest) / falsified_expectations(focus) / check_focus_outcomes(focus) / write_reports(focus, run_dir)",
       inputs: "focus.json, <extraction>/focus-response.json, manifest readable sources, extraction inventory/endpoints",
-      outputs: "gate violation messages, FOCUS_UNMET validation issues, <run-dir>/focus/focus-report.{json,zh-TW.md}",
+      outputs: "gate violation messages, FOCUS_UNMET / FOCUS_INCOMPLETE validation issues, <run-dir>/focus/focus-report.{json,zh-TW.md}",
       sideEffect: "File I/O: loader.py 讀取兩份輸入、report.py 寫出報告；gate.py／fields.py／codes.py 為純函式。焦點材料不進 provenance、score 或 Foundry（ADR 0004）"
     }
   };

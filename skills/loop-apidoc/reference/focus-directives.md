@@ -93,10 +93,23 @@ not resolve: those are opaque data and would let an anchor claim a code that nev
 contract. Report one anchor per code, each with its own evidence; the gate judges them
 individually and names only the ones that failed.
 
-What is **not** checked is completeness. There is no deterministic lower bound on how many
-codes a source documents, so a directive asking you to collect them all is satisfied by codes
-that are real and cited, not by a count. Do not pad the list to look thorough — every code you
-report must resolve and must carry evidence, so padding fails the gate rather than passing it.
+Completeness **is** checked. Where a Markdown source presents an error-code table, the codes in
+it are a *documented error-code floor* — a deterministic lower bound your answer must contain.
+Report fewer and the omitted codes are named, with the source and line where each is written
+down, as a `FOCUS_INCOMPLETE` validation issue. Report more and you still pass: it is a floor,
+not an equality, because a source can also document codes in prose that no table exposes. Where
+the sources present no recognisable table there is no floor and no judgement — silence there
+means the bound is *absent*, not zero.
+
+Padding still fails, and fails earlier: every code you report must resolve against
+`inventory.errors[]` and must carry evidence, so inventing codes to clear the floor is refused at
+the gate. The only way through is to read the table.
+
+The floor ignores your directive's wording. `text` scopes your attention, but the gate is
+deterministic and cannot read prose, so a `collect_error_codes` directive worded narrowly is
+still judged against every code the sources tabulate — the intent means the provider's error
+codes, all of them. An operator who wants a narrow claim writes an Expectation Directive naming
+the one thing. See `docs/adr/0005-the-error-code-floor-comes-from-source-structure-alone.md`.
 
 The anchor's `type` must be the one its directive's `intent` calls for.
 
@@ -122,6 +135,12 @@ An honest `not_found` is different: it passes the gate and becomes a `FOCUS_UNME
 issue — error for an Expectation Directive, warning for a Coverage Directive. The run's
 artifacts are produced either way, so the operator can read what you searched. Do not treat a
 `FOCUS_UNMET` error as something to make go away by weakening the answer; report it.
+
+An answer that falls short of the documented error-code floor routes the same way, as a
+`FOCUS_INCOMPLETE` validation issue with severity from the directive's `kind`. It is a
+statement about your answer rather than about the response's shape, which is why it does not
+stop the run. `verify-extraction` forecasts it before you get there — that forecast is
+informational only: it never enters `--json` and never changes the exit code.
 
 ## Where it goes in the flow
 

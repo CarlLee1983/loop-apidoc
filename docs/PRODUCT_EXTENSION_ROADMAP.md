@@ -342,6 +342,17 @@ semantics that cannot be rendered faithfully; every DOCX in a batch is validated
 are written. The resulting Markdown still passes through the existing manifest-bound
 `inspect-source-risk` gate. Legacy `.doc` remains an explicit passthrough gap.
 
+**Deferred, deliberately:** the documented error-code floor derived by
+`source_facts/markdown.py` is consumed only by focus directives. The general
+source-fact gate can see the same facts and could require every code a source
+tabulates to appear in `inventory.errors[]` on *every* run, with no directive
+present — a materially stronger completeness guarantee. It is not done here
+because it changes the verdict of runs nobody directed, so it needs its own
+impact assessment against the benchmark suite (whose ~113 skips are not passes
+and cannot be read as one) and its own trade-off discussion. Recorded here so
+the omission stays visible outside
+[ADR 0005](adr/0005-the-error-code-floor-comes-from-source-structure-alone.md).
+
 ## Defer protocol main-flow integration until preceding blockers are resolved
 
 Do not add GraphQL or AsyncAPI as conditional branches in the current
