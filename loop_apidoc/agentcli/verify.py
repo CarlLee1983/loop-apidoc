@@ -82,7 +82,6 @@ def preview_error_code_shortfall(
     extraction_dir: Path,
     generated_at: datetime,
     focus_file: Path,
-    urls: list[str] | None = None,
     excludes: Sequence[str] = (),
 ) -> list[str]:
     """哪些窮盡型指令報得比記載錯誤碼下界少 —— 同樣是預告,不是違規。
@@ -93,10 +92,14 @@ def preview_error_code_shortfall(
     重建一次 manifest 與事實索引,而不是把它們從 `verify_extraction_dir` 傳出來:
     那個函式的回傳值只有一個意義(該擋的違規字串),把預告需要的東西塞進去會
     毀掉它。多掃一次來源目錄的代價,遠小於那個意義被稀釋。
+
+    刻意不帶 URL:`collect_facts` 只讀 `manifest.local_sources`,所以下界完全
+    不受 URL 來源影響,而帶了就得為一段預告把每個 URL 重新連網探測一次。這條
+    不變式由 `tests/source_facts/test_collect.py` 釘住。
     """
     focus = load_focus_package(focus_file, extraction_dir)
     manifest = build_manifest(
-        sources_root=sources_root, urls=urls or [],
+        sources_root=sources_root, urls=[],
         generated_at=generated_at, excludes=excludes)
     floor = collect_facts(sources_root, manifest).documented_error_codes()
     return [

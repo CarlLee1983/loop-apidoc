@@ -757,11 +757,12 @@ def verify_extraction(
     )
     from loop_apidoc.focus.loader import FocusInputError
 
+    generated_at = datetime.now(timezone.utc)
     try:
         violations = verify_extraction_dir(
             sources_root=sources,
             extraction_dir=extraction,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=generated_at,
             urls=list(url),
             excludes=tuple(exclude),
             focus_file=focus,
@@ -794,15 +795,16 @@ def verify_extraction(
                 "但仍會產出 run 目錄供你判斷是來源真的沒有、還是查得不夠。",
                 err=True,
             )
-        shortfall = preview_error_code_shortfall(
+        # 呼叫本身也擋在 json_out 外面,不只擋 echo:預告在 `--json` 下是純浪費,
+        # 而它跑在 PASS 印出之後,任何例外都會把一次通過的 verify 變成 traceback。
+        shortfall = [] if json_out else preview_error_code_shortfall(
             sources_root=sources,
             extraction_dir=extraction,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=generated_at,
             focus_file=focus,
-            urls=list(url),
             excludes=tuple(exclude),
         )
-        if shortfall and not json_out:
+        if shortfall:
             typer.echo(
                 f"預告:{len(shortfall)} 條窮盡型 directive 報得比來源記載的錯誤碼少"
                 f"({'; '.join(shortfall)});assemble 會以 FOCUS_INCOMPLETE 提出,"
