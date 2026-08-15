@@ -37,8 +37,9 @@ processing state, so duplicate, ignored, and unsupported sources never reach the
 **The general source-fact gate deliberately does not consume the floor.** The fact exists and
 that gate can see it, but only focus directives are judged against it. Requiring every
 documented code to appear in the typed catalogue on *every* run would change the verdict of
-runs nobody directed, and it deserves its own impact assessment and its own trade-off
-discussion rather than arriving as a side effect of this one.
+runs nobody directed, and it deserves its own trade-off discussion rather than arriving as a
+side effect of this one. That discussion has since happened and settled on keeping it this way
+— see [ADR 0006](0006-requiring-exhaustive-error-codes-stays-a-directive.md).
 
 ## Considered options
 
