@@ -1,6 +1,9 @@
 # Focus directive examples
 
 Copy one of these next to your run inputs, edit it, and pass it with `--focus`.
+`payment-integration.focus.json` is the directive file you author;
+`payment-integration.focus-response.json` is what a completed extraction answers with, shown
+here so you can recognise a well-formed answer before running one.
 
 They are **examples, not presets**. There is deliberately no `--focus-preset` flag: a
 preset shipped with the package would assert on your behalf that a provider documents

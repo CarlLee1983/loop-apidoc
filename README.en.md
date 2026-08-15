@@ -708,8 +708,101 @@ Structural problems (an unanswered directive, an anchor resolving to no extracte
 evidence naming a source outside the manifest) fail before a run directory exists. Focus
 material never reaches `provenance.json`, the score, or any Foundry-governed asset, so two
 runs over the same sources with different directives stay comparable — see
-`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`. Copyable examples live
-in [`examples/focus/`](examples/focus/), which also records which checks are wired up today.
+`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`.
+
+#### Writing a `focus.json`
+
+The file is strict — unknown fields are refused and directive `id`s must be unique:
+
+| Field | Required | Value |
+| --- | --- | --- |
+| `version` | yes | `1` |
+| `directives[].id` | yes | Non-blank, unique within the file; it is how the answer refers back |
+| `directives[].kind` | yes | `expectation` (falsified when absent → blocks) or `coverage` (absent is a complete answer → warns) |
+| `directives[].intent` | yes | `find_operation`, `find_field`, or `collect_error_codes` — this alone fixes the anchor type |
+| `directives[].text` | yes | Non-blank. Copied verbatim into every extraction subagent's prompt, so write it as an instruction |
+| `directives[].rationale` | no | Why this matters; carried into the report for the next reader |
+
+```json
+{
+  "version": 1,
+  "directives": [
+    {
+      "id": "settlement-callback",
+      "kind": "expectation",
+      "intent": "find_operation",
+      "text": "Find the settlement-completed callback endpoint. If no source documents it, list every source you searched.",
+      "rationale": "The reconciliation schedule is triggered by this callback."
+    },
+    {
+      "id": "refund-operation",
+      "kind": "coverage",
+      "intent": "find_operation",
+      "text": "Sweep every refund, cancellation, and reversal endpoint. Finding none is not a failure."
+    }
+  ]
+}
+```
+
+Pass it with `--focus ./focus.json` on `verify-extraction`, then on `assemble`. Both are
+optional and independent, but passing it to `assemble` is what puts the answer into the run's
+focus report.
+
+#### Reading the answer
+
+The extraction agent writes `<extraction>/focus-response.json`, answering each `id` exactly
+once. `reported_by` names the endpoint file that carries the anchor, or `inventory` when the
+answer is `not_found`:
+
+```json
+{
+  "version": 1,
+  "responses": [
+    {
+      "id": "settlement-callback",
+      "outcome": "satisfied",
+      "reported_by": "ep3",
+      "anchors": [{
+        "type": "operation",
+        "value": "POST /v1/callbacks/settlement",
+        "evidence": [{
+          "version": 1,
+          "source": "provider-api.md",
+          "locator": {"kind": "line_range", "start_line": 412, "end_line": 412},
+          "fragment_digest": "a5a2…5e5d",
+          "claim_path": "/summary"
+        }]
+      }]
+    },
+    {"id": "refund-operation", "outcome": "not_found", "reported_by": "inventory",
+     "searched_sources": ["provider-api.md", "provider-errors.md", "webhooks.md"]}
+  ]
+}
+```
+
+`fragment_digest` is the SHA-256 of the normalized source fragment, and it is re-derived from
+the manifest's bytes rather than trusted — a filename-only citation is refused here even
+though extraction accepts one elsewhere.
+
+#### Where the results land, and what to do about them
+
+- `<run-dir>/focus/focus-report.{json,zh-TW.md}` — every directive, its anchor resolution, the
+  sources searched, and the outcome. This is the file to read after a run.
+- A structural failure (unanswered directive, unresolvable anchor, evidence outside the
+  manifest) exits `2` before any run directory exists — fix the extraction and re-run.
+- An honest `not_found` on an `expectation` directive passes the gate and becomes a
+  `FOCUS_UNMET` validation error, so the artifacts are still written: read the guide, the
+  OpenAPI document, and the searched-source list, then decide whether the gap is the
+  provider's or your source set's. On a `coverage` directive it is a warning and blocks
+  nothing.
+- A `collect_error_codes` answer below the documented floor becomes `FOCUS_INCOMPLETE`, naming
+  the omitted codes and where each is documented. `verify-extraction` forecasts both shortfalls
+  on stderr ahead of time, deliberately without changing its exit code.
+
+Copyable examples live in [`examples/focus/`](examples/focus/) —
+[`payment-integration.focus.json`](examples/focus/payment-integration.focus.json) and the
+matching [`payment-integration.focus-response.json`](examples/focus/payment-integration.focus-response.json) —
+alongside a README recording which checks are wired up today.
 
 ### GraphQL and AsyncAPI status
 
