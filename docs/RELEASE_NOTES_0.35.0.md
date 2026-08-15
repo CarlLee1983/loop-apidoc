@@ -33,6 +33,7 @@ Focus directives end-to-end: error-code floor, anchor resolution, and shortfall 
 
 ## Strategy impact
 
+- [ ] None — <explain why no strategy document changed>
 - [x] Updated — `docs/DESIGN_DECISIONS.md`, `docs/PRODUCT_EXTENSION_ROADMAP.md`,
   `docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`,
   `docs/adr/0005-the-error-code-floor-comes-from-source-structure-alone.md`,
