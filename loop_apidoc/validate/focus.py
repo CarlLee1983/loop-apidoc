@@ -22,7 +22,7 @@ _SEVERITY = {
 
 def check_focus_outcomes(
     focus: FocusPackage | None,
-    error_code_floor: dict[str, list[tuple[str, ErrorCodeFact]]] | None = None,
+    error_code_floor: dict[str, list[ErrorCodeFact]] | None = None,
 ) -> list[Issue]:
     if focus is None:
         return []
@@ -39,14 +39,13 @@ def check_focus_outcomes(
 
 def _shortfall_issues(
     focus: FocusPackage,
-    floor: dict[str, list[tuple[str, ErrorCodeFact]]],
+    floor: dict[str, list[ErrorCodeFact]],
 ) -> list[Issue]:
     """報得比記載錯誤碼下界少的窮盡型指令。
 
     下界一律全域,不受 directive 文字範圍限制:`text` 導引 agent 的注意力,但閘門
     是確定性的、讀不懂散文,而 `collect_error_codes` 的字面意思就是「這家供應商的
     錯誤碼,全部」。範圍窄的需求該寫成逐條指名的 Expectation Directive。
-    見 docs/adr/0005。
     """
     if not floor:
         return []
@@ -69,13 +68,13 @@ def _shortfall_issues(
 def _shortfall_issue(
     directive: FocusDirective,
     omitted: list[str],
-    floor: dict[str, list[tuple[str, ErrorCodeFact]]],
+    floor: dict[str, list[ErrorCodeFact]],
 ) -> Issue:
     cited = "、".join(
         f"{code}({_locations(floor[code])})" for code in sorted(omitted)
     )
     sources = "、".join(sorted({
-        path for code in omitted for path, _ in floor[code]
+        fact.relative_path for code in omitted for fact in floor[code]
     }))
     return Issue(
         code=IssueCode.FOCUS_INCOMPLETE,
@@ -92,8 +91,8 @@ def _shortfall_issue(
     )
 
 
-def _locations(entries: list[tuple[str, ErrorCodeFact]]) -> str:
-    return "、".join(f"{path}:{fact.line}" for path, fact in entries)
+def _locations(facts: list[ErrorCodeFact]) -> str:
+    return "、".join(f"{fact.relative_path}:{fact.line}" for fact in facts)
 
 
 def _shortfall_fix(directive: FocusDirective) -> str:

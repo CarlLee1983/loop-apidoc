@@ -22,7 +22,7 @@ def validate_outputs(
     result: GenerateResult,
     manifest: Manifest,
     focus: FocusPackage | None = None,
-    error_code_floor: dict[str, list[tuple[str, ErrorCodeFact]]] | None = None,
+    error_code_floor: dict[str, list[ErrorCodeFact]] | None = None,
 ) -> ValidationReport:
     """Aggregate the §9 validation categories plus §6 manifest coverage.
     Pure; the correction loop reuses this seam.
