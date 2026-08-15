@@ -665,8 +665,95 @@ severity 一樣由 `kind` 決定;報得比它多仍然通過(那是底線不是�
 結構性問題(某條 directive 沒人應答、錨點指不到任何已擷取端點、證據指向 manifest 以外的
 來源)在建立 run 目錄之前就失敗。focus 材料不會進入 `provenance.json`、score 或任何
 Foundry 治理資產,所以同一份來源、不同 focus 的兩次 run 仍可互相比對 —— 見
-`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`。可複製的範本在
-[`examples/focus/`](examples/focus/),該處也記錄了目前實際接上的檢查有哪些。
+`docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`。
+
+#### 怎麼寫 `focus.json`
+
+檔案是嚴格契約:多寫欄位會被拒絕,`id` 在同一份檔案內必須唯一。
+
+| 欄位 | 必填 | 值 |
+| --- | --- | --- |
+| `version` | 是 | `1` |
+| `directives[].id` | 是 | 非空白、檔案內唯一;應答就是靠它回指 |
+| `directives[].kind` | 是 | `expectation`(查無記載即落空 → 阻斷)或 `coverage`(查無記載也是完整答案 → 警告) |
+| `directives[].intent` | 是 | `find_operation`、`find_field`、`collect_error_codes` —— 錨點型別只由它決定 |
+| `directives[].text` | 是 | 非空白。會逐字進入每個擷取 subagent 的 prompt,所以要當成指令來寫 |
+| `directives[].rationale` | 否 | 為什麼重要;會帶進報告給下一個讀的人 |
+
+```json
+{
+  "version": 1,
+  "directives": [
+    {
+      "id": "settlement-callback",
+      "kind": "expectation",
+      "intent": "find_operation",
+      "text": "一定要找到結算完成的回呼通知端點。若來源真的沒有記載,請列出已查過的每一份來源。",
+      "rationale": "對帳排程以此回呼為觸發點,缺了它整份契約無法上線。"
+    },
+    {
+      "id": "refund-operation",
+      "kind": "coverage",
+      "intent": "find_operation",
+      "text": "掃過所有與退款、取消、沖正相關的端點;找不到不算失敗。"
+    }
+  ]
+}
+```
+
+用 `--focus ./focus.json` 帶進 `verify-extraction`,再帶進 `assemble`。兩邊各自可選、互不
+依賴,但要讓應答進到 run 的 focus 報告,`assemble` 這次一定要帶。
+
+#### 怎麼讀應答
+
+擷取 agent 會寫出 `<extraction>/focus-response.json`,對每個 `id` 恰好應答一次。
+`reported_by` 指出承載錨點的端點檔;`not_found` 時為 `inventory`:
+
+```json
+{
+  "version": 1,
+  "responses": [
+    {
+      "id": "settlement-callback",
+      "outcome": "satisfied",
+      "reported_by": "ep3",
+      "anchors": [{
+        "type": "operation",
+        "value": "POST /v1/callbacks/settlement",
+        "evidence": [{
+          "version": 1,
+          "source": "provider-api.md",
+          "locator": {"kind": "line_range", "start_line": 412, "end_line": 412},
+          "fragment_digest": "a5a2…5e5d",
+          "claim_path": "/summary"
+        }]
+      }]
+    },
+    {"id": "refund-operation", "outcome": "not_found", "reported_by": "inventory",
+     "searched_sources": ["provider-api.md", "provider-errors.md", "webhooks.md"]}
+  ]
+}
+```
+
+`fragment_digest` 是正規化來源片段的 SHA-256,而且是從 manifest 的 bytes 重新推導比對、
+不是照單全收 —— 只給檔名的引用在這裡會被拒絕,即使擷取的其他地方仍然接受。
+
+#### 結果落在哪、然後該做什麼
+
+- `<run-dir>/focus/focus-report.{json,zh-TW.md}` —— 每條指令、錨點怎麼解析、查了哪些來源、
+  結局是什麼。跑完要讀的就是這份。
+- 結構性失敗(沒人應答、錨點解不到、證據在 manifest 之外)在建立 run 目錄前以 `2` 結束,
+  修好擷取再跑。
+- `expectation` 誠實回 `not_found` 會通過閘門,成為 `FOCUS_UNMET` 驗證錯誤,產物照常寫出:
+  拿著指南、OpenAPI 與已查來源清單,判斷這個缺口是供應商的還是你來源集的。同樣情況在
+  `coverage` 只是警告,什麼都不擋。
+- `collect_error_codes` 報得比記載下界少會成為 `FOCUS_INCOMPLETE`,具名列出漏掉哪幾個、
+  各記載在哪裡。這兩種落差 `verify-extraction` 都會事先在 stderr 預告,並刻意不影響退出碼。
+
+可複製的範本在 [`examples/focus/`](examples/focus/):
+[`payment-integration.focus.json`](examples/focus/payment-integration.focus.json) 與對應的
+[`payment-integration.focus-response.json`](examples/focus/payment-integration.focus-response.json),
+同目錄的 README 也記錄了目前實際接上的檢查有哪些。
 
 ### GraphQL／AsyncAPI 狀態
 

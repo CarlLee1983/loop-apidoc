@@ -265,7 +265,53 @@ action, <code>1</code> = review required, and <code>2</code> = attention require
 uv run loop-apidoc assemble --sources ./sources --extraction ./work --output ./output \
   --source-quality ./work/source-quality --focus ./focus.json --json
 </code></pre>
-<p>Optional on both <code>verify-extraction</code> and <code>assemble</code>; omitting it leaves the pipeline exactly as it was. A <code>focus.json</code> file declares what this particular integration cannot ship without — a settlement callback, a wallet transfer operation, a supplier's error codes. The directives go verbatim into every extraction subagent's prompt, so they really do steer the extraction rather than only audit it afterwards; the extraction agent then answers each one exactly once in <code>&lt;WORK&gt;/focus-response.json</code>. Copyable examples live in the repository's <code>examples/focus/</code>; there is deliberately no built-in preset flag.</p>
+<p>Optional on both <code>verify-extraction</code> and <code>assemble</code>; omitting it leaves the pipeline exactly as it was. A <code>focus.json</code> file declares what this particular integration cannot ship without — a settlement callback, a wallet transfer operation, a supplier's error codes. The directives go verbatim into every extraction subagent's prompt, so they really do steer the extraction rather than only audit it afterwards; the extraction agent then answers each one exactly once in <code>&lt;WORK&gt;/focus-response.json</code>. Copyable examples live in the repository's <code>examples/focus/</code> (<code>payment-integration.focus.json</code> and the matching <code>payment-integration.focus-response.json</code>); there is deliberately no built-in preset flag.</p>
+<p><strong>What a <code>focus.json</code> looks like.</strong> The file is strict: unknown fields are refused and <code>id</code>s must be unique within it. <code>version</code> is always <code>1</code>. Each directive requires <code>id</code> (non-blank; the answer refers back by it), <code>kind</code>, <code>intent</code>, and <code>text</code> (non-blank, copied verbatim into every extraction subagent's prompt, so write it as an instruction), plus an optional <code>rationale</code> that records why it matters and travels into the report for the next reader.</p>
+<pre><code class="language-json">{
+  "version": 1,
+  "directives": [
+    {
+      "id": "settlement-callback",
+      "kind": "expectation",
+      "intent": "find_operation",
+      "text": "Find the settlement-completed callback endpoint. If no source documents it, list every source you searched.",
+      "rationale": "The reconciliation schedule is triggered by this callback."
+    },
+    {
+      "id": "refund-operation",
+      "kind": "coverage",
+      "intent": "find_operation",
+      "text": "Sweep every refund, cancellation, and reversal endpoint. Finding none is not a failure."
+    }
+  ]
+}
+</code></pre>
+<p><strong>What the answer looks like.</strong> The extraction agent answers each <code>id</code> exactly once in <code>&lt;WORK&gt;/focus-response.json</code>. <code>reported_by</code> names the endpoint file carrying the anchor, or <code>inventory</code> for a <code>not_found</code>. <code>fragment_digest</code> is the SHA-256 of the normalized source fragment, re-derived from the manifest's bytes rather than trusted.</p>
+<pre><code class="language-json">{
+  "version": 1,
+  "responses": [
+    {
+      "id": "settlement-callback",
+      "outcome": "satisfied",
+      "reported_by": "ep3",
+      "anchors": [{
+        "type": "operation",
+        "value": "POST /v1/callbacks/settlement",
+        "evidence": [{
+          "version": 1,
+          "source": "provider-api.md",
+          "locator": {"kind": "line_range", "start_line": 412, "end_line": 412},
+          "fragment_digest": "a5a2…5e5d",
+          "claim_path": "/summary"
+        }]
+      }]
+    },
+    {"id": "refund-operation", "outcome": "not_found", "reported_by": "inventory",
+     "searched_sources": ["provider-api.md", "provider-errors.md", "webhooks.md"]}
+  ]
+}
+</code></pre>
+<p><strong>Read <code>&lt;run-dir&gt;/focus/focus-report.{json,zh-TW.md}</code> after a run.</strong> It carries every directive, its anchor resolution, the sources searched, and the outcome. <code>--focus</code> is optional and independent on <code>verify-extraction</code> and <code>assemble</code>, but the answer only reaches this report when <code>assemble</code> is given the file too.</p>
 <p><strong>Two kinds of directive, two fields each doing one job.</strong> <code>kind</code> is the sole determinant of severity: an <code>expectation</code> asserts that supplier sources document the thing, while a <code>coverage</code> directive only names a scope to sweep, where finding nothing is a complete answer. <code>intent</code> is the sole determinant of anchor type: <code>find_operation</code>, <code>find_field</code>, <code>collect_error_codes</code>. No third field overrides either one — a requester who wants a non-blocking outcome rewrites the directive as <code>coverage</code> instead of adding a downgrade flag.</p>
 <p><strong>An answer has exactly two outcomes.</strong> <code>satisfied</code> carries anchors, and every anchor must carry a v1 exact evidence reference — a filename alone is refused here, unlike the form the extraction still accepts elsewhere. <code>not_found</code> must list <strong>every</strong> readable manifest source: the claim being made is "it is in none of them", and one source proves nothing. There is deliberately no "not applicable" outcome — whether a directive applies is the requester's judgement, not the agent's, and that button would be one the agent could always press to get out.</p>
 <p><strong>Structural problems and semantic outcomes stay on separate layers.</strong> An unanswered directive, an anchor resolving to no extracted endpoint, and evidence naming a source outside the manifest or with a mismatched digest all exit <code>2</code> before a run directory is created. An honest <code>not_found</code> passes the gate instead and becomes a <code>FOCUS_UNMET</code> validation issue (error for <code>expectation</code>, warning for <code>coverage</code>), with the run directory and its artifacts written as usual — because the judgement to be made here is "the supplier really does not document it" versus "the search was not thorough enough", and that needs the artifacts and the searched-source list in hand. <code>verify-extraction</code> previews the count of falsified expectations on stderr, but deliberately does not let it affect the exit code.</p>
