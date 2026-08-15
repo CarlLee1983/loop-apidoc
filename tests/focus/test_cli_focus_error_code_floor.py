@@ -167,3 +167,15 @@ def test_a_not_found_answer_is_not_judged_against_the_floor(tmp_path):
 
 # 短少不進計分,驗在 tests/score/test_evaluate.py 的 _UNSCORED_CODES ——
 # 那裡已經有一道檢查逼每個新 code 二選一,不必在這個 seam 再造一個。
+
+
+def test_an_answer_beyond_the_floor_still_passes(tmp_path):
+    """下界是底線不是等式:來源可能在散文裡還寫了掃描器看不見的碼。"""
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("1001", "1002")],
+        table=_ERROR_TABLE.replace("| 1002 | 簽章錯誤 |\n", ""))
+
+    payload = _payload(assemble(tmp_path, sources, extraction, focus, "--json"))
+
+    assert issues_with_code(payload, "FOCUS_INCOMPLETE") == []

@@ -61,8 +61,11 @@ class ErrorCodeFact(BaseModel):
     掛在來源檔而不是端點上:錯誤碼幾乎都寫在文末的全域附錄,底下沒有端點宣告。
     """
 
+    relative_path: str
     code: str
     line: int
+    #: 這是「這份來源的第幾張**錯誤碼表**」,不是它在文件裡的表格序位——
+    #: 錯誤碼表不依附端點,沒有 `EndpointFact.tables` 那種容器可以定序。
     table_index: int
     row_index: int
     column_index: int
@@ -87,18 +90,18 @@ class FactIndex(BaseModel):
     def all_endpoints(self) -> list[EndpointFact]:
         return [ep for source in self.sources for ep in source.endpoints]
 
-    def documented_error_codes(self) -> dict[str, list[tuple[str, ErrorCodeFact]]]:
-        """記載錯誤碼下界:碼 → 記載它的 (來源路徑, 事實) 清單。
+    def documented_error_codes(self) -> dict[str, list[ErrorCodeFact]]:
+        """記載錯誤碼下界:碼 → 記載它的事實清單(每筆自帶來源路徑)。
 
         跨來源取**聯集**,與端點的 `by_identity()` 交集刻意相反。那道交集處理的是
         「同一個端點被寫兩次、彼此不一致」;而兩份文件的錯誤碼表通常記載的是不同
         的碼集,取交集會把只出現在其中一份的碼全部丟掉,下界近乎歸零。已被 manifest
         標成重複 / 忽略 / 不支援的來源根本不會進到這裡(`collect_facts` 只讀 PENDING)。
         """
-        floor: dict[str, list[tuple[str, ErrorCodeFact]]] = {}
+        floor: dict[str, list[ErrorCodeFact]] = {}
         for source in self.sources:
             for fact in source.error_codes:
-                floor.setdefault(fact.code, []).append((source.relative_path, fact))
+                floor.setdefault(fact.code, []).append(fact)
         return floor
 
     def by_identity(self) -> dict[tuple[str, str], EndpointFact]:

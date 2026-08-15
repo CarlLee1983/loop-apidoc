@@ -187,7 +187,9 @@ class _ScanState:
             if self.current is not None and fact is not None:
                 self.current.tables += (fact,)
             # 端點狀態無關:錯誤碼表通常落在所有端點小節之外。
-            codes = _absorb_error_codes(self.table, self.error_table_index)
+            codes = _absorb_error_codes(
+                self.relative_path, self.table, self.error_table_index
+            )
             if codes:
                 self.error_codes.extend(codes)
                 self.error_table_index += 1
@@ -325,10 +327,10 @@ def _absorb_table(
     rows: list[tuple[int, str]],
 ) -> TableFact | None:
     """把一張 GFM 表格的「名稱欄」併入目前端點的參數名清單。"""
-    if current is None or len(rows) < 3:
+    if current is None:
         return None
-    header = _cells(rows[0][1])
-    if not header or not _TABLE_SEPARATOR.match(rows[1][1]):
+    header = _table_header(rows)
+    if header is None:
         return None
     if not _is_name_header(header[0]):
         return None
@@ -394,6 +396,7 @@ def _absorb_table(
 
 
 def _absorb_error_codes(
+    relative_path: str,
     rows: list[tuple[int, str]],
     table_index: int,
 ) -> list[ErrorCodeFact]:
@@ -402,10 +405,9 @@ def _absorb_error_codes(
     整表成立或整表作廢,不做逐列挑選:漏掉一列會安靜地把下界調低,而下界調低
     正是這道檢查要防的東西;整表沉默則等同今天的行為,是安全的那一邊。
     """
-    if len(rows) < 3:
-        return []
-    header = _cells(rows[0][1])
-    if len(header) < 2 or not _TABLE_SEPARATOR.match(rows[1][1]):
+    header = _table_header(rows)
+    # 只有碼、沒有意義欄的表多半不是錯誤碼表。
+    if header is None or len(header) < 2:
         return []
     column = _error_code_column(header)
     if column is None:
@@ -422,6 +424,7 @@ def _absorb_error_codes(
             return []
         facts.append(
             ErrorCodeFact(
+                relative_path=relative_path,
                 code=code,
                 line=line,
                 table_index=table_index,
@@ -432,6 +435,16 @@ def _absorb_error_codes(
             )
         )
     return facts
+
+
+def _table_header(rows: list[tuple[int, str]]) -> list[str] | None:
+    """GFM 表格的表頭列;湊不齊表頭 + 分隔列 + 至少一列內文就不算表格。"""
+    if len(rows) < 3:
+        return None
+    header = _cells(rows[0][1])
+    if not header or not _TABLE_SEPARATOR.match(rows[1][1]):
+        return None
+    return header
 
 
 def _error_code_column(header: list[str]) -> int | None:

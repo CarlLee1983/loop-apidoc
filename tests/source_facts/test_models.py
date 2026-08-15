@@ -66,8 +66,9 @@ def test_duplicate_endpoint_intersection_drops_incompatible_exact_cells():
     assert merged.tables == ()
 
 
-def _error_code(code: str, line: int) -> ErrorCodeFact:
+def _error_code(code: str, line: int, path: str = "manual.md") -> ErrorCodeFact:
     return ErrorCodeFact(
+        relative_path=path,
         code=code,
         line=line,
         table_index=0,
@@ -88,7 +89,7 @@ def test_documented_error_codes_unions_across_sources() -> None:
         SourceFacts(relative_path="manual.md", error_codes=[
             _error_code("1001", 10), _error_code("1002", 11)]),
         SourceFacts(relative_path="errors.md", error_codes=[
-            _error_code("1002", 5), _error_code("2001", 6)]),
+            _error_code("1002", 5, "errors.md"), _error_code("2001", 6, "errors.md")]),
     ])
 
     floor = index.documented_error_codes()
@@ -100,11 +101,11 @@ def test_a_code_documented_twice_keeps_both_locations() -> None:
     """罰單要指出漏掉的碼寫在哪裡,所以每個記載位置都要留著。"""
     index = FactIndex(sources=[
         SourceFacts(relative_path="manual.md", error_codes=[_error_code("1002", 11)]),
-        SourceFacts(relative_path="errors.md", error_codes=[_error_code("1002", 5)]),
+        SourceFacts(relative_path="errors.md", error_codes=[_error_code("1002", 5, "errors.md")]),
     ])
 
-    assert [(path, fact.line) for path, fact
-            in index.documented_error_codes()["1002"]] == [
+    assert [(fact.relative_path, fact.line)
+            for fact in index.documented_error_codes()["1002"]] == [
         ("manual.md", 11), ("errors.md", 5)]
 
 

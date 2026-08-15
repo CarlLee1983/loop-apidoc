@@ -71,3 +71,41 @@ def test_recognising_an_error_code_table_leaves_parameter_facts_untouched() -> N
     facts = scan_markdown("manual.md", GLOBAL_ERROR_TABLE)
 
     assert [ep.parameter_names for ep in facts.endpoints] == [["amount"]]
+
+
+def test_a_single_column_table_is_not_an_error_code_table() -> None:
+    """只有碼、沒有意義欄的表多半是別的東西,不拿它當下界。"""
+    text = """## 錯誤碼
+
+| 錯誤碼 |
+| --- |
+| 1001 |
+| 1002 |
+"""
+
+    assert scan_markdown("manual.md", text).error_codes == []
+
+
+def test_one_malformed_data_row_discards_the_whole_table() -> None:
+    """整表作廢而不是跳過那一列。
+
+    跳列會安靜地把下界調低,而下界調低正是這道檢查要防的事;整表沉默只是回到
+    今天的行為,是安全的那一邊。
+    """
+    text = """## 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 1001 | 餘額不足 |
+| 視情況而定 | 其他錯誤 |
+| 1002 | 簽章錯誤 |
+"""
+
+    assert scan_markdown("manual.md", text).error_codes == []
+
+
+def test_each_fact_carries_the_source_it_was_read_from() -> None:
+    """罰單要指出哪一份來源的哪一行,所以出處跟著事實走。"""
+    facts = scan_markdown("errors.md", GLOBAL_ERROR_TABLE)
+
+    assert {fact.relative_path for fact in facts.error_codes} == {"errors.md"}
