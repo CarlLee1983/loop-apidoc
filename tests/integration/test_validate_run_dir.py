@@ -105,3 +105,18 @@ def test_validate_command_fails_on_unreadable_source(tmp_path):
     assert result.exit_code == 1, result.output
     report = (run_dir / "validation" / "report.json").read_text(encoding="utf-8")
     assert "broken.pdf" in report
+
+
+def test_validate_command_says_which_checks_it_cannot_rebuild(tmp_path):
+    """這個入口從 run 目錄重建報告,來源不在裡面,所以來源事實涵蓋算不出來。
+
+    危險的不是少判一項,而是它會用一份沒有那筆警告的報告覆寫 assemble 寫出的
+    報告——把「這份來源沒被閘門判過」抹掉,正是這個功能要消滅的狀態。擋不了覆寫
+    (那是這個命令的用途),就至少要講出來。
+    """
+    run_dir = _setup_run_dir(tmp_path, _good_plan())
+
+    result = runner.invoke(app, ["validate", "--output", str(run_dir)])
+
+    assert result.exit_code == 0, result.output
+    assert "SOURCE_FACTS_UNSCANNED" in result.output

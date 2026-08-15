@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import NamedTuple
 from datetime import datetime
 from pathlib import Path
 
@@ -27,8 +28,20 @@ from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.source_facts.collect import collect_facts
-from loop_apidoc.validate.fact_coverage import build_fact_coverage, unscanned_sources
+from loop_apidoc.agentcli.fact_coverage import build_fact_coverage
+from loop_apidoc.validate.fact_coverage import unscanned_sources
 from loop_apidoc.validate.focus import omitted_error_codes
+
+
+class VerifyOutcome(NamedTuple):
+    """一次 `verify-extraction` 的兩種輸出,分開命名。
+
+    `violations` 是該擋的東西(exit 2);`unscanned` 是預告 —— 語意完整性閘門對
+    哪些來源不會有作用。混進同一個 list 就會被呼叫端當成該擋的東西。
+    """
+
+    violations: list[str]
+    unscanned: list[str]
 
 
 def verify_extraction_dir(
@@ -42,6 +55,30 @@ def verify_extraction_dir(
 ) -> list[str]:
     """回傳所有違規(空 list = 乾淨)。硬 schema 錯誤由
     `load_extraction_inputs` / `load_focus_package` 拋出,不在此收斂。"""
+    return verify_extraction(
+        sources_root=sources_root,
+        extraction_dir=extraction_dir,
+        generated_at=generated_at,
+        urls=urls,
+        excludes=excludes,
+        focus_file=focus_file,
+    ).violations
+
+
+def verify_extraction(
+    *,
+    sources_root: Path,
+    extraction_dir: Path,
+    generated_at: datetime,
+    urls: list[str] | None = None,
+    excludes: Sequence[str] = (),
+    focus_file: Path | None = None,
+) -> VerifyOutcome:
+    """閘門 + 事實涵蓋預告,共用同一次來源掃描。
+
+    CLI 走這個入口,所以一次 `verify-extraction` 只掃一遍來源目錄:預告用的
+    manifest 與 `FactIndex` 就是閘門剛用過的那兩份,兩者不可能給出不一致的判斷。
+    """
     inventory, endpoint_texts, integration = load_extraction_inputs(extraction_dir)
     focus = (
         load_focus_package(focus_file, extraction_dir)
@@ -64,7 +101,18 @@ def verify_extraction_dir(
         contract = build_integration_contract(integration, plan, manifest)
         plan = plan.model_copy(update={"integration": contract})
         violations += verify_evidence_claim_paths(plan)
-    return violations
+    coverage = build_fact_coverage(
+        manifest, facts, extraction_identities(inventory, endpoints))
+    return VerifyOutcome(violations=violations, unscanned=_forecast(coverage))
+
+
+def _forecast(coverage) -> list[str]:
+    """把投影寫成人可讀的一行一份來源。"""
+    return [
+        f"{source}:掃出 0 筆端點事實" if entry.facts == 0
+        else f"{source}:{entry.facts} 筆事實無一對上 extraction 的端點"
+        for source, entry in unscanned_sources(coverage)
+    ]
 
 
 def preview_falsified_expectations(
@@ -107,37 +155,4 @@ def preview_error_code_shortfall(
     return [
         f"{directive.id}:{'、'.join(omitted)}"
         for directive, omitted in omitted_error_codes(focus, floor)
-    ]
-
-
-def preview_unscanned_sources(
-    *,
-    sources_root: Path,
-    extraction_dir: Path,
-    generated_at: datetime,
-    excludes: Sequence[str] = (),
-) -> list[str]:
-    """語意完整性閘門對哪些來源不會有作用 —— 預告,不是違規。
-
-    與 `assemble` 的 `SOURCE_FACTS_UNSCANNED` 警告共用 `validate/fact_coverage.py`
-    的同一份投影邏輯,兩邊不可能給出不一致的判斷。
-
-    刻意不帶 URL,理由與 `preview_error_code_shortfall` 相同:`collect_facts` 只讀
-    `manifest.local_sources`,帶了就得為一段預告把每個 URL 重新連網探測一次。
-    """
-    inventory, endpoint_texts, _ = load_extraction_inputs(extraction_dir)
-    manifest = build_manifest(
-        sources_root=sources_root, urls=[],
-        generated_at=generated_at, excludes=excludes)
-    facts = collect_facts(sources_root, manifest)
-    coverage = build_fact_coverage(
-        manifest,
-        facts,
-        extraction_identities(
-            inventory, named_endpoints(extraction_dir, endpoint_texts)),
-    )
-    return [
-        f"{source}:掃出 0 筆來源事實" if entry.facts == 0
-        else f"{source}:{entry.facts} 筆事實無一對上 extraction 的端點"
-        for source, entry in unscanned_sources(coverage)
     ]

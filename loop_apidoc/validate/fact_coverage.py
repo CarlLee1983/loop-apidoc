@@ -1,9 +1,11 @@
 """語意完整性閘門對某份來源沒有作用時,把那件事說出來。
 
-`source_facts` 只掃結構良好的 Markdown。HTML 來源與被壓平成單行純文字的快照掃出
-零筆事實,閘門於是無事可判、靜默通過 —— 產出的 run 目錄與一份真的被逐條比對過的
-run 完全無法區分。這個範圍限制是刻意的取捨(見 ADR 0007),缺的不是解析能力,是
-執行時的可見性。
+`source_facts` 只從結構良好的 Markdown 讀出端點事實,而且只認得 `METHOD /path`
+形式的端點宣告。掃不出端點事實的來源有兩種:一種真的沒有可機械判讀的結構(HTML
+來源、被壓平成單行的快照),一種結構完好但端點寫成掃描器不認得的形式(例如註解裡
+的完整 URL)。兩種的下場相同——閘門無事可判、靜默通過,產出的 run 目錄與一份真的
+被逐條比對過的 run 完全無法區分。這個範圍限制是刻意的取捨(見 ADR 0007),缺的不是
+解析能力,是執行時的可見性。
 
 嚴重度恆為 warning:純散文、本來就沒有參數表的合法來源也會落在零事實這一類,
 把它擋下來等於把「量不到」誤判成「錯」。
@@ -17,51 +19,19 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from loop_apidoc.agentcli.identity import endpoint_identity
-from loop_apidoc.manifest.models import Manifest, SourceFormat
-from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
-
-#: 機器可讀的規格來源不歸這道閘門管:它的內容由 OpenAPI 解析路徑逐欄位吃進來,
-#: 「掃不出來源事實」對它不代表任何失能。
-_MACHINE_READABLE = (SourceFormat.OPENAPI_JSON, SourceFormat.OPENAPI_YAML)
 
 
 class FactCoverage(BaseModel):
-    """一份來源的事實涵蓋:掃出幾筆、其中幾筆對得上 extraction 的端點識別。
+    """一份來源的端點事實涵蓋:掃出幾筆、其中幾筆對得上 extraction 的端點識別。
 
     刻意窄:validate 只需要這兩個數字就能分辨零事實與零匹配,把 `FactIndex`
-    整包遞進來反而讓 validate 認識了它不該認識的結構。
+    整包遞進來反而讓 validate 認識了它不該認識的結構。錯誤碼事實不計入——
+    閘門判的是端點,錯誤碼下界走的是另一條(只在 focus 指令要求時才綁)。
     """
 
     facts: int
     matched: int
-
-
-def build_fact_coverage(
-    manifest: Manifest,
-    facts: FactIndex,
-    identities: set[str],
-) -> dict[str, FactCoverage]:
-    """以 manifest source 識別碼為鍵的事實涵蓋投影。
-
-    `identities` 是 extraction 宣告過的跨檔身份鍵(`agentcli/identity.py`),
-    端點識別因此與 cross-file 不變式、focus 錨點解析用的是同一個定義。
-    """
-    scanned = {source.relative_path: source for source in facts.sources}
-    coverage: dict[str, FactCoverage] = {}
-    for source in manifest.readable_local_sources():
-        if source.source_format in _MACHINE_READABLE:
-            continue
-        endpoints = getattr(scanned.get(source.relative_path), "endpoints", [])
-        matched = sum(
-            1 for fact in endpoints
-            if endpoint_identity({"method": fact.method, "path": fact.path})
-            in identities
-        )
-        coverage[source.relative_path] = FactCoverage(
-            facts=len(endpoints), matched=matched)
-    return coverage
 
 
 def unscanned_sources(
@@ -71,6 +41,10 @@ def unscanned_sources(
 
     公開的原因與 `omitted_error_codes` 相同:`verify-extraction` 的預告與
     `assemble` 的驗證警告必須算出同一件事,兩邊各寫一份就會漂移。
+
+    「有匹配 ＝ 被判過」是近似:閘門實際走 `FactIndex.by_identity()` 的跨來源
+    交集,某筆事實可能對得上 extraction 卻在交集裡被削掉。近似的方向是安全的
+    ——它只會少報,不會對一份確實被逐條比對過的來源開罰單。
     """
     if not coverage:
         return []
@@ -90,14 +64,16 @@ def check_fact_coverage(
 def _issue(source: str, entry: FactCoverage) -> Issue:
     if entry.facts == 0:
         evidence = (
-            "這份來源掃出 0 筆來源事實,語意完整性閘門對它完全沒有作用;"
+            "這份來源掃出 0 筆端點事實,語意完整性閘門對它完全沒有作用;"
             "報告乾淨不代表它被逐條比對過"
         )
         fix = (
-            "改走保留表格結構的前處理路徑(HTML 快照用 normalize-html-snapshot,"
-            "PDF/Word 用 preprocess),不要重讀來源填 JSON —— 壓平成單行的內容"
-            "沒有可機械判讀的結構,重讀多少次都掃不出事實。"
-            "若這份來源本來就是純散文、沒有參數表,這筆警告即為預期。"
+            "先打開來源看它屬於哪一種:(a) 內容被壓平成單行、沒有表格與標題結構"
+            "(HTML 傾印、未轉換的 PDF/Word)——改走保留結構的前處理路徑"
+            "(normalize-html-snapshot / preprocess)後重新擷取,重讀來源沒有用;"
+            "(b) 結構完好,但端點不是寫成 `METHOD /path`(例如註解裡的完整 URL)"
+            "——掃描器認不得這種寫法,請回報給維護者,擷取本身可能是對的;"
+            "(c) 本來就是純散文、沒有參數表的合法來源——這筆警告即為預期。"
         )
     else:
         evidence = (
@@ -114,5 +90,6 @@ def _issue(source: str, entry: FactCoverage) -> Issue:
         location=source,
         evidence=evidence,
         suggested_fix=fix,
-        requery_scope=source,
+        # 刻意不填 requery_scope:那個欄位的意義是「有界的重讀提示」,而這筆
+        # issue 的重點正是重讀解決不了問題。要定位是哪一份來源,看 location。
     )

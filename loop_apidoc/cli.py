@@ -753,14 +753,13 @@ def verify_extraction(
     from loop_apidoc.agentcli.verify import (
         preview_error_code_shortfall,
         preview_falsified_expectations,
-        preview_unscanned_sources,
-        verify_extraction_dir,
+        verify_extraction,
     )
     from loop_apidoc.focus.loader import FocusInputError
 
     generated_at = datetime.now(timezone.utc)
     try:
-        violations = verify_extraction_dir(
+        outcome = verify_extraction(
             sources_root=sources,
             extraction_dir=extraction,
             generated_at=generated_at,
@@ -768,6 +767,7 @@ def verify_extraction(
             excludes=tuple(exclude),
             focus_file=focus,
         )
+        violations = outcome.violations
     except (AssembleInputError, FocusInputError) as exc:
         if json_out:
             typer.echo(json.dumps([str(exc)], ensure_ascii=False, indent=2))
@@ -788,18 +788,14 @@ def verify_extraction(
         # SOURCE_FACTS_UNSCANNED 共用同一份投影,只是提早到付出 plan→generate
         # 的成本之前。不進 --json、不動 exit code:能擋就等於把被否決的
         # 「零事實直接 FAIL」強度裝回去。
-        unscanned = preview_unscanned_sources(
-            sources_root=sources,
-            extraction_dir=extraction,
-            generated_at=generated_at,
-            excludes=tuple(exclude),
-        )
+        unscanned = outcome.unscanned
         if unscanned:
             typer.echo(
                 f"預告:{len(unscanned)} 份來源不會被語意完整性閘門判過"
                 f"({'; '.join(unscanned)});assemble 會以 SOURCE_FACTS_UNSCANNED "
-                "警告提出,不阻擋 run。掃出 0 筆的來源改走保留表格結構的前處理路徑"
-                "(normalize-html-snapshot / preprocess),不要重讀來源;"
+                "警告提出,不阻擋 run。掃出 0 筆的來源先看它是被壓平成單行"
+                "(改走 normalize-html-snapshot / preprocess,重讀無用)、還是結構完好"
+                "但端點沒寫成 METHOD /path(掃描器認不得,請回報);"
                 "事實對不上的來源請檢查 extraction 是否漏掉它記載的端點。",
                 err=True,
             )
@@ -854,6 +850,17 @@ def validate(
     typer.echo(
         f"驗證 {status}：error {len(report.errors())}，warning {len(report.warnings())}；"
         f"報告寫入 {output / 'validation'}"
+    )
+    # 這個入口只讀 run 目錄,來源與 focus 應答都不在裡面,所以三項檢查在此無法
+    # 重建 —— 而它剛剛用一份沒有那些問題的報告覆寫了 assemble 寫出的那份。
+    # 擋不了覆寫(那正是這個命令的用途),就必須講出來,否則 SOURCE_FACTS_UNSCANNED
+    # 會被一次 re-validate 靜靜抹掉,而那正是這筆警告存在的理由。
+    typer.echo(
+        "注意:此報告不含需要來源或 focus 應答才能判定的檢查"
+        "(SOURCE_FACTS_UNSCANNED、FOCUS_UNMET、FOCUS_INCOMPLETE);"
+        "它們只在 assemble 產生,重跑此命令會把它們從報告中移除。"
+        "要保留完整結論,請以 assemble 的報告為準。",
+        err=True,
     )
     raise typer.Exit(code=0 if report.ok else 1)
 
