@@ -8,14 +8,17 @@ Make the source-fact gate's no-op visible: SOURCE_FACTS_UNSCANNED
 
 ## Changed
 
-- `assemble` now projects, per manifest source, how many source facts were scanned and
+- `assemble` now projects, per manifest source, how many endpoint facts were scanned and
   how many of them matched the extraction by endpoint identity (`METHOD /path`), and
   reports the two ways the semantic completeness gate can fail to judge a source as a
   new warning-severity `SOURCE_FACTS_UNSCANNED` validation issue:
-  - **zero facts** — nothing was scanned from that source (an HTML source, a flattened
-    HTML-to-text dump, or an unconverted PDF/Word file). The remedy is to re-run
-    preprocessing along a table-preserving path (`normalize-html-snapshot`,
-    `preprocess`), *not* to re-read the source.
+  - **zero facts** — no endpoint facts were scanned from that source. Three different
+    things land here and the remedy differs: content flattened into single lines or an
+    unconverted PDF/Word file needs preprocessing re-run along a table-preserving path
+    (`normalize-html-snapshot`, `preprocess`); a structurally sound source whose endpoints
+    are written as full URLs or code comments rather than `METHOD /path` is a gap in the
+    recognizer, not in the extraction; and a prose-only source with no parameter tables
+    legitimately lands here. Re-reading the source is never the answer.
   - **zero matches** — facts were scanned but none matched an extracted endpoint. The
     remedy is to check whether the extraction missed the endpoints that source documents.
 - The severity is always warning and never changes a run's pass/fail or exit code: a
@@ -53,6 +56,18 @@ The four cases whose sources are machine-readable OpenAPI documents
 Each case's `expected/validation.expect.json` was updated to the observed counts; the
 trigger condition was not narrowed to keep the old expectations. These runs were never
 judged by the gate and the reports had said nothing about it — that is the change.
+
+They are not all the same problem. Some of these sources really are flattened HTML dumps;
+others (`tappay-backend`, `line-pay-online-v3`) are well-formed Markdown whose endpoints are
+documented as full URLs in code comments, which the scanner does not recognise as endpoint
+declarations. The warning text enumerates the possible causes rather than asserting one, and
+the second class is a recognizer gap worth its own ticket.
+
+**Score impact:** each warning costs 12 points within its category and `source_grounding`
+carries 20% of the weighted total, so a case with two or more of them floors that category
+at 0 and loses the full 20 points (`cybersource-payments` has 24). Run status and exit codes
+are unaffected, but any pipeline gating on an absolute `--min-score` threshold should
+revisit it.
 
 ## Strategy impact
 

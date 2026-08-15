@@ -56,8 +56,8 @@ from loop_apidoc.source_quality.models import QualityVerdict
 from loop_apidoc.source_quality.report import write_reports as write_source_quality_reports
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.shadow.report import run_shadow_safely
+from loop_apidoc.agentcli.fact_coverage import build_fact_coverage
 from loop_apidoc.agentcli.identity import extraction_identities
-from loop_apidoc.validate.fact_coverage import build_fact_coverage
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 

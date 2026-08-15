@@ -11,6 +11,12 @@ never reaches that scan at all, and a source produced by flattening HTML into a 
 text reaches it and yields nothing. In both cases the gate has nothing to compare, so it passes
 silently.
 
+A third shape hides inside the same class and matters just as much: a source whose Markdown
+structure is intact — headings, GFM tables, the lot — but whose endpoints are not written as
+`METHOD /path`. `benchmarks/tappay-backend` documents every operation as a full URL inside a code
+comment, and the scan reads nothing from it. The failure there is the recognizer's, not the
+source's, and no amount of re-running preprocessing will change it.
+
 The scan is deliberately not widened to cover them. Structure is what makes a fact mechanical;
 guessing structure out of a prose dump manufactures facts, and under a fail-closed gate a false
 fact blocks a correct extraction. The asymmetry is decisive — a missed fact costs a check that
@@ -47,9 +53,18 @@ sources the gate never judged.
 
 ## Consequences
 
-Benchmark cases whose sources are HTML-derived Markdown now carry this warning permanently, and
-that is the intended reading: those runs were never judged by the gate, and the reports said
-nothing about it. The 0.36.0 release notes list which cases and how many sources each.
+Nine of the thirteen benchmark cases now carry this warning permanently, and that is the intended
+reading: those runs were never judged by the gate, and the reports said nothing about it. The
+0.36.0 release notes list which cases and how many sources each. They are not all the same
+problem — some sources are genuinely flattened, others are well-formed Markdown the recognizer
+does not understand — which is why the issue's remedy text enumerates the causes instead of
+asserting one.
+
+The score cost is real and worth stating plainly: a warning costs 12 points in its category and
+`source_grounding` carries 20% of the total, so a case like `cybersource-payments` with 24 such
+warnings floors that category at 0 and loses the full 20 points. Runs gated on an absolute
+`--min-score` threshold will need that threshold revisited; run status and exit codes are
+unaffected.
 
 A warning that is always present for a given corpus does teach people to ignore it (the concern
 ADR 0006 weighs), and that cost is accepted here because the alternative is worse: the
