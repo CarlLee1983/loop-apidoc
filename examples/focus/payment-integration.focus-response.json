@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "id": "settlement-callback",
+      "outcome": "satisfied",
+      "reported_by": "ep3",
+      "anchors": [
+        {
+          "type": "operation",
+          "value": "POST /v1/callbacks/settlement",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "provider-api.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 412,
+                "end_line": 412
+              },
+              "fragment_digest": "a5a2c8bfbead7cab1d0d8d3293b74320725e07a6611507e024d030252af15e5d",
+              "claim_path": "/summary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refund-operation",
+      "outcome": "not_found",
+      "reported_by": "inventory",
+      "searched_sources": [
+        "provider-api.md",
+        "provider-errors.md",
+        "webhooks.md"
+      ]
+    }
+  ]
+}
