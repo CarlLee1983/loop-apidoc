@@ -380,7 +380,9 @@ def run_assemble_pipeline(
     )
     write_preparation_reports(preparation_report, run_dir)
     result = generate_outputs(plan, manifest, run_dir)
-    report = validate_outputs(plan, result, manifest, focus)
+    report = validate_outputs(
+        plan, result, manifest, focus, facts.documented_error_codes()
+    )
     write_validation_reports(report, run_dir / "validation")
     if focus is not None:
         write_focus_reports(focus, run_dir)

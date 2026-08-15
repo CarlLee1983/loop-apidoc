@@ -31,7 +31,9 @@ _ERROR_PENALTY = 40
 # 提出者指令的結局,一旦計入,同一份來源就會因為 focus 不同而得到不同分數,而
 # 提出者也能靠寫寬鬆的 directive 把分數拉高 —— 那會讓這個數字的意義反轉。
 # 見 docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md。
-_UNSCORED_CODES: frozenset[IssueCode] = frozenset({IssueCode.FOCUS_UNMET})
+_UNSCORED_CODES: frozenset[IssueCode] = frozenset(
+    {IssueCode.FOCUS_UNMET, IssueCode.FOCUS_INCOMPLETE}
+)
 
 _CODE_ERROR_PENALTY: dict[IssueCode, int] = {
     IssueCode.OPENAPI_INVALID: 100,
