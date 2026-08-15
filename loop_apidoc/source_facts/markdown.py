@@ -17,6 +17,7 @@ import re
 from loop_apidoc.domain.evidence import normalize_excerpt
 from loop_apidoc.source_facts.models import (
     EndpointFact,
+    ErrorCodeFact,
     PayloadFenceFact,
     SourceFacts,
     TableCellFact,
@@ -60,6 +61,18 @@ _PAYLOAD_INFO = {
     "json", "xml", "http", "curl", "yaml", "yml", "javascript", "js",
     "response", "request", "jsonc", "html",
 }
+# 錯誤碼表的表頭詞彙。命中的那一欄才是碼欄——這與 URL corpus 那個在散文裡撈
+# 四五位數的 regex 是結構上不同的東西:這裡只取「表頭自稱是錯誤碼」的整格內容。
+_ERROR_CODE_HEADER_TOKENS = ("錯誤碼", "錯誤代碼", "回應碼", "error code", "errcode")
+# 這些表頭太泛用,單看它無法斷定:`| 代碼 | 幣別 |` 的幣別表(USD、TWD)完全符合
+# 碼的形狀。要有章節標題佐證才算數——認錯一張表會生出假事實,而假事實會擋掉
+# 正確的擷取,所以模糊時沉默。
+_AMBIGUOUS_CODE_HEADER_TOKENS = ("代碼", "狀態碼", "status code", "code")
+_ERROR_SECTION_TOKENS = ("錯誤", "例外", "error", "exception")
+# 碼的形狀刻意不沿用 _IDENTIFIER——它禁止開頭是數字,而 `1001` 正是最常見的形狀。
+# 收下 1001 / E1001 / INVALID_REQUEST / ERR-001 / 40001。
+_ERROR_CODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]*$")
+_ERROR_CODE_MAX_LENGTH = 32
 _REQUIRED_HEADERS = ("required", "mandatory", "必填", "是否必填")
 _REQUIRED_TRUE = {"y", "yes", "true", "required", "必填", "是"}
 _REQUIRED_FALSE = {"n", "no", "false", "optional", "非必填", "否"}
@@ -118,7 +131,11 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
 
     state.flush_table()
     state.finish_section(len(lines))
-    return SourceFacts(relative_path=relative_path, endpoints=state.endpoints)
+    return SourceFacts(
+        relative_path=relative_path,
+        endpoints=state.endpoints,
+        error_codes=state.error_codes,
+    )
 
 
 class _ScanState:
@@ -137,6 +154,12 @@ class _ScanState:
         self.fence_length = 0
         self.table: list[tuple[int, str]] = []
         self.previous = ""
+        # 錯誤碼表不依附端點,所以索引與累積都在來源層級。
+        self.error_codes: list[ErrorCodeFact] = []
+        self.error_table_index = 0
+        # 包住目前位置的標題層級堆疊。錯誤碼表常寫成 `## 錯誤碼` → `### 支付類`
+        # → 表格,只看最近一層標題會漏掉整批分組。
+        self.heading_stack: list[tuple[int, str]] = []
 
     @property
     def in_fence(self) -> bool:
@@ -172,6 +195,16 @@ class _ScanState:
             fact = _absorb_table(self.current, self.table)
             if self.current is not None and fact is not None:
                 self.current.tables += (fact,)
+            # 端點狀態無關:錯誤碼表通常落在所有端點小節之外。
+            codes = _absorb_error_codes(
+                self.relative_path,
+                self.table,
+                self.error_table_index,
+                headings=tuple(title for _, title in self.heading_stack),
+            )
+            if codes:
+                self.error_codes.extend(codes)
+                self.error_table_index += 1
             self.table = []
 
     def open_heading(
@@ -183,6 +216,9 @@ class _ScanState:
     ) -> None:
         self.last_heading = title
         self.last_heading_level = level
+        while self.heading_stack and self.heading_stack[-1][0] >= level:
+            self.heading_stack.pop()
+        self.heading_stack.append((level, title))
         declared = _declared_endpoint(title)
         if declared:
             self.declare(
@@ -306,10 +342,10 @@ def _absorb_table(
     rows: list[tuple[int, str]],
 ) -> TableFact | None:
     """把一張 GFM 表格的「名稱欄」併入目前端點的參數名清單。"""
-    if current is None or len(rows) < 3:
+    if current is None:
         return None
-    header = _cells(rows[0][1])
-    if not header or not _TABLE_SEPARATOR.match(rows[1][1]):
+    header = _table_header(rows)
+    if header is None:
         return None
     if not _is_name_header(header[0]):
         return None
@@ -371,6 +407,112 @@ def _absorb_table(
         end_line=rows[-1][0],
         headers=clean_headers,
         rows=tuple(fact_rows),
+    )
+
+
+def _absorb_error_codes(
+    relative_path: str,
+    rows: list[tuple[int, str]],
+    table_index: int,
+    *,
+    headings: tuple[str, ...],
+) -> list[ErrorCodeFact]:
+    """把一張錯誤碼表格攤成記載錯誤碼下界的成員。
+
+    整表成立或整表作廢,不做逐列挑選:漏掉一列會安靜地把下界調低,而下界調低
+    正是這道檢查要防的東西;整表沉默則等同今天的行為,是安全的那一邊。
+    """
+    header = _table_header(rows)
+    # 只有碼、沒有意義欄的表多半不是錯誤碼表。
+    if header is None or len(header) < 2:
+        return []
+    column = _error_code_column(header, headings)
+    if column is None:
+        return []
+
+    clean_headers = [normalize_excerpt(_field_name(cell)) for cell in header]
+    facts: list[ErrorCodeFact] = []
+    for row_index, (line, row) in enumerate(rows[2:]):
+        cells = _cells(row)
+        if not cells or column >= len(cells):
+            return []
+        code = normalize_excerpt(cells[column].strip().strip("`*_ "))
+        # 分組標題列(「支付類」)其餘欄位全空,且碼欄本身不是碼的形狀。兩個條件
+        # 都要:`| 1001 | |` 也是其餘欄位全空,但它是說明留白的真資料列,把它
+        # 當標題跳過會安靜地把下界調低,正好是這道檢查要防的事。
+        others_blank = len(cells) > 1 and not any(
+            cell.strip() for index, cell in enumerate(cells) if index != column
+        )
+        if others_blank and not _is_error_code(code):
+            continue
+        if not _is_error_code(code):
+            return []
+        facts.append(
+            ErrorCodeFact(
+                relative_path=relative_path,
+                code=code,
+                line=line,
+                table_index=table_index,
+                row_index=row_index,
+                column_index=column,
+                column_name=clean_headers[column],
+                normalized_excerpt=normalize_excerpt(row.strip()),
+            )
+        )
+    return facts
+
+
+def _table_header(rows: list[tuple[int, str]]) -> list[str] | None:
+    """GFM 表格的表頭列;湊不齊表頭 + 分隔列 + 至少一列內文就不算表格。"""
+    if len(rows) < 3:
+        return None
+    header = _cells(rows[0][1])
+    if not header or not _TABLE_SEPARATOR.match(rows[1][1]):
+        return None
+    return header
+
+
+def _error_code_column(header: list[str], headings: tuple[str, ...]) -> int | None:
+    """哪一欄是碼欄——明確的表頭直接算數,模糊的表頭要有錯誤章節佐證。
+
+    完全相符優先於包含:`| 錯誤碼分類 | 錯誤碼 | 說明 |` 的碼欄是第二欄,
+    照「第一個命中」會挑到分類欄,整張表就跟著作廢。
+    模糊詞彙只認完全相符——`國家代碼`、`幣別代碼` 都包含「代碼」,放寬成包含
+    會把國別表、幣別表整批認成錯誤碼。
+    """
+    lowered = [cell.strip().strip("`*_ ").lower() for cell in header]
+    # 不走 _field_name:它會從第一個空白截斷(那是為參數名後的註記設計的),
+    # 「Error Code」會被砍成「Error」。
+    for index, cell in enumerate(lowered):
+        if cell in _ERROR_CODE_HEADER_TOKENS:
+            return index
+    for index, cell in enumerate(lowered):
+        if any(token in cell for token in _ERROR_CODE_HEADER_TOKENS):
+            return index
+    if not _is_error_section(headings):
+        return None
+    for index, cell in enumerate(lowered):
+        if cell in _AMBIGUOUS_CODE_HEADER_TOKENS:
+            return index
+    return None
+
+
+def _is_error_section(headings: tuple[str, ...]) -> bool:
+    """包住這張表的任何一層標題是錯誤章節就算數。
+
+    `## 錯誤碼` → `### 支付類` → 表格,是主流的分組寫法;只看最近的一層標題
+    會漏掉它們全部。
+    """
+    return any(
+        token in heading.lower()
+        for heading in headings
+        for token in _ERROR_SECTION_TOKENS
+    )
+
+
+def _is_error_code(value: str) -> bool:
+    return bool(value) and len(value) <= _ERROR_CODE_MAX_LENGTH and bool(
+        _ERROR_CODE.match(value)
     )
 
 

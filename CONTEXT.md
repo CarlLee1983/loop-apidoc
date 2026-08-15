@@ -101,6 +101,14 @@ It has no third outcome; a directive's applicability is the requester's judgemen
 the agent's.
 _Avoid_: Extraction result, missing list, directive status
 
+**Documented Error-Code Floor**:
+The set of provider error codes the supplier sources demonstrably document through
+structure they themselves present, and the deterministic basis for judging whether an
+exhaustive answer collected them all. It is a lower bound: an answer naming more codes is
+still complete. Where the sources present no such structure the floor does not exist,
+which is not the same as being empty.
+_Avoid_: Expected code list, error-code count, required errors
+
 **Line Currency Policy**:
 A source-stated constraint on how a product line selects or binds currency. The
 absence of a request currency field is not evidence of a single-currency policy.

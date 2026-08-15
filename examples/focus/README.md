@@ -36,6 +36,14 @@ once, an anchor resolves to an endpoint the extraction actually contains, its an
 agrees with the directive's intent, and its evidence materializes from a manifest source with
 a matching digest. Any of those failing stops the run before a run directory exists.
 
+For a `collect_error_codes` directive it also checks *completeness*. Where one of your Markdown
+sources presents an error-code table, the codes in it are a floor: an answer reporting fewer
+names the ones it left out, with the file and line where each is documented. Reporting more
+still passes, because a source can document codes in prose no table exposes. Sources with no
+recognisable table produce no floor, so nothing is judged — the bound is absent rather than
+zero. Note the floor ignores how narrowly your directive is worded: `collect_error_codes` means
+all of the provider's codes, and a narrow claim belongs in an Expectation Directive.
+
 A falsified Expectation Directive then fails validation as a `FOCUS_UNMET` error — the run's
 artifacts are still written, so you can read the guide, the OpenAPI document, and the answer's
 searched-source list before deciding whether to gather better sources or re-run the
