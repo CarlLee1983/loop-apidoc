@@ -63,9 +63,15 @@ _PAYLOAD_INFO = {
 }
 # 錯誤碼表的表頭詞彙。命中的那一欄才是碼欄——這與 URL corpus 那個在散文裡撈
 # 四五位數的 regex 是結構上不同的東西:這裡只取「表頭自稱是錯誤碼」的整格內容。
-_ERROR_CODE_HEADER_TOKENS = ("錯誤碼", "error code")
+_ERROR_CODE_HEADER_TOKENS = ("錯誤碼", "錯誤代碼", "回應碼", "error code", "errcode")
+# 這些表頭太泛用,單看它無法斷定:`| 代碼 | 幣別 |` 的幣別表(USD、TWD)完全符合
+# 碼的形狀。要有章節標題佐證才算數——認錯一張表會生出假事實,而假事實會擋掉
+# 正確的擷取,所以模糊時沉默。
+_AMBIGUOUS_CODE_HEADER_TOKENS = ("代碼", "狀態碼", "status code", "code")
+_ERROR_SECTION_TOKENS = ("錯誤", "例外", "error", "exception")
 # 碼的形狀刻意不沿用 _IDENTIFIER——它禁止開頭是數字,而 `1001` 正是最常見的形狀。
-_ERROR_CODE = re.compile(r"^[0-9]+$")
+# 收下 1001 / E1001 / INVALID_REQUEST / ERR-001 / 40001。
+_ERROR_CODE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]*$")
 _ERROR_CODE_MAX_LENGTH = 32
 _REQUIRED_HEADERS = ("required", "mandatory", "必填", "是否必填")
 _REQUIRED_TRUE = {"y", "yes", "true", "required", "必填", "是"}
@@ -188,7 +194,10 @@ class _ScanState:
                 self.current.tables += (fact,)
             # 端點狀態無關:錯誤碼表通常落在所有端點小節之外。
             codes = _absorb_error_codes(
-                self.relative_path, self.table, self.error_table_index
+                self.relative_path,
+                self.table,
+                self.error_table_index,
+                heading=self.last_heading,
             )
             if codes:
                 self.error_codes.extend(codes)
@@ -399,6 +408,8 @@ def _absorb_error_codes(
     relative_path: str,
     rows: list[tuple[int, str]],
     table_index: int,
+    *,
+    heading: str | None,
 ) -> list[ErrorCodeFact]:
     """把一張錯誤碼表格攤成記載錯誤碼下界的成員。
 
@@ -409,7 +420,7 @@ def _absorb_error_codes(
     # 只有碼、沒有意義欄的表多半不是錯誤碼表。
     if header is None or len(header) < 2:
         return []
-    column = _error_code_column(header)
+    column = _error_code_column(header, heading)
     if column is None:
         return []
 
@@ -419,6 +430,9 @@ def _absorb_error_codes(
         cells = _cells(row)
         if not cells or column >= len(cells):
             return []
+        # 分組標題列(其餘欄位全空)不是資料列,跳過它不會調低下界。
+        if len(cells) > 1 and not any(cell.strip() for cell in cells[1:]):
+            continue
         code = normalize_excerpt(cells[column].strip().strip("`*_ "))
         if not _is_error_code(code):
             return []
@@ -447,12 +461,25 @@ def _table_header(rows: list[tuple[int, str]]) -> list[str] | None:
     return header
 
 
-def _error_code_column(header: list[str]) -> int | None:
+def _error_code_column(header: list[str], heading: str | None) -> int | None:
+    """哪一欄是碼欄——明確的表頭直接算數,模糊的表頭要有錯誤章節佐證。"""
+    ambiguous: int | None = None
     for index, cell in enumerate(header):
-        lowered = _field_name(cell).lower()
+        # 不走 _field_name:它會從第一個空白截斷(那是為參數名後的註記設計的),
+        # 「Error Code」會被砍成「Error」。
+        lowered = cell.strip().strip("`*_ ").lower()
         if any(token in lowered for token in _ERROR_CODE_HEADER_TOKENS):
             return index
-    return None
+        if ambiguous is None and any(
+            token in lowered for token in _AMBIGUOUS_CODE_HEADER_TOKENS
+        ):
+            ambiguous = index
+    return ambiguous if _is_error_section(heading) else None
+
+
+def _is_error_section(heading: str | None) -> bool:
+    lowered = (heading or "").lower()
+    return any(token in lowered for token in _ERROR_SECTION_TOKENS)
 
 
 def _is_error_code(value: str) -> bool:

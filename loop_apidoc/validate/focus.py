@@ -58,8 +58,10 @@ def _shortfall_issues(
         # not_found 已經有 FOCUS_UNMET 這個結局,不該再被短少連坐一次。
         if response is None or response.outcome != "satisfied":
             continue
-        reported = {anchor.value.strip() for anchor in response.anchors}
-        omitted = [code for code in floor if code not in reported]
+        # 不分大小寫:來源寫 `E1001`、答案寫 `e1001` 是同一個碼。對一個確實被
+        # 回報的碼開罰單,比漏判一個沒回報的碼貴得多。
+        reported = {anchor.value.strip().casefold() for anchor in response.anchors}
+        omitted = [code for code in floor if code.casefold() not in reported]
         if omitted:
             issues.append(_shortfall_issue(directive, omitted, floor))
     return issues

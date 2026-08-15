@@ -179,3 +179,31 @@ def test_an_answer_beyond_the_floor_still_passes(tmp_path):
     payload = _payload(assemble(tmp_path, sources, extraction, focus, "--json"))
 
     assert issues_with_code(payload, "FOCUS_INCOMPLETE") == []
+
+
+def test_a_case_difference_is_not_a_shortfall(tmp_path):
+    """來源寫 `E1001`、答案寫 `e1001` —— 那是同一個碼,不是漏掉一個。
+
+    #64 只收數字碼時不會發生;#65 收下 `E1001` / `INVALID_REQUEST` 之後,
+    比對就必須不分大小寫,否則會對一個確實被回報的碼開罰單。假違規比漏判貴。
+    """
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("e1001")],
+        table="""
+## 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| E1001 | 餘額不足 |
+""")
+    inventory = json.loads((extraction / "inventory.json").read_text("utf-8"))
+    inventory["errors"] = [{"code": "e1001", "meaning": "餘額不足",
+                            "http_status": "400", "applicable_to": [],
+                            "source": "manual.md lines 2-3"}]
+    (extraction / "inventory.json").write_text(
+        json.dumps(inventory, ensure_ascii=False), encoding="utf-8")
+
+    payload = _payload(assemble(tmp_path, sources, extraction, focus, "--json"))
+
+    assert issues_with_code(payload, "FOCUS_INCOMPLETE") == []

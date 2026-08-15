@@ -109,3 +109,149 @@ def test_each_fact_carries_the_source_it_was_read_from() -> None:
     facts = scan_markdown("errors.md", GLOBAL_ERROR_TABLE)
 
     assert {fact.relative_path for fact in facts.error_codes} == {"errors.md"}
+
+
+# --- 表頭詞彙 -------------------------------------------------------------
+
+def _table(header: str, *rows: str) -> str:
+    body = "\n".join(f"| {row} |" for row in rows)
+    return f"## 附錄\n\n| {header} |\n| --- | --- |\n{body}\n"
+
+
+def test_the_unambiguous_header_vocabulary_is_recognised() -> None:
+    for header in ("錯誤碼 | 說明", "錯誤代碼 | 說明", "回應碼 | 說明",
+                   "Error Code | Description", "ErrCode | Message"):
+        facts = scan_markdown("manual.md", _table(header, "1001 | 餘額不足"))
+        assert [f.code for f in facts.error_codes] == ["1001"], header
+
+
+def test_an_ambiguous_header_needs_an_error_section_to_corroborate_it() -> None:
+    """`代碼` / `code` / `status code` 太泛用,單看表頭無法斷定。
+
+    一張 `| 代碼 | 幣別 |` 的幣別表(USD、TWD)完全符合碼的形狀。認錯一張表會生出
+    假下界,而假事實會擋掉正確的擷取——所以模糊表頭要有章節標題佐證才算數。
+    """
+    currency = """## 幣別代碼
+
+| 代碼 | 幣別 |
+| --- | --- |
+| USD | 美元 |
+| TWD | 新臺幣 |
+"""
+    assert scan_markdown("manual.md", currency).error_codes == []
+
+    errors = """## 錯誤代碼一覽
+
+| 代碼 | 說明 |
+| --- | --- |
+| USD | 佔位 |
+"""
+    assert [f.code for f in scan_markdown("manual.md", errors).error_codes] == ["USD"]
+
+
+def test_an_english_error_section_corroborates_an_ambiguous_header() -> None:
+    text = """## Error Codes
+
+| Code | Meaning |
+| --- | --- |
+| INVALID_REQUEST | malformed body |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["INVALID_REQUEST"]
+
+
+# --- 碼的形狀 -------------------------------------------------------------
+
+def test_the_supported_code_shapes_are_recognised() -> None:
+    facts = scan_markdown("manual.md", _table(
+        "錯誤碼 | 說明",
+        "1001 | 餘額不足", "E1001 | 餘額不足", "INVALID_REQUEST | 格式錯誤",
+        "ERR-001 | 逾時", "40001 | 簽章錯誤"))
+
+    assert [f.code for f in facts.error_codes] == [
+        "1001", "E1001", "INVALID_REQUEST", "ERR-001", "40001"]
+
+
+def test_the_parameter_identifier_pattern_is_not_reused_for_codes() -> None:
+    """`_IDENTIFIER` 禁止開頭是數字,而 `1001` 正是最常見的供應商錯誤碼形狀。"""
+    from loop_apidoc.source_facts.markdown import _IDENTIFIER
+
+    assert not _IDENTIFIER.match("1001")
+    assert [f.code for f in scan_markdown(
+        "manual.md", _table("錯誤碼 | 說明", "1001 | 餘額不足")).error_codes] == ["1001"]
+
+
+def test_an_over_long_cell_is_not_a_code() -> None:
+    """碼有長度上限;整段句子塞在碼欄時,那張表不是錯誤碼表。"""
+    facts = scan_markdown("manual.md", _table(
+        "錯誤碼 | 說明", f"{'9' * 40} | 這不是碼"))
+
+    assert facts.error_codes == []
+
+
+# --- 表格形狀 -------------------------------------------------------------
+
+def test_a_group_label_row_is_skipped_without_discarding_the_table() -> None:
+    """分組標題列(其餘欄位全空)不是資料列,不該讓整張表作廢。"""
+    text = """## 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 支付類 | |
+| 1001 | 餘額不足 |
+| 1002 | 簽章錯誤 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert [f.code for f in facts.error_codes] == ["1001", "1002"]
+
+
+def test_a_table_inside_a_fenced_code_sample_yields_no_floor() -> None:
+    """圍籬裡的東西是範例,不是來源的主張。"""
+    text = """## 錯誤碼
+
+```markdown
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 1001 | 餘額不足 |
+```
+"""
+
+    assert scan_markdown("manual.md", text).error_codes == []
+
+
+def test_the_constant_table_rejection_does_not_swallow_an_error_code_table() -> None:
+    """`| X | Value |` 的常數表判定只管參數表,不得連錯誤碼表一起丟掉。"""
+    text = """## 錯誤碼
+
+| 錯誤碼 | Value |
+| --- | --- |
+| 1001 | 餘額不足 |
+"""
+
+    assert [f.code for f in scan_markdown("manual.md", text).error_codes] == ["1001"]
+
+
+def test_an_error_code_table_inside_an_endpoint_section_leaves_parameters_alone(
+) -> None:
+    """兩種表共存於同一個端點小節時,各自認各自的,互不污染。"""
+    text = """## POST /payments
+
+| Name | Type | Required |
+| --- | --- | --- |
+| amount | integer | Y |
+
+### 錯誤碼
+
+| 錯誤碼 | 說明 |
+| --- | --- |
+| 1001 | 餘額不足 |
+"""
+
+    facts = scan_markdown("manual.md", text)
+
+    assert facts.endpoints[0].parameter_names == ["amount"]
+    assert [f.code for f in facts.error_codes] == ["1001"]
