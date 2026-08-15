@@ -3,6 +3,7 @@ from __future__ import annotations
 from loop_apidoc.generate.models import GenerateResult
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
+from loop_apidoc.source_facts.models import ErrorCodeFact
 from loop_apidoc.validate.completeness import check_completeness
 from loop_apidoc.validate.consistency import check_consistency
 from loop_apidoc.focus.models import FocusPackage
@@ -21,6 +22,7 @@ def validate_outputs(
     result: GenerateResult,
     manifest: Manifest,
     focus: FocusPackage | None = None,
+    error_code_floor: dict[str, list[tuple[str, ErrorCodeFact]]] | None = None,
 ) -> ValidationReport:
     """Aggregate the §9 validation categories plus §6 manifest coverage.
     Pure; the correction loop reuses this seam.
@@ -37,5 +39,5 @@ def validate_outputs(
     issues += check_manifest_coverage(manifest, result.provenance)
     issues += check_integration(plan, result)
     issues += analyze_response_contracts(result.openapi).issues
-    issues += check_focus_outcomes(focus)
+    issues += check_focus_outcomes(focus, error_code_floor)
     return ValidationReport(issues=issues, root_causes=derive_root_causes(issues))

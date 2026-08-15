@@ -17,6 +17,7 @@ import re
 from loop_apidoc.domain.evidence import normalize_excerpt
 from loop_apidoc.source_facts.models import (
     EndpointFact,
+    ErrorCodeFact,
     PayloadFenceFact,
     SourceFacts,
     TableCellFact,
@@ -60,6 +61,12 @@ _PAYLOAD_INFO = {
     "json", "xml", "http", "curl", "yaml", "yml", "javascript", "js",
     "response", "request", "jsonc", "html",
 }
+# 錯誤碼表的表頭詞彙。命中的那一欄才是碼欄——這與 URL corpus 那個在散文裡撈
+# 四五位數的 regex 是結構上不同的東西:這裡只取「表頭自稱是錯誤碼」的整格內容。
+_ERROR_CODE_HEADER_TOKENS = ("錯誤碼", "error code")
+# 碼的形狀刻意不沿用 _IDENTIFIER——它禁止開頭是數字,而 `1001` 正是最常見的形狀。
+_ERROR_CODE = re.compile(r"^[0-9]+$")
+_ERROR_CODE_MAX_LENGTH = 32
 _REQUIRED_HEADERS = ("required", "mandatory", "必填", "是否必填")
 _REQUIRED_TRUE = {"y", "yes", "true", "required", "必填", "是"}
 _REQUIRED_FALSE = {"n", "no", "false", "optional", "非必填", "否"}
@@ -118,7 +125,11 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
 
     state.flush_table()
     state.finish_section(len(lines))
-    return SourceFacts(relative_path=relative_path, endpoints=state.endpoints)
+    return SourceFacts(
+        relative_path=relative_path,
+        endpoints=state.endpoints,
+        error_codes=state.error_codes,
+    )
 
 
 class _ScanState:
@@ -137,6 +148,9 @@ class _ScanState:
         self.fence_length = 0
         self.table: list[tuple[int, str]] = []
         self.previous = ""
+        # 錯誤碼表不依附端點,所以索引與累積都在來源層級。
+        self.error_codes: list[ErrorCodeFact] = []
+        self.error_table_index = 0
 
     @property
     def in_fence(self) -> bool:
@@ -172,6 +186,11 @@ class _ScanState:
             fact = _absorb_table(self.current, self.table)
             if self.current is not None and fact is not None:
                 self.current.tables += (fact,)
+            # 端點狀態無關:錯誤碼表通常落在所有端點小節之外。
+            codes = _absorb_error_codes(self.table, self.error_table_index)
+            if codes:
+                self.error_codes.extend(codes)
+                self.error_table_index += 1
             self.table = []
 
     def open_heading(
@@ -371,6 +390,61 @@ def _absorb_table(
         end_line=rows[-1][0],
         headers=clean_headers,
         rows=tuple(fact_rows),
+    )
+
+
+def _absorb_error_codes(
+    rows: list[tuple[int, str]],
+    table_index: int,
+) -> list[ErrorCodeFact]:
+    """把一張錯誤碼表格攤成記載錯誤碼下界的成員。
+
+    整表成立或整表作廢,不做逐列挑選:漏掉一列會安靜地把下界調低,而下界調低
+    正是這道檢查要防的東西;整表沉默則等同今天的行為,是安全的那一邊。
+    """
+    if len(rows) < 3:
+        return []
+    header = _cells(rows[0][1])
+    if len(header) < 2 or not _TABLE_SEPARATOR.match(rows[1][1]):
+        return []
+    column = _error_code_column(header)
+    if column is None:
+        return []
+
+    clean_headers = [normalize_excerpt(_field_name(cell)) for cell in header]
+    facts: list[ErrorCodeFact] = []
+    for row_index, (line, row) in enumerate(rows[2:]):
+        cells = _cells(row)
+        if not cells or column >= len(cells):
+            return []
+        code = normalize_excerpt(cells[column].strip().strip("`*_ "))
+        if not _is_error_code(code):
+            return []
+        facts.append(
+            ErrorCodeFact(
+                code=code,
+                line=line,
+                table_index=table_index,
+                row_index=row_index,
+                column_index=column,
+                column_name=clean_headers[column],
+                normalized_excerpt=normalize_excerpt(row.strip()),
+            )
+        )
+    return facts
+
+
+def _error_code_column(header: list[str]) -> int | None:
+    for index, cell in enumerate(header):
+        lowered = _field_name(cell).lower()
+        if any(token in lowered for token in _ERROR_CODE_HEADER_TOKENS):
+            return index
+    return None
+
+
+def _is_error_code(value: str) -> bool:
+    return bool(value) and len(value) <= _ERROR_CODE_MAX_LENGTH and bool(
+        _ERROR_CODE.match(value)
     )
 
 
