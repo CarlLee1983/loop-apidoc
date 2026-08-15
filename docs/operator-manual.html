@@ -264,7 +264,53 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 uv run loop-apidoc assemble --sources ./sources --extraction ./work --output ./output \
   --source-quality ./work/source-quality --focus ./focus.json --json
 </code></pre>
-<p><code>verify-extraction</code> 與 <code>assemble</code> 皆可選用;不給就與現況完全相同。<code>focus.json</code> 裡寫的是「這次串接少了它就不能上線」的東西——金流的結算回呼、遊戲平台的錢包轉帳端點、供應商的錯誤碼。指令會逐字進入每個擷取 subagent 的 prompt,所以它真的導引擷取,不只是事後稽核;擷取 agent 則對每一條恰好應答一次,寫進 <code>&lt;WORK&gt;/focus-response.json</code>。可複製的範本在 repo 的 <code>examples/focus/</code>。</p>
+<p><code>verify-extraction</code> 與 <code>assemble</code> 皆可選用;不給就與現況完全相同。<code>focus.json</code> 裡寫的是「這次串接少了它就不能上線」的東西——金流的結算回呼、遊戲平台的錢包轉帳端點、供應商的錯誤碼。指令會逐字進入每個擷取 subagent 的 prompt,所以它真的導引擷取,不只是事後稽核;擷取 agent 則對每一條恰好應答一次,寫進 <code>&lt;WORK&gt;/focus-response.json</code>。可複製的範本在 repo 的 <code>examples/focus/</code>(<code>payment-integration.focus.json</code> 與對應的 <code>payment-integration.focus-response.json</code>)。</p>
+<p><strong><code>focus.json</code> 長這樣。</strong>檔案是嚴格契約:多寫欄位會被拒絕,<code>id</code> 在同一份檔案內必須唯一。<code>version</code> 固定為 <code>1</code>;每條指令必填 <code>id</code>(非空白,應答靠它回指)、<code>kind</code>、<code>intent</code>、<code>text</code>(非空白,會逐字進入每個擷取 subagent 的 prompt,所以要當成指令來寫),選填 <code>rationale</code> 說明為什麼重要、並帶進報告給下一個讀的人。</p>
+<pre><code class="language-json">{
+  "version": 1,
+  "directives": [
+    {
+      "id": "settlement-callback",
+      "kind": "expectation",
+      "intent": "find_operation",
+      "text": "一定要找到結算完成的回呼通知端點。若來源真的沒有記載,請列出已查過的每一份來源。",
+      "rationale": "對帳排程以此回呼為觸發點,缺了它整份契約無法上線。"
+    },
+    {
+      "id": "refund-operation",
+      "kind": "coverage",
+      "intent": "find_operation",
+      "text": "掃過所有與退款、取消、沖正相關的端點;找不到不算失敗。"
+    }
+  ]
+}
+</code></pre>
+<p><strong>應答長這樣。</strong>擷取 agent 對每個 <code>id</code> 恰好應答一次,寫進 <code>&lt;WORK&gt;/focus-response.json</code>。<code>reported_by</code> 指出承載錨點的端點檔,<code>not_found</code> 時為 <code>inventory</code>。<code>fragment_digest</code> 是正規化來源片段的 SHA-256,由 manifest 的 bytes 重新推導比對,不是照單全收。</p>
+<pre><code class="language-json">{
+  "version": 1,
+  "responses": [
+    {
+      "id": "settlement-callback",
+      "outcome": "satisfied",
+      "reported_by": "ep3",
+      "anchors": [{
+        "type": "operation",
+        "value": "POST /v1/callbacks/settlement",
+        "evidence": [{
+          "version": 1,
+          "source": "provider-api.md",
+          "locator": {"kind": "line_range", "start_line": 412, "end_line": 412},
+          "fragment_digest": "a5a2…5e5d",
+          "claim_path": "/summary"
+        }]
+      }]
+    },
+    {"id": "refund-operation", "outcome": "not_found", "reported_by": "inventory",
+     "searched_sources": ["provider-api.md", "provider-errors.md", "webhooks.md"]}
+  ]
+}
+</code></pre>
+<p><strong>跑完要讀的是 <code>&lt;run-dir&gt;/focus/focus-report.{json,zh-TW.md}</code>。</strong>每條指令、錨點怎麼解析、查了哪些來源、結局是什麼都在裡面。<code>--focus</code> 在 <code>verify-extraction</code> 與 <code>assemble</code> 各自可選、互不依賴,但要讓應答進到這份報告,<code>assemble</code> 那次一定要帶。</p>
 <p><strong>兩種指令,兩個欄位各管一件事。</strong><code>kind</code> 是 severity 的唯一來源:<code>expectation</code> 斷言供應商來源確實記載了它,<code>coverage</code> 只指定一個要掃乾淨的範圍、查無記載也算完整回答。<code>intent</code> 是錨點型別的唯一來源:<code>find_operation</code>、<code>find_field</code>、<code>collect_error_codes</code>。沒有第三個欄位可以覆寫任何一個——想要不阻斷的結局,把指令改寫成 <code>coverage</code>,而不是加降級旗標。</p>
 <p><strong>應答只有兩種結局。</strong><code>satisfied</code> 帶錨點,每個錨點必須附 v1 exact evidence——只給檔名會被拒絕,而那是擷取其他地方仍然接受的形式。<code>not_found</code> 必須列出 manifest 中<strong>每一份</strong>可讀來源:宣稱的是「它不在任何一份裡」,列一份證明不了那件事。刻意沒有「不適用」這個結局——一條指令適不適用是提出者的判斷,給 agent 那顆按鈕等於給它一個永遠能按的脫身鍵。</p>
 <p><strong>結構問題與語意結局分兩層。</strong>沒人應答的指令、指不到任何已擷取端點的錨點、指向 manifest 以外或 digest 不符的證據,都在建立 run 目錄之前以 <code>2</code> 結束。誠實的 <code>not_found</code> 則通過閘門,成為 <code>FOCUS_UNMET</code> 驗證問題(<code>expectation</code> 為 error、<code>coverage</code> 為 warning),run 目錄與產物照常寫出——因為此時要判斷的是「供應商真的沒寫,還是查得不夠」,而那需要產物與已查來源清單一起在手上。<code>verify-extraction</code> 會在 stderr 預告落空的斷言數量,但刻意不影響退出碼。</p>
