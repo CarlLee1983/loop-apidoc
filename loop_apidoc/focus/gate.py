@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from loop_apidoc.agentcli.identity import extraction_identities
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
+from loop_apidoc.focus.codes import extraction_error_codes
+from loop_apidoc.focus.fields import extraction_field_names
 from loop_apidoc.focus.models import FocusDirective, FocusPackage, FocusResponse
 from loop_apidoc.manifest.models import Manifest
 
@@ -22,6 +24,8 @@ def focus_violations(
         return []
     out = _correspondence_violations(focus)
     identities = extraction_identities(inventory, endpoints)
+    field_names = extraction_field_names(inventory, endpoints)
+    codes = extraction_error_codes(inventory)
     readable = manifest.readable_source_identities()
     known = manifest.all_source_identities()
     by_id = {directive.id: directive for directive in focus.directives}
@@ -30,7 +34,8 @@ def focus_violations(
         if directive is None:
             continue  # 已由 _correspondence_violations 報過
         out += _response_violations(
-            directive, response, identities, readable, known)
+            directive, response, identities, field_names, codes,
+            readable, known)
     return out
 
 
@@ -117,6 +122,8 @@ def _response_violations(
     directive: FocusDirective,
     response: FocusResponse,
     identities: set[str],
+    field_names: set[str],
+    codes: set[str],
     readable: set[str],
     known: set[str],
 ) -> list[str]:
@@ -146,4 +153,29 @@ def _response_violations(
                 "不對應任何已擷取的端點身份"
                 "(有 path 用 `METHOD /path`;webhook 用 `METHOD (webhook) <summary>`)"
             )
+        elif anchor.type == "error_code" and anchor.value.strip() not in codes:
+            out.append(
+                f"focus-response.json[{directive.id}]: 錨點 {anchor.value!r} "
+                "不在 inventory.errors[] 的錯誤碼目錄裡"
+                "(錯誤碼只認型別化的 errors[],不認範例或 enum 裡的數字)"
+            )
+        elif anchor.type == "field" and not _field_resolves(
+                anchor.value, field_names):
+            out.append(
+                f"focus-response.json[{directive.id}]: 錨點 {anchor.value!r} "
+                "不對應任何已擷取的欄位"
+                "(可寫 `Schema.field` 或裸欄位名;解析會沿 schema_ref 走進共用 schema)"
+            )
     return out
+
+
+def _field_resolves(value: str, field_names: set[str]) -> bool:
+    """以葉節點名比對,與 source_facts 的欄位覆蓋判準相同。
+
+    來源寫 `user.id`、擷取寫成巢狀的 `id`,是同一件事;兩個閘門對「這個欄位有沒有
+    被擷取」必須給出同一個答案,否則 agent 會收到互相矛盾的指示。
+    """
+    candidates = {value.strip().lower()}
+    if "." in value:
+        candidates.add(value.rsplit(".", 1)[-1].strip().lower())
+    return bool(candidates & field_names)
