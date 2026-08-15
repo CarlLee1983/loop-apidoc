@@ -37,20 +37,20 @@ def check_focus_outcomes(
     return issues + _shortfall_issues(focus, error_code_floor or {})
 
 
-def _shortfall_issues(
-    focus: FocusPackage,
-    floor: dict[str, list[ErrorCodeFact]],
-) -> list[Issue]:
-    """報得比記載錯誤碼下界少的窮盡型指令。
+def omitted_error_codes(
+    focus: FocusPackage | None,
+    floor: dict[str, list[ErrorCodeFact]] | None,
+) -> list[tuple[FocusDirective, list[str]]]:
+    """每個窮盡型指令漏報的錯誤碼(依碼排序);沒有漏報的指令不列入。
 
-    下界一律全域,不受 directive 文字範圍限制:`text` 導引 agent 的注意力,但閘門
-    是確定性的、讀不懂散文,而 `collect_error_codes` 的字面意思就是「這家供應商的
-    錯誤碼,全部」。範圍窄的需求該寫成逐條指名的 Expectation Directive。
+    公開的原因是 `verify-extraction` 的預告與 `assemble` 的驗證問題必須算出同一
+    件事。兩邊各寫一份就會漂移,而預告說「你漏了三個」、驗證說「你漏了五個」
+    比沒有預告更糟。
     """
-    if not floor:
+    if focus is None or not floor:
         return []
     answered = {response.id: response for response in focus.responses}
-    issues: list[Issue] = []
+    shortfalls: list[tuple[FocusDirective, list[str]]] = []
     for directive in focus.directives:
         if directive.intent != "collect_error_codes":
             continue
@@ -61,10 +61,28 @@ def _shortfall_issues(
         # 不分大小寫:來源寫 `E1001`、答案寫 `e1001` 是同一個碼。對一個確實被
         # 回報的碼開罰單,比漏判一個沒回報的碼貴得多。
         reported = {anchor.value.strip().casefold() for anchor in response.anchors}
-        omitted = [code for code in floor if code.casefold() not in reported]
+        omitted = sorted(
+            code for code in floor if code.casefold() not in reported
+        )
         if omitted:
-            issues.append(_shortfall_issue(directive, omitted, floor))
-    return issues
+            shortfalls.append((directive, omitted))
+    return shortfalls
+
+
+def _shortfall_issues(
+    focus: FocusPackage,
+    floor: dict[str, list[ErrorCodeFact]],
+) -> list[Issue]:
+    """報得比記載錯誤碼下界少的窮盡型指令。
+
+    下界一律全域,不受 directive 文字範圍限制:`text` 導引 agent 的注意力,但閘門
+    是確定性的、讀不懂散文,而 `collect_error_codes` 的字面意思就是「這家供應商的
+    錯誤碼,全部」。範圍窄的需求該寫成逐條指名的 Expectation Directive。
+    """
+    return [
+        _shortfall_issue(directive, omitted, floor)
+        for directive, omitted in omitted_error_codes(focus, floor)
+    ]
 
 
 def _shortfall_issue(
@@ -72,9 +90,7 @@ def _shortfall_issue(
     omitted: list[str],
     floor: dict[str, list[ErrorCodeFact]],
 ) -> Issue:
-    cited = "、".join(
-        f"{code}({_locations(floor[code])})" for code in sorted(omitted)
-    )
+    cited = "、".join(f"{code}({_locations(floor[code])})" for code in omitted)
     sources = "、".join(sorted({
         fact.relative_path for code in omitted for fact in floor[code]
     }))

@@ -751,6 +751,7 @@ def verify_extraction(
     """
     from loop_apidoc.agentcli.assemble import AssembleInputError
     from loop_apidoc.agentcli.verify import (
+        preview_error_code_shortfall,
         preview_falsified_expectations,
         verify_extraction_dir,
     )
@@ -791,6 +792,21 @@ def verify_extraction(
                 f"預告:{len(falsified)} 條 expectation directive 落空"
                 f"({'、'.join(falsified)});assemble 會以 FOCUS_UNMET 判定驗證失敗,"
                 "但仍會產出 run 目錄供你判斷是來源真的沒有、還是查得不夠。",
+                err=True,
+            )
+        shortfall = preview_error_code_shortfall(
+            sources_root=sources,
+            extraction_dir=extraction,
+            generated_at=datetime.now(timezone.utc),
+            focus_file=focus,
+            urls=list(url),
+            excludes=tuple(exclude),
+        )
+        if shortfall and not json_out:
+            typer.echo(
+                f"預告:{len(shortfall)} 條窮盡型 directive 報得比來源記載的錯誤碼少"
+                f"({'; '.join(shortfall)});assemble 會以 FOCUS_INCOMPLETE 提出,"
+                "severity 由 directive 的 kind 決定。回到來源把漏掉的碼補進擷取。",
                 err=True,
             )
     raise typer.Exit(code=2 if violations else 0)
