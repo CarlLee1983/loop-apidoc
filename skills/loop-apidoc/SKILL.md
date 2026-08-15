@@ -384,8 +384,10 @@ exactly once, each anchor resolving to an endpoint the extraction actually conta
 piece of evidence reopening from its manifest source with a matching digest. An honest
 `not_found` passes here and surfaces later as a `FOCUS_UNMET` validation issue instead — error
 for an Expectation Directive, warning for a Coverage Directive — with the run's artifacts
-still produced. `verify-extraction` prints a count of falsified expectations on stderr as a
-preview; it does not change the exit code.
+still produced. A `collect_error_codes` answer reporting fewer codes than the sources tabulate
+routes the same way, as a `FOCUS_INCOMPLETE` issue naming the ones left out — reporting more
+still passes, and sources with no error-code table are not judged at all. `verify-extraction`
+prints both as previews on stderr; neither enters `--json` or changes the exit code.
 
 ### 6. Assemble + validate
 

@@ -418,6 +418,15 @@ comparable. That confinement, its alternatives, and the condition that would fal
 are recorded in
 [ADR 0004](adr/0004-focus-directives-never-enter-comparable-artifacts.md).
 
+A directive asking for the provider's error codes exhaustively was, at first, satisfiable by
+reporting one — real, cited, and indistinguishable in the output from a genuine sweep. The
+codes a supplier source presents in an error-code table are now a deterministic lower bound on
+that answer, so a short one names what it left out and where each omission is written down.
+The bound derives from source structure alone; why it ignores a directive's own wording, why
+it unions across sources where the endpoint index intersects, and why the general source-fact
+gate deliberately does not consume it are recorded in
+[ADR 0005](adr/0005-the-error-code-floor-comes-from-source-structure-alone.md).
+
 ## Canonical operational references
 
 - [Architecture](ARCHITECTURE.md) — component boundaries, data flow, and seams.

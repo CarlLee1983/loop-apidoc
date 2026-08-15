@@ -656,6 +656,12 @@ agent 對每一條恰好應答一次,寫進 `<extraction>/focus-response.json`�
 會被拒絕);`not_found` 帶查過的來源。刻意沒有第三種 —— 一條 directive 適不適用是提出者
 的判斷,不是 agent 的。
 
+`collect_error_codes` 這個 intent 另有完整性判定:來源在錯誤碼表格裡攤出來的碼構成
+**記載錯誤碼下界**,報得比它少會以 `FOCUS_INCOMPLETE` 點名漏掉哪幾個、各記載在哪一行,
+severity 一樣由 `kind` 決定;報得比它多仍然通過(那是底線不是等式),來源沒有可辨識的
+表格就不下判斷 —— 見
+`docs/adr/0005-the-error-code-floor-comes-from-source-structure-alone.md`。
+
 結構性問題(某條 directive 沒人應答、錨點指不到任何已擷取端點、證據指向 manifest 以外的
 來源)在建立 run 目錄之前就失敗。focus 材料不會進入 `provenance.json`、score 或任何
 Foundry 治理資產,所以同一份來源、不同 focus 的兩次 run 仍可互相比對 —— 見
