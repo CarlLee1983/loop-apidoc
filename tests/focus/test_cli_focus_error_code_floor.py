@@ -21,6 +21,7 @@ from tests.focus.support import (
     issues_with_code,
     response,
     setup,
+    verify,
 )
 
 _ERRORS = [
@@ -207,3 +208,56 @@ def test_a_case_difference_is_not_a_shortfall(tmp_path):
     payload = _payload(assemble(tmp_path, sources, extraction, focus, "--json"))
 
     assert issues_with_code(payload, "FOCUS_INCOMPLETE") == []
+
+
+# --- verify-extraction 的預告 ---------------------------------------------
+
+def test_verify_forecasts_the_shortfall_and_names_the_codes(tmp_path):
+    """讓 agent 在跑到 assemble 之前就知道答案不齊,省掉一整趟回圈。"""
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("1001")])
+
+    res = verify(sources, extraction, focus)
+
+    assert "1002" in res.output
+
+
+def test_the_forecast_does_not_change_the_exit_code(tmp_path):
+    """預告不是違規:輸入閘乾淨就該是 exit 0。"""
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("1001")])
+
+    assert verify(sources, extraction, focus).exit_code == 0
+
+
+def test_the_forecast_stays_out_of_the_json_payload(tmp_path):
+    """`--json` 那個陣列的意義是「該擋的違規」,預告混進去會被當成該擋的東西。"""
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("1001")])
+
+    res = verify(sources, extraction, focus, "--json")
+
+    assert json.loads(res.stdout) == []
+
+
+def test_the_forecast_appears_for_a_coverage_directive_too(tmp_path):
+    """預告是資訊,不承載 severity —— 兩種 kind 都該看得到。"""
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive(kind="coverage")],
+        responses=[_code_response("1001")])
+
+    assert "1002" in verify(sources, extraction, focus).output
+
+
+def test_no_forecast_when_the_sources_document_no_error_code_table(tmp_path):
+    sources, extraction, focus = _setup(
+        tmp_path, directives=[_code_directive()],
+        responses=[_code_response("1001")], table="")
+
+    res = verify(sources, extraction, focus)
+
+    assert res.exit_code == 0
+    assert "1002" not in res.output
