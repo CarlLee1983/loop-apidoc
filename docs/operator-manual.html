@@ -86,6 +86,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
   <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — 來源新鮮度排程閘</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — 擷取契約檢查</a>
+  <a class="lvl-3" href="#focus-directives">--focus — 依任務對擷取下重點指令</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
   <a class="lvl-3" href="#validate-run">validate — 驗證既有 run 目錄</a>
   <a class="lvl-3" href="#score-run">score — 為完成的 run 評分</a>
@@ -127,7 +128,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 <p>早期曾有以子行程 <code>claude -p</code> 擷取的 <code>run-agent</code> CLI 模式,已於 2026-06 退役(連同 NotebookLM 擷取後端一併移除);現在唯一擷取路徑是 agent-native。</p>
 </blockquote>
 <h3 id="_2">完整流程</h3>
-<pre><code>URL 導航／快取（可選） → 視需要 preprocess／正規化原始 PDF 或 Word → manifest → inspect-source-risk（必要，agent 讀取前） → assess-sources → 擷取（agent 唯讀 subagent fan-out） → verify-extraction → assemble manifest → 規格化計畫 → 生成（OpenAPI + Markdown） → 驗證 → 修正（agent 驅動）
+<pre><code>URL 導航／快取（可選） → 視需要 preprocess／正規化原始 PDF 或 Word → manifest → inspect-source-risk（必要，agent 讀取前） → assess-sources → 擷取（agent 唯讀 subagent fan-out，可帶 --focus 重點指令） → verify-extraction → assemble manifest → 規格化計畫 → 生成（OpenAPI + Markdown） → 驗證 → 修正（agent 驅動）
 </code></pre>
 <p>驗證失敗時,<code>assemble</code> 以 <code>--json</code> 回報分類後的問題;<strong>修正由 agent 自行驅動</strong>:依報告回頭重讀相關來源、覆寫對應的擷取 JSON,再重跑 <code>assemble</code>,最多 3 輪。三輪後仍失敗或遇到無法修正的缺漏／衝突,則以缺漏／衝突回報而不補寫。</p>
 <h3 id="_codex">在 OpenAI Codex CLI 使用</h3>
@@ -252,18 +253,29 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 漂移；unchanged、inconclusive、error 不會被保存，全部未變時也不建立空快照。退出碼：
 <code>0</code>=no action、<code>1</code>=review required、<code>2</code>=attention required。</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
-<pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...]
+<pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...] [--focus ./focus.json]
 </code></pre>
 <p>對 agent 產出的擷取目錄套用與 <code>assemble</code> 相同的輸入閘(schema、來源引用、跨檔不變式、來源事實、延後語句與選填 v1 <code>evidence[]</code>)。若提供 exact reference，必須能從 manifest source 依 typed locator 重新 materialize，並吻合 stated normalized-fragment SHA-256；其 <code>claim_path</code> 也必須在 shared normalized-plan projection 中解析成功。命令<strong>不寫檔、不建立 run 目錄</strong>,適合在組裝前快速驗證擷取 JSON。</p>
 <p><strong>來源事實閘</strong>會機械掃描 manifest 中的 Markdown 來源,取出端點宣告、參數表與圍籬範例區塊,再以 <code>(METHOD, path)</code> 與擷取結果對照。一旦對上的來源小節寫了欄位或範例、擷取卻交回空的,就 fail closed——靜默遺漏不等於「來源沒寫」。要主張來源沒寫,在 <code>missing</code> 裡具名該欄位即可通過,所以這道閘只會逼出有據可查的缺口,不會逼出捏造。欄位名會沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,因此把共用 request body 抽成共用型別算去重複,不算遺漏。</p>
 <p>另一道檢查攔下佔位式延後答案,並分兩層以避免誤判。明確指涉「擷取這件事」的說法(<em>further extraction</em>、<em>not yet extracted</em>、「需進一步擷取」)出現在值的任何位置都算,因為真實 API 描述不會提到自己的擷取流程;泛用佔位字(<em>TBD</em>、<em>to be determined</em>、「待補」)則只有在<strong>整個欄位就只有這句</strong>時才算,因為「amount to be determined at capture」是合法的 API 描述。英文片語以詞界比對,CJK 沒有詞界可言,維持子字串比對。少了這道檢查,run 會以 <em>passed</em> 收場而產物是空的。</p>
 <p><strong>請注意適用範圍。</strong>這道掃描只認得結構良好的 Markdown:標題、含分隔列的 GFM 表格、圍籬程式碼區塊。若來源被壓成一行行超長文字(例如 HTML 轉純文字的傾印檔),掃描結果為零筆事實,這道閘就靜默失效。因此<em>閘門乾淨通過本身並不等於擷取完整</em>,它只證明「機械讀得到的事實」沒有被違反。面對非結構化來源,仍要靠 <code>review.html</code> 與人工核對。</p>
+<h3 id="focus-directives"><code>--focus</code> — 依任務對擷取下重點指令</h3>
+<pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work --focus ./focus.json
+uv run loop-apidoc assemble --sources ./sources --extraction ./work --output ./output \
+  --source-quality ./work/source-quality --focus ./focus.json --json
+</code></pre>
+<p><code>verify-extraction</code> 與 <code>assemble</code> 皆可選用;不給就與現況完全相同。<code>focus.json</code> 裡寫的是「這次串接少了它就不能上線」的東西——金流的結算回呼、遊戲平台的錢包轉帳端點、供應商的錯誤碼。指令會逐字進入每個擷取 subagent 的 prompt,所以它真的導引擷取,不只是事後稽核;擷取 agent 則對每一條恰好應答一次,寫進 <code>&lt;WORK&gt;/focus-response.json</code>。可複製的範本在 repo 的 <code>examples/focus/</code>。</p>
+<p><strong>兩種指令,兩個欄位各管一件事。</strong><code>kind</code> 是 severity 的唯一來源:<code>expectation</code> 斷言供應商來源確實記載了它,<code>coverage</code> 只指定一個要掃乾淨的範圍、查無記載也算完整回答。<code>intent</code> 是錨點型別的唯一來源:<code>find_operation</code>、<code>find_field</code>、<code>collect_error_codes</code>。沒有第三個欄位可以覆寫任何一個——想要不阻斷的結局,把指令改寫成 <code>coverage</code>,而不是加降級旗標。</p>
+<p><strong>應答只有兩種結局。</strong><code>satisfied</code> 帶錨點,每個錨點必須附 v1 exact evidence——只給檔名會被拒絕,而那是擷取其他地方仍然接受的形式。<code>not_found</code> 必須列出 manifest 中<strong>每一份</strong>可讀來源:宣稱的是「它不在任何一份裡」,列一份證明不了那件事。刻意沒有「不適用」這個結局——一條指令適不適用是提出者的判斷,給 agent 那顆按鈕等於給它一個永遠能按的脫身鍵。</p>
+<p><strong>結構問題與語意結局分兩層。</strong>沒人應答的指令、指不到任何已擷取端點的錨點、指向 manifest 以外或 digest 不符的證據,都在建立 run 目錄之前以 <code>2</code> 結束。誠實的 <code>not_found</code> 則通過閘門,成為 <code>FOCUS_UNMET</code> 驗證問題(<code>expectation</code> 為 error、<code>coverage</code> 為 warning),run 目錄與產物照常寫出——因為此時要判斷的是「供應商真的沒寫,還是查得不夠」,而那需要產物與已查來源清單一起在手上。<code>verify-extraction</code> 會在 stderr 預告落空的斷言數量,但刻意不影響退出碼。</p>
+<p><strong>指令不會污染跨 run 可比的產物。</strong>focus 材料只寫進 <code>&lt;run-dir&gt;/focus/focus-report.{json,zh-TW.md}</code>;<code>provenance.json</code>、score 與所有 Foundry 治理資產都看不到它。同一份來源、不同 focus 的兩次 run,分數相同、provenance 逐位元組相同——否則「來源說了什麼」會被「誰問了什麼」污染,而提出者還能靠寫寬鬆的指令把分數拉高。理由記在 <code>docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md</code>。</p>
+<p><strong>指令從不授權捏造。</strong>來源沒寫就是 <code>not_found</code>,run 因此驗證失敗正是預期結果——它告訴你該補的是來源,不是換一個聽起來比較好的答案。</p>
 <h3 id="assemble"><code>assemble</code> — 從 agent 產出的擷取 JSON 組裝 + 驗證</h3>
 <pre><code class="language-bash">uv run loop-apidoc assemble \
   --sources ./sources \
   --extraction ./work \
   --output ./output \
-  [--url &lt;URL&gt; ...] --source-quality ./work/source-quality [--url-coverage &lt;coverage.json&gt;] [--extractor-model &lt;模型名稱&gt;] [--architecture-mode legacy|shadow|strict] [--json] [--score]
+  [--url &lt;URL&gt; ...] --source-quality ./work/source-quality [--url-coverage &lt;coverage.json&gt;] [--focus ./focus.json] [--extractor-model &lt;模型名稱&gt;] [--architecture-mode legacy|shadow|strict] [--json] [--score]
 </code></pre>
 <p><strong>必要前置條件：</strong><code>--source-quality</code> 必須指定 <code>assess-sources</code> 產出的 pass 套件。assemble 會拒絕建立未稽核 run，但無法證明本流程外 agent 讀取來源文字的時間順序。</p>
 <p><strong>不擷取</strong>,只把 agent 已產出的擷取目錄(<code>inventory.json</code> + <code>endpoints/*.json</code>,選用 typed <code>integration.json</code>)組裝成輸出:manifest → plan → generate → validate。選填契約保存來源明載的 <code>transport</code>、<code>amount_direction</code>、<code>idempotency</code> 與 <code>line_currency_policy</code>；request 沒有 currency 欄位不會被當成單幣別證據。若傳入 <code>assess-sources</code> 產出的 <code>--source-quality</code> 目錄，<code>assemble</code> 會重建 manifest，並在建立 run-dir 前重新驗證內嵌 source-risk binding；audit 缺失、過期或不匹配會中止，通過的 quality report 才保存進 run-dir。<code>--url-coverage</code> 在有 URL 來源時檢核撈取涵蓋率(僅 warning)。<code>--json</code> 會把 <code>run_id</code>、<code>run_dir</code>、<code>review_html</code>、<code>ok</code>、<code>status</code>、<code>report</code>、<code>toolchain</code> 印到 stdout,供 agent 解析並驅動修正迴圈。run 目錄另寫出 <code>run.json</code>,記錄 <code>toolchain</code>(<code>cli_version</code>、<code>extraction_contract_version</code>、<code>skill_version</code>、<code>model</code>)以便日後歸因;<code>--extractor-model</code> 由 agent 明確帶入擷取模型名稱,省略即 <code>null</code>(CLI 不推測)。退出碼:<code>0</code>=驗證 PASS、<code>1</code>=驗證 FAIL、<code>2</code>=擷取輸入檔或 strict 執行錯誤。加上 <code>--score</code> 會在組裝後一併寫出 <code>score/score.{json,md}</code>(見下),評分不影響上述退出碼。</p>
@@ -489,7 +501,7 @@ uv run ruff check .
 </tr>
 <tr>
 <td><code>loop_apidoc/agentcli/</code></td>
-<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(typed PDF／DOCX→md 編排)</td>
+<td><code>assemble.py</code>(組裝 agent 寫出的擷取 JSON → plan→generate→validate)、<code>identity.py</code>(端點跨檔身份鍵的唯一定義,cross-file 檢查與 focus 錨點解析共用)、<code>input_schema.py</code>/<code>gate.py</code>/<code>verify.py</code>(擷取輸入契約檢查,即 <code>verify-extraction</code>;<code>gate.py</code> 同時彙整 <code>source_facts/</code> 的來源事實與延後語句違規)、<code>evidence.py</code>(選填 v1 exact-evidence reference 的 read-side materialization/digest verification)、<code>extraction.py</code>(把 <code>inventory.json</code> 轉成 plan 各 stage 答案)、<code>preprocess.py</code>(typed PDF／DOCX→md 編排)</td>
 </tr>
 <tr>
 <td><code>loop_apidoc/docx_*.py</code></td>

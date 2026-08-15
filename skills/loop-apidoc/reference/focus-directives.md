@@ -26,7 +26,7 @@ get a better-sounding answer.
 | --- | --- |
 | `id` | unique within the file; your answer is keyed on it |
 | `kind` | `expectation` = the operator asserts the sources document this; `coverage` = a scope to sweep where finding nothing is a complete answer. **Sole determinant of severity** |
-| `intent` | currently `find_operation`. **Sole determinant of anchor type** |
+| `intent` | `find_operation` → an `operation` anchor; `find_field` → a `field` anchor; `collect_error_codes` → one `error_code` anchor per code. **Sole determinant of anchor type** |
 | `text` | the operator's own words — read them, they carry the scope |
 | `rationale` | optional context; not checked |
 
@@ -78,9 +78,27 @@ against the manifest and the digest recomputed, so a guessed digest fails.
 `reported_by` names the subagent whose read produced the anchor. It exists so a wrong anchor
 stays traceable after you centralise the answers.
 
-Anchor `value` for `type: "operation"` is the endpoint identity string: `METHOD /path`, or
-`METHOD (webhook) <summary>` when a webhook's path is null. The anchor's `type` must be the one
-its directive's `intent` calls for.
+Anchor `value` depends on the type. An `operation` anchor is the endpoint identity string:
+`METHOD /path`, or `METHOD (webhook) <summary>` when a webhook's path is null. A `field` anchor
+is a field name, optionally qualified (`SettleBody.merchant_trade_no` or just
+`merchant_trade_no`); resolution follows `schema_ref` into the inventory's shared schemas and
+matches on the leaf name, the same rule the source-fact coverage check uses — so the two gates
+cannot disagree about whether a field was extracted. A name that appears only inside a
+description does not count: mentioning a field is not extracting it.
+
+An `error_code` anchor is one provider error code, resolved against `inventory.errors[]` —
+the only path into the generated `ErrorCode` enumeration and the only place a code is typed at
+the input boundary. A code appearing only in an `examples[]` payload or a schema `enum` does
+not resolve: those are opaque data and would let an anchor claim a code that never reaches the
+contract. Report one anchor per code, each with its own evidence; the gate judges them
+individually and names only the ones that failed.
+
+What is **not** checked is completeness. There is no deterministic lower bound on how many
+codes a source documents, so a directive asking you to collect them all is satisfied by codes
+that are real and cited, not by a count. Do not pad the list to look thorough — every code you
+report must resolve and must carry evidence, so padding fails the gate rather than passing it.
+
+The anchor's `type` must be the one its directive's `intent` calls for.
 
 ### `not_found` must account for every readable source
 
@@ -110,5 +128,9 @@ artifacts are produced either way, so the operator can read what you searched. D
 Write `focus-response.json` after the endpoint and integration subagents return, before step 5.
 Pass `--focus` on both `verify-extraction` and `assemble`; the two run the same checks.
 
-Focus material never reaches `provenance.json`, the score, or any Foundry-governed asset — see
+A focused run writes `<run-dir>/focus/focus-report.{json,zh-TW.md}`, listing every directive with
+its declaration, outcome, anchors and bound source fragments, or the sources searched. The
+Traditional-Chinese Markdown leads with falsified expectations, because that is what a reader
+opens it for. That report is the feature's complete audit surface: focus material never reaches
+`provenance.json`, the score, or any Foundry-governed asset — see
 `docs/adr/0004-focus-directives-never-enter-comparable-artifacts.md`.

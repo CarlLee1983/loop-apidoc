@@ -19,12 +19,14 @@ from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 DirectiveKind = Literal["coverage", "expectation"]
 # 每新增一種 intent 就要同時交出它的確定性錨點解析器,所以這個列舉是隨解析器
 # 一起長出來的,不是先宣告後補實作。
-DirectiveIntent = Literal["find_operation"]
-# 錨點詞彙本身已經定案(operation / field / error_code),即使解析器還沒到齊 ——
-# 型別留在這裡,intent↔type 的相符檢查才報得出「這個 intent 要的是哪一種錨點」。
+DirectiveIntent = Literal["find_operation", "find_field", "collect_error_codes"]
 AnchorType = Literal["operation", "field", "error_code"]
 
-_INTENT_ANCHOR: dict[DirectiveIntent, AnchorType] = {"find_operation": "operation"}
+_INTENT_ANCHOR: dict[DirectiveIntent, AnchorType] = {
+    "find_operation": "operation",
+    "find_field": "field",
+    "collect_error_codes": "error_code",
+}
 
 
 class _Strict(BaseModel):
