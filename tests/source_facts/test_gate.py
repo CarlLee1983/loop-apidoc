@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from loop_apidoc.source_facts.gate import source_fact_violations
-from loop_apidoc.source_facts.models import EndpointFact, FactIndex, SourceFacts
+from loop_apidoc.source_facts.models import (
+    EndpointFact,
+    ErrorCodeFact,
+    FactIndex,
+    SourceFacts,
+)
 
 
 def _index(*facts: EndpointFact) -> FactIndex:
@@ -286,3 +291,27 @@ def test_a_schema_named_as_a_plain_string_resolves_like_a_ref() -> None:
         },
     )]
     assert source_fact_violations(_index(_fact()), endpoints, inventory) == []
+
+
+def test_the_gate_never_judges_documented_error_codes() -> None:
+    """沒有 directive 的 run 不受記載錯誤碼下界判定(ADR 0006)。
+
+    這道檢查存在是因為那個省略太容易被「補上」:事實已經算好了、閘門也拿得到,
+    順手接上去看起來像修 bug。它不是——參數事實掛在端點上,閘門因此能只對擷取
+    真的包含的端點說話;錯誤碼是文件層級的共用目錄,沒有可以限縮的把手,無範圍
+    地要求會打到只實作一部分端點的正當整合。要求窮盡的方式是寫一條
+    `collect_error_codes` directive,那句話該由付得起它的人說。
+    """
+    facts = FactIndex(sources=[
+        SourceFacts(
+            relative_path="manual.md",
+            error_codes=[ErrorCodeFact(
+                relative_path="manual.md", code="1001", line=10,
+                table_index=0, row_index=0, column_index=0,
+                column_name="錯誤碼", normalized_excerpt="| 1001 | 餘額不足 |",
+            )],
+        ),
+    ])
+
+    assert facts.documented_error_codes() == {"1001": [facts.sources[0].error_codes[0]]}
+    assert source_fact_violations(facts, [], {"errors": []}) == []
