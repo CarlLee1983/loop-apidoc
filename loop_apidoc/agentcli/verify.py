@@ -20,12 +20,14 @@ from loop_apidoc.agentcli.evidence import (
     verify_extraction_evidence,
 )
 from loop_apidoc.agentcli.gate import check_extraction
+from loop_apidoc.agentcli.identity import extraction_identities
 from loop_apidoc.focus.gate import falsified_expectations, focus_evidence_references
 from loop_apidoc.focus.loader import load_focus_package
 from loop_apidoc.manifest.builder import build_manifest
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.source_facts.collect import collect_facts
+from loop_apidoc.validate.fact_coverage import build_fact_coverage, unscanned_sources
 from loop_apidoc.validate.focus import omitted_error_codes
 
 
@@ -105,4 +107,37 @@ def preview_error_code_shortfall(
     return [
         f"{directive.id}:{'、'.join(omitted)}"
         for directive, omitted in omitted_error_codes(focus, floor)
+    ]
+
+
+def preview_unscanned_sources(
+    *,
+    sources_root: Path,
+    extraction_dir: Path,
+    generated_at: datetime,
+    excludes: Sequence[str] = (),
+) -> list[str]:
+    """語意完整性閘門對哪些來源不會有作用 —— 預告,不是違規。
+
+    與 `assemble` 的 `SOURCE_FACTS_UNSCANNED` 警告共用 `validate/fact_coverage.py`
+    的同一份投影邏輯,兩邊不可能給出不一致的判斷。
+
+    刻意不帶 URL,理由與 `preview_error_code_shortfall` 相同:`collect_facts` 只讀
+    `manifest.local_sources`,帶了就得為一段預告把每個 URL 重新連網探測一次。
+    """
+    inventory, endpoint_texts, _ = load_extraction_inputs(extraction_dir)
+    manifest = build_manifest(
+        sources_root=sources_root, urls=[],
+        generated_at=generated_at, excludes=excludes)
+    facts = collect_facts(sources_root, manifest)
+    coverage = build_fact_coverage(
+        manifest,
+        facts,
+        extraction_identities(
+            inventory, named_endpoints(extraction_dir, endpoint_texts)),
+    )
+    return [
+        f"{source}:掃出 0 筆來源事實" if entry.facts == 0
+        else f"{source}:{entry.facts} 筆事實無一對上 extraction 的端點"
+        for source, entry in unscanned_sources(coverage)
     ]

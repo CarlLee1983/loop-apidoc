@@ -753,6 +753,7 @@ def verify_extraction(
     from loop_apidoc.agentcli.verify import (
         preview_error_code_shortfall,
         preview_falsified_expectations,
+        preview_unscanned_sources,
         verify_extraction_dir,
     )
     from loop_apidoc.focus.loader import FocusInputError
@@ -782,6 +783,26 @@ def verify_extraction(
             typer.echo(f"  - {violation}", err=True)
     else:
         typer.echo("verify-extraction PASS:擷取輸入符合契約")
+    if not violations and not json_out:
+        # 語意完整性閘門對哪些來源不會有作用 —— 與 assemble 的
+        # SOURCE_FACTS_UNSCANNED 共用同一份投影,只是提早到付出 plan→generate
+        # 的成本之前。不進 --json、不動 exit code:能擋就等於把被否決的
+        # 「零事實直接 FAIL」強度裝回去。
+        unscanned = preview_unscanned_sources(
+            sources_root=sources,
+            extraction_dir=extraction,
+            generated_at=generated_at,
+            excludes=tuple(exclude),
+        )
+        if unscanned:
+            typer.echo(
+                f"預告:{len(unscanned)} 份來源不會被語意完整性閘門判過"
+                f"({'; '.join(unscanned)});assemble 會以 SOURCE_FACTS_UNSCANNED "
+                "警告提出,不阻擋 run。掃出 0 筆的來源改走保留表格結構的前處理路徑"
+                "(normalize-html-snapshot / preprocess),不要重讀來源;"
+                "事實對不上的來源請檢查 extraction 是否漏掉它記載的端點。",
+                err=True,
+            )
     if not violations and focus is not None:
         # 純預告:讓人在跑完整 assemble 之前就知道要不要先回頭補來源。
         # 刻意不進 --json 輸出、不動 exit code —— 那個陣列的意義是「該擋的違規」,
