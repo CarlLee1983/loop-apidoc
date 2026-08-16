@@ -8,6 +8,11 @@
 掃得出事實。把 HTML 壓平成長單行的來源會掃出零個事實,閘門對它等同無效。
 這是接受的取捨,不是待修的 bug——要涵蓋那類來源,得先在取源階段把結構
 還原(見 `html_snapshot.py`),而不是在這裡猜。
+
+**與 `markdown_drafts/markdown.py` 的分歧是刻意的**,不是重複實作待統一:那一套餵的
+是給人審的非權威草稿,這一套餵的是 fail-closed 閘門,兩邊的寬鬆處各自朝自己的用途
+交錯放寬。逐條對照與理由見 `docs/adr/0009-the-two-markdown-scanners-stay-separate.md`,
+每一格由 `tests/source_facts/test_scanner_divergence.py` 釘住。
 """
 
 from __future__ import annotations
