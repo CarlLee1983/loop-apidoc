@@ -74,9 +74,7 @@ def test_hollow_success_response_warns_at_operation_boundary():
         if issue.location == "paths./users.get" and issue.field_path == "responses"
     ]
     assert len(response_warnings) == 1
-    assert response_warnings[0].evidence == (
-        "successful response has no usable schema contract"
-    )
+    assert response_warnings[0].evidence == "成功 response 沒有可用的 schema 契約"
 
 
 def test_missing_method_makes_report_not_ok():
