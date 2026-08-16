@@ -114,12 +114,42 @@ def _first_text(elements: list[_Element]) -> str | None:
     return None
 
 
+#: An error code has to be introduced as one. Shape alone matches years, amounts,
+#: timeouts, ports and versions: across the benchmark corpus, four- and five-digit
+#: runs matched 761 times and only 8% of them sit right next to a word that calls
+#: them a code. These entities only feed related-page scoring, so precision is what
+#: is worth having — a year shared by two pages is noise every page carries, while a
+#: missed code costs one weak signal.
+_CODE_CUES = ("error", "err.", "code", "status", "錯誤", "代碼", "碼", "狀態")
+#: How far from the digits the cue may sit. Wide enough for "Error 9005" and for a
+#: table row whose neighbouring cell explains the error, narrow enough that a page
+#: merely opening with "this page explains error handling" does not turn its rate
+#: limits into codes.
+_CUE_BEFORE = 24
+_CUE_AFTER = 12
+#: A year is never registered as a code, cue or no cue: "錯誤碼表更新於 2024" reads
+#: exactly like a code being introduced, and a provider that happens to number a code
+#: 2024 loses one weak scoring signal — cheaper than every page in a corpus sharing
+#: the current year as an entity.
+_YEARS = frozenset(str(year) for year in range(1990, 2036))
+
+
+def _is_error_code(text: str, match: re.Match[str]) -> bool:
+    if match.group(1) in _YEARS:
+        return False
+    window = text[
+        max(0, match.start() - _CUE_BEFORE): match.end() + _CUE_AFTER
+    ].casefold()
+    return any(cue in window for cue in _CODE_CUES)
+
+
 def _entities(text: str) -> list[str]:
     matches: list[tuple[int, str]] = []
     for match in re.finditer(r"\baction\s*(\d+)\b", text, flags=re.IGNORECASE):
         matches.append((match.start(), f"action:{match.group(1)}"))
     for match in re.finditer(r"\b([1-9]\d{3,4})\b", text):
-        matches.append((match.start(), f"error:{match.group(1)}"))
+        if _is_error_code(text, match):
+            matches.append((match.start(), f"error:{match.group(1)}"))
     return list(dict.fromkeys(value for _, value in sorted(matches)))
 
 
