@@ -45,6 +45,15 @@ policy changes in this work.
    their descendants.  Do not add heuristic content scoring or site-specific rules.
 3. Preserve the existing output for headings, paragraphs, table cells (including
    escaped pipes), and `pre`/`code` block line breaks.
+3a. Render each table on its own grid.  A table owns only its own rows: a nested
+   table becomes a separate table block after its parent, and its text is not pulled
+   into the enclosing cell.  Expand `colspan`/`rowspan` into a rectangular grid — the
+   spanning cell's text stays in its own column and the columns it covers are left
+   blank, while `rowspan` carries the text down its own column.  Do not repeat a
+   spanning cell across the columns it covers: a row whose remaining cells are blank
+   is how downstream fact extraction tells a group-title row from a parameter row.
+   Out-of-range or non-numeric spans count as 1, overlapping spans discard the whole
+   table, and a multi-row `thead` merges into the single header row GFM allows.
 4. Render nested unordered and ordered lists as Markdown list items with deterministic
    indentation.  Preserve each item's readable text once; group/empty wrapper nodes
    must not produce duplicate lines.  Identical sibling items remain distinct: source

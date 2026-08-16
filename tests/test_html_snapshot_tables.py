@@ -30,7 +30,9 @@ def test_colspan_keeps_the_following_columns_aligned():
 
     rows = _rows(html_to_markdown(html))
 
-    assert rows[0] == ["Request", "Request", "Note"]
+    # 文字只留在它自己的位置,跨到的欄位補空:重複它會毀掉「其餘欄位全空」這個
+    # 下游用來認出分組標題列的訊號(見 source_facts/markdown.py)。
+    assert rows[0] == ["Request", "", "Note"]
     assert rows[1] == ["name", "string", "必填"]
 
 
@@ -143,7 +145,7 @@ def test_an_absurd_span_is_ignored_rather_than_expanded():
 
     rows = _rows(html_to_markdown(html))
 
-    assert all(len(row) <= 8 for row in rows)
+    assert rows[1] == ["name", "String"]
 
 
 def test_a_non_numeric_span_is_treated_as_one():
@@ -157,3 +159,102 @@ def test_a_non_numeric_span_is_treated_as_one():
     rows = _rows(html_to_markdown(html))
 
     assert rows[1] == ["name", "String"]
+
+
+def test_a_colspan_group_title_row_stays_recognisable_as_a_group_title():
+    """跨欄的分組標題列不得變成一個叫「Header」的參數。
+
+    `source_facts/markdown.py` 認分組標題列的判準是「其餘欄位全空」。把跨欄儲存格
+    的文字重複填進每一欄會毀掉那個訊號,於是來源根本沒寫的欄位變成來源事實,而
+    假事實在 fail-closed 閘門下會擋掉正確的擷取——正是這張票要防的傷害。
+    """
+    from loop_apidoc.source_facts.markdown import scan_markdown
+
+    html = (
+        "<main><h2>POST /pay</h2><table>"
+        "<tr><th>參數</th><th>型別</th><th>必要</th></tr>"
+        "<tr><td colspan='3'>Header</td></tr>"
+        "<tr><td>api_key</td><td>String</td><td>Y</td></tr>"
+        "</table></main>"
+    )
+
+    facts = scan_markdown("doc.md", html_to_markdown(html))
+
+    assert facts.endpoints[0].parameter_names == ["api_key"]
+
+
+def test_a_spanning_section_row_does_not_void_an_error_code_table():
+    """錯誤碼表的分組列同理:訊號一毀,整張表被作廢,記載下界靜靜歸零。"""
+    from loop_apidoc.source_facts.markdown import scan_markdown
+
+    html = (
+        "<main><h2>錯誤碼</h2><table>"
+        "<tr><th>錯誤碼</th><th>說明</th></tr>"
+        "<tr><td colspan='2'>支付類</td></tr>"
+        "<tr><td>1001</td><td>餘額不足</td></tr>"
+        "</table></main>"
+    )
+
+    facts = scan_markdown("doc.md", html_to_markdown(html))
+
+    assert [fact.code for fact in facts.error_codes] == ["1001"]
+
+
+def test_rows_survive_a_missing_closing_tr_tag():
+    """`<tr>` 未閉合時解析器會把下一列變成上一列的子節點,那些列不得消失。"""
+    html = (
+        "<main><table>"
+        "<tr><td>a</td><td>b</td>"
+        "<tr><td>c</td><td>d</td>"
+        "</table></main>"
+    )
+
+    rows = _rows(html_to_markdown(html))
+
+    assert rows == [["a", "b"], ["c", "d"]]
+
+
+def test_overlapping_spans_discard_the_whole_table():
+    """對不齊就整張放棄,與錯誤碼表「一列壞掉作廢整張」的既有偏誤一致。
+
+    靜靜讓後寫的儲存格蓋掉前一列帶下來的,會產出一張看起來正常、內容卻錯位的表。
+    """
+    html = (
+        "<main><table>"
+        "<tr><td>A</td><td rowspan='2'>B</td></tr>"
+        "<tr><td colspan='3'>C</td></tr>"
+        "</table></main>"
+    )
+
+    assert _rows(html_to_markdown(html)) == []
+
+
+def test_a_tfoot_written_before_tbody_still_renders_after_it():
+    """HTML 允許 tfoot 寫在 tbody 之前,但它是表尾。"""
+    html = (
+        "<main><table>"
+        "<thead><tr><th>Name</th><th>Type</th></tr></thead>"
+        "<tfoot><tr><td>f1</td><td>f2</td></tr></tfoot>"
+        "<tbody><tr><td>b1</td><td>b2</td></tr></tbody>"
+        "</table></main>"
+    )
+
+    rows = _rows(html_to_markdown(html))
+
+    assert rows == [["Name", "Type"], ["b1", "b2"], ["f1", "f2"]]
+
+
+def test_a_two_row_thead_merges_into_one_header():
+    """GFM 只有一列表頭。第二列降級成資料列會變成一個叫「Name」的參數。"""
+    html = (
+        "<main><table>"
+        "<thead><tr><th>Request</th><th>Request</th></tr>"
+        "<tr><th>Name</th><th>Type</th></tr></thead>"
+        "<tbody><tr><td>api_key</td><td>String</td></tr></tbody>"
+        "</table></main>"
+    )
+
+    rows = _rows(html_to_markdown(html))
+
+    assert rows[0] == ["Request Name", "Request Type"]
+    assert rows[1] == ["api_key", "String"]
