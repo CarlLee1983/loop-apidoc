@@ -9,6 +9,11 @@ from pathlib import Path
 
 from loop_apidoc.url_catalog import _Element, _TreeParser, _walk
 
+#: 一個儲存格能橫跨多少欄／列才算可信。真實參數表不會超過這個量級,而超過的值
+#: 幾乎都是壞掉的 HTML;把它照單展開會生出一張沒人寫過的表。
+_MAX_COLSPAN = 16
+_MAX_ROWSPAN = 64
+
 
 def html_to_markdown(html: str) -> str:
     """Extract readable main-document text without inventing content."""
@@ -47,7 +52,12 @@ def html_to_markdown(html: str) -> str:
         visit(item)
         return " ".join("".join(parts).split())
 
-    def inline_text(item: _Element, *, exclude_lists: bool = False) -> str:
+    def inline_text(
+        item: _Element,
+        *,
+        exclude_lists: bool = False,
+        exclude_tables: bool = False,
+    ) -> str:
         """Render readable inline content without resolving or inventing links."""
         parts: list[str] = []
 
@@ -56,6 +66,11 @@ def html_to_markdown(html: str) -> str:
                 parts.append(node)
                 return
             if node.tag in ignored or (exclude_lists and node.tag in {"ul", "ol"}):
+                return
+            # A nested table is rendered as its own table, so pulling its text into
+            # the enclosing cell would state the same rows twice — once as a run-on
+            # sentence that no longer says which value belongs to which column.
+            if exclude_tables and node.tag == "table":
                 return
             if node.tag == "a":
                 label = plain_text(node)
@@ -79,27 +94,108 @@ def html_to_markdown(html: str) -> str:
                 parts.append(raw_text(child))
         return "".join(parts)
 
-    def render_table(table: _Element) -> str:
-        rows: list[list[str]] = []
-        for row in (e for e in _walk(table) if e.tag == "tr"):
-            cells = [
-                inline_text(cell).replace("|", r"\|")
-                for cell in row.children
-                if isinstance(cell, _Element) and cell.tag in {"th", "td"}
-            ]
-            if cells:
-                rows.append(cells)
-        if not rows:
-            return ""
-        width = max(len(row) for row in rows)
-        rows = [row + [""] * (width - len(row)) for row in rows]
-        header, *body = rows
-        out = [
-            "| " + " | ".join(header) + " |",
-            "| " + " | ".join(["---"] * width) + " |",
+    def own_rows(table: _Element) -> list[_Element]:
+        """This table's own rows, `thead` first, nested tables left to themselves.
+
+        A nested table's rows belong to it. Collecting every descendant `tr`
+        appends them to the enclosing table, where they line up against the wrong
+        columns — and a misaligned parameter table becomes a source fact the
+        source never stated.
+        """
+        head: list[_Element] = []
+        body: list[_Element] = []
+
+        def visit(node: _Element, *, in_head: bool) -> None:
+            for child in node.children:
+                if not isinstance(child, _Element) or child.tag == "table":
+                    continue
+                if child.tag == "tr":
+                    (head if in_head else body).append(child)
+                    continue
+                visit(child, in_head=in_head or child.tag == "thead")
+
+        visit(table, in_head=False)
+        return head + body
+
+    def nested_tables(table: _Element) -> list[_Element]:
+        """The outermost tables inside this one; each renders itself recursively."""
+        found: list[_Element] = []
+
+        def visit(node: _Element) -> None:
+            for child in node.children:
+                if not isinstance(child, _Element):
+                    continue
+                if child.tag == "table":
+                    found.append(child)
+                else:
+                    visit(child)
+
+        visit(table)
+        return found
+
+    def span(cell: _Element, attribute: str, limit: int) -> int:
+        """A span the document actually states, or 1.
+
+        Out-of-range and non-numeric values fall back to 1 rather than being
+        clamped to the limit: `colspan="9999"` is a broken document, and honouring
+        it as "the widest we allow" would invent a shape nobody wrote.
+        """
+        try:
+            value = int(cell.attrs.get(attribute, "1"))
+        except ValueError:
+            return 1
+        return value if 1 <= value <= limit else 1
+
+    def table_grid(rows: list[_Element]) -> list[list[str]]:
+        """Expand `colspan`/`rowspan` into a rectangular grid.
+
+        GFM has no spans, so a spanning cell is repeated across the positions it
+        occupies in HTML. That is what the document says: the cell *is* in those
+        cells. Leaving them blank would drop the group label that tells a reader
+        which rows a nested field belongs to.
+        """
+        cells: dict[tuple[int, int], str] = {}
+        for index, row in enumerate(rows):
+            column = 0
+            for cell in row.children:
+                if not isinstance(cell, _Element) or cell.tag not in {"th", "td"}:
+                    continue
+                while (index, column) in cells:
+                    column += 1
+                text = inline_text(cell, exclude_tables=True).replace("|", r"\|")
+                columns = span(cell, "colspan", _MAX_COLSPAN)
+                down = min(span(cell, "rowspan", _MAX_ROWSPAN), len(rows) - index)
+                for offset in range(down):
+                    for shift in range(columns):
+                        cells[(index + offset, column + shift)] = text
+                column += columns
+        if not cells:
+            return []
+        width = max(column for _, column in cells) + 1
+        height = max(index for index, _ in cells) + 1
+        return [
+            [cells.get((index, column), "") for column in range(width)]
+            for index in range(height)
         ]
-        out += ["| " + " | ".join(row) + " |" for row in body]
-        return "\n".join(out)
+
+    def render_table(table: _Element) -> str:
+        rows = table_grid(own_rows(table))
+        blocks: list[str] = []
+        if rows:
+            header, *body = rows
+            width = len(header)
+            lines = [
+                "| " + " | ".join(header) + " |",
+                "| " + " | ".join(["---"] * width) + " |",
+            ]
+            lines += ["| " + " | ".join(row) + " |" for row in body]
+            blocks.append("\n".join(lines))
+        blocks += [
+            rendered
+            for rendered in (render_table(nested) for nested in nested_tables(table))
+            if rendered
+        ]
+        return "\n\n".join(blocks)
 
     def render_list(list_element: _Element, depth: int) -> list[str]:
         list_lines: list[str] = []
