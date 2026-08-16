@@ -22,6 +22,9 @@ _ISSUE_CATEGORY: dict[IssueCode, ScoreCategory] = {
     IssueCode.OUTPUT_MISMATCH: ScoreCategory.CONSISTENCY,
     IssueCode.SOURCE_UNVERIFIED: ScoreCategory.SOURCE_GROUNDING,
     IssueCode.SOURCE_CONFLICT: ScoreCategory.SOURCE_GROUNDING,
+    # 「無法對這份來源執行這項檢查」是來源可信度的問題,不是成品缺了資訊,
+    # 所以歸 source grounding 而不是 completeness。
+    IssueCode.SOURCE_FACTS_UNSCANNED: ScoreCategory.SOURCE_GROUNDING,
     IssueCode.UNSUPPORTED_ASSERTION: ScoreCategory.SOURCE_GROUNDING,
 }
 
