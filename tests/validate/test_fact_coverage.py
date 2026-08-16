@@ -56,3 +56,23 @@ def test_the_warning_never_fails_the_report():
 
     assert len(_unscanned(report)) == 2
     assert report.ok is True
+
+
+def test_an_unclosed_fence_is_named_as_the_cause():
+    """成因已知時就不要叫 operator 從三種可能裡自己猜。
+
+    圍籬未閉合是唯一一種掃描器自己知道確切成因的零事實:從那一行起整份文件都被
+    當成在圍籬內。訊息點名行號,operator 打開來源就看得到問題。
+    """
+    report = _report({"api.md": FactCoverage(facts=0, matched=0, unclosed_fence_line=42)})
+    issue = _unscanned(report)[0]
+
+    assert "42" in issue.evidence
+    assert "42" in issue.suggested_fix or "圍籬" in issue.suggested_fix
+
+
+def test_a_zero_fact_source_without_a_known_cause_still_enumerates_them():
+    issue = _unscanned(_report({"dump.md": FactCoverage(facts=0, matched=0)}))[0]
+
+    assert "42" not in issue.evidence
+    assert "normalize-html-snapshot" in issue.suggested_fix

@@ -596,3 +596,52 @@ def test_json_and_xml_fences_still_count_as_examples() -> None:
 ```
 """
     assert scan_markdown("doc.md", text).endpoints[0].example_blocks == 2
+
+
+def test_a_fence_that_is_never_closed_is_recorded_with_its_line() -> None:
+    """從該行起整份文件被當成在圍籬內,而那是靜默的全域失效。
+
+    關閉行帶 info string(```` ```json ````)依 CommonMark 不算關閉,所以掃描器維持
+    嚴格判定——放寬會讓兩個相鄰的開啟圍籬被誤判成一開一關,把程式碼範例外洩成事實。
+    代價是掃到檔尾仍在圍籬內時掃出零筆且毫無錯誤,與「這份來源本來就沒結構」無法
+    區分。記下開啟的行號,成因就從三選一縮到一。
+    """
+    text = """
+## GET /a
+
+```json
+{"a": 1}
+```json
+
+## GET /b
+
+`POST /b`
+
+| Name | Type |
+| --- | --- |
+| id | string |
+"""
+    facts = scan_markdown("doc.md", text)
+
+    # 圍籬之後的一切都不見了:`GET /b` 與它的參數表從未被讀到。
+    assert [fact.path for fact in facts.endpoints] == ["/a"]
+    assert facts.endpoints[0].parameter_names == []
+    assert facts.unclosed_fence_line == 4
+
+
+def test_a_document_whose_fences_all_close_records_nothing() -> None:
+    text = """
+## GET /a
+
+```json
+{"a": 1}
+```
+
+| Name | Type |
+| --- | --- |
+| id | string |
+"""
+    facts = scan_markdown("doc.md", text)
+
+    assert facts.unclosed_fence_line is None
+    assert facts.endpoints[0].parameter_names == ["id"]

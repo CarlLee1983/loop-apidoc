@@ -135,6 +135,9 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
         relative_path=relative_path,
         endpoints=state.endpoints,
         error_codes=state.error_codes,
+        # 掃完仍在圍籬內 ⇒ 這份文件從那一行起沒有被讀過。判定維持嚴格(見 ADR 0008),
+        # 但失效不再是靜默的。
+        unclosed_fence_line=state.fence_line or None,
     )
 
 
@@ -152,6 +155,7 @@ class _ScanState:
         self.declaring_level = 0
         self.fence_marker: str | None = None
         self.fence_length = 0
+        self.fence_line = 0
         self.table: list[tuple[int, str]] = []
         self.previous = ""
         # 錯誤碼表不依附端點,所以索引與累積都在來源層級。
@@ -176,6 +180,7 @@ class _ScanState:
                 )
         self.fence_marker = marker[0]
         self.fence_length = len(marker)
+        self.fence_line = index
         self.previous = ""
 
     def closes_fence(self, marker: str, info: str) -> bool:
@@ -188,6 +193,7 @@ class _ScanState:
     def close_fence(self) -> None:
         self.fence_marker = None
         self.fence_length = 0
+        self.fence_line = 0
         self.previous = ""
 
     def flush_table(self) -> None:
