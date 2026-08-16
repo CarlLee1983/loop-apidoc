@@ -71,8 +71,10 @@ def _issue(source: str, entry: FactCoverage) -> Issue:
             "先打開來源看它屬於哪一種:(a) 內容被壓平成單行、沒有表格與標題結構"
             "(HTML 傾印、未轉換的 PDF/Word)——改走保留結構的前處理路徑"
             "(normalize-html-snapshot / preprocess)後重新擷取,重讀來源沒有用;"
-            "(b) 結構完好,但端點不是寫成 `METHOD /path`(例如註解裡的完整 URL)"
-            "——掃描器認不得這種寫法,請回報給維護者,擷取本身可能是對的;"
+            "(b) 結構完好,但端點不是寫成 `METHOD /path`(例如只給一個完整 URL、"
+            "method 寫在別處的散文裡,或本來就是 path 為 null 的 webhook)"
+            "——掃描器不會去推測缺少的 method,那是 ADR 0007 拒絕的推論,"
+            "所以這筆警告會長期存在,擷取本身可能完全正確;"
             "(c) 本來就是純散文、沒有參數表的合法來源——這筆警告即為預期。"
         )
     else:

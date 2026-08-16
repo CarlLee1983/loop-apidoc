@@ -57,11 +57,17 @@ Each case's `expected/validation.expect.json` was updated to the observed counts
 trigger condition was not narrowed to keep the old expectations. These runs were never
 judged by the gate and the reports had said nothing about it — that is the change.
 
-They are not all the same problem. Some of these sources really are flattened HTML dumps;
-others (`tappay-backend`, `line-pay-online-v3`) are well-formed Markdown whose endpoints are
-documented as full URLs in code comments, which the scanner does not recognise as endpoint
-declarations. The warning text enumerates the possible causes rather than asserting one, and
-the second class is a recognizer gap worth its own ticket.
+They are not all the same problem, and only one of them is a preprocessing problem.
+`rsg-game-transfer-wallet` is the textbook case: its single-line 38 KB dump is warned while the
+`*.normalized.md` sibling in the same run scans, matches, and is not — the remedy demonstrated on
+one document. Eight of the nine contain no `METHOD /path` declaration outside a code fence at all;
+their endpoints appear as concrete URLs with the method stated only in prose (ecpay, newebpay,
+tappay), or they document webhooks, whose identity is `(method, summary)` and which a scan keyed
+on `METHOD /path` cannot produce a key for (`github-webhooks`, `paypal-webhooks-incomplete`).
+Recognising those would require inferring an HTTP method, which this project refuses at this
+boundary; ADR 0007 records the measurement. The warning is therefore accurate for all nine and
+actionable for one — which is the point: it says these runs were not judged, not that they are
+wrong.
 
 **Score impact:** each warning costs 12 points within its category and `source_grounding`
 carries 20% of the weighted total, so a case with two or more of them floors that category
