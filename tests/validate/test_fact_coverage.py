@@ -68,7 +68,7 @@ def test_an_unclosed_fence_is_named_as_the_cause():
     issue = _unscanned(report)[0]
 
     assert "42" in issue.evidence
-    assert "42" in issue.suggested_fix or "圍籬" in issue.suggested_fix
+    assert "42" in issue.suggested_fix
 
 
 def test_a_zero_fact_source_without_a_known_cause_still_enumerates_them():
@@ -76,3 +76,25 @@ def test_a_zero_fact_source_without_a_known_cause_still_enumerates_them():
 
     assert "42" not in issue.evidence
     assert "normalize-html-snapshot" in issue.suggested_fix
+
+
+def test_a_partially_unread_source_is_reported_even_though_facts_matched():
+    """讀到一半才失效才是最危險的:閘門判了前半,報告乾淨,後半根本沒被讀過。
+
+    以事實數／匹配數為唯一判準時這種來源完全不會浮現——比全篇未讀更危險,
+    因為閘門看起來運作正常。
+    """
+    coverage = {"api.md": FactCoverage(facts=3, matched=2, unclosed_fence_line=7)}
+    issue = _unscanned(_report(coverage))[0]
+
+    assert "7" in issue.evidence
+    assert "extraction" not in issue.suggested_fix
+
+
+def test_the_known_cause_wins_over_the_zero_match_wording():
+    """成因已知時不得再叫人去查 extraction 漏了什麼——那個缺陷並不存在。"""
+    coverage = {"api.md": FactCoverage(facts=4, matched=0, unclosed_fence_line=9)}
+    issue = _unscanned(_report(coverage))[0]
+
+    assert "9" in issue.evidence
+    assert "檢查 extraction" not in issue.suggested_fix

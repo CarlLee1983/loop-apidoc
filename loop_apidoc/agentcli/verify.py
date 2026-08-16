@@ -110,7 +110,7 @@ def _forecast(coverage) -> list[str]:
     """把投影寫成人可讀的一行一份來源。"""
     lines: list[str] = []
     for source, entry in unscanned_sources(coverage):
-        if entry.facts == 0 and entry.unclosed_fence_line is not None:
+        if entry.unclosed_fence_line is not None:
             lines.append(
                 f"{source}:第 {entry.unclosed_fence_line} 行的圍籬未關閉,"
                 "其後的內容全部沒被讀到"

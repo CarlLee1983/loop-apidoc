@@ -22,11 +22,22 @@ one close, putting the sample *between* them outside any fence. Its contents the
 facts. A fabricated fact blocks a correct extraction under the fail-closed completeness gate,
 which is the harm this project consistently refuses to risk (ADR 0007).
 
-What changes is that the failure is no longer silent. `SourceFacts` records the line where a fence
-opened and was never closed, the coverage projection carries that line, and the
-`SOURCE_FACTS_UNSCANNED` warning (ADR 0007) names it: the operator is told which line to open
-instead of being handed three possible causes to choose between. `verify-extraction` forecasts the
-same line before a run directory exists.
+What changes is that the failure is no longer silent. `SourceFacts` records the line where such a
+fence opened, the coverage projection carries that line, and the `SOURCE_FACTS_UNSCANNED` warning
+(ADR 0007) names it: the operator is told which line to open instead of being handed three possible
+causes to choose between. `verify-extraction` forecasts the same line before a run directory exists.
+
+The record is made only when the scan saw a line that *looks* like a close and was refused — an
+info string on the closing fence, or a marker that does not match the opening one. A fence that
+simply runs to the end of the document without any such line is not reported: CommonMark closes an
+unterminated fence at end of input, so every reader agrees with the scanner and nothing was lost by
+the strict rule. Reporting it anyway would send an operator to fix a source that is not broken, and
+the fact count after the "fix" would be unchanged.
+
+The warning also fires when the source is only *partly* unread — facts before the fence matched the
+extraction while everything after it went unread. That case is more dangerous than a wholly
+unscanned source, not less: the gate ran, found nothing wrong with the part it could see, and the
+report looks clean.
 
 ## Considered options
 
@@ -61,7 +72,7 @@ No benchmark source currently trips this: a scan across all thirteen cases found
 info-string closes and zero documents ending inside a fence. This decision is therefore about a
 failure mode that is cheap to disclose and expensive to misread, not about a fire being put out.
 
-**Falsified if:** an unclosed fence stops being reported, or the scan starts guessing fences shut.
-Concretely, this decision no longer holds when `loop_apidoc/source_facts/markdown.py` treats a line
-carrying an info string as a closing fence, or when `loop_apidoc/validate/fact_coverage.py` stops
-naming the unclosed fence's line.
+**Falsified if:** a refused closing fence stops being reported, or the scan starts guessing fences
+shut. Concretely, this decision no longer holds when `loop_apidoc/source_facts/markdown.py` treats a
+line carrying an info string as a closing fence, or when `loop_apidoc/validate/fact_coverage.py`
+stops naming the line where the unclosed fence opened.

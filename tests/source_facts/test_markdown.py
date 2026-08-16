@@ -645,3 +645,27 @@ def test_a_document_whose_fences_all_close_records_nothing() -> None:
 
     assert facts.unclosed_fence_line is None
     assert facts.endpoints[0].parameter_names == ["id"]
+
+
+def test_a_fence_left_open_on_the_last_structural_line_loses_nothing() -> None:
+    """CommonMark 在檔尾關閉未終止的圍籬,所以這種文件渲染正常、也沒有內容被吃掉。
+
+    照樣回報會叫 operator 去修一個不存在的缺陷,而「修好」之後事實數仍然是零。
+    只在圍籬之後真的還有內容時才主張有東西沒被讀到。
+    """
+    text = "`GET /a`\n\n```json\n{\"a\": 1}\n"
+
+    assert scan_markdown("doc.md", text).unclosed_fence_line is None
+
+
+def test_a_tilde_fence_left_open_is_reported_like_a_backtick_one() -> None:
+    text = "~~~json\n{}\n~~~json\n\n## GET /b\n\n`GET /b`\n"
+
+    assert scan_markdown("doc.md", text).unclosed_fence_line == 1
+
+
+def test_only_the_fence_that_stayed_open_is_reported() -> None:
+    """前面關好的圍籬不得留下殘影。"""
+    text = "```json\n{}\n```\n\n```json\n{}\n```json\n\n`GET /b`\n"
+
+    assert scan_markdown("doc.md", text).unclosed_fence_line == 5
