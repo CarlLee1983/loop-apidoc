@@ -80,6 +80,12 @@ class SourceFacts(BaseModel):
     endpoints: list[EndpointFact] = Field(default_factory=list)
     #: 這份來源以表格結構明確記載的錯誤碼,依出現順序。
     error_codes: list[ErrorCodeFact] = Field(default_factory=list)
+    #: 開在第幾行、其後出現過「長得像關閉、卻不算關閉」的行、且掃到檔尾仍未關閉
+    #: 的那道圍籬(沒有就是 None)。從該行起整份文件都被當成在圍籬內,掃出零筆且
+    #: 毫無錯誤——這個欄位存在的唯一目的,是讓那次靜默失效在報告裡有具名的成因。
+    #: 圍籬單純沒有收尾(其後沒有任何疑似關閉行)不算:CommonMark 在檔尾關閉未
+    #: 終止的圍籬,那份文件在每個讀者眼中都一樣,沒有任何內容因為我們的判定而遺失。
+    unclosed_fence_line: int | None = None
 
 
 class FactIndex(BaseModel):

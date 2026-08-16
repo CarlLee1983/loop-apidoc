@@ -56,3 +56,45 @@ def test_the_warning_never_fails_the_report():
 
     assert len(_unscanned(report)) == 2
     assert report.ok is True
+
+
+def test_an_unclosed_fence_is_named_as_the_cause():
+    """成因已知時就不要叫 operator 從三種可能裡自己猜。
+
+    圍籬未閉合是唯一一種掃描器自己知道確切成因的零事實:從那一行起整份文件都被
+    當成在圍籬內。訊息點名行號,operator 打開來源就看得到問題。
+    """
+    report = _report({"api.md": FactCoverage(facts=0, matched=0, unclosed_fence_line=42)})
+    issue = _unscanned(report)[0]
+
+    assert "42" in issue.evidence
+    assert "42" in issue.suggested_fix
+
+
+def test_a_zero_fact_source_without_a_known_cause_still_enumerates_them():
+    issue = _unscanned(_report({"dump.md": FactCoverage(facts=0, matched=0)}))[0]
+
+    assert "42" not in issue.evidence
+    assert "normalize-html-snapshot" in issue.suggested_fix
+
+
+def test_a_partially_unread_source_is_reported_even_though_facts_matched():
+    """讀到一半才失效才是最危險的:閘門判了前半,報告乾淨,後半根本沒被讀過。
+
+    以事實數／匹配數為唯一判準時這種來源完全不會浮現——比全篇未讀更危險,
+    因為閘門看起來運作正常。
+    """
+    coverage = {"api.md": FactCoverage(facts=3, matched=2, unclosed_fence_line=7)}
+    issue = _unscanned(_report(coverage))[0]
+
+    assert "7" in issue.evidence
+    assert "extraction" not in issue.suggested_fix
+
+
+def test_the_known_cause_wins_over_the_zero_match_wording():
+    """成因已知時不得再叫人去查 extraction 漏了什麼——那個缺陷並不存在。"""
+    coverage = {"api.md": FactCoverage(facts=4, matched=0, unclosed_fence_line=9)}
+    issue = _unscanned(_report(coverage))[0]
+
+    assert "9" in issue.evidence
+    assert "檢查 extraction" not in issue.suggested_fix

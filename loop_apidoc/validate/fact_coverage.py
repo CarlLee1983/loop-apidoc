@@ -32,12 +32,19 @@ class FactCoverage(BaseModel):
 
     facts: int
     matched: int
+    #: 掃到檔尾仍未關閉的圍籬開在第幾行(沒有就是 None)。零事實唯一一種掃描器
+    #: 自己知道確切成因的情形,知道就別叫 operator 從三種可能裡猜。
+    unclosed_fence_line: int | None = None
 
 
 def unscanned_sources(
     coverage: dict[str, FactCoverage] | None,
 ) -> list[tuple[str, FactCoverage]]:
-    """閘門對之無作用的來源(依識別碼排序);有匹配的來源不列入。
+    """閘門沒有完整判過的來源(依識別碼排序)。
+
+    兩種:一筆事實都對不上(閘門對它完全無作用),或掃描在某一行之後就停了
+    (未關閉的圍籬)。後者即使前半有事實對上也必須列入——讀到一半才失效比全篇
+    未讀更危險,因為閘門看起來運作正常,而報告是乾淨的。
 
     公開的原因與 `omitted_error_codes` 相同:`verify-extraction` 的預告與
     `assemble` 的驗證警告必須算出同一件事,兩邊各寫一份就會漂移。
@@ -50,7 +57,7 @@ def unscanned_sources(
         return []
     return [
         (source, entry) for source, entry in sorted(coverage.items())
-        if entry.matched == 0
+        if entry.matched == 0 or entry.unclosed_fence_line is not None
     ]
 
 
@@ -62,7 +69,25 @@ def check_fact_coverage(
 
 
 def _issue(source: str, entry: FactCoverage) -> Issue:
-    if entry.facts == 0:
+    # 成因已知時它壓過其他措辭:掃描器知道是圍籬,就不該叫 operator 去查一個
+    # 並不存在的 extraction 缺陷。
+    if entry.unclosed_fence_line is not None:
+        scanned = (
+            "掃出 0 筆端點事實" if entry.facts == 0
+            else f"圍籬之前掃出 {entry.facts} 筆端點事實"
+        )
+        evidence = (
+            f"第 {entry.unclosed_fence_line} 行開啟的圍籬直到檔尾都沒有被關閉,"
+            f"該行之後的內容全部沒有被讀到({scanned});"
+            "語意完整性閘門沒有完整判過這份來源"
+        )
+        fix = (
+            f"打開來源第 {entry.unclosed_fence_line} 行,補上關閉圍籬。"
+            "常見成因是關閉行帶了 info string(例如以 ```json 結尾)——依 CommonMark "
+            "那不算關閉,而是又開了一個新的圍籬。修好之後重新擷取,閘門才會讀到"
+            "該行以後的內容。"
+        )
+    elif entry.facts == 0:
         evidence = (
             "這份來源掃出 0 筆端點事實,語意完整性閘門對它完全沒有作用;"
             "報告乾淨不代表它被逐條比對過"
