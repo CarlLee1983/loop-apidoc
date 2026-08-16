@@ -75,6 +75,13 @@ that state cannot survive the boundary check, so it should never be observed her
 Hard schema errors (malformed JSON, wrong types) abort on the first one — the remaining
 checks would be meaningless.
 
+When the input boundary is clean, `verify-extraction` also **forecasts** on stderr which
+sources the semantic completeness gate will not judge — the same projection `assemble`
+reports as `SOURCE_FACTS_UNSCANNED`, delivered before you pay for plan→generate. Act on it
+by changing the preprocessing path or reporting a recognizer gap — never by re-reading the
+source. Like the error-code shortfall forecast, it stays out of `--json` and never changes
+the exit code.
+
 ## The `--json` payload
 
 `assemble … --json` prints one object on stdout with **6 top-level keys**:
@@ -90,7 +97,7 @@ checks would be meaningless.
 ## The `Issue` object (9 fields)
 
 ```json
-{"code": "OPENAPI_INVALID|OUTPUT_MISMATCH|REQUIRED_INFO_MISSING|SOURCE_UNVERIFIED|SOURCE_CONFLICT|UNSUPPORTED_ASSERTION|FOCUS_UNMET|FOCUS_INCOMPLETE",
+{"code": "OPENAPI_INVALID|OUTPUT_MISMATCH|REQUIRED_INFO_MISSING|SOURCE_UNVERIFIED|SOURCE_CONFLICT|UNSUPPORTED_ASSERTION|FOCUS_UNMET|FOCUS_INCOMPLETE|SOURCE_FACTS_UNSCANNED",
  "severity": "error|warning",
  "location": "str (free text)",
  "evidence": "str",
@@ -146,6 +153,7 @@ your extraction JSON and re-running.
 | `UNSUPPORTED_ASSERTION` | error | the output asserts something no source states (speculation leaked in) | remove the unsupported content; fail-closed |
 | `FOCUS_UNMET` | error **or** warning | a focus directive was answered `not_found`. ERROR for an Expectation Directive (the requester asserted a source documents this and it was not found), WARNING for a Coverage Directive (finding nothing is a complete answer there). Severity comes from the directive's `kind` alone — there is no per-directive override | re-read the sources named in `requery_scope` and confirm nothing was missed. If the provider genuinely does not document it, **do not invent it**: report the gap to the requester, who either supplies better sources or rewrites the directive as `coverage`. `target_file` is `focus-response.json` and `field_path` is `/responses/<directive id>` |
 | `FOCUS_INCOMPLETE` | error **or** warning | a `collect_error_codes` directive was answered with fewer codes than the sources tabulate. The **documented error-code floor** is the set of codes a Markdown source presents in an error-code table; reporting fewer names the ones left out, reporting more still passes (it is a floor, not an equality), and sources with no recognisable table produce no floor and no judgement. Severity comes from the directive's `kind` alone, as with `FOCUS_UNMET` | `evidence` names each omitted code with the source path and line where it is documented — open those lines, read the codes, and add them to `inventory.errors[]` with an `error_code` anchor each carrying its own evidence. Padding with invented codes fails earlier, at the gate. `target_file` is `focus-response.json`, `field_path` is `/responses/<directive id>`, and `requery_scope` lists the documenting sources |
+| `SOURCE_FACTS_UNSCANNED` | warning (always) | the semantic completeness gate never judged that source. Either it scanned **zero endpoint facts**, or it scanned facts but **none matched** an extracted endpoint identity (`METHOD /path`). The report being clean says nothing about that source | **Do not re-read the source** — that is what `SOURCE_UNVERIFIED` asks for and it does not apply here. Open the source and decide which of three shapes it is: (a) flattened into single lines, or an unconverted PDF/Word file — re-run acquisition/preprocessing along a table-preserving path (`normalize-html-snapshot`, `preprocess`), point the manifest at the result, and re-extract; (b) structurally fine (headings, GFM tables) but its endpoints are written as full URLs, code comments, or prose rather than `METHOD /path` — the scanner cannot see them, so report the recognizer gap to the user; your extraction may be entirely correct; (c) prose-only with no parameter tables — legitimate, report as a known gap, never as a failure. For the zero-match shape, check whether the extraction missed the endpoints that source documents, or wrote a method/path the source does not use. `location` is the source relative path; the routing fields stay `null` on purpose, because there is no JSON field to re-fill. Never blocking (ADR 0007) |
 
 ## Driving a correction round (default max 3 rounds; `--score` uses `--max-rounds`, default 6)
 

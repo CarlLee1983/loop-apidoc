@@ -280,7 +280,7 @@ def test_strict_assemble_rejects_supported_claim_without_exact_evidence(
     (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
     monkeypatch.setattr(
         "loop_apidoc.agentcli.assemble.validate_outputs",
-        lambda *_args: ValidationReport(),
+        lambda *_args, **_kwargs: ValidationReport(),
     )
 
     generated_at = datetime(2026, 7, 20, tzinfo=timezone.utc)
@@ -380,7 +380,7 @@ def test_strict_assemble_writes_candidate_for_exactly_grounded_claims(
     )
     monkeypatch.setattr(
         "loop_apidoc.agentcli.assemble.validate_outputs",
-        lambda *_args: ValidationReport(),
+        lambda *_args, **_kwargs: ValidationReport(),
     )
 
     result = run_assemble_pipeline(
@@ -570,7 +570,7 @@ def test_shadow_runs_after_failed_legacy_validation(tmp_path, monkeypatch):
             )
         ]
     )
-    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: failed_report)
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args, **_kwargs: failed_report)
 
     result = assemble_mod.run_assemble_pipeline(
         sources_root=sources,
@@ -612,7 +612,7 @@ def test_strict_assemble_blocks_before_core_when_legacy_validation_fails(
             )
         ]
     )
-    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: failed_report)
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args, **_kwargs: failed_report)
 
     result = assemble_mod.run_assemble_pipeline(
         sources_root=sources,
@@ -660,7 +660,7 @@ def test_strict_execution_error_blocks_the_run(tmp_path, monkeypatch):
         core_dir=str(tmp_path / "out" / "run-strict-error" / "core"),
         message="safe",
     )
-    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args: ValidationReport())
+    monkeypatch.setattr(assemble_mod, "validate_outputs", lambda *_args, **_kwargs: ValidationReport())
     monkeypatch.setattr(
         assemble_mod,
         "run_strict_core_safely",

@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 3 },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 3, "SOURCE_FACTS_UNSCANNED.warning": 2 },
   "acceptable_warnings": "3 webhook 各一筆『endpoint 缺少 request/response 範例』:GitHub docs 未附逐事件完整範例 body,降為 WARNING(範例由 generator 從 payload schema 合成)。",
   "resolved_issue_was": {
     "kind": "pipeline-bug",

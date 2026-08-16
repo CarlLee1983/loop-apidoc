@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 1 },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 1, "SOURCE_FACTS_UNSCANNED.warning": 1 },
   "acceptable_warnings": "endpoints[5] Frontend Redirect(GET 導頁)無 responses — 來源未定義接收端回應,降為 WARNING。",
   "resolved_issue_was": {
     "kind": "validator-bug",

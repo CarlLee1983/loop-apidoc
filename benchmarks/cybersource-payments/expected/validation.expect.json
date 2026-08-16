@@ -8,7 +8,7 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5 },
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5, "SOURCE_FACTS_UNSCANNED.warning": 24 },
   "acceptable_warnings": "5 endpoints 各一筆『endpoint 缺少 request/response 範例』:來源 SDK docs 未附逐端點範例(僅 create_payment 有官方 sample,放在 integration.test_cases),降為 WARNING。",
   "resolved_issue_was": {
     "kind": "authoring-fail-closed",
