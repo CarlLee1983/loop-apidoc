@@ -39,7 +39,7 @@ def check_manifest_coverage(
                 severity=Severity.WARNING,
                 location=source.relative_path,
                 evidence=f"來源格式不受支援（{source.source_format.value}），未納入規格化",
-                suggested_fix="轉為受支援格式（PDF／Markdown／Word／OpenAPI）或確認可略過",
+                suggested_fix="轉為受支援格式（PDF／Markdown／.docx／OpenAPI）或確認可略過",
             )
         )
     if provenance is not None:

@@ -1309,10 +1309,19 @@ def preprocess(
         f"passthrough {len(result.passthrough)} 於 {result.dest_dir}"
     )
     for relative in result.passthrough:
-        typer.echo(
-            f"passthrough {relative.as_posix()} "
-            "(not converted; agent must read source format)"
-        )
+        # `.doc` 是 OLE 複合檔,「交給 agent 讀原始格式」對它是做不到的事,
+        # 而那正是這行訊息原本會讓人以為可行的。給出真正可行的下一步。
+        if relative.suffix.lower() == ".doc":
+            typer.echo(
+                f"passthrough {relative.as_posix()} "
+                "(legacy binary Word is not readable by this pipeline; "
+                "re-save it as .docx or PDF and preprocess again)"
+            )
+        else:
+            typer.echo(
+                f"passthrough {relative.as_posix()} "
+                "(not converted; agent must read source format)"
+            )
 
 
 def main() -> None:

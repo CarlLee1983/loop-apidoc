@@ -367,7 +367,7 @@ artifacts.
 
 ## Supported source formats
 
-PDF, Markdown, Microsoft Word, OpenAPI JSON/YAML, static HTML snapshots, public URLs.
+PDF, Markdown, Microsoft Word (`.docx`; legacy binary `.doc` is unsupported and the manifest says so), OpenAPI JSON/YAML, static HTML snapshots, public URLs.
 
 ---
 
