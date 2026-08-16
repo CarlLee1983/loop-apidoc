@@ -20,6 +20,10 @@ def check_manifest_coverage(
 
     issue code 一律用 SOURCE_UNVERIFIED；location 用來源 relative_path
     （§6 穩定來源識別碼）。修正循環會將之分類為 UNFIXABLE。
+
+    訊息一律繁體中文：validation 報告是產品輸出，依 AGENTS.md 的語言政策屬 zh-TW
+    那一側（英文是教學／推廣文件的語言）。這裡曾經三筆中文、一筆英文，同一份報告
+    因此以兩種語言對 operator 說話。新增檢查時沿用中文，不要各寫各的。
     """
     issues: list[Issue] = []
     for source in manifest.unreadable():
@@ -69,10 +73,10 @@ def check_manifest_coverage(
                         code=IssueCode.SOURCE_UNVERIFIED,
                         severity=Severity.WARNING,
                         location=document_id,
-                        evidence="source has no material citation in provenance",
+                        evidence="來源在 provenance 中沒有任何實質引用",
                         suggested_fix=(
-                            "Re-read the source and cite its material claims, or explicitly "
-                            "exclude it when it is not API evidence."
+                            "重讀這份來源並引用它的實質主張；"
+                            "若它不是 API 證據，請明確排除。"
                         ),
                     )
                 )

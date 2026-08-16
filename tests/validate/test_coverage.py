@@ -64,7 +64,7 @@ def test_supported_source_without_material_citation_is_warning() -> None:
     assert issues[0].code is IssueCode.SOURCE_UNVERIFIED
     assert issues[0].severity is Severity.WARNING
     assert issues[0].location == "codes.pdf"
-    assert "material citation" in issues[0].evidence
+    assert "實質引用" in issues[0].evidence
 
 
 def test_successful_standalone_url_without_material_citation_is_warning() -> None:
