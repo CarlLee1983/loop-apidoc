@@ -139,10 +139,30 @@ def test_preprocess_cli_lists_passthrough_files(tmp_path: Path):
 
     assert res.exit_code == 0
     assert "converted 0 / copied 0 / passthrough 2" in res.stdout
-    assert "passthrough guide.doc (not converted; agent must read source format)" in res.stdout
+    # `.doc` 有自己的訊息:它讀不動,不是「交給 agent 讀」就能解決的。
+    assert "passthrough guide.doc (legacy binary Word is not readable" in res.stdout
     assert (
         "passthrough contract.json (not converted; agent must read source format)"
         in res.stdout
     )
     assert (out / "guide.doc").read_bytes() == b"doc bytes"
     assert (out / "contract.json").read_bytes() == b'{"paths":{}}'
+
+
+def test_legacy_word_passthrough_names_the_only_move_that_works(tmp_path: Path):
+    """「交給 agent 讀原始格式」對 OLE 複合檔是做不到的事。
+
+    這行訊息是 operator 在 manifest 之外第二個會看到的東西,講錯就等於把人推向
+    一條走不通的路;真正可行的下一步是另存成 .docx 或 PDF 再前處理一次。
+    """
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "spec.doc").write_bytes(b"\xd0\xcf\x11\xe0legacy word")
+
+    res = runner.invoke(app, [
+        "preprocess", "--sources", str(sources), "--out", str(tmp_path / "out"),
+    ])
+
+    assert res.exit_code == 0, res.output
+    assert ".docx" in res.output
+    assert "agent must read source format" not in res.output

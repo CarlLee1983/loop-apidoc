@@ -10,6 +10,10 @@ class SourceFormat(str, Enum):
     PDF = "pdf"
     MARKDOWN = "markdown"
     WORD = "word"
+    #: 舊版二進位 Word(.doc)。與 .docx 分開,因為它們的差別不是版本而是「讀不讀得動」:
+    #: OOXML 的驗證／渲染路徑對 OLE 複合檔完全不適用,把兩者塞進同一個值會讓 manifest
+    #: 宣稱一件不成立的事(supported),而 operator 要到 source-risk 才發現。
+    WORD_LEGACY = "word-legacy"
     OPENAPI_JSON = "openapi-json"
     OPENAPI_YAML = "openapi-yaml"
     HTML = "html"

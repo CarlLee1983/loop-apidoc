@@ -340,7 +340,7 @@ npm run docs:check
 
 ## 支援的來源格式
 
-PDF、Markdown、Microsoft Word、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
+PDF、Markdown、Microsoft Word（`.docx`；舊版二進位 `.doc` 不支援,manifest 會標明）、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
 
 ---
 

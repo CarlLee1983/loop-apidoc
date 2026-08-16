@@ -160,7 +160,7 @@ uv run loop-apidoc --help
 </ol>
 <p>No external Notebook to create, no browser login needed — source reading is done by the current agent within the session.</p>
 <h3 id="_5">Supported source formats</h3>
-<p>Markdown, HTML, and OpenAPI JSON/YAML are directly scannable. PDF, Microsoft Word, and public URLs are supported only after conversion or acquisition into a manifest-bound local scannable artifact.</p>
+<p>Markdown, HTML, and OpenAPI JSON/YAML are directly scannable. PDF, Microsoft Word (<code>.docx</code> only), and public URLs are supported only after conversion or acquisition into a manifest-bound local scannable artifact. Legacy binary <code>.doc</code> has no preprocessing path, so the manifest reports it as unsupported — re-save it as <code>.docx</code> or PDF first.</p>
 <hr />
 <h2 id="_6">Usage</h2>
 <p>The CLI provides source processing, URL evidence, draft extraction, quality and extraction, scheduled source freshness, run processing, Foundry asset governance, and the local human-review <code>review</code> workbench. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>

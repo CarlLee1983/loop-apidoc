@@ -160,7 +160,7 @@ uv run loop-apidoc --help
 </ol>
 <p>不需建立任何外部 Notebook、不需瀏覽器登入 —— 來源讀取由當前 agent 在 session 內完成。</p>
 <h3 id="_5">支援的來源格式</h3>
-<p>Markdown、HTML、OpenAPI JSON／YAML 可直接掃描；PDF、Microsoft Word 與公開 URL 必須先轉換或取得成 manifest 綁定的本機可掃描 artifact。</p>
+<p>Markdown、HTML、OpenAPI JSON／YAML 可直接掃描；PDF、Microsoft Word（僅 <code>.docx</code>）與公開 URL 必須先轉換或取得成 manifest 綁定的本機可掃描 artifact。舊版二進位 <code>.doc</code> 沒有前處理路徑,manifest 會直接把它標成不受支援,請先另存為 <code>.docx</code> 或 PDF。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
 <p>CLI 提供來源處理、URL evidence、草稿擷取、品質與擷取、來源新鮮度、run 處理、Foundry 資產治理，以及 <code>review</code> 本機人工覆核。日常擷取流程仍由 skill 驅動；每個命令都可單獨使用。</p>
