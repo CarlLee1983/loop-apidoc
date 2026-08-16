@@ -80,6 +80,10 @@ class SourceFacts(BaseModel):
     endpoints: list[EndpointFact] = Field(default_factory=list)
     #: 這份來源以表格結構明確記載的錯誤碼,依出現順序。
     error_codes: list[ErrorCodeFact] = Field(default_factory=list)
+    #: 掃到檔尾仍未關閉的那個圍籬開啟在第幾行(沒有就是 None)。
+    #: 從該行起整份文件都被當成在圍籬內,掃出零筆且毫無錯誤——這個欄位存在的
+    #: 唯一目的,是讓那次靜默失效在報告裡有具名的成因。
+    unclosed_fence_line: int | None = None
 
 
 class FactIndex(BaseModel):

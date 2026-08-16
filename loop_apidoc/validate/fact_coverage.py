@@ -32,6 +32,9 @@ class FactCoverage(BaseModel):
 
     facts: int
     matched: int
+    #: 掃到檔尾仍未關閉的圍籬開在第幾行(沒有就是 None)。零事實唯一一種掃描器
+    #: 自己知道確切成因的情形,知道就別叫 operator 從三種可能裡猜。
+    unclosed_fence_line: int | None = None
 
 
 def unscanned_sources(
@@ -62,7 +65,19 @@ def check_fact_coverage(
 
 
 def _issue(source: str, entry: FactCoverage) -> Issue:
-    if entry.facts == 0:
+    if entry.facts == 0 and entry.unclosed_fence_line is not None:
+        evidence = (
+            f"這份來源掃出 0 筆端點事實:第 {entry.unclosed_fence_line} 行開啟的圍籬"
+            "直到檔尾都沒有被關閉,從該行起整份文件都被當成程式碼區塊,"
+            "語意完整性閘門對它完全沒有作用"
+        )
+        fix = (
+            f"打開來源第 {entry.unclosed_fence_line} 行,補上關閉圍籬。"
+            "常見成因是關閉行帶了 info string(例如以 ```json 結尾)——依 CommonMark "
+            "那不算關閉,而是又開了一個新的圍籬。修好之後重新擷取,閘門才會讀到"
+            "該行以後的內容。"
+        )
+    elif entry.facts == 0:
         evidence = (
             "這份來源掃出 0 筆端點事實,語意完整性閘門對它完全沒有作用;"
             "報告乾淨不代表它被逐條比對過"

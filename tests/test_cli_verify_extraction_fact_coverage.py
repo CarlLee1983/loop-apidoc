@@ -102,3 +102,15 @@ def test_the_forecast_stays_out_of_the_json_payload(tmp_path):
     res = _verify(sources, extraction, "--json")
 
     assert json.loads(res.stdout) == []
+
+
+def test_the_forecast_names_an_unclosed_fence(tmp_path):
+    """成因已知時,預告就該直接說是哪一行,而不是叫人自己猜。"""
+    # 圍籬開在第 3 行且從未關閉,所以其後的 `GET /ping` 宣告根本沒被讀到。
+    source = "# Demo API\n\n```json\n{}\n```json\n\n`GET /ping`\n"
+    sources, extraction = _setup(tmp_path, source_text=source)
+
+    res = _verify(sources, extraction)
+
+    assert res.exit_code == 0, res.output
+    assert "第 3 行" in res.output
