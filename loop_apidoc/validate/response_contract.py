@@ -142,10 +142,10 @@ def analyze_response_contracts(openapi: dict) -> ResponseContractAnalysis:
                     code=IssueCode.REQUIRED_INFO_MISSING,
                     severity=Severity.WARNING,
                     location=location,
-                    evidence="successful response has no usable schema contract",
+                    evidence="成功 response 沒有可用的 schema 契約",
                     suggested_fix=(
-                        "Re-read the endpoint response envelope and record its schema; "
-                        "when the source is silent, keep this delivery gap visible."
+                        "重讀這個端點的回應封包並記下它的 schema；"
+                        "若來源確實未載明，就讓這個交付缺口留在報告裡。"
                     ),
                     target_file="endpoints/",
                     field_path="responses",

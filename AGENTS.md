@@ -166,7 +166,7 @@ Per-code severity and the structured-routing fields (`target_file`/`field_path`/
 
 - Python `>=3.11`, managed with `uv` (no `pip`). Deps: typer, pydantic v2, httpx, pyyaml, openapi-spec-validator, jsonschema, pymupdf.
 - Prefer immutable patterns (return new values; pure functions outside the I/O modules above).
-- The skill file `skills/loop-apidoc/SKILL.md` is written in **English** (token economy); generated *product* output remains `zh-TW`.
+- The skill file `skills/loop-apidoc/SKILL.md` is written in **English** (token economy); generated *product* output remains `zh-TW`. Validation issue text (`evidence`, `suggested_fix`, `fix_once`) is product output, so it is `zh-TW` too — one report must not address the operator in two languages, which is what happened while `validate/coverage.py` and `validate/response_contract.py` each chose their own.
 - Docsentry governs the selected Markdown documents in `.docsentry.json`: it checks local links and documented package scripts against checked-in evidence. It does not validate HTML manuals, external URLs, prose style, translations, or generated run output.
 - **Documentation language policy (for wider adoption/promotion):** teaching, promotion, and reference docs are **English-primary, Traditional-Chinese-secondary** — write the canonical copy in English so the project reaches the broadest audience, and provide zh-TW as the supporting/localized layer (e.g. `README.md` zh-TW ↔ `README.en.md` English). This applies to the human-facing docs listed under "Release: keep teaching & promotion docs in sync". The only content that stays `zh-TW`-first is *generated product output* (the `api-guide.zh-TW.md` guide and other run artifacts).
 
