@@ -45,3 +45,14 @@ def test_scan_records_nested_relative_paths(tmp_path: Path, fixed_now):
     assert sources[0].relative_path == "api/v1/openapi.yaml"
     assert sources[0].source_format is SourceFormat.OPENAPI_YAML
     assert sources[0].size_bytes == len(b"openapi: 3.1.0")
+
+
+def test_legacy_binary_word_is_marked_unsupported(tmp_path: Path, fixed_now):
+    """manifest 是 operator 第一個看到的東西,它得說實話。"""
+    (tmp_path / "spec.doc").write_bytes(b"\xd0\xcf\x11\xe0legacy word")
+
+    source = scan_sources(tmp_path, scanned_at=fixed_now)[0]
+
+    assert source.source_format is SourceFormat.WORD_LEGACY
+    assert source.supported is False
+    assert source.status is ProcessingStatus.UNSUPPORTED
