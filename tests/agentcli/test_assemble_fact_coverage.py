@@ -53,3 +53,15 @@ def test_a_source_whose_facts_match_the_extraction_is_not_reported(tmp_path):
     res = assemble(tmp_path, sources, extraction, None, "--json")
 
     assert _issues(res, "SOURCE_FACTS_UNSCANNED") == []
+
+
+def test_a_source_with_no_scanned_facts_at_all_still_gets_a_projection_entry(tmp_path):
+    """manifest 有、掃描結果沒有的來源(非 Markdown)不得從投影裡消失。
+
+    投影少一筆,報告就少一份警告,而那份來源正是最可能沒被判過的那種。
+    """
+    sources, extraction, _ = setup(tmp_path, extra_sources={"page.html": "<html></html>"})
+
+    res = assemble(tmp_path, sources, extraction, None, "--json")
+
+    assert [i["location"] for i in _issues(res, "SOURCE_FACTS_UNSCANNED")] == ["page.html"]

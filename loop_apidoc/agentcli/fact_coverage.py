@@ -40,5 +40,10 @@ def build_fact_coverage(
             in identities
         )
         coverage[source.relative_path] = FactCoverage(
-            facts=len(endpoints), matched=matched)
+            facts=len(endpoints),
+            matched=matched,
+            unclosed_fence_line=(
+                entry.unclosed_fence_line if entry is not None else None
+            ),
+        )
     return coverage
