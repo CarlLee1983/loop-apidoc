@@ -1,4 +1,14 @@
-"""Pure, conservative scanning of structured Markdown API facts."""
+"""Pure, conservative scanning of structured Markdown API facts.
+
+This is the draft side: its output is non-authoritative material an agent copies,
+re-reads against the source, and fills in by hand. `source_facts/markdown.py` is the
+other scanner, and the two deliberately disagree — each is looser exactly where its own
+job needs it, and neither is uniformly the stricter one. Do not unify them: a change
+made to improve draft output would silently move a fail-closed gate. The divergence
+table and its reasoning live in
+`docs/adr/0009-the-two-markdown-scanners-stay-separate.md`, pinned row by row in
+`tests/source_facts/test_scanner_divergence.py`.
+"""
 
 from __future__ import annotations
 
