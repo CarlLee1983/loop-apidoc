@@ -13,9 +13,29 @@ silently.
 
 A third shape hides inside the same class and matters just as much: a source whose Markdown
 structure is intact — headings, GFM tables, the lot — but whose endpoints are not written as
-`METHOD /path`. `benchmarks/tappay-backend` documents every operation as a full URL inside a code
-comment, and the scan reads nothing from it. The failure there is the recognizer's, not the
-source's, and no amount of re-running preprocessing will change it.
+`METHOD /path`. Re-running preprocessing changes nothing there, so the remedy text must not
+claim it does.
+
+Measured across the nine benchmark cases that now carry this warning, that third shape is the
+majority, and it is not fixable by widening the recognizer without breaking the rule above.
+Eight of the nine contain **no** `METHOD /path` declaration anywhere outside a code fence. What
+they contain instead is a concrete URL with no method beside it — `- 正式環境：https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5`
+(ecpay), `測試串接網址：https://ccore.newebpay.com/MPG/mpg_gateway` (newebpay), or the same thing
+inside a ```java comment (tappay). The method lives in prose elsewhere on the page ("all requests
+are sent using HTTP POST"), which means recognising these declarations requires *inferring* the
+method — the one thing this project refuses at this boundary. Recognising bare URLs without a
+method is worse still: the same sources carry dozens of out-of-fence absolute URLs that are
+documentation links, currency-code references, and merchant-portal pages, and a rule that reads
+them manufactures exactly the false facts this decision exists to prevent.
+
+Two of the nine are a different kind of unreachable: `github-webhooks` and
+`paypal-webhooks-incomplete` document webhooks, whose cross-file identity is `(method, summary)`
+because their path is null. A scan keyed on `METHOD /path` has no key to produce for them at all.
+
+One case does match the flattened shape exactly, and instructively: `rsg-game-transfer-wallet`
+carries both a single-line 38 KB dump and a `*.normalized.md` sibling produced by the
+structure-preserving path. The dump is warned; the normalized file scans, matches, and is not
+warned. That is the remedy working, in the same run, on the same document.
 
 The scan is deliberately not widened to cover them. Structure is what makes a fact mechanical;
 guessing structure out of a prose dump manufactures facts, and under a fail-closed gate a false
