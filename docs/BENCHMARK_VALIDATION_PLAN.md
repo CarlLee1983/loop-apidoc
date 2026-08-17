@@ -198,6 +198,34 @@ source is a supplier delivery with no public URL; it joins the lane only once th
 file is available, and until then keeps exactly the evidence strength it already
 had.
 
+## Acquisition paths outside the harness
+
+The four layers grade *cases*. They say nothing about an acquisition path that no case
+uses, and every case's sources are `.md`, `.json`, or `.yaml` — so several shipped
+commands have never carried a real supplier source through this harness at all. Two
+distinct states hide behind that, and they must not be described with one word, because
+what would fix them differs.
+
+**Not validated against a real source.** The code is complete and unit-tested; no case has
+used it. `import-supplementary-note`, `import-rendered-url`, `select-url`,
+`related-url-pages`, and the `.docx` preprocessing path are here. What is missing is a
+source: the first real delivery that travels this path becomes a benchmark case and the
+label goes away with it. `import-supplementary-note` is the sharpest instance, because its
+output moves the validation report's per-claim `SUPPLEMENTARY_SUPPORT` warnings and the
+document-quality score's source grounding — a path that changes the score, with no case.
+
+**Outside the harness by construction.** `catalog-url`, `cache-url-pages`/`cache-url-entry`,
+`snapshot-openapi-url`, and `cache-gitbook-llms` issue network requests, and a harness run
+must be offline-reproducible. No quantity of real sources changes that; what is missing is a
+mechanism — a replayable recording contract that stores responses as fixtures so a case can
+re-run without the network. `cache-gitbook-llms` is in both states at once: no real GitBook
+site has gone through end to end, and it is itself a network acquisition.
+
+A path in either state is never described as validated, and a synthetic fixture is never
+written to erase a label — the label exists precisely because no real source has arrived.
+`normalize-html-snapshot`, `preprocess` (PDF), and `manifest` are not in this section: each
+carries a real supplier source in at least one case.
+
 ## Terminology
 
 Use these terms consistently in issues, release notes, and review comments:
@@ -210,6 +238,8 @@ Use these terms consistently in issues, release notes, and review comments:
 | **Passed** | The applicable assertions executed and passed. |
 | **Strict-local passed** | Every required case had sources, all source-backed benchmark checks ran, and no skip was reported. |
 | **Sanitized-fixture exact-evidence passed** | A reviewed redistributable subset replayed the retained claims with exact fragment support; this is not source-backed or strict-local success. |
+| **Not validated against a real source** | A shipped path whose code is complete but which no benchmark case has ever used; the first real source along it becomes a case. |
+| **Outside the harness by construction** | A path that issues network requests, so no offline-reproducible case can exercise it until a replayable recording contract exists. Never interchangeable with the row above. |
 | **Source-derivation verified** | A PDF case's local Markdown matches the SHA-256 recorded in its committed `source-derivation.json`, and — when the original PDF is also present locally — was re-derived byte-identically from it; this is part of the existing source-backed layer, not new evidence strength. |
 
 Do not shorten “committed and discovered” to “validated,” and do not describe
