@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import json
-import statistics
 from datetime import datetime, timezone
 from pathlib import Path
-from time import perf_counter
 
 import pytest
 
 from loop_apidoc.agentcli.assemble import AssembleInputError, run_assemble_pipeline
+from loop_apidoc.agentcli import evidence as evidence_module
 from loop_apidoc.agentcli.evidence import verify_extraction_evidence
 from loop_apidoc.agentcli.verify import verify_extraction_dir
 from loop_apidoc.domain.evidence import fragment_digest
 from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.shadow import bridge as bridge_module
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.source_facts.collect import collect_facts
 from tests.source_quality_support import write_passing_source_quality
@@ -103,9 +103,24 @@ def test_exact_evidence_verifier_accepts_matching_fragment(tmp_path):
     ) == []
 
 
-def test_exact_evidence_verifier_scales_near_linearly_with_unique_references(
+def test_exact_evidence_verifier_materializes_every_reference_in_one_batch(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Verification must read the sources once, not once per reference.
+
+    Counted, not timed. The timed version compared wall clock between a
+    250-reference and a 1,000-reference run, which measures the machine as much
+    as the algorithm — the sibling test written the same way failed under load
+    while the code was unchanged, taking the whole quality gate with it (#120).
+
+    What keeps this near-linear is that `verify_extraction_evidence` collects
+    every declared reference into one deduplicated request set and calls
+    `acquire_fragment_bundle` exactly once. Both halves are asserted: one call
+    at each size, and a request set matching the distinct references rather
+    than multiplying with them.
+    """
+
     def build_case(name: str, count: int):
         sources = tmp_path / name
         sources.mkdir()
@@ -138,31 +153,30 @@ def test_exact_evidence_verifier_scales_near_linearly_with_unique_references(
         }
         return inventory, manifest, facts
 
-    def median_elapsed(case) -> float:
-        inventory, manifest, facts = case
-        samples: list[float] = []
-        for sample_index in range(4):
-            started = perf_counter()
-            assert verify_extraction_evidence(
-                inventory,
-                [],
-                None,
-                manifest,
-                facts,
-                NOW,
-            ) == []
-            elapsed = perf_counter() - started
-            if sample_index:
-                samples.append(elapsed)
-        return statistics.median(samples)
+    requested: list[int] = []
+    original = evidence_module.acquire_fragment_bundle
 
-    small_elapsed = median_elapsed(build_case("small", 250))
-    large_elapsed = median_elapsed(build_case("large", 1_000))
+    def counting(source_set, manifest, facts, requests, generated_at):
+        requested.append(len(requests))
+        return original(source_set, manifest, facts, requests, generated_at)
 
-    assert large_elapsed < small_elapsed * 6, (
-        "quadrupling exact evidence references should remain near-linear; "
-        f"small={small_elapsed:.4f}s, large={large_elapsed:.4f}s"
-    )
+    monkeypatch.setattr(evidence_module, "acquire_fragment_bundle", counting)
+
+    for name, count in (("small", 250), ("large", 1_000)):
+        requested.clear()
+        inventory, manifest, facts = build_case(name, count)
+        assert verify_extraction_evidence(
+            inventory,
+            [],
+            None,
+            manifest,
+            facts,
+            NOW,
+        ) == []
+        assert requested == [count], (
+            f"{name}: expected one materialization of {count} distinct requests, "
+            f"got {requested}"
+        )
 
 
 def test_exact_evidence_verifier_reports_stale_digest_and_unknown_source(tmp_path):
@@ -304,10 +318,32 @@ def test_shadow_uses_verified_v1_evidence_for_its_declared_claim_path(tmp_path):
     assert summary[0]["reason_code"] == "CLAIM_BOUND_EXACT_REFERENCE"
 
 
-def test_shadow_assembly_scales_near_linearly_with_exact_references(
+def test_shadow_assembly_does_no_linear_fragment_scan_per_exact_reference(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def median_elapsed_for(count: int) -> float:
+    """Shadow lookup must not walk the fragment list once per exact reference.
+
+    Counted, not timed. The previous version compared wall clock between a
+    200-reference and a 1,600-reference run; under load it failed while the
+    code was unchanged and took the whole quality gate down with it (#120). The
+    ratio was also a weak bound — it tolerated an 8x input growing 10x in time,
+    most of the way to the quadratic blow-up it was written to catch.
+
+    `_BridgeLookup.fragment_by_id` is the single per-proposal fragment lookup
+    and a dict read, so the measured quantity is how often the shadow path
+    resolves a fragment at all. Measured, that count is *constant* — driven by
+    material claim paths, not by references — which is pinned here by equality.
+    A change that makes it grow with the references is not necessarily wrong,
+    but it is exactly the kind of change that should have to say so out loud.
+
+    The second assertion guards the original defect: this lookup replaced a
+    `for fragment in evidence.fragments` scan that ran inside a per-path,
+    per-proposal `any(...)`, so every one of those calls walked the whole
+    fragment list. Asserting the helper is gone keeps it from reappearing.
+    """
+
+    def lookups_for(count: int) -> int:
         case_root = tmp_path / f"case-{count}"
         sources = case_root / "sources"
         extraction = case_root / "extraction"
@@ -335,33 +371,43 @@ def test_shadow_assembly_scales_near_linearly_with_exact_references(
         ]
         _write_extraction(extraction, _inventory(evidence=evidence))
 
-        samples: list[float] = []
-        for sample_index in range(4):
-            started = perf_counter()
-            result = run_assemble_pipeline(
+        calls = 0
+        original = bridge_module._BridgeLookup.fragment_by_id
+
+        def counting(self, fragment_id):
+            nonlocal calls
+            calls += 1
+            return original(self, fragment_id)
+
+        monkeypatch.setattr(bridge_module._BridgeLookup, "fragment_by_id", counting)
+        result = run_assemble_pipeline(
+            sources_root=sources,
+            extraction_dir=extraction,
+            output_root=case_root / "output",
+            run_id=f"shadow-{count}",
+            generated_at=NOW,
+            source_quality_dir=write_passing_source_quality(
                 sources_root=sources,
-                extraction_dir=extraction,
-                output_root=case_root / "output",
-                run_id=f"shadow-{sample_index}",
+                output=case_root / "source-quality",
                 generated_at=NOW,
-                source_quality_dir=write_passing_source_quality(
-                    sources_root=sources,
-                    output=case_root / "source-quality",
-                    generated_at=NOW,
-                ),
-                architecture_mode=ArchitectureMode.SHADOW,
-            )
-            elapsed = perf_counter() - started
-            assert result.shadow is not None
-            assert result.shadow.status == "ok"
-            if sample_index:
-                samples.append(elapsed)
-        return statistics.median(samples)
+            ),
+            architecture_mode=ArchitectureMode.SHADOW,
+        )
+        assert result.shadow is not None
+        assert result.shadow.status == "ok"
+        return calls
 
-    small_elapsed = median_elapsed_for(200)
-    large_elapsed = median_elapsed_for(1_600)
+    small_lookups = lookups_for(200)
+    large_lookups = lookups_for(1_600)
 
-    assert large_elapsed < small_elapsed * 10, (
-        "8x more exact references should not trigger quadratic shadow lookup; "
-        f"small={small_elapsed:.4f}s, large={large_elapsed:.4f}s"
+    assert small_lookups > 0, "the per-proposal lookup seam was not exercised"
+    assert large_lookups == small_lookups, (
+        "8x more exact references changed how often the shadow path resolves a "
+        "fragment; it is driven by claim paths, not by reference count "
+        f"(small={small_lookups}, large={large_lookups})"
+    )
+
+    assert not hasattr(bridge_module, "_fragment_index"), (
+        "a linear scan over evidence.fragments reappeared beside the dict lookup; "
+        "resolve a fragment by id through _BridgeLookup instead"
     )
