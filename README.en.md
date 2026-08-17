@@ -272,7 +272,7 @@ artifacts stay out of agent context and agent handoffs to reduce token use. This
 delivery policy and does not change CLI source grounding, validation, or the compatible run
 directory structure.
 
-Release notes: [`0.37.0`](docs/RELEASE_NOTES_0.37.0.md).
+Release notes: [`0.38.0`](docs/RELEASE_NOTES_0.38.0.md).
 
 ---
 
@@ -466,6 +466,41 @@ provenance inputs and all output collisions. A matching `fetched_rendered` resul
 `manifest` and `assemble` use the verified local snapshot without probing the protected origin;
 URL, path, method, or digest mismatches fail closed.
 
+### Supplementary evidence: supplier notes
+
+Some normative information exists only in a supplier's email or chat message—how keys are
+obtained, the test environment address, what must be completed before go-live—and the
+supplier often never intended to write it into the documentation. Such content can be
+excerpted into Markdown by hand and imported as **supplementary evidence**:
+
+```bash
+uv run loop-apidoc import-supplementary-note \
+  --input ./notes/sandbox-key.md \
+  --from "engineer@provider.example" \
+  --received-at "2026-08-16T10:00:00+08:00" \
+  --subject "How to obtain the test environment key" \
+  --excerpted-by "carl" \
+  --sources ./sources
+```
+
+The command writes the excerpt plus a `.source.json` sidecar recording origin, receipt time,
+excerpter, and SHA-256. `manifest` reads the sidecar and marks that source
+`authority: supplementary`; a source without a sidecar is always `normative`. A field-mapping
+spreadsheet sent separately by the supplier takes the same path once saved as a Markdown table.
+
+What supplementary evidence can do: be cited, fill `missing`, make a claim stand. What it
+cannot do: win a conflict against formal documentation, or be reported as indistinguishable
+from it. Every claim that stands only on supplementary evidence is named **individually** in
+the validation report as the warning-level `SUPPLEMENTARY_SUPPORT` (not one blanket run-level
+warning) and counts toward the document-quality score's source grounding. Such sources also
+stay out of `record-fingerprint`'s fingerprint—freshness comparison assumes a source can be
+re-acquired, and an email has neither URL nor version.
+
+**The cost you accept**: an excerpt is written by a person, that person can transcribe it
+wrongly or over-interpret it, and the pipeline cannot tell. The sidecar records the excerpter
+for **accountability**, not verifiability. That is the essential difference between this path
+and every other source. ([ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md))
+
 When a URL itself is a Swagger 2.0 or OpenAPI 3.x JSON/YAML document, snapshot it as a local
 source instead of using the HTML navigation flow:
 
@@ -537,9 +572,27 @@ uv run loop-apidoc inspect-source-risk \
 Scans the exact manifest-bound text package before it enters model context. UTF-8 Markdown,
 HTML, and OpenAPI JSON/YAML are supported; PDF, Word, invalid UTF-8, oversized text, and other
 unscannable pending sources are blockers, so convert them and rebuild the manifest first. The
-default limit is 5 MiB per file. A report retains at most 1,000 findings; when additional
+default limit is 5 MiB per file. The rules cover two directions: whether a source can
+**manipulate** the agent (Unicode tags, bidi overrides, control characters, instruction-override
+text), and whether a source can **disclose something to** the agent (`SR-SECRET-VALUE` is a
+blocker and matches only PEM private-key blocks and JWTs, whose structure is itself the
+evidence; `SR-CREDENTIAL-REFERENCE`, `SR-CONTACT-PII`, `SR-PII-VALUE`, and `SR-PAYMENT-CARD`
+are warnings). A credential reference is only a warning because a competent API document
+demonstrates `Authorization: Bearer <TOKEN>` and the text cannot establish whether the value is
+real; card numbers are Luhn-validated with the card schemes' published test numbers excluded. A
+candidate is only "a digit string of an eligible length", not a card number—a hit is found by
+windowing inside the candidate along digit-group boundaries, because otherwise an adjacent
+number on the same line (`1 4539…`) is swallowed into one candidate, Luhn fails over the whole
+string, and the real card is never reported. Candidates do not span lines (joining two adjacent
+rows of digits passes Luhn about one time in ten), but NBSP and full-width spaces still count as
+separators. A report retains at most 1,000 findings; when additional
 matches exist, the final entry is the blocker `SR-FINDINGS-TRUNCATED`, so dense hostile input
-fails closed without amplifying into an unbounded report. The fixed
+fails closed without amplifying into an unbounded report. Warnings get a separate 500-entry
+budget whose overflow produces the warning-level `SR-WARNINGS-TRUNCATED`—without that
+separation, the contact addresses and credential references that are frequent in a competent
+large document would turn the verdict into a reject through the truncation blocker with no
+substantive hit anywhere in the report; blockers may still use the entire cap, so warnings can
+never crowd out a real hit. The fixed
 `source-risk-report.{json,zh-TW.md}` records only rule
 IDs, severities, source refs, and locators—never the matched payload—and source bytes are not
 changed. Its schema/ruleset versions, `max_bytes`, manifest digest, per-source SHA-256 coverage,
