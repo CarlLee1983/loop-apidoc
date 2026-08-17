@@ -135,8 +135,10 @@ cap so that a document merely rich in contact addresses is never rejected by tru
 The built-in `preprocess` seam handles `.docx` as a bounded OOXML package: it scans every Word XML
 part and rejects unsafe ZIP/package/XML, macro or active DDE field content, external relationships,
 unsupported alternate content, and merged-cell table semantics that cannot be rendered faithfully before writing
-deterministic Markdown plus source-hash provenance. Legacy `.doc`
-remains outside this trusted boundary and requires an operator-controlled external conversion.
+deterministic Markdown plus source-hash provenance. Legacy `.doc` and spreadsheets
+(`.xlsx`/`.xls`) remain outside this trusted boundary and require an operator-controlled external
+conversion; that is a decision rather than a backlog item, recorded with its falsification condition
+in `docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md`.
 
 The DOCX ingestion shape and ZIP/XML fallback were adapted from
 [`virgiliojr94/book-to-skill`](https://github.com/virgiliojr94/book-to-skill) revision

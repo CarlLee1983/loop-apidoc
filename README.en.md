@@ -367,7 +367,9 @@ artifacts.
 
 ## Supported source formats
 
-PDF, Markdown, Microsoft Word (`.docx`; legacy binary `.doc` is unsupported and the manifest says so), OpenAPI JSON/YAML, static HTML snapshots, public URLs.
+PDF, Markdown, Microsoft Word (`.docx`), OpenAPI JSON/YAML, static HTML snapshots, public URLs.
+
+Legacy binary `.doc` and spreadsheets (`.xlsx`/`.xls`) are **deliberately unsupported**, and no converter is planned: the manifest recognises the format, marks it unsupported, and names the export that resolves it (`.doc` → `.docx` or PDF; a spreadsheet → a Markdown table). The conversion judgement stays with the person who can see the merged cells — reasoning and falsification condition in [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md). When a spreadsheet's content must enter the pipeline as evidence, it goes in along the supplementary-carrier path ([ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)).
 
 ---
 

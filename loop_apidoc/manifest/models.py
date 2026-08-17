@@ -14,6 +14,9 @@ class SourceFormat(str, Enum):
     #: OOXML 的驗證／渲染路徑對 OLE 複合檔完全不適用,把兩者塞進同一個值會讓 manifest
     #: 宣稱一件不成立的事(supported),而 operator 要到 source-risk 才發現。
     WORD_LEGACY = "word-legacy"
+    #: 試算表(.xlsx/.xls)。與 UNKNOWN 分開的理由和 word-legacy 一樣,而且只有這個
+    #: 理由:結果都是拒絕,但認得出格式才講得出下一步。不建轉檔器見 ADR 0012。
+    SPREADSHEET = "spreadsheet"
     OPENAPI_JSON = "openapi-json"
     OPENAPI_YAML = "openapi-yaml"
     HTML = "html"

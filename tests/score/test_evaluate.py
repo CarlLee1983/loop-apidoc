@@ -17,7 +17,11 @@ from loop_apidoc.validate.models import Issue, IssueCode, Severity, ValidationRe
 _NOW = datetime(2026, 7, 1, 9, 0, tzinfo=timezone.utc)
 
 
-def _manifest(*, status: ProcessingStatus = ProcessingStatus.PENDING) -> Manifest:
+def _manifest(
+    *,
+    status: ProcessingStatus = ProcessingStatus.PENDING,
+    source_format: SourceFormat = SourceFormat.MARKDOWN,
+) -> Manifest:
     return Manifest(
         sources_root="./sources",
         generated_at=_NOW,
@@ -25,7 +29,7 @@ def _manifest(*, status: ProcessingStatus = ProcessingStatus.PENDING) -> Manifes
             LocalSource(
                 relative_path="manual.md",
                 mime_type="text/markdown",
-                source_format=SourceFormat.MARKDOWN,
+                source_format=source_format,
                 size_bytes=10,
                 sha256="abc",
                 scanned_at=_NOW,
@@ -281,6 +285,24 @@ def test_manifest_source_warnings_reduce_reviewability() -> None:
     assert report.status is ScoreStatus.NEEDS_ATTENTION
     assert report.category_scores["reviewability"] == 90
     assert report.findings[0].code == "SOURCE_UNSUPPORTED"
+
+
+def test_the_unsupported_finding_names_the_format_s_own_next_step() -> None:
+    """「轉成受支援的格式」對拿著 .xlsx 的人等於沒說。分數不變,可行動性才變。"""
+    report = evaluate_score(
+        _inputs(
+            manifest=_manifest(
+                status=ProcessingStatus.UNSUPPORTED,
+                source_format=SourceFormat.SPREADSHEET,
+            )
+        ),
+        profile=ScoreProfile.CI,
+    )
+
+    unsupported = next(
+        f for f in report.findings if f.code == "SOURCE_UNSUPPORTED"
+    )
+    assert "Markdown table" in unsupported.suggested_fix
 
 
 def test_issue_category_mapping_covers_every_scored_issue_code() -> None:
