@@ -18,7 +18,7 @@ def test_hash_file_matches_known_value(tmp_path: Path):
 def test_scan_classifies_and_dedupes(tmp_path: Path, fixed_now):
     (tmp_path / "a.md").write_text("same", encoding="utf-8")
     (tmp_path / "b.md").write_text("same", encoding="utf-8")  # duplicate content
-    (tmp_path / "notes.txt").write_text("unsupported", encoding="utf-8")
+    (tmp_path / "notes.bin").write_text("unsupported", encoding="utf-8")
 
     sources = scan_sources(tmp_path, scanned_at=fixed_now)
     by_path = {s.relative_path: s for s in sources}
@@ -28,9 +28,9 @@ def test_scan_classifies_and_dedupes(tmp_path: Path, fixed_now):
     assert by_path["b.md"].status is ProcessingStatus.DUPLICATE
     assert by_path["b.md"].duplicate_of == "a.md"
     assert by_path["a.md"].sha256 == by_path["b.md"].sha256
-    assert by_path["notes.txt"].status is ProcessingStatus.UNSUPPORTED
-    assert by_path["notes.txt"].supported is False
-    assert by_path["notes.txt"].source_format is SourceFormat.UNKNOWN
+    assert by_path["notes.bin"].status is ProcessingStatus.UNSUPPORTED
+    assert by_path["notes.bin"].supported is False
+    assert by_path["notes.bin"].source_format is SourceFormat.UNKNOWN
     assert by_path["a.md"].scanned_at == fixed_now
 
 

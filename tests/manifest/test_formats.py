@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from loop_apidoc.manifest.formats import (
+    _UNSUPPORTED,
+    _UNSUPPORTED_REMEDIES,
     detect_format,
     is_supported,
     unsupported_remedy,
@@ -27,7 +29,7 @@ def test_detect_word_and_openapi():
 
 
 def test_detect_unknown_extension():
-    assert detect_format(Path("notes.txt")) is SourceFormat.UNKNOWN
+    assert detect_format(Path("notes.bin")) is SourceFormat.UNKNOWN
 
 
 def test_is_supported():
@@ -46,6 +48,9 @@ def test_legacy_binary_word_is_detected_but_not_supported():
     assert is_supported(SourceFormat.WORD_LEGACY) is False
     # .docx 不受影響:它有完整的前處理路徑。
     assert is_supported(SourceFormat.WORD) is True
+    remedy = unsupported_remedy(SourceFormat.WORD_LEGACY)
+    assert ".docx" in remedy.zh
+    assert ".docx" in remedy.en
 
 
 def test_spreadsheets_are_detected_but_not_supported():
@@ -58,26 +63,62 @@ def test_spreadsheets_are_detected_but_not_supported():
     assert detect_format(Path("codes.xls")) is SourceFormat.SPREADSHEET
     assert detect_format(Path("codes.XLSX")) is SourceFormat.SPREADSHEET
     assert is_supported(SourceFormat.SPREADSHEET) is False
+    remedy = unsupported_remedy(SourceFormat.SPREADSHEET)
+    assert "Markdown" in remedy.zh
+    assert "markdown" in remedy.en.lower()
 
 
-def test_each_unsupported_format_names_its_own_next_step():
-    """remedy 要具名到格式。「轉成受支援的格式」對拿著 .xlsx 的人等於沒說。"""
-    spreadsheet = unsupported_remedy(SourceFormat.SPREADSHEET)
-    assert "Markdown" in spreadsheet.zh
-    assert "markdown" in spreadsheet.en.lower()
+def test_every_unsupported_format_except_unknown_has_a_named_remedy():
+    """忘記登記 remedy 的格式會靜靜落到通則,而通則式的斷言測不出這件事——
+    所以直接斷言「有沒有登記」本身,而不是手寫一份格式清單去核對(那份清單
+    本身就會忘記更新)。`UNKNOWN` 沒有可具名的下一步,維持通則,不在此列。
+    """
+    named = [f for f in _UNSUPPORTED if f is not SourceFormat.UNKNOWN]
+    assert named
+    for source_format in named:
+        assert source_format in _UNSUPPORTED_REMEDIES, source_format
 
-    legacy_word = unsupported_remedy(SourceFormat.WORD_LEGACY)
-    assert ".docx" in legacy_word.zh
-    assert ".docx" in legacy_word.en
-
-    # 未知副檔名沒有可具名的下一步,維持通則。
     unknown = unsupported_remedy(SourceFormat.UNKNOWN)
     assert unknown.zh and unknown.en
 
 
 def test_the_spreadsheet_remedy_does_not_promise_csv():
-    """CSV 不在受支援副檔名裡,叫人另存 CSV 等於把他送進同一個 unsupported。"""
-    assert detect_format(Path("codes.csv")) is SourceFormat.UNKNOWN
+    """叫人另存 CSV 等於把他送進同一個 unsupported——.csv 自己就落在這裡。"""
     remedy = unsupported_remedy(SourceFormat.SPREADSHEET)
-    assert "CSV" not in remedy.zh.upper()
-    assert "CSV" not in remedy.en.upper()
+    assert ".csv" not in remedy.zh.lower()
+    assert ".csv" not in remedy.en.lower()
+
+
+def test_plain_text_is_detected_but_not_supported():
+    """`.txt` 與 `.doc`／試算表同一個處置:認得出、拒絕、講得出下一步。
+
+    `.txt` 的內容通常就是可讀文字,下一步不是通則裡的四選一,而是「改副檔名」。
+    """
+    assert detect_format(Path("notes.txt")) is SourceFormat.PLAIN_TEXT
+    assert is_supported(SourceFormat.PLAIN_TEXT) is False
+    remedy = unsupported_remedy(SourceFormat.PLAIN_TEXT)
+    assert ".md" in remedy.zh
+    assert ".md" in remedy.en
+
+
+def test_csv_is_detected_but_not_supported():
+    """`.csv` 落進自己的具名格式,不再是通則,也不建議另存 CSV(#98 的決定)。"""
+    assert detect_format(Path("codes.csv")) is SourceFormat.CSV
+    assert detect_format(Path("codes.CSV")) is SourceFormat.CSV
+    assert is_supported(SourceFormat.CSV) is False
+    remedy = unsupported_remedy(SourceFormat.CSV)
+    assert "Markdown" in remedy.zh
+    assert "markdown" in remedy.en.lower()
+    # 不建議另存 CSV:那會把 operator 送回這個 unsupported。「.csv」不能出現
+    # 在建議的動作裡——只比對片語會放過「re-save it as a CSV file」這類措辭。
+    assert ".csv" not in remedy.zh.lower()
+    assert ".csv" not in remedy.en.lower()
+    # remedy 要以 CSV 本身為主詞,不是誤指到試算表那一筆——兩者都提
+    # Markdown,單靠這個詞分辨不出用錯了哪一筆。
+    spreadsheet_remedy = unsupported_remedy(SourceFormat.SPREADSHEET)
+    assert remedy.zh != spreadsheet_remedy.zh
+    assert remedy.en != spreadsheet_remedy.en
+    assert "CSV" in remedy.zh
+    assert "csv" in remedy.en.lower()
+    assert "試算表" not in remedy.zh
+    assert "spreadsheet" not in remedy.en.lower()
