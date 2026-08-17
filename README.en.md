@@ -541,7 +541,7 @@ fails closed without amplifying into an unbounded report. The fixed
 `source-risk-report.{json,zh-TW.md}` records only rule
 IDs, severities, source refs, and locators—never the matched payload—and source bytes are not
 changed. Its schema/ruleset versions, `max_bytes`, manifest digest, per-source SHA-256 coverage,
-and stable source-binding digest prevent stale audit reuse. Exit codes: `0` = pass, `1` = reject,
+and stable source-binding digest prevent stale audit reuse: after a ruleset version change (the card-window rule, for example) every earlier audit fails with `ruleset version is stale`, and the remedy is to re-run `inspect-source-risk` and `assess-sources` to rebuild the source-quality package. Exit codes: `0` = pass, `1` = reject,
 `2` = invalid, unsafe, unreadable, or mismatched input.
 
 ### `assess-sources` — pre-extraction source-quality assessment
