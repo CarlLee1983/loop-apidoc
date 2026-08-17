@@ -26,6 +26,9 @@ _ISSUE_CATEGORY: dict[IssueCode, ScoreCategory] = {
     # 所以歸 source grounding 而不是 completeness。
     IssueCode.SOURCE_FACTS_UNSCANNED: ScoreCategory.SOURCE_GROUNDING,
     IssueCode.UNSUPPORTED_ASSERTION: ScoreCategory.SOURCE_GROUNDING,
+    # 一份契約有多少比例是靠信件撐起來的,正是 source grounding 要回答的
+    # 問題。它不是成品缺了資訊 —— 資訊在,只是背書比較薄。
+    IssueCode.SUPPLEMENTARY_SUPPORT: ScoreCategory.SOURCE_GROUNDING,
 }
 
 _WARNING_PENALTY = 12

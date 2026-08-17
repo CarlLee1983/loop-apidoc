@@ -30,6 +30,17 @@ class ProcessingStatus(str, Enum):
     IGNORED = "ignored"
 
 
+class SourceAuthority(str, Enum):
+    #: 供應商正式文件。現存的每一份來源都是這個等級 —— 預設值是事實,
+    #: 不是相容性妥協。
+    NORMATIVE = "normative"
+    #: 供應商補充說明的人工摘錄(信件、通訊軟體、另存成 Markdown 的
+    #: 試算表)。填得了 `missing`,支撐不了 `explicit_support`;與正式
+    #: 文件衝突時正式文件勝。分界線是可重新取得性:這種載體沒有 URL、
+    #: 沒有版本,`check-freshness` 無法週期性重走。
+    SUPPLEMENTARY = "supplementary"
+
+
 class LocalSource(BaseModel):
     relative_path: str
     mime_type: str | None
@@ -40,6 +51,7 @@ class LocalSource(BaseModel):
     supported: bool
     status: ProcessingStatus
     duplicate_of: str | None = None
+    authority: SourceAuthority = SourceAuthority.NORMATIVE
 
 
 class UrlSource(BaseModel):

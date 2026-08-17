@@ -738,6 +738,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">scaffold-extraction</div>
           <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">import-rendered-url</div>
+          <div class="command-chip">import-supplementary-note</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">inspect-source-risk</div>
           <div class="command-chip">assess-sources</div>
@@ -773,7 +774,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="module-group">
           <button type="button" class="module-card" data-module="manifest">
             <div class="module-name">manifest/ <span class="pill io">Scan</span></div>
-            <div class="module-role">掃描來源、URL 與雜湊，建立 provenance 基礎。</div>
+            <div class="module-role">掃描來源、URL 與雜湊，建立 provenance 基礎；並由 sidecar 標定每份來源的 authority。</div>
           </button>
           <button type="button" class="module-card" data-module="extraction">
             <div class="module-name">extraction/ <span class="pill agent">Data</span></div>
@@ -968,7 +969,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "manifest/",
       badgeClass: "io",
       badgeLabel: "Source Scan",
-      description: "掃描本機來源與公開 URL，記錄格式、大小、雜湊與掃描時間，作為後續 provenance 對齊基礎。",
+      description: "掃描本機來源與公開 URL，記錄格式、大小、雜湊與掃描時間，作為後續 provenance 對齊基礎。每份本機來源另帶 authority（normative 或 supplementary），由來源同名的 .source.json sidecar 標定；沒有 sidecar 就是 normative。次級佐證是供應商補充說明的人工摘錄（信件、通訊軟體、另存成 Markdown 的試算表），填得了 missing、支撐不了 explicit_support，也不進入新鮮度指紋——分界線是可重新取得性。sidecar 讀取端 fail closed：缺席才是 normative，讀不動或與內容對不上一律拒絕（ADR 0010）。",
       seam: "build_manifest(sources_root, urls, generated_at)",
       inputs: "sources root, URL list",
       outputs: "manifest.json data structure",
@@ -1088,7 +1089,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_risk/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "任何 agent 讀來源前執行的確定性 manifest-bound 文字風險閘。掃描 Markdown、HTML、OpenAPI JSON/YAML；原始 PDF／Word 無法掃描，轉檔前一律 reject。報告不改寫來源或回顯命中 payload。",
+      description: "任何 agent 讀來源前執行的確定性 manifest-bound 文字風險閘，掃描兩個方向：來源會不會操縱 agent（Unicode tag、bidi override、控制字元、指令覆寫），以及會不會洩漏東西給 agent（密鑰與個資，複用 privacy.py 的樣式）。洩漏類只有自證性材料會擋——SR-SECRET-VALUE 認 PEM 私鑰區塊與 JWT；憑證引用只給 warning，因為合格文件本來就會示範 Authorization 標頭。Warning 有獨立的 500 筆額度，溢出是 warning 級而非 blocker。原始 PDF／Word 無法掃描，轉檔前一律 reject。報告不改寫來源或回顯命中 payload。",
       seam: "inspect_source_risks(...) / load_verified_source_risk_report(...) / inspect-source-risk",
       inputs: "exact source directory, manifest.json, optional max-bytes",
       outputs: "source-risk-report.json, source-risk-report.zh-TW.md",

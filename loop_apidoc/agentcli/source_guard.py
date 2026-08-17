@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 from loop_apidoc.manifest.models import Manifest
-from loop_apidoc.plan.classify import match_manifest_source, sole_source
+from loop_apidoc.plan.classify import match_manifest_source, sole_normative_source
 
 # Inventory sections whose entries each carry a `source`, per
 # reference/extraction-schemas.md.
@@ -150,7 +150,7 @@ def source_violations(
     `plan.classify.classify_item` already treats such citations as supported.
     Checking here would reject inputs the pipeline accepts.
     """
-    if sole_source(manifest) is not None:
+    if sole_normative_source(manifest) is not None:
         return []
 
     inventory_scope = [

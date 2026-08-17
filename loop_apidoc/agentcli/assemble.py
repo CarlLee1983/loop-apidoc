@@ -31,7 +31,8 @@ from loop_apidoc.extraction.models import AnswerArtifact, ExtractionResult
 from loop_apidoc.extraction.stages import QueryKind
 from loop_apidoc.extraction.store import ExtractionStore
 from loop_apidoc.generate.writer import generate_outputs
-from loop_apidoc.manifest.builder import ManifestInputError, build_manifest
+from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.manifest.scanner import ManifestScanError
 from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
@@ -302,7 +303,7 @@ def run_assemble_pipeline(
             excludes=excludes,
             url_coverage=url_coverage,
         )
-    except ManifestInputError as exc:
+    except ManifestScanError as exc:
         raise AssembleInputError(str(exc)) from exc
     from loop_apidoc.source_risk import SourceRiskInputError, verify_source_risk_report
 

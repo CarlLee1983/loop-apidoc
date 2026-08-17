@@ -744,6 +744,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
           <div class="command-chip">scaffold-extraction</div>
           <div class="command-chip">normalize-html-snapshot</div>
           <div class="command-chip">import-rendered-url</div>
+          <div class="command-chip">import-supplementary-note</div>
           <div class="command-chip">related-url-pages</div>
           <div class="command-chip">inspect-source-risk</div>
           <div class="command-chip">assess-sources</div>
@@ -779,7 +780,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         <div class="module-group">
           <button type="button" class="module-card" data-module="manifest">
             <div class="module-name">manifest/ <span class="pill io">Scan</span></div>
-            <div class="module-role">Scans sources, URLs and hashes to establish the provenance foundation.</div>
+            <div class="module-role">Scans sources, URLs and hashes to establish the provenance foundation, and takes each source's authority from its sidecar.</div>
           </button>
           <button type="button" class="module-card" data-module="extraction">
             <div class="module-name">extraction/ <span class="pill agent">Data</span></div>
@@ -974,7 +975,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "manifest/",
       badgeClass: "io",
       badgeLabel: "Source Scan",
-      description: "Scans local sources and public URLs, recording format, size, hash and scan time as the basis for later provenance alignment.",
+      description: "Scans local sources and public URLs, recording format, size, hash and scan time as the basis for later provenance alignment. Each local source also carries an authority — normative or supplementary — declared by its same-named .source.json sidecar; no sidecar means normative. A supplementary source is a hand-written excerpt of supplier correspondence (email, chat, or a spreadsheet re-saved as Markdown): it may fill missing but never supports explicit_support, and it is omitted from the freshness fingerprint. The dividing line is re-obtainability. The sidecar read side fails closed: absence means normative, but a sidecar that cannot be read or does not match its source is refused (ADR 0010).",
       seam: "build_manifest(sources_root, urls, generated_at)",
       inputs: "sources root, URL list",
       outputs: "manifest.json data structure",
@@ -1094,7 +1095,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       title: "source_risk/",
       badgeClass: "io",
       badgeLabel: "File I/O",
-      description: "A deterministic, manifest-bound text-risk gate that runs before any agent reads sources. Markdown, HTML, and OpenAPI JSON/YAML are scanned; raw PDF/Word are unscannable and reject until converted. Reports never rewrite sources or echo matched payloads.",
+      description: "A deterministic, manifest-bound text-risk gate that runs before any agent reads sources, covering both directions: whether a source can manipulate the agent (Unicode tag, bidi override, control characters, instruction override) and whether it leaks material to the agent (secrets and personal data, reusing privacy.py's patterns). Among the leak rules only self-evidencing material blocks — SR-SECRET-VALUE is PEM private-key blocks and JWTs, while a credential reference stays a warning because a competent document documents its Authorization header. Warnings hold a separate 500-entry budget whose overflow is a warning, not a blocker. Markdown, HTML, and OpenAPI JSON/YAML are scanned; raw PDF/Word are unscannable and reject until converted. Reports never rewrite sources or echo matched payloads.",
       seam: "inspect_source_risks(...) / load_verified_source_risk_report(...) / inspect-source-risk",
       inputs: "exact source directory, manifest.json, optional max-bytes",
       outputs: "source-risk-report.json, source-risk-report.zh-TW.md",

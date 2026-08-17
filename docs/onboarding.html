@@ -615,6 +615,7 @@
       <h2>供應商來源是「供應商文件明載內容」的唯一權威。</h2>
       <p>來源沒寫的東西，一律留 <code>null</code> 並記錄到 <code>missing</code> —— <b>絕不推論、絕不用 REST/OAuth 慣例補上</b>。</p>
       <p>驗證遇到缺漏會大聲失敗（fail loudly），而不是用猜測讓文件「看起來完整」。整個專案的每一個設計決策，都是為了守住這條線。</p>
+      <p>次級佐證也不會削弱它。供應商信件的人工摘錄可以填 <code>missing</code>,但它不是正式文件:與正式文件衝突時正式文件勝,它永遠到不了 <code>explicit_support</code>,而每一條只靠它成立的主張都會被逐條點名(ADR 0010)。</p>
       <p>被動 Implementation Observation 不會削弱這條規則。它只回報精確 Applicability Envelope 內的經驗行為，使用獨立的 <code>confirms</code>／<code>contradicts</code>／<code>inconclusive</code>／<code>out_of_scope</code> 軸；任何結果都不會變成供應商來源支持。</p>
       <p>反過來說，<b>「來源沒寫」也必須拿得出證據</b>：<code>source_facts/</code> 會機械掃描 Markdown 來源的參數表與範例區塊，來源明明寫了、擷取卻空著就擋下；「之後再擷取」「需進一步擷取」這類佔位答案同樣擋下。要主張某欄位來源真的沒寫，就在 <code>missing</code> 裡具名——所以這道閘只逼出具名缺口，不會逼出捏造。</p>
       <p>但要清楚它的界線：掃描只認得<b>結構良好的 Markdown</b>（標題、GFM 表格、圍籬區塊）。來源若被壓成一行行超長文字，掃出零筆事實，這道閘等於沒作用。<b>閘門乾淨通過 ≠ 擷取完整</b>——它擋掉的是「機械證明得了的遺漏」，其餘仍要人工核對。</p>
@@ -777,7 +778,7 @@
       </div>
       <div class="flow-row">
         <span class="stage"><span class="n tint-teal">2</span>inspect-source-risk</span>
-        <span class="desc">掃描 manifest 綁定文字，不改寫來源、不回顯 payload；blocker 或 unscannable 輸入會在 agent 接觸前拒絕。</span>
+        <span class="desc">掃描 manifest 綁定文字的兩個方向 —— 會不會操縱 agent、會不會洩漏東西給 agent；不改寫來源、不回顯 payload；blocker 或 unscannable 輸入會在 agent 接觸前拒絕。</span>
         <span class="out">source-risk-report.{json,zh-TW.md}</span>
       </div>
       <div class="flow-row">
@@ -872,6 +873,10 @@
       <div class="cmd">
         <span class="name"><span class="kw">import-rendered-url</span></span>
         <div><p>把受保護頁面的 browser-rendered HTML/Markdown 匯入為 immutable 本機證據、版本化 provenance 與 <code class="inline">fetched_rendered</code> coverage。驗證匹配後 manifest/assemble 省略該 origin probe；mismatch fail closed。</p></div>
+      </div>
+      <div class="cmd">
+        <span class="name"><span class="kw">import-supplementary-note</span></span>
+        <div><p>把供應商信件／通訊軟體補充說明的人工摘錄匯入為<strong>次級佐證</strong>,寫出綁定內容的 provenance sidecar(出處、收到時間、摘錄者、SHA-256)。它填得了 <code class="inline">missing</code>,支撐不了 <code class="inline">explicit_support</code>,也不進新鮮度指紋 —— 分界線是可重新取得性。摘錄由人所寫,sidecar 買到的是可追責,不是可驗證(ADR 0010)。</p></div>
       </div>
       <div class="cmd">
         <span class="name"><span class="kw">related-url-pages</span></span>
@@ -1190,8 +1195,9 @@
       <table class="pkg-table">
         <thead><tr><th>套件</th><th>職責</th></tr></thead>
         <tbody>
-          <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json</td></tr>
+          <tr><td><code>manifest/</code></td><td>掃描本地來源 + 建立 manifest.json；每份來源的 <code>authority</code>(normative 預設／supplementary)由同名 <code>.source.json</code> sidecar 標定,讀取端 fail closed</td></tr>
           <tr class="io"><td><code>rendered_url.py</code></td><td>離線 rendered-source import 與只讀 provenance 驗證；寫入 immutable source/sidecar/coverage，並防止匹配的 protected origin probe</td></tr>
+          <tr class="io"><td><code>supplementary_note.py</code></td><td>把供應商補充說明的人工摘錄匯入為次級佐證；寫出 immutable source 與綁定內容的 provenance sidecar</td></tr>
           <tr class="io"><td><code>agentcli/</code></td><td>assemble.py(組裝 JSON → plan→preparation→generate→validate)、input_schema.py(交界處的 pydantic 驗證)、evidence.py(v1 exact evidence 的 read-side materialization/digest 與 claim-path 驗證)、gate.py/verify.py(<code>verify-extraction</code> 的擷取契約檢查,含 <code>source_facts/</code> 的來源事實與延後語句閘,不寫檔)、extraction.py(inventory → plan 答案)、preprocess.py(typed PDF／DOCX→markdown 編排)</td></tr>
           <tr class="io"><td><code>docx_*.py</code></td><td><code>docx_normalization.py</code> 是穩定 facade；package-wide fail-closed OOXML 驗證／rendering 維持 pure，<code>docx_publish.py</code> 負責分段暫存且於可回報寫入失敗時回滾的 provenance publication</td></tr>
           <tr class="io"><td><code>shadow/</code></td><td>選用的 legacy/Core bridge 與 in-memory runner；只有 <code>shadow/report.py</code> 會寫出觀測性的 <code>core/</code> 產物集或安全錯誤報告。</td></tr>
@@ -1205,8 +1211,8 @@
           <tr class="io"><td><code>run/</code></td><td>run-id 產生、result/status models、把計畫寫入 run-dir(寫檔)</td></tr>
           <tr class="io"><td><code>score/</code></td><td>讀取完成 run-dir,以五類權重產生 score/score.{json,md}(report.py 寫檔)</td></tr>
           <tr class="io"><td><code>diff/</code></td><td>loader.py / compare.py / models.py / report.py(report.py 寫檔)</td></tr>
-          <tr class="io"><td><code>freshness/</code></td><td>排程用的便宜新鮮度閘:record.py 從已完成 run-dir 寫出基準 fingerprint(本地取 sha256、每個 URL 取一次版本訊號,無 <code>--force</code> 拒絕覆寫)、signals.py 重算當下訊號並分類(網路讀取但不寫檔)、check.py 彙總單一 docset、batch.py 依 watchlist 扇出多個 docset(單項錯誤收進該項結果不中斷整批)、report.py 輸出報告。退出碼即契約:0 未變動、1 已變動、2 無法判定</td></tr>
-          <tr class="io"><td><code>source_risk/</code></td><td>以 manifest 綁定、在 agent 讀取前執行的文字風險掃描與 audit 驗證；讀取精確來源 bytes，寫出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫或回顯來源 payload</td></tr>
+          <tr class="io"><td><code>freshness/</code></td><td>排程用的便宜新鮮度閘:record.py 從已完成 run-dir 寫出基準 fingerprint(本地取 sha256、每個 URL 取一次版本訊號,次級佐證一律排除 —— 它不可重新取得,納入只會永遠回報新鮮;零可重取得來源則直接拒絕寫出,無 <code>--force</code> 亦拒絕覆寫)、signals.py 重算當下訊號並分類(網路讀取但不寫檔)、check.py 彙總單一 docset、batch.py 依 watchlist 扇出多個 docset(單項錯誤收進該項結果不中斷整批)、report.py 輸出報告。退出碼即契約:0 未變動、1 已變動、2 無法判定</td></tr>
+          <tr class="io"><td><code>source_risk/</code></td><td>以 manifest 綁定、在 agent 讀取前執行的文字風險掃描與 audit 驗證,涵蓋兩個方向:來源會不會<b>操縱</b> agent,以及會不會<b>洩漏東西給</b> agent。洩漏類只有自證性材料(PEM 私鑰區塊、JWT)會擋,憑證引用只給 warning —— 合格文件本來就會示範 Authorization 標頭。讀取精確來源 bytes，寫出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫或回顯來源 payload</td></tr>
           <tr class="io"><td><code>source_quality/</code></td><td>擷取前來源品質評估與來源版本差異報告；要求並嵌入已驗證的 source-risk audit；reject 可輸出明確 bounded <code>required_source_refs</code> 且不 crawl(寫檔)</td></tr>
           <tr class="io"><td><code>focus/</code></td><td>提出者的擷取重點指令:models.py(嚴格契約;kind 決定 severity、intent 決定錨點型別,只有 satisfied／not_found 兩種結局)、loader.py(讀 focus.json 與 focus-response.json,本套件唯一讀檔出口)、gate.py／fields.py／codes.py(純檢查:應答對應、錨點解析、not_found 必須交代每一份可讀來源)、report.py(寫出 <code>&lt;run-dir&gt;/focus/</code>,唯一寫檔出口)。落空的斷言走 ValidationReport 的 <code>FOCUS_UNMET</code>,不走輸入閘 —— 那樣產物才留得下來給人判斷。<code>collect_error_codes</code> 答得比來源表格算出的記載錯誤碼下界少,同樣走 ValidationReport,成為具名列出漏碼與其出處的 <code>FOCUS_INCOMPLETE</code></td></tr>
           <tr><td><code>source_facts/</code></td><td>來源事實盤點:markdown.py 機械掃描 Markdown 來源的端點宣告、參數表與範例區塊,collect.py 讀取 manifest 指名的來源(本套件唯一讀檔出口),gate.py 比對擷取 JSON(並沿 <code>schema_ref</code> 遞迴解析進 <code>inventory.schemas</code>,讓共用型別算去重複而非遺漏)、deferral.py 攔截佔位式延後答案</td></tr>
@@ -1217,7 +1223,7 @@
         </tbody>
       </table>
     </div>
-    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">agentcli/preprocess.py</code>、<code class="inline">shadow/report.py</code>、<code class="inline">feedback/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、<code class="inline">docx_publish.py</code>、rendered URL import、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">feedback/loader.py</code>、<code class="inline">docx_normalization.py</code>、<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
+    <p class="io-note"><span class="swatch"></span> 標記列含<b>檔案 I/O 出口</b>:<code class="inline">generate/</code>、<code class="inline">run/</code>、<code class="inline">agentcli/preprocess.py</code>、<code class="inline">shadow/report.py</code>、<code class="inline">feedback/report.py</code>、<code class="inline">preparation/report.py</code>、<code class="inline">score/report.py</code>、<code class="inline">diff/report.py</code>、<code class="inline">source_risk/report.py</code>、<code class="inline">source_quality/</code>、<code class="inline">freshness/</code>、<code class="inline">docx_publish.py</code>、rendered URL import、<code class="inline">supplementary_note.py</code>、URL corpus 快取、<code class="inline">foundry/</code> 與經 Foundry 寫入的 <code class="inline">review/workflow.py</code> 會寫檔。<code class="inline">feedback/loader.py</code>、<code class="inline">docx_normalization.py</code>、<code class="inline">source_risk/inspect.py</code> 與 <code class="inline">adapters/fragments.py</code> 是 read-side I/O exit；Core 與 Domain 維持 pure。</p>
   </div>
 </section>
 

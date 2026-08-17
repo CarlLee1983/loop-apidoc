@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
-from loop_apidoc.manifest.models import Manifest, ProcessingStatus
+from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceAuthority
 from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
 
 _UNUSABLE = (
@@ -54,8 +54,21 @@ def sole_source(manifest: Manifest) -> str | None:
     """Return the lone usable *document*'s identifier if the manifest collapses to
     exactly one, else None.
 
-    A document is a usable local source, plus each URL whose snapshot_file does NOT
-    point at a usable local source. A URL saved as a local snapshot (per the
+    Supplementary sources DO count here, and that is the point: this function
+    licenses attributing an unresolvable locator to the one document present,
+    and that licence rests entirely on there being only one. An excerpt of
+    correspondence is a second document. Excluding it would let a citation
+    reading "供應商信件 2026-08-16" be recorded as supported by the manual —
+    a claim attributed to a document that never made it, which is the exact
+    failure this whole authority distinction exists to prevent. With an excerpt
+    in the corpus, an unresolvable locator is ambiguous and must stay
+    `UNVERIFIED` until the agent cites precisely.
+
+    `source_guard` deliberately keys off `sole_normative_source` instead, so
+    adding an excerpt still does not get the whole run refused at the boundary.
+
+    A document is a usable local source, plus each URL whose snapshot_file does
+    NOT point at a usable local source. A URL saved as a local snapshot (per the
     url-fetching SOP) is the SAME document as that snapshot, so it is not counted
     twice — otherwise every SOP-following URL run would have ≥2 documents and lose
     single-source attribution. When exactly one document remains, a citation that
@@ -75,6 +88,35 @@ def sole_source(manifest: Manifest) -> str | None:
     for url_source in manifest.url_sources:
         if url_source.snapshot_file is not None and url_source.snapshot_file in usable_set:
             continue  # 這個 URL 就是某可用本地快照檔,不另計一份文件
+        documents.append(url_source.url)
+    return documents[0] if len(documents) == 1 else None
+
+
+def sole_normative_source(manifest: Manifest) -> str | None:
+    """Return the lone usable *normative* document, ignoring supplementary ones.
+
+    `source_guard.source_violations` skips its whole check when this is not
+    None. It must ignore supplementary carriers: otherwise adding one excerpt
+    to a single-manual corpus would refuse the entire run at the input
+    boundary, before a run directory exists — supporting material must never
+    cost the manual its run.
+
+    This is deliberately NOT what `classify_item` uses. Skipping a boundary
+    check is a decision to report problems per-entry later; attributing an
+    unresolvable locator to a document is a decision to assert something about
+    that document. Only the first is safe once a second document exists.
+    """
+    documents = [
+        s.relative_path
+        for s in manifest.local_sources
+        if s.supported
+        and s.status not in _UNUSABLE
+        and s.authority is SourceAuthority.NORMATIVE
+    ]
+    usable_set = set(documents)
+    for url_source in manifest.url_sources:
+        if url_source.snapshot_file is not None and url_source.snapshot_file in usable_set:
+            continue
         documents.append(url_source.url)
     return documents[0] if len(documents) == 1 else None
 

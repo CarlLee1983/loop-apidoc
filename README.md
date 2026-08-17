@@ -430,6 +430,35 @@ versioned provenance sidecar；格式錯誤與任何輸出碰撞都會拒絕。�
 `fetched_rendered` 結果讓 `manifest`／`assemble` 使用通過驗證的本機快照，不再探測受保護
 origin；URL、路徑、method 或 digest 不一致則 fail closed。
 
+### 次級佐證：供應商補充說明
+
+有些規範性資訊只存在於供應商的信件或通訊軟體訊息裡——金鑰怎麼取得、測試環境位址、
+上線前必須完成的事——而供應商往往沒有打算把它寫進文件。這類內容可以人工摘錄成
+Markdown 後匯入，標記為**次級佐證**：
+
+```bash
+uv run loop-apidoc import-supplementary-note \
+  --input ./notes/sandbox-key.md \
+  --from "engineer@provider.example" \
+  --received-at "2026-08-16T10:00:00+08:00" \
+  --subject "測試環境金鑰取得方式" \
+  --excerpted-by "carl" \
+  --sources ./sources
+```
+
+指令寫出摘錄本身與一份 `.source.json` sidecar，記錄出處、收到時間、摘錄者與 SHA-256；
+`manifest` 讀 sidecar 把該來源標成 `authority: supplementary`，沒有 sidecar 的來源一律是
+`normative`。供應商另外給的欄位對照試算表，另存為 Markdown 表格後走同一條路徑。
+
+次級佐證做得到的事：被引用、填補 `missing`、讓一條主張成立。做不到的事：與正式文件
+衝突時勝出、與正式文件在報告裡混為一談。凡是只靠次級佐證才成立的主張，都會在驗證
+報告裡以 warning 級的 `SUPPLEMENTARY_SUPPORT` **逐條**點名（不是一則籠統的 run 層警告），
+並計入文件品質分數的 source grounding。這類來源也不會進入 `record-fingerprint` 的指紋——
+新鮮度比對的前提是來源可被重新取得，而一封信沒有 URL、沒有版本。
+
+**要接受的代價**：摘錄是人寫的，摘錄者可能寫錯或過度解讀，pipeline 無法分辨。
+sidecar 記下摘錄者是為了**可追責**，不是可驗證。這是這條路徑與其他所有來源的本質差異。
+
 若 URL 本身就是 Swagger 2.0 或 OpenAPI 3.x JSON／YAML，請先把它固定為本機來源，而不是
 走 HTML 導覽流程：
 

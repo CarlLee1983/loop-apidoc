@@ -64,7 +64,15 @@ def test_record_fingerprint_writes_and_refuses_overwrite(tmp_path: Path, monkeyp
         yaml.safe_dump({"openapi": "3.1.0", "info": {"version": "2.3.0"}}), encoding="utf-8")
     manifest = {
         "sources_root": "s", "generated_at": datetime.now(timezone.utc).isoformat(),
-        "local_sources": [], "url_sources": [],
+        # 至少一份可重新取得的來源:零來源的指紋會讓 check-freshness 永遠
+        # 回報新鮮,現在會被拒絕,而這個測試要測的是寫檔與防覆寫。
+        "local_sources": [{
+            "relative_path": "manual.md", "mime_type": "text/markdown",
+            "source_format": "markdown", "size_bytes": 3, "sha256": "a" * 64,
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+            "supported": True, "status": "pending",
+        }],
+        "url_sources": [],
     }
     run.joinpath("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     out = tmp_path / "fp.json"
