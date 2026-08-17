@@ -77,6 +77,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-2" href="#_3">安裝</a>
   <a class="lvl-2" href="#_4">提供來源</a>
   <a class="lvl-3" href="#_5">支援的來源格式</a>
+  <a class="lvl-3" href="#acquisition-evidence">取源路徑的證據強度</a>
   <a class="lvl-2" href="#_6">使用方式</a>
   <a class="lvl-3" href="#preprocess">preprocess — PDF／DOCX 轉 markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
@@ -162,6 +163,19 @@ uv run loop-apidoc --help
 <p>不需建立任何外部 Notebook、不需瀏覽器登入 —— 來源讀取由當前 agent 在 session 內完成。</p>
 <h3 id="_5">支援的來源格式</h3>
 <p>Markdown、HTML、OpenAPI JSON／YAML 可直接掃描；PDF、Microsoft Word（僅 <code>.docx</code>）與公開 URL 必須先轉換或取得成 manifest 綁定的本機可掃描 artifact。舊版二進位 <code>.doc</code>、試算表（<code>.xlsx</code>／<code>.xls</code>）、純文字 <code>.txt</code> 與 <code>.csv</code> 沒有前處理路徑,manifest 會認出格式並直接標成不受支援,並在報告裡指名下一步:<code>.doc</code> 另存為 <code>.docx</code> 或 PDF,試算表把需要的工作表另存為 Markdown 表格,<code>.txt</code> 改副檔名為 <code>.md</code>,<code>.csv</code> 另存為 Markdown 表格,放回 <code>sources/</code> 後重跑前處理。四者都不會有內建轉檔器——轉檔的判斷留給看得到原始檔案的人,理由見 <code>docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md</code>。</p>
+<h3 id="acquisition-evidence">取源路徑的證據強度</h3>
+<p>「這個指令能跑」與「這個指令走過一份真實供應商來源」是兩件事。十三個 benchmark case 的來源只有 <code>.md</code>、<code>.json</code>、<code>.yaml</code> 三種副檔名，所以每條取源路徑照同一把尺標註，而兩個標註不能互換——缺的東西不同，補救方式也不同。</p>
+<table>
+<thead>
+<tr><th>取源路徑</th><th>證據強度</th><th>移除標註的條件</th></tr>
+</thead>
+<tbody>
+<tr><td><code>manifest</code>、<code>preprocess</code>（PDF）、<code>normalize-html-snapshot</code></td><td><strong>來源支撐</strong>：有 benchmark case 走過真實供應商來源</td><td>不適用</td></tr>
+<tr><td><code>import-supplementary-note</code>、<code>import-rendered-url</code>、<code>select-url</code>、<code>related-url-pages</code>、<code>.docx</code> 前處理</td><td><strong>未經真實來源驗證</strong>：程式完整、有單元測試，但沒有任何 case 用過它</td><td>收到第一份走這條路的真實來源，補成 benchmark case</td></tr>
+<tr><td><code>catalog-url</code>、<code>cache-url-pages</code>／<code>cache-url-entry</code>、<code>snapshot-openapi-url</code>、<code>cache-gitbook-llms</code></td><td><strong>結構上不進 harness</strong>：它們發出網路請求，而 harness 必須離線可重跑</td><td>一套可重播的錄製機制（把回應存成 fixture 讓 case 離線重跑）</td></tr>
+</tbody>
+</table>
+<p>第二類缺的是<strong>一份來源</strong>，等它到手就能補成 case；第三類缺的是<strong>一個機制</strong>，再多來源也不會讓網路請求進得了 CI。<code>cache-gitbook-llms</code> 同時屬於後兩類。<code>import-supplementary-note</code> 值得單獨點名：它的產出會影響驗證報告的 <code>SUPPLEMENTARY_SUPPORT</code> 逐條警告與文件品質分數的 source grounding，是一條會改變分數卻零 case 的路徑。不會為了消掉標註而生一個合成 case。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
 <p>CLI 提供來源處理、URL evidence、草稿擷取、品質與擷取、來源新鮮度、run 處理、Foundry 資產治理，以及 <code>review</code> 本機人工覆核。日常擷取流程仍由 skill 驅動；每個命令都可單獨使用。</p>
