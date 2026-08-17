@@ -7,15 +7,15 @@
       "name": "<server>",
       "base_url": "http://<server>",
       "version": null,
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 498-503",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 365-370",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/name"
@@ -25,8 +25,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/servers/http:~1~1<server>"
@@ -40,17 +40,17 @@
       "type": "apiKey",
       "location": "header",
       "details": "Headers X-API-ClientID, X-API-Signature (MD5), X-API-Timestamp. Request body encrypted via DES-CBC.",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 272-283",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 178-197",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/name"
         },
         {
@@ -58,10 +58,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/type"
         }
       ]
@@ -72,7 +72,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/CreatePlayer",
       "summary": "建立會員(幣別帳戶)",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 577-601",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 444-467",
       "server": null,
       "evidence": [
         {
@@ -80,8 +80,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -91,10 +91,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -102,10 +102,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -113,10 +113,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -124,10 +124,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -135,10 +135,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -146,10 +146,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -157,10 +157,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -168,10 +168,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -179,10 +179,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -190,10 +190,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -201,10 +201,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -212,10 +212,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -223,10 +223,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -234,10 +234,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -245,10 +245,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/path"
         },
         {
@@ -256,10 +256,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -267,10 +267,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/summary"
         }
       ]
@@ -279,7 +279,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/Deposit",
       "summary": "存入點數",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 602-633",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 469-506",
       "server": null,
       "evidence": [
         {
@@ -287,8 +287,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -298,10 +298,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/Balance/name"
         },
         {
@@ -309,10 +309,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/Balance/required"
         },
         {
@@ -320,10 +320,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -331,10 +331,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -342,10 +342,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/body/Msg/name"
         },
         {
@@ -353,10 +353,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/body/Msg/required"
         },
         {
@@ -364,10 +364,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -375,10 +375,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -386,10 +386,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/TransactionID/name"
         },
         {
@@ -397,10 +397,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/TransactionID/required"
         },
         {
@@ -408,10 +408,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -419,10 +419,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -430,10 +430,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -441,10 +441,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -452,10 +452,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -463,10 +463,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -474,10 +474,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -485,10 +485,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -496,10 +496,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -507,10 +507,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -518,10 +518,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/path"
         },
         {
@@ -529,10 +529,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/responses/default/description"
         },
         {
@@ -540,10 +540,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -551,10 +551,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/summary"
         }
       ]
@@ -563,7 +563,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/Withdraw",
       "summary": "取出點數",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 634-665",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 508-545",
       "server": null,
       "evidence": [
         {
@@ -571,8 +571,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -582,10 +582,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/Balance/name"
         },
         {
@@ -593,10 +593,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/Balance/required"
         },
         {
@@ -604,10 +604,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -615,10 +615,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -626,10 +626,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -637,10 +637,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -648,10 +648,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/TransactionID/name"
         },
         {
@@ -659,10 +659,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/TransactionID/required"
         },
         {
@@ -670,10 +670,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -681,10 +681,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -692,10 +692,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -703,10 +703,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -714,10 +714,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -725,10 +725,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -736,10 +736,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -747,10 +747,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -758,10 +758,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -769,10 +769,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -780,10 +780,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/path"
         },
         {
@@ -791,10 +791,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/responses/default/description"
         },
         {
@@ -802,10 +802,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -813,10 +813,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/summary"
         }
       ]
@@ -825,7 +825,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/GetBalance",
       "summary": "查詢點數",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 666-680",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 547-566",
       "server": null,
       "evidence": [
         {
@@ -833,8 +833,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -844,10 +844,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -855,10 +855,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -866,10 +866,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -877,10 +877,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -888,10 +888,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -899,10 +899,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -910,10 +910,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -921,10 +921,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -932,10 +932,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -943,10 +943,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -954,10 +954,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -965,10 +965,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -976,10 +976,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -987,10 +987,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -998,10 +998,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/path"
         },
         {
@@ -1009,10 +1009,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/responses/default/description"
         },
         {
@@ -1020,10 +1020,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -1031,10 +1031,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/summary"
         }
       ]
@@ -1043,7 +1043,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/GetTransactionResult",
       "summary": "查詢點數交易結果",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 681-707",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 568-599",
       "server": null,
       "evidence": [
         {
@@ -1051,8 +1051,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -1062,10 +1062,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -1073,10 +1073,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -1084,10 +1084,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/parameters/body/TransactionID/name"
         },
         {
@@ -1095,10 +1095,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/parameters/body/TransactionID/required"
         },
         {
@@ -1106,10 +1106,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -1117,10 +1117,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -1128,10 +1128,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -1139,10 +1139,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -1150,10 +1150,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -1161,10 +1161,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -1172,10 +1172,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/path"
         },
         {
@@ -1183,10 +1183,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/responses/default/description"
         },
         {
@@ -1194,10 +1194,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -1205,10 +1205,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/summary"
         }
       ]
@@ -1217,7 +1217,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/GetTransactionHistory",
       "summary": "查詢點數交易歷程",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 708-747",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 601-640",
       "server": null,
       "evidence": [
         {
@@ -1225,8 +1225,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -1236,10 +1236,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -1247,10 +1247,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -1258,10 +1258,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/DateEnd/name"
         },
         {
@@ -1269,10 +1269,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/DateEnd/required"
         },
         {
@@ -1280,10 +1280,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/DateStart/name"
         },
         {
@@ -1291,10 +1291,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/DateStart/required"
         },
         {
@@ -1302,10 +1302,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -1313,10 +1313,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -1324,10 +1324,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -1335,10 +1335,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -1346,10 +1346,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -1357,10 +1357,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -1368,10 +1368,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -1379,10 +1379,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -1390,10 +1390,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -1401,10 +1401,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -1412,10 +1412,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -1423,10 +1423,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -1434,10 +1434,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/path"
         },
         {
@@ -1445,10 +1445,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -1456,10 +1456,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/summary"
         }
       ]
@@ -1468,7 +1468,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/GetURLToken",
       "summary": "取得遊戲網址(進入遊戲)",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 748-786",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 642-680",
       "server": null,
       "evidence": [
         {
@@ -1476,8 +1476,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -1487,10 +1487,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/Currency/name"
         },
         {
@@ -1498,10 +1498,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/Currency/required"
         },
         {
@@ -1509,10 +1509,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/ExitAction/name"
         },
         {
@@ -1520,10 +1520,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/ExitAction/required"
         },
         {
@@ -1531,10 +1531,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/GameId/name"
         },
         {
@@ -1542,10 +1542,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/GameId/required"
         },
         {
@@ -1553,10 +1553,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/Language/name"
         },
         {
@@ -1564,10 +1564,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/Language/required"
         },
         {
@@ -1575,10 +1575,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/MaxBetAmount/name"
         },
         {
@@ -1586,10 +1586,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/MaxBetAmount/required"
         },
         {
@@ -1597,10 +1597,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/MinBetAmount/name"
         },
         {
@@ -1608,10 +1608,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/MinBetAmount/required"
         },
         {
@@ -1619,10 +1619,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -1630,10 +1630,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -1641,10 +1641,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/UserId/name"
         },
         {
@@ -1652,10 +1652,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/UserId/required"
         },
         {
@@ -1663,10 +1663,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/UserName/name"
         },
         {
@@ -1674,10 +1674,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/UserName/required"
         },
         {
@@ -1685,10 +1685,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -1696,10 +1696,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -1707,10 +1707,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/path"
         },
         {
@@ -1718,10 +1718,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -1729,10 +1729,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/summary"
         }
       ]
@@ -1741,7 +1741,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/PlayerOnlineList",
       "summary": "取得遊戲中的會員",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 787-815",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 682-715",
       "server": null,
       "evidence": [
         {
@@ -1749,8 +1749,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -1760,10 +1760,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/GameId/name"
         },
         {
@@ -1771,10 +1771,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/GameId/required"
         },
         {
@@ -1782,10 +1782,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/Page/name"
         },
         {
@@ -1793,10 +1793,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/Page/required"
         },
         {
@@ -1804,10 +1804,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/Rows/name"
         },
         {
@@ -1815,10 +1815,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/Rows/required"
         },
         {
@@ -1826,10 +1826,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -1837,10 +1837,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -1848,10 +1848,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -1859,10 +1859,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -1870,10 +1870,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -1881,10 +1881,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -1892,10 +1892,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -1903,10 +1903,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -1914,10 +1914,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -1925,10 +1925,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -1936,10 +1936,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/path"
         },
         {
@@ -1947,10 +1947,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/responses/default/description"
         },
         {
@@ -1958,10 +1958,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -1969,10 +1969,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/summary"
         }
       ]
@@ -1981,7 +1981,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/Kickout",
       "summary": "剔除遊戲中的會員",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 816-846",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 717-752",
       "server": null,
       "evidence": [
         {
@@ -1989,8 +1989,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -2000,10 +2000,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 816,
-            "end_line": 846
+            "start_line": 717,
+            "end_line": 752
           },
-          "fragment_digest": "43b82b9a23f50602c47918fba0d49c852f7661c312ce4acbde38c4b77715cc11",
+          "fragment_digest": "c3e460d1ed71bd2b68c3df13c7dbe1ad1469fb95f13913a48d6ae0480b14cac7",
           "claim_path": "/path"
         },
         {
@@ -2011,10 +2011,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 816,
-            "end_line": 846
+            "start_line": 717,
+            "end_line": 752
           },
-          "fragment_digest": "43b82b9a23f50602c47918fba0d49c852f7661c312ce4acbde38c4b77715cc11",
+          "fragment_digest": "c3e460d1ed71bd2b68c3df13c7dbe1ad1469fb95f13913a48d6ae0480b14cac7",
           "claim_path": "/responses/default/description"
         },
         {
@@ -2022,10 +2022,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -2033,10 +2033,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 816,
-            "end_line": 846
+            "start_line": 717,
+            "end_line": 752
           },
-          "fragment_digest": "43b82b9a23f50602c47918fba0d49c852f7661c312ce4acbde38c4b77715cc11",
+          "fragment_digest": "c3e460d1ed71bd2b68c3df13c7dbe1ad1469fb95f13913a48d6ae0480b14cac7",
           "claim_path": "/summary"
         }
       ]
@@ -2045,7 +2045,7 @@
       "method": "POST",
       "path": "/WithBalance/Player/GetUnwithdrawn",
       "summary": "取得點數不為0的會員帳戶資訊(已離開遊戲)",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 847-852",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 754-758",
       "server": null,
       "evidence": [
         {
@@ -2053,8 +2053,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -2064,8 +2064,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 847,
-            "end_line": 852
+            "start_line": 754,
+            "end_line": 758
           },
           "fragment_digest": "1dfa1d764f8a1d76bd1d65eac1c350ca93d2798fe1668914be86f6f8756d5d15",
           "claim_path": "/path"
@@ -2075,10 +2075,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/description"
         },
         {
@@ -2086,10 +2086,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -2097,8 +2097,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 847,
-            "end_line": 852
+            "start_line": 754,
+            "end_line": 758
           },
           "fragment_digest": "1dfa1d764f8a1d76bd1d65eac1c350ca93d2798fe1668914be86f6f8756d5d15",
           "claim_path": "/summary"
@@ -2109,7 +2109,7 @@
       "method": "POST",
       "path": "/WithBalance/Game/GameList",
       "summary": "取得遊戲列表",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 853-888",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 760-800",
       "server": null,
       "evidence": [
         {
@@ -2117,8 +2117,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -2128,10 +2128,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -2139,10 +2139,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -2150,10 +2150,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -2161,10 +2161,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -2172,10 +2172,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -2183,10 +2183,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -2194,10 +2194,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -2205,10 +2205,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -2216,10 +2216,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/path"
         },
         {
@@ -2227,10 +2227,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/responses/default/description"
         },
         {
@@ -2238,10 +2238,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -2249,10 +2249,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/summary"
         }
       ]
@@ -2261,7 +2261,7 @@
       "method": "POST",
       "path": "/WithBalance/History/GetGameDetail",
       "summary": "取得遊戲詳細資訊",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 889-963",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 802-848",
       "server": null,
       "evidence": [
         {
@@ -2269,8 +2269,8 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 498,
-            "end_line": 503
+            "start_line": 365,
+            "end_line": 370
           },
           "fragment_digest": "74bf51f79e827e491f6148b9b693619a356f7d893b5f86f8035b153f35b77495",
           "claim_path": "/method"
@@ -2280,10 +2280,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/GameType/name"
         },
         {
@@ -2291,10 +2291,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/GameType/required"
         },
         {
@@ -2302,10 +2302,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/SystemCode/name"
         },
         {
@@ -2313,10 +2313,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/SystemCode/required"
         },
         {
@@ -2324,10 +2324,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/TimeEnd/name"
         },
         {
@@ -2335,10 +2335,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/TimeEnd/required"
         },
         {
@@ -2346,10 +2346,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/TimeStart/name"
         },
         {
@@ -2357,10 +2357,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/TimeStart/required"
         },
         {
@@ -2368,10 +2368,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/WebId/name"
         },
         {
@@ -2379,10 +2379,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/parameters/body/WebId/required"
         },
         {
@@ -2390,10 +2390,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/name"
         },
         {
@@ -2401,10 +2401,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-ClientID/required"
         },
         {
@@ -2412,10 +2412,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/name"
         },
         {
@@ -2423,10 +2423,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Signature/required"
         },
         {
@@ -2434,10 +2434,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/name"
         },
         {
@@ -2445,10 +2445,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 272,
-            "end_line": 283
+            "start_line": 178,
+            "end_line": 197
           },
-          "fragment_digest": "35cca2391a334daf43377c4824a038b4a7d937378b7827997f2434a70048878a",
+          "fragment_digest": "01576e2d900278a06326401c0aa4a3c3b2c23f36efa85824db3b7ede67f79cc4",
           "claim_path": "/parameters/header/X-API-Timestamp/required"
         },
         {
@@ -2456,10 +2456,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/path"
         },
         {
@@ -2467,10 +2467,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 521,
-            "end_line": 565
+            "start_line": 388,
+            "end_line": 432
           },
-          "fragment_digest": "99bf6f29fac81b55f907c674548a89c09b4fc5f2a774a79bb8809564cae39cbc",
+          "fragment_digest": "ec66d841a5b79621efc12b783576bc484af048f73614b816a648b407ff484cfe",
           "claim_path": "/responses/default/status_code"
         },
         {
@@ -2478,10 +2478,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/summary"
         }
       ]
@@ -2494,17 +2494,17 @@
       "meaning": "正常",
       "http_status": null,
       "applicable_to": [],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2512,10 +2512,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2525,17 +2525,17 @@
       "meaning": "執行失敗",
       "http_status": null,
       "applicable_to": [],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2543,10 +2543,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2556,17 +2556,17 @@
       "meaning": "系統維護中",
       "http_status": null,
       "applicable_to": [],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2574,10 +2574,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2587,17 +2587,17 @@
       "meaning": "無效的參數",
       "http_status": null,
       "applicable_to": [],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2605,10 +2605,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2618,17 +2618,17 @@
       "meaning": "解密失敗",
       "http_status": null,
       "applicable_to": [],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2636,10 +2636,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2651,17 +2651,17 @@
       "applicable_to": [
         "POST /WithBalance/Player/Withdraw"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -2669,10 +2669,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2680,10 +2680,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2695,17 +2695,17 @@
       "applicable_to": [
         "POST /WithBalance/Player/GetTransactionResult"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetTransactionResult"
         },
         {
@@ -2713,10 +2713,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2724,10 +2724,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2742,17 +2742,17 @@
         "POST /WithBalance/Player/GetBalance",
         "POST /WithBalance/Player/GetURLToken"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Deposit"
         },
         {
@@ -2760,10 +2760,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetBalance"
         },
         {
@@ -2771,10 +2771,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetURLToken"
         },
         {
@@ -2782,10 +2782,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -2793,10 +2793,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2804,10 +2804,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2819,17 +2819,17 @@
       "applicable_to": [
         "POST /WithBalance/Player/CreatePlayer"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1CreatePlayer"
         },
         {
@@ -2837,10 +2837,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -2848,10 +2848,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -2873,17 +2873,17 @@
         "POST /WithBalance/Game/GameList",
         "POST /WithBalance/History/GetGameDetail"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 853,
-            "end_line": 888
+            "start_line": 760,
+            "end_line": 800
           },
-          "fragment_digest": "cbaf1407d69d6e7985f1df59b031d52c864eb82509e397caa5025c9f12b84b2c",
+          "fragment_digest": "213a96d23fbfd9e30d4b536dbce80bf7a2b937a37498bc7f053b9c9b448275c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Game~1GameList"
         },
         {
@@ -2891,10 +2891,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1History~1GetGameDetail"
         },
         {
@@ -2902,10 +2902,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1CreatePlayer"
         },
         {
@@ -2913,10 +2913,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Deposit"
         },
         {
@@ -2924,10 +2924,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 666,
-            "end_line": 680
+            "start_line": 547,
+            "end_line": 566
           },
-          "fragment_digest": "36670a7bf034c65841975ac30e2c6110862fb70a8e67bf1e6c65c116e87829b7",
+          "fragment_digest": "50a735317b2b2dc0d20bfb600dd5d0502af7469c01440e55824e8eff2bc7e385",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetBalance"
         },
         {
@@ -2935,10 +2935,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetTransactionHistory"
         },
         {
@@ -2946,10 +2946,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 681,
-            "end_line": 707
+            "start_line": 568,
+            "end_line": 599
           },
-          "fragment_digest": "62184e6efa0f46a8708f9b067925ef0e03ca9be8870932ef61f54c4784227426",
+          "fragment_digest": "2a5294b9365b2e82bdb5c121ac54c7e8b62fa31924429d35f1b406cb3d5e2a20",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetTransactionResult"
         },
         {
@@ -2957,10 +2957,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetURLToken"
         },
         {
@@ -2968,10 +2968,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 816,
-            "end_line": 846
+            "start_line": 717,
+            "end_line": 752
           },
-          "fragment_digest": "43b82b9a23f50602c47918fba0d49c852f7661c312ce4acbde38c4b77715cc11",
+          "fragment_digest": "c3e460d1ed71bd2b68c3df13c7dbe1ad1469fb95f13913a48d6ae0480b14cac7",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Kickout"
         },
         {
@@ -2979,10 +2979,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1PlayerOnlineList"
         },
         {
@@ -2990,10 +2990,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -3001,10 +3001,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3012,10 +3012,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3029,17 +3029,17 @@
         "POST /WithBalance/Player/PlayerOnlineList",
         "POST /WithBalance/Player/Kickout"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetURLToken"
         },
         {
@@ -3047,10 +3047,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 816,
-            "end_line": 846
+            "start_line": 717,
+            "end_line": 752
           },
-          "fragment_digest": "43b82b9a23f50602c47918fba0d49c852f7661c312ce4acbde38c4b77715cc11",
+          "fragment_digest": "c3e460d1ed71bd2b68c3df13c7dbe1ad1469fb95f13913a48d6ae0480b14cac7",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Kickout"
         },
         {
@@ -3058,10 +3058,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 787,
-            "end_line": 815
+            "start_line": 682,
+            "end_line": 715
           },
-          "fragment_digest": "6a0ec0da5c362a18f608116d57c564ed6c84acb9d68c8b756ab80ddb4ef978b0",
+          "fragment_digest": "c04d4c11c97af8942e79670c3009280e174e634c0a0bd894f4625628861b2ec0",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1PlayerOnlineList"
         },
         {
@@ -3069,10 +3069,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3080,10 +3080,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3096,17 +3096,17 @@
         "POST /WithBalance/Player/Deposit",
         "POST /WithBalance/Player/Withdraw"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Deposit"
         },
         {
@@ -3114,10 +3114,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -3125,10 +3125,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3136,10 +3136,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3152,17 +3152,17 @@
         "POST /WithBalance/Player/GetTransactionHistory",
         "POST /WithBalance/History/GetGameDetail"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 889,
-            "end_line": 963
+            "start_line": 802,
+            "end_line": 848
           },
-          "fragment_digest": "12bd90c1b0005b50c4ebc28bec21e445661c28fed43cd8173743b213adce6845",
+          "fragment_digest": "5ec1fc70972de0b0a827a1c60c50deb764d8ea98958b38b234564abc21294045",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1History~1GetGameDetail"
         },
         {
@@ -3170,10 +3170,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 708,
-            "end_line": 747
+            "start_line": 601,
+            "end_line": 640
           },
-          "fragment_digest": "e1a2c16c093f7c566a00dac4d5cdb727a7ff53e439e169466247a185a4ae74b0",
+          "fragment_digest": "d4ece6c8c4085a2caba00252b94699e07179f18b0f074fe088c06d2fba3eb5af",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetTransactionHistory"
         },
         {
@@ -3181,10 +3181,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3192,10 +3192,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3207,17 +3207,17 @@
       "applicable_to": [
         "POST /WithBalance/Player/Withdraw"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -3225,10 +3225,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3236,10 +3236,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3254,17 +3254,17 @@
         "POST /WithBalance/Player/Withdraw",
         "POST /WithBalance/Player/GetURLToken"
       ],
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1435-1463",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1369-1408",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 577,
-            "end_line": 601
+            "start_line": 444,
+            "end_line": 467
           },
-          "fragment_digest": "49397da750ebf03d83cb577446051953e4f83c390745210fc76222cdcd659e1e",
+          "fragment_digest": "175d2699944c05efa73b1919411699546c5c73e5e16e1a30328a5897e11128ec",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1CreatePlayer"
         },
         {
@@ -3272,10 +3272,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 602,
-            "end_line": 633
+            "start_line": 469,
+            "end_line": 506
           },
-          "fragment_digest": "2dde565edddc80f1fd3a5c5361df57c1a57a6d15c4c67ae7f1d717e5490ef645",
+          "fragment_digest": "f7ace9ec73e455d939985eeb72652d9463ec1892276e6558ac5bc09d62889833",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Deposit"
         },
         {
@@ -3283,10 +3283,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 748,
-            "end_line": 786
+            "start_line": 642,
+            "end_line": 680
           },
-          "fragment_digest": "2e9597152c312043ee24e166974760521b454656593665f96babef626bc09332",
+          "fragment_digest": "6a9beed4e7f9251c78589243f0dd461acf274349e256bfd546b82ef052808998",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1GetURLToken"
         },
         {
@@ -3294,10 +3294,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 634,
-            "end_line": 665
+            "start_line": 508,
+            "end_line": 545
           },
-          "fragment_digest": "7ac0e6e996799d1827b8187b7a26993274fbaae9393e600da620680ad12d145e",
+          "fragment_digest": "394b32a10c7d4934f77aba6001eb0f90a7bec81690742dbd0db7599bc468e1c3",
           "claim_path": "/applicable_to/operation:POST:~1WithBalance~1Player~1Withdraw"
         },
         {
@@ -3305,10 +3305,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/code"
         },
         {
@@ -3316,10 +3316,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1435,
-            "end_line": 1463
+            "start_line": 1369,
+            "end_line": 1408
           },
-          "fragment_digest": "f74049967c9344ea1307e92f38381322b9063e732bb820f12803b94ef85e8a39",
+          "fragment_digest": "94701eb7a4a9b7e6b0744abd9f3d0908323e75278bd37e68e2aacd61ac365dfe",
           "claim_path": "/description"
         }
       ]
@@ -3329,17 +3329,17 @@
     {
       "topic": "FTP 功能",
       "detail": "FTP 方式提供遊戲詳細交易信息、遊戲每分鐘統計資訊、遊戲每日統計資訊",
-      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1313-1330",
+      "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 1285-1351",
       "evidence": [
         {
           "version": 1,
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1313,
-            "end_line": 1330
+            "start_line": 1285,
+            "end_line": 1351
           },
-          "fragment_digest": "63802cbaea115e1ce97025cbf8d2eccad8e75e8ac9600cda00723881b83fd846",
+          "fragment_digest": "9bc9f6584fea13633d649e2f24c287cbd79dcb18a7c12e57a5aafc79f00ddc2d",
           "claim_path": "/detail"
         },
         {
@@ -3347,10 +3347,10 @@
           "source": "rsg-game-transfer-wallet.zh-TW.normalized.md",
           "locator": {
             "kind": "line_range",
-            "start_line": 1313,
-            "end_line": 1330
+            "start_line": 1285,
+            "end_line": 1351
           },
-          "fragment_digest": "63802cbaea115e1ce97025cbf8d2eccad8e75e8ac9600cda00723881b83fd846",
+          "fragment_digest": "9bc9f6584fea13633d649e2f24c287cbd79dcb18a7c12e57a5aafc79f00ddc2d",
           "claim_path": "/topic"
         }
       ]
