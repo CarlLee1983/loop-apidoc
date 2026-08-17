@@ -1343,7 +1343,7 @@ def preprocess(
         ..., "--out", help="markdown 輸出目錄（衍生位置，勿放 sources/ 內）"
     ),
 ) -> None:
-    """把 PDF／DOCX 轉成可掃描 markdown，非 PDF/DOCX 文字檔原樣複製。"""
+    """把 PDF／DOCX 轉成可掃描 markdown，其餘格式一律原樣複製（byte-for-byte）。"""
     from loop_apidoc.agentcli.preprocess import prepare_markdown
 
     try:

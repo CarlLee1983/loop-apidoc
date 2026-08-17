@@ -17,6 +17,13 @@ class SourceFormat(str, Enum):
     #: 試算表(.xlsx/.xls)。與 UNKNOWN 分開的理由和 word-legacy 一樣,而且只有這個
     #: 理由:結果都是拒絕,但認得出格式才講得出下一步。不建轉檔器見 ADR 0012。
     SPREADSHEET = "spreadsheet"
+    #: 純文字(.txt)。與 UNKNOWN 分開的理由只有一個:結果都是拒絕,但認得出格式
+    #: 才講得出下一步——這裡的下一步是「改副檔名為 .md」,通則講不出這麼具體的事。
+    PLAIN_TEXT = "plain-text"
+    #: CSV。與 UNKNOWN 分開的理由和 plain-text 一樣,只有這一個:結果都是拒絕,
+    #: 但認得出格式才講得出下一步。下一步刻意不是「另存為 CSV」(#98 已否決同一個
+    #: 建議,理由是會把 operator 送回這個 unsupported)。
+    CSV = "csv"
     OPENAPI_JSON = "openapi-json"
     OPENAPI_YAML = "openapi-yaml"
     HTML = "html"

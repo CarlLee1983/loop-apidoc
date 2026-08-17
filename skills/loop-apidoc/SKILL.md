@@ -131,6 +131,12 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   Do not attempt to read the workbook — nothing downstream reads a spreadsheet. If its content is
   evidence rather than documentation, it enters as a supplementary note with a sidecar
   (`authority: supplementary`), which is a lower standing than a formal document.
+- **Plain text** (`.txt`) and **CSV** (`.csv`) → also not supported, and never will be converted
+  here (ADR 0012), even though a `.txt` file's content usually looks directly readable. The manifest
+  recognises both formats and marks them unsupported; the named next step is to rename `.txt` to
+  `.md`, or export `.csv` as a Markdown table, then put it back in `sources/` and preprocess again.
+  Do not read either as-is — an unsupported source is not extraction evidence regardless of how
+  legible its bytes are.
 - **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
   `<APIDOC> normalize-html-snapshot --input page.html --url "<ORIGINAL_URL>" --output
   "<WORK>/sources_md/page.md"` — writes Markdown plus a URL/hash provenance sidecar; cite

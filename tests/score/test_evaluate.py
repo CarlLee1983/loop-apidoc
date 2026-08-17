@@ -305,6 +305,37 @@ def test_the_unsupported_finding_names_the_format_s_own_next_step() -> None:
     assert "Markdown table" in unsupported.suggested_fix
 
 
+def test_the_unsupported_finding_names_plain_text_and_csv_next_steps() -> None:
+    """`.txt`／`.csv` 落到 UNKNOWN 只拿得到通則,現在各自具名(#113)。"""
+    report = evaluate_score(
+        _inputs(
+            manifest=_manifest(
+                status=ProcessingStatus.UNSUPPORTED,
+                source_format=SourceFormat.PLAIN_TEXT,
+            )
+        ),
+        profile=ScoreProfile.CI,
+    )
+    unsupported = next(f for f in report.findings if f.code == "SOURCE_UNSUPPORTED")
+    assert ".md" in unsupported.suggested_fix
+
+    report = evaluate_score(
+        _inputs(
+            manifest=_manifest(
+                status=ProcessingStatus.UNSUPPORTED,
+                source_format=SourceFormat.CSV,
+            )
+        ),
+        profile=ScoreProfile.CI,
+    )
+    unsupported = next(f for f in report.findings if f.code == "SOURCE_UNSUPPORTED")
+    assert "Markdown table" in unsupported.suggested_fix
+    # 試算表的 remedy 也含「Markdown table」,單看這個詞分辨不出 CSV 有沒有被
+    # 誤指到試算表那一筆。
+    assert "csv" in unsupported.suggested_fix.lower()
+    assert "spreadsheet" not in unsupported.suggested_fix.lower()
+
+
 def test_issue_category_mapping_covers_every_scored_issue_code() -> None:
     # 每個「會計分」的 code 都必須有類別;刻意不計分的則必須明列在
     # _UNSCORED_CODES,好讓新增 code 的人被迫二選一,而不是漏掉。

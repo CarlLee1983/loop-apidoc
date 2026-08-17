@@ -11,10 +11,8 @@ from loop_apidoc.docx_normalization import (
     prepare_docx,
     write_prepared_docx,
 )
-
-# Source formats we can flatten to markdown text for the agent to read. Other
-# formats are copied byte-for-byte so no declared source silently disappears.
-_TEXT_SUFFIXES = {".md", ".markdown", ".txt"}
+from loop_apidoc.manifest.formats import detect_format
+from loop_apidoc.manifest.models import SourceFormat
 
 
 @dataclass(frozen=True)
@@ -37,7 +35,16 @@ class PreprocessKind(Enum):
             return cls.CONVERTED_PDF
         if suffix == ".docx":
             return cls.CONVERTED_DOCX
-        if suffix in _TEXT_SUFFIXES:
+        # Derived from `manifest`'s own classification rather than a second,
+        # independently-maintained extension set: COPIED_TEXT means "manifest
+        # considers this scannable Markdown", which is the actual rule. A
+        # second hardcoded set drifted from `_EXTENSION_FORMATS` once already
+        # (`.txt` was copied here as readable text while manifest reported it
+        # unsupported, #113) — deriving it removes the seam where that
+        # happens again. `.txt` is `SourceFormat.PLAIN_TEXT`, not
+        # `SourceFormat.MARKDOWN`, so it correctly falls through to
+        # PASSTHROUGH and gets its own named remedy instead.
+        if detect_format(Path("x" + suffix)) is SourceFormat.MARKDOWN:
             return cls.COPIED_TEXT
         return cls.PASSTHROUGH
 
