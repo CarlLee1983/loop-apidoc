@@ -26,6 +26,7 @@ import yaml
 from openapi_spec_validator import validate as validate_openapi
 
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline as _run_assemble_pipeline
+from loop_apidoc.agentcli.preprocess import prepare_markdown
 from loop_apidoc.agentcli.verify import verify_extraction_dir
 from loop_apidoc.diff import DiffImpact, build_diff_report, load_run_artifacts
 from loop_apidoc.foundry import store as foundry_store
@@ -46,7 +47,10 @@ from loop_apidoc.score import (
     loop_verdict,
     write_reports as write_score_reports,
 )
-from scripts.quality_gate import required_sanitized_benchmark_cases
+from scripts.quality_gate import (
+    required_sanitized_benchmark_cases,
+    required_source_derivation_benchmark_cases,
+)
 
 _BENCH_ROOT = Path(__file__).resolve().parent.parent / "benchmarks"
 _FIXED_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -1324,3 +1328,86 @@ def test_sanitized_fixture_is_a_true_redaction_of_the_original_snapshot(
     assert blanked == [], (
         f"{case.name}: declared-retained lines were dropped: {blanked[:5]}"
     )
+
+
+def _descriptor_relative_path(case_id: str, key: str, relative: str) -> Path:
+    """Reject a descriptor-declared path that would escape the case directory
+    (absolute, or containing `..`) before it is ever joined."""
+    candidate = Path(relative)
+    assert not candidate.is_absolute() and ".." not in candidate.parts, (
+        f"{case_id}: {key}.path must be a case-relative path with no '..'"
+    )
+    return candidate
+
+
+@pytest.mark.parametrize("case_id", required_source_derivation_benchmark_cases())
+def test_local_markdown_matches_recorded_source_derivation(
+    case_id: str, tmp_path: Path
+) -> None:
+    """`source-derivation.json` is the only *tracked* anchor for a PDF case's
+    Markdown — both `raw/` and `sources/` are gitignored (ADR 0013), so neither
+    the original PDF nor its Markdown is ever "committed" in this repo's sense.
+
+    The local Markdown's digest is checked unconditionally wherever that file
+    exists (one hash, no reason to gate it on `raw/` too); re-deriving it from
+    the original PDF additionally needs the gitignored `raw/` copy, so only
+    that half SKIPs like every other source-backed assertion when it is
+    absent.
+    """
+    case = _case_by_name(case_id)
+    descriptor_path = case / "source-derivation.json"
+    assert descriptor_path.is_file(), f"{case_id}: source-derivation.json is missing"
+    descriptor = json.loads(descriptor_path.read_text(encoding="utf-8"))
+    assert descriptor["case_id"] == case_id, (
+        f"{case_id}: source-derivation.json case_id does not match its directory"
+    )
+    assert descriptor["conversion_tool"] == "pymupdf4llm", (
+        f"{case_id}: this test only exercises pymupdf4llm; a different declared "
+        "conversion tool needs its own re-derivation assertion"
+    )
+
+    local_markdown_path = case / _descriptor_relative_path(
+        case_id, "derived_markdown", descriptor["derived_markdown"]["path"]
+    )
+    original_path = case / _descriptor_relative_path(
+        case_id, "original_document", descriptor["original_document"]["path"]
+    )
+
+    if local_markdown_path.is_file():
+        assert (
+            hashlib.sha256(local_markdown_path.read_bytes()).hexdigest()
+            == descriptor["derived_markdown"]["sha256"]
+        ), f"{case.name}: local markdown does not match the recorded digest"
+    elif not original_path.is_file():
+        pytest.skip(
+            f"{case.name}: neither {local_markdown_path} nor {original_path} "
+            "present (operator-provided, gitignored)"
+        )
+
+    if not original_path.is_file():
+        pytest.skip(
+            f"{case.name}: {original_path} not present (operator-provided, "
+            "gitignored); local markdown digest already verified above"
+        )
+
+    assert (
+        hashlib.sha256(original_path.read_bytes()).hexdigest()
+        == descriptor["original_document"]["sha256"]
+    ), f"{case.name}: original PDF does not match the recorded digest"
+
+    result = prepare_markdown(original_path, tmp_path)
+    assert len(result.converted) == 1, f"{case.name}: expected exactly one converted file"
+    derived_markdown_path = tmp_path / result.converted[0]
+
+    assert (
+        hashlib.sha256(derived_markdown_path.read_bytes()).hexdigest()
+        == descriptor["derived_markdown"]["sha256"]
+    ), f"{case.name}: re-converted markdown does not match the recorded digest"
+
+    if local_markdown_path.is_file():
+        assert derived_markdown_path.read_bytes() == local_markdown_path.read_bytes(), (
+            f"{case.name}: re-converting the original PDF no longer reproduces "
+            "the local markdown byte-for-byte; a pymupdf4llm upgrade likely "
+            "changed conversion output — re-derive this case's evidence and "
+            "record what moved"
+        )

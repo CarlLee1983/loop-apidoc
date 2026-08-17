@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "case_id": "ecpay-creditcard-pdf",
+  "original_document": {
+    "path": "raw/gw_p110.pdf",
+    "source_url": "https://www.ecpay.com.tw/Content/files/gw_p110.pdf",
+    "captured_on": "2026-08-17",
+    "sha256": "fd12a38c37df000e0927d39fdc32448c304b10e8aa6056d4419c63c42b7f53e9"
+  },
+  "derived_markdown": {
+    "path": "sources/gw_p110.pdf.md",
+    "sha256": "d42d3337d15d4c91ffad0e8efa48b294e9e1404149f20ae73b70b040cbe650b4"
+  },
+  "conversion_tool": "pymupdf4llm"
+}

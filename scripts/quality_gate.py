@@ -42,6 +42,10 @@ REQUIRED_BENCHMARK_CASES = (
     "rsg-game-transfer-wallet",
 )
 SANITIZED_BENCHMARK_CASES = ("rsg-game-transfer-wallet",)
+# Cases whose committed `sources/*.md` is asserted to be pymupdf4llm's actual
+# output for a specific, dated, checksummed original PDF — not merely a hand
+# transcription. See `source-derivation.json` in each listed case.
+SOURCE_DERIVATION_BENCHMARK_CASES = ("ecpay-creditcard-pdf",)
 
 
 class QualityGateFailure(RuntimeError):
@@ -138,6 +142,73 @@ def missing_benchmark_source_quality(
         if not all((quality / name).is_file() for name in BENCHMARK_QUALITY_FILES):
             missing.append(case)
     return missing
+
+
+SOURCE_DERIVATION_DESCRIPTOR = "source-derivation.json"
+
+
+def required_source_derivation_benchmark_cases() -> tuple[str, ...]:
+    return SOURCE_DERIVATION_BENCHMARK_CASES
+
+
+def _case_relative_path(case_dir: Path, relative: str) -> Path | None:
+    """Resolve a descriptor-declared, case-relative path, refusing to escape
+    the case directory. Returns None for an absolute path or one containing
+    `..`, rather than joining it and trusting the descriptor author."""
+    candidate = Path(relative)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        return None
+    return case_dir / candidate
+
+
+def _source_derivation_original_path(benchmark_root: Path, case: str) -> Path | None:
+    """The original PDF path a case's descriptor names, or None if the
+    descriptor is missing, unreadable, malformed, or points outside the case
+    directory. None never means "restored"; callers decide what None means for
+    their own check."""
+    descriptor_path = benchmark_root / case / SOURCE_DERIVATION_DESCRIPTOR
+    try:
+        descriptor = json.loads(descriptor_path.read_text(encoding="utf-8"))
+        relative = descriptor["original_document"]["path"]
+        if not isinstance(relative, str):
+            return None
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        return None
+    return _case_relative_path(benchmark_root / case, relative)
+
+
+def missing_benchmark_source_derivation(
+    *,
+    benchmark_root: Path = BENCHMARK_ROOT,
+    cases: tuple[str, ...] | list[str] = SOURCE_DERIVATION_BENCHMARK_CASES,
+) -> list[str]:
+    """Cases with a valid `source-derivation.json` whose named original PDF is
+    not restored into the case's gitignored `raw/`. A descriptor that is
+    missing, unreadable, or malformed is a different failure — reported by
+    `invalid_benchmark_source_derivation` instead, so "the PDF is missing" and
+    "the descriptor is broken" are never collapsed into the same remedy."""
+    missing: list[str] = []
+    for case in cases:
+        original = _source_derivation_original_path(benchmark_root, case)
+        if original is None:
+            continue
+        if not original.is_file():
+            missing.append(case)
+    return missing
+
+
+def invalid_benchmark_source_derivation(
+    *,
+    benchmark_root: Path = BENCHMARK_ROOT,
+    cases: tuple[str, ...] | list[str] = SOURCE_DERIVATION_BENCHMARK_CASES,
+) -> list[str]:
+    """Cases whose `source-derivation.json` is missing, unreadable, malformed,
+    or names an original path outside the case directory."""
+    return [
+        case
+        for case in cases
+        if _source_derivation_original_path(benchmark_root, case) is None
+    ]
 
 
 def has_benchmark_skips(stdout: str) -> bool:
@@ -391,6 +462,19 @@ def main(argv: list[str] | None = None) -> int:
                     "strict-local benchmark source-quality package missing "
                     "(run manifest → inspect-source-risk → assess-sources into "
                     "benchmarks/<case>/source-quality): " + ", ".join(unaudited)
+                )
+            invalid_descriptors = invalid_benchmark_source_derivation()
+            if invalid_descriptors:
+                raise QualityGateFailure(
+                    "strict-local benchmark source-derivation.json missing, "
+                    "unreadable, or malformed: " + ", ".join(invalid_descriptors)
+                )
+            unrestored = missing_benchmark_source_derivation()
+            if unrestored:
+                raise QualityGateFailure(
+                    "strict-local benchmark source-derivation original PDF missing "
+                    "(restore the file named in source-derivation.json into "
+                    "benchmarks/<case>/raw): " + ", ".join(unrestored)
                 )
         benchmark_result: _RunResult | None = None
         for name, cmd in command_plan(
