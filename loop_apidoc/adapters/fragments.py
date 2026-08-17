@@ -35,6 +35,7 @@ from loop_apidoc.domain.evidence import (
     normalize_excerpt,
 )
 from loop_apidoc.domain.models import FrozenModel
+from loop_apidoc.manifest.formats import detect_format
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceFormat
 from loop_apidoc.source_facts.models import FactIndex, SourceFacts, TableFact
 
@@ -563,11 +564,15 @@ def _exact_fragment(
 
 
 def _format_from_path(path: str) -> SourceFormat:
-    lowered = path.lower()
-    if lowered.endswith((".yaml", ".yml")):
-        return SourceFormat.OPENAPI_YAML
-    if lowered.endswith(".json"):
-        return SourceFormat.OPENAPI_JSON
-    if lowered.endswith(".pdf"):
-        return SourceFormat.PDF
-    return SourceFormat.MARKDOWN
+    """A remote snapshot has no manifest entry to read its format from, so it is
+    classified the same way `manifest` classifies a local file.
+
+    This used to be a third extension table with its own rules and an
+    everything-else-is-Markdown fallback, which labelled an imported `.html`
+    snapshot as Markdown (#115). No caller could observe that: `_prepare_source`
+    reads the format only to open a PDF's pages and to pick YAML over JSON, and
+    `import-rendered-url` accepts only HTML and Markdown. It was a wrong value
+    that happened not to be read — the kind that stops being harmless the moment
+    someone adds a branch for it.
+    """
+    return detect_format(Path(path))
