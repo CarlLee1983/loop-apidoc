@@ -229,6 +229,13 @@ release, never a force-moved tag.
   `benchmarks/<case>/sources/` snapshot.
 - A skipped case has not passed source-backed revalidation. Never report a discovered or
   skipped case as passed.
+- The `.docx` (`docx_*.py`) and GitBook (`cache-gitbook-llms`) paths are **not validated
+  against a real source**: no case in the inventory has a Word or GitBook source and every
+  DOCX under `tests/` is synthesised in `tmp_path`, so their evidence strength is exactly a
+  skipped case's. Never describe either as validated or source-backed; `README.md`,
+  `README.en.md`, the landing/intro pages, both operator manuals, and
+  `docs/PRODUCT_EXTENSION_ROADMAP.md` carry the label. Removing it requires the first real
+  Word delivery or GitBook site to arrive as a benchmark case in the same change.
 - Implementation-backed conformance benchmarks are a separate assurance lane. They report
   only the declared Applicability Envelope, time, and suite version; they never count as a
   source-backed strict-local pass or documentary grounding coverage.

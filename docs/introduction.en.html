@@ -1167,7 +1167,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <details class="step-details">
             <summary>Source-safety and licensing details</summary>
             <ul class="detail-list">
-              <li><strong>Document conversion:</strong> <code>preprocess</code> converts PDF/DOCX into scannable text. DOCX first passes a bounded, fail-closed OOXML gate and receives source-hash provenance.</li>
+              <li><strong>Document conversion:</strong> <code>preprocess</code> converts PDF/DOCX into scannable text. DOCX first passes a bounded, fail-closed OOXML gate and receives source-hash provenance. The DOCX and GitBook paths are <strong>not validated against a real source</strong> — none of the thirteen benchmark cases has a Word or GitBook source, so their evidence strength equals the benchmark's <em>skipped</em>: available but unproven.</li>
               <li><strong>Source risk:</strong> <code>inspect-source-risk</code> checks the exact manifest-bound bytes before any agent reads them. It neither rewrites source bytes nor echoes a matched payload.</li>
               <li><strong>Protected pages:</strong> When direct HTTP is blocked but a browser can render the page, <code>import-rendered-url</code> preserves the bytes and capture provenance. Origin fetch is skipped only when URL, path, method, and SHA-256 all match.</li>
               <li><strong>GitBook and scaffolds:</strong> When <code>llms.txt</code> is available, the pipeline caches in-scope Markdown and creates a line-cited extraction scaffold for human review. It must be copied, verified, and completed before use as the real extraction.</li>
