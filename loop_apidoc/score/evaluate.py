@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from loop_apidoc.manifest.formats import unsupported_remedy
 from loop_apidoc.manifest.models import ProcessingStatus
 from loop_apidoc.score.models import (
     CATEGORY_WEIGHTS,
@@ -154,7 +155,9 @@ def _reviewability_findings(inputs: ScoreInputs) -> list[ScoreFinding]:
                     code="SOURCE_UNSUPPORTED",
                     location=f"manifest.json:{source.relative_path}",
                     evidence=f"{source.relative_path} is marked unsupported",
-                    suggested_fix="Convert the unsupported input or remove it from the run.",
+                    # 具名到格式:通則的一句話對拿著 .xlsx 或 .doc 的人
+                    # 說不出任何可做的事(ADR 0012)。
+                    suggested_fix=unsupported_remedy(source.source_format).en,
                     score_impact=10,
                 )
             )

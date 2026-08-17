@@ -340,7 +340,9 @@ npm run docs:check
 
 ## 支援的來源格式
 
-PDF、Markdown、Microsoft Word（`.docx`；舊版二進位 `.doc` 不支援,manifest 會標明）、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
+PDF、Markdown、Microsoft Word（`.docx`）、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
+
+舊版二進位 `.doc` 與試算表（`.xlsx`／`.xls`）**刻意不支援**，也不會有轉檔器：manifest 會認出格式、標成 unsupported，並告訴你該把它另存成什麼（`.doc` → `.docx` 或 PDF；試算表 → Markdown 表格）。轉檔的判斷留給看得到合併儲存格的人，理由與證偽條件見 [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md)。若試算表的內容本身要當證據進 pipeline，走的是次級佐證那條路（[ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)）。
 
 ---
 

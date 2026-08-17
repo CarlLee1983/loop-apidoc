@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from loop_apidoc.generate.models import ProvenanceDocument
+from loop_apidoc.manifest.formats import unsupported_remedy
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.validate.models import Issue, IssueCode, Severity
 
@@ -43,7 +44,9 @@ def check_manifest_coverage(
                 severity=Severity.WARNING,
                 location=source.relative_path,
                 evidence=f"來源格式不受支援（{source.source_format.value}），未納入規格化",
-                suggested_fix="轉為受支援格式（PDF／Markdown／.docx／OpenAPI）或確認可略過",
+                # 具名到格式:通則列的四種受支援格式,拿著 .xlsx 或 .doc 的人
+                # 一種都做不到,那樣的 remedy 等於沒說(ADR 0012)。
+                suggested_fix=unsupported_remedy(source.source_format).zh,
             )
         )
     if provenance is not None:
