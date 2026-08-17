@@ -166,3 +166,21 @@ def test_legacy_word_passthrough_names_the_only_move_that_works(tmp_path: Path):
     assert res.exit_code == 0, res.output
     assert ".docx" in res.output
     assert "agent must read source format" not in res.output
+
+
+def test_spreadsheet_passthrough_names_the_only_move_that_works(tmp_path: Path):
+    """試算表與 `.doc` 同一個問題:「交給 agent 讀原始格式」對它做不到。
+
+    不建轉檔器是決定而不是待辦(ADR 0012),所以這條路徑必須自己講得出下一步。
+    """
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "codes.xlsx").write_bytes(b"PK\x03\x04xlsx")
+
+    res = runner.invoke(app, [
+        "preprocess", "--sources", str(sources), "--out", str(tmp_path / "out"),
+    ])
+
+    assert res.exit_code == 0, res.output
+    assert "Markdown table" in res.output
+    assert "agent must read source format" not in res.output

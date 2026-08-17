@@ -125,6 +125,12 @@ Then choose the read location `<EXTRACT_SOURCES>` by source type:
   of being silently omitted or rendered into a different meaning.
   Legacy `.doc` remains passthrough and must be converted with a trusted external tool before
   the risk gate. Raw Word is intentionally an unscannable source-risk blocker.
+- **Spreadsheet** (`.xlsx`/`.xls`) → not supported and never will be converted here (ADR 0012).
+  The manifest recognises the format, marks it unsupported, and every report names the same next
+  step: the operator exports the sheet as a Markdown table into `sources/` and preprocesses again.
+  Do not attempt to read the workbook — nothing downstream reads a spreadsheet. If its content is
+  evidence rather than documentation, it enters as a supplementary note with a sidecar
+  (`authority: supplementary`), which is a lower standing than a formal document.
 - **HTML snapshot** (a saved static page; `.html`/`.htm` is a supported manifest format) →
   `<APIDOC> normalize-html-snapshot --input page.html --url "<ORIGINAL_URL>" --output
   "<WORK>/sources_md/page.md"` — writes Markdown plus a URL/hash provenance sidecar; cite
