@@ -82,6 +82,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#manifest-manifest">manifest — 建立來源 manifest</a>
   <a class="lvl-3" href="#url-corpus">URL 導航與快取（catalog / select / cache）</a>
   <a class="lvl-3" href="#import-rendered-url">import-rendered-url — 受保護 rendered evidence</a>
+  <a class="lvl-3" href="#import-supplementary-note">import-supplementary-note — 供應商補充說明的人工摘錄</a>
   <a class="lvl-3" href="#inspect-source-risk">inspect-source-risk — agent 讀取前來源風險閘</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
   <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — 來源新鮮度排程閘</a>
@@ -194,6 +195,14 @@ uv run loop-apidoc manifest --sources ./sources --url &lt;原始 URL&gt; \
   --url-coverage ./work/url_sources/coverage.json --output ./work/manifest.json
 </code></pre>
 <p>適用於互動式瀏覽器能顯示、但直接 HTTP 取源被擋的頁面。命令保留已儲存的 HTML／Markdown 原始位元組，寫出包含 original/canonical URL、capture time/method、SHA-256 的版本化 provenance，以及 <code>fetched_rendered</code> coverage。既有目的檔、格式錯誤及 URL／path／method／digest mismatch 一律 fail closed；驗證匹配後，<code>manifest</code> 與 <code>assemble</code> 不再探測該受保護 origin。命令不處理 CAPTCHA／credentials、不推論、不 crawl。</p>
+<h3 id="import-supplementary-note"><code>import-supplementary-note</code> — 匯入供應商補充說明的人工摘錄</h3>
+<pre><code class="language-bash">uv run loop-apidoc import-supplementary-note --input ./notes/sandbox-key.md \
+  --from "engineer@provider.example" --received-at "2026-08-16T10:00:00+08:00" \
+  --subject "測試環境金鑰取得方式" --excerpted-by "carl" --sources ./sources
+</code></pre>
+<p>適用於只存在於信件或通訊軟體訊息裡的規範性資訊——金鑰怎麼取得、測試環境位址、上線前必須完成的事——以及供應商另外給的欄位對照試算表（另存為 Markdown 表格後走同一條路徑）。命令寫出摘錄本身與一份綁定內容的 <code>.source.json</code> sidecar（出處、收到時間、摘錄者、SHA-256），<code>manifest</code> 據此把該來源標成 <code>authority: supplementary</code>；沒有 sidecar 的來源一律是 <code>normative</code>。</p>
+<p>次級佐證做得到：被引用、填補 <code>missing</code>、讓一條主張成立。做不到：與正式文件衝突時勝出、在報告裡與正式文件混為一談、支撐 Core 的 <code>explicit_support</code>（<code>shadow</code>／<code>strict</code> 會撤掉它的支撐提案與證據引用）。只靠次級佐證才成立的主張，會在驗證報告裡以 warning 級的 <code>SUPPLEMENTARY_SUPPORT</code> <strong>逐條</strong>點名，並計入分數的 source grounding。這類來源也不會進入 <code>record-fingerprint</code> 的指紋——新鮮度比對的前提是來源可被重新取得，而一封信沒有 URL、沒有版本。</p>
+<p><strong>要接受的代價</strong>：摘錄是人寫的，摘錄者可能寫錯或過度解讀，pipeline 無法分辨。sidecar 記下摘錄者買到的是<strong>可追責</strong>，不是可驗證。這是唯一帶著這個代價的來源類別，詳見 ADR 0010。sidecar 讀取端 fail closed：缺席才是 <code>normative</code>，讀不動或與內容對不上都會讓 <code>manifest</code> 以 exit 2 拒絕。</p>
 <h3 id="snapshot-openapi-url"><code>snapshot-openapi-url</code> — 固定直連 OpenAPI 來源</h3>
 <pre><code class="language-bash">uv run loop-apidoc snapshot-openapi-url --url &lt;OpenAPI JSON/YAML URL&gt; \\
   --sources ./sources --coverage ./work/url_sources/coverage.json [--confirmed-by-user]
@@ -212,7 +221,9 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
 <pre><code class="language-bash">uv run loop-apidoc inspect-source-risk --sources ./sources --manifest ./work/manifest.json \
   --output ./work/source-risk [--max-bytes 5242880]
 </code></pre>
-<p>請在<strong>前處理與 manifest 建立後、任何 agent 讀取來源內容前</strong>執行。它把 manifest 綁定的 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則找出高風險 Unicode、控制字元與 instruction／control-token pattern。原始 PDF 與 Word 刻意標為 <code>unscannable</code> 並拒絕通過：須先轉成支援的文字格式，再對精確 bytes 重建 manifest。blocker rules 為 <code>SR-UNICODE-TAG</code>、<code>SR-BIDI-OVERRIDE</code>、<code>SR-CONTROL-CHARACTER</code>、<code>SR-UNSCANNABLE</code>、<code>SR-SCAN-SIZE-EXCEEDED</code>、<code>SR-INVALID-UTF8</code>、<code>SR-FINDINGS-TRUNCATED</code>；warning rules 為 <code>SR-BIDI-FORMATTING</code>、<code>SR-ZERO-WIDTH-FORMATTING</code>、<code>SR-INSTRUCTION-OVERRIDE-TEXT</code>、<code>SR-CONTROL-TOKEN-TEXT</code>。warning 是人工覆核訊號，不是可遵循的來源指令。命令輸出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫來源，也不回顯命中 payload；finding 只含 rule ID、manifest source reference 與 locator。報告最多保留 1,000 筆 finding，其餘命中會用 blocker <code>SR-FINDINGS-TRUNCATED</code> 表示。退出碼：<code>0</code> = pass（可含 warning）、<code>1</code> = reject（blocker 或 unscannable source）、<code>2</code> = 輸入無效、過期、不安全或不可讀。</p>
+<p>請在<strong>前處理與 manifest 建立後、任何 agent 讀取來源內容前</strong>執行。它把 manifest 綁定的 Markdown、HTML、OpenAPI JSON/YAML 當文字掃描，依確定性規則掃描兩個方向：來源會不會<strong>操縱</strong> agent（高風險 Unicode、控制字元、instruction／control-token pattern），以及來源會不會<strong>洩漏東西給</strong> agent（密鑰與個資）。原始 PDF 與 Word 刻意標為 <code>unscannable</code> 並拒絕通過：須先轉成支援的文字格式，再對精確 bytes 重建 manifest。blocker rules 為 <code>SR-UNICODE-TAG</code>、<code>SR-BIDI-OVERRIDE</code>、<code>SR-CONTROL-CHARACTER</code>、<code>SR-SECRET-VALUE</code>、<code>SR-UNSCANNABLE</code>、<code>SR-SCAN-SIZE-EXCEEDED</code>、<code>SR-INVALID-UTF8</code>、<code>SR-FINDINGS-TRUNCATED</code>；warning rules 為 <code>SR-BIDI-FORMATTING</code>、<code>SR-ZERO-WIDTH-FORMATTING</code>、<code>SR-INSTRUCTION-OVERRIDE-TEXT</code>、<code>SR-CONTROL-TOKEN-TEXT</code>、<code>SR-CREDENTIAL-REFERENCE</code>、<code>SR-CONTACT-PII</code>、<code>SR-PII-VALUE</code>、<code>SR-PAYMENT-CARD</code>、<code>SR-WARNINGS-TRUNCATED</code>。warning 是人工覆核訊號，不是可遵循的來源指令。</p>
+<p>洩漏類規則只有<strong>自證性材料</strong>會擋：<code>SR-SECRET-VALUE</code> 認的是 PEM 私鑰區塊與 JWT，結構本身就是證據。<code>SR-CREDENTIAL-REFERENCE</code> 只給 warning，因為合格的 API 文件本來就會示範 <code>Authorization: Bearer &lt;TOKEN&gt;</code>，而值是真是假無法從文字確定——擋它會拒絕幾乎每一份合格來源，而一個永遠需要 waiver 的閘不是閘。卡號經 Luhn 驗證並排除各卡組織公告的測試卡號，候選不跨行（相鄰兩行數字接起來約十分之一會通過 Luhn），但 NBSP 與全形空格仍算分隔符。</p>
+<p>命令輸出 <code>source-risk-report.{json,zh-TW.md}</code>，不改寫來源，也不回顯命中 payload；finding 只含 rule ID、manifest source reference 與 locator。報告最多保留 1,000 筆 finding，其餘命中會用 blocker <code>SR-FINDINGS-TRUNCATED</code> 表示；warning 另有 500 筆的獨立額度，溢出時是 warning 級的 <code>SR-WARNINGS-TRUNCATED</code>——沒有這道分隔，一份合格大型文件裡高頻的聯絡信箱與憑證引用會經由截斷 blocker 把 verdict 變成 reject，而報告裡沒有任何一筆實質命中。blocker 仍可用滿整個上限，所以警告永遠擠不掉真正的命中。退出碼：<code>0</code> = pass（可含 warning）、<code>1</code> = reject（blocker 或 unscannable source）、<code>2</code> = 輸入無效、過期、不安全或不可讀。</p>
 <h3 id="assess-sources"><code>assess-sources</code> — 擷取前來源品質閘</h3>
 <pre><code class="language-bash">uv run loop-apidoc assess-sources --sources ./sources --manifest &lt;manifest.json&gt; \
   --source-risk ./work/source-risk --observations &lt;observations.json&gt; \

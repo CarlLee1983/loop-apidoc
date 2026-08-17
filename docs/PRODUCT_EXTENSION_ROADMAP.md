@@ -22,7 +22,8 @@ their declared Applicability Envelope.
 The repository already provides more than document conversion:
 
 - bounded and reproducible source acquisition for local files, URLs, GitBook,
-  and direct OpenAPI snapshots;
+  direct OpenAPI snapshots, and hand-written excerpts of supplier correspondence
+  imported as **supplementary** sources (ADR 0010);
 - deterministic pre-agent source-risk inspection, assembly, validation, scoring,
   source quality, and run diffs;
 - source freshness fingerprints and batch checks;
@@ -87,8 +88,14 @@ enter any agent context. After acquisition/preprocess, a manifest binds the exac
 package and `inspect-source-risk` deterministically scans UTF-8 Markdown, HTML, and OpenAPI
 JSON/YAML. Raw PDF/Word, invalid UTF-8, oversized text, and other unscannable pending sources
 are blockers rather than implicit exceptions. Fixed findings identify only rules, source refs,
-and locators; they never reproduce the matched payload or rewrite evidence. Reports retain at
-most 1,000 findings and replace further matches with a fail-closed truncation blocker.
+and locators; they never reproduce the matched payload or rewrite evidence. The ruleset covers
+both directions — whether a source can manipulate the agent and whether it leaks secrets or
+personal data to it — and among the leak rules only self-evidencing material (PEM private-key
+blocks, JWTs) blocks, because a competent API document necessarily documents its own
+`Authorization` header. Reports retain at most 1,000 findings and replace further matches with a
+fail-closed truncation blocker; warnings hold a separate 500-entry budget whose overflow is a
+warning, so a document that is merely rich in contact addresses is never rejected by truncation
+alone.
 
 The versioned report records schema/ruleset, `max_bytes`, manifest digest, per-source SHA-256,
 and a stable source-binding digest. `assess-sources --source-risk` verifies and embeds that

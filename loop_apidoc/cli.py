@@ -89,6 +89,7 @@ def manifest(
         sources.relative_to(sources_root).as_posix() if sources.is_file() else None
     )
     from loop_apidoc.manifest.builder import ManifestInputError
+    from loop_apidoc.manifest.scanner import ManifestScanError
     from loop_apidoc.preparation.coverage import CoverageInputError, load_coverage
 
     try:
@@ -104,7 +105,7 @@ def manifest(
             excludes=tuple(exclude),
             url_coverage=parsed_coverage,
         )
-    except (CoverageInputError, ManifestInputError) as exc:
+    except (CoverageInputError, ManifestScanError) as exc:
         typer.echo(f"manifest error: {exc}", err=True)
         raise typer.Exit(code=2) from exc
     if selected_relative_path is not None:
@@ -371,6 +372,49 @@ def snapshot_openapi_url_command(
     typer.echo(
         f"OpenAPI snapshot 已寫入 {result.snapshot_path}；SHA-256 {result.sha256}；"
         f"coverage 已寫入 {result.coverage_path}"
+    )
+
+
+@app.command(name="import-supplementary-note")
+def import_supplementary_note_command(
+    input: Path = typer.Option(
+        ..., "--input", exists=True, readable=True, help="人工摘錄的 Markdown"
+    ),
+    received_from: str = typer.Option(
+        ..., "--from", help="誰給的：寄件者、通訊軟體帳號或提供者"
+    ),
+    received_at: str = typer.Option(
+        ..., "--received-at", help="含時區的 ISO-8601 收到時間"
+    ),
+    excerpted_by: str = typer.Option(..., "--excerpted-by", help="摘錄者"),
+    sources: Path = typer.Option(..., "--sources", help="不可變本機來源目錄"),
+    subject: str | None = typer.Option(None, "--subject", help="信件主旨或標題"),
+    filename: str | None = typer.Option(
+        None, "--filename", help="來源檔名；預設沿用輸入檔名"
+    ),
+) -> None:
+    """匯入供應商補充說明的人工摘錄，標記為次級佐證。"""
+    from loop_apidoc.supplementary_note import (
+        SupplementaryNoteError,
+        import_supplementary_note,
+    )
+
+    try:
+        result = import_supplementary_note(
+            input,
+            received_from=received_from,
+            received_at=received_at,
+            excerpted_by=excerpted_by,
+            sources=sources,
+            subject=subject,
+            filename=filename,
+        )
+    except (SupplementaryNoteError, OSError) as exc:
+        typer.echo(f"import-supplementary-note error: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        f"次級佐證已寫入 {result.source_path}；SHA-256 {result.sha256}；"
+        f"provenance 已寫入 {result.provenance_path}"
     )
 
 
