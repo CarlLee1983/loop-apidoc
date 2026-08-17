@@ -77,6 +77,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-2" href="#_3">Installation</a>
   <a class="lvl-2" href="#_4">Providing sources</a>
   <a class="lvl-3" href="#_5">Supported source formats</a>
+  <a class="lvl-3" href="#acquisition-evidence">Evidence strength of the acquisition paths</a>
   <a class="lvl-2" href="#_6">Usage</a>
   <a class="lvl-3" href="#preprocess">preprocess — PDF/DOCX to markdown</a>
   <a class="lvl-3" href="#manifest-manifest">manifest — build the source manifest</a>
@@ -162,6 +163,19 @@ uv run loop-apidoc --help
 <p>No external Notebook to create, no browser login needed — source reading is done by the current agent within the session.</p>
 <h3 id="_5">Supported source formats</h3>
 <p>Markdown, HTML, and OpenAPI JSON/YAML are directly scannable. PDF, Microsoft Word (<code>.docx</code> only), and public URLs are supported only after conversion or acquisition into a manifest-bound local scannable artifact. Legacy binary <code>.doc</code>, spreadsheets (<code>.xlsx</code>/<code>.xls</code>), plain text <code>.txt</code>, and <code>.csv</code> have no preprocessing path, so the manifest recognises the format, reports it as unsupported, and names the next step: re-save a <code>.doc</code> as <code>.docx</code> or PDF, export the sheet you need from a spreadsheet as a Markdown table, rename a <code>.txt</code> to <code>.md</code>, re-save a <code>.csv</code> as a Markdown table, then put it back in <code>sources/</code> and preprocess again. None of the four will get a built-in converter — the conversion judgement stays with the person who can see the original file (<code>docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md</code>).</p>
+<h3 id="acquisition-evidence">Evidence strength of the acquisition paths</h3>
+<p>"This command runs" and "this command has carried a real supplier source end to end" are two different statements. The thirteen benchmark cases have sources in exactly three extensions (<code>.md</code>, <code>.json</code>, <code>.yaml</code>), so every acquisition path is graded by the same measure — and the two labels are never interchangeable, because what is missing differs and so does the remedy.</p>
+<table>
+<thead>
+<tr><th>Acquisition path</th><th>Evidence strength</th><th>What removes the label</th></tr>
+</thead>
+<tbody>
+<tr><td><code>manifest</code>, <code>preprocess</code> (PDF), <code>normalize-html-snapshot</code></td><td><strong>Source-backed</strong>: a benchmark case carries a real supplier source through it</td><td>n/a</td></tr>
+<tr><td><code>import-supplementary-note</code>, <code>import-rendered-url</code>, <code>select-url</code>, <code>related-url-pages</code>, <code>.docx</code> preprocessing</td><td><strong>Not validated against a real source</strong>: complete code with unit tests, but no case has ever used it</td><td>the first real source that arrives along that path, committed as a benchmark case</td></tr>
+<tr><td><code>catalog-url</code>, <code>cache-url-pages</code>/<code>cache-url-entry</code>, <code>snapshot-openapi-url</code>, <code>cache-gitbook-llms</code></td><td><strong>Outside the harness by construction</strong>: they issue network requests, and the harness must be offline-reproducible</td><td>a replayable recording contract — responses stored as fixtures so a case can re-run offline</td></tr>
+</tbody>
+</table>
+<p>The second label is missing <strong>a source</strong>, and arrives at a case as soon as one shows up; the third is missing <strong>a mechanism</strong>, and no quantity of sources will let a network request run in CI. <code>cache-gitbook-llms</code> belongs to both. <code>import-supplementary-note</code> is worth naming on its own: its output moves the validation report's per-claim <code>SUPPLEMENTARY_SUPPORT</code> warnings and the document-quality score's source grounding — a path that changes the score, with no case. No synthetic case will be written to erase a label.</p>
 <hr />
 <h2 id="_6">Usage</h2>
 <p>The CLI provides source processing, URL evidence, draft extraction, quality and extraction, scheduled source freshness, run processing, Foundry asset governance, and the local human-review <code>review</code> workbench. The day-to-day extraction flow is driven by the skill; each command can also be used standalone.</p>
