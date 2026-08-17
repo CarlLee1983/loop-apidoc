@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -140,6 +141,211 @@ def acquisition_grading_gaps(commands: Iterable[str]) -> dict[str, list[str]]:
     return {
         "ungraded": sorted(registered - classified),
         "unknown": sorted(classified - registered),
+    }
+
+
+# --- File-I/O exit inventory (issue #125) -----------------------------------
+#
+# AGENTS.md's "File-I/O exits" paragraph closes with "Every other module is pure
+# functions", which makes it a claim of exhaustiveness that nothing checked —
+# ten writers had accumulated outside it. The paragraph stays prose for humans;
+# this inventory is what a test can compare against the code.
+#
+# **The criterion**: a module is a file-I/O exit when it *calls* something that
+# creates, writes, moves, or removes a filesystem entry. Mechanically that is
+# the groups below, and nothing else — a module that only reads, or that hands
+# a path to another module, is pure by this measure (`review/workflow.py`
+# persists through `foundry/`'s writers and is therefore not listed).
+#
+# `os.open` is deliberately NOT a write call: it creates only with `O_CREAT`,
+# and two read-side exits (`docx_normalization.py`, `source_risk/inspect.py`)
+# open read-only descriptors with it. The write that follows shows up as
+# `os.write` / `os.fdopen`, which are listed, so nothing escapes by that route.
+#
+# The constants live here for co-location with the criterion; enforcement is
+# `test_every_module_that_writes_is_in_the_file_io_inventory`, not `main()` —
+# the same split as `acquisition_grading_gaps` above.
+PATH_WRITE_METHODS = frozenset(
+    {
+        "write_text",
+        "write_bytes",
+        "touch",
+        "mkdir",
+        "rmdir",
+        "unlink",
+        "rename",
+        "symlink_to",
+        "hardlink_to",
+    }
+)
+OS_WRITE_FUNCTIONS = {
+    "os": frozenset(
+        {
+            "makedirs",
+            "mkdir",
+            "remove",
+            "removedirs",
+            "rename",
+            "renames",
+            "replace",
+            "unlink",
+            "link",
+            "symlink",
+            "fdopen",
+            "truncate",
+            "chmod",
+        }
+    ),
+    "shutil": frozenset(
+        {"copy", "copy2", "copyfile", "copytree", "move", "rmtree", "make_archive"}
+    ),
+    # Every `tempfile` entry point that materializes a real path. Eight modules
+    # in the inventory stage through one of these; each is currently caught by
+    # some other call in the same file, so a module that staged with `mkstemp`
+    # and wrote through the raw descriptor would otherwise pass the gate.
+    "tempfile": frozenset(
+        {
+            "mkstemp",
+            "mkdtemp",
+            "NamedTemporaryFile",
+            "TemporaryFile",
+            "TemporaryDirectory",
+            "SpooledTemporaryFile",
+        }
+    ),
+}
+OS_WRITE_FUNCTIONS["os"] |= frozenset({"write", "ftruncate", "mkfifo"})
+WRITE_OPEN_MODE_CHARS = "wax+"
+# A mode string is short and drawn from this alphabet. Without the shape check
+# any `.open("word/document.xml")` or `.open("https://…/ax")` reads as a write,
+# because the name happens to contain `x` or `a`.
+_MODE_ALPHABET = set("rwaxbt+U")
+# `dataclasses.replace(obj)` is a one-argument `replace` that touches no file.
+NON_PATH_REPLACE_RECEIVERS = frozenset({"dataclasses", "copy", "typing"})
+
+FILE_IO_EXIT_MODULES = (
+    "loop_apidoc/adapters/local.py",
+    "loop_apidoc/agentcli/assemble.py",
+    "loop_apidoc/agentcli/preprocess.py",
+    "loop_apidoc/agentcli/strict.py",
+    "loop_apidoc/cli.py",
+    "loop_apidoc/diff/report.py",
+    "loop_apidoc/docx_publish.py",
+    "loop_apidoc/evaluation/report.py",
+    "loop_apidoc/extraction/store.py",
+    "loop_apidoc/extraction_scaffold/write.py",
+    "loop_apidoc/feedback/report.py",
+    "loop_apidoc/focus/report.py",
+    "loop_apidoc/foundry/feedback.py",
+    "loop_apidoc/foundry/importer.py",
+    "loop_apidoc/foundry/store.py",
+    "loop_apidoc/freshness/record.py",
+    "loop_apidoc/freshness/report.py",
+    "loop_apidoc/generate/writer.py",
+    "loop_apidoc/gitbook_llms.py",
+    "loop_apidoc/governance/report.py",
+    "loop_apidoc/governance/review_plan.py",
+    "loop_apidoc/governance/snapshot.py",
+    "loop_apidoc/html_snapshot.py",
+    "loop_apidoc/openapi_snapshot.py",
+    "loop_apidoc/preparation/report.py",
+    "loop_apidoc/rendered_url.py",
+    "loop_apidoc/run/persist.py",
+    "loop_apidoc/score/report.py",
+    "loop_apidoc/shadow/report.py",
+    "loop_apidoc/source_quality/report.py",
+    "loop_apidoc/source_risk/report.py",
+    "loop_apidoc/supplementary_note.py",
+    "loop_apidoc/url_corpus.py",
+    "loop_apidoc/validate/report.py",
+)
+
+
+def _looks_like_mode(value: object) -> bool:
+    """Whether a literal is shaped like an open mode. A path or URL that merely
+    contains `w`/`a`/`x` is not: `.open("word/document.xml")` must not read as a
+    write."""
+    return (
+        isinstance(value, str)
+        and 0 < len(value) <= 4
+        and set(value) <= _MODE_ALPHABET
+        and any(c in value for c in WRITE_OPEN_MODE_CHARS)
+    )
+
+
+def _opens_for_writing(call: ast.Call, *, mode_position: int) -> bool:
+    """Whether an `open()`/`Path.open()` call names a write mode. Only the one
+    positional slot that can hold a mode is inspected — scanning every argument
+    turned any string containing `x` into a write. A non-literal mode reads as
+    read-only rather than being guessed at."""
+    if len(call.args) > mode_position:
+        candidate = call.args[mode_position]
+        if isinstance(candidate, ast.Constant) and _looks_like_mode(candidate.value):
+            return True
+    return any(
+        keyword.arg == "mode"
+        and isinstance(keyword.value, ast.Constant)
+        and _looks_like_mode(keyword.value.value)
+        for keyword in call.keywords
+    )
+
+
+def _call_writes(call: ast.Call) -> bool:
+    func = call.func
+    if isinstance(func, ast.Name):
+        return func.id == "open" and _opens_for_writing(call, mode_position=1)
+    if not isinstance(func, ast.Attribute):
+        return False
+    receiver = func.value.id if isinstance(func.value, ast.Name) else None
+    if receiver in OS_WRITE_FUNCTIONS and func.attr in OS_WRITE_FUNCTIONS[receiver]:
+        return True
+    if func.attr in PATH_WRITE_METHODS:
+        return True
+    if func.attr == "open":
+        return _opens_for_writing(call, mode_position=0)
+    # `Path.replace(target)` takes exactly one argument; `str.replace(old, new)`
+    # takes two. Counting the name alone put every string-munging module in the
+    # inventory, which is how this scanner first read 46 modules instead of 34.
+    # `dataclasses.replace(obj)` is the one-argument shape that is not a path.
+    return (
+        func.attr == "replace"
+        and receiver not in NON_PATH_REPLACE_RECEIVERS
+        and len(call.args) == 1
+        and not call.keywords
+    )
+
+
+PACKAGE_ROOT = Path("loop_apidoc")
+
+
+def modules_with_file_writes(
+    *, package_root: Path = PACKAGE_ROOT, relative_to: Path | None = None
+) -> tuple[str, ...]:
+    """Every module under `package_root` containing a write call, as sorted
+    paths relative to `relative_to` — by default the package's parent, so the
+    repository package yields `loop_apidoc/...` regardless of how the root was
+    spelled."""
+    base = relative_to if relative_to is not None else package_root.parent
+    found: list[str] = []
+    for path in sorted(package_root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError as exc:
+            raise QualityGateFailure(f"cannot parse {path}: {exc}") from exc
+        if any(isinstance(node, ast.Call) and _call_writes(node) for node in ast.walk(tree)):
+            found.append(path.relative_to(base).as_posix())
+    return tuple(found)
+
+
+def file_io_registry_gaps(modules: Iterable[str]) -> dict[str, list[str]]:
+    """Both directions of drift between the scanned modules and
+    `FILE_IO_EXIT_MODULES`: `unregistered` writes without being listed, `stale`
+    is listed without writing any more."""
+    scanned = set(modules)
+    registered = set(FILE_IO_EXIT_MODULES)
+    return {
+        "unregistered": sorted(scanned - registered),
+        "stale": sorted(registered - scanned),
     }
 
 
