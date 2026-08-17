@@ -14,6 +14,8 @@ _EXTENSION_FORMATS: dict[str, SourceFormat] = {
     ".doc": SourceFormat.WORD_LEGACY,
     ".xlsx": SourceFormat.SPREADSHEET,
     ".xls": SourceFormat.SPREADSHEET,
+    ".txt": SourceFormat.PLAIN_TEXT,
+    ".csv": SourceFormat.CSV,
     ".json": SourceFormat.OPENAPI_JSON,
     ".yaml": SourceFormat.OPENAPI_YAML,
     ".yml": SourceFormat.OPENAPI_YAML,
@@ -26,13 +28,15 @@ def detect_format(path: Path) -> SourceFormat:
     return _EXTENSION_FORMATS.get(path.suffix.lower(), SourceFormat.UNKNOWN)
 
 
-#: 認得出格式不等於讀得動。舊版二進位 Word 與試算表都沒有前處理路徑
-#: (`preprocess` 只轉 `.pdf`/`.docx`),掃描器也讀不了它們,所以標成 supported 是
-#: 一句不成立的宣稱——而 manifest 是 operator 第一個看到的東西。
+#: 認得出格式不等於讀得動。舊版二進位 Word、試算表、純文字、CSV 都沒有前處理
+#: 路徑(`preprocess` 只轉 `.pdf`/`.docx`),掃描器也讀不了它們,所以標成 supported
+#: 是一句不成立的宣稱——而 manifest 是 operator 第一個看到的東西。
 _UNSUPPORTED = (
     SourceFormat.UNKNOWN,
     SourceFormat.WORD_LEGACY,
     SourceFormat.SPREADSHEET,
+    SourceFormat.PLAIN_TEXT,
+    SourceFormat.CSV,
 )
 
 
@@ -86,6 +90,23 @@ _UNSUPPORTED_REMEDIES: dict[SourceFormat, UnsupportedRemedy] = {
         en=(
             "spreadsheets are not readable by this pipeline; export the sheet you "
             "need as a Markdown table into sources/ and preprocess again"
+        ),
+    ),
+    # `.txt` 的內容通常就是可讀文字,唯一缺的是副檔名——不是通則裡的四選一。
+    SourceFormat.PLAIN_TEXT: UnsupportedRemedy(
+        zh="純文字檔這條管線讀不動，請改副檔名為 .md 放回 sources/ 後重跑前處理",
+        en=(
+            "plain text is not readable by this pipeline; rename it to .md "
+            "into sources/ and preprocess again"
+        ),
+    ),
+    # 刻意不說「另存為 CSV」:.csv 本身就是這個 unsupported 的成因,建議它等於
+    # 把 operator 送回同一個地方,而且來源事實只從 Markdown 讀得出來(#98)。
+    SourceFormat.CSV: UnsupportedRemedy(
+        zh="CSV 這條管線讀不動，請另存為 Markdown 表格放進 sources/ 後重跑前處理",
+        en=(
+            "CSV is not readable by this pipeline; re-save it as a Markdown table "
+            "into sources/ and preprocess again"
         ),
     ),
 }

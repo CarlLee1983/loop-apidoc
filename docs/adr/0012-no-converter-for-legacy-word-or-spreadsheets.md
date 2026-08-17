@@ -4,6 +4,11 @@ status: accepted
 
 # No converter is built for legacy Word or spreadsheets — the operator converts, the pipeline says so
 
+> The filename predates the 2026-08 extension of this decision to `.txt` and `.csv` (#113). It stays
+> unchanged because renaming it would break every existing link into this record; read "legacy Word
+> or spreadsheets" as the two formats the title was written for, not the full current scope — the
+> Decision section below states that scope.
+
 `.docx` has a complete OOXML subsystem in this repo: preflight validation, rendering, staged
 publication, its own risk checks. `.doc` gets a passthrough and a sentence. `.xlsx` gets nothing at
 all. Read cold, that reads as unfinished work, and the obvious "fix" is to write the two missing
@@ -33,16 +38,18 @@ of edge cases for a source class that arrives a few times a year.
 
 ## Decision
 
-Neither `.doc` nor `.xlsx`/`.xls` is converted by this pipeline. Both are **recognised** as their
-own `SourceFormat` (`word-legacy`, `spreadsheet`), marked unsupported, and reported with a remedy
-that names the next step in the operator's own hands.
+Neither `.doc`, `.xlsx`/`.xls`, `.txt`, nor `.csv` is converted by this pipeline. All four are
+**recognised** as their own `SourceFormat` (`word-legacy`, `spreadsheet`, `plain-text`, `csv`),
+marked unsupported, and reported with a remedy that names the next step in the operator's own hands.
 
 Recognition is the entire point, because the outcome is identical either way — a `.xlsx` that falls
 through to `UNKNOWN` is refused just as firmly. What differs is whether the refusal can be acted on.
 That was the whole value of the 0.37.0 change for `.doc` (`docs/RELEASE_NOTES_0.37.0.md:40-45`):
 nothing new became supported; a silent failure became a loud one that names the next move. A format
 that is refused without a remedy leaves the operator holding a file and no next step, which is how a
-one-minute problem becomes a support thread.
+one-minute problem becomes a support thread. `.txt` and `.csv` (#113) are the same decision applied
+to two more formats that arrive the same way — recognisable, unreadable by this pipeline, and
+previously indistinguishable from a truly unknown extension.
 
 The remedy is one decision stored once, in `manifest/formats.py`, and read by all four sites that
 report the refusal: the preparation-readiness warning, the coverage warning, the score finding, and
@@ -61,9 +68,11 @@ run-level action, because the passthrough line is printed before any run directo
 mandatory order starts at preprocess — so the same sentence is true in all four places.
 
 **The spreadsheet remedy does not mention CSV**, though the originating issue proposed it. `.csv` is
-not in the extension table either, so it lands in exactly the same unsupported state — advising it
-would send the operator in a circle. Source facts are read only out of Markdown, so a Markdown table
-is the only export that actually reaches the gate.
+now recognised as its own `SourceFormat` and unsupported in exactly the same way — advising it
+would send the operator in a circle, only now back into a *named* unsupported state instead of
+`UNKNOWN`. The reasoning is unchanged by giving `.csv` its own entry: its own remedy still does not
+suggest CSV, for the same reason. Source facts are read only out of Markdown, so a Markdown table is
+the only export that actually reaches the gate.
 
 ## Considered options
 
@@ -93,18 +102,28 @@ worse by a machine that cannot see the merged cells.
 
 One migration consequence is worth stating plainly, because its error message does not name the
 cause. `source_risk/inspect.py`'s `source_binding_digest` hashes each source's `source_format.value`,
-so a corpus containing `.xls`/`.xlsx` that was risk-scanned before this change no longer matches the
-rebuilt manifest, and `assemble --source-quality` refuses the run with a source-binding mismatch.
-That is fail-closed and correct — the package genuinely changed how it is described — and re-running
-`inspect-source-risk` resolves it, but an operator hitting it will not guess why.
+so a corpus containing `.xls`/`.xlsx` — and now `.txt`/`.csv` — that was risk-scanned before the
+respective change no longer matches the rebuilt manifest, and `assemble --source-quality` refuses the
+run with a source-binding mismatch. That is fail-closed and correct — the package genuinely changed
+how it is described — and re-running `inspect-source-risk` resolves it, but an operator hitting it
+will not guess why.
+
+The `.txt`/`.csv` extension did not touch anything else that reads a `SourceFormat`: freshness
+fingerprinting (`loop_apidoc/freshness/record.py`, where `build_fingerprint` lives) does not branch
+on it, `source_risk/inspect.py`'s
+`_SCANNABLE_FORMATS` set is unchanged (a `.txt`/`.csv` local source was already excluded from
+content scanning, both before and after, since neither was ever in that set), and the scanner's
+`status`/`supported` computation reads `is_supported()` generically rather than naming formats. None
+of the thirteen benchmark cases has a `.txt` or `.csv` local source, so no committed fixture's
+`source_binding_digest` changed.
 
 `docs/PRODUCT_EXTENSION_ROADMAP.md` and `docs/DESIGN_DECISIONS.md` keep their statements of fact and
 link here for the reasoning, rather than restating the trade-off in three places.
 
-**Falsified if:** either format stops being an explicit, remedied refusal. Concretely, this decision
-no longer holds when `loop_apidoc/manifest/formats.py` maps `.doc`, `.xls` or `.xlsx` to a supported
-format or drops their remedies; when any of the four reporting sites stops reading them —
-`loop_apidoc/preparation/assess.py`, `loop_apidoc/validate/coverage.py`,
+**Falsified if:** any of the four formats stops being an explicit, remedied refusal. Concretely, this
+decision no longer holds when `loop_apidoc/manifest/formats.py` maps `.doc`, `.xls`, `.xlsx`, `.txt`
+or `.csv` to a supported format or drops their remedies; when any of the four reporting sites stops
+reading them — `loop_apidoc/preparation/assess.py`, `loop_apidoc/validate/coverage.py`,
 `loop_apidoc/score/evaluate.py`, `loop_apidoc/cli.py` (the `preprocess` passthrough line lives there,
 not in the preprocess module) — and hardcodes its own wording instead; or when
-`loop_apidoc/agentcli/preprocess.py` converts either format instead of passing it through.
+`loop_apidoc/agentcli/preprocess.py` converts any of the four instead of passing it through.

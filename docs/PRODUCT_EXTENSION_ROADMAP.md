@@ -347,10 +347,10 @@ OOXML gate scans every Word XML part and rejects unsafe ZIP/package/XML, macros 
 field content, external relationships, markup-compatibility alternate content, `altChunk`, and merged-cell table
 semantics that cannot be rendered faithfully; every DOCX in a batch is validated before outputs
 are written. The resulting Markdown still passes through the existing manifest-bound
-`inspect-source-risk` gate. Legacy `.doc` and spreadsheets (`.xlsx`/`.xls`) remain explicit
-passthrough gaps: both are recognised, refused, and reported with the operator-side conversion that
-resolves them. No converter is planned for either — the reasoning is in
-`docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md`.
+`inspect-source-risk` gate. Legacy `.doc`, spreadsheets (`.xlsx`/`.xls`), plain text (`.txt`), and
+CSV (`.csv`) remain explicit passthrough gaps: all four are recognised, refused, and reported with
+the operator-side conversion that resolves them. No converter is planned for any of them — the
+reasoning is in `docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md`.
 
 **Status (2026-08-17): `.docx` and GitBook are not validated against a real source.**
 The OOXML subsystem (`docx_normalization.py` plus `docx_{models,validation,render,publish}.py`)
