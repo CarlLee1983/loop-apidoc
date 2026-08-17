@@ -352,6 +352,22 @@ passthrough gaps: both are recognised, refused, and reported with the operator-s
 resolves them. No converter is planned for either — the reasoning is in
 `docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md`.
 
+**Status (2026-08-17): `.docx` and GitBook are not validated against a real source.**
+The OOXML subsystem (`docx_normalization.py` plus `docx_{models,validation,render,publish}.py`)
+and `cache-gitbook-llms` are complete and unit-tested, but none of the thirteen benchmark cases
+has a Word or GitBook source, and every DOCX under `tests/` is synthesised in `tmp_path`. Their
+evidence strength is exactly the benchmark's *skipped*: code that passes on synthetic input, with
+no supplier document having gone through end to end. This repository is strict about that
+vocabulary elsewhere — a skipped case is never reported as passed, a sanitized fixture is never
+reported as source-backed — so the two paths carry the same label until they earn otherwise, in
+`README.md` / `README.en.md` and here.
+
+The label is not a plan to remove the code. Keeping it is deliberate: the problem is not that the
+investment was wrong, it is that the current wording reads as validated. The trigger to remove the
+label is the arrival of the first real Word delivery or GitBook site — add it as a benchmark case,
+then drop the label in the same change. Until then neither path may be described as validated in
+any teaching or promotion document.
+
 **Decided against (2026-08-15):** the documented error-code floor derived by
 `source_facts/markdown.py` is consumed only by focus directives, and stays that
 way. Extending the general source-fact gate to require every tabulated code on

@@ -1166,7 +1166,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
           <details class="step-details">
             <summary>查看來源安全與授權細節</summary>
             <ul class="detail-list">
-              <li><strong>文件轉換：</strong><code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先通過 bounded、fail-closed OOXML 驗證，並附上 source-hash provenance。</li>
+              <li><strong>文件轉換：</strong><code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先通過 bounded、fail-closed OOXML 驗證，並附上 source-hash provenance。DOCX 與 GitBook 兩條路徑<strong>未經真實來源驗證</strong>——十三個 benchmark case 都不是 Word 或 GitBook 來源，證據強度等同 benchmark 的 skipped，請當成可用但未證實。</li>
               <li><strong>來源風險：</strong><code>inspect-source-risk</code> 會在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中的 payload。</li>
               <li><strong>受保護頁面：</strong>直接 HTTP 被擋、但瀏覽器可顯示時，<code>import-rendered-url</code> 會保存原始位元組與 capture provenance；只有 URL、path、method 與 SHA-256 全數吻合，才會略過 origin fetch。</li>
               <li><strong>GitBook 與草稿：</strong>若提供 <code>llms.txt</code>，系統會快取同範圍 Markdown，再產生具行號、待人工覆核的 extraction scaffold；它必須複製、核對並補齊後，才能作為正式 extraction。</li>
