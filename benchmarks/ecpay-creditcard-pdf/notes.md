@@ -63,6 +63,19 @@
 - title=`綠界科技全方位金流 信用卡介接技術文件`、version=`V5.6.1`。AioCheckOut requestBody 仍 36 屬性 / 11 必填。
 - assemble 帶 `--url` 首跑揭 review.html 崩潰(見下方 Pipeline 缺陷 §2),修後 PASS。
 
+### Source-derivation lane（2026-08-17,issue #111）
+
+原始 PDF 已還原到本機 gitignored `raw/gw_p110.pdf`(SHA-256 與上述
+`fd12a38c…` 記載逐位元組相同,今天由官方 URL 重新下載驗證)。新增 committed
+`source-derivation.json` 綁定原始 PDF、本機 `sources/gw_p110.pdf.md`(注意:
+兩者都是 gitignored,不入庫;入庫的只有描述檔記錄的 SHA-256)與轉檔工具
+(pymupdf4llm,版本交給 `uv.lock` 決定,不在描述檔內釘死)。以現行
+`uv run loop-apidoc preprocess`(pymupdf4llm)重跑該 PDF,產出與本機
+`sources/gw_p110.pdf.md` 逐位元組相同 —— `preprocess` 這一步
+正式納入 `tests/test_benchmarks.py` 與 `scripts/quality_gate.py
+--strict-local` 迴圈(ADR 0013)。`jili-legacy-gaming-pdf` 因無公開
+URL、未取得供應商原始檔,本次不列入此 lane。
+
 ## Pipeline 缺陷（本 case 揭 2 項真 bug,皆 TDD 修)
 
 ### 1. 純簽章 auth 誤觸 no-auth gap

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -112,6 +113,18 @@ def test_required_sanitized_benchmark_cases_match_committed_descriptors():
     assert set(cases) == committed == {"rsg-game-transfer-wallet"}
 
 
+def test_required_source_derivation_benchmark_cases_match_committed_descriptors():
+    cases = quality_gate.required_source_derivation_benchmark_cases()
+    benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
+    committed = {
+        case.name
+        for case in benchmark_root.iterdir()
+        if (case / "source-derivation.json").is_file()
+    }
+
+    assert set(cases) == committed == {"ecpay-creditcard-pdf"}
+
+
 def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):
     root = tmp_path / "benchmarks"
     (root / "has-source" / "sources").mkdir(parents=True)
@@ -156,6 +169,75 @@ def test_missing_benchmark_source_quality_reports_incomplete_packages(tmp_path):
     )
 
     assert missing == ["half-audited", "unaudited"]
+
+
+def test_missing_benchmark_source_derivation_reports_absent_originals_only(tmp_path):
+    root = tmp_path / "benchmarks"
+    restored = root / "restored"
+    restored.mkdir(parents=True)
+    (restored / "source-derivation.json").write_text(
+        json.dumps({"original_document": {"path": "raw/doc.pdf"}}),
+        encoding="utf-8",
+    )
+    (restored / "raw").mkdir()
+    (restored / "raw" / "doc.pdf").write_text("pdf bytes", encoding="utf-8")
+
+    not_restored = root / "not-restored"
+    not_restored.mkdir()
+    (not_restored / "source-derivation.json").write_text(
+        json.dumps({"original_document": {"path": "raw/doc.pdf"}}),
+        encoding="utf-8",
+    )
+
+    # A missing/broken descriptor is a different failure mode (see
+    # test_invalid_benchmark_source_derivation_reports_broken_descriptors below)
+    # and must never be reported here as "original missing".
+    no_descriptor = root / "no-descriptor"
+    no_descriptor.mkdir()
+
+    missing = quality_gate.missing_benchmark_source_derivation(
+        benchmark_root=root,
+        cases=["restored", "not-restored", "no-descriptor"],
+    )
+
+    assert missing == ["not-restored"]
+
+
+def test_invalid_benchmark_source_derivation_reports_broken_descriptors(tmp_path):
+    root = tmp_path / "benchmarks"
+    valid = root / "valid"
+    valid.mkdir(parents=True)
+    (valid / "source-derivation.json").write_text(
+        json.dumps({"original_document": {"path": "raw/doc.pdf"}}),
+        encoding="utf-8",
+    )
+
+    no_descriptor = root / "no-descriptor"
+    no_descriptor.mkdir()
+
+    bad_json = root / "bad-json"
+    bad_json.mkdir()
+    (bad_json / "source-derivation.json").write_text("{ not json", encoding="utf-8")
+
+    missing_field = root / "missing-field"
+    missing_field.mkdir()
+    (missing_field / "source-derivation.json").write_text(
+        json.dumps({"original_document": {}}), encoding="utf-8"
+    )
+
+    escaping = root / "escaping"
+    escaping.mkdir()
+    (escaping / "source-derivation.json").write_text(
+        json.dumps({"original_document": {"path": "../../etc/passwd"}}),
+        encoding="utf-8",
+    )
+
+    invalid = quality_gate.invalid_benchmark_source_derivation(
+        benchmark_root=root,
+        cases=["valid", "no-descriptor", "bad-json", "missing-field", "escaping"],
+    )
+
+    assert invalid == ["no-descriptor", "bad-json", "missing-field", "escaping"]
 
 
 def test_strict_local_does_not_accept_sanitized_sources_as_originals(tmp_path):

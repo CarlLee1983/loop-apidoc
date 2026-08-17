@@ -52,6 +52,19 @@ signal for retained claims, but they neither replace original snapshots nor
 qualify for strict-local. `--strict-local` and `--sanitized-fixtures` are
 mutually exclusive.
 
+A PDF-derived case (currently only `ecpay-creditcard-pdf`) also carries a
+committed `source-derivation.json` binding the original PDF and the derived
+Markdown to the conversion tool that produced it — but neither the original PDF
+nor the Markdown itself is committed; both `raw/` and `sources/` are gitignored,
+so the descriptor's recorded SHA-256 values are the only tracked anchor.
+`tests/test_benchmarks.py` checks the local Markdown's digest unconditionally
+wherever `sources/` is present, and additionally re-runs `preprocess` over the
+restored original — under the case's gitignored `raw/` — asserting
+byte-identical output when `raw/` is also present; `--strict-local` names a case
+whose original is missing from `raw/` before it runs pytest. This is not a
+fifth layer: it exercises the conversion step of the existing Source-backed
+execution layer and grants no new evidence strength (ADR 0013).
+
 Implementation-backed conformance benchmarks are another distinct assurance lane. They
 must report the exact Applicability Envelope, observation time, runner/suite version,
 material-claim coverage, and open discrepancies. They do not increase documentary

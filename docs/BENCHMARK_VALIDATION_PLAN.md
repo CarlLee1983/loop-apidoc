@@ -122,12 +122,16 @@ Strict-local is the strongest harness claim. It:
 2. requires a non-empty `sources/` tree for every required case;
 3. requires a `source-quality/` audit package for every required case, naming
    the missing ones before pytest runs;
-4. runs `uv run pytest tests/test_benchmarks.py -q`; and
-5. rejects the run if pytest reports any benchmark skip.
+4. requires the original PDF for every case in the source-derivation lane
+   (below) to be restored into `raw/`, naming the missing ones before pytest
+   runs;
+5. runs `uv run pytest tests/test_benchmarks.py -q`; and
+6. rejects the run if pytest reports any benchmark skip.
 
 “Strict-local passed” therefore means every required case had a source
-snapshot and its audit package, all source-backed benchmark checks ran, and no
-skip was reported.
+snapshot and its audit package, every source-derivation-lane case had its
+original PDF restored into `raw/`, all source-backed benchmark checks ran, and
+no skip was reported.
 
 ## Supplemental sanitized-fixture lane
 
@@ -161,6 +165,39 @@ eligible for the phrase “strict-local passed.” The CLI rejects combining
 `--strict-local` and `--sanitized-fixtures` so the two assurance claims cannot
 be collapsed into one result.
 
+## Supplemental PDF source-derivation lane
+
+A case whose source is a PDF converts it via `preprocess` (pymupdf4llm) before its
+local `sources/*.md` ever exists — that conversion step previously sat outside
+every harness run. A PDF-derived case may commit `source-derivation.json`,
+binding the original PDF (case-relative path under gitignored `raw/`, official
+URL, capture date, SHA-256), the derived Markdown (case-relative path, SHA-256),
+and the conversion tool by name. It never pins a tool version: `uv.lock` is the
+sole authority for which pymupdf4llm runs (ADR 0013). The descriptor itself is
+committed, but what it names is not: both `raw/` and `sources/` are gitignored,
+so `derived_markdown.sha256` is the only tracked anchor for the Markdown the
+harness actually reads.
+
+This is not a fifth harness layer: it exercises the conversion step of the
+existing Source-backed execution layer (§3) and grants no new evidence strength
+— a declared case was already source-backed. `scripts/quality_gate.py::
+SOURCE_DERIVATION_BENCHMARK_CASES` is a third reviewed inventory with the same
+exact-set-parity rule as `REQUIRED_BENCHMARK_CASES` and
+`SANITIZED_BENCHMARK_CASES`;
+`test_required_source_derivation_benchmark_cases_match_committed_descriptors`
+enforces it. `--strict-local` names a case whose original is missing from
+`raw/` before it runs pytest. `tests/test_benchmarks.py` checks the local
+Markdown's digest against the descriptor unconditionally, wherever that file
+exists; when the original is also present in `raw/`, it additionally re-runs
+`preprocess` over it and asserts the output is byte-identical to the local
+Markdown. Only that re-derivation half SKIPs, like every other source-backed
+assertion, when the original is absent.
+
+The current inventory contains only `ecpay-creditcard-pdf`. `jili-legacy-gaming-pdf`'s
+source is a supplier delivery with no public URL; it joins the lane only once that
+file is available, and until then keeps exactly the evidence strength it already
+had.
+
 ## Terminology
 
 Use these terms consistently in issues, release notes, and review comments:
@@ -173,6 +210,7 @@ Use these terms consistently in issues, release notes, and review comments:
 | **Passed** | The applicable assertions executed and passed. |
 | **Strict-local passed** | Every required case had sources, all source-backed benchmark checks ran, and no skip was reported. |
 | **Sanitized-fixture exact-evidence passed** | A reviewed redistributable subset replayed the retained claims with exact fragment support; this is not source-backed or strict-local success. |
+| **Source-derivation verified** | A PDF case's local Markdown matches the SHA-256 recorded in its committed `source-derivation.json`, and — when the original PDF is also present locally — was re-derived byte-identically from it; this is part of the existing source-backed layer, not new evidence strength. |
 
 Do not shorten “committed and discovered” to “validated,” and do not describe
 a CI run containing source-related skips as benchmark success.
@@ -186,6 +224,7 @@ a CI run containing source-related skips as benchmark success.
 | `uv run python scripts/quality_gate.py` | CI-safe lint, unit/integration tests, discovery, and parity | No |
 | `uv run python scripts/quality_gate.py --sanitized-fixtures` | CI-safe checks plus the reviewed sanitized exact-evidence lane | No; only committed sanitized subsets |
 | `uv run pytest tests/test_benchmarks.py -q` | Source-backed execution for cases whose sources are present; absent sources skip | Yes, for a complete pass |
+| `uv run pytest tests/test_benchmarks.py -k test_local_markdown_matches_recorded_source_derivation -q` | Source-derivation lane for PDF cases; Markdown digest checked whenever `sources/` is present, re-derivation additionally needs `raw/` | Yes: `sources/` for the digest check, `raw/` for re-derivation |
 | `uv run python scripts/quality_gate.py --strict-local` | All four layers, with sources present and zero skips | Yes, for all thirteen cases |
 
 The full benchmark module creates more than thirteen pytest items because each
@@ -284,14 +323,29 @@ Benchmark harness 分成四層，不能混為一談：
    `benchmarks/<case>/sources/` 快照存在時，assemble 與產物斷言才會執行；缺來源是
    SKIP，不是 PASS。
 4. **strict-local 預檢**：`scripts/quality_gate.py --strict-local` 要求 required
-   inventory 與 committed fixture 完全一致、每個 case 都有非空來源，且 benchmark
-   測試零 skip。
+   inventory 與 committed fixture 完全一致、每個 case 都有非空來源、source-derivation
+   lane 裡的每個 case 都已把原始 PDF 還原到 `raw/`，且 benchmark 測試零 skip。
 
 另外有一條獨立、不可混稱為第五層的 sanitized-fixture CI lane：
 `scripts/quality_gate.py --sanitized-fixtures` 只重播經審核、可重新散布、保留原始行號的
 exact-evidence 片段。它會驗證 retained claims 的 legacy/Core parity，但不代表完整原始文件
 已重新驗證，也不能稱為 source-backed 或 strict-local PASS。目前 pilot 是
 `rsg-game-transfer-wallet`；受控清單與 descriptor 必須 exact parity。
+
+另有一條同樣不算第五層的 PDF source-derivation lane：PDF 來源的 case 可額外提交
+`source-derivation.json`，記錄原始 PDF（case 相對路徑，位於 gitignored 的 `raw/`、官方
+URL、取得日期、SHA-256）、導出的 markdown（case 相對路徑、SHA-256）與轉檔工具名稱——
+不釘版本號，因為 `uv.lock` 才是 pymupdf4llm 版本的唯一依據（ADR 0013）。描述檔本身入庫，
+但它記錄的原始 PDF 與 markdown 都不入庫——`raw/` 與 `sources/` 都是 gitignored，
+`derived_markdown.sha256` 才是唯一入庫的錨點。它只是把既有
+「來源支撐執行」層裡本來沒被重跑過的 `preprocess` 步驟補進迴圈，不代表新的證據強度。
+`scripts/quality_gate.py::SOURCE_DERIVATION_BENCHMARK_CASES` 是第三份受控清單，與既有
+兩份同樣要求 exact set parity；`--strict-local` 會在跑 pytest 前先點名缺少原始 PDF 的
+case。`tests/test_benchmarks.py` 只要本機 `sources/` 存在,就無條件比對其 SHA-256 與描述檔；
+`raw/` 的原始檔也在時,才追加重跑一次 `preprocess`,斷言產出與本機 markdown 逐位元組相同——
+只有重跑 preprocess 這半段,才比照其他來源支撐斷言在原始檔不在時 SKIP。目前只有
+`ecpay-creditcard-pdf` 在此清單裡，`jili-legacy-gaming-pdf` 是供應商交件、沒有公開 URL，
+要等拿到檔案才會加入。
 
 新增 case 時，先加入 extraction／expected 宣告，再刻意更新
 `REQUIRED_BENCHMARK_CASES`，跑 exact-parity 測試，最後才在持有原始來源快照的機器上
