@@ -171,11 +171,65 @@ def test_inspect_source_risk_classifies_control_content_by_fixed_rules(
     ]
 
 
-def test_inspect_source_risk_bounds_high_density_findings(tmp_path: Path) -> None:
+def test_inspect_source_risk_bounds_high_density_warnings_without_rejecting(
+    tmp_path: Path,
+) -> None:
+    """Warning 有獨立額度。一份合格的大型文件裡聯絡信箱與憑證引用是高頻的,
+    沒有這道分隔,「警告很多」會經由截斷 blocker 變成「拒絕」,而報告裡
+    沒有任何一筆實質命中。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "dense-warnings.md"
+    source.write_text("\u200b" * 200_000, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report_path = output / "source-risk-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["ruleset_version"] == "3"
+    assert report["verdict"] == "pass"
+    assert len(report["findings"]) == 501
+    assert report["findings"][-1] == {
+        "rule_id": "SR-WARNINGS-TRUNCATED",
+        "severity": "warning",
+        "source_ref": "/local_sources/0",
+        "locator": "file",
+    }
+    assert all(
+        finding["rule_id"] == "SR-ZERO-WIDTH-FORMATTING"
+        for finding in report["findings"][:-1]
+    )
+    assert report_path.stat().st_size < 200_000
+
+
+def test_inspect_source_risk_still_fails_closed_on_high_density_blockers(
+    tmp_path: Path,
+) -> None:
+    """Warning 的額度不能鬆動 blocker 的 fail-closed:高密度惡意輸入
+    仍必須拒絕,而不是被放大成無上限報告。"""
     sources = tmp_path / "sources"
     sources.mkdir()
     source = sources / "dense-controls.md"
-    source.write_text("\u200b" * 200_000, encoding="utf-8")
+    source.write_text("\x00" * 200_000, encoding="utf-8")
     manifest = tmp_path / "manifest.json"
     manifest_result = runner.invoke(
         app,
@@ -200,7 +254,6 @@ def test_inspect_source_risk_bounds_high_density_findings(tmp_path: Path) -> Non
     assert result.exit_code == 1, result.stdout
     report_path = output / "source-risk-report.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
-    assert report["ruleset_version"] == "2"
     assert report["verdict"] == "reject"
     assert len(report["findings"]) == 1_000
     assert report["findings"][-1] == {
@@ -209,10 +262,6 @@ def test_inspect_source_risk_bounds_high_density_findings(tmp_path: Path) -> Non
         "source_ref": "/local_sources/0",
         "locator": "file",
     }
-    assert all(
-        finding["rule_id"] == "SR-ZERO-WIDTH-FORMATTING"
-        for finding in report["findings"][:-1]
-    )
     assert report_path.stat().st_size < 200_000
 
 
@@ -551,3 +600,443 @@ def test_inspect_source_risk_is_byte_deterministic_for_same_manifest(
     assert (outputs[0] / "source-risk-report.zh-TW.md").read_bytes() == (
         outputs[1] / "source-risk-report.zh-TW.md"
     ).read_bytes()
+
+
+def test_inspect_source_risk_blocks_secret_material_without_echo(
+    tmp_path: Path,
+) -> None:
+    """一把真金鑰進了 sources/ 之後會被 hash、被引用、可能隨產出散布 ——
+    不可逆的洩漏,所以在任何 agent 讀到來源文字之前就擋下。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    secret = "-----BEGIN RSA PRIVATE KEY-----"
+    source.write_text(f"# API\n\n{secret}\n", encoding="utf-8")
+    original_bytes = source.read_bytes()
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 1, result.stdout
+    report_text = (output / "source-risk-report.json").read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert report["verdict"] == "reject"
+    assert report["findings"] == [
+        {
+            "rule_id": "SR-SECRET-VALUE",
+            "severity": "blocker",
+            "source_ref": "/local_sources/0",
+            "locator": "line 3, column 1",
+        }
+    ]
+    assert secret not in report_text
+    assert secret not in (output / "source-risk-report.zh-TW.md").read_text(
+        encoding="utf-8"
+    )
+    assert source.read_bytes() == original_bytes
+
+
+def test_inspect_source_risk_warns_on_contact_pii_without_rejecting(
+    tmp_path: Path,
+) -> None:
+    """技術窗口信箱是正當供應商文件的常態內容。擋下它會讓 operator 學會
+    加 waiver,而 waiver 一旦成為習慣,這個閘就等於沒有。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    contact = "support@provider.example"
+    source.write_text(f"# API\n\n{contact}\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report_text = (output / "source-risk-report.json").read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert report["verdict"] == "pass"
+    assert report["findings"] == [
+        {
+            "rule_id": "SR-CONTACT-PII",
+            "severity": "warning",
+            "source_ref": "/local_sources/0",
+            "locator": "line 3, column 1",
+        }
+    ]
+    assert contact not in report_text
+
+
+def test_inspect_source_risk_warns_on_identity_and_phone_pii(
+    tmp_path: Path,
+) -> None:
+    """身分證字號與手機號碼與聯絡信箱同級:浮現,但不擋。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text("# API\n\nA123456789\n0912345678\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report_text = (output / "source-risk-report.json").read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert report["verdict"] == "pass"
+    assert [
+        (finding["rule_id"], finding["severity"], finding["locator"])
+        for finding in report["findings"]
+    ] == [
+        ("SR-PII-VALUE", "warning", "line 3, column 1"),
+        ("SR-PII-VALUE", "warning", "line 4, column 1"),
+    ]
+    assert "A123456789" not in report_text
+    assert "0912345678" not in report_text
+
+
+def test_inspect_source_risk_warns_on_payment_card_but_not_on_long_ids(
+    tmp_path: Path,
+) -> None:
+    """付款文件裡到處是十幾位數的訂單／商店編號。沒有 Luhn 檢查的卡號規則
+    會把它們全部誤報,而一個吵到沒人看的閘等於沒有閘。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text(
+        "# API\n\n4539148803436004\n4539148803436005\n", encoding="utf-8"
+    )
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report_text = (output / "source-risk-report.json").read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert report["verdict"] == "pass"
+    assert [
+        (finding["rule_id"], finding["severity"], finding["locator"])
+        for finding in report["findings"]
+    ] == [("SR-PAYMENT-CARD", "warning", "line 3, column 1")]
+    assert "4539148803436004" not in report_text
+
+
+def test_inspect_source_risk_does_not_block_documented_credential_placeholders(
+    tmp_path: Path,
+) -> None:
+    """每一份寫得好的 API 文件都會示範認證標頭。把「文件在描述認證方式」
+    與「有人把真金鑰貼進來」當成同一件事,會擋掉幾乎每一份合格來源。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text(
+        "# API\n\nAPI-Key: YOUR_API_KEY\nAuthorization: Basic {{credentials}}\n",
+        encoding="utf-8",
+    )
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert report["verdict"] == "pass"
+    assert {finding["severity"] for finding in report["findings"]} == {"warning"}
+    assert {finding["rule_id"] for finding in report["findings"]} == {
+        "SR-CREDENTIAL-REFERENCE"
+    }
+
+
+def test_inspect_source_risk_ignores_well_known_test_card_numbers(
+    tmp_path: Path,
+) -> None:
+    """付款供應商文件必然示範測試卡號。把它們報成 PII,等於對每一份
+    付款文件產生一整排永遠不會有人處理的警告。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text(
+        "# API\n\n4111111111111111\n5555555555554444\n378282246310005\n",
+        encoding="utf-8",
+    )
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert report["verdict"] == "pass"
+    assert report["findings"] == []
+
+
+def test_inspect_source_risk_does_not_join_adjacent_numeric_lines_into_a_card(
+    tmp_path: Path,
+) -> None:
+    """卡號不會跨行。允許跨行的候選樣式會把相鄰兩行的訂單編號接起來,
+    再由 Luhn 隨機放行約十分之一 —— 一張沒有人寫過的卡號。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text("# API\n\n87654321\n10000000\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert report["findings"] == []
+
+
+def test_inspect_source_risk_detects_cards_separated_by_unicode_spaces(
+    tmp_path: Path,
+) -> None:
+    """從 PDF 貼出的付款範例帶 U+00A0、zh-TW 文件帶 U+3000。排除換行時
+    一併排掉這些空白,會讓真卡號整段被忽略。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text(
+        "# API\n\n4539 1488 0343 6004\n"
+        "4539　1488　0343　6004\n",
+        encoding="utf-8",
+    )
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert [
+        (finding["rule_id"], finding["locator"]) for finding in report["findings"]
+    ] == [
+        ("SR-PAYMENT-CARD", "line 3, column 1"),
+        ("SR-PAYMENT-CARD", "line 4, column 1"),
+    ]
+
+
+def test_inspect_source_risk_scans_punctuation_dense_text_in_bounded_time(
+    tmp_path: Path,
+) -> None:
+    """這個閘的職責是擋下不可信來源,所以它自己不能被不可信來源癱瘓。
+    無界限的 email 樣式在整份文件上是二次時間:184 KB 的 minified CSS
+    要 52 秒,5 MiB 來源足以讓前置閘停擺。"""
+    import time
+
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "styles.md"
+    source.write_text(".a{color:#fff;margin:0}" * 8_000, encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    started = time.perf_counter()
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+    elapsed = time.perf_counter() - started
+
+    assert result.exit_code == 0, result.stdout
+    assert elapsed < 5.0, f"source-risk scan took {elapsed:.1f}s"
+
+
+def test_inspect_source_risk_passes_a_document_full_of_contact_addresses(
+    tmp_path: Path,
+) -> None:
+    """1,200 個聯絡信箱、其餘完全乾淨的來源:一份合格的大型供應商文件,
+    不該因為「信箱太多」被前置閘拒絕。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "contacts.md"
+    body = "\n".join(f"contact{index}@example.com" for index in range(1_200))
+    source.write_text(f"# API\n\n{body}\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert report["verdict"] == "pass"
+    assert {finding["severity"] for finding in report["findings"]} == {"warning"}
