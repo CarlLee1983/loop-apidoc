@@ -373,6 +373,33 @@ PDF, Markdown, Microsoft Word (`.docx`), OpenAPI JSON/YAML, static HTML snapshot
 
 Legacy binary `.doc`, spreadsheets (`.xlsx`/`.xls`), plain text (`.txt`), and `.csv` are **deliberately unsupported**, and no converter is planned: the manifest recognises the format, marks it unsupported, and names the export that resolves it (`.doc` → `.docx` or PDF; a spreadsheet → a Markdown table; `.txt` → rename to `.md`; `.csv` → a Markdown table). The conversion judgement stays with the person who can see the original file — reasoning and falsification condition in [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md). When a spreadsheet's content must enter the pipeline as evidence, it goes in along the supplementary-carrier path ([ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)).
 
+## Evidence strength of the acquisition paths
+
+"This command runs" and "this command has carried a real supplier source end to end" are two
+different statements. The thirteen benchmark cases have sources in exactly three extensions
+(`.md`, `.json`, `.yaml`), so the table below grades every acquisition path by the same measure and
+states what would remove each label. The conditions differ because what is missing differs.
+
+| Acquisition path | Evidence strength | What removes the label |
+| --- | --- | --- |
+| `manifest`, `preprocess` (PDF), `normalize-html-snapshot` | **Source-backed**: a benchmark case carries a real supplier source through it | n/a |
+| `import-supplementary-note`, `import-rendered-url`, `select-url`, `related-url-pages`, `.docx` preprocessing | **Not validated against a real source**: complete code with unit tests, but no case has ever used it | the first real source that arrives along that path, committed as a benchmark case |
+| `catalog-url`, `cache-url-pages`/`cache-url-entry`, `snapshot-openapi-url`, `cache-gitbook-llms` | **Outside the harness by construction**: they issue network requests, and the harness must be offline-reproducible | a replayable recording contract — responses stored as fixtures so a case can re-run offline |
+
+The two labels are not interchangeable. The second is missing **a source**, and arrives at a case as
+soon as one shows up; the third is missing **a mechanism**, and no quantity of sources will let a
+network request run in CI. `cache-gitbook-llms` belongs to both of the latter two: no real GitBook
+site has gone through end to end, and it is itself a network acquisition.
+
+`import-supplementary-note` is worth naming on its own: it shipped in 0.38.0, and its output moves
+both the validation report's per-claim `SUPPLEMENTARY_SUPPORT` warnings and the document-quality
+score's source grounding. A path that changes the score, with zero cases today.
+
+No synthetic case will be written to erase a label. The label exists because there is no real source
+yet; swapping in a fabricated one hides the problem instead of fixing it. The four-layer benchmark
+model, and why these paths sit outside it, are in
+[`docs/BENCHMARK_VALIDATION_PLAN.md`](docs/BENCHMARK_VALIDATION_PLAN.md).
+
 ---
 
 ## Usage

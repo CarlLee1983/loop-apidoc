@@ -346,6 +346,30 @@ PDF、Markdown、Microsoft Word（`.docx`）、OpenAPI JSON／YAML、靜態 HTML
 
 舊版二進位 `.doc`、試算表（`.xlsx`／`.xls`）、純文字（`.txt`）與 `.csv` **刻意不支援**，也不會有轉檔器：manifest 會認出格式、標成 unsupported，並告訴你該把它另存成什麼（`.doc` → `.docx` 或 PDF；試算表 → Markdown 表格；`.txt` → 改副檔名為 `.md`；`.csv` → Markdown 表格）。轉檔的判斷留給看得到原始檔案的人，理由與證偽條件見 [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md)。若試算表的內容本身要當證據進 pipeline，走的是次級佐證那條路（[ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)）。
 
+## 取源路徑的證據強度
+
+「這個指令能跑」與「這個指令走過一份真實供應商來源」是兩件事。十三個 benchmark case
+的來源只有三種副檔名（`.md`、`.json`、`.yaml`），所以下面這張表把每條取源路徑照同一把尺
+標出來，並寫明各自的移除條件——條件不同，是因為缺的東西不同。
+
+| 取源路徑 | 證據強度 | 移除標註的條件 |
+| --- | --- | --- |
+| `manifest`、`preprocess`（PDF）、`normalize-html-snapshot` | **來源支撐**：有 benchmark case 走過真實供應商來源 | 不適用 |
+| `import-supplementary-note`、`import-rendered-url`、`select-url`、`related-url-pages`、`.docx` 前處理 | **未經真實來源驗證**：程式完整、有單元測試，但沒有任何 case 用過它 | 收到第一份走這條路的真實來源，補成 benchmark case |
+| `catalog-url`、`cache-url-pages`／`cache-url-entry`、`snapshot-openapi-url`、`cache-gitbook-llms` | **結構上不進 harness**：它們發出網路請求，而 harness 必須離線可重跑 | 一套可重播的錄製機制（把回應存成 fixture 讓 case 離線重跑） |
+
+兩個標註不能互換。第二類缺的是**一份來源**，等它到手就能補成 case；第三類缺的是**一個機制**，
+再多來源也不會讓網路請求進得了 CI。`cache-gitbook-llms` 同時屬於後兩類——既沒有真實
+GitBook 站台走過全程，本身也是網路取源。
+
+`import-supplementary-note` 特別點名一次：它是 0.38.0 才上線的路徑，而且它的產出會影響
+驗證報告的 `SUPPLEMENTARY_SUPPORT` 逐條警告與文件品質分數的 source grounding。一條會改變
+分數的路徑，目前零個 case。
+
+不會為了消掉標註而生一個合成 case。標註存在的理由就是還沒有真實來源，用合成檔換掉它是
+把問題藏起來。四層 benchmark 模型與這些路徑為何在模型之外，見
+[`docs/BENCHMARK_VALIDATION_PLAN.md`](docs/BENCHMARK_VALIDATION_PLAN.md)。
+
 ---
 
 ## 使用方式

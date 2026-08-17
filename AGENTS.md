@@ -236,6 +236,18 @@ release, never a force-moved tag.
   `README.en.md`, the landing/intro pages, both operator manuals, and
   `docs/PRODUCT_EXTENSION_ROADMAP.md` carry the label. Removing it requires the first real
   Word delivery or GitBook site to arrive as a benchmark case in the same change.
+- Two labels grade the acquisition paths, and they are never interchangeable, because what is
+  missing differs. **Not validated against a real source** — complete, unit-tested code that no
+  case has used: `import-supplementary-note`, `import-rendered-url`, `select-url`,
+  `related-url-pages`, plus the `.docx` path above; the first real source along the path becomes a
+  case and removes the label. **Outside the harness by construction** — `catalog-url`,
+  `cache-url-pages`/`cache-url-entry`, `snapshot-openapi-url`, and `cache-gitbook-llms` issue
+  network requests while a harness run must be offline-reproducible; only a replayable recording
+  contract removes that, never another source. `cache-gitbook-llms` is in both states.
+  `manifest`, `preprocess` (PDF), and `normalize-html-snapshot` carry a real source in at least one
+  case and take neither label. Never write a labelled path as validated, and never author a
+  synthetic case to erase a label. Both READMEs, both operator manuals, and
+  `docs/BENCHMARK_VALIDATION_PLAN.md` carry this grading.
 - Implementation-backed conformance benchmarks are a separate assurance lane. They report
   only the declared Applicability Envelope, time, and suite version; they never count as a
   source-backed strict-local pass or documentary grounding coverage.
