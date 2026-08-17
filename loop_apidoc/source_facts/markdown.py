@@ -9,6 +9,12 @@
 這是接受的取捨,不是待修的 bug——要涵蓋那類來源,得先在取源階段把結構
 還原(見 `html_snapshot.py`),而不是在這裡猜。
 
+端點宣告除了 `METHOD /path`,也認帶標籤的 `URL … Method …` 同行寫法
+(`|URL|<API URL>/Login|Method|GET|`)。兩種形狀都要求 method 與 path
+同時是這一行上的字面值:讀出來源已經寫下的字不是推論,跨行湊出一個
+method 才是,而後者仍然不做(ADR 0007 / 0011,邊界釘在
+`tests/source_facts/test_labelled_endpoint.py`)。
+
 **與 `markdown_drafts/markdown.py` 的分歧是刻意的**,不是重複實作待統一:那一套餵的
 是給人審的非權威草稿,這一套餵的是 fail-closed 閘門,兩邊的寬鬆處各自朝自己的用途
 交錯放寬。逐條對照與理由見 `docs/adr/0009-the-two-markdown-scanners-stay-separate.md`,
@@ -37,6 +43,32 @@ _SETEXT = re.compile(r"^\s{0,3}(=+|-{2,})\s*$")
 # 收下,否則那道圍籬會被當成內文,區塊裡的表格就會變成假事實。
 _FENCE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
 _ENDPOINT = re.compile(rf"^(?:{'|'.join(_HTTP_METHODS)})\s+(?P<path>/\S*)")
+# 帶標籤的宣告:`|URL|<API URL>/Login|Method|GET|…|`、`URL … Method POST …`。
+# method 與 path 都寫在同一行、都是字面值,認它不需要推論任何東西(ADR 0011)。
+# 三道窄化:標籤要獨立成詞(`curl`、`URLs` 不算)、method 只認大寫、
+# 兩個標籤之間的值有長度上限——否則一行散文裡剛好都出現就會生出假端點。
+#
+# 分隔符寫成單一扁平字元類別是刻意的:拆成 `\s*[:：]?\s*[|\s]\s*` 之後,一個空白
+# 可以由三個量詞裡的任何一個吃掉,近乎命中的長空白行會指數回溯——十六個空白就要
+# 兩秒。掃描器讀的是操作者給的任意文件,一行對齊排版的純文字就足以讓它停住。
+_LABELLED_VALUE_MAX_LENGTH = 80
+_LABELLED_SEPARATOR = r"[\s:：|]+"
+_LABELLED_ENDPOINT = re.compile(
+    rf"(?:^|\|)\s*(?<![A-Za-z])[Uu][Rr][Ll](?![A-Za-z]){_LABELLED_SEPARATOR}"
+    # 值的開頭排掉分隔符裡的兩個非空白字元。少了它們,一長串冒號的每一個都是
+    # 一個候選的值起點,回溯量又回到指數級——四千字元要七秒半。路徑與佔位基底
+    # 都不可能以冒號開頭,所以排掉不損失任何合法寫法。
+    rf"(?P<value>[^|\s:：][^|]{{0,{_LABELLED_VALUE_MAX_LENGTH - 1}}}?)"
+    rf"{_LABELLED_SEPARATOR}(?:HTTP{_LABELLED_SEPARATOR})?"
+    rf"(?<![A-Za-z])[Mm]ethod(?![A-Za-z]){_LABELLED_SEPARATOR}"
+    rf"(?P<method>{'|'.join(_HTTP_METHODS)})(?![A-Za-z])"
+)
+# 值裡唯一算數的三種寫法:完整 URL、佔位基底加路徑、裸路徑。其餘一律沉默。
+# 三者都要求整個值就是那條路徑——只是「開頭像路徑」的散文
+# (`URL /old was renamed, see table. Method POST`)不算宣告。
+_ABSOLUTE_URL = re.compile(r"^https?://[^/\s]+(?P<path>/\S*)$")
+_PLACEHOLDER_BASE = re.compile(r"^[<{\[][^>}\]]*[>}\]]\s*")
+_BARE_PATH = re.compile(r"^(?P<path>/\S*)$")
 _TABLE_SEPARATOR = re.compile(r"^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$")
 
 _MD_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
@@ -106,6 +138,17 @@ def scan_markdown(relative_path: str, text: str) -> SourceFacts:
             continue
 
         if raw.lstrip().startswith("|"):
+            # 標籤式宣告常寫成一張小表的表頭列(`|URL|…|Method|GET|…|`)。
+            # 抽走它,底下的參數表才有端點可歸屬;剩下的分隔列與說明列湊不成
+            # 表格,所以不會有欄位事實跟著消失。
+            #
+            # 只認管線區塊的第一列。一張真的參數表中間出現 `|URL|/callback|
+            # Method|POST|` 這種設定列並不罕見,把它當宣告會一次造成兩種傷害:
+            # 生出一個假端點,並把那張表從中切斷,其後的欄位全部消失。
+            declared = _labelled_endpoint(raw) if not state.table else None
+            if declared:
+                state.declare(declared, index, excerpt=raw)
+                continue
             state.table.append((index, raw))
             continue
         state.flush_table()
@@ -249,7 +292,12 @@ class _ScanState:
                 excerpt=excerpt,
             )
             return
-        if self.current is not None and level <= self.declaring_level:
+        # `declaring_level == 0` 是「宣告出現在任何標題之前」。沒有這個分支,
+        # 沒有標題層級小於等於 0,那一節永遠不會結束,整份文件其後的參數表
+        # 都會被算成這個端點的——PDF 轉出來的文件正常就是先給宣告再開章節。
+        if self.current is not None and (
+            self.declaring_level == 0 or level <= self.declaring_level
+        ):
             self.finish_section(index - 1)
             self.current = None
 
@@ -347,14 +395,52 @@ def _fence_language(fence: re.Match[str]) -> str:
 
 
 def _declared_endpoint(line: str) -> tuple[str, str] | None:
-    """從一行文字辨識 `METHOD /path`,允許 backtick / 粗體 / 清單符號包裝。"""
+    """從一行文字辨識端點宣告:`METHOD /path`,或帶標籤的 `URL … Method …`。
+
+    允許 backtick / 粗體 / 清單符號包裝。兩種形狀都要求 method 與 path 同時
+    寫在這一行上,跨行取 method 仍然是推論,仍然不做(ADR 0007 / 0011)。
+    """
     cleaned = line.strip().lstrip("-*+ \t").strip("`* \t")
     match = _ENDPOINT.match(cleaned)
+    if match:
+        method = cleaned.split(maxsplit=1)[0].upper()
+        path = match.group("path").strip("`,。;;、)】")
+        return method, path
+    return _labelled_endpoint(line)
+
+
+def _labelled_endpoint(line: str) -> tuple[str, str] | None:
+    """辨識 `URL <值> Method <大寫 method>` 這種把宣告拆成標籤欄的寫法。"""
+    match = _LABELLED_ENDPOINT.search(line)
     if not match:
         return None
-    method = cleaned.split(maxsplit=1)[0].upper()
-    path = match.group("path").strip("`,。;;、)】")
-    return method, path
+    path = _labelled_path(match.group("value"))
+    if path is None:
+        return None
+    return match.group("method"), path
+
+
+def _labelled_path(value: str) -> str | None:
+    """從標籤欄的值裡讀出路徑;讀不出來就是沒有宣告。
+
+    收下完整 URL(取主機之後的路徑)、佔位基底加路徑(`<API URL>/Login`)、
+    以及裸路徑。`參見附錄` 或只有主機的 URL 都沒有路徑可讀——那時沉默,
+    因為一個猜出來的路徑會在 fail-closed 閘門下擋掉正確的擷取。
+    """
+    cleaned = value.strip().strip("`*_ ")
+    absolute = _ABSOLUTE_URL.match(cleaned)
+    if absolute:
+        return _clean_path(absolute.group("path"))
+    placeholder = _PLACEHOLDER_BASE.match(cleaned)
+    if placeholder:
+        cleaned = cleaned[placeholder.end() :]
+    bare = _BARE_PATH.match(cleaned)
+    return _clean_path(bare.group("path")) if bare else None
+
+
+def _clean_path(path: str) -> str | None:
+    stripped = path.strip("`,。;;、)】")
+    return stripped if len(stripped) > 1 else None
 
 
 def _absorb_table(
@@ -377,6 +463,11 @@ def _absorb_table(
         for line, row in rows[2:]
         if (cells := _cells(row))
     ]
+    # PDF 轉檔會把緊鄰的兩張表併成一個管線區塊。宣告自己是錯誤碼表的那一列就是
+    # 邊界——它之後的列屬於另一張表,收下它們會把錯誤訊息記成參數,而閘門會據此
+    # 要求擷取交出一個來源沒有的欄位。切在挑名稱欄之前:那些列的碼欄(`0`)會讓
+    # `_column_is_identifier` 判第一欄不是識別字欄,於是連真欄位都跟著挑錯欄。
+    body = body[: _error_code_table_start(body)]
     column = _name_column(header, [cells for _, cells in body])
     fact_rows: list[tuple[TableCellFact, ...]] = []
     table_index = len(current.tables)
@@ -424,10 +515,35 @@ def _absorb_table(
     return TableFact(
         table_index=table_index,
         start_line=rows[0][0],
-        end_line=rows[-1][0],
+        # 被切掉的錯誤碼列不算這張表的範圍——事實不該宣稱涵蓋它刻意沒讀的行。
+        end_line=body[-1][0] if body else rows[-1][0],
         headers=clean_headers,
         rows=tuple(fact_rows),
     )
+
+
+def _error_code_table_start(body: list[tuple[int, list[str]]]) -> int:
+    """另一張錯誤碼表從第幾列開始;沒有就是整個 body 的長度。"""
+    for index, (_, cells) in enumerate(body):
+        if _starts_error_code_table(cells):
+            return index
+    return len(body)
+
+
+def _starts_error_code_table(cells: list[str]) -> bool:
+    """這一列是不是「另一張錯誤碼表」的開頭。
+
+    兩個條件都要:這一列**只有一格有字**,而那一格自稱是錯誤碼欄
+    (`Error code:`、`錯誤碼`)。少了前一個條件,一個真的叫 `Error Code` 的
+    回應欄位——上游閘道錯誤碼的透傳欄,是常見的欄位——會把它所在的參數表
+    從那裡截斷,而且不留任何痕跡。被黏上來的表頭列旁邊是空的
+    (`|Error code:||||||`),真欄位旁邊有型態與說明。
+    """
+    labels = [cell.strip().strip("`*_ ") for cell in cells if cell.strip()]
+    if len(labels) != 1:
+        return False
+    lowered = labels[0].rstrip(":：").lower()
+    return any(token == lowered for token in _ERROR_CODE_HEADER_TOKENS)
 
 
 def _absorb_error_codes(

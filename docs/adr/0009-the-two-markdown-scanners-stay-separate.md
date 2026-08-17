@@ -28,6 +28,7 @@ it. `tests/source_facts/test_scanner_divergence.py` pins every row.
 | heading with a prefix (`## 支付 GET /a`) | ignores | reads | The gate anchors its match at the start; the draft searches the whole line. Anchoring is what keeps "見 POST /pay 的說明" out of the fact inventory. |
 | lowercase method | ignores | reads (case-insensitive) | Same trade: case-insensitive matching widens the prose surface a fail-closed gate is exposed to. |
 | GitBook's `` `GET` `` + `` `/a` `` pair | ignores | reads | **A gap, not a decision** — see below. |
+| labelled declaration (`\|URL\|<API URL>/Login\|Method\|GET\|`) | reads | ignores | ADR 0011. Both halves are literal and on one line, so the gate reads it; the draft's unit is still a section, and this shape opens none. The direction is the reverse of the GitBook row, which is the point: neither scanner is the stricter one. |
 | declaration inside prose | ignores | ignores | Reading it would be guessing, on either side. |
 | unlabelled parameter table | reads | ignores | The draft needs a `**Request**`-style label to know which section a field belongs to; the gate only asks whether the source documents the field at all. |
 | fenced block in any language | counts as an example | only whitelisted languages | The gate needs the fact "an example exists here"; the draft has to paste the example, so it takes only languages it can carry. |
@@ -56,6 +57,13 @@ fail-closed gate for a shape nobody has is speculative work with a real downside
 uses it is the trigger to close the gap — and, until then, such a source shows up as a
 `SOURCE_FACTS_UNSCANNED` warning rather than as silence (ADR 0007), which is what makes waiting
 safe.
+
+That trigger has still not fired. Every Markdown source in the thirteen cases was measured against
+the GitBook pair while ADR 0011 was being decided, and none uses it; the row stays a gap. What that
+measurement did surface is a *different* literal-but-misplaced shape — `jili-legacy-gaming-pdf`'s
+labelled `URL … Method …` line — which is why the table gained a row rather than losing one. The
+reasoning 0011 applies to it is the reasoning stated here: a method written out beside the path is
+not an inference, whatever column it sits in.
 
 Anything that changes a row in the table changes this decision, and the pinned test is where that
 shows up first.
