@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -46,6 +46,101 @@ SANITIZED_BENCHMARK_CASES = ("rsg-game-transfer-wallet",)
 # output for a specific, dated, checksummed original PDF — not merely a hand
 # transcription. See `source-derivation.json` in each listed case.
 SOURCE_DERIVATION_BENCHMARK_CASES = ("ecpay-creditcard-pdf",)
+
+
+# --- Acquisition-path evidence grading (issue #121) -------------------------
+#
+# The three labels #112 wrote into both READMEs and both operator manuals. The
+# documents are the human-readable presentation; this registry is the truth a
+# test can check, so a new acquisition command cannot ship unlabelled the way
+# `.docx` and GitBook did for most of a version.
+ACQUISITION_EVIDENCE_TIERS = (
+    "source-backed",
+    "not validated against a real source",
+    "outside the harness by construction",
+)
+
+# **The criterion**, so this list does not itself become something to remember:
+# a CLI command is an *acquisition path* when it brings supplier material into
+# the local, manifest-bindable corpus, or establishes that corpus. Everything
+# else is excluded by name below with the reason. Exhaustive classification is
+# the mechanism — `acquisition_grading_gaps` fails on a command that is in
+# neither mapping, so a new command forces the decision rather than inheriting
+# a default. Sub-app commands (`foundry <cmd>`, `feedback <cmd>`) are keyed by
+# their full invocation and excluded individually for the same reason: naming
+# the group once would let a later `foundry fetch-portal` ship ungraded.
+#
+# A command carries *every* label its branches earn, not the strongest one — a
+# tuple, because `preprocess` and `cache-gitbook-llms` are each in two states at
+# once and recording only one is how `.docx` stayed unlabelled through #99.
+SOURCE_ACQUISITION_EVIDENCE_TIERS = {
+    "manifest": ("source-backed",),
+    # PDF is source-backed; the `.docx` branch of the same command has never
+    # carried a real Word delivery.
+    "preprocess": ("source-backed", "not validated against a real source"),
+    "normalize-html-snapshot": ("source-backed",),
+    "import-supplementary-note": ("not validated against a real source",),
+    "import-rendered-url": ("not validated against a real source",),
+    "select-url": ("not validated against a real source",),
+    "related-url-pages": ("not validated against a real source",),
+    "catalog-url": ("outside the harness by construction",),
+    "cache-url-pages": ("outside the harness by construction",),
+    "cache-url-entry": ("outside the harness by construction",),
+    "snapshot-openapi-url": ("outside the harness by construction",),
+    # No real GitBook site has gone through end to end, and it is itself a
+    # network acquisition. Only the second label is removable by a source.
+    "cache-gitbook-llms": (
+        "not validated against a real source",
+        "outside the harness by construction",
+    ),
+}
+
+_GOVERNS_IMPORTED_ASSETS = "governs already-imported assets; reads no supplier document"
+
+NON_ACQUISITION_CLI_COMMANDS = {
+    "extract-markdown-drafts": "reads corpus already acquired; writes drafts, not sources",
+    "scaffold-extraction": "projects drafts into extraction JSON; acquires nothing",
+    "inspect-source-risk": "pre-agent gate over an existing manifest",
+    "assess-sources": "quality gate over an existing manifest",
+    "verify-extraction": "extraction input gate",
+    "assemble": "assembles agent-written JSON into a run",
+    "validate": "revalidates a completed run dir",
+    "score": "scores a completed run dir",
+    "evaluate": "compares two completed runs",
+    "diff": "compares two completed runs",
+    "review": "local human review workbench over a candidate",
+    "record-fingerprint": "records a completed run's source baseline",
+    "check-freshness": "compares current signals with a baseline fingerprint",
+    "check-freshness-batch": "fans check-freshness over a watchlist",
+    "governance-scan": "classifies a batch freshness scan",
+    "governance-review-plan": "plans review work from a governance trigger",
+    "foundry init": _GOVERNS_IMPORTED_ASSETS,
+    "foundry import": "imports a completed run dir, not a source",
+    "foundry approve": _GOVERNS_IMPORTED_ASSETS,
+    "foundry list": _GOVERNS_IMPORTED_ASSETS,
+    "foundry current": _GOVERNS_IMPORTED_ASSETS,
+    "feedback assess": "reads normalized observations, not sources",
+    "feedback propose": _GOVERNS_IMPORTED_ASSETS,
+    "feedback submit": _GOVERNS_IMPORTED_ASSETS,
+    "feedback review": _GOVERNS_IMPORTED_ASSETS,
+    "feedback approve": _GOVERNS_IMPORTED_ASSETS,
+    "feedback compose": _GOVERNS_IMPORTED_ASSETS,
+    "feedback current": _GOVERNS_IMPORTED_ASSETS,
+    "feedback provider-erratum": "hands off a digest-verified erratum; performs no provider I/O",
+}
+
+
+def acquisition_grading_gaps(commands: Iterable[str]) -> dict[str, list[str]]:
+    """Both directions of drift between the CLI and the two mappings above:
+    `ungraded` is a registered command in neither mapping, `unknown` is a
+    mapped command the CLI no longer registers. Sorted, so a failure reads the
+    same on every machine."""
+    classified = set(SOURCE_ACQUISITION_EVIDENCE_TIERS) | set(NON_ACQUISITION_CLI_COMMANDS)
+    registered = set(commands)
+    return {
+        "ungraded": sorted(registered - classified),
+        "unknown": sorted(classified - registered),
+    }
 
 
 class QualityGateFailure(RuntimeError):
