@@ -205,7 +205,7 @@ def test_inspect_source_risk_bounds_high_density_warnings_without_rejecting(
     assert result.exit_code == 0, result.stdout
     report_path = output / "source-risk-report.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
-    assert report["ruleset_version"] == "3"
+    assert report["ruleset_version"] == "4"
     assert report["verdict"] == "pass"
     assert len(report["findings"]) == 501
     assert report["findings"][-1] == {
@@ -960,6 +960,133 @@ def test_inspect_source_risk_detects_cards_separated_by_unicode_spaces(
         ("SR-PAYMENT-CARD", "line 3, column 1"),
         ("SR-PAYMENT-CARD", "line 4, column 1"),
     ]
+
+
+def test_inspect_source_risk_exempts_test_cards_next_to_another_number(
+    tmp_path: Path,
+) -> None:
+    """切窗取最長的合格窗,所以緊鄰的編號約十分之一會與公告測試卡號湊出
+    一個更長、不在清單上的合格窗。若豁免只認相等,一份只是引用測試卡號的
+    付款文件會拿到警告 —— 這正是豁免存在的理由。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text("# API\n\n88 4111111111111111\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert report["findings"] == []
+
+
+def test_inspect_source_risk_exempts_only_a_file_leading_bom(
+    tmp_path: Path,
+) -> None:
+    """開頭的 BOM 是編碼副產物,報它等於對每一份 Windows 編輯器存出來的來源
+    產生一筆沒人能處理的警告。文件中間的同一個字元則是有人藏字,豁免只認
+    位置,不認字元。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text("﻿# API\n\n付款﻿說明\n", encoding="utf-8")
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report = json.loads(
+        (output / "source-risk-report.json").read_text(encoding="utf-8")
+    )
+    assert [
+        (finding["rule_id"], finding["locator"]) for finding in report["findings"]
+    ] == [("SR-ZERO-WIDTH-FORMATTING", "line 3, column 3")]
+
+
+def test_inspect_source_risk_detects_cards_next_to_another_number(
+    tmp_path: Path,
+) -> None:
+    """候選樣式是貪婪的:同一行左邊緊鄰的編號會被吃進同一段候選,Luhn 於是
+    對「編號＋卡號」整串失敗,而 `finditer` 不會再回到候選內部。純文字編號
+    清單正是這個形狀,漏掉的不是誤報而是真卡號。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    source = sources / "manual.md"
+    source.write_text(
+        "# API\n\n1 4539148803436004\nID 88 4539148803436004\n",
+        encoding="utf-8",
+    )
+
+    manifest = tmp_path / "manifest.json"
+    manifest_result = runner.invoke(
+        app,
+        ["manifest", "--sources", str(sources), "--output", str(manifest)],
+    )
+    assert manifest_result.exit_code == 0, manifest_result.stdout
+
+    output = tmp_path / "source-risk"
+    result = runner.invoke(
+        app,
+        [
+            "inspect-source-risk",
+            "--sources",
+            str(sources),
+            "--manifest",
+            str(manifest),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    report_text = (output / "source-risk-report.json").read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert [
+        (finding["rule_id"], finding["locator"]) for finding in report["findings"]
+    ] == [
+        ("SR-PAYMENT-CARD", "line 3, column 3"),
+        ("SR-PAYMENT-CARD", "line 4, column 7"),
+    ]
+    assert "4539148803436004" not in report_text
 
 
 def test_inspect_source_risk_scans_punctuation_dense_text_in_bounded_time(
