@@ -42,6 +42,7 @@ from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
     ProcessingStatus,
+    SourceAuthority,
 )
 from loop_apidoc.plan.claim_projection import iter_plan_claim_projections
 from loop_apidoc.plan.models import NormalizationPlan, PlanItemStatus, SourceCitation
@@ -63,6 +64,17 @@ class BridgeInputs(FrozenModel):
     citation_fragments: tuple[tuple[str, tuple[str, ...]], ...]
     diagnostics: tuple[BridgeDiagnostic, ...] = ()
     source_set_digest: str
+    #: Manifest paths of supplementary carriers. Stored as source locators
+    #: rather than fragment ids because `with_materialized_evidence` replaces
+    #: the whole bundle — fragment ids do not survive it, locators do.
+    supplementary_sources: tuple[str, ...] = ()
+
+    def supplementary_fragment_ids(self) -> frozenset[str]:
+        return frozenset(
+            fragment_id
+            for source in self.supplementary_sources
+            for fragment_id in self.resolve_citation(source)
+        )
 
     def resolve_citation(self, manifest_source: str | None) -> tuple[str, ...]:
         if manifest_source is None:
@@ -169,6 +181,7 @@ def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
     fragments: list[EvidenceFragment] = []
     citations: dict[str, set[str]] = {}
     local_fragments: dict[str, tuple[str, ...]] = {}
+    supplementary_sources: list[str] = []
     diagnostics: list[BridgeDiagnostic] = []
 
     for source in sorted(manifest.local_sources, key=lambda item: item.relative_path):
@@ -191,6 +204,8 @@ def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
         fragments.append(fragment)
         citations.setdefault(source.relative_path, set()).add(fragment.id)
         local_fragments[source.relative_path] = (fragment.id,)
+        if source.authority is SourceAuthority.SUPPLEMENTARY:
+            supplementary_sources.append(source.relative_path)
 
     urls_by_locator: dict[str, list] = {}
     for source in manifest.url_sources:
@@ -255,6 +270,7 @@ def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
         ),
         diagnostics=tuple(diagnostics),
         source_set_digest=source_set_digest,
+        supplementary_sources=tuple(supplementary_sources),
     )
 
 
@@ -316,6 +332,57 @@ def build_fragment_requests(
     return tuple(requests[key] for key in sorted(requests))
 
 
+def _downgrade_supplementary(
+    candidate: _ProposalCandidate,
+    supplementary: frozenset[str],
+) -> _ProposalCandidate:
+    """Never let a supplementary carrier reach `explicit_support`.
+
+    Filename-only legacy citations already degrade to `insufficient`, so the
+    exposure is the v1 exact reference: it owns its declared claim path and
+    would otherwise carry an excerpt of correspondence straight into a Core
+    candidate with the same standing as the manual. `strict` mode exists to
+    require exact evidence for every claim it writes — admitting an
+    unre-obtainable, human-transcribed carrier there is worse than admitting
+    it into legacy validation, not better (ADR 0010).
+    """
+    if not supplementary:
+        return candidate
+    if not any(
+        proposal.fragment_id in supplementary
+        for proposal in candidate.support_proposals
+    ):
+        return candidate
+    # Core 只接受 runtime 提出 explicit 或 derived —— insufficient 是它自己
+    # 驗證後的結論,不是 runtime 可以宣告的。所以撤掉提案與證據引用,讓
+    # Core 依它自己的邏輯判定不足,而不是由這裡冒充那個判斷。
+    proposals = tuple(
+        proposal
+        for proposal in candidate.support_proposals
+        if proposal.fragment_id not in supplementary
+    )
+    evidence_refs = tuple(
+        ref for ref in candidate.evidence_refs if ref not in supplementary
+    )
+    diagnostics = (
+        *candidate.diagnostics,
+        BridgeDiagnostic(
+            code="CITATION_SUPPLEMENTARY",
+            message=(
+                "supplementary carrier cannot support a normative claim; "
+                "its support proposal and evidence reference were withdrawn"
+            ),
+            plan_location=candidate.plan_location,
+        ),
+    )
+    return replace(
+        candidate,
+        support_proposals=proposals,
+        evidence_refs=evidence_refs,
+        diagnostics=diagnostics,
+    )
+
+
 def build_runtime_result(
     plan: NormalizationPlan,
     bridge: BridgeInputs,
@@ -323,7 +390,10 @@ def build_runtime_result(
     runtime_identity: str = SHADOW_RUNTIME_IDENTITY,
     runtime_version: str = SHADOW_RUNTIME_VERSION,
 ) -> RuntimeResult:
-    candidates = _proposal_candidates(plan, bridge, _BridgeLookup.build(bridge))
+    candidates = [
+        _downgrade_supplementary(candidate, bridge.supplementary_fragment_ids())
+        for candidate in _proposal_candidates(plan, bridge, _BridgeLookup.build(bridge))
+    ]
     diagnostics: list[BridgeDiagnostic] = [
         diagnostic
         for candidate in candidates
