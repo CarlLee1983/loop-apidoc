@@ -219,6 +219,44 @@ def test_each_unsupported_source_gets_its_own_remedy():
     assert ".docx" in unsupported[1].suggested_action
 
 
+def test_plain_text_and_csv_get_their_own_remedy():
+    """`.txt`／`.csv` 落到 UNKNOWN 只拿得到通則,現在各自具名(#113)。"""
+    manifest = _manifest(
+        supported=False,
+        relative_path="notes.txt",
+        source_format=SourceFormat.PLAIN_TEXT,
+    )
+    manifest.local_sources.append(
+        LocalSource(
+            relative_path="codes.csv",
+            mime_type="text/csv",
+            size_bytes=12,
+            sha256="abc",
+            scanned_at=_NOW,
+            source_format=SourceFormat.CSV,
+            supported=False,
+            status=ProcessingStatus.UNSUPPORTED,
+        )
+    )
+
+    report = assess_preparation(
+        manifest=manifest,
+        inventory=_inventory(),
+        endpoint_texts=[_endpoint()],
+        plan=NormalizationPlan(notebook_url=""),
+    )
+
+    findings = [finding for phase in report.phases for finding in phase.findings]
+    unsupported = [f for f in findings if f.summary == "unsupported source present"]
+    assert [f.evidence for f in unsupported] == ["notes.txt", "codes.csv"]
+    assert ".md" in unsupported[0].suggested_action
+    assert "Markdown" in unsupported[1].suggested_action
+    # 試算表的 remedy 也含「Markdown」,單看這個詞分辨不出 CSV 有沒有被誤指到
+    # 試算表那一筆——所以再斷言 CSV 自己的 remedy 以 CSV 為主詞。
+    assert "csv" in unsupported[1].suggested_action.lower()
+    assert "spreadsheet" not in unsupported[1].suggested_action.lower()
+
+
 def test_render_markdown_includes_phase_status_and_actions():
     report = assess_preparation(
         manifest=_manifest(supported=False),

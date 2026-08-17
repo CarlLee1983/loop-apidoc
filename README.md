@@ -344,7 +344,7 @@ PDF、Markdown、Microsoft Word（`.docx`）、OpenAPI JSON／YAML、靜態 HTML
 
 其中 `.docx` 與 GitBook（`cache-gitbook-llms`）標記為**未經真實來源驗證**。兩個子系統都完整、也有單元測試，但十三個 benchmark case 沒有任何一個的來源是 Word 或 GitBook，`tests/` 底下的 DOCX 全部在 `tmp_path` 裡合成。它們的證據強度恰好等於 benchmark 的 *skipped*：程式跑得過合成檔，沒有任何一份真實供應商來源走過全程。請當成「可用但未證實」，不要讀成已驗證。收到第一份真實 Word 交件或 GitBook 站台、並補成 benchmark case 時移除這個標註——觸發條件是那份來源到手，不是某個日期。
 
-舊版二進位 `.doc` 與試算表（`.xlsx`／`.xls`）**刻意不支援**，也不會有轉檔器：manifest 會認出格式、標成 unsupported，並告訴你該把它另存成什麼（`.doc` → `.docx` 或 PDF；試算表 → Markdown 表格）。轉檔的判斷留給看得到合併儲存格的人，理由與證偽條件見 [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md)。若試算表的內容本身要當證據進 pipeline，走的是次級佐證那條路（[ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)）。
+舊版二進位 `.doc`、試算表（`.xlsx`／`.xls`）、純文字（`.txt`）與 `.csv` **刻意不支援**，也不會有轉檔器：manifest 會認出格式、標成 unsupported，並告訴你該把它另存成什麼（`.doc` → `.docx` 或 PDF；試算表 → Markdown 表格；`.txt` → 改副檔名為 `.md`；`.csv` → Markdown 表格）。轉檔的判斷留給看得到原始檔案的人，理由與證偽條件見 [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md)。若試算表的內容本身要當證據進 pipeline，走的是次級佐證那條路（[ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)）。
 
 ---
 

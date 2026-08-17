@@ -184,3 +184,44 @@ def test_spreadsheet_passthrough_names_the_only_move_that_works(tmp_path: Path):
     assert res.exit_code == 0, res.output
     assert "Markdown table" in res.output
     assert "agent must read source format" not in res.output
+
+
+def test_csv_passthrough_names_the_only_move_that_works(tmp_path: Path):
+    """`.csv` 落到 UNKNOWN 只拿得到通則,現在具名(#113)。"""
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "codes.csv").write_bytes(b"code,message\n1,ok")
+
+    res = runner.invoke(app, [
+        "preprocess", "--sources", str(sources), "--out", str(tmp_path / "out"),
+    ])
+
+    assert res.exit_code == 0, res.output
+    assert "Markdown table" in res.output
+    assert "agent must read source format" not in res.output
+    # 試算表的 remedy 也含「Markdown table」,單看這個詞分辨不出 CSV 有沒有被
+    # 誤指到試算表那一筆——檔名本身就帶 "csv"，所以只看 remedy 那段括號。
+    remedy_text = res.output.split("(", 1)[1]
+    assert "csv" in remedy_text.lower()
+    assert "spreadsheet" not in remedy_text.lower()
+
+
+def test_plain_text_passthrough_names_the_only_move_that_works(tmp_path: Path):
+    """`.txt` 的內容通常就是可讀文字,但 manifest 已經標成 unsupported。
+
+    `.txt` 曾經與 `.md` 一起走 `copied`,那一行會讓 operator 以為它可用,
+    與 manifest 的判斷矛盾。現在它落到 passthrough,講得出真正的下一步:
+    改副檔名為 `.md`(#113)。
+    """
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "notes.txt").write_bytes(b"plain text")
+
+    res = runner.invoke(app, [
+        "preprocess", "--sources", str(sources), "--out", str(tmp_path / "out"),
+    ])
+
+    assert res.exit_code == 0, res.output
+    assert "passthrough notes.txt" in res.output
+    assert ".md" in res.output
+    assert "agent must read source format" not in res.output

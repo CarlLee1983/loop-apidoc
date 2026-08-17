@@ -144,6 +144,33 @@ def test_an_unsupported_spreadsheet_is_told_what_to_do_next() -> None:
     assert "CSV" not in issues[0].suggested_fix.upper()
 
 
+def test_an_unsupported_plain_text_is_told_what_to_do_next() -> None:
+    """`.txt` 通常就是可讀文字,下一步是改副檔名,不是通則的四選一(#113)。"""
+    manifest = _manifest(
+        _source("notes.txt", SourceFormat.PLAIN_TEXT, ProcessingStatus.UNSUPPORTED)
+    )
+    issues = check_manifest_coverage(manifest)
+    assert len(issues) == 1
+    assert ".md" in issues[0].suggested_fix
+
+
+def test_an_unsupported_csv_is_told_what_to_do_next_without_suggesting_csv() -> None:
+    """`.csv` 自己落進 unsupported,remedy 不能建議另存 CSV(#98 的決定)。"""
+    manifest = _manifest(
+        _source("codes.csv", SourceFormat.CSV, ProcessingStatus.UNSUPPORTED)
+    )
+    issues = check_manifest_coverage(manifest)
+    assert len(issues) == 1
+    assert "Markdown 表格" in issues[0].suggested_fix
+    # 只比對「另存為 CSV」這個片語放得過「re-save it as a .csv file」之類
+    # 其他措辭;改比對 `.csv` 這個副檔名本身完全不出現在建議的動作裡。
+    assert ".csv" not in issues[0].suggested_fix.lower()
+    # 試算表的 remedy 也含「Markdown 表格」,單看這個詞分辨不出 CSV 有沒有被
+    # 誤指到試算表那一筆。
+    assert "CSV" in issues[0].suggested_fix
+    assert "試算表" not in issues[0].suggested_fix
+
+
 def test_duplicate_source_is_not_surfaced() -> None:
     dup = _source("copy.md", SourceFormat.MARKDOWN, ProcessingStatus.DUPLICATE)
     dup.duplicate_of = "orig.md"
