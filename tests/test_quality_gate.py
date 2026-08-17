@@ -125,6 +125,84 @@ def test_required_source_derivation_benchmark_cases_match_committed_descriptors(
     assert set(cases) == committed == {"ecpay-creditcard-pdf"}
 
 
+def _registered_cli_commands() -> set[str]:
+    """Every invocable command name, sub-app commands included as
+    `"<group> <command>"`. Names come from typer's own derivation rather than a
+    local copy of it, so an unnamed command cannot drift out of the check."""
+    from typer.main import get_command_name
+
+    from loop_apidoc.cli import app
+
+    def names(typer_app, prefix: str = "") -> set[str]:
+        found = {
+            prefix + (command.name or get_command_name(command.callback.__name__))
+            for command in typer_app.registered_commands
+        }
+        for group in typer_app.registered_groups:
+            group_name = group.name or get_command_name(group.typer_instance.info.name or "")
+            found |= names(group.typer_instance, f"{prefix}{group_name} ")
+        return found
+
+    return names(app)
+
+
+def test_every_cli_command_is_graded_or_explicitly_excluded():
+    registered = _registered_cli_commands()
+
+    assert "foundry approve" in registered  # sub-app commands are in scope
+    assert quality_gate.acquisition_grading_gaps(registered) == {
+        "ungraded": [],
+        "unknown": [],
+    }
+
+
+def test_acquisition_grading_gaps_reports_an_ungraded_new_command():
+    registered = set(quality_gate.SOURCE_ACQUISITION_EVIDENCE_TIERS)
+    registered |= set(quality_gate.NON_ACQUISITION_CLI_COMMANDS)
+    registered.add("fetch-supplier-portal")
+
+    assert quality_gate.acquisition_grading_gaps(registered) == {
+        "ungraded": ["fetch-supplier-portal"],
+        "unknown": [],
+    }
+
+
+def test_acquisition_grading_gaps_reports_a_command_that_no_longer_exists():
+    registered = set(quality_gate.SOURCE_ACQUISITION_EVIDENCE_TIERS)
+    registered |= set(quality_gate.NON_ACQUISITION_CLI_COMMANDS)
+    registered.discard("select-url")
+
+    assert quality_gate.acquisition_grading_gaps(registered) == {
+        "ungraded": [],
+        "unknown": ["select-url"],
+    }
+
+
+def test_acquisition_tiers_use_the_three_documented_labels():
+    for command, tiers in quality_gate.SOURCE_ACQUISITION_EVIDENCE_TIERS.items():
+        assert tiers, command
+        assert len(set(tiers)) == len(tiers), command
+        assert set(tiers) <= set(quality_gate.ACQUISITION_EVIDENCE_TIERS), command
+
+    assert quality_gate.ACQUISITION_EVIDENCE_TIERS == (
+        "source-backed",
+        "not validated against a real source",
+        "outside the harness by construction",
+    )
+
+
+def test_every_excluded_command_carries_a_reason():
+    for command, reason in quality_gate.NON_ACQUISITION_CLI_COMMANDS.items():
+        assert reason.strip(), command
+
+
+def test_no_command_is_both_graded_and_excluded():
+    graded = set(quality_gate.SOURCE_ACQUISITION_EVIDENCE_TIERS)
+    excluded = set(quality_gate.NON_ACQUISITION_CLI_COMMANDS)
+
+    assert graded & excluded == set()
+
+
 def test_missing_benchmark_sources_reports_absent_or_empty_dirs(tmp_path):
     root = tmp_path / "benchmarks"
     (root / "has-source" / "sources").mkdir(parents=True)

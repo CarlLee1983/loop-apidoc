@@ -226,6 +226,23 @@ written to erase a label — the label exists precisely because no real source h
 `normalize-html-snapshot`, `preprocess` (PDF), and `manifest` are not in this section: each
 carries a real supplier source in at least one case.
 
+The grading above is prose, and prose is what went unmaintained when `.docx` and GitBook
+were labelled in #99 and the remaining six paths were not. The machine-readable truth is
+`scripts/quality_gate.py::SOURCE_ACQUISITION_EVIDENCE_TIERS`, paired with
+`NON_ACQUISITION_CLI_COMMANDS`, which names every other CLI command and why it acquires
+nothing. A command carries every label its branches earn rather than the strongest one:
+`preprocess` is source-backed for PDF and un-validated for `.docx`, and `cache-gitbook-llms`
+is in both un-validated states. Together the two mappings classify **every** registered
+command, sub-app commands included under their full invocation, and
+`test_every_cli_command_is_graded_or_explicitly_excluded` fails on either direction of
+drift: a new command in neither mapping, or a mapped command the CLI no longer registers.
+The criterion the split follows — a command is an acquisition path when it brings supplier
+material into the local, manifest-bindable corpus, or establishes that corpus — is written
+beside the list, so the boundary is not something a reader has to reconstruct. The tables in
+both READMEs and both operator manuals are the human-readable presentation and are checked
+against the list by `tests/docs/test_acquisition_evidence_tiers.py`; they are never
+generated from it.
+
 ## Terminology
 
 Use these terms consistently in issues, release notes, and review comments:
