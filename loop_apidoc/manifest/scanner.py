@@ -1,13 +1,29 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Sequence
 from datetime import datetime
 from fnmatch import fnmatch
 from pathlib import Path, PurePosixPath
 
+from pydantic import ValidationError
+
 from loop_apidoc.manifest.formats import detect_format, guess_mime_type, is_supported
-from loop_apidoc.manifest.models import LocalSource, ProcessingStatus
+from loop_apidoc.manifest.models import (
+    LocalSource,
+    ProcessingStatus,
+    SourceAuthority,
+)
+from loop_apidoc.supplementary_note import SupplementaryProvenance
+
+
+class ManifestScanError(ValueError):
+    """A source's authority cannot be determined, so scanning must not continue."""
+
+
+#: sidecar 是人或工具寫的小 JSON;超過這個大小代表它不是 sidecar。
+_MAX_SIDECAR_BYTES = 64 * 1024
 
 _CHUNK_SIZE = 1 << 20  # 1 MiB
 
@@ -27,6 +43,57 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
     # it is the tool's own bookkeeping, never source evidence.
     "*.source.json",
 )
+
+
+def _read_authority(path: Path, root_resolved: Path, sha256: str) -> SourceAuthority:
+    """Read the source's authority from its `.source.json` sidecar.
+
+    **缺席才是 normative,讀不動不是。** 沒有 sidecar 的來源是正式文件 ——
+    現存的每一份來源都是,這是事實而非為了相容編出來的預設值。但一個
+    *存在卻讀不動*的 sidecar 意味著等級無從判定,而 fail open 的後果是
+    一份次級佐證靜默升級成正式文件:它重新進入 `sole_source()` 與
+    `build_fingerprint`,`SUPPLEMENTARY_SUPPORT` 一條都不會報,而操作者
+    看不到任何差別。一個截斷的寫入或錯誤的權限就足以關掉整個功能。
+
+    宣告必須綁在內容上:`source_file` 與 `imported_sha256` 都要對得上,
+    否則一個從別處複製來的兩行 sidecar 就能把一份正式手冊降級。
+    """
+    sidecar = path.with_suffix(path.suffix + ".source.json")
+    if not sidecar.exists():
+        return SourceAuthority.NORMATIVE
+    if not _within_root(sidecar, root_resolved) or sidecar.is_symlink():
+        raise ManifestScanError(f"來源 sidecar 不在來源目錄內：{sidecar}")
+    try:
+        if sidecar.stat().st_size > _MAX_SIDECAR_BYTES:
+            raise ManifestScanError(f"來源 sidecar 過大：{sidecar}")
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ManifestScanError(
+            f"來源 sidecar 存在但讀不動，無法判定來源等級：{sidecar}"
+        ) from exc
+    except ValueError as exc:
+        raise ManifestScanError(
+            f"來源 sidecar 不是合法 JSON，無法判定來源等級：{sidecar}"
+        ) from exc
+    if not isinstance(payload, dict) or "authority" not in payload:
+        # `import-rendered-url` 寫的 provenance 沒有 authority 欄位 ——
+        # 那是一份已驗證出處的正式文件,不是判定失敗。
+        return SourceAuthority.NORMATIVE
+    try:
+        provenance = SupplementaryProvenance.model_validate(payload)
+    except ValidationError as exc:
+        raise ManifestScanError(
+            f"來源 sidecar 宣告了 authority 但格式不合：{sidecar}：{exc}"
+        ) from exc
+    if provenance.source_file != path.name:
+        raise ManifestScanError(
+            f"來源 sidecar 的 source_file 與檔名不符：{sidecar}"
+        )
+    if provenance.imported_sha256 != sha256:
+        raise ManifestScanError(
+            f"來源 sidecar 的 SHA-256 與來源內容不符：{sidecar}"
+        )
+    return SourceAuthority.SUPPLEMENTARY
 
 
 def is_excluded(relative_path: str, patterns: Sequence[str]) -> bool:
@@ -161,6 +228,7 @@ def scan_sources(
                 supported=supported,
                 status=status,
                 duplicate_of=duplicate_of,
+                authority=_read_authority(path, root_resolved, sha256),
             )
         )
 

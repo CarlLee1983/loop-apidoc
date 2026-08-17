@@ -13,7 +13,7 @@ from loop_apidoc.freshness.models import (
     SourceSignal,
 )
 from loop_apidoc.freshness.signals import fetch_url_signal
-from loop_apidoc.manifest.models import Manifest, ProcessingStatus
+from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceAuthority
 from loop_apidoc.preparation.coverage import CoverageInputError, ResultStatus, load_coverage
 
 _USABLE_URL_STATUSES = {ResultStatus.FETCHED, ResultStatus.FETCHED_RENDERED}
@@ -55,6 +55,10 @@ def build_fingerprint(
     for src in manifest.local_sources:
         if src.status is not ProcessingStatus.PENDING:
             continue
+        # 次級佐證不可重新取得 —— 沒有 URL、沒有版本。納入指紋只會讓
+        # watchlist 對它永遠給出無意義的判定,並污染批次掃描的結論。
+        if src.authority is SourceAuthority.SUPPLEMENTARY:
+            continue
         entries.append(FingerprintEntry(
             id=src.relative_path,
             kind=SourceKind.LOCAL_FILE,
@@ -93,6 +97,14 @@ def build_fingerprint(
             if owns_client:
                 active_client.close()
 
+    if not entries:
+        # 空指紋不會失敗,它會永遠回報新鮮 —— 每一次 check-freshness 都在
+        # 對零份來源比對雜湊。那是無聲的監控喪失,而次級佐證被排除之後
+        # 一份全由摘錄組成的 run 正好會落到這裡。
+        raise FreshnessInputError(
+            f"{run_dir}：沒有任何可重新取得的來源，"
+            "指紋會讓 check-freshness 永遠回報新鮮"
+        )
     return SourceFingerprint(
         openapi_version=openapi_version,
         recorded_from=run_dir.name,
