@@ -94,6 +94,7 @@ class BridgeInputs(FrozenModel):
 @dataclass(frozen=True)
 class _BridgeLookup:
     fragment_ids_by_citation: dict[str, tuple[str, ...]]
+    fragments_by_id: dict[str, EvidenceFragment]
     fragments_by_citation: dict[str, tuple[EvidenceFragment, ...]]
     exact_fragments_by_reference: dict[
         tuple[str, FragmentLocator, str],
@@ -136,6 +137,7 @@ class _BridgeLookup:
                 indexed.setdefault(key, []).append(fragment)
         return cls(
             fragment_ids_by_citation=fragment_ids_by_citation,
+            fragments_by_id=fragments_by_id,
             fragments_by_citation=fragments_by_citation,
             exact_fragments_by_reference={
                 key: tuple(fragments) for key, fragments in indexed.items()
@@ -154,6 +156,16 @@ class _BridgeLookup:
         if manifest_source is None:
             return ()
         return self.fragments_by_citation.get(manifest_source, ())
+
+    def fragment_by_id(self, fragment_id: str) -> EvidenceFragment:
+        """The one per-proposal fragment lookup, and a dict read.
+
+        It replaced a linear scan over `evidence.fragments` that ran inside a
+        per-path, per-proposal `any(...)` — quadratic in the number of exact
+        references, and invisible to a wall-clock test until the constants grew
+        (#120). The index it reads is already built once in `build`.
+        """
+        return self.fragments_by_id[fragment_id]
 
     def exact_fragments_for_reference(
         self,
@@ -823,9 +835,7 @@ def _semantic_support_proposals(
         any(proposal.claim_path == path for proposal in proposals.values())
         and any(
             proposal.claim_path == path
-            and bridge.evidence.fragments[
-                _fragment_index(bridge.evidence, proposal.fragment_id)
-            ].precision
+            and lookup.fragment_by_id(proposal.fragment_id).precision
             is FragmentPrecision.EXACT
             for proposal in proposals.values()
         )
@@ -1534,13 +1544,6 @@ def _direct_evidence_for_path(
         for reference in citation.evidence
         if reference.claim_path == path
     )
-
-
-def _fragment_index(evidence: EvidenceBundle, fragment_id: str) -> int:
-    for index, fragment in enumerate(evidence.fragments):
-        if fragment.id == fragment_id:
-            return index
-    raise KeyError(fragment_id)
 
 
 def _source_fact_fragments_for_path(
