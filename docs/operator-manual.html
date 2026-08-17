@@ -171,11 +171,11 @@ uv run loop-apidoc --help
 </thead>
 <tbody>
 <tr><td><code>manifest</code>、<code>preprocess</code>（PDF）、<code>normalize-html-snapshot</code></td><td><strong>來源支撐</strong>：有 benchmark case 走過真實供應商來源</td><td>不適用</td></tr>
-<tr><td><code>import-supplementary-note</code>、<code>import-rendered-url</code>、<code>select-url</code>、<code>related-url-pages</code>、<code>.docx</code> 前處理</td><td><strong>未經真實來源驗證</strong>：程式完整、有單元測試，但沒有任何 case 用過它</td><td>收到第一份走這條路的真實來源，補成 benchmark case</td></tr>
+<tr><td><code>import-supplementary-note</code>、<code>import-rendered-url</code>、<code>select-url</code>、<code>related-url-pages</code>、<code>cache-gitbook-llms</code>、<code>.docx</code> 前處理</td><td><strong>未經真實來源驗證</strong>：程式完整、有單元測試，但沒有任何 case 用過它</td><td>收到第一份走這條路的真實來源，補成 benchmark case</td></tr>
 <tr><td><code>catalog-url</code>、<code>cache-url-pages</code>／<code>cache-url-entry</code>、<code>snapshot-openapi-url</code>、<code>cache-gitbook-llms</code></td><td><strong>結構上不進 harness</strong>：它們發出網路請求，而 harness 必須離線可重跑</td><td>一套可重播的錄製機制（把回應存成 fixture 讓 case 離線重跑）</td></tr>
 </tbody>
 </table>
-<p>第二類缺的是<strong>一份來源</strong>，等它到手就能補成 case；第三類缺的是<strong>一個機制</strong>，再多來源也不會讓網路請求進得了 CI。<code>cache-gitbook-llms</code> 同時屬於後兩類。<code>import-supplementary-note</code> 值得單獨點名：它的產出會影響驗證報告的 <code>SUPPLEMENTARY_SUPPORT</code> 逐條警告與文件品質分數的 source grounding，是一條會改變分數卻零 case 的路徑。不會為了消掉標註而生一個合成 case。</p>
+<p>第二類缺的是<strong>一份來源</strong>，等它到手就能補成 case；第三類缺的是<strong>一個機制</strong>，再多來源也不會讓網路請求進得了 CI。<code>cache-gitbook-llms</code> 同時列在後兩類，補上真實來源只消掉第二個標註。這張表是寫給人讀的呈現，機器讀的真相是 <code>scripts/quality_gate.py</code> 的 <code>SOURCE_ACQUISITION_EVIDENCE_TIERS</code>——新增一個沒分級的指令，測試就會失敗。<code>import-supplementary-note</code> 值得單獨點名：它的產出會影響驗證報告的 <code>SUPPLEMENTARY_SUPPORT</code> 逐條警告與文件品質分數的 source grounding，是一條會改變分數卻零 case 的路徑。不會為了消掉標註而生一個合成 case。</p>
 <hr />
 <h2 id="_6">使用方式</h2>
 <p>CLI 提供來源處理、URL evidence、草稿擷取、品質與擷取、來源新鮮度、run 處理、Foundry 資產治理，以及 <code>review</code> 本機人工覆核。日常擷取流程仍由 skill 驅動；每個命令都可單獨使用。</p>

@@ -355,16 +355,21 @@ PDF、Markdown、Microsoft Word（`.docx`）、OpenAPI JSON／YAML、靜態 HTML
 | 取源路徑 | 證據強度 | 移除標註的條件 |
 | --- | --- | --- |
 | `manifest`、`preprocess`（PDF）、`normalize-html-snapshot` | **來源支撐**：有 benchmark case 走過真實供應商來源 | 不適用 |
-| `import-supplementary-note`、`import-rendered-url`、`select-url`、`related-url-pages`、`.docx` 前處理 | **未經真實來源驗證**：程式完整、有單元測試，但沒有任何 case 用過它 | 收到第一份走這條路的真實來源，補成 benchmark case |
+| `import-supplementary-note`、`import-rendered-url`、`select-url`、`related-url-pages`、`cache-gitbook-llms`、`.docx` 前處理 | **未經真實來源驗證**：程式完整、有單元測試，但沒有任何 case 用過它 | 收到第一份走這條路的真實來源，補成 benchmark case |
 | `catalog-url`、`cache-url-pages`／`cache-url-entry`、`snapshot-openapi-url`、`cache-gitbook-llms` | **結構上不進 harness**：它們發出網路請求，而 harness 必須離線可重跑 | 一套可重播的錄製機制（把回應存成 fixture 讓 case 離線重跑） |
 
 兩個標註不能互換。第二類缺的是**一份來源**，等它到手就能補成 case；第三類缺的是**一個機制**，
-再多來源也不會讓網路請求進得了 CI。`cache-gitbook-llms` 同時屬於後兩類——既沒有真實
-GitBook 站台走過全程，本身也是網路取源。
+再多來源也不會讓網路請求進得了 CI。`cache-gitbook-llms` 同時列在後兩類——既沒有真實
+GitBook 站台走過全程，本身也是網路取源；補上真實來源只消掉第二個標註，第三個仍在。
 
 `import-supplementary-note` 特別點名一次：它是 0.38.0 才上線的路徑，而且它的產出會影響
 驗證報告的 `SUPPLEMENTARY_SUPPORT` 逐條警告與文件品質分數的 source grounding。一條會改變
 分數的路徑，目前零個 case。
+
+這張表是寫給人讀的呈現；機器讀的真相是 `scripts/quality_gate.py` 裡的
+`SOURCE_ACQUISITION_EVIDENCE_TIERS`，它與列出「這條指令不取源，理由是什麼」的
+`NON_ACQUISITION_CLI_COMMANDS` 一起涵蓋每一個 CLI 指令。新增一個沒分級的指令、或清單裡
+留著一個已經不存在的指令，測試都會失敗——表格不會自動產生，但漏標會被擋下來。
 
 不會為了消掉標註而生一個合成 case。標註存在的理由就是還沒有真實來源，用合成檔換掉它是
 把問題藏起來。四層 benchmark 模型與這些路徑為何在模型之外，見

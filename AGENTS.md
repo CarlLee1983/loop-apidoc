@@ -248,6 +248,20 @@ release, never a force-moved tag.
   case and take neither label. Never write a labelled path as validated, and never author a
   synthetic case to erase a label. Both READMEs, both operator manuals, and
   `docs/BENCHMARK_VALIDATION_PLAN.md` carry this grading.
+- The grading itself is a fourth reviewed inventory:
+  `scripts/quality_gate.py::SOURCE_ACQUISITION_EVIDENCE_TIERS` maps each acquisition command
+  to **every** label its branches earn — a tuple, because `preprocess` is source-backed for
+  PDF and un-validated for `.docx`, and `cache-gitbook-llms` is in both un-validated states —
+  and `NON_ACQUISITION_CLI_COMMANDS` names every other command with the reason it acquires
+  nothing. The criterion is written beside them: a command is an acquisition path when it
+  brings supplier material into the local, manifest-bindable corpus, or establishes that
+  corpus. The two mappings must classify every command `loop_apidoc.cli.app` registers,
+  sub-app commands included under their full invocation (`foundry import`, `feedback
+  assess`), so a later `foundry fetch-portal` cannot ship ungraded;
+  `test_every_cli_command_is_graded_or_explicitly_excluded` fails both on an unclassified
+  new command and on a listed command the CLI no longer has. The doc tables are the
+  human-readable presentation, checked against the list by
+  `tests/docs/test_acquisition_evidence_tiers.py` and never generated from it.
 - Implementation-backed conformance benchmarks are a separate assurance lane. They report
   only the declared Applicability Envelope, time, and suite version; they never count as a
   source-backed strict-local pass or documentary grounding coverage.

@@ -383,17 +383,24 @@ states what would remove each label. The conditions differ because what is missi
 | Acquisition path | Evidence strength | What removes the label |
 | --- | --- | --- |
 | `manifest`, `preprocess` (PDF), `normalize-html-snapshot` | **Source-backed**: a benchmark case carries a real supplier source through it | n/a |
-| `import-supplementary-note`, `import-rendered-url`, `select-url`, `related-url-pages`, `.docx` preprocessing | **Not validated against a real source**: complete code with unit tests, but no case has ever used it | the first real source that arrives along that path, committed as a benchmark case |
+| `import-supplementary-note`, `import-rendered-url`, `select-url`, `related-url-pages`, `cache-gitbook-llms`, `.docx` preprocessing | **Not validated against a real source**: complete code with unit tests, but no case has ever used it | the first real source that arrives along that path, committed as a benchmark case |
 | `catalog-url`, `cache-url-pages`/`cache-url-entry`, `snapshot-openapi-url`, `cache-gitbook-llms` | **Outside the harness by construction**: they issue network requests, and the harness must be offline-reproducible | a replayable recording contract — responses stored as fixtures so a case can re-run offline |
 
 The two labels are not interchangeable. The second is missing **a source**, and arrives at a case as
 soon as one shows up; the third is missing **a mechanism**, and no quantity of sources will let a
-network request run in CI. `cache-gitbook-llms` belongs to both of the latter two: no real GitBook
-site has gone through end to end, and it is itself a network acquisition.
+network request run in CI. `cache-gitbook-llms` is listed in both of the latter two: no real GitBook
+site has gone through end to end, and it is itself a network acquisition — a real source removes only
+the second label.
 
 `import-supplementary-note` is worth naming on its own: it shipped in 0.38.0, and its output moves
 both the validation report's per-claim `SUPPLEMENTARY_SUPPORT` warnings and the document-quality
 score's source grounding. A path that changes the score, with zero cases today.
+
+The table is the human-readable presentation; the machine-readable truth is
+`SOURCE_ACQUISITION_EVIDENCE_TIERS` in `scripts/quality_gate.py`, which together with
+`NON_ACQUISITION_CLI_COMMANDS` — every other command and the reason it acquires nothing — covers
+every CLI command. A new command in neither list, or a listed command the CLI no longer has, fails
+the test: the table is not generated, but a missing label is caught.
 
 No synthetic case will be written to erase a label. The label exists because there is no real source
 yet; swapping in a fabricated one hides the problem instead of fixing it. The four-layer benchmark
