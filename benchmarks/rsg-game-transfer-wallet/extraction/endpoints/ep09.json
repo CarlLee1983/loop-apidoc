@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/WithBalance/Player/GetUnwithdrawn",
-  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 847-852",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 754-758",
   "parameters": [],
   "request": null,
   "responses": [
