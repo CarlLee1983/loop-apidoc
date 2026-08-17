@@ -252,6 +252,26 @@ release, never a force-moved tag.
   `uv run python scripts/quality_gate.py --sanitized-fixtures`; never describe
   this supplemental result as source-backed or strict-local, and never use its
   `sanitized_sources/` as a fallback for `--strict-local`.
+- A PDF-derived case may additionally commit `source-derivation.json`, binding the
+  original PDF (case-relative path under gitignored `raw/`, official URL, capture
+  date, SHA-256), the derived Markdown (case-relative path, SHA-256), and the
+  conversion tool by name — never a pinned version, since `uv.lock` is the sole
+  authority for which pymupdf4llm runs (ADR 0013). Neither the original PDF nor
+  its Markdown is ever *committed* — both `raw/` and `sources/` are gitignored —
+  so `derived_markdown.sha256` is the only tracked anchor. `scripts/quality_gate.py::
+  SOURCE_DERIVATION_BENCHMARK_CASES` is a third reviewed inventory with the same
+  exact-set-parity rule; `--strict-local` names a case whose original is not
+  restored into `raw/` before it runs pytest. `tests/test_benchmarks.py` checks
+  the local Markdown's digest unconditionally wherever that file exists, and
+  additionally re-runs `preprocess` over the restored original, asserting the
+  output is byte-identical to the local Markdown, when `raw/` is also present —
+  SKIPping the re-derivation half like every other source-backed assertion when
+  the original is absent. This grants no
+  new evidence strength — a declared case was already source-backed — it only
+  exercises the conversion step that previously sat outside every harness run.
+  Only `ecpay-creditcard-pdf` is in this lane today; `jili-legacy-gaming-pdf`'s
+  source is a supplier delivery with no public URL and joins only once that file
+  is available.
 - Never replace an unavailable historical snapshot with a newer document, synthetic
   fixture, or error page. Record the unavailable evidence, run deterministic CI checks,
   and perform a legitimate targeted source-backed spot-check instead.
