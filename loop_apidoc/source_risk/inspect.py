@@ -6,18 +6,17 @@ import json
 import os
 import re
 import stat
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceFormat
 from loop_apidoc.privacy import (
     CONTACT_PII,
     CREDENTIAL_REFERENCE,
-    PAYMENT_CARD_CANDIDATE,
     PII_VALUE,
     SECRET_MATERIAL,
     TEST_PAYMENT_CARDS,
-    is_payment_card_number,
+    iter_payment_card_numbers,
 )
 from loop_apidoc.source_risk.models import (
     RiskCoverageStatus,
@@ -29,7 +28,7 @@ from loop_apidoc.source_risk.models import (
 )
 
 SCHEMA_VERSION = "1"
-RULESET_VERSION = "3"
+RULESET_VERSION = "4"
 MAX_REPORTED_FINDINGS = 1_000
 _TRUNCATION_RULE_ID = "SR-FINDINGS-TRUNCATED"
 #: Warning 的獨立額度。上限是全體來源共用的,而 leak 類規則(聯絡信箱、
@@ -60,23 +59,87 @@ _CONTROL_TOKEN_TEXT = re.compile(
     re.IGNORECASE,
 )
 
-_RULES: tuple[tuple[str, RiskSeverity, re.Pattern[str]], ...] = (
-    ("SR-UNICODE-TAG", RiskSeverity.BLOCKER, _UNICODE_TAG),
-    ("SR-BIDI-OVERRIDE", RiskSeverity.BLOCKER, _BIDI_OVERRIDE),
-    ("SR-CONTROL-CHARACTER", RiskSeverity.BLOCKER, _CONTROL_CHARACTER),
-    ("SR-BIDI-FORMATTING", RiskSeverity.WARNING, _BIDI_FORMATTING),
-    ("SR-ZERO-WIDTH-FORMATTING", RiskSeverity.WARNING, _ZERO_WIDTH_FORMATTING),
+#: 一條規則就是一個「掃出命中起點」的函式。回傳位移而非 `re.Match`,因為
+#: 卡號的命中未必等於樣式的命中 —— 它在候選內部,沒有對應的 match 物件。
+_RuleScanner = Callable[[str], Iterator[int]]
+
+
+def _is_not_leading_bom(match: re.Match[str]) -> bool:
+    """Accept every zero-width formatting hit except a file-leading BOM.
+
+    開頭的 BOM 是編碼副產物,不是有人藏字。純外觀,與內容無關。
+    """
+    return not (match.start() == 0 and match.group() == "\ufeff")
+
+
+def _pattern_scanner(
+    pattern: re.Pattern[str],
+    accept: Callable[[re.Match[str]], bool] | None = None,
+) -> _RuleScanner:
+    def scan(text: str) -> Iterator[int]:
+        for match in pattern.finditer(text):
+            if accept is None or accept(match):
+                yield match.start()
+
+    return scan
+
+
+def _payment_card_scanner(text: str) -> Iterator[int]:
+    """Locate card numbers, not card candidates.
+
+    候選只是「長度合格的數字串」,判準是 Luhn 加上卡組織公告的測試卡號 ——
+    後者出現在付款文件裡是必要內容,報它等於對每一份付款文件產生一整排
+    沒人會處理的警告。切窗與命中位置由 `privacy.py` 決定,這裡只做取捨。
+
+    比對用 `in` 而不是相等:切窗取最長的合格窗,`88 4111…` 這種左邊緊鄰
+    編號的形狀約十分之一會湊出一個更長的合格窗,它不在清單上,於是一份
+    只是引用公告號碼的付款文件會拿到警告。窗裡整段寫著公告號碼,就是這
+    份文件寫了公告號碼。
+    """
+    for offset, digits in iter_payment_card_numbers(text):
+        if not any(card in digits for card in TEST_PAYMENT_CARDS):
+            yield offset
+
+
+#: 規則的判準是資料,不是通用迴圈裡以 rule_id 比字串的分支 —— rule_id 打錯
+#: 一個字母就會靜默變成不過濾,而同一 rule_id 已有對應多個樣式的先例。
+_RULES: tuple[tuple[str, RiskSeverity, _RuleScanner], ...] = (
+    ("SR-UNICODE-TAG", RiskSeverity.BLOCKER, _pattern_scanner(_UNICODE_TAG)),
+    ("SR-BIDI-OVERRIDE", RiskSeverity.BLOCKER, _pattern_scanner(_BIDI_OVERRIDE)),
+    (
+        "SR-CONTROL-CHARACTER",
+        RiskSeverity.BLOCKER,
+        _pattern_scanner(_CONTROL_CHARACTER),
+    ),
+    (
+        "SR-BIDI-FORMATTING",
+        RiskSeverity.WARNING,
+        _pattern_scanner(_BIDI_FORMATTING),
+    ),
+    (
+        "SR-ZERO-WIDTH-FORMATTING",
+        RiskSeverity.WARNING,
+        _pattern_scanner(_ZERO_WIDTH_FORMATTING, _is_not_leading_bom),
+    ),
     (
         "SR-INSTRUCTION-OVERRIDE-TEXT",
         RiskSeverity.WARNING,
-        _INSTRUCTION_OVERRIDE_TEXT,
+        _pattern_scanner(_INSTRUCTION_OVERRIDE_TEXT),
     ),
-    ("SR-CONTROL-TOKEN-TEXT", RiskSeverity.WARNING, _CONTROL_TOKEN_TEXT),
-    ("SR-SECRET-VALUE", RiskSeverity.BLOCKER, SECRET_MATERIAL),
-    ("SR-CREDENTIAL-REFERENCE", RiskSeverity.WARNING, CREDENTIAL_REFERENCE),
-    ("SR-CONTACT-PII", RiskSeverity.WARNING, CONTACT_PII),
-    ("SR-PII-VALUE", RiskSeverity.WARNING, PII_VALUE),
-    ("SR-PAYMENT-CARD", RiskSeverity.WARNING, PAYMENT_CARD_CANDIDATE),
+    (
+        "SR-CONTROL-TOKEN-TEXT",
+        RiskSeverity.WARNING,
+        _pattern_scanner(_CONTROL_TOKEN_TEXT),
+    ),
+    ("SR-SECRET-VALUE", RiskSeverity.BLOCKER, _pattern_scanner(SECRET_MATERIAL)),
+    (
+        "SR-CREDENTIAL-REFERENCE",
+        RiskSeverity.WARNING,
+        _pattern_scanner(CREDENTIAL_REFERENCE),
+    ),
+    ("SR-CONTACT-PII", RiskSeverity.WARNING, _pattern_scanner(CONTACT_PII)),
+    ("SR-PII-VALUE", RiskSeverity.WARNING, _pattern_scanner(PII_VALUE)),
+    ("SR-PAYMENT-CARD", RiskSeverity.WARNING, _payment_card_scanner),
 )
 
 
@@ -108,27 +171,6 @@ def source_binding_digest(manifest: Manifest) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _rule_matches(
-    text: str,
-    rule_id: str,
-    pattern: re.Pattern[str],
-) -> Iterator[re.Match[str]]:
-    for match in pattern.finditer(text):
-        if (
-            rule_id == "SR-ZERO-WIDTH-FORMATTING"
-            and match.start() == 0
-            and match.group() == "\ufeff"
-        ):
-            continue
-        if rule_id == "SR-PAYMENT-CARD":
-            digits = "".join(
-                character for character in match.group() if character.isdigit()
-            )
-            if not is_payment_card_number(digits) or digits in TEST_PAYMENT_CARDS:
-                continue
-        yield match
-
-
 def _scan_source_findings(
     text: str,
     source_ref: str,
@@ -142,19 +184,18 @@ def _scan_source_findings(
             str,
             int,
             RiskSeverity,
-            Iterator[re.Match[str]],
-            re.Match[str],
+            Iterator[int],
         ]
     ] = []
-    for rule_index, (rule_id, severity, pattern) in enumerate(_RULES):
-        matches = _rule_matches(text, rule_id, pattern)
+    for rule_index, (rule_id, severity, scan) in enumerate(_RULES):
+        offsets = scan(text)
         try:
-            match = next(matches)
+            first = next(offsets)
         except StopIteration:
             continue
         heapq.heappush(
             match_heap,
-            (match.start(), rule_id, rule_index, severity, matches, match),
+            (first, rule_id, rule_index, severity, offsets),
         )
 
     findings: list[SourceRiskFinding] = []
@@ -164,9 +205,7 @@ def _scan_source_findings(
     line_start = 0
     previous_offset = 0
     while match_heap and len(findings) < limit:
-        offset, rule_id, rule_index, severity, matches, match = heapq.heappop(
-            match_heap
-        )
+        offset, rule_id, rule_index, severity, offsets = heapq.heappop(match_heap)
         if severity is RiskSeverity.WARNING and warnings_emitted >= warning_limit:
             # 額度用盡就整條規則退場,而不是繼續比對再丟棄 —— 一份高密度
             # 警告來源否則會讓迴圈跑完每一個命中。Blocker 規則不受影響。
@@ -188,19 +227,12 @@ def _scan_source_findings(
         if severity is RiskSeverity.WARNING:
             warnings_emitted += 1
         try:
-            next_match = next(matches)
+            next_offset = next(offsets)
         except StopIteration:
             continue
         heapq.heappush(
             match_heap,
-            (
-                next_match.start(),
-                rule_id,
-                rule_index,
-                severity,
-                matches,
-                next_match,
-            ),
+            (next_offset, rule_id, rule_index, severity, offsets),
         )
     return findings, bool(match_heap), warnings_truncated
 

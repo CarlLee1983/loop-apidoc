@@ -533,11 +533,13 @@ pending source 都是 blocker，需先轉換再重建 manifest。預設每檔 5 
 **洩漏東西給** agent（`SR-SECRET-VALUE` 為 blocker，只認結構本身即證據的 PEM 私鑰區塊與 JWT；
 `SR-CREDENTIAL-REFERENCE`、`SR-CONTACT-PII`、`SR-PII-VALUE`、`SR-PAYMENT-CARD` 為 warning）。憑證引用只給
 warning，是因為合格的 API 文件本來就會示範 `Authorization: Bearer <TOKEN>`，值是真是假無法從文字確定；
-卡號經 Luhn 驗證並排除各卡組織公告的測試卡號，候選不跨行（相鄰兩行數字接起來約十分之一會通過
+卡號經 Luhn 驗證並排除各卡組織公告的測試卡號。候選只是「長度合格的數字串」，不等於一個卡號——
+命中是在候選內部沿數字群邊界切窗找出來的，否則同一行左邊緊鄰的編號（`1 4539…`）會被吃進同一段
+候選、Luhn 對整串失敗，那筆真卡號一次也不會報。候選不跨行（相鄰兩行數字接起來約十分之一會通過
 Luhn），但 NBSP 與全形空格仍算分隔符。固定格式的
 `source-risk-report.{json,zh-TW.md}` 最多保留 1,000 筆 finding；若尚有更多命中，最後一筆固定為 blocker `SR-FINDINGS-TRUNCATED`，讓高密度惡意輸入 fail closed 而不放大成無上限報告。Warning 另有 500 筆的獨立額度，溢出時產生 warning 級的 `SR-WARNINGS-TRUNCATED`——沒有這道分隔，一份合格大型文件裡高頻的聯絡信箱與憑證引用會經由截斷 blocker 把 verdict 變成 reject，而報告裡沒有任何一筆實質命中；blocker 仍可用滿整個上限，所以警告永遠擠不掉真正的命中。報告只記 rule ID、severity、source ref 與 locator，絕不回顯
 命中的 payload，也不改寫來源 bytes。schema/ruleset 版本、`max_bytes`、manifest digest、逐來源
-SHA-256 coverage 與穩定 source-binding digest 會阻止 stale audit 重用。退出碼：`0` = pass、
+SHA-256 coverage 與穩定 source-binding digest 會阻止 stale audit 重用——ruleset 版本改變後（例如卡號切窗規則）舊 audit 一律以「ruleset version is stale」失敗，重跑 `inspect-source-risk` 與 `assess-sources` 重建 source-quality 包即可。退出碼：`0` = pass、
 `1` = reject、`2` = 無效、不安全、無法讀取或綁定不符的輸入。
 
 ### `assess-sources` — 擷取前來源品質評估
