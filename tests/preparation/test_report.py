@@ -26,15 +26,20 @@ from loop_apidoc.preparation import (
 _NOW = datetime(2026, 6, 30, 8, 0, tzinfo=timezone.utc)
 
 
-def _manifest(*, supported: bool = True) -> Manifest:
+def _manifest(
+    *,
+    supported: bool = True,
+    relative_path: str = "manual.md",
+    source_format: SourceFormat = SourceFormat.MARKDOWN,
+) -> Manifest:
     return Manifest(
         sources_root="./sources",
         generated_at=_NOW,
         local_sources=[
             LocalSource(
-                relative_path="manual.md",
+                relative_path=relative_path,
                 mime_type="text/markdown",
-                source_format=SourceFormat.MARKDOWN,
+                source_format=source_format,
                 size_bytes=12,
                 sha256="abc",
                 scanned_at=_NOW,
@@ -152,6 +157,66 @@ def test_blocked_when_no_supported_sources_or_endpoint_details():
     findings = [finding for phase in report.phases for finding in phase.findings]
     assert any("supported source" in finding.summary for finding in findings)
     assert any("endpoint detail" in finding.summary for finding in findings)
+
+
+def test_the_unsupported_warning_never_promises_a_conversion_preprocess_will_not_do():
+    """`preprocess` 對 `.doc` 與試算表只做 byte-for-byte 複製。
+
+    「Convert unsupported inputs during preprocess」比一句沒用的通則更糟:它指名
+    了一個這條管線做不到的動作,而 operator 會照做並得到同一個檔案。這份報告
+    每個 run 都會寫進去,是 operator 手上最早的四份說明之一。
+    """
+    report = assess_preparation(
+        manifest=_manifest(
+            supported=False,
+            relative_path="codes.xlsx",
+            source_format=SourceFormat.SPREADSHEET,
+        ),
+        inventory=_inventory(),
+        endpoint_texts=[_endpoint()],
+        plan=NormalizationPlan(notebook_url=""),
+    )
+
+    findings = [finding for phase in report.phases for finding in phase.findings]
+    unsupported = [f for f in findings if f.summary == "unsupported source present"]
+    assert len(unsupported) == 1
+    assert unsupported[0].evidence == "codes.xlsx"
+    assert "Markdown table" in unsupported[0].suggested_action
+    assert "during preprocess" not in unsupported[0].suggested_action
+
+
+def test_each_unsupported_source_gets_its_own_remedy():
+    """兩種不支援的格式有兩個不同的下一步,合成一筆就必然講錯其中一個。"""
+    manifest = _manifest(
+        supported=False,
+        relative_path="codes.xlsx",
+        source_format=SourceFormat.SPREADSHEET,
+    )
+    manifest.local_sources.append(
+        LocalSource(
+            relative_path="spec.doc",
+            mime_type="application/msword",
+            size_bytes=12,
+            sha256="def",
+            scanned_at=_NOW,
+            source_format=SourceFormat.WORD_LEGACY,
+            supported=False,
+            status=ProcessingStatus.UNSUPPORTED,
+        )
+    )
+
+    report = assess_preparation(
+        manifest=manifest,
+        inventory=_inventory(),
+        endpoint_texts=[_endpoint()],
+        plan=NormalizationPlan(notebook_url=""),
+    )
+
+    findings = [finding for phase in report.phases for finding in phase.findings]
+    unsupported = [f for f in findings if f.summary == "unsupported source present"]
+    assert [f.evidence for f in unsupported] == ["codes.xlsx", "spec.doc"]
+    assert "Markdown table" in unsupported[0].suggested_action
+    assert ".docx" in unsupported[1].suggested_action
 
 
 def test_render_markdown_includes_phase_status_and_actions():

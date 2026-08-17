@@ -9,6 +9,11 @@ from typing import Annotated
 import typer
 
 from loop_apidoc.manifest.builder import build_manifest
+from loop_apidoc.manifest.formats import (
+    detect_format,
+    is_supported,
+    unsupported_remedy,
+)
 from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.score.models import ScoreProfile
 from loop_apidoc.shadow.models import ArchitectureMode
@@ -1353,18 +1358,19 @@ def preprocess(
         f"passthrough {len(result.passthrough)} 於 {result.dest_dir}"
     )
     for relative in result.passthrough:
-        # `.doc` 是 OLE 複合檔,「交給 agent 讀原始格式」對它是做不到的事,
-        # 而那正是這行訊息原本會讓人以為可行的。給出真正可行的下一步。
-        if relative.suffix.lower() == ".doc":
+        # `.doc` 是 OLE 複合檔、`.xlsx` 是試算表,「交給 agent 讀原始格式」對兩者
+        # 都是做不到的事,而那正是這行訊息原本會讓人以為可行的。認得出格式的,
+        # 就用那個格式自己的下一步(ADR 0012);認不出的才回到通則。
+        source_format = detect_format(relative)
+        if is_supported(source_format):
             typer.echo(
                 f"passthrough {relative.as_posix()} "
-                "(legacy binary Word is not readable by this pipeline; "
-                "re-save it as .docx or PDF and preprocess again)"
+                "(not converted; agent must read source format)"
             )
         else:
             typer.echo(
                 f"passthrough {relative.as_posix()} "
-                "(not converted; agent must read source format)"
+                f"({unsupported_remedy(source_format).en})"
             )
 
 

@@ -132,6 +132,18 @@ def test_unsupported_source_is_warning() -> None:
     assert "unknown" in issues[0].evidence
 
 
+def test_an_unsupported_spreadsheet_is_told_what_to_do_next() -> None:
+    """通則的 remedy 列了四種受支援格式,卻沒有一種是拿著 .xlsx 的人做得到的。"""
+    manifest = _manifest(
+        _source("codes.xlsx", SourceFormat.SPREADSHEET, ProcessingStatus.UNSUPPORTED)
+    )
+    issues = check_manifest_coverage(manifest)
+    assert len(issues) == 1
+    assert "Markdown 表格" in issues[0].suggested_fix
+    # CSV 不在受支援副檔名裡,建議另存 CSV 等於把他送回同一個 unsupported。
+    assert "CSV" not in issues[0].suggested_fix.upper()
+
+
 def test_duplicate_source_is_not_surfaced() -> None:
     dup = _source("copy.md", SourceFormat.MARKDOWN, ProcessingStatus.DUPLICATE)
     dup.duplicate_of = "orig.md"

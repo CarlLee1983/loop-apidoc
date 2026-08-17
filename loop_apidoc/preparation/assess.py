@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from loop_apidoc.manifest.formats import unsupported_remedy
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import NormalizationPlan
 from loop_apidoc.preparation.coverage import ResultStatus, UrlCoverage, normalize_url
@@ -99,13 +100,16 @@ def _assess_sources(manifest: Manifest) -> PreparationPhase:
                 target_file="manifest.json",
             )
         )
-    if manifest.unsupported():
+    # 逐份而不是合成一筆:兩種不支援的格式有兩個不同的下一步,併成一句必然
+    # 講錯其中一個。而且 `preprocess` 對 `.doc` 與試算表只做 byte-for-byte 複製,
+    # 舊訊息的「during preprocess」指名了一個管線做不到的動作(ADR 0012)。
+    for source in manifest.unsupported():
         findings.append(
             _finding(
                 PreparationSeverity.WARNING,
-                "unsupported sources present",
-                "Convert unsupported inputs during preprocess or remove them from the run.",
-                evidence=", ".join(s.relative_path for s in manifest.unsupported()),
+                "unsupported source present",
+                unsupported_remedy(source.source_format).en,
+                evidence=source.relative_path,
                 target_file="manifest.json",
             )
         )
