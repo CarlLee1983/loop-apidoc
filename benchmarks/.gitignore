@@ -9,3 +9,6 @@
 # Source-quality audit packages — derived from the operator-provided sources
 # above (assemble requires one), so they stay local and are never redistributed.
 */source-quality/
+# Raw acquired snapshots — same reasoning as sources/ below: vendor HTML that
+# may be copyrighted, kept local, re-downloadable via each notes.md.
+*/raw/

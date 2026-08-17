@@ -1,7 +1,7 @@
 {
   "method": "POST",
   "path": "/WithBalance/Game/GameList",
-  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 853-888",
+  "source": "rsg-game-transfer-wallet.zh-TW.normalized.md lines 760-800",
   "parameters": [
     {
       "name": "X-API-ClientID",
