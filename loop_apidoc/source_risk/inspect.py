@@ -10,6 +10,15 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceFormat
+from loop_apidoc.privacy import (
+    CONTACT_PII,
+    CREDENTIAL_REFERENCE,
+    PAYMENT_CARD_CANDIDATE,
+    PII_VALUE,
+    SECRET_MATERIAL,
+    TEST_PAYMENT_CARDS,
+    is_payment_card_number,
+)
 from loop_apidoc.source_risk.models import (
     RiskCoverageStatus,
     RiskSeverity,
@@ -20,9 +29,15 @@ from loop_apidoc.source_risk.models import (
 )
 
 SCHEMA_VERSION = "1"
-RULESET_VERSION = "2"
+RULESET_VERSION = "3"
 MAX_REPORTED_FINDINGS = 1_000
 _TRUNCATION_RULE_ID = "SR-FINDINGS-TRUNCATED"
+#: Warning 的獨立額度。上限是全體來源共用的,而 leak 類規則(聯絡信箱、
+#: 憑證引用、電話)在一份合格的大型文件裡是高頻的 —— 沒有這道分隔,
+#: 「警告很多」會經由截斷 blocker 變成「拒絕」,而報告裡沒有任何一筆
+#: 實質命中。Blocker 仍可用滿整個上限,所以警告永遠擠不掉真正的命中。
+MAX_REPORTED_WARNINGS = 500
+_WARNING_TRUNCATION_RULE_ID = "SR-WARNINGS-TRUNCATED"
 
 _SCANNABLE_FORMATS = {
     SourceFormat.MARKDOWN,
@@ -57,6 +72,11 @@ _RULES: tuple[tuple[str, RiskSeverity, re.Pattern[str]], ...] = (
         _INSTRUCTION_OVERRIDE_TEXT,
     ),
     ("SR-CONTROL-TOKEN-TEXT", RiskSeverity.WARNING, _CONTROL_TOKEN_TEXT),
+    ("SR-SECRET-VALUE", RiskSeverity.BLOCKER, SECRET_MATERIAL),
+    ("SR-CREDENTIAL-REFERENCE", RiskSeverity.WARNING, CREDENTIAL_REFERENCE),
+    ("SR-CONTACT-PII", RiskSeverity.WARNING, CONTACT_PII),
+    ("SR-PII-VALUE", RiskSeverity.WARNING, PII_VALUE),
+    ("SR-PAYMENT-CARD", RiskSeverity.WARNING, PAYMENT_CARD_CANDIDATE),
 )
 
 
@@ -100,6 +120,12 @@ def _rule_matches(
             and match.group() == "\ufeff"
         ):
             continue
+        if rule_id == "SR-PAYMENT-CARD":
+            digits = "".join(
+                character for character in match.group() if character.isdigit()
+            )
+            if not is_payment_card_number(digits) or digits in TEST_PAYMENT_CARDS:
+                continue
         yield match
 
 
@@ -108,7 +134,8 @@ def _scan_source_findings(
     source_ref: str,
     *,
     limit: int,
-) -> tuple[list[SourceRiskFinding], bool]:
+    warning_limit: int,
+) -> tuple[list[SourceRiskFinding], bool, bool]:
     match_heap: list[
         tuple[
             int,
@@ -131,6 +158,8 @@ def _scan_source_findings(
         )
 
     findings: list[SourceRiskFinding] = []
+    warnings_emitted = 0
+    warnings_truncated = False
     line = 1
     line_start = 0
     previous_offset = 0
@@ -138,6 +167,11 @@ def _scan_source_findings(
         offset, rule_id, rule_index, severity, matches, match = heapq.heappop(
             match_heap
         )
+        if severity is RiskSeverity.WARNING and warnings_emitted >= warning_limit:
+            # 額度用盡就整條規則退場,而不是繼續比對再丟棄 —— 一份高密度
+            # 警告來源否則會讓迴圈跑完每一個命中。Blocker 規則不受影響。
+            warnings_truncated = True
+            continue
         newlines = text.count("\n", previous_offset, offset)
         if newlines:
             line += newlines
@@ -151,6 +185,8 @@ def _scan_source_findings(
                 locator=f"line {line}, column {offset - line_start + 1}",
             )
         )
+        if severity is RiskSeverity.WARNING:
+            warnings_emitted += 1
         try:
             next_match = next(matches)
         except StopIteration:
@@ -166,7 +202,7 @@ def _scan_source_findings(
                 next_match,
             ),
         )
-    return findings, bool(match_heap)
+    return findings, bool(match_heap), warnings_truncated
 
 
 def _read_manifest_source(
@@ -269,6 +305,7 @@ def inspect_source_risks(
     findings: list[SourceRiskFinding] = []
     coverage: list[SourceRiskCoverage] = []
     truncated_source_ref: str | None = None
+    warnings_truncated_source_ref: str | None = None
 
     for source_index, source in enumerate(manifest.local_sources):
         source_ref = f"/local_sources/{source_index}"
@@ -359,15 +396,32 @@ def inspect_source_risks(
                 status=RiskCoverageStatus.SCANNED,
             )
         )
-        source_findings, source_truncated = _scan_source_findings(
-            text,
-            source_ref,
-            limit=max(0, MAX_REPORTED_FINDINGS - 1 - len(findings)),
+        warnings_emitted = sum(
+            finding.severity is RiskSeverity.WARNING for finding in findings
+        )
+        source_findings, source_truncated, source_warnings_truncated = (
+            _scan_source_findings(
+                text,
+                source_ref,
+                limit=max(0, MAX_REPORTED_FINDINGS - 1 - len(findings)),
+                warning_limit=max(0, MAX_REPORTED_WARNINGS - warnings_emitted),
+            )
         )
         findings.extend(source_findings)
         if source_truncated and truncated_source_ref is None:
             truncated_source_ref = source_ref
+        if source_warnings_truncated and warnings_truncated_source_ref is None:
+            warnings_truncated_source_ref = source_ref
 
+    if warnings_truncated_source_ref is not None:
+        findings.append(
+            SourceRiskFinding(
+                rule_id=_WARNING_TRUNCATION_RULE_ID,
+                severity=RiskSeverity.WARNING,
+                source_ref=warnings_truncated_source_ref,
+                locator="file",
+            )
+        )
     if truncated_source_ref is not None:
         findings.append(
             SourceRiskFinding(
