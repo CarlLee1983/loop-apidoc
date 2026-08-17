@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 
 
 FORBIDDEN_KEYS = frozenset(
@@ -77,8 +78,8 @@ PII_VALUE = re.compile(
     r"(?<!\d)(?:\+886[-.\s]?|0)\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}(?!\d)|"
     r"(?<!\w)\+\d(?:[-.\s]?\d){7,14}(?!\d))"
 )
-#: 卡號候選樣式。單獨使用會誤報訂單／商店編號 ——
-#: 必須搭配 `is_payment_card_number` 的 Luhn 檢查。
+#: 卡號候選樣式。單獨使用會誤報訂單／商店編號 —— 只能經由
+#: `iter_payment_card_numbers` 使用,它才會做 Luhn 檢查與候選內部切窗。
 #: 分隔符只排除換行,不排除其他 Unicode 空白 —— 卡號不會跨行,而允許跨行
 #: 會把相鄰兩行的訂單編號接成長度合格的候選,再由 Luhn 隨機放行約十分之一。
 #: 用 `[-. \t]` 一併排掉 NBSP 與全形空格則是另一個錯誤方向:從 PDF 貼出的
@@ -86,6 +87,9 @@ PII_VALUE = re.compile(
 PAYMENT_CARD_CANDIDATE = re.compile(
     r"(?<!\d)(?:\d(?:[-.]|[^\S\r\n])?){12,18}\d(?!\d)"
 )
+#: 候選內部的數字群。切窗的切點只能落在群邊界 —— 從一串數字中間切開會
+#: 憑空造出卡號,而不是找出寫在來源裡的那一個。
+_DIGIT_GROUP = re.compile(r"\d+")
 #: 各卡組織公告的測試卡號。它們通過 Luhn,但出現在付款文件裡是必要內容
 #: 而非外洩 —— 報它們等於對每一份付款文件產生一整排沒人會處理的警告。
 TEST_PAYMENT_CARDS = frozenset(
@@ -169,28 +173,95 @@ def _is_forbidden_key(key: str) -> bool:
     )
 
 
-def is_payment_card_number(candidate: str) -> bool:
-    """Luhn-validate one digit run matched by `PAYMENT_CARD_CANDIDATE`.
+def _luhn_prefix_sums(digits: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """Return Luhn weight prefix sums, one per parity of the window's end.
 
-    付款文件裡到處是十幾位數的訂單／商店編號,長度與分隔符和卡號無異。
-    Luhn 是唯一能把兩者分開的確定性判準,所以候選樣式從不單獨使用。
+    付款文件裡到處是十幾位數的訂單／商店編號,長度與分隔符和卡號無異,
+    Luhn 是唯一能把兩者分開的確定性判準。一個數字要不要加倍,只取決於
+    它自己的位置與窗尾位置的奇偶,不取決於窗從哪裡開始 —— 所以整段數字
+    算兩條前綴和之後,任何一個窗都是一次減法。切窗是逐段候選都要做的事,
+    沒有這個等式它是位數乘窗數。
     """
-    digits = [int(character) for character in candidate if character.isdigit()]
-    if not 13 <= len(digits) <= 19:
-        return False
-    checksum = 0
-    parity = len(digits) % 2
-    for index, digit in enumerate(digits):
-        if index % 2 == parity:
-            digit *= 2
-            if digit > 9:
-                digit -= 9
-        checksum += digit
-    return checksum % 10 == 0
+    even = [0]
+    odd = [0]
+    for index, character in enumerate(digits):
+        digit = int(character)
+        doubled = digit * 2 - 9 if digit > 4 else digit * 2
+        even.append(even[-1] + (doubled if index % 2 == 0 else digit))
+        odd.append(odd[-1] + (doubled if index % 2 == 1 else digit))
+    return tuple(even), tuple(odd)
+
+
+def _luhn_checksum(
+    sums: tuple[tuple[int, ...], tuple[int, ...]], start: int, end: int
+) -> int:
+    return sums[end % 2][end] - sums[end % 2][start]
+
+
+def iter_payment_card_numbers(text: str) -> Iterator[tuple[int, str]]:
+    """Yield `(offset, digits)` for every Luhn-valid card number in `text`.
+
+    候選樣式是貪婪的,所以一段候選不等於一個卡號:同一行內緊鄰的訂單編號
+    會被吃進同一段候選,Luhn 對整串失敗,而 `finditer` 從候選結尾繼續掃,
+    裡面的真卡號不會有第二次機會(`| 1 | 4539… |` 因為表格分隔而倖存,
+    純文字編號清單則整筆漏掉)。所以逐段候選再切窗:候選內部的數字群是
+    切點,依序取最長的合格窗,命中後從窗尾繼續,同一段數字只報一次
+    (候選最多 19 位數,所以第二個窗在實務上不存在,續掃是為了不假設)。
+
+    切點只落在數字群邊界:從一串數字中間切開會憑空造出卡號,而不是找出
+    寫在來源裡的那一個 —— 代價是 `9994539148803436004` 這種沒有分隔符
+    直接黏上去的形狀仍然掃不到,那是刻意的取捨。
+    """
+    for candidate in PAYMENT_CARD_CANDIDATE.finditer(text):
+        yield from _payment_cards_within(candidate.group(), candidate.start())
+
+
+def _payment_cards_within(
+    candidate: str, offset: int
+) -> Iterator[tuple[int, str]]:
+    groups = [
+        (match.start(), match.group())
+        for match in _DIGIT_GROUP.finditer(candidate)
+    ]
+    digits = "".join(group for _, group in groups)
+    # 窗的邊界只能落在數字群的邊界上,所以切點就是每個群的起始位數與總位數。
+    cuts = [0]
+    for _, group in groups:
+        cuts.append(cuts[-1] + len(group))
+    sums = _luhn_prefix_sums(digits)
+
+    start = 0
+    while start < len(groups):
+        end = _card_window_from(sums, cuts, start)
+        if end is None:
+            start += 1
+            continue
+        yield offset + groups[start][0], digits[cuts[start] : cuts[end]]
+        start = end
+
+
+def _card_window_from(
+    sums: tuple[tuple[int, ...], tuple[int, ...]],
+    cuts: list[int],
+    start: int,
+) -> int | None:
+    """Return the end cut of the longest Luhn-valid window starting at `start`.
+
+    最長優先,因為卡號是連續寫出來的,較短的合格窗多半是把它截斷。取捨在
+    於這個窗可能是把旁邊的編號吃進來湊出來的(`88 4111…` 約十分之一會通過
+    Luhn);判斷「這其實是公告測試卡號」需要清單,那是取用端的政策,不是
+    切窗的職責 —— `source_risk/` 據此豁免,治理端則兩者都拒。
+    """
+    for end in range(len(cuts) - 1, start, -1):
+        length = cuts[end] - cuts[start]
+        if length > 19:
+            continue
+        if length < 13:
+            return None
+        if _luhn_checksum(sums, cuts[start], cuts[end]) % 10 == 0:
+            return end
+    return None
 
 
 def _contains_payment_card_number(value: str) -> bool:
-    return any(
-        is_payment_card_number(candidate.group())
-        for candidate in PAYMENT_CARD_CANDIDATE.finditer(value)
-    )
+    return next(iter_payment_card_numbers(value), None) is not None

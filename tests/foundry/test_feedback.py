@@ -778,6 +778,9 @@ def test_feedback_review_rejects_raw_secret_fields(tmp_path: Path) -> None:
     (
         "Replay with SSN 123-45-6789",
         "Replay with card 4111 1111 1111 1111",
+        # 左邊緊鄰的編號會被吃進同一段卡號候選,Luhn 對整串失敗。治理端
+        # 若因此放行,一筆真卡號就寫進了 Foundry。
+        "Replay with card no. 88 4539148803436004",
         "Replay with passport number AB1234567",
     ),
 )
