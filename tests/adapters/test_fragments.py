@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 import pymupdf
@@ -10,6 +11,7 @@ import pytest
 
 from loop_apidoc.adapters.fragments import (
     FragmentRequest,
+    _format_from_path,
     acquire_fragment_bundle,
     parse_legacy_locator,
 )
@@ -27,6 +29,7 @@ from loop_apidoc.domain.evidence import (
     XPathLocator,
     fragment_digest,
 )
+from loop_apidoc.manifest.formats import detect_format
 from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
@@ -616,3 +619,20 @@ def test_url_yaml_snapshot_materializes_root_and_list_pointer(
         if isinstance(fragment.locator, JsonPointerLocator)
     }
     assert pointers == {"": {"items": ["amount"]}, "/items/0": "amount"}
+
+
+def test_remote_snapshot_format_follows_the_manifest_classifier():
+    """A remote snapshot has no manifest entry, so `fragments` classifies it by
+    extension — and must do it the way `manifest` does, not with rules of its own.
+
+    This asserts a private helper because the value is not observable at the
+    public seam for the extension that was wrong: `_prepare_source` reads the
+    format only to open a PDF's pages and to pick YAML over JSON, so the old
+    everything-else-is-Markdown fallback mislabelled an imported `.html`
+    snapshot without changing any fragment (#115). The assertion exists to fail
+    if someone reintroduces a bespoke table here, which is the actual risk.
+    """
+    for name in ("page.html", "page.htm", "guide.md", "spec.json", "spec.yaml", "doc.pdf"):
+        assert _format_from_path(name) is detect_format(Path(name)), name
+
+    assert _format_from_path("page.html") is SourceFormat.HTML
