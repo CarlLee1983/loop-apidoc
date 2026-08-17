@@ -126,7 +126,12 @@ reads source-derived text. The inspector supports bounded UTF-8 Markdown, HTML, 
 JSON/YAML; PDF, Word, invalid UTF-8, oversized text, and other unscannable pending sources fail
 closed until converted and re-manifested. It never rewrites evidence or echoes a matched payload;
 the report retains at most 1,000 findings and uses a blocker truncation sentinel when more matches
-exist, preventing bounded input from amplifying into unbounded output.
+exist, preventing bounded input from amplifying into unbounded output. The ruleset covers both
+directions a source can be dangerous in: whether it can *manipulate* the agent, and whether it
+*leaks material to* the agent. Only self-evidencing secret material blocks in the second
+direction — a competent API document necessarily documents its own `Authorization` header, and a
+gate that always needs a waiver is not a gate. Warnings hold a budget separate from the shared
+cap so that a document merely rich in contact addresses is never rejected by truncation alone.
 The built-in `preprocess` seam handles `.docx` as a bounded OOXML package: it scans every Word XML
 part and rejects unsafe ZIP/package/XML, macro or active DDE field content, external relationships,
 unsupported alternate content, and merged-cell table semantics that cannot be rendered faithfully before writing
@@ -170,6 +175,15 @@ supply a conservative semantic-completeness check only when a source has reliabl
 structured Markdown. Preparation reports, deterministic scores, version diffs, and
 freshness reports help an operator understand readiness and change; they do not
 fabricate claims or silently change validation semantics.
+
+Some of those details exist, but only in supplier correspondence. A hand-written excerpt may be
+imported as a **supplementary** source: it may be cited and may fill `missing`, but it never
+outranks a formal document, never reaches `explicit_support`, and never enters the freshness
+fingerprint — the dividing line is re-obtainability, not medium. Every claim resting only on such
+a carrier is named individually in the validation report. The excerpt is written by a person, so
+recording the excerpter buys accountability, not verifiability; that cost is accepted
+deliberately, because excluding the carrier does not stop the information arriving — it only
+stops it being recorded (ADR 0010).
 
 Source-unstated deployment details such as a concrete server URL, authentication
 details, or sandbox credentials remain structured governance gaps. Their absence from
