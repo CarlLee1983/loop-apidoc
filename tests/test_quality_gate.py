@@ -417,3 +417,123 @@ def test_scenario_result_fails_on_missing_signal():
         cleanup_ok=True,
     )
     assert not result.ok
+
+
+# --- File-I/O exit inventory (issue #125) ------------------------------------
+
+
+def _write_module(tmp_path: Path, name: str, body: str) -> Path:
+    package = tmp_path / "pkg"
+    package.mkdir(exist_ok=True)
+    (package / name).write_text(body, encoding="utf-8")
+    return package
+
+
+def test_every_module_that_writes_is_in_the_file_io_inventory():
+    scanned = quality_gate.modules_with_file_writes()
+
+    assert "loop_apidoc/validate/report.py" in scanned  # was missing from AGENTS.md
+    assert quality_gate.file_io_registry_gaps(scanned) == {
+        "unregistered": [],
+        "stale": [],
+    }
+
+
+def test_file_io_registry_gaps_reports_both_directions():
+    registered = set(quality_gate.FILE_IO_EXIT_MODULES)
+
+    assert quality_gate.file_io_registry_gaps(
+        (registered | {"loop_apidoc/new_writer.py"}) - {"loop_apidoc/run/persist.py"}
+    ) == {
+        "unregistered": ["loop_apidoc/new_writer.py"],
+        "stale": ["loop_apidoc/run/persist.py"],
+    }
+
+
+def test_scanner_ignores_str_replace_and_other_pure_calls(tmp_path):
+    package = _write_module(
+        tmp_path,
+        "pure.py",
+        "def f(text: str, items):\n"
+        "    joined = text.replace('a', 'b')\n"
+        "    data = open('x.txt').read()\n"
+        "    return sorted(items), joined, data\n",
+    )
+
+    assert quality_gate.modules_with_file_writes(package_root=package, relative_to=package) == ()
+
+
+def test_scanner_recognises_the_documented_write_calls(tmp_path):
+    package = _write_module(
+        tmp_path,
+        "writer.py",
+        "import os\nimport shutil\nfrom pathlib import Path\n\n"
+        "def f(p: Path, tmp: Path):\n"
+        "    p.parent.mkdir(parents=True, exist_ok=True)\n"
+        "    p.write_text('x', encoding='utf-8')\n"
+        "    tmp.replace(p)\n"
+        "    os.replace(tmp, p)\n"
+        "    shutil.rmtree(p)\n"
+        "    with open(p, 'w', encoding='utf-8') as fh:\n"
+        "        fh.write('x')\n",
+    )
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=package, relative_to=package
+    ) == ("writer.py",)
+
+
+def test_scanner_recognises_an_exclusive_binary_open(tmp_path):
+    package = _write_module(
+        tmp_path,
+        "exclusive.py",
+        "from pathlib import Path\n\n"
+        "def f(p: Path):\n"
+        "    with p.open('xb') as fh:\n"
+        "        fh.write(b'x')\n",
+    )
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=package, relative_to=package
+    ) == ("exclusive.py",)
+
+
+def test_scanner_counts_a_tempfile_staging_call(tmp_path):
+    # Eight inventory modules stage through tempfile; each is currently caught
+    # by another call in the same file, so this shape must count on its own.
+    package = _write_module(
+        tmp_path,
+        "staging.py",
+        "import os\nimport tempfile\n\n"
+        "def f() -> None:\n"
+        "    fd, name = tempfile.mkstemp()\n"
+        "    os.write(fd, b'x')\n",
+    )
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=package, relative_to=package
+    ) == ("staging.py",)
+
+
+def test_scanner_ignores_dataclasses_replace_and_a_pathlike_open_argument(tmp_path):
+    package = _write_module(
+        tmp_path,
+        "lookalikes.py",
+        "import dataclasses\nimport zipfile\n\n"
+        "def f(obj, archive: zipfile.ZipFile):\n"
+        "    updated = dataclasses.replace(obj)\n"
+        "    member = archive.open('word/document.xml')\n"
+        "    return updated, member\n",
+    )
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=package, relative_to=package
+    ) == ()
+
+
+def test_scanner_prefix_does_not_depend_on_how_the_root_was_spelled():
+    absolute = Path(__file__).resolve().parents[1] / "loop_apidoc"
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=absolute
+    ) == quality_gate.modules_with_file_writes()
