@@ -839,7 +839,7 @@ def verify_extraction(
                 f"({'; '.join(unscanned)});assemble 會以 SOURCE_FACTS_UNSCANNED "
                 "警告提出,不阻擋 run。掃出 0 筆的來源先看它是被壓平成單行"
                 "(改走 normalize-html-snapshot / preprocess,重讀無用)、還是結構完好"
-                "但端點沒寫成 METHOD /path(掃描器認不得,請回報);"
+                "但 method 與 path 沒寫在同一行(掃描器認不得,請回報);"
                 "事實對不上的來源請檢查 extraction 是否漏掉它記載的端點。",
                 err=True,
             )

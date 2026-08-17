@@ -335,6 +335,67 @@ def test_group_label_rows_are_not_fields() -> None:
     assert facts.endpoints[0].parameter_names == ["X-Token", "provider"]
 
 
+def test_an_error_code_table_glued_onto_a_parameter_table_ends_it() -> None:
+    """PDF 轉檔常把緊鄰的兩張表併成一個管線區塊(jili 的 `KickMemberAll` 就是)。
+
+    表格內容逐字取自 `JiLi_zh-tw.pdf.md:387-392`,連重複的 `Parameter` 表頭一起——
+    照單全收有兩種傷害:錯誤訊息「Success」被記成參數(假事實會擋掉正確的擷取),
+    而且那些列的碼欄(`0`)會讓名稱欄挑到第二欄,連真欄位 `GameId` 都一起漏掉。
+    宣告自己是錯誤碼表的那一列就是邊界,而且要切在挑名稱欄之前。
+    """
+    text = """
+## Games
+
+`GET /games`
+
+|Parameter|Parameter|Type|Require|Description|Description|
+|---|---|---|---|---|---|
+|GameId||int|No|遊戲的唯一識別值||
+|Error code:||||||
+|Error Code||Message|||Description|
+|0|Success||||註銷成功|
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["GameId"]
+
+
+def test_a_field_actually_named_error_code_does_not_truncate_its_table() -> None:
+    """「叫 Error Code 的欄位」與「黏上來的錯誤碼表頭」靠旁邊有沒有字分辨。
+
+    上游閘道錯誤碼的透傳欄就叫這個名字,是常見的欄位。只看名字就截斷,會把它
+    之後的欄位全部靜默丟掉——閘門停止檢查,而且不留痕跡。
+    """
+    text = """
+## Pay
+
+`POST /pay`
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| MerchantID | string | 商店代號 |
+| 錯誤碼 | string | 上游回傳的錯誤碼欄位 |
+| Amount | int | 金額 |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["MerchantID", "錯誤碼", "Amount"]
+
+
+def test_a_generic_group_label_still_only_skips_its_own_row() -> None:
+    """只有錯誤碼表那個標籤終止表格;`Header`／`Query` 這類分組仍然只是跳過一列。"""
+    text = """
+## Games
+
+`GET /games`
+
+| Name | Type |
+| --- | --- |
+| Header | |
+| X-Token | string |
+"""
+    facts = scan_markdown("doc.md", text)
+    assert facts.endpoints[0].parameter_names == ["X-Token"]
+
+
 def test_a_single_column_table_still_yields_its_rows() -> None:
     """單欄表沒有「其餘欄位」可判空,不能被分組標題規則整張吃掉。"""
     text = """
