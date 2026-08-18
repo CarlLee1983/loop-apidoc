@@ -281,12 +281,15 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <code>0</code>=no action、<code>1</code>=review required、<code>2</code>=attention required。</p>
 <p>要把觸發轉成 bounded 的人工／agent 交辦，使用 <code>governance-review-plan</code>：</p>
 <pre><code class="language-bash">uv run loop-apidoc governance-review-plan --trigger ./work/governance/governance-trigger.json \
-  --snapshot ./work/governance-snapshot --output ./work/review-plan [--json]
+  --output ./work/review-plan [--snapshot ./work/governance-snapshot] [--json]
 </code></pre>
 <p>讀入同一次掃描的 <code>governance-trigger.json</code>；使用快照前會逐一重讀
 <code>sources/&lt;sha256&gt;.source</code> 的 bytes、重算 SHA-256 並與 <code>governance-snapshot.json</code>
-比對，任一份缺檔或摘要不符即失敗。<code>source_changed</code> 觸發若沒有通過驗證的快照一律拒絕——沒有保存
-下來的原始 bytes，就沒有可審的證據。輸出 <code>governance-review-plan.{json,md}</code>，逐個觸發列出
+比對，任一份缺檔或摘要不符即失敗。<code>--snapshot</code> 是選填，但
+<code>source_changed</code> 觸發若沒有快照裡同名 label 的來源就一律拒絕——沒有保存下來的原始 bytes，
+就沒有可審的證據；全部只有 <code>attention_required</code> 的掃描不會產生快照目錄，此時要省略
+<code>--snapshot</code>，指到不存在的目錄會以退出碼 <code>2</code> 失敗。驗證比對的是快照自身的
+<code>sha256</code> 記載，觸發與快照出自同一次掃描是操作者要保證的事，命令無從得知。輸出 <code>governance-review-plan.{json,md}</code>，逐個觸發列出
 kind、原因、既有 run 目錄、快照來源，以及必要的人工／agent 步驟：來源變動是「審閱保存的 bytes → 另開
 工作目錄重新擷取並跑 <code>verify-extraction</code> → assemble、看影響 diff，再要求明確的人工核准」；無法
 判定則是「先查清楚來源可用性，在那之前不 assemble、不核准」。命令本身不抓取、不重新擷取、不 assemble、

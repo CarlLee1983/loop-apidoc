@@ -24,9 +24,15 @@ UNDOCUMENTED_COMMANDS: dict[str, str] = {}
 # fix is to widen the brackets.
 _GROUPED_FORM = re.compile(r"([a-z][a-z-]*) \[([a-z][a-z|-]*)\]")
 
+# The table of contents is stripped before matching. A one-line anchor there is a
+# link to a section, not the section — counting it would let a command satisfy
+# this check with no prose at all, which is the paragraph-written-to-pass outcome
+# the exclusion list exists to avoid.
+_TOC_ENTRY = re.compile(r'<a class="lvl-\d"[^>]*>.*?</a>')
+
 
 def _documented_commands(manual: Path) -> set[str]:
-    text = manual.read_text(encoding="utf-8")
+    text = _TOC_ENTRY.sub("", manual.read_text(encoding="utf-8"))
     documented = {
         f"{group} {name}"
         for group, alternatives in _GROUPED_FORM.findall(text)
@@ -43,20 +49,20 @@ def _documented_commands(manual: Path) -> set[str]:
 
 
 def test_every_registered_command_is_in_both_operator_manuals():
-    expected = set(registered_cli_commands()) - set(UNDOCUMENTED_COMMANDS)
+    expected = registered_cli_commands() - set(UNDOCUMENTED_COMMANDS)
 
     assert expected, "no commands registered"
     for manual in MANUALS:
-        assert expected <= _documented_commands(manual), (
-            manual,
-            sorted(expected - _documented_commands(manual)),
-        )
+        documented = _documented_commands(manual)
+
+        assert expected <= documented, (manual, sorted(expected - documented))
 
 
-def test_excluded_commands_still_exist():
-    """An exclusion outlives the command it was written for otherwise, and a
-    stale reason reads as a decision nobody has revisited."""
+def test_every_exclusion_names_a_live_command_and_a_reason():
+    """An exclusion outlives the command it was written for otherwise, and an
+    empty reason is the same omission this list was meant to make visible."""
     assert set(UNDOCUMENTED_COMMANDS) <= registered_cli_commands()
+    assert all(reason.strip() for reason in UNDOCUMENTED_COMMANDS.values())
 
 
 def test_the_manuals_document_the_command_this_check_was_written_for():

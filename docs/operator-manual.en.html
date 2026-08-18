@@ -282,13 +282,17 @@ sources are not retained, and an all-unchanged scan creates no empty pack. Exit 
 action, <code>1</code> = review required, and <code>2</code> = attention required.</p>
 <p>To turn that trigger into a bounded human/agent handoff, use <code>governance-review-plan</code>:</p>
 <pre><code class="language-bash">uv run loop-apidoc governance-review-plan --trigger ./work/governance/governance-trigger.json \
-  --snapshot ./work/governance-snapshot --output ./work/review-plan [--json]
+  --output ./work/review-plan [--snapshot ./work/governance-snapshot] [--json]
 </code></pre>
 <p>It reads the <code>governance-trigger.json</code> from that same scan. Before the snapshot is used, every
 retained <code>sources/&lt;sha256&gt;.source</code> is re-read and re-hashed against
-<code>governance-snapshot.json</code>; a missing file or a digest mismatch fails the command. A
-<code>source_changed</code> trigger without a verified snapshot is refused outright — without the retained
-bytes there is nothing to review. The output is <code>governance-review-plan.{json,md}</code>, listing per
+<code>governance-snapshot.json</code>; a missing file or a digest mismatch fails the command.
+<code>--snapshot</code> is optional, but a <code>source_changed</code> trigger whose label has no source in
+the snapshot is refused outright — without the retained bytes there is nothing to review. A scan that found
+only <code>attention_required</code> items writes no snapshot pack at all, so omit <code>--snapshot</code>
+there; pointing it at a directory that does not exist fails with exit code <code>2</code>. The verification
+compares each file against the digest recorded in that same snapshot, so pairing a trigger with the snapshot
+from its own scan is the operator's responsibility — the command cannot tell. The output is <code>governance-review-plan.{json,md}</code>, listing per
 trigger the kind, the reason, the prior run directory, the snapshot sources, and the required human/agent
 steps: a changed source gets "review the retained bytes → re-extract into a separate work directory and run
 <code>verify-extraction</code> → assemble, inspect the impact diff, then request explicit human approval",
