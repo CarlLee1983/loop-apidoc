@@ -237,11 +237,6 @@ def test_benchmark_case(case, assembled) -> None:
             f"{case.name}: critical security scheme {name} missing from OpenAPI "
             f"components.securitySchemes (got {sorted(schemes)})"
         )
-    labelled = minimum.get("critical_security_scheme_labels", {})
-    assert set(labelled) <= set(minimum.get("critical_security_schemes", [])), (
-        f"{case.name}: a human-readable label names a scheme the case does not "
-        f"require: {sorted(set(labelled) - set(minimum.get('critical_security_schemes', [])))}"
-    )
 
     run_dir = Path(result.run_dir)
 
@@ -250,18 +245,18 @@ def test_benchmark_case(case, assembled) -> None:
     ic_path = run_dir / "integration-contract.json"
     ic = json.loads(ic_path.read_text("utf-8")) if ic_path.is_file() else {}
 
-    # --- 6. provenance present and covers something ---
+    # --- 7. provenance present and covers something ---
     if must.get("provenance"):
         prov = json.loads((run_dir / "provenance.json").read_text("utf-8"))
         entries = prov.get("entries", prov) if isinstance(prov, dict) else prov
         assert entries, f"{case.name}: provenance has no entries"
 
-    # --- 7. examples generated ---
+    # --- 8. examples generated ---
     if must.get("examples"):
         ex = run_dir / "examples"
         assert ex.is_dir() and any(ex.rglob("request.*")), f"{case.name}: no examples generated"
 
-    # --- 8. integration-contract present + declared mechanics carried ---
+    # --- 9. integration-contract present + declared mechanics carried ---
     integ = minimum.get("integration", {}) or {}
     if integ.get("required"):
         assert ic_path.is_file(), (
@@ -337,6 +332,62 @@ def test_benchmark_harness_discovers_cases() -> None:
             "ecpay-creditcard-pdf", "adyen-payments-multimethod",
             "jili-legacy-gaming-pdf", "funkygames-transfer-operator",
             "rsg-game-transfer-wallet"} <= names
+
+
+# Every key a `minimum.json` may carry. A declaration that reaches the harness
+# only through `minimum.get(...)` disappears silently when its key is misspelled,
+# which is the shape #137 was filed about one level up.
+_MINIMUM_KEYS = {
+    "_note",
+    "counts",
+    "critical_operations",
+    "critical_security_schemes",
+    "critical_security_scheme_labels",
+    "integration",
+    "must_have",
+}
+
+# The cases whose declaration is load-bearing. It cannot be derived from
+# `counts.security_schemes`: jili emits a scheme and deliberately declares none,
+# so a derived rule would either force a declaration nobody wants or accept an
+# empty one from the seven that need it.
+_CASES_DECLARING_SECURITY_SCHEMES = frozenset({
+    "adyen-payments-multimethod",
+    "cybersource-payments",
+    "line-pay-online-v3",
+    "newebpay-mpg",
+    "rsg-game-transfer-wallet",
+    "stripe-basic-rest",
+    "tappay-backend",
+})
+
+
+def test_benchmark_cases_declare_security_schemes_by_identity(case) -> None:
+    """The declaration's shape, checked without source snapshots.
+
+    The identity check itself needs the assembled OpenAPI and so runs only where
+    sources are present; this half is pure data, and CI is exactly where a
+    misspelled key or an emptied list would otherwise pass unnoticed.
+    """
+    minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
+
+    assert set(minimum) <= _MINIMUM_KEYS, (
+        f"{case.name}: unknown minimum.json key(s) {sorted(set(minimum) - _MINIMUM_KEYS)} "
+        "— a key the harness does not read is a declaration that cannot fail"
+    )
+
+    declared = minimum.get("critical_security_schemes", [])
+    if case.name in _CASES_DECLARING_SECURITY_SCHEMES:
+        assert declared, f"{case.name}: critical_security_schemes went missing or empty"
+    labels = minimum.get("critical_security_scheme_labels", {})
+
+    assert set(labels) <= set(declared), (
+        f"{case.name}: a human-readable label names a scheme the case does not "
+        f"require: {sorted(set(labels) - set(declared))}"
+    )
+    assert all(label.strip() for label in labels.values()), (
+        f"{case.name}: a blank label documents nothing"
+    )
 
 
 def test_benchmark_cases_declare_core_parity_contract(case) -> None:
