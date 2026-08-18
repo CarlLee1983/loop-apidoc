@@ -6,10 +6,16 @@ from loop_apidoc.manifest.models import (
     LocalSource,
     Manifest,
     ProcessingStatus,
+    SourceAuthority,
     SourceFormat,
     UrlSource,
 )
-from loop_apidoc.plan.classify import classify_item, match_manifest_source, sole_source
+from loop_apidoc.plan.classify import (
+    classify_item,
+    match_manifest_source,
+    sole_normative_source,
+    sole_source,
+)
 from loop_apidoc.plan.models import PlanItemStatus
 
 
@@ -189,10 +195,15 @@ def _now():
     return datetime(2026, 7, 4, tzinfo=timezone.utc)
 
 
-def _local_src(rel: str, status=ProcessingStatus.PENDING) -> LocalSource:
+def _local_src(
+    rel: str,
+    status=ProcessingStatus.PENDING,
+    authority: SourceAuthority = SourceAuthority.NORMATIVE,
+) -> LocalSource:
     return LocalSource(
         relative_path=rel, mime_type="text/markdown", source_format=SourceFormat.MARKDOWN,
         size_bytes=1, sha256="x", scanned_at=_now(), supported=True, status=status,
+        authority=authority,
     )
 
 
@@ -273,3 +284,26 @@ def test_sole_source_multi_file_plus_url_still_none():
     )
     # 摺疊後仍是 a.md + b.md = 2 份 → None(多來源 run 仍須嚴格比對)
     assert sole_source(manifest) is None
+
+
+def _manual_plus_excerpt() -> Manifest:
+    return Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[
+            _local_src("manual.md"),
+            _local_src("supplier-mail.md", authority=SourceAuthority.SUPPLEMENTARY),
+        ],
+        url_sources=[],
+    )
+
+
+def test_sole_source_counts_a_supplementary_excerpt_as_a_second_document():
+    # 次級佐證「算」一份文件:唯一文件才licenses把無法解析的 locator 歸給它,
+    # 而摘錄在場時「供應商信件」到底指哪一份是有歧義的,必須留在 UNVERIFIED。
+    assert sole_source(_manual_plus_excerpt()) is None
+
+
+def test_sole_normative_source_ignores_a_supplementary_excerpt():
+    # 邊界檢查走的是這一個:加一份摘錄不該讓整個 run 在 run 目錄產生前被拒。
+    # 兩個函式的分野只有這裡釘著,AGENTS.md 曾把兩者的敘述對調(#124)。
+    assert sole_normative_source(_manual_plus_excerpt()) == "manual.md"
