@@ -27,7 +27,11 @@
     "paths./API/CreditCard/Close.post"
   ],
   "critical_security_schemes": [
-    "AES256 (TradeInfo / EncryptData_ / PostData_)",
-    "SHA256 (TradeSha / HashData_)"
-  ]
+    "AES256_TradeInfo_EncryptData__PostData",
+    "SHA256_TradeSha_HashData"
+  ],
+  "critical_security_scheme_labels": {
+    "AES256_TradeInfo_EncryptData__PostData": "AES256 (TradeInfo / EncryptData_ / PostData_)",
+    "SHA256_TradeSha_HashData": "SHA256 (TradeSha / HashData_)"
+  }
 }
