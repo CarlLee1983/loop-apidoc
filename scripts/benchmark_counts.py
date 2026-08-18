@@ -4,7 +4,7 @@ them back into a case's `expected/minimum.json`.
 The counting lives here rather than in the test so that recording a snapshot and
 asserting against it cannot drift apart: `tests/test_benchmarks.py` imports
 `COUNT_KEYS`/`count_run_dir`, and `python scripts/benchmark_counts.py --record`
-writes what the same function measured. Hand-editing thirteen JSON files was the
+writes what the same function measured. Hand-editing one JSON file per case was the
 alternative, and one mistyped field there is invisible (#126).
 """
 

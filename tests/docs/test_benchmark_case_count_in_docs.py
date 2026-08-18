@@ -27,11 +27,17 @@ def test_current_docs_state_the_current_count():
 
 
 def test_historical_docs_are_left_at_the_count_they_recorded():
-    """A release note records what shipped and an ADR records what was measured;
-    both are excluded from the check by name. They are asserted to still state a
-    count so the exclusion list cannot quietly outlive its reason."""
-    for path in support.HISTORICAL_DOCS:
-        assert support.stated_counts(path), f"{path} no longer states a count"
+    """A release note records what shipped and an ADR records what was measured,
+    so neither follows the current count. They are pinned to the number they
+    recorded rather than merely skipped: editing a past count is the record
+    falsification this list exists to prevent, and a document that stops stating
+    a count at all has outlived its entry."""
+    for path, recorded in support.HISTORICAL_DOCS.items():
+        stated = support.stated_counts(path)
+
+        assert stated, f"{path} no longer states a count"
+        for number, phrase in stated:
+            assert number == recorded, (path, phrase)
 
 
 def test_every_document_stating_the_count_is_accounted_for():
