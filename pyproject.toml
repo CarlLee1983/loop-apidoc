@@ -21,6 +21,7 @@ loop-apidoc = "loop_apidoc.cli:main"
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
+    "pytest-timeout>=2.3",
     "ruff>=0.6",
 ]
 
@@ -37,6 +38,13 @@ packages = ["loop_apidoc"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# A test that proves something terminates must fail when it does not. Without a
+# timeout the loop this repo guards against (`extraction/field_names.py`'s `seen`
+# set) turns its own regression test into a hang: the suite never returns, CI
+# dies on the job timeout, and the offending test's name never appears in the
+# output. The slowest test in the suite is 7.4s (measured with --durations), so
+# 300s only ever fires on a genuine hang, never on a loaded machine (#127).
+timeout = 300
 
 [tool.ruff]
 extend-exclude = ["work"]
