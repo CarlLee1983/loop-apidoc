@@ -25,6 +25,9 @@
     "paths./v3/payments/{transactionId}/confirm.post"
   ],
   "critical_security_schemes": [
-    "X-LINE-Authorization (HMAC-SHA256)"
-  ]
+    "X-LINE-Authorization_HMAC-SHA256"
+  ],
+  "critical_security_scheme_labels": {
+    "X-LINE-Authorization_HMAC-SHA256": "X-LINE-Authorization (HMAC-SHA256)"
+  }
 }

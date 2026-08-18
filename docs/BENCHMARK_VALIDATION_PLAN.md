@@ -29,8 +29,12 @@ The committed extraction and expectation files define the case and its
 source-backed assertions. Other expected declarations, such as
 `expected/minimum.json`, carry the exact structural counts the case produced
 when it was recorded — `counts` is asserted with `==`, not as a floor, so any
-movement has to appear in the diff and be explained (#126). The booleans and
-`critical_operations` beside it stay presence checks.
+movement has to appear in the diff and be explained (#126). The booleans,
+`critical_operations`, and `critical_security_schemes` beside it stay presence
+checks. `critical_security_schemes` names emitted
+`components.securitySchemes` keys, because a count cannot tell a renamed scheme
+from the required one; a human-readable name for a key belongs in
+`critical_security_scheme_labels`, which is never matched against output (#137).
 
 The original source snapshot is deliberately not part of fixture identity because `benchmarks/<case>/sources/` is operator-provided and
 gitignored.
