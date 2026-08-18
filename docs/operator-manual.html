@@ -86,7 +86,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#import-supplementary-note">import-supplementary-note — 供應商補充說明的人工摘錄</a>
   <a class="lvl-3" href="#inspect-source-risk">inspect-source-risk — agent 讀取前來源風險閘</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — 來源品質閘</a>
-  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — 來源新鮮度排程閘</a>
+  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch / governance-scan / governance-review-plan — 來源新鮮度與治理觸發</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — 擷取契約檢查</a>
   <a class="lvl-3" href="#focus-directives">--focus — 依任務對擷取下重點指令</a>
   <a class="lvl-3" href="#assemble">assemble — 組裝 + 驗證</a>
@@ -246,7 +246,7 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
   --source-set &lt;名稱&gt; --output ./work/source-quality [--base-manifest &lt;舊 manifest&gt;]
 </code></pre>
 <p>在擷取前依可追溯 observation 評估來源品質,輸出 <code>source-quality-report.{json,zh-TW.md}</code> 與來源差異 <code>source-diff.{json,md}</code>,結論為 pass 或 reject。<code>--source-risk</code> 為必要參數：命令會驗證 binding、對目前來源 bytes 重跑確定性檢查，並要求完整 audit 相符後才嵌入 source-quality report。blocker observation 可列出來源明確連結的 <code>required_source_refs</code>；reject report 依原順序去重後輸出為 bounded next-capture seed，絕不自動 crawl。把報告目錄傳給 <code>assemble --source-quality</code>:reject 會在建立 run-dir 前中止組裝;pass 的報告與來源差異會保存進 run-dir 供稽核。</p>
-<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> / <code>governance-scan</code> — 來源新鮮度與治理觸發</h3>
+<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> / <code>governance-scan</code> / <code>governance-review-plan</code> — 來源新鮮度與治理觸發</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 
 uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json \
@@ -279,6 +279,19 @@ SHA-256、本機檔案比對 SHA-256。退出碼:<code>0</code>=未變(可跳過
 <code>sources/&lt;sha256&gt;.source</code> 與 <code>governance-snapshot.json</code>。這避免掃描後重新抓取而造成內容
 漂移；unchanged、inconclusive、error 不會被保存，全部未變時也不建立空快照。退出碼：
 <code>0</code>=no action、<code>1</code>=review required、<code>2</code>=attention required。</p>
+<p>要把觸發轉成 bounded 的人工／agent 交辦，使用 <code>governance-review-plan</code>：</p>
+<pre><code class="language-bash">uv run loop-apidoc governance-review-plan --trigger ./work/governance/governance-trigger.json \
+  --snapshot ./work/governance-snapshot --output ./work/review-plan [--json]
+</code></pre>
+<p>讀入同一次掃描的 <code>governance-trigger.json</code>；使用快照前會逐一重讀
+<code>sources/&lt;sha256&gt;.source</code> 的 bytes、重算 SHA-256 並與 <code>governance-snapshot.json</code>
+比對，任一份缺檔或摘要不符即失敗。<code>source_changed</code> 觸發若沒有通過驗證的快照一律拒絕——沒有保存
+下來的原始 bytes，就沒有可審的證據。輸出 <code>governance-review-plan.{json,md}</code>，逐個觸發列出
+kind、原因、既有 run 目錄、快照來源，以及必要的人工／agent 步驟：來源變動是「審閱保存的 bytes → 另開
+工作目錄重新擷取並跑 <code>verify-extraction</code> → assemble、看影響 diff，再要求明確的人工核准」；無法
+判定則是「先查清楚來源可用性，在那之前不 assemble、不核准」。命令本身不抓取、不重新擷取、不 assemble、
+不匯入 Foundry、不核准契約。退出碼：<code>0</code>=計畫已寫出，<code>2</code>=輸入或快照驗證失敗，或
+<code>--output</code> 指到既有檔案。</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — 檢查擷取 JSON 是否符合契約</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...] [--focus ./focus.json]
 </code></pre>
