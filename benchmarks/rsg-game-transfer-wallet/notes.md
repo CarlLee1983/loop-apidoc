@@ -50,7 +50,13 @@
 - Base URL: one documented server placeholder.
 - Critical endpoints: member creation, deposit, withdrawal, transaction-result lookup.
 - Auth/signing: `X-API-ClientID`, `X-API-Signature` (MD5),
-  `X-API-Timestamp`; DES-CBC body encryption.
+  `X-API-Timestamp`; DES-CBC body encryption. This scheme was named
+  `RSG Signature` until commit `123083e` (2026-07-24) renamed it to the
+  documented header, leaving `details` untouched — one scheme throughout, never
+  two. The archived run under `output/20260716T072005.471369Z/` therefore emits
+  the old key `RSG_Signature`, and `expected/minimum.json` kept naming the old
+  label until #137 rewrote the declaration as the emitted key. A `RSG_Signature`
+  found in an old artifact is that rename, not a missing scheme.
 - Error codes: all 15 entries in section 8-1, with source citations and any
   explicitly documented operation applicability.
 
