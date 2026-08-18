@@ -347,8 +347,9 @@ Adding a case widens a reviewed contract. Use this sequence:
    ```
 
    That test reads the number back out of every current document and compares it
-   to `REQUIRED_BENCHMARK_CASES`; release notes and ADRs are excluded by name,
-   because each records the count that was true when it was written.
+   to `REQUIRED_BENCHMARK_CASES`. Release notes and ADRs are named separately and
+   pinned to the count they recorded: each states what was true or measured when
+   it was written, so it must not be updated to today's number.
 
 The exact-parity test must fail between steps 1 and 3. That RED result proves a
 new committed fixture cannot silently widen discovery without also widening the
