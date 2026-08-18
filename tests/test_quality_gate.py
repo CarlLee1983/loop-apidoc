@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from scripts import quality_gate
+from tests.cli_commands_support import registered_cli_commands
 
 
 @dataclass
@@ -125,29 +126,8 @@ def test_required_source_derivation_benchmark_cases_match_committed_descriptors(
     assert set(cases) == committed == {"ecpay-creditcard-pdf"}
 
 
-def _registered_cli_commands() -> set[str]:
-    """Every invocable command name, sub-app commands included as
-    `"<group> <command>"`. Names come from typer's own derivation rather than a
-    local copy of it, so an unnamed command cannot drift out of the check."""
-    from typer.main import get_command_name
-
-    from loop_apidoc.cli import app
-
-    def names(typer_app, prefix: str = "") -> set[str]:
-        found = {
-            prefix + (command.name or get_command_name(command.callback.__name__))
-            for command in typer_app.registered_commands
-        }
-        for group in typer_app.registered_groups:
-            group_name = group.name or get_command_name(group.typer_instance.info.name or "")
-            found |= names(group.typer_instance, f"{prefix}{group_name} ")
-        return found
-
-    return names(app)
-
-
 def test_every_cli_command_is_graded_or_explicitly_excluded():
-    registered = _registered_cli_commands()
+    registered = registered_cli_commands()
 
     assert "foundry approve" in registered  # sub-app commands are in scope
     assert quality_gate.acquisition_grading_gaps(registered) == {
