@@ -1089,14 +1089,16 @@ def test_inspect_source_risk_detects_cards_next_to_another_number(
     assert "4539148803436004" not in report_text
 
 
-def test_inspect_source_risk_scans_punctuation_dense_text_in_bounded_time(
-    tmp_path: Path,
-) -> None:
+def test_inspect_source_risk_scans_punctuation_dense_text(tmp_path: Path) -> None:
     """這個閘的職責是擋下不可信來源,所以它自己不能被不可信來源癱瘓。
     無界限的 email 樣式在整份文件上是二次時間:184 KB 的 minified CSS
-    要 52 秒,5 MiB 來源足以讓前置閘停擺。"""
-    import time
+    要 52 秒,5 MiB 來源足以讓前置閘停擺。
 
+    這裡只證明端到端跑得完、而且這種來源不會被誤判成有風險。成本隨輸入
+    線性成長那件事釘在 `tests/test_privacy_scaling.py`:原本寫在這裡的
+    `elapsed < 5.0` 量的是這台機器跑這一份輸入多久(實測 0.13 秒,38 倍
+    餘裕),既放得過 O(n^1.5) 的新規則,也會在機器忙時擋下沒有缺陷的
+    東西(#120／#128)。"""
     sources = tmp_path / "sources"
     sources.mkdir()
     source = sources / "styles.md"
@@ -1110,7 +1112,6 @@ def test_inspect_source_risk_scans_punctuation_dense_text_in_bounded_time(
     assert manifest_result.exit_code == 0, manifest_result.stdout
 
     output = tmp_path / "source-risk"
-    started = time.perf_counter()
     result = runner.invoke(
         app,
         [
@@ -1123,10 +1124,10 @@ def test_inspect_source_risk_scans_punctuation_dense_text_in_bounded_time(
             str(output),
         ],
     )
-    elapsed = time.perf_counter() - started
 
     assert result.exit_code == 0, result.stdout
-    assert elapsed < 5.0, f"source-risk scan took {elapsed:.1f}s"
+    report = json.loads((output / "source-risk-report.json").read_text("utf-8"))
+    assert report["findings"] == []
 
 
 def test_inspect_source_risk_passes_a_document_full_of_contact_addresses(
