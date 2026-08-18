@@ -18,36 +18,47 @@ AGENTS = REPO_ROOT / "AGENTS.md"
 # direction matters as much: a code left in prose after it was deleted has the
 # agent responding to a signal that can no longer arrive (#136).
 _TABLE_HEADING = "## Issue codes → what it means → how to respond"
+_ISSUE_OBJECT_HEADING = "## The `Issue` object"
 _CORRECTION_HEADING = "## Correction & fail-closed classification"
 
-# Codes are written the same way everywhere they appear: a code span in SCREAMING
-# _SNAKE_CASE. Nothing else in these two sections is spelled that way, so a token
-# this matches but the enum does not know is reported rather than filtered out.
-_CODE_SPAN = re.compile(r"`([A-Z][A-Z_]{2,})`")
+# A code span in SCREAMING_SNAKE_CASE, the underscore required: `ERROR` and
+# `WARNING` are severities and plausible prose in a section about severity, and
+# reporting them as unknown codes would make a correct document fail. Every code
+# today carries an underscore, and a future single-word one surfaces as
+# `undocumented` — loud, and on the side that is safe to be wrong about.
+_CODE_SPAN = re.compile(r"`([A-Z]+(?:_[A-Z]+)+)`")
+_TABLE_ROW = re.compile(r"^\|\s*`([A-Z]+(?:_[A-Z]+)+)`")
 
 
-def _section(text: str, heading: str) -> str:
-    body = text.split(heading, 1)[1]
-    return body.split("\n## ", 1)[0]
+def _section(path: Path, heading: str) -> str:
+    text = path.read_text(encoding="utf-8")
+
+    assert heading in text, f"{path} no longer has the section {heading!r}"
+    return text.split(heading, 1)[1].split("\n## ", 1)[0]
 
 
 def _routing_table_codes() -> set[str]:
     """The first cell of every row in the routing table."""
-    section = _section(REFERENCE.read_text(encoding="utf-8"), _TABLE_HEADING)
-    return {
+    rows = [
         match.group(1)
-        for line in section.splitlines()
-        if line.startswith("| `")
-        for match in [_CODE_SPAN.match(line[2:])]
+        for line in _section(REFERENCE, _TABLE_HEADING).splitlines()
+        for match in [_TABLE_ROW.match(line)]
         if match
-    }
+    ]
+
+    # Without this, a reformatted table (aligned pipes, say) parses as empty and
+    # the test reports every code as undocumented — sending the next maintainer
+    # to add rows that are already there.
+    assert rows, f"no routing-table rows parsed from {REFERENCE}"
+    return set(rows)
 
 
 def _issue_object_codes() -> set[str]:
     """The alternation in the `Issue` object example — a second list in the same
     file, and the one an agent copies when it writes the shape out."""
-    text = REFERENCE.read_text(encoding="utf-8")
-    match = re.search(r'\{"code": "([A-Z_|]+)"', text)
+    match = re.search(
+        r'\{"code": "([A-Z_|]+)"', _section(REFERENCE, _ISSUE_OBJECT_HEADING)
+    )
 
     assert match, "the Issue object example no longer states the code alternation"
     return set(match.group(1).split("|"))
@@ -55,7 +66,7 @@ def _issue_object_codes() -> set[str]:
 
 def _agents_correction_codes() -> set[str]:
     """Every code named in the response-by-intent bullets."""
-    return set(_CODE_SPAN.findall(_section(AGENTS.read_text(encoding="utf-8"), _CORRECTION_HEADING)))
+    return set(_CODE_SPAN.findall(_section(AGENTS, _CORRECTION_HEADING)))
 
 
 def _drift(documented: set[str]) -> dict[str, list[str]]:
