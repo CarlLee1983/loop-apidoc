@@ -86,7 +86,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   <a class="lvl-3" href="#import-supplementary-note">import-supplementary-note — excerpt of supplier correspondence</a>
   <a class="lvl-3" href="#inspect-source-risk">inspect-source-risk — pre-agent source-risk gate</a>
   <a class="lvl-3" href="#assess-sources">assess-sources — source quality gate</a>
-  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch — scheduled source freshness gate</a>
+  <a class="lvl-3" href="#freshness-gate">record-fingerprint / check-freshness / check-freshness-batch / governance-scan / governance-review-plan — source freshness and governance triggers</a>
   <a class="lvl-3" href="#verify-extraction">verify-extraction — extraction contract check</a>
   <a class="lvl-3" href="#focus-directives">--focus — task-specific extraction focus directives</a>
   <a class="lvl-3" href="#assemble">assemble — assemble + validate</a>
@@ -246,7 +246,7 @@ uv run loop-apidoc scaffold-extraction --sources ./sources --manifest ./work/man
   --source-set &lt;name&gt; --output ./work/source-quality [--base-manifest &lt;old manifest&gt;]
 </code></pre>
 <p>Before extraction, assesses source quality against traceable observations, producing <code>source-quality-report.{json,zh-TW.md}</code> and a source diff <code>source-diff.{json,md}</code>, with a verdict of pass or reject. <code>--source-risk</code> is required: the command verifies the binding, re-runs deterministic inspection against the current source bytes, and requires the complete audit to match before embedding it. Blocker observations may list explicit HTTP(S) links in <code>required_source_refs</code>; a rejected report emits their ordered, de-duplicated union as a bounded next-capture seed and never crawls it. Pass the report directory to <code>assemble --source-quality</code>: reject aborts assembly before the run-dir is created; a passing report and source diff are retained in the run-dir for audit.</p>
-<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> — scheduled source freshness gate</h3>
+<h3 id="freshness-gate"><code>record-fingerprint</code> / <code>check-freshness</code> / <code>check-freshness-batch</code> / <code>governance-scan</code> / <code>governance-review-plan</code> — source freshness and governance triggers</h3>
 <pre><code class="language-bash">uv run loop-apidoc record-fingerprint --run-dir ./output/&lt;run-id&gt; --output ./work/source-fingerprint.json [--force]
 
 uv run loop-apidoc check-freshness --fingerprint ./work/source-fingerprint.json \
@@ -280,6 +280,22 @@ content-addressed evidence pack: <code>sources/&lt;sha256&gt;.source</code> and
 <code>governance-snapshot.json</code>. This avoids a second, racy fetch; unchanged, inconclusive, and failed
 sources are not retained, and an all-unchanged scan creates no empty pack. Exit codes are <code>0</code> = no
 action, <code>1</code> = review required, and <code>2</code> = attention required.</p>
+<p>To turn that trigger into a bounded human/agent handoff, use <code>governance-review-plan</code>:</p>
+<pre><code class="language-bash">uv run loop-apidoc governance-review-plan --trigger ./work/governance/governance-trigger.json \
+  --snapshot ./work/governance-snapshot --output ./work/review-plan [--json]
+</code></pre>
+<p>It reads the <code>governance-trigger.json</code> from that same scan. Before the snapshot is used, every
+retained <code>sources/&lt;sha256&gt;.source</code> is re-read and re-hashed against
+<code>governance-snapshot.json</code>; a missing file or a digest mismatch fails the command. A
+<code>source_changed</code> trigger without a verified snapshot is refused outright — without the retained
+bytes there is nothing to review. The output is <code>governance-review-plan.{json,md}</code>, listing per
+trigger the kind, the reason, the prior run directory, the snapshot sources, and the required human/agent
+steps: a changed source gets "review the retained bytes → re-extract into a separate work directory and run
+<code>verify-extraction</code> → assemble, inspect the impact diff, then request explicit human approval",
+while an inconclusive one gets "investigate source availability first, and neither assemble nor approve until
+it is resolved". The command itself never fetches, re-extracts, assembles, imports to Foundry, or approves a
+contract. Exit codes: <code>0</code> = plan written, <code>2</code> = bad input, failed snapshot
+verification, or an <code>--output</code> path that is an existing file.</p>
 <h3 id="verify-extraction"><code>verify-extraction</code> — check that the extraction JSON meets the contract</h3>
 <pre><code class="language-bash">uv run loop-apidoc verify-extraction --sources ./sources --extraction ./work [--url &lt;URL&gt; ...] [--focus ./focus.json]
 </code></pre>
