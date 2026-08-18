@@ -27,9 +27,12 @@ benchmarks/<case>/
 
 The committed extraction and expectation files define the case and its
 source-backed assertions. Other expected declarations, such as
-`expected/minimum.json`, provide the assertion thresholds used during
-execution. The original source snapshot is deliberately not part of fixture
-identity because `benchmarks/<case>/sources/` is operator-provided and
+`expected/minimum.json`, carry the exact structural counts the case produced
+when it was recorded — `counts` is asserted with `==`, not as a floor, so any
+movement has to appear in the diff and be explained (#126). The booleans and
+`critical_operations` beside it stay presence checks.
+
+The original source snapshot is deliberately not part of fixture identity because `benchmarks/<case>/sources/` is operator-provided and
 gitignored.
 
 Every committed case also carries `expected/core-parity.json`. This is a
@@ -93,7 +96,7 @@ case's `expected/` declarations. Among other things, the assertions cover:
 
 - expected validation PASS or EXPECTED_FAIL status;
 - the complete issue-class map, including warning drift;
-- OpenAPI 3.1 validity and structural minimums;
+- OpenAPI 3.1 validity and the exact structural count snapshot;
 - critical operations, provenance, examples, and integration contracts;
 - preparation, scoring, diff, and Foundry behavior exercised by the case.
 

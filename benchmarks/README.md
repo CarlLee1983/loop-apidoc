@@ -17,7 +17,7 @@
 │   ├── endpoints/ep0.json …
 │   └── integration.json     # 選填:來源有簽章/加密/callback/欄位條件時才有
 ├── expected/                # 人工驗收基準(入庫)
-│   ├── minimum.json         # 此 case 至少必須抽到的重點
+│   ├── minimum.json         # 此 case 產物的實測計數快照(counts 以 == 斷言)
 │   └── validation.expect.json  # 預期 PASS/FAIL 與必要 issue 類型
 ├── source-quality/         # assemble 必要的來源品質稽核套件(gitignore)
 ├── output/                  # assemble 實際輸出 run-dir(gitignore)
@@ -89,8 +89,10 @@ uv run pytest tests/test_benchmarks.py -v
 
 對每個 case 用**已 commit 的 `extraction/`** 重跑確定性的 assemble→validate,
 並比對 `expected/{validation.expect.json,minimum.json}`:斷言 PASS/FAIL、error 數、
-OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes 數量下限、critical_operations
-存在、provenance/examples/integration-contract 齊備。
+OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes/error_codes 等計數與快照
+完全相等、critical_operations 存在、provenance/examples/integration-contract 齊備。
+計數改快照的理由見 #126:地板式的 >= 會讓「錯誤碼掉一半」這種退步靜靜通過。
+快照要重錄時用 `uv run python scripts/benchmark_counts.py --case benchmarks/<case> --run-dir <組裝出的 run 目錄> --record`,它與測試共用同一份計數程式碼,手改 JSON 容易錄錯一欄而無人察覺。
 
 > **需本機 `sources/` 與 `source-quality/`**:驗證器需 manifest 含被引用來源才會把項目標為
 > verified,而 `assemble` 必須帶通過的來源品質稽核套件;兩者皆為操作者本機產出且 gitignore,

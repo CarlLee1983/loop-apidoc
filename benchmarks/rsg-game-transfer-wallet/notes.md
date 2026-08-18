@@ -74,7 +74,8 @@
 
 ## Follow-up
 
-- If RSG publishes additional concrete code rows, refresh extraction and raise
-  `error_codes_min` with the source revision.
+- If RSG publishes additional concrete code rows, refresh extraction and re-record
+  `counts.error_codes` with the source revision — the snapshot moves in either
+  direction, and the diff is where the reason gets stated.
 - Expand the endpoint subset only after extracting each request/response example
   with its source citation.
