@@ -186,13 +186,18 @@ def test_a_near_miss_on_a_padded_line_does_not_take_exponential_time(padding, li
     容許冒號時四千字元要七秒半。母體裡最長的一行是 38,011 字元,所以這
     完全在掃描器已經要處理的尺寸之內,而它讀的是操作者給的任意文件。
     正確性測試看不見這一類 bug,所以這裡直接量時間。
+
+    #128 只改量測基準,不改預算:`perf_counter` → `process_time` 就足以拿掉
+    「機器一忙就紅」那一類偽失敗,而 0.5 秒對健康掃描(實測 0.00009 秒 CPU,
+    兩種 padding 都是)本來就有五千倍餘裕。放寬預算是另一件事,而且會往回走:
+    回溯版本是 2～7.5 秒,預算放到 2 秒就貼著已知缺陷的下緣了。
     """
-    start = time.perf_counter()
+    start = time.process_time()
     result = scan_markdown("doc.md", line + "\n").endpoints
-    elapsed = time.perf_counter() - start
+    elapsed = time.process_time() - start
 
     assert result == [], padding
-    assert elapsed < 0.5, padding
+    assert elapsed < 0.5, f"{padding}: {elapsed:.3f}s CPU"
 
 
 def test_a_declaration_before_any_heading_ends_at_the_first_heading():
