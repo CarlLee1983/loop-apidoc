@@ -113,6 +113,7 @@ HISTORICAL_DOCS: dict[Path, int] = {
     Path("docs/RELEASE_NOTES_0.36.0.md"): 13,
     Path("docs/RELEASE_NOTES_0.37.0.md"): 13,
     Path("docs/RELEASE_NOTES_0.38.0.md"): 13,
+    Path("docs/RELEASE_NOTES_0.39.0.md"): 13,
     Path("docs/adr/0007-source-fact-scanning-stays-limited-to-well-structured-markdown.md"): 13,
     Path("docs/adr/0008-an-unclosed-fence-is-reported-not-guessed-shut.md"): 13,
     Path("docs/adr/0009-the-two-markdown-scanners-stay-separate.md"): 13,
