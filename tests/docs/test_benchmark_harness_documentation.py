@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from scripts import quality_gate
+from tests import benchmark_case_count_support as support
+
 
 CANONICAL = Path("docs/BENCHMARK_VALIDATION_PLAN.md")
 SUPPORTING_DOCS = (
@@ -15,7 +18,7 @@ SUPPORTING_DOCS = (
 AGENT_SECTION_MARKER = "## Benchmark harness contract"
 
 
-def test_canonical_benchmark_contract_names_four_layers_and_thirteen_cases():
+def test_canonical_benchmark_contract_names_four_layers_and_the_case_count():
     text = CANONICAL.read_text(encoding="utf-8")
 
     for layer in (
@@ -25,7 +28,13 @@ def test_canonical_benchmark_contract_names_four_layers_and_thirteen_cases():
         "Strict-local preflight",
     ):
         assert layer in text
-    assert "thirteen unique cases" in text
+    # The number itself is checked against `REQUIRED_BENCHMARK_CASES` in
+    # `test_benchmark_case_count_in_docs.py`; here the canonical document only
+    # has to keep saying how many unique cases the harness holds.
+    count = len(quality_gate.REQUIRED_BENCHMARK_CASES)
+    assert any(
+        f"{word} unique cases" in text for word in support.spelled(count)
+    )
     assert "5-8" not in text
     assert "5–8" not in text
     assert "11 case" not in text
