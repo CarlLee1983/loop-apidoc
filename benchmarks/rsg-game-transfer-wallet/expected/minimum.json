@@ -27,6 +27,9 @@
     "paths./WithBalance/Player/GetTransactionResult.post"
   ],
   "critical_security_schemes": [
-    "RSG Signature"
-  ]
+    "X-API-Signature"
+  ],
+  "critical_security_scheme_labels": {
+    "X-API-Signature": "RSG Signature"
+  }
 }

@@ -225,12 +225,23 @@ def test_benchmark_case(case, assembled) -> None:
             f"{case.name}: critical op {ref} missing from OpenAPI paths"
         )
 
-    # `critical_security_schemes` is deliberately NOT asserted here: the seven
-    # cases that declare it write prose labels ("AES256 (TradeInfo / …)"), which
-    # the generator emits as sanitized keys ("AES256_TradeInfo_…") and which rsg
-    # does not relate to its emitted `X-API-Signature` at all. Checking it needs
-    # the declaration re-expressed as scheme identities — a separate change, not
-    # a line snuck into #126. `counts.security_schemes` guards the count only.
+    # --- 6. every critical security scheme is present, by identity ---
+    # `counts.security_schemes` guards the cardinality only: rename `bearerAuth`
+    # to anything and the count is still 2. The declaration now names the emitted
+    # `components.securitySchemes` key, so the scheme a case cannot ship without
+    # is checked by identity (#137). The prose that used to sit in this key lives
+    # in `critical_security_scheme_labels`, which nothing matches against.
+    schemes = (doc.get("components") or {}).get("securitySchemes") or {}
+    for name in minimum.get("critical_security_schemes", []):
+        assert name in schemes, (
+            f"{case.name}: critical security scheme {name} missing from OpenAPI "
+            f"components.securitySchemes (got {sorted(schemes)})"
+        )
+    labelled = minimum.get("critical_security_scheme_labels", {})
+    assert set(labelled) <= set(minimum.get("critical_security_schemes", [])), (
+        f"{case.name}: a human-readable label names a scheme the case does not "
+        f"require: {sorted(set(labelled) - set(minimum.get('critical_security_schemes', [])))}"
+    )
 
     run_dir = Path(result.run_dir)
 
