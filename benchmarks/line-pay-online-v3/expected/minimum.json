@@ -1,10 +1,30 @@
 {
-  "_note": "HMAC 簽章 REST(來源為總覽頁,endpoint body 多在 JS 子頁,faithful 缺漏);達成下限。",
-  "must_have": {
-    "base_urls": 2, "endpoints_min": 7, "schemas_min": 2,
-    "error_codes_min": 20, "security_schemes_min": 1, "examples": true, "provenance": true
+  "_note": "HMAC 簽章 REST(來源為總覽頁,endpoint body 多在 JS 子頁,faithful 缺漏)。",
+  "counts": {
+    "operations": 7,
+    "paths": 7,
+    "webhooks": 0,
+    "schemas": 3,
+    "security_schemes": 2,
+    "servers": 2,
+    "error_codes": 31,
+    "field_conditions": 1,
+    "test_cases": 2
   },
-  "integration": { "required": true, "crypto_required": true, "callbacks_required": false, "test_cases_min": 1 },
-  "critical_operations": ["paths./v3/payments/request.post", "paths./v3/payments/{transactionId}/confirm.post"],
-  "critical_security_schemes": ["X-LINE-Authorization (HMAC-SHA256)"]
+  "must_have": {
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": true,
+    "crypto_required": true,
+    "callbacks_required": false
+  },
+  "critical_operations": [
+    "paths./v3/payments/request.post",
+    "paths./v3/payments/{transactionId}/confirm.post"
+  ],
+  "critical_security_schemes": [
+    "X-LINE-Authorization (HMAC-SHA256)"
+  ]
 }

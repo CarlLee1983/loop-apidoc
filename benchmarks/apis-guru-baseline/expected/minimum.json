@@ -1,12 +1,17 @@
 {
-  "_note": "machine-readable OpenAPI baseline;達成值的保守下限。",
+  "_note": "machine-readable OpenAPI baseline。",
+  "counts": {
+    "operations": 7,
+    "paths": 7,
+    "webhooks": 0,
+    "schemas": 4,
+    "security_schemes": 0,
+    "servers": 1,
+    "error_codes": 0,
+    "field_conditions": 0,
+    "test_cases": 0
+  },
   "must_have": {
-    "base_urls": 1,
-    "endpoints_min": 7,
-    "webhooks_min": 0,
-    "schemas_min": 4,
-    "error_codes_min": 0,
-    "security_schemes_min": 0,
     "examples": true,
     "provenance": true
   },

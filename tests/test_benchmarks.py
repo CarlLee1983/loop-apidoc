@@ -25,6 +25,8 @@ import pytest
 import yaml
 from openapi_spec_validator import validate as validate_openapi
 
+from scripts.benchmark_counts import COUNT_KEYS, count_run_dir, operation_count
+
 from loop_apidoc.agentcli.assemble import run_assemble_pipeline as _run_assemble_pipeline
 from loop_apidoc.agentcli.preprocess import prepare_markdown
 from loop_apidoc.agentcli.verify import verify_extraction_dir
@@ -67,14 +69,9 @@ def run_assemble_pipeline(**kwargs) -> RunResult:
     return _run_assemble_pipeline(**kwargs)
 
 
-def _operation_count(paths: dict) -> int:
-    return sum(
-        1
-        for path_item in paths.values()
-        if isinstance(path_item, dict)
-        for method in path_item
-        if method.lower() in {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
-    )
+# Counting lives in scripts/benchmark_counts.py so that recording a snapshot
+# and asserting against it cannot measure different things (#126).
+_operation_count = operation_count
 
 
 def _cases() -> list[Path]:
@@ -119,16 +116,16 @@ def _case_by_name(name: str) -> Path:
     return _BENCH_ROOT / name
 
 
-def test_jili_case_has_declared_legacy_pdf_minimums():
+def test_jili_case_has_declared_legacy_pdf_counts():
     case = _case_by_name("jili-legacy-gaming-pdf")
     minimum = json.loads((case / "expected" / "minimum.json").read_text("utf-8"))
-    assert minimum["must_have"]["endpoints_min"] == 25
-    assert minimum["must_have"]["paths_min"] == 20
+    assert minimum["counts"]["operations"] == 25
+    assert minimum["counts"]["paths"] == 20
     assert "paths./CreateFreeSpin.get" in minimum["critical_operations"]
     assert "paths./CreateFreeSpin.post" in minimum["critical_operations"]
 
 
-def test_operation_floor_counts_methods_separately_from_paths():
+def test_operation_count_counts_methods_separately_from_paths():
     paths = {"/free-spin": {"get": {}, "post": {}}}
 
     assert len(paths) == 1
@@ -202,21 +199,23 @@ def test_benchmark_case(case, assembled) -> None:
     assert doc.get("openapi", "").startswith("3.1"), f"{case.name}: not OpenAPI 3.1"
 
     paths = doc.get("paths", {}) or {}
-    webhooks = doc.get("webhooks", {}) or {}
-    schemas = (doc.get("components", {}) or {}).get("schemas", {}) or {}
-    sec = (doc.get("components", {}) or {}).get("securitySchemes", {}) or {}
-    servers = doc.get("servers", []) or []
 
-    # --- 4. structural minimums (>= floor; harness must not silently regress) ---
-    assert _operation_count(paths) >= must.get("endpoints_min", 0), (
-        f"{case.name}: too few operations"
+    # --- 4. every counted artifact matches the recorded snapshot exactly ---
+    # These were `>=` floors until #126. A floor answers "did we clear a number
+    # somebody wrote down in 2026-06", not "did the extraction change": newebpay
+    # produced 127 error codes against a floor of 80, so losing 47 of them was a
+    # silent pass. Equality makes any movement show up in the diff, where it is
+    # either an improvement to re-record or the regression the harness exists for.
+    assert "counts" in minimum, f"{case.name}: minimum.json has no counts snapshot"
+    counts = minimum["counts"]
+    assert set(counts) == set(COUNT_KEYS), (
+        f"{case.name}: counts keys drifted — recorded {sorted(counts)}, "
+        f"expected {sorted(COUNT_KEYS)}"
     )
-    assert len(paths) >= must.get("paths_min", 0), f"{case.name}: too few paths"
-    assert len(webhooks) >= must.get("webhooks_min", 0), f"{case.name}: too few webhooks"
-    assert len(schemas) >= must.get("schemas_min", 0), f"{case.name}: too few schemas"
-    assert len(sec) >= must.get("security_schemes_min", 0), f"{case.name}: too few securitySchemes"
-    # base_urls = OpenAPI servers (0 is valid for webhook-only specs, e.g. github/paypal)
-    assert len(servers) >= must.get("base_urls", 0), f"{case.name}: too few servers/base URLs"
+    got_counts = count_run_dir(Path(result.run_dir))
+    assert got_counts == counts, (
+        f"{case.name}: counts moved — recorded {counts}, got {got_counts}"
+    )
 
     # --- 5. critical operations are present (paths.{path}.{method}) ---
     for ref in minimum.get("critical_operations", []):
@@ -226,18 +225,19 @@ def test_benchmark_case(case, assembled) -> None:
             f"{case.name}: critical op {ref} missing from OpenAPI paths"
         )
 
+    # `critical_security_schemes` is deliberately NOT asserted here: the seven
+    # cases that declare it write prose labels ("AES256 (TradeInfo / …)"), which
+    # the generator emits as sanitized keys ("AES256_TradeInfo_…") and which rsg
+    # does not relate to its emitted `X-API-Signature` at all. Checking it needs
+    # the declaration re-expressed as scheme identities — a separate change, not
+    # a line snuck into #126. `counts.security_schemes` guards the count only.
+
     run_dir = Path(result.run_dir)
 
     # integration-contract is also where error codes + integration mechanics land;
     # load once (absent for cases with no integration source).
     ic_path = run_dir / "integration-contract.json"
     ic = json.loads(ic_path.read_text("utf-8")) if ic_path.is_file() else {}
-
-    # error-code floor (inventory.errors → integration-contract.error_codes)
-    assert len(ic.get("error_codes", [])) >= must.get("error_codes_min", 0), (
-        f"{case.name}: too few error codes "
-        f"({len(ic.get('error_codes', []))} < {must.get('error_codes_min', 0)})"
-    )
 
     # --- 6. provenance present and covers something ---
     if must.get("provenance"):
@@ -250,7 +250,7 @@ def test_benchmark_case(case, assembled) -> None:
         ex = run_dir / "examples"
         assert ex.is_dir() and any(ex.rglob("request.*")), f"{case.name}: no examples generated"
 
-    # --- 8. integration-contract present + meets declared floors ---
+    # --- 8. integration-contract present + declared mechanics carried ---
     integ = minimum.get("integration", {}) or {}
     if integ.get("required"):
         assert ic_path.is_file(), (
@@ -263,14 +263,6 @@ def test_benchmark_case(case, assembled) -> None:
             assert ic.get("crypto"), f"{case.name}: crypto required but none in integration-contract"
         if integ.get("callbacks_required"):
             assert ic.get("callbacks"), f"{case.name}: callbacks required but none in integration-contract"
-        assert len(ic.get("field_conditions", [])) >= integ.get("field_conditions_min", 0), (
-            f"{case.name}: too few field_conditions "
-            f"({len(ic.get('field_conditions', []))} < {integ.get('field_conditions_min', 0)})"
-        )
-        assert len(ic.get("test_cases", [])) >= integ.get("test_cases_min", 0), (
-            f"{case.name}: too few test_cases "
-            f"({len(ic.get('test_cases', []))} < {integ.get('test_cases_min', 0)})"
-        )
 
 
 def test_benchmark_score(case, assembled) -> None:

@@ -1,11 +1,17 @@
 {
-  "_note": "RSG 轉帳錢包公開文件的可重跑下限；error-code map 必須保留全部文件列出的 15 個代碼。",
+  "_note": "RSG 轉帳錢包公開文件;error-code map 必須保留文件列出的全部 15 個代碼。",
+  "counts": {
+    "operations": 12,
+    "paths": 12,
+    "webhooks": 0,
+    "schemas": 1,
+    "security_schemes": 1,
+    "servers": 1,
+    "error_codes": 15,
+    "field_conditions": 0,
+    "test_cases": 0
+  },
   "must_have": {
-    "base_urls": 1,
-    "endpoints_min": 12,
-    "schemas_min": 1,
-    "error_codes_min": 15,
-    "security_schemes_min": 1,
     "examples": true,
     "provenance": true
   },

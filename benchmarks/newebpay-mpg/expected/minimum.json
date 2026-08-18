@@ -1,21 +1,24 @@
 {
-  "_note": "此 case 至少必須抽到的重點;數字為實跑 20260628 達成值的保守下限,後續回歸不得低於此。",
+  "_note": "MPG 主流程 case:交易建立、查詢,以及信用卡取消/關帳;AES256/SHA256 雙層簽章。",
+  "counts": {
+    "operations": 7,
+    "paths": 7,
+    "webhooks": 3,
+    "schemas": 21,
+    "security_schemes": 5,
+    "servers": 3,
+    "error_codes": 127,
+    "field_conditions": 7,
+    "test_cases": 6
+  },
   "must_have": {
-    "base_urls": 2,
-    "endpoints_min": 7,
-    "webhooks_min": 3,
-    "schemas_min": 15,
-    "error_codes_min": 80,
-    "security_schemes_min": 4,
     "examples": true,
     "provenance": true
   },
   "integration": {
     "required": true,
     "crypto_required": true,
-    "callbacks_required": true,
-    "field_conditions_min": 5,
-    "test_cases_min": 1
+    "callbacks_required": true
   },
   "critical_operations": [
     "paths./MPG/mpg_gateway.post",
