@@ -119,7 +119,11 @@ def test_a_field_anchor_still_requires_exact_evidence(tmp_path):
     assert res.exit_code == 2
 
 
-def test_a_circular_schema_reference_terminates(tmp_path):
+def test_a_circular_schema_reference_resolves_through_the_cli(tmp_path):
+    """The end-to-end half: a cyclic `schema_ref` graph still resolves a field
+    anchor. Termination itself is proved at the seam in
+    `tests/extraction/test_field_names.py` — an exit code cannot fail when the
+    walk does not stop, it can only hang (#127)."""
     import json
     inventory = json.loads(json.dumps(_INVENTORY_WITH_SCHEMA))
     inventory["schemas"].append(
