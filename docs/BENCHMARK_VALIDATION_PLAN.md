@@ -340,6 +340,16 @@ Adding a case widens a reviewed contract. Use this sequence:
    uv run python scripts/quality_gate.py --strict-local
    ```
 
+7. Update the case count where the documents spell it out, and run:
+
+   ```bash
+   uv run pytest tests/docs/test_benchmark_case_count_in_docs.py -q
+   ```
+
+   That test reads the number back out of every current document and compares it
+   to `REQUIRED_BENCHMARK_CASES`; release notes and ADRs are excluded by name,
+   because each records the count that was true when it was written.
+
 The exact-parity test must fail between steps 1 and 3. That RED result proves a
 new committed fixture cannot silently widen discovery without also widening the
 required release inventory.
