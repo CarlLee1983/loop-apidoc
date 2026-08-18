@@ -1,12 +1,17 @@
 {
   "_note": "FunkyGames Transfer Operator 的 machine-readable OpenAPI 基準；來源未給 server、security 或 payload example，必須忠實保留缺漏。",
+  "counts": {
+    "operations": 27,
+    "paths": 27,
+    "webhooks": 0,
+    "schemas": 65,
+    "security_schemes": 0,
+    "servers": 0,
+    "error_codes": 0,
+    "field_conditions": 0,
+    "test_cases": 0
+  },
   "must_have": {
-    "base_urls": 0,
-    "endpoints_min": 27,
-    "webhooks_min": 0,
-    "schemas_min": 65,
-    "error_codes_min": 0,
-    "security_schemes_min": 0,
     "examples": true,
     "provenance": true
   },

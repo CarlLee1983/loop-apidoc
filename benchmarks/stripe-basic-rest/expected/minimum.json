@@ -1,7 +1,30 @@
 {
-  "_note": "高品質 REST(Stripe OpenAPI 子集,Bearer/Basic auth,form body);達成下限。",
-  "must_have": { "base_urls": 1, "endpoints_min": 5, "schemas_min": 1, "error_codes_min": 0, "security_schemes_min": 2, "examples": true, "provenance": true },
-  "integration": { "required": false },
-  "critical_operations": ["paths./v1/payment_intents.post", "paths./v1/payment_intents/{intent}.get", "paths./v1/payment_intents/{intent}/confirm.post"],
-  "critical_security_schemes": ["bearerAuth", "basicAuth"]
+  "_note": "高品質 REST(Stripe OpenAPI 子集,Bearer/Basic auth,form body)。",
+  "counts": {
+    "operations": 6,
+    "paths": 5,
+    "webhooks": 0,
+    "schemas": 1,
+    "security_schemes": 2,
+    "servers": 1,
+    "error_codes": 0,
+    "field_conditions": 0,
+    "test_cases": 0
+  },
+  "must_have": {
+    "examples": true,
+    "provenance": true
+  },
+  "integration": {
+    "required": false
+  },
+  "critical_operations": [
+    "paths./v1/payment_intents.post",
+    "paths./v1/payment_intents/{intent}.get",
+    "paths./v1/payment_intents/{intent}/confirm.post"
+  ],
+  "critical_security_schemes": [
+    "bearerAuth",
+    "basicAuth"
+  ]
 }
