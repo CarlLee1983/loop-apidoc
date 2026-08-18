@@ -90,7 +90,8 @@ uv run pytest tests/test_benchmarks.py -v
 對每個 case 用**已 commit 的 `extraction/`** 重跑確定性的 assemble→validate,
 並比對 `expected/{validation.expect.json,minimum.json}`:斷言 PASS/FAIL、error 數、
 OpenAPI 3.1 valid、paths/webhooks/schemas/securitySchemes/error_codes 等計數與快照
-完全相等、critical_operations 存在、provenance/examples/integration-contract 齊備。
+完全相等、critical_operations 存在、critical_security_schemes 逐個對上產出的
+`components.securitySchemes` 鍵、provenance/examples/integration-contract 齊備。
 計數改快照的理由見 #126:地板式的 >= 會讓「錯誤碼掉一半」這種退步靜靜通過。
 快照要重錄時用 `uv run python scripts/benchmark_counts.py --case benchmarks/<case> --run-dir <組裝出的 run 目錄> --record`,它與測試共用同一份計數程式碼,手改 JSON 容易錄錯一欄而無人察覺。
 
