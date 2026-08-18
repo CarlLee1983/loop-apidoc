@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import ast
+import importlib
 import re
-from functools import cache
 from pathlib import Path
+
+import pytest
 
 from loop_apidoc.validate.models import IssueCode
 
@@ -14,6 +15,11 @@ AGENTS = REPO_ROOT / "AGENTS.md"
 # The operator's copy of the same list. Both manuals name all ten codes today,
 # scattered through prose rather than gathered in a table, which is what makes
 # them the fourth complete list nothing was keeping in sync (#144).
+#
+# `README.md` / `README.en.md` (nine of ten, no `SOURCE_FACTS_UNSCANNED`) and
+# `docs/onboarding*.html` (eight) are deliberately out of scope: they describe a
+# part of the pipeline and do not read as complete lists, so binding them would
+# force prose written to satisfy a test rather than to tell an operator anything.
 MANUALS = (
     REPO_ROOT / "docs/operator-manual.html",
     REPO_ROOT / "docs/operator-manual.en.html",
@@ -79,35 +85,31 @@ def _issue_object_codes() -> set[str]:
     return set(match.group(1).split("|"))
 
 
-@cache
-def _module_constants() -> frozenset[str]:
-    """Every module-level constant name this repository defines.
+# The constants both manuals legitimately cite in the same SCREAMING_SNAKE shape
+# as an issue code. Named one by one, with where each is defined, rather than
+# derived by subtracting every module-level constant in the repository: that
+# subtraction removes 248 names to neutralise these three, and any of the 248 can
+# then mask a stale mention — a deleted code that survives as a constant (a
+# legacy mapping, a migration table) would read as documented, which is the
+# direction this check exists for.
+CITED_CONSTANTS = {
+    "REQUIRED_BENCHMARK_CASES": "scripts.quality_gate",
+    "SANITIZED_BENCHMARK_CASES": "scripts.quality_gate",
+    "SOURCE_ACQUISITION_EVIDENCE_TIERS": "scripts.quality_gate",
+}
 
-    The manuals have no table to parse, so codes are read from the prose's code
-    spans — and prose also names real constants (`REQUIRED_BENCHMARK_CASES`,
-    `SOURCE_ACQUISITION_EVIDENCE_TIERS`). Deriving the exclusion from the code
-    keeps it true as those constants come and go, where a hand-written skip list
-    would fail the next time the manual cites one. A name the repository does not
-    define is reported, which is exactly the deleted-code direction. No issue
-    code is also a constant, and the reverse-direction test proves it stays that
-    way: shadow one and it disappears from the parse and reads as undocumented.
-    """
-    names: set[str] = set()
-    for path in (*(REPO_ROOT / "loop_apidoc").rglob("*.py"), *(REPO_ROOT / "scripts").rglob("*.py")):
-        for node in ast.parse(path.read_text(encoding="utf-8")).body:
-            targets = (
-                node.targets
-                if isinstance(node, ast.Assign)
-                else [node.target] if isinstance(node, ast.AnnAssign) else []
-            )
-            names.update(t.id for t in targets if isinstance(t, ast.Name))
-    return frozenset(names)
+# A bare `<code>` span. The manuals write every code that way; a code moved into
+# a highlighted example block (`<code class="language-bash">`) would read as
+# undocumented, which is the right answer — an operator looking a code up needs
+# it in the prose that explains it, not only in a command line.
+_MANUAL_SPAN = re.compile(r"<code>([A-Z]+(?:_[A-Z]+)+)</code>")
 
 
 def _manual_codes(manual: Path) -> set[str]:
-    """Codes named in a manual's prose: `<code>` spans that are not constants."""
-    spans = set(re.findall(r"<code>([A-Z]+(?:_[A-Z]+)+)</code>", manual.read_text(encoding="utf-8")))
-    return spans - _module_constants()
+    """Codes named in a manual's prose: `<code>` spans that are not cited constants."""
+    return set(_MANUAL_SPAN.findall(manual.read_text(encoding="utf-8"))) - set(
+        CITED_CONSTANTS
+    )
 
 
 def _agents_correction_codes() -> set[str]:
@@ -146,17 +148,52 @@ def test_every_issue_code_has_a_response_intent_in_agents_md():
     }
 
 
-def test_both_operator_manuals_name_every_issue_code():
+@pytest.mark.parametrize("manual", MANUALS, ids=lambda path: path.name)
+def test_the_operator_manual_names_every_issue_code(manual):
     """The manuals are where an operator reads what an issue means. A code that
-    never reaches them leaves a list that still looks complete, one entry short."""
-    for manual in MANUALS:
-        excluded = UNDOCUMENTED_IN_MANUAL.get(manual.name, {})
-        drift = _drift(_manual_codes(manual) | set(excluded))
+    never reaches them leaves a list that still looks complete, one entry short.
+    Parametrized so a drift in both translations is reported in one run — they
+    are a pair and move together."""
+    excluded = UNDOCUMENTED_IN_MANUAL.get(manual.name, {})
 
-        assert drift == {"undocumented": [], "documented_but_not_a_code": []}, (
-            manual.name,
-            drift,
+    assert _drift(_manual_codes(manual) | set(excluded)) == {
+        "undocumented": [],
+        "documented_but_not_a_code": [],
+    }
+
+
+def test_the_manuals_name_the_code_this_check_was_written_for():
+    """`SOURCE_FACTS_UNSCANNED` is the code that separates the manuals from the
+    partial lists: the READMEs stop one short of it. Naming it here means a
+    rewrite that drops it fails for the original reason, not as one entry in a
+    set difference."""
+    for manual in MANUALS:
+        assert "SOURCE_FACTS_UNSCANNED" in _manual_codes(manual), manual.name
+
+
+def test_every_cited_constant_exists_and_is_not_an_issue_code():
+    """The exclusion is only safe while these names are constants and nothing
+    else. A renamed constant leaves a stale citation in the manual, and a code
+    that ever takes one of these names would be excluded from the parse and read
+    as undocumented — both are reported here, where the message is accurate."""
+    for name, module in CITED_CONSTANTS.items():
+        assert hasattr(importlib.import_module(module), name), (
+            f"{module}.{name} is gone"
         )
+    assert set(CITED_CONSTANTS).isdisjoint(code.value for code in IssueCode)
+
+
+def test_a_cited_constant_is_excluded_but_a_code_is_not(tmp_path):
+    """The parser, on a manual built for the purpose: a constant the prose cites
+    is not read as a code, everything else in that shape is."""
+    manual = tmp_path / "manual.html"
+    manual.write_text(
+        "<p><code>REQUIRED_BENCHMARK_CASES</code> <code>SOURCE_CONFLICT</code>"
+        " <code>GHOST_CODE</code> <code>WARNING</code></p>",
+        encoding="utf-8",
+    )
+
+    assert _manual_codes(manual) == {"SOURCE_CONFLICT", "GHOST_CODE"}
 
 
 def test_every_manual_exclusion_names_a_live_code_and_a_reason():
