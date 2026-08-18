@@ -1,22 +1,24 @@
 {
   "_note": "JiLi legacy PDF: 20 committed endpoint details expand to 25 GET/POST operations; the source deliberately omits its concrete API URL.",
+  "counts": {
+    "operations": 25,
+    "paths": 20,
+    "webhooks": 0,
+    "schemas": 0,
+    "security_schemes": 1,
+    "servers": 0,
+    "error_codes": 0,
+    "field_conditions": 2,
+    "test_cases": 1
+  },
   "must_have": {
-    "base_urls": 0,
-    "endpoints_min": 25,
-    "paths_min": 20,
-    "webhooks_min": 0,
-    "schemas_min": 0,
-    "error_codes_min": 0,
-    "security_schemes_min": 0,
     "examples": true,
     "provenance": true
   },
   "integration": {
     "required": true,
     "crypto_required": true,
-    "callbacks_required": false,
-    "field_conditions_min": 2,
-    "test_cases_min": 1
+    "callbacks_required": false
   },
   "critical_operations": [
     "paths./Login.get",

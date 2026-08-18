@@ -33,7 +33,7 @@
 ## Result
 
 - Status: **PASS**(初跑 FAIL 揭出 6 項 pipeline 缺陷 → 全數修復後重跑 PASS;見下方 Findings 標註 ✅)
-- 產物達成度(全部 ≥ minimum.json):7 paths + 3 webhooks、20 components.schemas、5 securitySchemes、127 error codes、integration-contract(5/3/7/6)、10×三語 examples、provenance 235、api-guide 705 行結構完整、OpenAPI 3.1 valid。
+- 產物達成度(2026-08-18 對帳,與 minimum.json 的 counts 快照一致):7 paths + 3 webhooks、21 components.schemas、5 securitySchemes、127 error codes、integration-contract(crypto/callbacks + 7 field_conditions/6 test_cases)、10×三語 examples、provenance 235、api-guide 705 行結構完整、OpenAPI 3.1 valid。
 - Issues:初跑 23 → 修復後 **7(全 warning)**:EWallet/BNPL×3 + ReturnURL/CustomerURL 缺 examples、ReturnURL/CustomerURL 無 responses(降為 warning)。皆非阻斷;來源 4.6~4.8 無專屬 PHP 範例(與 AES/SHA 同機制),產出仍含 curl/ts/py 範例,屬來源缺漏。
 - Missing source info(來源真缺,faithful):AES/GCM(EncryptType=1)細節、callback 接收端應回應主體、各錯誤碼 HTTP status、BankType 完整清單、rate-limit 數值 — 皆正確進 missing,未硬補。
 - False positives:16× OUTPUT_MISMATCH(偵測誤判,非範例真錯);ReturnURL/CustomerURL no-response ERROR(來源確實未定義接收端回應)。
