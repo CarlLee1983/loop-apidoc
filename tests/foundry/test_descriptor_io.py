@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path
 
 import pytest
@@ -266,6 +267,90 @@ def test_head_snapshot_detects_mutation_and_rejects_raw_bytes_rollback(
         assert descriptor_io.read_model_relative(
             root_fd, Docset, "docset.json", "docset.json"
         ) == updated
+    finally:
+        os.close(root_fd)
+
+
+def test_head_snapshot_rejects_unsafe_entries_and_parses_a_pinned_model(
+    tmp_path: Path,
+) -> None:
+    root_fd = _open_root(tmp_path)
+    try:
+        assert head_io.read_head_relative(root_fd, "missing.json") is None
+        with pytest.raises(FoundryInputError, match="required file missing: docset"):
+            head_io.read_head_model_snapshot_relative(
+                root_fd, Docset, "missing.json", "docset"
+            )
+
+        (tmp_path / "directory.json").mkdir()
+        (tmp_path / "target.json").write_text("{}", encoding="utf-8")
+        (tmp_path / "linked.json").symlink_to(tmp_path / "target.json")
+        for name in ("directory.json", "linked.json"):
+            with pytest.raises(FoundryInputError, match="head path is unsafe"):
+                head_io.read_head_snapshot_relative(root_fd, name)
+
+        descriptor_io.write_model_relative(root_fd, "docset.json", _docset())
+        snapshot, parsed = head_io.read_head_model_snapshot_relative(
+            root_fd, Docset, "docset.json", "docset"
+        )
+        assert parsed == _docset()
+        assert snapshot.original_identity == descriptor_namespace.entry_identity_relative(
+            root_fd, "docset.json"
+        )
+    finally:
+        os.close(root_fd)
+
+
+def test_write_model_marks_a_failed_replacement_cleanup_for_recovery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root_fd = _open_root(tmp_path)
+    original = _docset()
+    updated = _docset(title="Updated title")
+    original_fsync = head_io.os.fsync
+    failed_once = False
+    try:
+        descriptor_io.write_model_relative(root_fd, "docset.json", original)
+
+        def fail_first_parent_sync(descriptor: int) -> None:
+            nonlocal failed_once
+            if not failed_once and stat.S_ISDIR(os.fstat(descriptor).st_mode):
+                failed_once = True
+                raise OSError("injected parent sync failure")
+            original_fsync(descriptor)
+
+        monkeypatch.setattr(head_io.os, "fsync", fail_first_parent_sync)
+        with pytest.raises(
+            FoundryPublicationError, match="replacement cleanup failed"
+        ) as caught:
+            descriptor_io.write_model_relative(root_fd, "docset.json", updated)
+
+        assert failed_once
+        assert getattr(caught.value, "recovery_required", False)
+        assert descriptor_io.read_model_relative(
+            root_fd, Docset, "docset.json", "docset.json"
+        ) == original
+    finally:
+        os.close(root_fd)
+
+
+def test_restore_absent_head_snapshot_removes_only_its_published_head(
+    tmp_path: Path,
+) -> None:
+    root_fd = _open_root(tmp_path)
+    try:
+        snapshot = head_io.read_head_snapshot_relative(root_fd, "docset.json")
+        assert snapshot.content is None
+        assert snapshot.original_identity is None
+
+        descriptor_io.write_model_relative(root_fd, "docset.json", _docset())
+        snapshot.published_identity = descriptor_namespace.entry_identity_relative(
+            root_fd, "docset.json"
+        )
+        assert snapshot.published_identity is not None
+
+        head_io.restore_head_relative(root_fd, "docset.json", snapshot)
+        assert head_io.read_head_relative(root_fd, "docset.json") is None
     finally:
         os.close(root_fd)
 
