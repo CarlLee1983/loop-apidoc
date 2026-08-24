@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.source_quality.models import SourceDiffReport, SourceQualityReport
 
 
@@ -34,7 +33,9 @@ def render_markdown(report: SourceQualityReport) -> str:
     return "\n".join(lines)
 
 
-def write_reports(report: SourceQualityReport, diff: SourceDiffReport, output: Path) -> None:
+def write_reports(
+    report: SourceQualityReport, diff: SourceDiffReport, output: OutputPath
+) -> None:
     output.mkdir(parents=True, exist_ok=True)
     (output / "source-quality-report.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
     (output / "source-quality-report.zh-TW.md").write_text(render_markdown(report), encoding="utf-8")

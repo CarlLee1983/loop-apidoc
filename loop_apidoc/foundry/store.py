@@ -1,10 +1,4 @@
-"""Foundry transaction policy and model persistence facade.
-
-Descriptor-level filesystem operations live in :mod:`foundry.descriptor_io` and
-pinned namespace views live in :mod:`foundry.governed`. They are re-exported
-here because existing Foundry workflows use this module as their persistence
-port.
-"""
+"""Foundry transaction policy and high-level model persistence."""
 
 from __future__ import annotations
 
@@ -18,52 +12,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from . import paths
-from .descriptor_io import (
-    _atomic_write_model_relative,
-    _directory_open_flags,
-    _open_directory,
-    _rename_noreplace,
-    entry_identity_relative,
-)
-from .descriptor_io import (  # noqa: F401 - store is the legacy persistence facade
-    ImmutableEntryPublication,
-    HeadSnapshot,
-    _atomic_write_bytes_relative,
-    _open_relative_parent,
-    copy_tree_to_directory,
-    copy_tree_to_owned_directory,
-    create_owned_directory_relative,
-    digest_artifact_relative,
-    directory_fd_path,
-    ensure_directory_relative,
-    move_owned_directory_relative,
-    open_directory_relative,
-    read_bytes_relative,
-    read_head_relative,
-    read_head_model_snapshot_relative,
-    read_head_snapshot_relative,
-    read_model_relative,
-    remove_owned_entry_relative,
-    restore_head_relative,
-    validate_directory_relative,
-    validate_head_snapshot_relative,
-    write_model_relative,
-    write_once_model_relative,
-)
-from .governed import (
-    _normalise_project_root,
-    _open_governance_directories,
-    _validate_governance_ancestors,
-    open_governed_docset,
-    validate_catalog_namespace,
-)
-from .governed import (  # noqa: F401 - store is the legacy persistence facade
-    GovernedDirectory,
-    GovernedDocset,
-    open_pinned_governed_docset,
-    validate_governance_namespace,
-)
+from . import descriptor_namespace, governed as governed_io, head_io, paths
 from .models import (
     Asset,
     Catalog,
@@ -172,7 +121,7 @@ class CatalogTransaction:
     def close(self) -> None:
         if self._closed:
             return
-        validate_catalog_namespace(
+        governed_io.validate_catalog_namespace(
             self.project_root,
             root_fd=self.root_fd,
             foundry_fd=self.foundry_fd,
@@ -224,21 +173,25 @@ def begin_catalog_transaction(project_root: Path) -> CatalogTransaction:
     if absolute_root.is_symlink():
         raise FoundryInputError("project root is unsafe")
     absolute_root.mkdir(parents=True, exist_ok=True)
-    project_root = _normalise_project_root(project_root)
+    project_root = governed_io._normalise_project_root(project_root)
     if not project_root.is_dir():
         raise FoundryInputError("project root is unsafe")
     root_fd = foundry_fd = api_fd = docsets_fd = -1
     try:
-        root_fd = _open_directory(project_root)
+        root_fd = descriptor_namespace._open_directory(project_root)
         parent_fd = root_fd
         opened: list[int] = []
         for component in (paths.FOUNDRY_DIR, paths.API_DIR, "docsets"):
             try:
-                descriptor = _open_directory(component, parent_fd=parent_fd)
+                descriptor = descriptor_namespace._open_directory(
+                    component, parent_fd=parent_fd
+                )
             except FileNotFoundError:
                 os.mkdir(component, dir_fd=parent_fd)
                 os.fsync(parent_fd)
-                descriptor = _open_directory(component, parent_fd=parent_fd)
+                descriptor = descriptor_namespace._open_directory(
+                    component, parent_fd=parent_fd
+                )
             opened.append(descriptor)
             if len(opened) == 1:
                 foundry_fd = descriptor
@@ -287,13 +240,13 @@ def begin_governance_transaction(
         or "\\" in docset_id
     ):
         raise FoundryInputError("unsafe docset id")
-    project_root = _normalise_project_root(project_root)
-    _validate_governance_ancestors(project_root, docset_id)
+    project_root = governed_io._normalise_project_root(project_root)
+    governed_io._validate_governance_ancestors(project_root, docset_id)
     lock_path = paths.docset_dir(project_root, docset_id) / ".governance.lock"
     root_fd = api_fd = docset_fd = assets_fd = -1
     catalog_lock_owned = False
     try:
-        root_fd, api_fd, docset_fd, assets_fd = _open_governance_directories(
+        root_fd, api_fd, docset_fd, assets_fd = governed_io._open_governance_directories(
             project_root, docset_id, create_assets=create_assets
         )
         os.mkdir(".catalog-governance.lock", dir_fd=api_fd)
@@ -390,12 +343,12 @@ def save_catalog(
     catalog: Catalog,
     *,
     parent_fd: int | None = None,
-    outcome: HeadSnapshot | None = None,
+    outcome: head_io.HeadSnapshot | None = None,
 ) -> None:
     if parent_fd is None:
         _write_model(paths.catalog_path(project_root), catalog)
     else:
-        _atomic_write_model_relative(
+        head_io._atomic_write_model_relative(
             parent_fd,
             "catalog.json",
             catalog,
@@ -415,12 +368,12 @@ def save_docset(
     docset: Docset,
     *,
     parent_fd: int | None = None,
-    outcome: HeadSnapshot | None = None,
+    outcome: head_io.HeadSnapshot | None = None,
 ) -> None:
     if parent_fd is None:
         _write_model(paths.docset_manifest_path(project_root, docset.docset_id), docset)
     else:
-        _atomic_write_model_relative(
+        head_io._atomic_write_model_relative(
             parent_fd,
             "docset.json",
             docset,
@@ -484,10 +437,13 @@ def publish_asset(
         )
         if not stat.S_ISDIR(staged_metadata.st_mode):
             raise FoundryInputError("staged asset root is unsafe")
-        if entry_identity_relative(parent_fd, asset_root.name) is not None:
+        if descriptor_namespace.entry_identity_relative(parent_fd, asset_root.name) is not None:
             raise FoundryInputError("asset root already exists")
     if parent_fd is not None and expected_identity is not None:
-        if entry_identity_relative(parent_fd, staged_root.name) != expected_identity:
+        if (
+            descriptor_namespace.entry_identity_relative(parent_fd, staged_root.name)
+            != expected_identity
+        ):
             raise FoundryPublicationError("staged asset identity changed")
     if parent_fd is None:
         asset_root.parent.mkdir(parents=True, exist_ok=True)
@@ -496,17 +452,21 @@ def publish_asset(
     if parent_fd is None and (asset_root.exists() or asset_root.is_symlink()):
         raise FoundryInputError("asset root already exists")
     try:
-        _rename_noreplace(staged_root, asset_root, parent_fd=parent_fd)
+        descriptor_namespace._rename_noreplace(
+            staged_root, asset_root, parent_fd=parent_fd
+        )
     except OSError as exc:
         raise FoundryInputError("asset root publication failed") from exc
     publication.owned_root = True
     identity_parent_fd = parent_fd
     close_identity_parent = False
     if identity_parent_fd is None:
-        identity_parent_fd = os.open(asset_root.parent, _directory_open_flags())
+        identity_parent_fd = os.open(
+            asset_root.parent, descriptor_namespace._directory_open_flags()
+        )
         close_identity_parent = True
     try:
-        published_identity = entry_identity_relative(
+        published_identity = descriptor_namespace.entry_identity_relative(
             identity_parent_fd, asset_root.name
         )
     finally:
@@ -521,7 +481,9 @@ def publish_asset(
         if parent_fd is not None:
             os.fsync(parent_fd)
         else:
-            descriptor = os.open(asset_root.parent, _directory_open_flags())
+            descriptor = os.open(
+                asset_root.parent, descriptor_namespace._directory_open_flags()
+            )
             try:
                 os.fsync(descriptor)
             finally:
@@ -547,7 +509,7 @@ def save_current(
     pointer: CurrentPointer,
     *,
     parent_fd: int | None = None,
-    outcome: HeadSnapshot | None = None,
+    outcome: head_io.HeadSnapshot | None = None,
 ) -> None:
     """Atomically publish the normative current pointer."""
     if parent_fd is None:
@@ -555,7 +517,7 @@ def save_current(
             paths.current_path(project_root, docset_id), pointer, prefix=".current-"
         )
     else:
-        _atomic_write_model_relative(
+        head_io._atomic_write_model_relative(
             parent_fd,
             "current.json",
             pointer,
@@ -595,7 +557,7 @@ def save_review_decision(
 def load_feedback_case(
     project_root: Path, docset_id: str, case_id: str
 ) -> FeedbackCase:
-    with open_governed_docset(project_root, docset_id) as governed:
+    with governed_io.open_governed_docset(project_root, docset_id) as governed:
         case = governed.read_model(
             FeedbackCase,
             f"feedback/cases/{case_id}/case.json",
@@ -609,7 +571,7 @@ def load_feedback_case(
 def load_effective_asset(
     project_root: Path, docset_id: str, scope_digest: str, asset_id: str
 ) -> EffectiveAsset:
-    with open_governed_docset(project_root, docset_id) as governed:
+    with governed_io.open_governed_docset(project_root, docset_id) as governed:
         asset = governed.read_model(
             EffectiveAsset,
             f"effective/scopes/{scope_digest}/assets/{asset_id}/asset.json",
@@ -623,7 +585,7 @@ def load_effective_asset(
 def load_effective_current(
     project_root: Path, docset_id: str, scope_digest: str
 ) -> EffectiveCurrentPointer | None:
-    with open_governed_docset(project_root, docset_id) as governed:
+    with governed_io.open_governed_docset(project_root, docset_id) as governed:
         pointer = governed.read_model(
             EffectiveCurrentPointer,
             f"effective/scopes/{scope_digest}/current.json",
@@ -642,11 +604,11 @@ def save_effective_current(
     *,
     parent_fd: int | None = None,
     scope_parent_fd: int | None = None,
-    outcome: HeadSnapshot | None = None,
+    outcome: head_io.HeadSnapshot | None = None,
 ) -> None:
     """Atomically publish the externally consumed scope-specific pointer."""
     if scope_parent_fd is not None:
-        _atomic_write_model_relative(
+        head_io._atomic_write_model_relative(
             scope_parent_fd,
             "current.json",
             pointer,
@@ -658,17 +620,17 @@ def save_effective_current(
         # pathname below .foundry: a scope directory can be replaced after a
         # successful lstat()/resolve() check. Traverse from the pinned docset
         # descriptor instead, then revalidate both descriptors after publish.
-        with open_governed_docset(project_root, docset_id) as governed:
+        with governed_io.open_governed_docset(project_root, docset_id) as governed:
             with governed.open_directory(
                 f"effective/scopes/{scope_digest}"
             ) as scope:
                 governed.validate()
                 scope.validate()
-                snapshot = outcome or read_head_snapshot_relative(
+                snapshot = outcome or head_io.read_head_snapshot_relative(
                     scope.descriptor, "current.json"
                 )
                 try:
-                    _atomic_write_model_relative(
+                    head_io._atomic_write_model_relative(
                         scope.descriptor,
                         "current.json",
                         pointer,
@@ -679,7 +641,7 @@ def save_effective_current(
                     governed.validate()
                 except BaseException as primary:
                     try:
-                        restore_head_relative(
+                        head_io.restore_head_relative(
                             scope.descriptor, "current.json", snapshot
                         )
                     except BaseException as rollback_error:
@@ -691,7 +653,7 @@ def save_effective_current(
                         raise failure from primary
                     raise
     else:
-        _atomic_write_model_relative(
+        head_io._atomic_write_model_relative(
             parent_fd,
             f"effective/scopes/{scope_digest}/current.json",
             pointer,

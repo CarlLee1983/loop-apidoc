@@ -10,7 +10,14 @@ from loop_apidoc.foundry.strict_artifacts import (
     StrictCoreExecutionError,
     require_eligible_strict_candidate,
 )
-from . import paths, store
+from . import (
+    descriptor_namespace,
+    descriptor_tree,
+    governed,
+    head_io,
+    paths,
+    store,
+)
 from loop_apidoc.foundry.models import Docset, FoundryInputError, FoundryPublicationError
 
 
@@ -58,9 +65,9 @@ def import_run(
     backup_name: str | None = None
     backup_identity: tuple[int, int] | None = None
     pruned_backups: list[_BackupQuarantine] = []
-    docset_snapshot: store.HeadSnapshot | None = None
+    docset_snapshot: head_io.HeadSnapshot | None = None
     try:
-        docset_snapshot, docset = store.read_head_model_snapshot_relative(
+        docset_snapshot, docset = head_io.read_head_model_snapshot_relative(
             transaction.docset_fd,
             Docset,
             "docset.json",
@@ -68,16 +75,16 @@ def import_run(
         )
         if docset.docset_id != docset_id:
             raise FoundryInputError("governance docset identity is stale")
-        candidates_fd = store.ensure_directory_relative(
+        candidates_fd = descriptor_namespace.ensure_directory_relative(
             transaction.docset_fd, "candidates"
         )
         transaction.own_fd(candidates_fd)
-        prior_identity = store.entry_identity_relative(candidates_fd, run_id)
+        prior_identity = descriptor_namespace.entry_identity_relative(candidates_fd, run_id)
         if prior_identity is not None and not overwrite:
             raise FoundryInputError(f"candidate already exists: {run_id}")
         _finalize_stale_backup_quarantines(candidates_fd, run_id)
         try:
-            stage_name, stage_fd, stage_identity = store.copy_tree_to_owned_directory(
+            stage_name, stage_fd, stage_identity = descriptor_tree.copy_tree_to_owned_directory(
                 run_dir,
                 candidates_fd,
                 prefix=f".{run_id}-stage-",
@@ -85,7 +92,7 @@ def import_run(
         except (FoundryInputError, OSError) as exc:
             raise FoundryInputError("candidate import staging failed") from exc
         transaction.own_fd(stage_fd)
-        stage_path = store.directory_fd_path(stage_fd)
+        stage_path = descriptor_namespace.directory_fd_path(stage_fd)
         try:
             load_run_artifacts(stage_path)
             require_eligible_strict_candidate(stage_path)
@@ -97,14 +104,14 @@ def import_run(
         if prior_identity is not None:
             _quarantine_stale_backups(candidates_fd, run_id, pruned_backups)
             backup_name = _next_backup_name(candidates_fd, run_id)
-            backup_identity = store.move_owned_directory_relative(
+            backup_identity = descriptor_namespace.move_owned_directory_relative(
                 candidates_fd,
                 run_id,
                 backup_name,
                 prior_identity,
             )
         assert docset_snapshot is not None
-        store.validate_head_snapshot_relative(
+        head_io.validate_head_snapshot_relative(
             transaction.docset_fd,
             "docset.json",
             docset_snapshot,
@@ -116,15 +123,15 @@ def import_run(
             expected_identity=stage_identity,
         )
         assert publication.identity == stage_identity
-        store.validate_directory_relative(
+        descriptor_namespace.validate_directory_relative(
             transaction.docset_fd, "candidates", candidates_fd
         )
-        store.validate_head_snapshot_relative(
+        head_io.validate_head_snapshot_relative(
             transaction.docset_fd,
             "docset.json",
             docset_snapshot,
         )
-        store.validate_governance_namespace(
+        governed.validate_governance_namespace(
             transaction.project_root,
             docset_id,
             root_fd=transaction.root_fd,
@@ -182,7 +189,7 @@ def _require_safe_run_id(run_id: str) -> None:
 def _next_backup_name(candidates_fd: int, run_id: str) -> str:
     for _ in range(100):
         candidate = f".{run_id}-backup-{uuid.uuid4().hex}"
-        if store.entry_identity_relative(candidates_fd, candidate) is None:
+        if descriptor_namespace.entry_identity_relative(candidates_fd, candidate) is None:
             return candidate
     raise FoundryPublicationError("cannot allocate candidate backup directory")
 
@@ -197,10 +204,10 @@ def _quarantine_stale_backups(
     for name in os.listdir(candidates_fd):
         if not name.startswith(prefix) or name == prefix:
             continue
-        identity = store.entry_identity_relative(candidates_fd, name)
+        identity = descriptor_namespace.entry_identity_relative(candidates_fd, name)
         if identity is not None:
             quarantine_name = _next_backup_quarantine_name(candidates_fd, run_id)
-            store.move_owned_directory_relative(
+            descriptor_namespace.move_owned_directory_relative(
                 candidates_fd,
                 name,
                 quarantine_name,
@@ -214,7 +221,7 @@ def _quarantine_stale_backups(
 def _next_backup_quarantine_name(candidates_fd: int, run_id: str) -> str:
     for _ in range(100):
         candidate = f".{run_id}-backup-prune-{uuid.uuid4().hex}"
-        if store.entry_identity_relative(candidates_fd, candidate) is None:
+        if descriptor_namespace.entry_identity_relative(candidates_fd, candidate) is None:
             return candidate
     raise FoundryPublicationError("cannot allocate candidate backup quarantine")
 
@@ -225,7 +232,7 @@ def _restore_quarantined_backups(
 ) -> None:
     """Undo reversible predecessor retirement after an uncommitted overwrite."""
     for quarantine in reversed(quarantines):
-        store.move_owned_directory_relative(
+        descriptor_namespace.move_owned_directory_relative(
             candidates_fd,
             quarantine.quarantine_name,
             quarantine.original_name,
@@ -239,9 +246,9 @@ def _finalize_stale_backup_quarantines(candidates_fd: int, run_id: str) -> None:
     for name in os.listdir(candidates_fd):
         if not name.startswith(prefix) or name == prefix:
             continue
-        identity = store.entry_identity_relative(candidates_fd, name)
+        identity = descriptor_namespace.entry_identity_relative(candidates_fd, name)
         if identity is not None:
-            store.remove_owned_entry_relative(candidates_fd, name, identity)
+            descriptor_namespace.remove_owned_entry_relative(candidates_fd, name, identity)
 
 
 def _finalize_backup_quarantines(
@@ -254,16 +261,16 @@ def _finalize_backup_quarantines(
     if not quarantines:
         return
     try:
-        with store.open_governed_docset(project_root, docset_id) as governed:
-            with governed.open_directory("candidates") as candidates:
+        with governed.open_governed_docset(project_root, docset_id) as governed_docset:
+            with governed_docset.open_directory("candidates") as candidates:
                 for quarantine in quarantines:
-                    store.remove_owned_entry_relative(
+                    descriptor_namespace.remove_owned_entry_relative(
                         candidates.descriptor,
                         quarantine.quarantine_name,
                         quarantine.identity,
                     )
                 candidates.validate()
-            governed.validate()
+            governed_docset.validate()
     except (FoundryInputError, FoundryPublicationError, OSError):
         # The import has already committed. Leave an identity-pinned hidden
         # quarantine for the next transaction rather than reporting a false
@@ -274,7 +281,7 @@ def _finalize_backup_quarantines(
 def _next_recovery_name(candidates_fd: int, run_id: str) -> str:
     for _ in range(100):
         candidate = f".{run_id}-recovery-{uuid.uuid4().hex}"
-        if store.entry_identity_relative(candidates_fd, candidate) is None:
+        if descriptor_namespace.entry_identity_relative(candidates_fd, candidate) is None:
             return candidate
     raise FoundryPublicationError("cannot allocate candidate recovery directory")
 
@@ -294,10 +301,10 @@ def _reconcile_backup_for_rollback(
         or backup_identity is not None
     ):
         return backup_identity
-    observed_backup = store.entry_identity_relative(candidates_fd, backup_name)
+    observed_backup = descriptor_namespace.entry_identity_relative(candidates_fd, backup_name)
     if observed_backup == prior_identity:
         return observed_backup
-    observed_current = store.entry_identity_relative(candidates_fd, run_id)
+    observed_current = descriptor_namespace.entry_identity_relative(candidates_fd, run_id)
     if observed_backup is None and observed_current == prior_identity:
         return None
     raise FoundryPublicationError(
@@ -317,19 +324,19 @@ def _rollback_candidate_import(
     if candidates_fd < 0:
         return
     if stage_identity is not None:
-        current_identity = store.entry_identity_relative(candidates_fd, run_id)
+        current_identity = descriptor_namespace.entry_identity_relative(candidates_fd, run_id)
         if current_identity == stage_identity:
-            store.remove_owned_entry_relative(candidates_fd, run_id, stage_identity)
+            descriptor_namespace.remove_owned_entry_relative(candidates_fd, run_id, stage_identity)
         elif current_identity is not None and current_identity != prior_identity:
             recovery_name = _next_recovery_name(candidates_fd, run_id)
-            store.move_owned_directory_relative(
+            descriptor_namespace.move_owned_directory_relative(
                 candidates_fd,
                 run_id,
                 recovery_name,
                 current_identity,
             )
             if backup_name is not None and backup_identity is not None:
-                store.move_owned_directory_relative(
+                descriptor_namespace.move_owned_directory_relative(
                     candidates_fd,
                     backup_name,
                     run_id,
@@ -344,9 +351,9 @@ def _rollback_candidate_import(
             failure.recovery_required = True  # type: ignore[attr-defined]
             raise failure
         if stage_name is not None:
-            store.remove_owned_entry_relative(candidates_fd, stage_name, stage_identity)
+            descriptor_namespace.remove_owned_entry_relative(candidates_fd, stage_name, stage_identity)
     if backup_name is not None and backup_identity is not None:
-        store.move_owned_directory_relative(
+        descriptor_namespace.move_owned_directory_relative(
             candidates_fd,
             backup_name,
             run_id,

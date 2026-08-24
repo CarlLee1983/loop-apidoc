@@ -17,7 +17,7 @@ from loop_apidoc.domain.evidence import (
     normalize_excerpt,
 )
 from loop_apidoc.domain.models import GroundedApiContract
-from . import store
+from . import descriptor_io, descriptor_namespace, governed
 from .models import (
     Asset,
     AssetArtifacts,
@@ -56,13 +56,13 @@ def load_approved_contract_snapshot(
     _require_safe_identifier(docset_id, "docset id")
     _require_safe_identifier(asset_id, "asset id")
     try:
-        with store.open_governed_docset(project_root, docset_id) as governed:
+        with governed.open_governed_docset(project_root, docset_id) as docset_view:
             asset, docset, release = load_approved_contract_snapshot_relative(
-                governed.docset_fd,
+                docset_view.docset_fd,
                 docset_id,
                 asset_id,
             )
-            governed.validate()
+            docset_view.validate()
     except FoundryPublicationError as exc:
         raise FoundryInputError("governed normative base path is unsafe") from exc
     return asset, docset, release
@@ -85,7 +85,7 @@ def load_approved_contract_snapshot_relative(
     _require_safe_identifier(docset_id, "docset id")
     _require_safe_identifier(asset_id, "asset id")
     if docset is None:
-        docset = store.read_model_relative(
+        docset = descriptor_io.read_model_relative(
             docset_fd, Docset, "docset.json", "docset.json"
         )
         assert docset is not None
@@ -94,13 +94,15 @@ def load_approved_contract_snapshot_relative(
     asset_fd = -1
     try:
         try:
-            asset_fd = store.open_directory_relative(
+            asset_fd = descriptor_namespace.open_directory_relative(
                 docset_fd, f"assets/{asset_id}"
             )
         except FileNotFoundError as exc:
             raise FoundryInputError("required file missing: asset.json") from exc
         try:
-            asset = store.read_model_relative(asset_fd, Asset, "asset.json", "asset.json")
+            asset = descriptor_io.read_model_relative(
+                asset_fd, Asset, "asset.json", "asset.json"
+            )
         except FoundryInputError as exc:
             if _has_missing_approval_lineage(exc):
                 raise FoundryInputError("base asset is missing approval lineage") from exc
@@ -136,7 +138,9 @@ def load_approved_contract_snapshot_relative(
             evidence_raw=evidence_raw,
             relationships_raw=relationships_raw,
         )
-        store.validate_directory_relative(docset_fd, f"assets/{asset_id}", asset_fd)
+        descriptor_namespace.validate_directory_relative(
+            docset_fd, f"assets/{asset_id}", asset_fd
+        )
     except FoundryPublicationError:
         raise
     finally:
@@ -193,7 +197,7 @@ def _verify_asset_artifacts(asset_root_fd: int, asset: Asset) -> None:
         expected_digest = getattr(asset.artifact_digests, artifact)
         if kind is None or expected_digest is None:
             raise FoundryInputError(f"artifact binding is incomplete: {artifact}")
-        actual_digest = store.digest_artifact_relative(
+        actual_digest = descriptor_io.digest_artifact_relative(
             asset_root_fd, relative, kind, artifact
         )
         if actual_digest != expected_digest:
@@ -214,7 +218,7 @@ def _read_bound_file(
     expected_digest = getattr(asset.artifact_digests, artifact)
     if kind != "file" or expected_digest is None:
         raise FoundryInputError(f"artifact is not a readable file: {artifact}")
-    content = store.read_bytes_relative(
+    content = descriptor_io.read_bytes_relative(
         asset_root_fd,
         relative,
         artifact,

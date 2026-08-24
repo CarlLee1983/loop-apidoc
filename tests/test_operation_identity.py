@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from loop_apidoc.agentcli.identity import endpoint_identity as legacy_endpoint_identity
 from loop_apidoc.operation_identity import (
     endpoint_identity,
     expand_methods,
@@ -35,4 +34,6 @@ def test_neutral_operation_identity_owns_shared_extraction_shape():
 
 
 def test_agentcli_identity_remains_a_compatibility_reexport():
+    from loop_apidoc.agentcli.identity import endpoint_identity as legacy_endpoint_identity
+
     assert legacy_endpoint_identity is endpoint_identity

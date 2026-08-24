@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
 
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.plan.models import NormalizationPlan
 from loop_apidoc.run.models import RunStatus
@@ -25,7 +24,7 @@ from loop_apidoc.validate.models import ValidationReport
 
 def write_shadow_artifacts(
     artifacts: ShadowArtifacts,
-    core_dir: Path,
+    core_dir: OutputPath,
 ) -> ShadowExecutionSummary:
     core_dir.parent.mkdir(parents=True, exist_ok=True)
     payloads: tuple[tuple[str, Any], ...] = (
@@ -40,9 +39,23 @@ def write_shadow_artifacts(
         ("events.json", artifacts.events),
         ("comparison.json", artifacts.comparison),
     )
-    staging_dir = Path(
-        tempfile.mkdtemp(prefix=f".{core_dir.name}-", dir=core_dir.parent)
-    )
+    if not isinstance(core_dir, Path):
+        # The enclosing run stage is still unpublished, so an inner pathname
+        # transaction adds no visibility guarantee.  Write through the pinned
+        # output capability instead; it records and revalidates the `core`
+        # directory identity for every leaf.
+        _write_shadow_payloads(core_dir, payloads, artifacts.projections)
+        return ShadowExecutionSummary(
+            status="ok",
+            core_dir=str(core_dir),
+            comparison_path=str(core_dir / "comparison.json"),
+        )
+    if isinstance(core_dir, Path):
+        from tempfile import mkdtemp
+
+        staging_dir: OutputPath = Path(
+            mkdtemp(prefix=f".{core_dir.name}-", dir=core_dir.parent)
+        )
     try:
         for filename, payload in payloads:
             _write_json(staging_dir / filename, payload)
@@ -55,13 +68,30 @@ def write_shadow_artifacts(
             )
         staging_dir.replace(core_dir)
     except Exception:
-        shutil.rmtree(staging_dir, ignore_errors=True)
+        if isinstance(staging_dir, Path):
+            from shutil import rmtree
+
+            rmtree(staging_dir, ignore_errors=True)
         raise
     return ShadowExecutionSummary(
         status="ok",
         core_dir=str(core_dir),
         comparison_path=str(core_dir / "comparison.json"),
     )
+
+
+def _write_shadow_payloads(
+    core_dir: OutputPath,
+    payloads: tuple[tuple[str, Any], ...],
+    projections: tuple,
+) -> None:
+    core_dir.mkdir(parents=True, exist_ok=True)
+    for filename, payload in payloads:
+        _write_json(core_dir / filename, payload)
+    projection_dir = core_dir / "projections"
+    projection_dir.mkdir()
+    for projection in projections:
+        _write_json(projection_dir / f"{projection.name}.json", projection.payload)
 
 
 def run_shadow_safely(
@@ -73,7 +103,7 @@ def run_shadow_safely(
     legacy_report: ValidationReport,
     legacy_status: RunStatus,
     generated_at: datetime,
-    run_dir: Path,
+    run_dir: OutputPath,
 ) -> ShadowExecutionSummary:
     core_dir = run_dir / "core"
     try:
@@ -97,7 +127,7 @@ def run_shadow_safely(
 
 
 def _record_error(
-    core_dir: Path,
+    core_dir: OutputPath,
     stage: ShadowStage,
     exception: Exception,
 ) -> ShadowExecutionSummary:
@@ -136,7 +166,7 @@ def _safe_message(stage: ShadowStage, exception: Exception) -> str:
     return f"shadow {stage.value} failed"
 
 
-def _write_json(path: Path, payload: Any) -> None:
+def _write_json(path: OutputPath, payload: Any) -> None:
     path.write_text(
         json.dumps(
             _json_value(payload),

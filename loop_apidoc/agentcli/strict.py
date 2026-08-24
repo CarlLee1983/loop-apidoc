@@ -9,14 +9,13 @@ later, explicit human governance decision.
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
 
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.core.models import PolicyProfile, StrictExecutionSummary
 from loop_apidoc.core.verification import verify_claim_support
 from loop_apidoc.domain.claim_paths import material_claim_paths
@@ -51,7 +50,7 @@ def run_strict_core_safely(
     sources_root: Path,
     legacy_report: ValidationReport,
     generated_at: datetime,
-    run_dir: Path,
+    run_dir: OutputPath,
 ) -> StrictExecutionSummary:
     """Build one reviewable Core candidate without any approval side effect."""
     core_dir = run_dir / "core"
@@ -84,7 +83,7 @@ def run_strict_core_safely(
 
 def write_strict_blocked_marker(
     *,
-    run_dir: Path,
+    run_dir: OutputPath,
     legacy_status: RunStatus,
 ) -> StrictExecutionSummary:
     """Persist strict intent when legacy validation blocks Core execution.
@@ -109,7 +108,7 @@ def write_strict_blocked_marker(
 
 def _write_strict_artifacts(
     artifacts: ShadowArtifacts,
-    core_dir: Path,
+    core_dir: OutputPath,
 ) -> StrictExecutionSummary:
     if artifacts.release is None:
         return _record_error(core_dir, "validation")
@@ -216,7 +215,7 @@ def _grounding_findings(
 
 
 def _record_grounding_rejection(
-    core_dir: Path,
+    core_dir: OutputPath,
     artifacts: ShadowArtifacts,
     findings: tuple[dict[str, Any], ...],
 ) -> StrictExecutionSummary:
@@ -263,7 +262,7 @@ def _execution_payload(
     }
 
 
-def _record_error(core_dir: Path, stage: str) -> StrictExecutionSummary:
+def _record_error(core_dir: OutputPath, stage: str) -> StrictExecutionSummary:
     error_path = core_dir / "error.json"
     try:
         _replace_core_directory(
@@ -302,13 +301,24 @@ def _blocked_execution_payload(legacy_status: RunStatus) -> dict[str, Any]:
 
 
 def _replace_core_directory(
-    core_dir: Path,
+    core_dir: OutputPath,
     payloads: tuple[tuple[str, Any], ...],
     *,
     projections=(),
 ) -> None:
     core_dir.parent.mkdir(parents=True, exist_ok=True)
-    staging_dir = Path(tempfile.mkdtemp(prefix=f".{core_dir.name}-", dir=core_dir.parent))
+    if not isinstance(core_dir, Path):
+        # The outer run has not been published yet.  Its descriptor-bound
+        # writer pins `core` and rejects any substituted child directory, so a
+        # second pathname transaction would only reintroduce a mutable seam.
+        _write_core_payloads(core_dir, payloads, projections)
+        return
+    if isinstance(core_dir, Path):
+        from tempfile import mkdtemp
+
+        staging_dir: OutputPath = Path(
+            mkdtemp(prefix=f".{core_dir.name}-", dir=core_dir.parent)
+        )
     try:
         for filename, payload in payloads:
             _write_json(staging_dir / filename, payload)
@@ -319,11 +329,29 @@ def _replace_core_directory(
                 _write_json(projection_dir / f"{projection.name}.json", projection.payload)
         staging_dir.replace(core_dir)
     except Exception:
-        shutil.rmtree(staging_dir, ignore_errors=True)
+        if isinstance(staging_dir, Path):
+            from shutil import rmtree
+
+            rmtree(staging_dir, ignore_errors=True)
         raise
 
 
-def _write_json(path: Path, payload: Any) -> None:
+def _write_core_payloads(
+    core_dir: OutputPath,
+    payloads: tuple[tuple[str, Any], ...],
+    projections,
+) -> None:
+    core_dir.mkdir(parents=True, exist_ok=True)
+    for filename, payload in payloads:
+        _write_json(core_dir / filename, payload)
+    if projections:
+        projection_dir = core_dir / "projections"
+        projection_dir.mkdir()
+        for projection in projections:
+            _write_json(projection_dir / f"{projection.name}.json", projection.payload)
+
+
+def _write_json(path: OutputPath, payload: Any) -> None:
     path.write_text(
         json.dumps(_json_value(payload), ensure_ascii=False, indent=2, sort_keys=True)
         + "\n",

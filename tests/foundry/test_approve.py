@@ -11,7 +11,19 @@ from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import approve, importer, paths, query, register, store
+from loop_apidoc.foundry import (
+    approve,
+    descriptor_io,
+    descriptor_namespace,
+    descriptor_tree,
+    governed,
+    head_io,
+    importer,
+    paths,
+    query,
+    register,
+    store,
+)
 from loop_apidoc.foundry.models import (
     AssetStatus,
     Docset,
@@ -130,18 +142,21 @@ def test_rename_collision_does_not_delete_foreign_asset_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _setup(tmp_path)
-    original_rename = store._rename_noreplace
+    original_rename = descriptor_namespace._rename_noreplace
+    asset_root = paths.asset_dir(
+        tmp_path, "tappay-backend", "tappay-backend-20260702-120000"
+    )
 
     def foreign_root_then_fail(source: Path, destination: Path, **kwargs: object) -> None:
+        if destination != asset_root:
+            original_rename(source, destination, **kwargs)
+            return
         foreign_root = destination
         foreign_root.mkdir()
         (foreign_root / "sentinel").write_text("owned elsewhere", encoding="utf-8")
         raise FileExistsError("foreign asset root won the rename race")
 
-    monkeypatch.setattr(store, "_rename_noreplace", foreign_root_then_fail)
-    asset_root = paths.asset_dir(
-        tmp_path, "tappay-backend", "tappay-backend-20260702-120000"
-    )
+    monkeypatch.setattr(descriptor_namespace, "_rename_noreplace", foreign_root_then_fail)
 
     with pytest.raises(FoundryInputError, match="asset root publication failed"):
         approve.approve_candidate(
@@ -149,7 +164,7 @@ def test_rename_collision_does_not_delete_foreign_asset_root(
         )
 
     assert (asset_root / "sentinel").read_text(encoding="utf-8") == "owned elsewhere"
-    monkeypatch.setattr(store, "_rename_noreplace", original_rename)
+    monkeypatch.setattr(descriptor_namespace, "_rename_noreplace", original_rename)
 
 
 def test_real_no_replace_collision_preserves_foreign_empty_asset_root(
@@ -157,7 +172,7 @@ def test_real_no_replace_collision_preserves_foreign_empty_asset_root(
 ) -> None:
     """A destination appearing between the check and rename is never replaced."""
     _setup(tmp_path)
-    original_exclusive_rename = store._rename_noreplace
+    original_exclusive_rename = descriptor_namespace._rename_noreplace
 
     def foreign_root_then_exclusive_rename(
         staged_root: Path, asset_root: Path, **kwargs: object
@@ -166,7 +181,7 @@ def test_real_no_replace_collision_preserves_foreign_empty_asset_root(
         original_exclusive_rename(staged_root, asset_root, **kwargs)
 
     monkeypatch.setattr(
-        store, "_rename_noreplace", foreign_root_then_exclusive_rename
+        descriptor_namespace, "_rename_noreplace", foreign_root_then_exclusive_rename
     )
 
     with pytest.raises(FoundryInputError, match="asset root publication failed"):
@@ -333,14 +348,14 @@ def test_approval_rejects_docset_ancestor_replaced_after_validation(
     outside_root = tmp_path / "outside-foundry"
     outside_root.mkdir()
     moved_docset = outside_root / "tappay-backend"
-    original_validate = store._validate_governance_ancestors
+    original_validate = governed._validate_governance_ancestors
 
     def validate_then_replace(project_root: Path, docset_id: str) -> None:
         original_validate(project_root, docset_id)
         docset_dir.rename(moved_docset)
         docset_dir.symlink_to(moved_docset, target_is_directory=True)
 
-    monkeypatch.setattr(store, "_validate_governance_ancestors", validate_then_replace)
+    monkeypatch.setattr(governed, "_validate_governance_ancestors", validate_then_replace)
 
     with pytest.raises(FoundryInputError, match="cannot acquire governance transaction"):
         approve.approve_candidate(
@@ -588,7 +603,7 @@ def test_staging_after_namespace_replacement_remains_in_the_pinned_tree(
     _setup(tmp_path)
     docset_dir = paths.docset_dir(tmp_path, "tappay-backend")
     moved_docset = tmp_path / "locked-docset"
-    original_validate = store.validate_governance_namespace
+    original_validate = governed.validate_governance_namespace
     calls = 0
 
     def replace_after_validation(*args: object, **kwargs: object) -> None:
@@ -601,7 +616,7 @@ def test_staging_after_namespace_replacement_remains_in_the_pinned_tree(
             (docset_dir / "sentinel.txt").write_text("foreign", encoding="utf-8")
 
     monkeypatch.setattr(
-        store, "validate_governance_namespace", replace_after_validation
+        governed, "validate_governance_namespace", replace_after_validation
     )
 
     with pytest.raises(FoundryPublicationError, match="namespace changed"):
@@ -659,19 +674,21 @@ def test_rollback_failures_attempt_all_heads_and_surface_original_failure(
     run_dir2 = write_run_dir(tmp_path / "output" / _RUN_ID_2)
     importer.import_run(tmp_path, "tappay-backend", run_dir2)
     attempted: list[str] = []
-    original_restore = store.restore_head_relative
+    original_restore = head_io.restore_head_relative
 
     def fail_current(*_args: object, **_kwargs: object) -> None:
         raise OSError("current pointer write failed")
 
-    def restore_head(parent_fd: int, name: str, content: bytes | None) -> None:
+    def restore_head(
+        parent_fd: int, name: str, snapshot: head_io.HeadSnapshot
+    ) -> None:
         attempted.append(name)
         if name in {"docset.json", "catalog.json"}:
             raise OSError(f"rollback {name} failed")
-        original_restore(parent_fd, name, content)
+        original_restore(parent_fd, name, snapshot)
 
     monkeypatch.setattr(store, "save_current", fail_current)
-    monkeypatch.setattr(store, "restore_head_relative", restore_head)
+    monkeypatch.setattr(head_io, "restore_head_relative", restore_head)
 
     with pytest.raises(FoundryPublicationError) as caught:
         approve.approve_candidate(
@@ -705,20 +722,20 @@ def test_candidate_copy_failure_cleans_asset_for_deterministic_retry(
 ) -> None:
     _setup(tmp_path)
     asset_root = paths.asset_dir(tmp_path, "tappay-backend", "tappay-backend-20260702-120000")
-    original_copytree = store.copy_tree_to_directory
+    original_copytree = descriptor_tree.copy_tree_to_directory
 
     def fail_copy(_source: Path, destination_fd: int, name: str) -> None:
-        store.os.mkdir(name, dir_fd=destination_fd)
+        descriptor_tree.os.mkdir(name, dir_fd=destination_fd)
         raise OSError("candidate copy failed")
 
-    monkeypatch.setattr(store, "copy_tree_to_directory", fail_copy)
+    monkeypatch.setattr(descriptor_tree, "copy_tree_to_directory", fail_copy)
     with pytest.raises(OSError, match="candidate copy failed"):
         approve.approve_candidate(
             tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
         )
     assert not asset_root.exists()
 
-    monkeypatch.setattr(store, "copy_tree_to_directory", original_copytree)
+    monkeypatch.setattr(descriptor_tree, "copy_tree_to_directory", original_copytree)
     retried = approve.approve_candidate(
         tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
     )
@@ -792,14 +809,14 @@ def test_strict_release_write_failure_cleans_asset_for_deterministic_retry(
     monkeypatch.setattr(
         approve, "approve_release", lambda release, _decision: release
     )
-    original_write_model = store.write_model_relative
+    original_write_model = descriptor_io.write_model_relative
 
     def fail_release_write(parent_fd: int, name: str, model: object) -> None:
         if name.endswith("/release.json"):
             raise OSError("strict release write failed")
         original_write_model(parent_fd, name, model)
 
-    monkeypatch.setattr(store, "write_model_relative", fail_release_write)
+    monkeypatch.setattr(descriptor_io, "write_model_relative", fail_release_write)
     with pytest.raises(OSError, match="strict release write failed"):
         approve.approve_candidate(
             tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW

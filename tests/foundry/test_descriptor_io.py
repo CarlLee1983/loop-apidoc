@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import descriptor_io
+from loop_apidoc.foundry import (
+    descriptor_io,
+    descriptor_namespace,
+    descriptor_tree,
+    head_io,
+)
 from loop_apidoc.foundry.models import (
     Docset,
     FoundryInputError,
@@ -45,7 +50,7 @@ def test_write_once_model_creates_nested_owned_directories_and_reads_back(
         )
 
         assert (tmp_path / "docsets" / "tappay" / "models").is_dir()
-        assert descriptor_io.entry_identity_relative(
+        assert descriptor_namespace.entry_identity_relative(
             root_fd, "docsets/tappay/models/docset.json"
         ) == identity
         assert (
@@ -146,7 +151,7 @@ def test_descriptor_io_rejects_traversal_and_symlinked_paths(tmp_path: Path) -> 
         with pytest.raises(FoundryInputError, match="secret path is unsafe"):
             descriptor_io.read_bytes_relative(root_fd, "linked/secret.json", "secret")
         with pytest.raises(FoundryInputError, match="unsafe governance path"):
-            descriptor_io.ensure_directory_relative(root_fd, "linked/new-child")
+            descriptor_namespace.ensure_directory_relative(root_fd, "linked/new-child")
     finally:
         os.close(root_fd)
 
@@ -202,11 +207,14 @@ def test_copy_tree_to_owned_directory_copies_nested_regular_files(tmp_path: Path
     destination.mkdir()
     destination_fd = _open_root(destination)
     try:
-        name, copied_fd, identity = descriptor_io.copy_tree_to_owned_directory(
+        name, copied_fd, identity = descriptor_tree.copy_tree_to_owned_directory(
             source, destination_fd, prefix=".candidate-"
         )
         try:
-            assert descriptor_io.entry_identity_relative(destination_fd, name) == identity
+            assert (
+                descriptor_namespace.entry_identity_relative(destination_fd, name)
+                == identity
+            )
             assert (destination / name / "nested" / "artifact.txt").read_text(
                 encoding="utf-8"
             ) == "payload"
@@ -227,14 +235,14 @@ def test_copy_tree_to_directory_rejects_a_non_regular_source_entry(
     destination_fd = _open_root(destination)
     try:
         with pytest.raises(FoundryInputError, match="contains a non-file"):
-            descriptor_io.copy_tree_to_directory(source, destination_fd, "published")
+            descriptor_tree.copy_tree_to_directory(source, destination_fd, "published")
 
         assert not (destination / "published").exists()
     finally:
         os.close(destination_fd)
 
 
-def test_head_snapshot_detects_mutation_and_restore_replaces_head_bytes(
+def test_head_snapshot_detects_mutation_and_rejects_raw_bytes_rollback(
     tmp_path: Path,
 ) -> None:
     root_fd = _open_root(tmp_path)
@@ -242,19 +250,22 @@ def test_head_snapshot_detects_mutation_and_restore_replaces_head_bytes(
     updated = _docset(title="Updated title")
     try:
         descriptor_io.write_model_relative(root_fd, "docset.json", original)
-        snapshot = descriptor_io.read_head_snapshot_relative(root_fd, "docset.json")
+        snapshot = head_io.read_head_snapshot_relative(root_fd, "docset.json")
         assert snapshot.content == original.model_dump_json(indent=2).encode("utf-8")
 
         descriptor_io.write_model_relative(root_fd, "docset.json", updated)
         with pytest.raises(FoundryPublicationError, match="head identity changed"):
-            descriptor_io.validate_head_snapshot_relative(
+            head_io.validate_head_snapshot_relative(
                 root_fd, "docset.json", snapshot
             )
 
-        descriptor_io.restore_head_relative(root_fd, "docset.json", snapshot.content)
+        with pytest.raises(FoundryInputError, match="requires a head snapshot"):
+            head_io.restore_head_relative(
+                root_fd, "docset.json", snapshot.content  # type: ignore[arg-type]
+            )
         assert descriptor_io.read_model_relative(
             root_fd, Docset, "docset.json", "docset.json"
-        ) == original
+        ) == updated
     finally:
         os.close(root_fd)
 
@@ -264,28 +275,28 @@ def test_move_owned_directory_requires_its_identity_and_an_absent_destination(
 ) -> None:
     root_fd = _open_root(tmp_path)
     try:
-        source_fd = descriptor_io.ensure_directory_relative(root_fd, "staged")
+        source_fd = descriptor_namespace.ensure_directory_relative(root_fd, "staged")
         try:
             identity = (os.fstat(source_fd).st_dev, os.fstat(source_fd).st_ino)
         finally:
             os.close(source_fd)
 
-        assert descriptor_io.move_owned_directory_relative(
+        assert descriptor_namespace.move_owned_directory_relative(
             root_fd, "staged", "published", identity
         ) == identity
         assert (tmp_path / "published").is_dir()
 
-        occupied_fd = descriptor_io.ensure_directory_relative(root_fd, "occupied")
+        occupied_fd = descriptor_namespace.ensure_directory_relative(root_fd, "occupied")
         os.close(occupied_fd)
         with pytest.raises(FoundryInputError, match="destination already exists"):
-            descriptor_io.move_owned_directory_relative(
+            descriptor_namespace.move_owned_directory_relative(
                 root_fd, "published", "occupied", identity
             )
 
         (tmp_path / "published").rename(tmp_path / "retired")
         (tmp_path / "published").mkdir()
         with pytest.raises(FoundryPublicationError, match="identity changed"):
-            descriptor_io.move_owned_directory_relative(
+            descriptor_namespace.move_owned_directory_relative(
                 root_fd, "published", "replacement", identity
             )
     finally:
