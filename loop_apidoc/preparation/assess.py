@@ -6,7 +6,7 @@ from typing import Any
 from loop_apidoc.manifest.formats import unsupported_remedy
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus
 from loop_apidoc.plan.models import NormalizationPlan
-from loop_apidoc.preparation.coverage import ResultStatus, UrlCoverage, normalize_url
+from loop_apidoc.url_coverage import ResultStatus, UrlCoverage, normalize_url
 from loop_apidoc.preparation.models import (
     PreparationFinding,
     PreparationPhase,

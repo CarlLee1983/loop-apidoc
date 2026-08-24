@@ -95,7 +95,7 @@ def manifest(
     )
     from loop_apidoc.manifest.builder import ManifestInputError
     from loop_apidoc.manifest.scanner import ManifestScanError
-    from loop_apidoc.preparation.coverage import CoverageInputError, load_coverage
+    from loop_apidoc.url_coverage import CoverageInputError, load_coverage
 
     try:
         parsed_coverage = load_coverage(url_coverage) if url_coverage else None

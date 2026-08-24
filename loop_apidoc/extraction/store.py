@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.extraction.models import AnswerArtifact, QueryRecord
 from loop_apidoc.extraction.stages import QueryKind
 
@@ -10,7 +11,7 @@ class ExtractionStore:
     """Persists each query round to extraction/queries.jsonl and
     extraction/answers/<query_id>.txt without discarding prior rounds (spec §7.1)."""
 
-    def __init__(self, extraction_dir: Path) -> None:
+    def __init__(self, extraction_dir: OutputPath) -> None:
         self._dir = extraction_dir
         self._answers = extraction_dir / "answers"
         self._queries = extraction_dir / "queries.jsonl"
@@ -18,6 +19,7 @@ class ExtractionStore:
         # re-runs reuse a query_id, so later writes get a versioned filename
         # instead of overwriting the prior round's artifact (spec §7.1 audit).
         self._counts: dict[str, int] = {}
+        self._query_lines: list[str] = []
 
     def record(
         self,
@@ -39,9 +41,22 @@ class ExtractionStore:
             query_id=query_id, stage_id=stage_id, kind=kind, question=question,
             answer_path=answer_path, returncode=returncode,
         )
-        with self._queries.open("a", encoding="utf-8") as handle:
-            handle.write(record.model_dump_json() + "\n")
+        query_record = record.model_dump_json() + "\n"
+        self._query_lines.append(query_record)
+        # A descriptor-bound stage deliberately permits every leaf exactly
+        # once.  Buffering this append-only journal preserves the public JSONL
+        # contents while avoiding an unsafe reopen of an existing leaf. Plain
+        # paths retain the historical incremental audit visibility.
+        if isinstance(self._queries, Path):
+            # `Path` retains the historical incremental append behavior.
+            with self._queries.open("a", encoding="utf-8") as handle:
+                handle.write(query_record)
         return AnswerArtifact(
             query_id=query_id, stage_id=stage_id, kind=kind, answer=answer,
             answer_path=answer_path, returncode=returncode,
         )
+
+    def flush(self) -> None:
+        """Materialize a descriptor-bound JSONL journal exactly once."""
+        if not isinstance(self._queries, Path) and self._query_lines:
+            self._queries.write_text("".join(self._query_lines), encoding="utf-8")

@@ -1,7 +1,7 @@
 """Pre-generation readiness checks for source-grounded API documentation runs."""
 
 from loop_apidoc.preparation.assess import assess_preparation
-from loop_apidoc.preparation.coverage import (
+from loop_apidoc.url_coverage import (
     CoverageInputError,
     UrlCoverage,
     load_coverage,

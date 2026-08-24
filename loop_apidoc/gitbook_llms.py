@@ -12,7 +12,7 @@ from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
 
-from loop_apidoc.preparation.coverage import (
+from loop_apidoc.url_coverage import (
     CoverageExpected,
     CoverageResult,
     ExpectedSource,

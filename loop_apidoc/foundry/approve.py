@@ -14,11 +14,16 @@ from loop_apidoc.core.conformance import canonical_digest
 from loop_apidoc.core.governance import approve_release
 from loop_apidoc.core.models import Actor, ActorKind, ApprovalDecision
 from loop_apidoc.diff.loader import DiffInputError, load_run_artifacts
+from loop_apidoc.foundry.candidate_binding import (
+    CandidateBindingError,
+    approval_artifact_digests,
+    artifact_digests,
+)
 from loop_apidoc.foundry.strict_artifacts import (
     StrictCoreExecutionError,
     require_eligible_strict_candidate,
 )
-from loop_apidoc.foundry import paths, store
+from . import descriptor_io, descriptor_namespace, descriptor_tree, governed, head_io, paths, store
 from loop_apidoc.foundry.integrity import digest_artifact
 from loop_apidoc.foundry.query import load_current_asset, validate_governance_baseline
 from loop_apidoc.foundry.models import (
@@ -80,7 +85,7 @@ class _LegacyCapture:
 
 @dataclass
 class _ApprovalTransactionState:
-    governance_snapshot: list[tuple[int, str, str, bytes | None]] | None = None
+    governance_snapshot: list[tuple[int, str, str, head_io.HeadSnapshot]] | None = None
     # The directory entry name, not a pathname: `directory_fd_path` resolves a pinned
     # fd to `/proc/self/fd/<n>` on Linux, whose basename is the descriptor number, so
     # cleanup keyed on that pathname's basename silently removes nothing.
@@ -96,11 +101,6 @@ def _verify_candidate_binding(
     candidate_dir: Path, expected_digests: dict[str, str]
 ) -> None:
     """Verify the exact candidate artifact set bound by the review decision."""
-    from loop_apidoc.review.binding import (
-        approval_artifact_digests,
-        artifact_digests,
-    )
-
     try:
         reviewed_digests = artifact_digests(candidate_dir)
         actual_digests = (
@@ -108,7 +108,7 @@ def _verify_candidate_binding(
             if "review/decision.json" in expected_digests
             else reviewed_digests
         )
-    except ValueError as exc:
+    except CandidateBindingError as exc:
         raise FoundryInputError(str(exc)) from exc
     if actual_digests.keys() != expected_digests.keys():
         raise FoundryInputError("review candidate artifact set is stale")
@@ -257,38 +257,50 @@ def _governance_snapshot(
     docset_parent_fd: int,
     api_parent_fd: int,
     current_bytes: bytes | None = None,
-) -> list[tuple[int, str, str, bytes | None]]:
+) -> list[tuple[int, str, str, head_io.HeadSnapshot]]:
+    current_snapshot = head_io.read_head_snapshot_relative(
+        docset_parent_fd, "current.json"
+    )
+    if current_bytes is not None and current_snapshot.content != current_bytes:
+        raise FoundryInputError("legacy current pointer changed during governance capture")
     return [
         (
             docset_parent_fd,
             "current.json",
             "current.json",
-            current_bytes
-            if current_bytes is not None
-            else store.read_head_relative(docset_parent_fd, "current.json"),
+            current_snapshot,
         ),
         (
             docset_parent_fd,
             "docset.json",
             "docset.json",
-            store.read_head_relative(docset_parent_fd, "docset.json"),
+            head_io.read_head_snapshot_relative(docset_parent_fd, "docset.json"),
         ),
         (
             api_parent_fd,
             "catalog.json",
             "catalog.json",
-            store.read_head_relative(api_parent_fd, "catalog.json"),
+            head_io.read_head_snapshot_relative(api_parent_fd, "catalog.json"),
         ),
     ]
 
 
+def _head_snapshot_for(
+    snapshot: list[tuple[int, str, str, head_io.HeadSnapshot]], name: str
+) -> head_io.HeadSnapshot:
+    for _, candidate, _, captured in snapshot:
+        if candidate == name:
+            return captured
+    raise AssertionError(f"missing governance snapshot for {name}")
+
+
 def _restore_governance_snapshot(
-    snapshot: list[tuple[int, str, str, bytes | None]],
+    snapshot: list[tuple[int, str, str, head_io.HeadSnapshot]],
 ) -> list[tuple[str, BaseException]]:
     failures: list[tuple[str, BaseException]] = []
-    for parent_fd, name, label, content in snapshot:
+    for parent_fd, name, label, captured in snapshot:
         try:
-            store.restore_head_relative(parent_fd, name, content)
+            head_io.restore_head_relative(parent_fd, name, captured)
         except BaseException as exc:
             failures.append((label, exc))
     return failures
@@ -311,7 +323,7 @@ def _cleanup_approval_outputs(
         targets.append(("asset root", asset_root.name, published_identity))
     for label, name, identity in targets:
         try:
-            store.remove_owned_entry_relative(assets_parent_fd, name, identity)
+            descriptor_namespace.remove_owned_entry_relative(assets_parent_fd, name, identity)
         except BaseException as exc:
             failures.append((label, exc))
     return failures
@@ -319,7 +331,7 @@ def _cleanup_approval_outputs(
 
 def _raise_approval_failure(
     primary: BaseException,
-    snapshot: list[tuple[int, str, str, bytes | None]],
+    snapshot: list[tuple[int, str, str, head_io.HeadSnapshot]],
     staging_name: str | None,
     asset_root: Path,
     *,
@@ -427,6 +439,7 @@ def _approve_candidate_locked(
     assets_parent_fd: int | None = None,
     docset_parent_fd: int | None = None,
     api_parent_fd: int | None = None,
+    root_parent_fd: int | None = None,
     _state: _ApprovalTransactionState | None = None,
 ) -> Asset:
     state = _state or _ApprovalTransactionState()
@@ -496,7 +509,12 @@ def _approve_candidate_locked(
     state.asset_root = asset_root
     if asset_root.exists() or asset_root.is_symlink():
         raise FoundryApprovalError(f"asset already exists: {asset_id}")
-    if assets_parent_fd is None or docset_parent_fd is None or api_parent_fd is None:
+    if (
+        assets_parent_fd is None
+        or docset_parent_fd is None
+        or api_parent_fd is None
+        or root_parent_fd is None
+    ):
         raise FoundryInputError("approval transaction descriptors are required")
     governance_snapshot = _governance_snapshot(
         docset_parent_fd=docset_parent_fd,
@@ -510,27 +528,28 @@ def _approve_candidate_locked(
     staging_fd = -1
     publication = store.AssetPublication()
     try:
-        store.validate_governance_namespace(
+        governed.validate_governance_namespace(
             project_root,
             docset_id,
+            root_fd=root_parent_fd,
             api_fd=api_parent_fd,
             docset_fd=docset_parent_fd,
             assets_fd=assets_parent_fd,
         )
         staging_name, staging_fd, staging_identity = (
-            store.create_owned_directory_relative(
+            descriptor_namespace.create_owned_directory_relative(
                 assets_parent_fd, prefix=f".{asset_id}-"
             )
         )
         state.staging_name = staging_name
         state.staging_identity = staging_identity
-        artifacts_dir = store.directory_fd_path(staging_fd) / "artifacts"
+        artifacts_dir = descriptor_namespace.directory_fd_path(staging_fd) / "artifacts"
         if expected_candidate_artifact_digests is not None:
             _verify_candidate_binding(candidate, expected_candidate_artifact_digests)
         pinned_candidate = (
-            store.directory_fd_path(docset_parent_fd) / "candidates" / run_id
+            descriptor_namespace.directory_fd_path(docset_parent_fd) / "candidates" / run_id
         )
-        store.copy_tree_to_directory(pinned_candidate, staging_fd, "artifacts")
+        descriptor_tree.copy_tree_to_directory(pinned_candidate, staging_fd, "artifacts")
         if expected_candidate_artifact_digests is not None:
             _verify_candidate_binding(artifacts_dir, expected_candidate_artifact_digests)
         if strict_release is not None:
@@ -555,7 +574,7 @@ def _approve_candidate_locked(
                 )
             except ValueError as exc:
                 raise FoundryApprovalError(str(exc)) from exc
-            store.write_model_relative(
+            descriptor_io.write_model_relative(
                 staging_fd, "artifacts/core/release.json", approved_release
             )
 
@@ -594,7 +613,7 @@ def _approve_candidate_locked(
             artifact_kinds=asset.artifact_kinds,
             review=asset.review,
         )
-        store.write_model_relative(staging_fd, "asset.json", asset)
+        descriptor_io.write_model_relative(staging_fd, "asset.json", asset)
         store.publish_asset(
             Path(staging_name),
             asset_root,
@@ -606,7 +625,10 @@ def _approve_candidate_locked(
         state.published_identity = publication.identity
         updated_docset = docset.model_copy(update={"current_asset": asset.asset_id})
         store.save_docset(
-            project_root, updated_docset, parent_fd=docset_parent_fd
+            project_root,
+            updated_docset,
+            parent_fd=docset_parent_fd,
+            outcome=_head_snapshot_for(governance_snapshot, "docset.json"),
         )
         store.save_catalog(
             project_root,
@@ -621,15 +643,21 @@ def _approve_candidate_locked(
                 ),
             ),
             parent_fd=api_parent_fd,
+            outcome=_head_snapshot_for(governance_snapshot, "catalog.json"),
         )
 
         # This is the externally consumed promotion signal. Publish it last.
         store.save_current(
-            project_root, docset_id, pointer, parent_fd=docset_parent_fd
-        )
-        store.validate_governance_namespace(
             project_root,
             docset_id,
+            pointer,
+            parent_fd=docset_parent_fd,
+            outcome=_head_snapshot_for(governance_snapshot, "current.json"),
+        )
+        governed.validate_governance_namespace(
+            project_root,
+            docset_id,
+            root_fd=root_parent_fd,
             api_fd=api_parent_fd,
             docset_fd=docset_parent_fd,
             assets_fd=assets_parent_fd,
@@ -711,6 +739,7 @@ def approve_candidate(
             assets_parent_fd=transaction.assets_fd,
             docset_parent_fd=transaction.docset_fd,
             api_parent_fd=transaction.api_fd,
+            root_parent_fd=transaction.root_fd,
             _state=state,
         )
     except BaseException as exc:

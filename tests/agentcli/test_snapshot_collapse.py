@@ -12,7 +12,7 @@ from loop_apidoc.manifest.models import (
     UrlSource,
 )
 from loop_apidoc.plan.builder import build_normalization_plan
-from loop_apidoc.preparation.coverage import CoverageResult, ResultStatus, UrlCoverage
+from loop_apidoc.url_coverage import CoverageResult, ResultStatus, UrlCoverage
 
 _NOW = datetime(2026, 7, 4, tzinfo=timezone.utc)
 

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.plan.models import IntegrationContract, NormalizationPlan
 from loop_apidoc.preparation import assess_preparation
-from loop_apidoc.preparation.coverage import UrlCoverage
+from loop_apidoc.url_coverage import UrlCoverage
 
 _NOW = datetime(2026, 7, 3, 8, 0, tzinfo=timezone.utc)
 

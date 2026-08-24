@@ -8,14 +8,11 @@ from loop_apidoc.adapters.fragments import acquire_fragment_bundle
 from loop_apidoc.adapters.memory import (
     FixedClock,
     InMemoryArtifactSink,
-    InMemoryContractStore,
-    InMemoryEventSink,
-    InMemoryEvidenceStore,
+    InMemoryCoreUnitOfWork,
     StaticSourceAdapter,
 )
 from loop_apidoc.adapters.runtime import CallableRuntimeAdapter
 from loop_apidoc.core.models import ContractRelease, PolicyProfile
-from loop_apidoc.core.governance import release_id_for_contract
 from loop_apidoc.core.service import EvidenceToContractService
 from loop_apidoc.domain.projections import (
     OpenApiProjectionCompiler,
@@ -109,10 +106,8 @@ def execute_shadow(
     except Exception as exc:
         raise ShadowExecutionFailure(ShadowStage.BRIDGE, exc) from exc
 
-    evidence_store = InMemoryEvidenceStore()
-    contract_store = InMemoryContractStore()
+    unit_of_work = InMemoryCoreUnitOfWork()
     artifact_sink = InMemoryArtifactSink()
-    event_sink = InMemoryEventSink()
     approval = _NeverApprove()
     service = EvidenceToContractService(
         source=StaticSourceAdapter(bridge.evidence),
@@ -121,11 +116,9 @@ def execute_shadow(
             runtime_version,
             lambda _work_item: runtime_result,
         ),
-        evidence_store=evidence_store,
-        contract_store=contract_store,
+        unit_of_work=unit_of_work,
         artifact_sink=artifact_sink,
         approval=approval,
-        events=event_sink,
         clock=FixedClock(generated_at),
         domain_rules=ApiDomainRulePack(version=SHADOW_DOMAIN_VERSION),
         policy_profile=policy_profile or PolicyProfile(name="shadow"),
@@ -171,14 +164,17 @@ def execute_shadow(
         raise ShadowExecutionFailure(ShadowStage.PROJECTION, exc) from exc
 
     try:
-        claims = contract_store.get_claims(source_set_id)
-        contract = contract_store.get_contract(source_set_id)
-        workflow = contract_store.get_workflow(source_set_id)
-        release = (
-            contract_store.get_release(release_id_for_contract(contract))
-            if decision.verdict.value != "reject"
-            else None
-        )
+        snapshot = unit_of_work.load(source_set_id)
+        if (
+            snapshot is None
+            or snapshot.claims is None
+            or snapshot.contract is None
+        ):
+            raise ValueError("shadow service did not commit its expected aggregate")
+        claims = snapshot.claims
+        contract = snapshot.contract
+        workflow = snapshot.workflow
+        release = snapshot.release
     except Exception as exc:
         raise ShadowExecutionFailure(ShadowStage.SERVICE, exc) from exc
 
@@ -197,7 +193,7 @@ def execute_shadow(
             media_type=projection.media_type,
             payload=json.loads(projection.content),
         )
-        for projection in contract_store.projections.get(source_set_id, ())
+        for projection in snapshot.projections or ()
     )
     diagnostics = (
         *bridge.diagnostics,
@@ -223,7 +219,7 @@ def execute_shadow(
         contract=contract,
         decision=decision,
         workflow=workflow,
-        events=tuple(event_sink.events),
+        events=unit_of_work.events,
         comparison=comparison,
         release=release,
         projections=projections,

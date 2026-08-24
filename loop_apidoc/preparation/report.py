@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.preparation.models import PreparationReport
 
 
@@ -47,7 +46,7 @@ def render_markdown(report: PreparationReport) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_reports(report: PreparationReport, output_dir: Path) -> None:
+def write_reports(report: PreparationReport, output_dir: OutputPath) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "preparation-report.json").write_text(
         report.model_dump_json(indent=2),
