@@ -3,13 +3,17 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from loop_apidoc.preparation.coverage import UrlCoverage as LegacyUrlCoverage
+from loop_apidoc.url_coverage import UrlCoverage
 
 
-def test_url_coverage_is_neutral_with_a_legacy_compatibility_export() -> None:
-    from loop_apidoc.url_coverage import UrlCoverage
+def test_url_coverage_has_one_neutral_owner() -> None:
+    assert UrlCoverage.__module__ == "loop_apidoc.url_coverage"
 
-    assert UrlCoverage is LegacyUrlCoverage
+
+def test_preparation_coverage_remains_a_compatibility_reexport() -> None:
+    from loop_apidoc.preparation.coverage import UrlCoverage as legacy_url_coverage
+
+    assert legacy_url_coverage is UrlCoverage
 
 
 def test_production_consumers_do_not_depend_on_preparation_coverage() -> None:

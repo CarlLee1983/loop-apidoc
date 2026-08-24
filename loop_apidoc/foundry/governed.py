@@ -9,19 +9,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from . import paths
-from .descriptor_io import (
-    ImmutableEntryPublication,
-    _open_directory,
-    digest_artifact_relative,
-    ensure_directory_relative,
-    open_directory_relative,
-    read_bytes_relative,
-    read_model_relative,
-    validate_directory_relative,
-    validate_pinned_directory_chain,
-    write_once_model_relative,
-)
+from . import descriptor_io, descriptor_namespace, paths
 from .models import FoundryInputError, FoundryPublicationError
 
 _ModelT = TypeVar("_ModelT", bound=BaseModel)
@@ -70,24 +58,34 @@ def _open_governance_directories(
     project_root: Path, docset_id: str, *, create_assets: bool = True
 ) -> tuple[int, int, int, int]:
     """Open the governed path one component at a time, refusing symlinks."""
-    root_fd = _open_directory(project_root)
+    root_fd = descriptor_namespace._open_directory(project_root)
     opened = [root_fd]
     try:
-        foundry_fd = _open_directory(paths.FOUNDRY_DIR, parent_fd=root_fd)
+        foundry_fd = descriptor_namespace._open_directory(
+            paths.FOUNDRY_DIR, parent_fd=root_fd
+        )
         opened.append(foundry_fd)
-        api_fd = _open_directory(paths.API_DIR, parent_fd=foundry_fd)
+        api_fd = descriptor_namespace._open_directory(
+            paths.API_DIR, parent_fd=foundry_fd
+        )
         opened.append(api_fd)
-        docsets_fd = _open_directory("docsets", parent_fd=api_fd)
+        docsets_fd = descriptor_namespace._open_directory("docsets", parent_fd=api_fd)
         opened.append(docsets_fd)
-        docset_fd = _open_directory(docset_id, parent_fd=docsets_fd)
+        docset_fd = descriptor_namespace._open_directory(
+            docset_id, parent_fd=docsets_fd
+        )
         opened.append(docset_fd)
         assets_fd = -1
         try:
-            assets_fd = _open_directory("assets", parent_fd=docset_fd)
+            assets_fd = descriptor_namespace._open_directory(
+                "assets", parent_fd=docset_fd
+            )
         except FileNotFoundError:
             if create_assets:
                 os.mkdir("assets", dir_fd=docset_fd)
-                assets_fd = _open_directory("assets", parent_fd=docset_fd)
+                assets_fd = descriptor_namespace._open_directory(
+                    "assets", parent_fd=docset_fd
+                )
         if assets_fd >= 0:
             opened.append(assets_fd)
         # The children are anchored by docset_fd/api_fd; these intermediates
@@ -154,7 +152,7 @@ class GovernedDocset:
         optional: bool = False,
         max_bytes: int | None = None,
     ) -> bytes | None:
-        return read_bytes_relative(
+        return descriptor_io.read_bytes_relative(
             self.docset_fd,
             relative,
             label,
@@ -171,7 +169,7 @@ class GovernedDocset:
         optional: bool = False,
         max_bytes: int | None = None,
     ) -> _ModelT | None:
-        return read_model_relative(
+        return descriptor_io.read_model_relative(
             self.docset_fd,
             model,
             relative,
@@ -190,7 +188,7 @@ class GovernedDocset:
         max_bytes: int | None = None,
     ) -> _ModelT | None:
         """Read an API-level model through the held Foundry descriptor."""
-        return read_model_relative(
+        return descriptor_io.read_model_relative(
             self.api_fd,
             model,
             relative,
@@ -201,13 +199,15 @@ class GovernedDocset:
 
     def open_directory(self, relative: str) -> GovernedDirectory:
         try:
-            descriptor = open_directory_relative(self.docset_fd, relative)
+            descriptor = descriptor_namespace.open_directory_relative(
+                self.docset_fd, relative
+            )
         except (FoundryInputError, OSError) as exc:
             raise FoundryInputError(f"unsafe governed directory: {relative}") from exc
         return GovernedDirectory(self, relative, descriptor)
 
     def validate(self) -> None:
-        validate_pinned_directory_chain(
+        descriptor_namespace.validate_pinned_directory_chain(
             self.project_root,
             expected_root_fd=self.root_fd,
             components=(
@@ -249,7 +249,7 @@ class GovernedDirectory:
         optional: bool = False,
         max_bytes: int | None = None,
     ) -> bytes | None:
-        return read_bytes_relative(
+        return descriptor_io.read_bytes_relative(
             self.descriptor,
             relative,
             label,
@@ -266,7 +266,7 @@ class GovernedDirectory:
         optional: bool = False,
         max_bytes: int | None = None,
     ) -> _ModelT | None:
-        return read_model_relative(
+        return descriptor_io.read_model_relative(
             self.descriptor,
             model,
             relative,
@@ -277,7 +277,9 @@ class GovernedDirectory:
 
     def ensure_directory(self, relative: str) -> GovernedDirectory:
         try:
-            descriptor = ensure_directory_relative(self.descriptor, relative)
+            descriptor = descriptor_namespace.ensure_directory_relative(
+                self.descriptor, relative
+            )
         except (FoundryInputError, OSError) as exc:
             raise FoundryInputError(f"unsafe governed directory: {relative}") from exc
         return GovernedDirectory(
@@ -287,7 +289,9 @@ class GovernedDirectory:
     def open_directory(self, relative: str) -> GovernedDirectory:
         """Open a nested directory from this pinned parent descriptor."""
         try:
-            descriptor = open_directory_relative(self.descriptor, relative)
+            descriptor = descriptor_namespace.open_directory_relative(
+                self.descriptor, relative
+            )
         except (FoundryInputError, OSError) as exc:
             raise FoundryInputError(f"unsafe governed directory: {relative}") from exc
         return GovernedDirectory(
@@ -296,10 +300,12 @@ class GovernedDirectory:
 
     def digest_artifact(self, relative: str, kind: str, label: str = "artifact") -> str:
         """Digest a bound artifact without reopening a governed pathname."""
-        return digest_artifact_relative(self.descriptor, relative, kind, label)
+        return descriptor_io.digest_artifact_relative(
+            self.descriptor, relative, kind, label
+        )
 
     def validate(self) -> None:
-        validate_directory_relative(
+        descriptor_namespace.validate_directory_relative(
             self.docset.docset_fd, self.relative, self.descriptor
         )
 
@@ -307,9 +313,9 @@ class GovernedDirectory:
         self, relative: str, model: BaseModel
     ) -> tuple[bool, tuple[int, int]]:
         self.validate()
-        publication = ImmutableEntryPublication()
+        publication = descriptor_io.ImmutableEntryPublication()
         try:
-            existed, identity = write_once_model_relative(
+            existed, identity = descriptor_io.write_once_model_relative(
                 self.descriptor, relative, model, outcome=publication
             )
             self.validate()
@@ -320,9 +326,7 @@ class GovernedDirectory:
                     raise FoundryPublicationError(
                         "immutable governed output ownership is unavailable"
                     )
-                from .descriptor_io import remove_owned_entry_relative
-
-                remove_owned_entry_relative(
+                descriptor_namespace.remove_owned_entry_relative(
                     self.descriptor, relative, publication.identity
                 )
             raise
@@ -341,15 +345,21 @@ def open_governed_docset(project_root: Path, docset_id: str) -> GovernedDocset:
     project_root = _normalise_project_root(project_root)
     descriptors: list[int] = []
     try:
-        root_fd = _open_directory(project_root)
+        root_fd = descriptor_namespace._open_directory(project_root)
         descriptors.append(root_fd)
-        foundry_fd = _open_directory(paths.FOUNDRY_DIR, parent_fd=root_fd)
+        foundry_fd = descriptor_namespace._open_directory(
+            paths.FOUNDRY_DIR, parent_fd=root_fd
+        )
         descriptors.append(foundry_fd)
-        api_fd = _open_directory(paths.API_DIR, parent_fd=foundry_fd)
+        api_fd = descriptor_namespace._open_directory(
+            paths.API_DIR, parent_fd=foundry_fd
+        )
         descriptors.append(api_fd)
-        docsets_fd = _open_directory("docsets", parent_fd=api_fd)
+        docsets_fd = descriptor_namespace._open_directory("docsets", parent_fd=api_fd)
         descriptors.append(docsets_fd)
-        docset_fd = _open_directory(docset_id, parent_fd=docsets_fd)
+        docset_fd = descriptor_namespace._open_directory(
+            docset_id, parent_fd=docsets_fd
+        )
         descriptors.append(docset_fd)
     except OSError as exc:
         for descriptor in reversed(descriptors):
@@ -389,13 +399,21 @@ def open_pinned_governed_docset(
     try:
         duplicated_root_fd = os.dup(root_fd)
         descriptors.append(duplicated_root_fd)
-        foundry_fd = _open_directory(paths.FOUNDRY_DIR, parent_fd=duplicated_root_fd)
+        foundry_fd = descriptor_namespace._open_directory(
+            paths.FOUNDRY_DIR, parent_fd=duplicated_root_fd
+        )
         descriptors.append(foundry_fd)
-        duplicated_api_fd = _open_directory(paths.API_DIR, parent_fd=foundry_fd)
+        duplicated_api_fd = descriptor_namespace._open_directory(
+            paths.API_DIR, parent_fd=foundry_fd
+        )
         descriptors.append(duplicated_api_fd)
-        docsets_fd = _open_directory("docsets", parent_fd=duplicated_api_fd)
+        docsets_fd = descriptor_namespace._open_directory(
+            "docsets", parent_fd=duplicated_api_fd
+        )
         descriptors.append(docsets_fd)
-        duplicated_docset_fd = _open_directory(docset_id, parent_fd=docsets_fd)
+        duplicated_docset_fd = descriptor_namespace._open_directory(
+            docset_id, parent_fd=docsets_fd
+        )
         descriptors.append(duplicated_docset_fd)
         if not os.path.samestat(os.fstat(duplicated_api_fd), os.fstat(api_fd)):
             raise FoundryPublicationError(
@@ -441,7 +459,7 @@ def validate_governance_namespace(
     )
     if assets_fd >= 0:
         components += (("assets", assets_fd),)
-    validate_pinned_directory_chain(
+    descriptor_namespace.validate_pinned_directory_chain(
         project_root,
         expected_root_fd=root_fd,
         components=components,
@@ -458,7 +476,7 @@ def validate_catalog_namespace(
     docsets_fd: int,
 ) -> None:
     """Fail if canonical catalog pathnames no longer name the pinned tree."""
-    validate_pinned_directory_chain(
+    descriptor_namespace.validate_pinned_directory_chain(
         project_root,
         expected_root_fd=root_fd,
         components=(

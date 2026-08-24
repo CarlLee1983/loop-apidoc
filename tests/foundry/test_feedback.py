@@ -51,7 +51,15 @@ from loop_apidoc.feedback.loader import (
 )
 from loop_apidoc.feedback.erratum import ProviderErratumMetadata
 from loop_apidoc.feedback.report import write_proposal_reports
-from loop_apidoc.foundry import feedback, normative, paths, query, register, store
+from loop_apidoc.foundry import (
+    descriptor_io,
+    feedback,
+    normative,
+    paths,
+    query,
+    register,
+    store,
+)
 from loop_apidoc.foundry.models import (
     Asset,
     AssetArtifactDigests,
@@ -533,7 +541,7 @@ def test_load_approved_contract_rejects_asset_directory_swap_after_open(
     foreign_root = tmp_path / "foreign-asset"
     moved_root = tmp_path / "moved-asset"
     shutil.copytree(asset_root, foreign_root)
-    original_open = normative.store.open_directory_relative
+    original_open = normative.descriptor_namespace.open_directory_relative
     swapped = False
 
     def open_then_swap(*args: object, **kwargs: object) -> int:
@@ -546,7 +554,9 @@ def test_load_approved_contract_rejects_asset_directory_swap_after_open(
             swapped = True
         return directory
 
-    monkeypatch.setattr(normative.store, "open_directory_relative", open_then_swap)
+    monkeypatch.setattr(
+        normative.descriptor_namespace, "open_directory_relative", open_then_swap
+    )
 
     with pytest.raises(FeedbackInputError, match="governed normative base path is unsafe"):
         load_approved_contract(tmp_path, "payments", "payments-base")
@@ -1299,7 +1309,7 @@ def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
     effective = _effective(amendment)
     docset_root = paths.docset_dir(tmp_path, "payments")
     moved_docset = tmp_path / "pinned-docset"
-    original_write_once = store.write_once_model_relative
+    original_write_once = descriptor_io.write_once_model_relative
     replaced = False
 
     def replace_then_write(*args: object, **kwargs: object):
@@ -1311,7 +1321,7 @@ def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
             (docset_root / "sentinel.txt").write_text("foreign", encoding="utf-8")
         return original_write_once(*args, **kwargs)
 
-    monkeypatch.setattr(store, "write_once_model_relative", replace_then_write)
+    monkeypatch.setattr(descriptor_io, "write_once_model_relative", replace_then_write)
 
     with pytest.raises(FoundryPublicationError, match="namespace changed"):
         feedback.approve_feedback_case(
@@ -1352,7 +1362,7 @@ def test_feedback_approval_rolls_back_amendment_after_post_link_failure(
     feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
     amendment = _amendment(proposal, decision)
     effective = _effective(amendment)
-    original_write_once = store.write_once_model_relative
+    original_write_once = descriptor_io.write_once_model_relative
 
     def write_then_fail(*args: object, **kwargs: object) -> object:
         result = original_write_once(*args, **kwargs)
@@ -1360,7 +1370,7 @@ def test_feedback_approval_rolls_back_amendment_after_post_link_failure(
             raise OSError("injected post-link failure")
         return result
 
-    monkeypatch.setattr(store, "write_once_model_relative", write_then_fail)
+    monkeypatch.setattr(descriptor_io, "write_once_model_relative", write_then_fail)
 
     with pytest.raises(OSError, match="post-link failure"):
         feedback.approve_feedback_case(
@@ -1551,7 +1561,7 @@ def test_effective_current_rejects_scope_directory_swap_after_open(
     foreign_root = tmp_path / "foreign-effective"
     moved_root = tmp_path / "moved-effective"
     shutil.copytree(effective_root, foreign_root)
-    original_open = query.store.open_governed_docset
+    original_open = query.governed_io.open_governed_docset
     swapped = False
 
     class SwappingGovernedDocset:
@@ -1580,7 +1590,7 @@ def test_effective_current_rejects_scope_directory_swap_after_open(
     def open_then_swap(*args: object, **kwargs: object) -> object:
         return SwappingGovernedDocset(original_open(*args, **kwargs))
 
-    monkeypatch.setattr(query.store, "open_governed_docset", open_then_swap)
+    monkeypatch.setattr(query.governed_io, "open_governed_docset", open_then_swap)
 
     with pytest.raises(FoundryInputError, match="effective governed path is unsafe"):
         query.load_current_effective_asset(

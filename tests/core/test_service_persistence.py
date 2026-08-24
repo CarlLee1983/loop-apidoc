@@ -285,6 +285,176 @@ def test_failed_reconcile_releases_reservation_for_normal_proposal_sequence() ->
     assert [event.kind for event in uow.events].count("lifecycle.reconciled") == 1
 
 
+def test_acquire_port_and_commit_failures_release_the_reservation_for_retry() -> None:
+    service, uow, _artifacts, _runtime_calls = _service([_runtime_result(_operation())])
+    service.register_source_set(_source_set())
+    source = service.source
+
+    class FailsOnceSource:
+        failed = False
+
+        def acquire(self, source_set):
+            if not self.failed:
+                self.failed = True
+                raise RuntimeError("source unavailable")
+            return source.acquire(source_set)
+
+    service.source = FailsOnceSource()
+    with pytest.raises(RuntimeError, match="source unavailable"):
+        service.acquire(_SOURCE_SET_ID)
+
+    service.acquire(_SOURCE_SET_ID)
+    acquired = uow.load(_SOURCE_SET_ID)
+    assert acquired is not None
+    assert acquired.workflow.state is LifecycleState.ACQUIRED
+
+    commit_service, commit_uow, _artifacts, _runtime_calls = _service(
+        [_runtime_result(_operation())]
+    )
+    commit_service.register_source_set(_source_set())
+    commit_uow.fail_next_commit_at("event")
+    with pytest.raises(RuntimeError, match="event"):
+        commit_service.acquire(_SOURCE_SET_ID)
+
+    commit_service.acquire(_SOURCE_SET_ID)
+    retried = commit_uow.load(_SOURCE_SET_ID)
+    assert retried is not None
+    assert retried.workflow.state is LifecycleState.ACQUIRED
+
+
+def test_proposal_port_and_commit_failures_release_the_reservation_for_retry() -> None:
+    results = [_runtime_result(_operation()), _runtime_result(_operation())]
+    service, uow, _artifacts, _runtime_calls = _service(results)
+    service.register_source_set(_source_set())
+    service.acquire(_SOURCE_SET_ID)
+    runtime = service.runtime
+
+    class FailsOnceRuntime:
+        failed = False
+
+        def propose(self, work_item):
+            if not self.failed:
+                self.failed = True
+                raise RuntimeError("runtime unavailable")
+            return runtime.propose(work_item)
+
+    service.runtime = FailsOnceRuntime()
+    with pytest.raises(RuntimeError, match="runtime unavailable"):
+        service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+
+    service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+    proposed = uow.load(_SOURCE_SET_ID)
+    assert proposed is not None
+    assert proposed.workflow.state is LifecycleState.CLAIMS_PROPOSED
+
+    commit_service, commit_uow, _artifacts, _runtime_calls = _service(
+        [_runtime_result(_operation()), _runtime_result(_operation())]
+    )
+    commit_service.register_source_set(_source_set())
+    commit_service.acquire(_SOURCE_SET_ID)
+    commit_uow.fail_next_commit_at("event")
+    with pytest.raises(RuntimeError, match="event"):
+        commit_service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+
+    commit_service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+    retried = commit_uow.load(_SOURCE_SET_ID)
+    assert retried is not None
+    assert retried.workflow.state is LifecycleState.CLAIMS_PROPOSED
+
+
+def test_approval_port_and_commit_failures_release_the_reservation_for_retry() -> None:
+    service, uow, _artifacts, _runtime_calls = _service([_runtime_result(_operation())])
+    _advance_to_contract(service)
+    service.validate(_SOURCE_SET_ID, (OpenApiProjectionCompiler(version="1"),))
+    approval_port = service.approval_port
+
+    class FailsOnceApproval:
+        failed = False
+
+        def request(self, release):
+            if not self.failed:
+                self.failed = True
+                raise RuntimeError("approval unavailable")
+            return approval_port.request(release)
+
+    service.approval_port = FailsOnceApproval()
+    with pytest.raises(RuntimeError, match="approval unavailable"):
+        service.approve(_SOURCE_SET_ID)
+
+    service.approve(_SOURCE_SET_ID)
+    approved = uow.load(_SOURCE_SET_ID)
+    assert approved is not None
+    assert approved.release is not None
+    assert approved.release.status is ReleaseStatus.APPROVED
+
+    commit_service, commit_uow, _artifacts, _runtime_calls = _service(
+        [_runtime_result(_operation())]
+    )
+    _advance_to_contract(commit_service)
+    commit_service.validate(_SOURCE_SET_ID, (OpenApiProjectionCompiler(version="1"),))
+    commit_uow.fail_next_commit_at("event")
+    with pytest.raises(RuntimeError, match="event"):
+        commit_service.approve(_SOURCE_SET_ID)
+
+    released = commit_service.approve(_SOURCE_SET_ID)
+    assert released.status is ReleaseStatus.APPROVED
+
+
+@pytest.mark.parametrize("boundary", ("payload", "workflow", "current", "event"))
+def test_acquire_commit_faults_leave_no_reservation_and_retry(boundary: str) -> None:
+    service, uow, _artifacts, _runtime_calls = _service([_runtime_result(_operation())])
+    service.register_source_set(_source_set())
+    before = uow.load(_SOURCE_SET_ID)
+    assert before is not None
+
+    uow.fail_next_commit_at(boundary)
+    with pytest.raises(RuntimeError, match=boundary):
+        service.acquire(_SOURCE_SET_ID)
+
+    assert uow.load(_SOURCE_SET_ID) == before
+    service.acquire(_SOURCE_SET_ID)
+    retried = uow.load(_SOURCE_SET_ID)
+    assert retried is not None
+    assert retried.workflow.state is LifecycleState.ACQUIRED
+
+
+@pytest.mark.parametrize("boundary", ("payload", "workflow", "current", "event"))
+def test_proposal_commit_faults_leave_no_reservation_and_retry(boundary: str) -> None:
+    service, uow, _artifacts, _runtime_calls = _service(
+        [_runtime_result(_operation()), _runtime_result(_operation())]
+    )
+    service.register_source_set(_source_set())
+    service.acquire(_SOURCE_SET_ID)
+    before = uow.load(_SOURCE_SET_ID)
+    assert before is not None
+
+    uow.fail_next_commit_at(boundary)
+    with pytest.raises(RuntimeError, match=boundary):
+        service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+
+    assert uow.load(_SOURCE_SET_ID) == before
+    service.request_claim_proposals(_SOURCE_SET_ID, ("operation",))
+    retried = uow.load(_SOURCE_SET_ID)
+    assert retried is not None
+    assert retried.workflow.state is LifecycleState.CLAIMS_PROPOSED
+
+
+@pytest.mark.parametrize("boundary", ("payload", "workflow", "current", "event"))
+def test_approval_commit_faults_leave_no_reservation_and_retry(boundary: str) -> None:
+    service, uow, _artifacts, _runtime_calls = _service([_runtime_result(_operation())])
+    _advance_to_contract(service)
+    service.validate(_SOURCE_SET_ID, (OpenApiProjectionCompiler(version="1"),))
+    before = uow.load(_SOURCE_SET_ID)
+    assert before is not None
+
+    uow.fail_next_commit_at(boundary)
+    with pytest.raises(RuntimeError, match=boundary):
+        service.approve(_SOURCE_SET_ID)
+
+    assert uow.load(_SOURCE_SET_ID) == before
+    assert service.approve(_SOURCE_SET_ID).status is ReleaseStatus.APPROVED
+
+
 def test_failed_build_releases_reservation_for_reconciled_contract() -> None:
     service, uow, _artifacts, _runtime_calls = _service([_runtime_result(_operation())])
     metadata = ContractMetadata(

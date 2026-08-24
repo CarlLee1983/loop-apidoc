@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.validate.models import Issue, ValidationReport
 
 
@@ -45,7 +44,7 @@ def render_markdown(report: ValidationReport) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def write_reports(report: ValidationReport, validation_dir: Path) -> None:
+def write_reports(report: ValidationReport, validation_dir: OutputPath) -> None:
     validation_dir.mkdir(parents=True, exist_ok=True)
     (validation_dir / "report.json").write_text(
         report.model_dump_json(indent=2), encoding="utf-8")

@@ -26,7 +26,7 @@ from loop_apidoc.domain.conformance import (
 )
 from loop_apidoc.privacy import find_sensitive_value
 
-from . import normative, store
+from . import descriptor_io, governed, normative
 from .models import FeedbackCase, FeedbackReviewDecision, FoundryInputError
 
 
@@ -47,8 +47,8 @@ def load_bound_feedback_case(
     _safe_segment(docset_id, "docset id")
     _safe_segment(case_id, "case id")
     if case_parent_fd is None:
-        with store.open_governed_docset(project_root, docset_id) as governed:
-            with governed.open_directory(f"feedback/cases/{case_id}") as case_dir:
+        with governed.open_governed_docset(project_root, docset_id) as docset_view:
+            with docset_view.open_directory(f"feedback/cases/{case_id}") as case_dir:
                 result = load_bound_feedback_case(
                     project_root,
                     docset_id,
@@ -57,9 +57,9 @@ def load_bound_feedback_case(
                     case_parent_fd=case_dir.descriptor,
                 )
                 case_dir.validate()
-                governed.validate()
+                docset_view.validate()
                 return result
-    case = store.read_model_relative(
+    case = descriptor_io.read_model_relative(
         case_parent_fd,
         FeedbackCase,
         "case.json",
@@ -68,19 +68,19 @@ def load_bound_feedback_case(
     assert case is not None
     if case.docset_id != docset_id or case.case_id != case_id:
         raise FoundryInputError("feedback case identity does not match its path")
-    bundle = store.read_model_relative(
+    bundle = descriptor_io.read_model_relative(
         case_parent_fd,
         ObservationBundle,
         "observation-bundle.json",
         "observation bundle",
     )
-    assessment = store.read_model_relative(
+    assessment = descriptor_io.read_model_relative(
         case_parent_fd,
         FeedbackAssessment,
         "feedback-assessment.json",
         "feedback assessment",
     )
-    proposal = store.read_model_relative(
+    proposal = descriptor_io.read_model_relative(
         case_parent_fd,
         CompatibilityAmendmentProposal,
         "amendment-proposal.json",
@@ -111,8 +111,8 @@ def load_governed_feedback_review_decision(
     """Load one case's immutable review through the pinned governance view."""
     _safe_segment(docset_id, "docset id")
     _safe_segment(case_id, "case id")
-    with store.open_governed_docset(project_root, docset_id) as governed:
-        with governed.open_directory(f"feedback/cases/{case_id}") as case_dir:
+    with governed.open_governed_docset(project_root, docset_id) as docset_view:
+        with docset_view.open_directory(f"feedback/cases/{case_id}") as case_dir:
             case, bundle, assessment, proposal = load_bound_feedback_case(
                 project_root,
                 docset_id,
@@ -120,7 +120,7 @@ def load_governed_feedback_review_decision(
                 require_proposal=False,
                 case_parent_fd=case_dir.descriptor,
             )
-            decision = store.read_model_relative(
+            decision = descriptor_io.read_model_relative(
                 case_dir.descriptor,
                 FeedbackReviewDecision,
                 "review/decision.json",
@@ -130,7 +130,7 @@ def load_governed_feedback_review_decision(
             if decision is not None:
                 _validate_decision(decision, case, bundle, assessment, proposal)
             case_dir.validate()
-            governed.validate()
+            docset_view.validate()
             return decision
 
 

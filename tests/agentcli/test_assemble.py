@@ -25,7 +25,7 @@ from loop_apidoc.manifest.models import (
     SourceFormat,
     UrlSource,
 )
-from loop_apidoc.preparation.coverage import (
+from loop_apidoc.url_coverage import (
     CoverageResult,
     FetchMethod,
     ResultStatus,
@@ -219,13 +219,64 @@ def test_run_assemble_pipeline_failure_leaves_no_final_run_and_can_retry(
         assemble_mod.run_assemble_pipeline(**kwargs)
 
     assert not (output / "run-retry").exists()
-    assert not list(output.glob(".run-retry.staging-*"))
+    staged = list(output.glob(".run-retry.staging-*"))
+    assert len(staged) == 1
+    assert (staged[0] / "manifest.json").is_file()
 
     monkeypatch.setattr(assemble_mod, "generate_outputs", original_generate)
     result = assemble_mod.run_assemble_pipeline(**kwargs)
 
     assert Path(result.run_dir) == output / "run-retry"
     assert (output / "run-retry" / "run.json").is_file()
+
+
+def test_run_assemble_pipeline_failure_never_removes_a_replaced_staging_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A staging name can be reused by another writer after our stage moved away."""
+    from loop_apidoc.agentcli import assemble as assemble_mod
+    import loop_apidoc.atomic_publish as atomic_publish
+
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    output = tmp_path / "out"
+    generated_at = datetime(2026, 6, 27, tzinfo=timezone.utc)
+    kwargs = {
+        "sources_root": sources,
+        "extraction_dir": tmp_path / "extraction",
+        "output_root": output,
+        "run_id": "run-race",
+        "generated_at": generated_at,
+        "source_quality_dir": _quality(tmp_path, sources, generated_at),
+        "urls": [],
+    }
+    replacement: dict[str, Path] = {}
+    original_open = atomic_publish.open_directory_relative
+
+    def open_stage_then_replace(parent_fd: int, name: str, label: str) -> int:
+        descriptor = original_open(parent_fd, name, label)
+        staging_dir = output / name
+        moved_stage = staging_dir.with_name(f"{staging_dir.name}.moved")
+        staging_dir.rename(moved_stage)
+        staging_dir.mkdir()
+        foreign_file = staging_dir / "foreign.txt"
+        foreign_file.write_text("must survive", encoding="utf-8")
+        replacement.update({"moved_stage": moved_stage, "foreign_file": foreign_file})
+        return descriptor
+
+    def replace_staging_then_fail(*args: object, **kwargs: object) -> object:
+        raise OSError("injected generation failure")
+
+    monkeypatch.setattr(atomic_publish, "open_directory_relative", open_stage_then_replace)
+    monkeypatch.setattr(assemble_mod, "generate_outputs", replace_staging_then_fail)
+    with pytest.raises(OSError, match="injected generation failure"):
+        assemble_mod.run_assemble_pipeline(**kwargs)
+
+    assert not (output / "run-race").exists()
+    assert replacement["moved_stage"].is_dir()
+    assert replacement["foreign_file"].read_text(encoding="utf-8") == "must survive"
 
 
 def test_run_assemble_pipeline_preserves_existing_run_collision(tmp_path: Path) -> None:

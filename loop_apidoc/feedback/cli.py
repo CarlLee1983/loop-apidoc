@@ -231,6 +231,7 @@ def review_feedback(
     except (
         FeedbackInputError,
         FoundryInputError,
+        FoundryPublicationError,
         ConformanceInputError,
         OSError,
         ValidationError,

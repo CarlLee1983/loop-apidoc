@@ -11,9 +11,9 @@ Markdown 是給人讀的那一份,所以它把未達成的斷言排在最前面 
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.focus.models import FocusDirective, FocusPackage, FocusResponse
 
 _KIND_LABEL = {"expectation": "斷言", "coverage": "範圍"}
@@ -44,7 +44,7 @@ def build_report(focus: FocusPackage) -> dict[str, Any]:
     }
 
 
-def write_reports(focus: FocusPackage, run_dir: Path) -> Path:
+def write_reports(focus: FocusPackage, run_dir: OutputPath) -> OutputPath:
     """寫入 `<run-dir>/focus/`。這是本套件唯一的寫入點。"""
     report = build_report(focus)
     out = run_dir / "focus"

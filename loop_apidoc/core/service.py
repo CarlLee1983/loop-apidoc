@@ -130,9 +130,9 @@ class EvidenceToContractService:
         command = self._begin(source_set_id, "acquire")
         if command.replay:
             return
-        snapshot = self._require_command_snapshot(command)
-        actor = Actor(id="source-adapter", kind=ActorKind.SYSTEM)
         try:
+            snapshot = self._require_command_snapshot(command)
+            actor = Actor(id="source-adapter", kind=ActorKind.SYSTEM)
             self._preflight(
                 snapshot,
                 LifecycleState.ACQUIRED,
@@ -140,29 +140,31 @@ class EvidenceToContractService:
                 command.key,
                 frozenset({"evidence_bundle"}),
             )
+            bundle = self.source.acquire(snapshot.source_set)
+            if (bundle.source_set_id, bundle.source_set_version) != (
+                snapshot.source_set.id,
+                snapshot.source_set.version,
+            ):
+                raise ValueError(
+                    "acquired evidence bundle does not match source set"
+                )
+            workflow, event = self._transition(
+                snapshot.workflow,
+                LifecycleState.ACQUIRED,
+                actor,
+                command.key,
+                frozenset({"evidence_bundle"}),
+            )
+            self._commit(
+                command,
+                snapshot.model_copy(
+                    update={"evidence_bundle": bundle, "workflow": workflow}
+                ),
+                (event,),
+            )
         except BaseException:
             self._release(command)
             raise
-        bundle = self.source.acquire(snapshot.source_set)
-        if (bundle.source_set_id, bundle.source_set_version) != (
-            snapshot.source_set.id,
-            snapshot.source_set.version,
-        ):
-            raise ValueError("acquired evidence bundle does not match source set")
-        workflow, event = self._transition(
-            snapshot.workflow,
-            LifecycleState.ACQUIRED,
-            actor,
-            command.key,
-            frozenset({"evidence_bundle"}),
-        )
-        self._commit(
-            command,
-            snapshot.model_copy(
-                update={"evidence_bundle": bundle, "workflow": workflow}
-            ),
-            (event,),
-        )
 
     def request_claim_proposals(
         self,
@@ -176,8 +178,8 @@ class EvidenceToContractService:
         )
         if command.replay:
             return
-        snapshot = self._require_command_snapshot(command)
         try:
+            snapshot = self._require_command_snapshot(command)
             self._preflight(
                 snapshot,
                 LifecycleState.CLAIMS_PROPOSED,
@@ -194,27 +196,27 @@ class EvidenceToContractService:
                 grounding_constraints=("evidence-reference-required",),
                 correlation_id=_id(source_set_id, "correlation"),
             )
+            result = self.runtime.propose(work_item)
+            workflow, event = self._transition(
+                snapshot.workflow,
+                LifecycleState.CLAIMS_PROPOSED,
+                Actor(id=result.runtime_identity, kind=ActorKind.RUNTIME),
+                command.key,
+                frozenset({"runtime_result"}),
+            )
+            workflow = workflow.model_copy(
+                update={"runtime_identities": (result.runtime_identity,)}
+            )
+            self._commit(
+                command,
+                snapshot.model_copy(
+                    update={"runtime_result": result, "workflow": workflow}
+                ),
+                (event,),
+            )
         except BaseException:
             self._release(command)
             raise
-        result = self.runtime.propose(work_item)
-        workflow, event = self._transition(
-            snapshot.workflow,
-            LifecycleState.CLAIMS_PROPOSED,
-            Actor(id=result.runtime_identity, kind=ActorKind.RUNTIME),
-            command.key,
-            frozenset({"runtime_result"}),
-        )
-        workflow = workflow.model_copy(
-            update={"runtime_identities": (result.runtime_identity,)}
-        )
-        self._commit(
-            command,
-            snapshot.model_copy(
-                update={"runtime_result": result, "workflow": workflow}
-            ),
-            (event,),
-        )
 
     def reconcile(self, source_set_id: str) -> None:
         command = self._begin(source_set_id, "reconcile")
@@ -415,8 +417,8 @@ class EvidenceToContractService:
                 _require(command.receipt, "approved command receipt").release,
                 "release",
             )
-        snapshot = self._require_command_snapshot(command)
         try:
+            snapshot = self._require_command_snapshot(command)
             self._preflight(
                 snapshot,
                 LifecycleState.APPROVED,
@@ -424,29 +426,25 @@ class EvidenceToContractService:
                 command.key,
             )
             candidate = _require(snapshot.release, "candidate release")
+            decision = self.approval_port.request(candidate)
+            approved = approve_release(candidate, decision)
+            workflow, event = self._transition(
+                snapshot.workflow,
+                LifecycleState.APPROVED,
+                Actor(id=approved.approved_by or "approver", kind=ActorKind.APPROVER),
+                command.key,
+            )
+            committed = self._commit(
+                command,
+                snapshot.model_copy(
+                    update={"release": approved, "workflow": workflow}
+                ),
+                (event,),
+            )
+            return _require(committed.release, "approved release")
         except BaseException:
             self._release(command)
             raise
-        decision = self.approval_port.request(candidate)
-        try:
-            approved = approve_release(candidate, decision)
-        except ApprovalRejected:
-            # A negative decision is fully known and changed no aggregate state,
-            # so it must not strand this exact command's reservation.
-            self._release(command)
-            raise
-        workflow, event = self._transition(
-            snapshot.workflow,
-            LifecycleState.APPROVED,
-            Actor(id=approved.approved_by or "approver", kind=ActorKind.APPROVER),
-            command.key,
-        )
-        committed = self._commit(
-            command,
-            snapshot.model_copy(update={"release": approved, "workflow": workflow}),
-            (event,),
-        )
-        return _require(committed.release, "approved release")
 
     def publish(self, source_set_id: str):
         command = self._begin(source_set_id, "publish")

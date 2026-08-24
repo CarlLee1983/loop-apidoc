@@ -15,12 +15,6 @@ _INVENTORY_STAGES: tuple[tuple[str, str], ...] = (
     ("09", "operational"),
 )
 
-
-# Kept for callers that imported this former private helper. New consumers use
-# the neutral operation-identity module directly.
-_expand_methods = expand_methods
-
-
 def _block(key: str, inventory: dict) -> str:
     # The global `missing` list is surfaced once via stage 10; copying it into
     # every inventory stage block here would make the plan record each gap once

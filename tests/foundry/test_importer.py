@@ -8,7 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import importer, paths, register, store
+from loop_apidoc.foundry import (
+    descriptor_namespace,
+    descriptor_tree,
+    importer,
+    paths,
+    register,
+    store,
+)
 from loop_apidoc.foundry.models import (
     Docset,
     FoundryInputError,
@@ -139,9 +146,7 @@ def test_import_overwrite_keeps_old_candidate_when_staged_copy_fails(
     def fail_copy(*args: object, **kwargs: object) -> object:
         raise OSError("injected candidate copy failure")
 
-    monkeypatch.setattr(
-        store, "copy_tree_to_owned_directory", fail_copy, raising=False
-    )
+    monkeypatch.setattr(descriptor_tree, "copy_tree_to_owned_directory", fail_copy)
 
     with pytest.raises(FoundryInputError, match="candidate import"):
         importer.import_run(tmp_path, "tappay-backend", run_dir, overwrite=True)
@@ -214,7 +219,7 @@ def test_import_overwrite_restores_old_candidate_after_backup_move_failure(
     destination = paths.candidate_dir(tmp_path, "tappay-backend", _RUN_ID)
     destination_openapi = destination / "openapi.yaml"
     destination_openapi.write_text("old candidate", encoding="utf-8")
-    original_move = store.move_owned_directory_relative
+    original_move = descriptor_namespace.move_owned_directory_relative
 
     def move_then_fail(
         parent_fd: int,
@@ -227,7 +232,7 @@ def test_import_overwrite_restores_old_candidate_after_backup_move_failure(
             raise FoundryPublicationError("injected post-rename backup failure")
         return result
 
-    monkeypatch.setattr(store, "move_owned_directory_relative", move_then_fail)
+    monkeypatch.setattr(descriptor_namespace, "move_owned_directory_relative", move_then_fail)
 
     with pytest.raises(FoundryPublicationError, match="post-rename backup failure"):
         importer.import_run(tmp_path, "tappay-backend", run_dir, overwrite=True)
@@ -244,7 +249,7 @@ def test_import_retains_governance_lock_when_staged_candidate_is_swapped(
     _register(tmp_path)
     run_dir = write_run_dir(tmp_path / "output" / _RUN_ID)
     candidates = paths.docset_dir(tmp_path, "tappay-backend") / "candidates"
-    original_rename = store._rename_noreplace
+    original_rename = descriptor_namespace._rename_noreplace
     swapped = False
 
     def replace_stage_before_publish(
@@ -277,7 +282,7 @@ def test_import_retains_governance_lock_when_staged_candidate_is_swapped(
                 os.close(stage_fd)
         original_rename(staged, destination, parent_fd=parent_fd)
 
-    monkeypatch.setattr(store, "_rename_noreplace", replace_stage_before_publish)
+    monkeypatch.setattr(descriptor_namespace, "_rename_noreplace", replace_stage_before_publish)
 
     with pytest.raises(FoundryPublicationError, match="recovery is required"):
         importer.import_run(tmp_path, "tappay-backend", run_dir)
@@ -400,7 +405,7 @@ def test_overwrite_preserves_current_candidate_when_backup_retirement_fails(
     (destination / "openapi.yaml").write_text("current candidate", encoding="utf-8")
     stale_backup = destination.parent / f".{_RUN_ID}-backup-stale"
     stale_backup.mkdir()
-    original_move = store.move_owned_directory_relative
+    original_move = descriptor_namespace.move_owned_directory_relative
 
     def fail_stale_retirement(
         parent_fd: int,
@@ -412,7 +417,7 @@ def test_overwrite_preserves_current_candidate_when_backup_retirement_fails(
             raise FoundryPublicationError("injected stale backup retirement failure")
         return original_move(parent_fd, source, destination, identity)
 
-    monkeypatch.setattr(store, "move_owned_directory_relative", fail_stale_retirement)
+    monkeypatch.setattr(descriptor_namespace, "move_owned_directory_relative", fail_stale_retirement)
 
     with pytest.raises(FoundryPublicationError, match="stale backup retirement"):
         importer.import_run(tmp_path, "tappay-backend", run_dir, overwrite=True)
@@ -430,7 +435,7 @@ def test_import_rejects_a_concurrent_same_docset_publication(
     run_dir = write_run_dir(tmp_path / "output" / _RUN_ID)
     entered = threading.Event()
     release = threading.Event()
-    original_copy = store.copy_tree_to_owned_directory
+    original_copy = descriptor_tree.copy_tree_to_owned_directory
     outcome: dict[str, object] = {}
 
     def pause_copy(*args: object, **kwargs: object) -> object:
@@ -438,7 +443,7 @@ def test_import_rejects_a_concurrent_same_docset_publication(
         assert release.wait(timeout=5)
         return original_copy(*args, **kwargs)
 
-    monkeypatch.setattr(store, "copy_tree_to_owned_directory", pause_copy)
+    monkeypatch.setattr(descriptor_tree, "copy_tree_to_owned_directory", pause_copy)
 
     def first_import() -> None:
         try:
