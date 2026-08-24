@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from loop_apidoc.agentcli.identity import endpoint_identity
+from loop_apidoc.operation_identity import endpoint_identity
 from loop_apidoc.manifest.models import Manifest, SourceFormat
 from loop_apidoc.source_facts.models import FactIndex
 from loop_apidoc.validate.fact_coverage import FactCoverage
@@ -24,7 +24,7 @@ def build_fact_coverage(
 ) -> dict[str, FactCoverage]:
     """以 manifest source 識別碼為鍵的端點事實涵蓋投影。
 
-    `identities` 是 extraction 宣告過的跨檔身份鍵(`agentcli/identity.py`),
+    `identities` 是 extraction 宣告過的跨檔身份鍵(`operation_identity.py`),
     端點識別因此與 cross-file 不變式、focus 錨點解析用的是同一個定義。
     """
     scanned = {source.relative_path: source for source in facts.sources}

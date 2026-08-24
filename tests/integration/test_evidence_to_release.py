@@ -5,9 +5,7 @@ from datetime import datetime, timezone
 from loop_apidoc.adapters.memory import (
     FixedClock,
     InMemoryArtifactSink,
-    InMemoryContractStore,
-    InMemoryEventSink,
-    InMemoryEvidenceStore,
+    InMemoryCoreUnitOfWork,
     StaticApprovalAdapter,
     StaticSourceAdapter,
 )
@@ -113,8 +111,7 @@ def test_source_to_published_release_is_a_governed_sequence():
         runtime_identity="parser",
         runtime_version="1",
     )
-    evidence_store = InMemoryEvidenceStore()
-    contract_store = InMemoryContractStore()
+    unit_of_work = InMemoryCoreUnitOfWork()
     artifacts = InMemoryArtifactSink()
     approval = ApprovalDecision(
         approved=True,
@@ -124,11 +121,9 @@ def test_source_to_published_release_is_a_governed_sequence():
     service = EvidenceToContractService(
         source=StaticSourceAdapter(bundle),
         runtime=CallableRuntimeAdapter("parser", "1", lambda _: runtime_result),
-        evidence_store=evidence_store,
-        contract_store=contract_store,
+        unit_of_work=unit_of_work,
         artifact_sink=artifacts,
         approval=StaticApprovalAdapter(approval),
-        events=InMemoryEventSink(),
         clock=FixedClock(NOW),
         domain_rules=ApiDomainRulePack(version="1"),
     )
@@ -154,9 +149,13 @@ def test_source_to_published_release_is_a_governed_sequence():
 
     assert release.status is ReleaseStatus.PUBLISHED
     assert release.projection_versions == (("openapi", "1"),)
-    assert artifacts.publications[release.release_id][0].name == "openapi"
-    assert release.artifact_refs == (f"memory://{release.release_id}/openapi",)
+    assert len(artifacts.publications) == 1
+    assert next(iter(artifacts.publications.values()))[0].name == "openapi"
+    assert release.artifact_refs[0].startswith("memory://")
+    snapshot = unit_of_work.load("sources")
+    assert snapshot is not None
+    assert snapshot.contract is not None
     assert all(
         binding.relationship_id is not None
-        for binding in contract_store.get_contract("sources").operations[0].evidence
+        for binding in snapshot.contract.operations[0].evidence
     )

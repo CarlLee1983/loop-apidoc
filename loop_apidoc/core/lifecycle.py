@@ -57,7 +57,7 @@ _ACTORS = {
 
 
 class LifecycleMachine:
-    def transition(
+    def preflight(
         self,
         record: WorkflowRecord,
         target: LifecycleState,
@@ -65,12 +65,19 @@ class LifecycleMachine:
         actor: Actor,
         idempotency_key: str,
         artifacts: frozenset[str] = frozenset(),
-    ) -> tuple[WorkflowRecord, DomainEvent | None]:
+    ) -> bool:
+        """Check a transition before an external effect.
+
+        Returns ``True`` only for the exact lifecycle retry already represented by
+        ``record``.  Command-level idempotency is broader and belongs to the
+        aggregate persistence boundary; this method deliberately stays focused on
+        lifecycle graph and artifact preconditions.
+        """
         if (
             idempotency_key in record.processed_idempotency_keys
             and target is record.state
         ):
-            return record, None
+            return True
         if target not in _ALLOWED.get(record.state, set()):
             raise InvalidTransition(
                 f"{record.state.value} cannot transition to {target.value}"
@@ -84,6 +91,26 @@ class LifecycleMachine:
             raise InvalidTransition(
                 f"{target.value} requires artifacts: {sorted(missing)}"
             )
+        return False
+
+    def transition(
+        self,
+        record: WorkflowRecord,
+        target: LifecycleState,
+        *,
+        actor: Actor,
+        idempotency_key: str,
+        artifacts: frozenset[str] = frozenset(),
+    ) -> tuple[WorkflowRecord, DomainEvent | None]:
+        if self.preflight(
+            record,
+            target,
+            actor=actor,
+            idempotency_key=idempotency_key,
+            artifacts=artifacts,
+        ):
+            return record, None
+        combined = record.artifacts | artifacts
         updated = record.model_copy(
             update={
                 "state": target,

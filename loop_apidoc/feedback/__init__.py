@@ -5,7 +5,7 @@ from loop_apidoc.feedback.erratum import (
     ProviderErratumMetadata,
     build_provider_erratum_handoff,
 )
-from loop_apidoc.feedback.loader import FeedbackInputError
+from loop_apidoc.feedback.errors import FeedbackInputError
 
 __all__ = [
     "FeedbackInputError",

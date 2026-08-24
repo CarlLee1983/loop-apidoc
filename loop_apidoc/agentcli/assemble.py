@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
 
-from loop_apidoc.agentcli.extraction import _expand_methods, inventory_to_stage_answers
+from loop_apidoc.atomic_publish import (
+    DirectoryPublicationCollisionError,
+    DirectoryPublicationError,
+    publish_directory_noreplace,
+)
+from loop_apidoc.agentcli.extraction import inventory_to_stage_answers
 from loop_apidoc.agentcli.strict import (
     run_strict_core_safely,
     write_strict_blocked_marker,
@@ -38,7 +45,7 @@ from loop_apidoc.plan.builder import build_normalization_plan
 from loop_apidoc.plan.integration import build_integration_contract
 from loop_apidoc.preparation import assess_preparation
 from loop_apidoc.preparation import write_reports as write_preparation_reports
-from loop_apidoc.preparation.coverage import (
+from loop_apidoc.url_coverage import (
     CoverageInputError,
     ResultStatus,
     UrlCoverage,
@@ -58,7 +65,7 @@ from loop_apidoc.source_quality.report import write_reports as write_source_qual
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.shadow.report import run_shadow_safely
 from loop_apidoc.agentcli.fact_coverage import build_fact_coverage
-from loop_apidoc.agentcli.identity import extraction_identities
+from loop_apidoc.operation_identity import expand_methods, extraction_identities
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
 
@@ -230,7 +237,7 @@ def build_extraction_from_files(
         ))
     for idx, text in enumerate(endpoint_texts):
         detail = json.loads(text)
-        expanded = _expand_methods([detail]) if isinstance(detail, dict) else []
+        expanded = expand_methods([detail]) if isinstance(detail, dict) else []
         if isinstance(detail, dict) and "methods" in detail:
             answers = [json.dumps(entry, ensure_ascii=False)
                        for entry in (expanded or [detail])]
@@ -354,87 +361,126 @@ def run_assemble_pipeline(
             + "\n".join(f"  - {v}" for v in violations))
 
     run_dir = output_root / run_id
-    output_root.mkdir(parents=True, exist_ok=True)
-    try:
-        run_dir.mkdir(exist_ok=False)
-    except FileExistsError as exc:
+    run_parent = run_dir.parent
+    run_parent.mkdir(parents=True, exist_ok=True)
+    if run_dir.exists() or run_dir.is_symlink():
         raise RunDirectoryCollisionError(
-            f"run 目錄已存在,拒絕覆寫:{run_dir}") from exc
-
-    (run_dir / "manifest.json").write_text(
-        manifest.model_dump_json(indent=2), encoding="utf-8")
-    write_source_quality_reports(
-        source_quality_report, source_diff_report, run_dir / "source-quality"
-    )
-
-    store = ExtractionStore(run_dir / "extraction")
-    extraction = build_extraction_from_files(inventory, endpoint_texts, store)
-
-    plan = build_normalization_plan(extraction, manifest)
-    contract = build_integration_contract(integration, plan, manifest)
-    plan = plan.model_copy(update={"integration": contract})
-    persist_plan(run_dir, plan)
-    preparation_report = assess_preparation(
-        manifest=manifest,
-        inventory=inventory,
-        endpoint_texts=endpoint_texts,
-        plan=plan,
-        url_coverage=url_coverage,
-    )
-    write_preparation_reports(preparation_report, run_dir)
-    result = generate_outputs(plan, manifest, run_dir)
-    report = validate_outputs(
-        plan, result, manifest, focus, facts.documented_error_codes(),
-        # 投影在此一處算出:`collect_facts` 的結果與 extraction 都在手上,讓
-        # validate 自行重掃會讓同一份來源在一次 run 內被掃兩次,可能給出
-        # 「閘門判過但報告說沒掃到」這種自相矛盾的輸出。
-        fact_coverage=build_fact_coverage(
-            manifest, facts, extraction_identities(inventory, endpoints)
-        ),
-    )
-    write_validation_reports(report, run_dir / "validation")
-    if focus is not None:
-        write_focus_reports(focus, run_dir)
-
-    status = RunStatus.PASSED if report.ok else RunStatus.FAILED
-    shadow = None
-    strict = None
-    if architecture_mode is ArchitectureMode.SHADOW:
-        shadow = run_shadow_safely(
-            manifest=manifest,
-            plan=plan,
-            facts=facts,
-            sources_root=sources_root,
-            legacy_report=report,
-            legacy_status=status,
-            generated_at=generated_at,
-            run_dir=run_dir,
+            f"run 目錄已存在,拒絕覆寫:{run_dir}"
         )
-    elif architecture_mode is ArchitectureMode.STRICT:
-        if report.ok:
-            strict = run_strict_core_safely(
+    staging_dir = Path(tempfile.mkdtemp(prefix=f".{run_dir.name}.staging-", dir=run_parent))
+    published = False
+    try:
+        (staging_dir / "manifest.json").write_text(
+            manifest.model_dump_json(indent=2), encoding="utf-8")
+        write_source_quality_reports(
+            source_quality_report, source_diff_report, staging_dir / "source-quality"
+        )
+
+        store = ExtractionStore(staging_dir / "extraction")
+        extraction = build_extraction_from_files(inventory, endpoint_texts, store)
+
+        plan = build_normalization_plan(extraction, manifest)
+        contract = build_integration_contract(integration, plan, manifest)
+        plan = plan.model_copy(update={"integration": contract})
+        persist_plan(staging_dir, plan)
+        preparation_report = assess_preparation(
+            manifest=manifest,
+            inventory=inventory,
+            endpoint_texts=endpoint_texts,
+            plan=plan,
+            url_coverage=url_coverage,
+        )
+        write_preparation_reports(preparation_report, staging_dir)
+        result = generate_outputs(plan, manifest, staging_dir)
+        report = validate_outputs(
+            plan, result, manifest, focus, facts.documented_error_codes(),
+            # 投影在此一處算出:`collect_facts` 的結果與 extraction 都在手上,讓
+            # validate 自行重掃會讓同一份來源在一次 run 內被掃兩次,可能給出
+            # 「閘門判過但報告說沒掃到」這種自相矛盾的輸出。
+            fact_coverage=build_fact_coverage(
+                manifest, facts, extraction_identities(inventory, endpoints)
+            ),
+        )
+        write_validation_reports(report, staging_dir / "validation")
+        if focus is not None:
+            write_focus_reports(focus, staging_dir)
+
+        status = RunStatus.PASSED if report.ok else RunStatus.FAILED
+        shadow = None
+        strict = None
+        if architecture_mode is ArchitectureMode.SHADOW:
+            shadow = run_shadow_safely(
                 manifest=manifest,
                 plan=plan,
                 facts=facts,
                 sources_root=sources_root,
                 legacy_report=report,
-                generated_at=generated_at,
-                run_dir=run_dir,
-            )
-            if strict.status == "error":
-                status = RunStatus.BLOCKED
-            elif strict.status != "ok":
-                status = RunStatus.FAILED
-        else:
-            strict = write_strict_blocked_marker(
-                run_dir=run_dir,
                 legacy_status=status,
+                generated_at=generated_at,
+                run_dir=staging_dir,
             )
-    toolchain = build_toolchain(model=extractor_model)
-    persist_run_descriptor(run_dir, RunDescriptor(
-        run_id=run_id, status=status, generated_at=generated_at,
-        toolchain=toolchain, architecture_mode=architecture_mode.value,
-    ))
+        elif architecture_mode is ArchitectureMode.STRICT:
+            if report.ok:
+                strict = run_strict_core_safely(
+                    manifest=manifest,
+                    plan=plan,
+                    facts=facts,
+                    sources_root=sources_root,
+                    legacy_report=report,
+                    generated_at=generated_at,
+                    run_dir=staging_dir,
+                )
+                if strict.status == "error":
+                    status = RunStatus.BLOCKED
+                elif strict.status != "ok":
+                    status = RunStatus.FAILED
+            else:
+                strict = write_strict_blocked_marker(
+                    run_dir=staging_dir,
+                    legacy_status=status,
+                )
+        toolchain = build_toolchain(model=extractor_model)
+        # ``run.json`` is the completion marker and must be materialized last.
+        persist_run_descriptor(staging_dir, RunDescriptor(
+            run_id=run_id, status=status, generated_at=generated_at,
+            toolchain=toolchain, architecture_mode=architecture_mode.value,
+        ))
+        try:
+            publish_directory_noreplace(staging_dir, run_dir)
+        except DirectoryPublicationCollisionError as exc:
+            raise RunDirectoryCollisionError(
+                f"run 目錄已存在,拒絕覆寫:{run_dir}"
+            ) from exc
+        except DirectoryPublicationError as exc:
+            raise RuntimeError(f"run 目錄發佈失敗:{run_dir}") from exc
+        published = True
+        if shadow is not None:
+            shadow = shadow.model_copy(
+                update={
+                    "core_dir": _published_run_path(shadow.core_dir, staging_dir, run_dir),
+                    "comparison_path": _published_run_path(
+                        shadow.comparison_path, staging_dir, run_dir
+                    ),
+                    "error_path": _published_run_path(
+                        shadow.error_path, staging_dir, run_dir
+                    ),
+                }
+            )
+        if strict is not None:
+            strict = strict.model_copy(
+                update={
+                    "core_dir": _published_run_path(strict.core_dir, staging_dir, run_dir),
+                    "candidate_path": _published_run_path(
+                        strict.candidate_path, staging_dir, run_dir
+                    ),
+                    "error_path": _published_run_path(
+                        strict.error_path, staging_dir, run_dir
+                    ),
+                }
+            )
+    finally:
+        if not published:
+            shutil.rmtree(staging_dir, ignore_errors=True)
 
     return RunResult(
         run_id=run_id,
@@ -446,3 +492,14 @@ def run_assemble_pipeline(
         shadow=shadow,
         strict=strict,
     )
+
+
+def _published_run_path(value: str | None, staging_dir: Path, run_dir: Path) -> str | None:
+    """Rebase a summary path created in staging after its atomic publication."""
+    if value is None:
+        return None
+    path = Path(value)
+    try:
+        return str(run_dir / path.relative_to(staging_dir))
+    except ValueError:
+        return value

@@ -3,37 +3,23 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
-from loop_apidoc.core.governance import contract_digest
-from loop_apidoc.domain.claim_paths import ClaimPathError, claim_value_at
 from loop_apidoc.domain.conformance import (
     ApplicabilityEnvelope,
     CompatibilityAmendment,
     CompatibilityAmendmentProposal,
     FeedbackAssessment,
-    NormativeBaseBinding,
-    NormativeRelease,
     ObservationBundle,
 )
-from loop_apidoc.domain.evidence import (
-    ClaimEvidenceRelationship,
-    EvidenceBundle,
-    EvidenceFragment,
-    fragment_digest,
-    normalize_excerpt,
-)
-from loop_apidoc.domain.models import GroundedApiContract
-from loop_apidoc.foundry import query, store
+from loop_apidoc.foundry import normative, query
 from loop_apidoc.foundry.models import (
-    Asset,
-    AssetStatus,
     FeedbackReviewDecision,
-    FoundryGovernedAssetApprovalLineageError,
-    FoundryGovernedAssetNotApprovedError,
     FoundryInputError,
 )
 from loop_apidoc.feedback.erratum import ProviderErratumMetadata
+from loop_apidoc.feedback.errors import FeedbackInputError
+from loop_apidoc.feedback.identifiers import require_safe_identifier
 from loop_apidoc.privacy import find_sensitive_value
 
 
@@ -42,10 +28,6 @@ MAX_CONTRACT_BYTES = 16 * 1024 * 1024
 MAX_FEEDBACK_REPORT_BYTES = 4 * 1024 * 1024
 MAX_ERRATUM_METADATA_BYTES = 256 * 1024
 MAX_ERRATUM_ARTIFACT_BYTES = 25 * 1024 * 1024
-
-
-class FeedbackInputError(ValueError):
-    """A persisted feedback or normative-release input is unsafe or invalid."""
 
 
 def load_observation_bundle(path: Path) -> ObservationBundle:
@@ -101,7 +83,7 @@ def load_current_scope_amendments(
     target: ApplicabilityEnvelope,
 ) -> tuple[CompatibilityAmendment, ...]:
     """Load the immutable amendment lineage for one exact effective scope."""
-    _require_safe_identifier(docset_id, "docset id")
+    require_safe_identifier(docset_id, "docset id")
     try:
         return query.load_bound_effective_amendments(
             project_root, docset_id, target
@@ -141,149 +123,13 @@ def load_provider_erratum_inputs(
     return metadata, digest
 
 
-def load_approved_contract(
-    project_root: Path, docset_id: str, asset_id: str
-) -> tuple[Asset, NormativeRelease]:
-    _require_safe_identifier(docset_id, "docset id")
-    _require_safe_identifier(asset_id, "asset id")
+def load_approved_contract(project_root: Path, docset_id: str, asset_id: str):
+    """Compatibility wrapper for the Foundry-owned normative base reader."""
+
     try:
-        asset = query.load_governed_asset(project_root, docset_id, asset_id)
-        docset = store.load_docset(project_root, docset_id)
-    except FoundryGovernedAssetNotApprovedError as exc:
-        raise FeedbackInputError(
-            "feedback requires an approved normative asset"
-        ) from exc
-    except FoundryGovernedAssetApprovalLineageError as exc:
-        raise FeedbackInputError("base asset is missing approval lineage") from exc
+        return normative.load_approved_contract(project_root, docset_id, asset_id)
     except FoundryInputError as exc:
         raise FeedbackInputError(str(exc)) from exc
-    if asset.docset_id != docset_id or asset.asset_id != asset_id:
-        raise FeedbackInputError("asset identity does not match the requested base release")
-    if asset.status not in {AssetStatus.APPROVED, AssetStatus.SUPERSEDED}:
-        raise FeedbackInputError("feedback requires an approved normative asset")
-    if not asset.approved_at or not asset.approved_by:
-        raise FeedbackInputError("base asset is missing approval lineage")
-    try:
-        contract_raw = query.read_governed_artifact(
-            project_root,
-            docset_id,
-            asset_id,
-            "core_contract",
-            max_bytes=MAX_CONTRACT_BYTES,
-        )
-        evidence_raw = query.read_governed_artifact(
-            project_root,
-            docset_id,
-            asset_id,
-            "core_evidence",
-            max_bytes=MAX_CONTRACT_BYTES,
-        )
-        relationships_raw = query.read_governed_artifact(
-            project_root,
-            docset_id,
-            asset_id,
-            "core_relationships",
-            max_bytes=MAX_CONTRACT_BYTES,
-        )
-    except FoundryInputError as exc:
-        raise FeedbackInputError(str(exc)) from exc
-    try:
-        contract = GroundedApiContract.model_validate_json(contract_raw)
-    except ValidationError as exc:
-        raise FeedbackInputError(
-            f"Canonical Contract artifact is invalid: {_safe_validation_summary(exc)}"
-        ) from exc
-    except ValueError as exc:
-        raise FeedbackInputError("Canonical Contract artifact is not valid JSON") from exc
-    if contract.metadata.contract_id != docset.docset_id:
-        raise FeedbackInputError("Canonical Contract identity does not match the docset")
-    fragments, relationships = _verify_normative_evidence(
-        contract,
-        evidence_raw=evidence_raw,
-        relationships_raw=relationships_raw,
-    )
-    return asset, NormativeRelease(
-        base=NormativeBaseBinding(
-            docset_id=docset_id,
-            asset_id=asset_id,
-            contract_digest=contract_digest(contract),
-        ),
-        contract=contract,
-        fragments=fragments,
-        relationships=relationships,
-    )
-
-
-def _verify_normative_evidence(
-    contract: GroundedApiContract,
-    *,
-    evidence_raw: bytes,
-    relationships_raw: bytes,
-) -> tuple[tuple[EvidenceFragment, ...], tuple[ClaimEvidenceRelationship, ...]]:
-    try:
-        evidence = EvidenceBundle.model_validate_json(evidence_raw)
-        relationships = TypeAdapter(
-            tuple[ClaimEvidenceRelationship, ...]
-        ).validate_json(relationships_raw)
-    except ValidationError as exc:
-        raise FeedbackInputError(
-            f"Canonical evidence artifacts are invalid: {_safe_validation_summary(exc)}"
-        ) from exc
-    except ValueError as exc:
-        raise FeedbackInputError(
-            "Canonical evidence artifacts are not valid JSON"
-        ) from exc
-    if (
-        evidence.source_set_id != contract.metadata.source_set_id
-        or evidence.source_set_version != contract.metadata.source_set_version
-    ):
-        raise FeedbackInputError(
-            "Canonical evidence bundle does not match the contract source set"
-        )
-    fragment_ids = [fragment.id for fragment in evidence.fragments]
-    relationship_ids = [relationship.id for relationship in relationships]
-    if len(fragment_ids) != len(set(fragment_ids)):
-        raise FeedbackInputError("Canonical evidence fragment ids must be unique")
-    if len(relationship_ids) != len(set(relationship_ids)):
-        raise FeedbackInputError("Canonical evidence relationship ids must be unique")
-    fragments = {fragment.id: fragment for fragment in evidence.fragments}
-    claims = {claim.identity: claim for claim in contract.claims}
-    for fragment in evidence.fragments:
-        if fragment.normalized_excerpt is not None and fragment.fragment_digest != fragment_digest(
-            normalize_excerpt(fragment.normalized_excerpt)
-        ):
-            raise FeedbackInputError(
-                f"Canonical evidence fragment digest mismatch: {fragment.id}"
-            )
-    for relationship in relationships:
-        if relationship.fragment_id not in fragments:
-            raise FeedbackInputError(
-                f"Canonical relationship has unknown fragment: {relationship.id}"
-            )
-        claim = claims.get(relationship.claim_identity)
-        if claim is None:
-            raise FeedbackInputError(
-                f"Canonical relationship has unknown claim: {relationship.id}"
-            )
-        try:
-            claim_value_at(
-                claim.claim_kind or "", claim.value, relationship.claim_path
-            )
-        except ClaimPathError as exc:
-            raise FeedbackInputError(
-                f"Canonical relationship has unknown claim path: {relationship.id}"
-            ) from exc
-    known_relationships = set(relationship_ids)
-    for claim in contract.claims:
-        for binding in claim.evidence:
-            if (
-                binding.relationship_id is not None
-                and binding.relationship_id not in known_relationships
-            ):
-                raise FeedbackInputError(
-                    f"Canonical Contract references unknown evidence relationship: {binding.relationship_id}"
-                )
-    return evidence.fragments, relationships
 
 
 def _bounded_read(path: Path, max_bytes: int, label: str) -> bytes:
@@ -338,8 +184,3 @@ def _safe_validation_summary(exc: ValidationError) -> str:
     error_type = str(first.get("type", "schema_mismatch"))
     suffix = f" (+{len(errors) - 1} more)" if len(errors) > 1 else ""
     return f"{location}: {error_type}{suffix}"
-
-
-def _require_safe_identifier(value: str, label: str) -> None:
-    if not value or value in {".", ".."} or "/" in value or "\\" in value:
-        raise FeedbackInputError(f"unsafe {label}")

@@ -413,6 +413,7 @@ def test_every_module_that_writes_is_in_the_file_io_inventory():
     scanned = quality_gate.modules_with_file_writes()
 
     assert "loop_apidoc/validate/report.py" in scanned  # was missing from AGENTS.md
+    assert "loop_apidoc/atomic_publish.py" in scanned
     assert quality_gate.file_io_registry_gaps(scanned) == {
         "unregistered": [],
         "stale": [],
@@ -493,6 +494,33 @@ def test_scanner_counts_a_tempfile_staging_call(tmp_path):
     assert quality_gate.modules_with_file_writes(
         package_root=package, relative_to=package
     ) == ("staging.py",)
+
+
+def test_scanner_requires_a_registered_low_level_ctypes_entrypoint(tmp_path, monkeypatch):
+    package = _write_module(
+        tmp_path,
+        "expected.py",
+        "def f(renameat2):\n"
+        "    return renameat2(1, b'from', 1, b'to', 1)\n",
+    )
+    _write_module(
+        tmp_path,
+        "stale.py",
+        "def f() -> None:\n"
+        "    return None\n",
+    )
+    monkeypatch.setattr(
+        quality_gate,
+        "LOW_LEVEL_FILESYSTEM_WRITE_ENTRYPOINTS",
+        {
+            "expected.py": frozenset({"renameat2"}),
+            "stale.py": frozenset({"renameat2"}),
+        },
+    )
+
+    assert quality_gate.modules_with_file_writes(
+        package_root=package, relative_to=package
+    ) == ("expected.py",)
 
 
 def test_scanner_ignores_dataclasses_replace_and_a_pathlike_open_argument(tmp_path):

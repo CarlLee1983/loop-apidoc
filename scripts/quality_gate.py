@@ -215,6 +215,15 @@ OS_WRITE_FUNCTIONS = {
     ),
 }
 OS_WRITE_FUNCTIONS["os"] |= frozenset({"write", "ftruncate", "mkfifo"})
+# Some platform filesystem syscalls are reached through dynamically loaded C
+# symbols. AST can still see the subsequently called local symbol, so register
+# its exact names rather than exempting the whole module: a stale exception then
+# falls out of the scanned result and the inventory reports it as stale.
+LOW_LEVEL_FILESYSTEM_WRITE_ENTRYPOINTS = {
+    "loop_apidoc/atomic_publish.py": frozenset(
+        {"renameatx_np", "renameat2", "syscall"}
+    )
+}
 WRITE_OPEN_MODE_CHARS = "wax+"
 # A mode string is short and drawn from this alphabet. Without the shape check
 # any `.open("word/document.xml")` or `.open("https://…/ax")` reads as a write,
@@ -224,6 +233,7 @@ _MODE_ALPHABET = set("rwaxbt+U")
 NON_PATH_REPLACE_RECEIVERS = frozenset({"dataclasses", "copy", "typing"})
 
 FILE_IO_EXIT_MODULES = (
+    "loop_apidoc/atomic_publish.py",
     "loop_apidoc/adapters/local.py",
     "loop_apidoc/agentcli/assemble.py",
     "loop_apidoc/agentcli/preprocess.py",
@@ -236,8 +246,8 @@ FILE_IO_EXIT_MODULES = (
     "loop_apidoc/extraction_scaffold/write.py",
     "loop_apidoc/feedback/report.py",
     "loop_apidoc/focus/report.py",
-    "loop_apidoc/foundry/feedback.py",
-    "loop_apidoc/foundry/importer.py",
+    "loop_apidoc/foundry/descriptor_io.py",
+    "loop_apidoc/foundry/governed.py",
     "loop_apidoc/foundry/store.py",
     "loop_apidoc/freshness/record.py",
     "loop_apidoc/freshness/report.py",
@@ -315,6 +325,19 @@ def _call_writes(call: ast.Call) -> bool:
     )
 
 
+def _calls_registered_low_level_filesystem_entrypoint(
+    tree: ast.AST, relative: str
+) -> bool:
+    """Whether a registered ctypes filesystem entrypoint is called in ``tree``."""
+    entrypoints = LOW_LEVEL_FILESYSTEM_WRITE_ENTRYPOINTS.get(relative, frozenset())
+    return bool(entrypoints) and any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in entrypoints
+        for node in ast.walk(tree)
+    )
+
+
 PACKAGE_ROOT = Path("loop_apidoc")
 
 
@@ -332,8 +355,15 @@ def modules_with_file_writes(
             tree = ast.parse(path.read_text(encoding="utf-8"))
         except SyntaxError as exc:
             raise QualityGateFailure(f"cannot parse {path}: {exc}") from exc
-        if any(isinstance(node, ast.Call) and _call_writes(node) for node in ast.walk(tree)):
-            found.append(path.relative_to(base).as_posix())
+        relative = path.relative_to(base).as_posix()
+        if (
+            _calls_registered_low_level_filesystem_entrypoint(tree, relative)
+            or any(
+                isinstance(node, ast.Call) and _call_writes(node)
+                for node in ast.walk(tree)
+            )
+        ):
+            found.append(relative)
     return tuple(found)
 
 

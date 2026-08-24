@@ -119,17 +119,17 @@ def test_register_preflight_failure_preserves_captured_catalog(
     docset_path = paths.docset_manifest_path(tmp_path, "tappay-backend")
     catalog_before = catalog_path.read_bytes()
     docset_before = docset_path.read_bytes()
-    original_read_head = store.read_head_relative
+    original_read_head = store.read_head_snapshot_relative
     reads = 0
 
-    def fail_second_snapshot(parent_fd: int, name: str) -> bytes | None:
+    def fail_second_snapshot(parent_fd: int, name: str) -> store.HeadSnapshot:
         nonlocal reads
         reads += 1
         if reads == 2:
             raise OSError("docset snapshot failed")
         return original_read_head(parent_fd, name)
 
-    monkeypatch.setattr(store, "read_head_relative", fail_second_snapshot)
+    monkeypatch.setattr(store, "read_head_snapshot_relative", fail_second_snapshot)
 
     with pytest.raises(OSError, match="docset snapshot failed"):
         register.register_docset(
@@ -281,6 +281,38 @@ def test_reregistration_failure_restores_the_previous_docset_manifest(
     assert store.load_docset(tmp_path, "tappay-backend").title == "TapPay Backend API"
     catalog = store.load_catalog(tmp_path)
     assert [entry.title for entry in catalog.docsets] == ["TapPay Backend API"]
+
+
+def test_catalog_head_substitute_is_not_overwritten_during_registration_rollback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    register.register_docset(tmp_path, _docset())
+    catalog_path = paths.catalog_path(tmp_path)
+    displaced = catalog_path.with_name("transaction-owned-catalog.json")
+    original_save_catalog = store.save_catalog
+    published: bytes | None = None
+
+    def publish_then_substitute(*args: object, **kwargs: object) -> None:
+        nonlocal published
+        original_save_catalog(*args, **kwargs)
+        published = catalog_path.read_bytes()
+        catalog_path.rename(displaced)
+        catalog_path.write_bytes(published)
+        raise OSError("injected post-publication catalog failure")
+
+    monkeypatch.setattr(store, "save_catalog", publish_then_substitute)
+
+    with pytest.raises(FoundryPublicationError, match="rollback failures"):
+        register.register_docset(
+            tmp_path,
+            _docset(title="Updated Backend API"),
+            exist_ok=True,
+        )
+
+    assert published is not None
+    assert catalog_path.read_bytes() == published
+    assert catalog_path.stat().st_ino != displaced.stat().st_ino
+    assert (tmp_path / ".foundry/api/.catalog-governance.lock").is_dir()
 
 
 def test_registration_reports_a_lock_release_failure_after_a_clean_rollback(

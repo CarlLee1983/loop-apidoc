@@ -9,6 +9,7 @@ import pytest
 
 from loop_apidoc.agentcli.assemble import (
     AssembleInputError,
+    RunDirectoryCollisionError,
     backfill_snapshot_files,
     build_extraction_from_files,
     load_extraction_inputs,
@@ -185,6 +186,72 @@ def test_run_assemble_pipeline_writes_outputs(tmp_path):
     assert prep_payload["summary"]["ready"] == 4
     assert result.status in (RunStatus.PASSED, RunStatus.FAILED)
     assert result.run_dir == str(run_dir)
+
+
+def test_run_assemble_pipeline_failure_leaves_no_final_run_and_can_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Operational failures after preflight never publish a partial run."""
+    from loop_apidoc.agentcli import assemble as assemble_mod
+
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    output = tmp_path / "out"
+    generated_at = datetime(2026, 6, 27, tzinfo=timezone.utc)
+    kwargs = {
+        "sources_root": sources,
+        "extraction_dir": tmp_path / "extraction",
+        "output_root": output,
+        "run_id": "run-retry",
+        "generated_at": generated_at,
+        "source_quality_dir": _quality(tmp_path, sources, generated_at),
+        "urls": [],
+    }
+    original_generate = assemble_mod.generate_outputs
+
+    def fail_generate(*_args, **_kwargs):
+        raise OSError("injected generation failure")
+
+    monkeypatch.setattr(assemble_mod, "generate_outputs", fail_generate)
+    with pytest.raises(OSError, match="injected generation failure"):
+        assemble_mod.run_assemble_pipeline(**kwargs)
+
+    assert not (output / "run-retry").exists()
+    assert not list(output.glob(".run-retry.staging-*"))
+
+    monkeypatch.setattr(assemble_mod, "generate_outputs", original_generate)
+    result = assemble_mod.run_assemble_pipeline(**kwargs)
+
+    assert Path(result.run_dir) == output / "run-retry"
+    assert (output / "run-retry" / "run.json").is_file()
+
+
+def test_run_assemble_pipeline_preserves_existing_run_collision(tmp_path: Path) -> None:
+    _write_extraction(tmp_path / "extraction")
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "manual.md").write_text("# Demo API\nGET /ping", encoding="utf-8")
+    output = tmp_path / "out"
+    existing = output / "run-existing"
+    existing.mkdir(parents=True)
+    marker = existing / "foreign.txt"
+    marker.write_text("preserve", encoding="utf-8")
+    generated_at = datetime(2026, 6, 27, tzinfo=timezone.utc)
+
+    with pytest.raises(RunDirectoryCollisionError):
+        run_assemble_pipeline(
+            sources_root=sources,
+            extraction_dir=tmp_path / "extraction",
+            output_root=output,
+            run_id="run-existing",
+            generated_at=generated_at,
+            source_quality_dir=_quality(tmp_path, sources, generated_at),
+            urls=[],
+        )
+
+    assert marker.read_text(encoding="utf-8") == "preserve"
 
 
 def test_run_assemble_pipeline_requires_source_quality_argument(tmp_path: Path) -> None:
