@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from loop_apidoc.manifest.models import LocalSource, SourceFormat, UrlSource
-from loop_apidoc.preparation.coverage import UrlCoverage
+from loop_apidoc.url_coverage import UrlCoverage
 
 
 class RenderedUrlImportError(ValueError):

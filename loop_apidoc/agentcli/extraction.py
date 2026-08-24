@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from loop_apidoc.operation_identity import expand_methods
+
 # Which inventory key feeds which plan stage; each becomes that stage's INITIAL
 # structured answer so build_normalization_plan consumes it unchanged.
 _INVENTORY_STAGES: tuple[tuple[str, str], ...] = (
@@ -14,25 +16,9 @@ _INVENTORY_STAGES: tuple[tuple[str, str], ...] = (
 )
 
 
-def _methods(entry: dict) -> list[str]:
-    raw = entry.get("methods")
-    if isinstance(raw, list):
-        return [value.upper() for value in raw
-                if isinstance(value, str) and value.strip()]
-    method = entry.get("method")
-    return [method] if isinstance(method, str) and method.strip() else []
-
-
-def _expand_methods(entries: list[dict]) -> list[dict]:
-    """Emit one canonical operation entry for each additive ``methods`` value."""
-    expanded: list[dict] = []
-    for entry in entries:
-        for method in _methods(entry):
-            expanded.append(
-                {key: value for key, value in entry.items() if key != "methods"}
-                | {"method": method}
-            )
-    return expanded
+# Kept for callers that imported this former private helper. New consumers use
+# the neutral operation-identity module directly.
+_expand_methods = expand_methods
 
 
 def _block(key: str, inventory: dict) -> str:
@@ -41,7 +27,7 @@ def _block(key: str, inventory: dict) -> str:
     # per stage and the guide repeat it N times.
     value = inventory.get(key)
     entries = value if isinstance(value, list) else []
-    payload = {key: _expand_methods(entries) if key == "endpoints" else entries}
+    payload = {key: expand_methods(entries) if key == "endpoints" else entries}
     return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
 
 

@@ -30,6 +30,22 @@ the claim is supported, missing, conflicting, unverified, waived, or superseded.
 OpenAPI and the review payload are projections of the Canonical API Contract IR, not its
 source of truth.
 
+Before any Core use case invokes a source, runtime, approval, or artifact port, its Unit of
+Work atomically reserves the complete source-set aggregate and returns a fencing token.
+The token must accompany the CAS commit; an exact completed retry replays its durable snapshot,
+while any live command is `in_progress` and cannot repeat an external effect. Pure preflight
+failures release the reservation; an unknown source/runtime/approval outcome remains fenced
+rather than being reissued automatically. Content-addressed artifact publication is the sole
+retry-safe effect.
+The optional local directory artifact sink pins its configured root with
+no-follow descriptors, verifies a complete single-link content tree twice before
+it returns references, and retains a hidden staging directory after a failed or
+raced publication. Its path references are durable locators in a sink-owned root,
+not immutable capabilities: the root must not be changed out of band between
+publication and consumption. Portable POSIX cannot prove that a recursive pathname
+cleanup still names its original inode, so automatic cleanup could otherwise delete
+a replacement supplied by another writer.
+
 The Canonical Contract Core stays domain-neutral. Payment-only Amount Direction and Line
 Currency Policy values are owned by one optional `PaymentProfile`; a non-payment contract
 has no profile. Legacy v0.27 top-level collection names are read/write compatibility
@@ -388,7 +404,7 @@ output/<run-id>/
 ```
 
 - **docset** 是一組來源文件的分組,這些文件共同定義一個 API 契約。
-- **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)。
+- **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)；成功的同 run-id overwrite 在治理交易鎖內只保留一個、即時前任 candidate 的 backup。較舊 backup 先以 identity-pinned quarantine 可回復地暫置；交易完成後會退役到隱藏 tombstone，而非以 pathname 實體刪除。Portable POSIX 沒有 expected-inode `unlink`，因此 physical removal 是可信任 operator maintenance 的工作，不能由可能遭目錄交換的交易自動猜測執行。
 - **approve** 將候選資產複製到自含、不可變的 `assets/<asset-id>/artifacts/` 目錄,記錄 `asset.json`(狀態、驗證、評分、來源雜湊、產物路徑、取代關係(supersedes)、批准元資料),取代先前的已批准資產,並更新 `current.json` / `docset.json` / `catalog.json`。
 - 下游工作(SDK 編寫、CI 契約檢查、整合)經由 `foundry current` / `query.load_current_asset` 讀取**當前**資產,而不是任意的 run 目錄。
 
@@ -421,7 +437,7 @@ read-modify-write 會序列化。Lock 取得前會拒絕 project root 到 assets
 symlink／非目錄 ancestor，lock 會涵蓋
 baseline、predecessor、staging、head publication、rollback 與 cleanup。Lock cleanup failure
 會以 operational publication error 回報，並要求先確認沒有活躍交易再移除 stale lock。
-Staging、immutable publication、head rollback 與 owned-output cleanup 都相對於 transaction
+Staging、immutable publication、head rollback 與 owned-output quarantine 都相對於 transaction
 持有的 directory descriptors 執行；publication identity 在 rename 前取得並在 rename 後
 驗證，commit 前也會拒絕已被替換的 canonical namespace。任何 head restore 或 ownership
 驗證失敗都保留雙鎖供人工復原，不會猜測性刪除或把 rollback 寫入同名 replacement tree。
@@ -429,6 +445,11 @@ Feedback final-pointer 失敗會恢復原 effective current，並移除只由
 本次 transaction 建立的 amendment 與 effective asset，使相同輸入可以重試。
 Review update baseline 只從 manifest 宣告且 digest/kind 綁定的 artifacts 建立；manifest 與
 preparation report 缺少 binding 或 bytes 改變都會 fail closed。
+Effective artifacts are exposed only through
+`query.read_current_effective_artifact`, which returns a verified byte snapshot.  The
+former path-returning `resolve_current_effective_artifact` API is intentionally retired:
+silently changing that name to return bytes would hide a security-relevant public-contract
+break.
 
 Implementation feedback does not alter that normative promotion path. A persisted case
 lives under `.foundry/api/docsets/<docset-id>/feedback/cases/<case-id>/`: its digest-bound

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import stat
 import threading
@@ -507,6 +508,44 @@ def test_pointer_failure_rolls_back_catalog_and_docset_for_retry(
     assert store.load_catalog(tmp_path).docsets[0].current_asset == retried.asset_id
 
 
+def test_current_head_substitute_is_not_overwritten_during_approval_rollback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup(tmp_path)
+    approve.approve_candidate(
+        tmp_path, "tappay-backend", _RUN_ID, approved_by="a", now=_NOW
+    )
+    run_dir2 = write_run_dir(tmp_path / "output" / _RUN_ID_2)
+    importer.import_run(tmp_path, "tappay-backend", run_dir2)
+    current_path = paths.current_path(tmp_path, "tappay-backend")
+    displaced = current_path.with_name("transaction-owned-current.json")
+    original_save_current = store.save_current
+    published: bytes | None = None
+
+    def publish_then_substitute(*args: object, **kwargs: object) -> None:
+        nonlocal published
+        original_save_current(*args, **kwargs)
+        published = current_path.read_bytes()
+        current_path.rename(displaced)
+        current_path.write_bytes(published)
+        raise OSError("injected post-publication current failure")
+
+    monkeypatch.setattr(store, "save_current", publish_then_substitute)
+
+    with pytest.raises(FoundryPublicationError, match="rollback/cleanup failures"):
+        approve.approve_candidate(
+            tmp_path, "tappay-backend", _RUN_ID_2, approved_by="a", now=_LATER
+        )
+
+    assert published is not None
+    assert current_path.read_bytes() == published
+    assert current_path.stat().st_ino != displaced.stat().st_ino
+    assert (
+        paths.docset_dir(tmp_path, "tappay-backend") / ".governance.lock"
+    ).is_dir()
+    assert (tmp_path / ".foundry/api/.catalog-governance.lock").is_dir()
+
+
 def test_namespace_replacement_after_lock_does_not_touch_foreign_tree(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -574,7 +613,8 @@ def test_staging_after_namespace_replacement_remains_in_the_pinned_tree(
         path.relative_to(docset_dir).as_posix()
         for path in docset_dir.rglob("*")
     ) == ["assets", "sentinel.txt"]
-    assert not list((moved_docset / "assets").iterdir())
+    retired_entries = tuple((moved_docset / "assets").iterdir())
+    assert all("-cleanup-" in entry.name for entry in retired_entries)
     assert json.loads((moved_docset / "docset.json").read_text(encoding="utf-8"))[
         "current_asset"
     ] is None
@@ -920,14 +960,19 @@ def test_lock_cleanup_failure_rolls_back_published_root_and_allows_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _setup(tmp_path)
-    original_rmdir = Path.rmdir
+    original_rmdir = store.os.rmdir
+    failed = False
 
-    def fail_governance_lock(path: Path) -> None:
-        if path.name == ".governance.lock":
+    def fail_governance_lock(
+        path: str | bytes | os.PathLike[str], *args: object, **kwargs: object
+    ) -> None:
+        nonlocal failed
+        if not failed and path == ".governance.lock":
+            failed = True
             raise OSError("injected lock cleanup failure")
-        original_rmdir(path)
+        original_rmdir(path, *args, **kwargs)  # type: ignore[arg-type]
 
-    monkeypatch.setattr(Path, "rmdir", fail_governance_lock)
+    monkeypatch.setattr(store.os, "rmdir", fail_governance_lock)
     with pytest.raises(FoundryPublicationError, match="lock cleanup"):
         approve.approve_candidate(
             tmp_path, "tappay-backend", _RUN_ID, approved_by="operator", now=_NOW
@@ -940,7 +985,7 @@ def test_lock_cleanup_failure_rolls_back_published_root_and_allows_retry(
     assert store.load_catalog(tmp_path).docsets[0].current_asset is None
     assert not paths.current_path(tmp_path, "tappay-backend").exists()
 
-    monkeypatch.setattr(Path, "rmdir", original_rmdir)
+    monkeypatch.setattr(store.os, "rmdir", original_rmdir)
     retried = approve.approve_candidate(
         tmp_path, "tappay-backend", _RUN_ID, approved_by="operator", now=_NOW
     )
@@ -1138,7 +1183,6 @@ def test_legacy_reapproval_parses_single_captured_record_bytes(
         if path == asset_path:
             # A later filesystem read would observe corruption; the approval
             # must continue using the already captured buffers.
-            current_path.write_bytes(b"not-json")
             asset_path.write_bytes(b"not-json")
         return raw
 

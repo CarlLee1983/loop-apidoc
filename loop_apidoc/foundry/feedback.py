@@ -1,18 +1,9 @@
 from __future__ import annotations
 
 import os
-import shutil
-import tempfile
 from pathlib import Path
 
-from pydantic import BaseModel
-
-from loop_apidoc.core.conformance import (
-    ConformanceInputError,
-    ContractConformance,
-    canonical_digest,
-)
-from loop_apidoc.core.governance import contract_digest
+from loop_apidoc.core.conformance import ContractConformance, canonical_digest
 from loop_apidoc.domain.conformance import (
     CompatibilityAmendment,
     CompatibilityAmendmentProposal,
@@ -22,20 +13,34 @@ from loop_apidoc.domain.conformance import (
     ObservationBundle,
     normative_release_digest,
 )
-from loop_apidoc.foundry import paths, query, store
-from loop_apidoc.foundry.models import (
+from . import normative, query, store
+from .feedback_binding import (
+    _load_bound_case,
+    _reject_sensitive_values,
+    _safe_segment,
+    _validate_amendment,
+    _validate_decision,
+    _validate_deterministic_feedback,
+    _validate_effective_contract,
+    _validate_proposal,
+)
+from .feedback_binding import (  # noqa: F401 - public legacy feedback facade
+    load_bound_feedback_case,
+    load_governed_feedback_review_decision,
+)
+from .models import (
     AssetStatus,
     EffectiveAsset,
     EffectiveAssetArtifacts,
     EffectiveCurrentPointer,
     EffectiveProvenance,
+    Docset,
     FeedbackCase,
     FeedbackReviewDecision,
     FoundryCurrentStaleError,
     FoundryInputError,
     FoundryPublicationError,
 )
-from loop_apidoc.privacy import find_sensitive_value
 
 
 def persist_feedback_case(
@@ -49,37 +54,6 @@ def persist_feedback_case(
     _safe_segment(docset_id, "docset id")
     _safe_segment(assessment.assessment_id, "assessment id")
     _safe_segment(bundle.base.asset_id, "asset id")
-    docset = store.load_docset(project_root, docset_id)
-    if bundle.base.docset_id != docset.docset_id:
-        raise FoundryInputError(
-            "feedback bundle docset does not match the requested docset"
-        )
-    _, governed_release = _load_governed_release(
-        project_root, docset_id, bundle.base.asset_id
-    )
-    if governed_release.base != bundle.base:
-        raise FoundryInputError(
-            "feedback bundle is not bound to the approved normative base"
-        )
-    bundle_digest = canonical_digest(bundle)
-    if assessment.base != bundle.base:
-        raise FoundryInputError("assessment base binding does not match the bundle")
-    if assessment.observation_bundle_id != bundle.bundle_id:
-        raise FoundryInputError("assessment bundle identity does not match the bundle")
-    if assessment.observation_bundle_digest != bundle_digest:
-        raise FoundryInputError("assessment observation bundle digest is stale")
-    if assessment.applicability != bundle.applicability:
-        raise FoundryInputError("assessment applicability does not match the bundle")
-    if assessment.policy_version != bundle.policy_version:
-        raise FoundryInputError("assessment policy does not match the bundle")
-    if assessment.redaction_policy_version != bundle.redaction_policy_version:
-        raise FoundryInputError("assessment redaction policy does not match the bundle")
-    if assessment.normative_release_digest != normative_release_digest(
-        governed_release
-    ):
-        raise FoundryInputError(
-            "assessment is not bound to the approved normative base release"
-        )
     if proposal is not None and not isinstance(proposal, CompatibilityAmendmentProposal):
         raise FoundryInputError(
             "unsupported compatibility amendment proposal schema"
@@ -88,47 +62,176 @@ def persist_feedback_case(
         if value is not None:
             _reject_sensitive_values(value.model_dump(mode="json"))
 
-    _validate_deterministic_feedback(
-        docset,
-        governed_release,
-        bundle,
-        assessment,
-        proposal,
-    )
-
-    proposal_digest = canonical_digest(proposal) if proposal is not None else None
-    if proposal is not None:
-        _validate_proposal(proposal, bundle, assessment)
-    case = FeedbackCase(
-        case_id=assessment.assessment_id,
-        docset_id=docset_id,
-        base_asset_id=bundle.base.asset_id,
-        base_contract_digest=bundle.base.contract_digest,
-        bundle_id=bundle.bundle_id,
-        bundle_digest=bundle_digest,
-        assessment_id=assessment.assessment_id,
-        assessment_digest=canonical_digest(assessment),
-        proposal_digest=proposal_digest,
-        policy_version=bundle.policy_version,
-        redaction_policy_version=bundle.redaction_policy_version,
-    )
-    destination = paths.feedback_case_dir(project_root, docset_id, case.case_id)
-    if destination.exists():
-        raise FoundryInputError(f"feedback case already exists: {case.case_id}")
-    parent = destination.parent
-    parent.mkdir(parents=True, exist_ok=True)
-    stage = Path(tempfile.mkdtemp(prefix=f".{case.case_id}-", dir=parent))
+    transaction = store.begin_governance_transaction(project_root, docset_id)
+    cases_fd = stage_fd = -1
+    stage_name: str | None = None
+    stage_identity: tuple[int, int] | None = None
+    published_identity: tuple[int, int] | None = None
+    publication = store.AssetPublication()
+    docset_snapshot: store.HeadSnapshot | None = None
+    case: FeedbackCase | None = None
     try:
-        _write_model(stage / "observation-bundle.json", bundle)
-        _write_model(stage / "feedback-assessment.json", assessment)
+        docset_snapshot, docset = store.read_head_model_snapshot_relative(
+            transaction.docset_fd,
+            Docset,
+            "docset.json",
+            "docset.json",
+        )
+        if bundle.base.docset_id != docset.docset_id:
+            raise FoundryInputError(
+                "feedback bundle docset does not match the requested docset"
+            )
+        _, _, governed_release = normative.load_approved_contract_snapshot_relative(
+            transaction.docset_fd,
+            docset_id,
+            bundle.base.asset_id,
+            docset=docset,
+        )
+        if governed_release.base != bundle.base:
+            raise FoundryInputError(
+                "feedback bundle is not bound to the approved normative base"
+            )
+        bundle_digest = canonical_digest(bundle)
+        if assessment.base != bundle.base:
+            raise FoundryInputError("assessment base binding does not match the bundle")
+        if assessment.observation_bundle_id != bundle.bundle_id:
+            raise FoundryInputError("assessment bundle identity does not match the bundle")
+        if assessment.observation_bundle_digest != bundle_digest:
+            raise FoundryInputError("assessment observation bundle digest is stale")
+        if assessment.applicability != bundle.applicability:
+            raise FoundryInputError("assessment applicability does not match the bundle")
+        if assessment.policy_version != bundle.policy_version:
+            raise FoundryInputError("assessment policy does not match the bundle")
+        if assessment.redaction_policy_version != bundle.redaction_policy_version:
+            raise FoundryInputError("assessment redaction policy does not match the bundle")
+        if assessment.normative_release_digest != normative_release_digest(
+            governed_release
+        ):
+            raise FoundryInputError(
+                "assessment is not bound to the approved normative base release"
+            )
+        _validate_deterministic_feedback(
+            docset,
+            governed_release,
+            bundle,
+            assessment,
+            proposal,
+        )
+
+        proposal_digest = canonical_digest(proposal) if proposal is not None else None
         if proposal is not None:
-            _write_model(stage / "amendment-proposal.json", proposal)
-        _write_model(stage / "case.json", case)
-        os.replace(stage, destination)
-    except BaseException:
-        if stage.exists():
-            shutil.rmtree(stage)
+            _validate_proposal(proposal, bundle, assessment)
+        case = FeedbackCase(
+            case_id=assessment.assessment_id,
+            docset_id=docset_id,
+            base_asset_id=bundle.base.asset_id,
+            base_contract_digest=bundle.base.contract_digest,
+            bundle_id=bundle.bundle_id,
+            bundle_digest=bundle_digest,
+            assessment_id=assessment.assessment_id,
+            assessment_digest=canonical_digest(assessment),
+            proposal_digest=proposal_digest,
+            policy_version=bundle.policy_version,
+            redaction_policy_version=bundle.redaction_policy_version,
+        )
+        assert docset_snapshot is not None
+        store.validate_head_snapshot_relative(
+            transaction.docset_fd,
+            "docset.json",
+            docset_snapshot,
+        )
+        cases_fd = store.ensure_directory_relative(
+            transaction.docset_fd, "feedback/cases"
+        )
+        transaction.own_fd(cases_fd)
+        if store.entry_identity_relative(cases_fd, case.case_id) is not None:
+            raise FoundryInputError(f"feedback case already exists: {case.case_id}")
+        stage_name, stage_fd, stage_identity = store.create_owned_directory_relative(
+            cases_fd, prefix=f".{case.case_id}-"
+        )
+        store.write_model_relative(stage_fd, "observation-bundle.json", bundle)
+        store.write_model_relative(stage_fd, "feedback-assessment.json", assessment)
+        if proposal is not None:
+            store.write_model_relative(stage_fd, "amendment-proposal.json", proposal)
+        store.write_model_relative(stage_fd, "case.json", case)
+        store.validate_head_snapshot_relative(
+            transaction.docset_fd,
+            "docset.json",
+            docset_snapshot,
+        )
+        store.validate_directory_relative(
+            transaction.docset_fd, "feedback/cases", cases_fd
+        )
+        store.publish_asset(
+            Path(stage_name),
+            Path(case.case_id),
+            outcome=publication,
+            parent_fd=cases_fd,
+            expected_identity=stage_identity,
+        )
+        assert publication.identity is not None
+        published_identity = publication.identity
+        store.validate_directory_relative(
+            transaction.docset_fd, "feedback/cases", cases_fd
+        )
+        store.validate_head_snapshot_relative(
+            transaction.docset_fd,
+            "docset.json",
+            docset_snapshot,
+        )
+        store.validate_governance_namespace(
+            transaction.project_root,
+            docset_id,
+            root_fd=transaction.root_fd,
+            api_fd=transaction.api_fd,
+            docset_fd=transaction.docset_fd,
+            assets_fd=transaction.assets_fd,
+        )
+    except BaseException as primary:
+        try:
+            if publication.owned_root:
+                if publication.identity is None:
+                    raise FoundryPublicationError(
+                        "feedback case publication ownership is unavailable"
+                    )
+                store.remove_owned_entry_relative(
+                    cases_fd, case.case_id, publication.identity
+                )
+            elif published_identity is not None:
+                store.remove_owned_entry_relative(
+                    cases_fd, case.case_id, published_identity
+                )
+            elif stage_name is not None and stage_identity is not None:
+                store.remove_owned_entry_relative(cases_fd, stage_name, stage_identity)
+        except BaseException as cleanup_error:
+            transaction.abandon()
+            raise FoundryPublicationError(
+                "feedback case publication failed and recovery is required: "
+                f"{cleanup_error}"
+            ) from primary
+        try:
+            transaction.close()
+        except FoundryPublicationError:
+            transaction.force_close()
         raise
+    finally:
+        if stage_fd >= 0:
+            os.close(stage_fd)
+    try:
+        transaction.close()
+    except FoundryPublicationError as lock_error:
+        try:
+            assert published_identity is not None
+            store.remove_owned_entry_relative(cases_fd, case.case_id, published_identity)
+        except BaseException as cleanup_error:
+            transaction.abandon()
+            raise FoundryPublicationError(
+                "feedback case lock cleanup failed and recovery is required: "
+                f"{cleanup_error}"
+            ) from lock_error
+        transaction.force_close()
+        raise
+    assert case is not None
     return case
 
 
@@ -139,45 +242,85 @@ def record_feedback_review(
     decision: FeedbackReviewDecision,
 ) -> FeedbackReviewDecision:
     """Record one human decision after revalidating every digest binding."""
-    case, bundle, assessment, proposal = _load_bound_case(
-        project_root, docset_id, case_id, require_proposal=False
-    )
-    _validate_decision(decision, case, bundle, assessment, proposal)
-    _reject_sensitive_values(decision.model_dump(mode="json"))
-    case_dir = paths.feedback_case_dir(project_root, docset_id, case_id)
-    _reject_symlink_components(project_root, case_dir, "feedback case")
-    review_dir = case_dir / "review"
-    _reject_symlink_components(project_root, review_dir, "feedback review")
-    review_dir.mkdir(parents=True, exist_ok=True)
-    _reject_symlink_components(project_root, review_dir, "feedback review")
-    destination = review_dir / "decision.json"
-    if destination.exists():
-        if _read_model(
-            FeedbackReviewDecision, destination, "feedback review decision"
-        ) == decision:
-            return decision
-        raise FoundryInputError(f"feedback review already exists: {case_id}")
-    file_descriptor, temporary_name = tempfile.mkstemp(
-        prefix=".decision-", suffix=".tmp", dir=review_dir
-    )
-    temporary = Path(temporary_name)
+    _safe_segment(case_id, "case id")
+    transaction = store.begin_governance_transaction(project_root, docset_id)
+    cases_fd = case_fd = review_fd = -1
+    created_identity: tuple[int, int] | None = None
+    publication = store.ImmutableEntryPublication()
     try:
-        with os.fdopen(file_descriptor, "w", encoding="utf-8") as stream:
-            stream.write(decision.model_dump_json(indent=2))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.link(temporary, destination, follow_symlinks=False)
-    except FileExistsError as exc:
-        existing = _read_model(
-            FeedbackReviewDecision, destination, "feedback review decision"
+        try:
+            cases_fd = store.open_directory_relative(
+                transaction.docset_fd, "feedback/cases"
+            )
+        except OSError as exc:
+            raise FoundryInputError("feedback case directory is unsafe") from exc
+        transaction.own_fd(cases_fd)
+        try:
+            case_fd = store.open_directory_relative(cases_fd, case_id)
+        except OSError as exc:
+            raise FoundryInputError("feedback case directory is unsafe") from exc
+        transaction.own_fd(case_fd)
+        case, bundle, assessment, proposal = _load_bound_case(
+            project_root,
+            docset_id,
+            case_id,
+            require_proposal=False,
+            case_parent_fd=case_fd,
         )
-        if existing == decision:
-            return decision
-        raise FoundryInputError(f"feedback review already exists: {case_id}") from exc
+        _validate_decision(decision, case, bundle, assessment, proposal)
+        _reject_sensitive_values(decision.model_dump(mode="json"))
+        store.validate_directory_relative(cases_fd, case_id, case_fd)
+        review_fd = store.ensure_directory_relative(case_fd, "review")
+        transaction.own_fd(review_fd)
+        store.validate_directory_relative(case_fd, "review", review_fd)
+        existed, identity = store.write_once_model_relative(
+            review_fd, "decision.json", decision, outcome=publication
+        )
+        if not existed:
+            created_identity = identity
+        store.validate_directory_relative(cases_fd, case_id, case_fd)
+        store.validate_directory_relative(case_fd, "review", review_fd)
+        store.validate_governance_namespace(
+            transaction.project_root,
+            docset_id,
+            root_fd=transaction.root_fd,
+            api_fd=transaction.api_fd,
+            docset_fd=transaction.docset_fd,
+            assets_fd=transaction.assets_fd,
+        )
     except BaseException:
+        cleanup_identity = (
+            publication.identity if publication.owned_entry else created_identity
+        )
+        if cleanup_identity is not None:
+            try:
+                store.remove_owned_entry_relative(
+                    review_fd, "decision.json", cleanup_identity
+                )
+            except BaseException:
+                transaction.abandon()
+                raise
+        try:
+            transaction.close()
+        except FoundryPublicationError:
+            transaction.force_close()
         raise
-    finally:
-        temporary.unlink(missing_ok=True)
+    try:
+        transaction.close()
+    except FoundryPublicationError as lock_error:
+        try:
+            if created_identity is not None:
+                store.remove_owned_entry_relative(
+                    review_fd, "decision.json", created_identity
+                )
+        except BaseException as cleanup_error:
+            transaction.abandon()
+            raise FoundryPublicationError(
+                "feedback review lock cleanup failed and recovery is required: "
+                f"{cleanup_error}"
+            ) from lock_error
+        transaction.force_close()
+        raise
     return decision
 
 
@@ -190,26 +333,31 @@ def _approve_feedback_case_locked(
     *,
     release: NormativeRelease,
     composition_amendments: tuple[CompatibilityAmendment, ...],
-    docset_root: Path | None = None,
-    docset_parent_fd: int | None = None,
-    case_parent_fd: int | None = None,
-    scope_parent_fd: int | None = None,
-    effective_assets_fd: int | None = None,
-    owned_outputs: list[tuple[int, str, tuple[int, int], str]] | None = None,
+    root_parent_fd: int,
+    api_parent_fd: int,
+    docset_parent_fd: int,
+    case_parent_fd: int,
+    scope_parent_fd: int,
+    effective_assets_fd: int,
+    current_snapshot: store.HeadSnapshot,
+    owned_outputs: list[tuple[int, str, tuple[int, int], str]],
 ) -> EffectiveAsset:
     """Publish an approved scoped release; the normative current stays untouched."""
     case, bundle, assessment, proposal = _load_bound_case(
-        project_root, docset_id, case_id, require_proposal=True
+        project_root,
+        docset_id,
+        case_id,
+        require_proposal=True,
+        case_parent_fd=case_parent_fd,
     )
     assert proposal is not None
-    decision_path = (
-        paths.feedback_case_dir(project_root, docset_id, case_id)
-        / "review"
-        / "decision.json"
+    decision = store.read_model_relative(
+        case_parent_fd,
+        FeedbackReviewDecision,
+        "review/decision.json",
+        "feedback review decision",
     )
-    decision = _read_model(
-        FeedbackReviewDecision, decision_path, "feedback review decision"
-    )
+    assert decision is not None
     _validate_decision(decision, case, bundle, assessment, proposal)
     if decision.disposition != "approved":
         raise FoundryInputError(
@@ -217,17 +365,68 @@ def _approve_feedback_case_locked(
         )
     _validate_amendment(amendment, case, proposal, decision)
     _validate_effective_contract(effective_contract, case, amendment)
+    scope_digest = canonical_digest(effective_contract.target)
+    _safe_segment(scope_digest, "scope digest")
+    current = _effective_current_from_snapshot(current_snapshot)
+    if current is not None and (
+        current.scope_digest != scope_digest
+        or current.target != effective_contract.target
+    ):
+        raise FoundryInputError("effective current pointer target scope is stale")
+    predecessor_asset: EffectiveAsset | None = None
     try:
-        normative_current = query.load_current_asset(project_root, docset_id)
+        with store.open_pinned_governed_docset(
+            project_root,
+            docset_id,
+            root_fd=root_parent_fd,
+            api_fd=api_parent_fd,
+            docset_fd=docset_parent_fd,
+        ) as governed:
+            docset, _, normative_current = query._read_bound_current_from(
+                governed,
+                docset_id,
+            )
+            if normative_current.asset_id != case.base_asset_id:
+                raise FoundryInputError(
+                    "feedback base is no longer the normative current asset"
+                )
+            _, _, governed_release = normative.load_approved_contract_snapshot_relative(
+                governed.docset_fd,
+                docset_id,
+                case.base_asset_id,
+                docset=docset,
+            )
+            with governed.open_directory(
+                f"effective/scopes/{scope_digest}"
+            ) as scope:
+                if not os.path.samestat(
+                    os.fstat(scope.descriptor), os.fstat(scope_parent_fd)
+                ):
+                    raise FoundryPublicationError(
+                        "governed transaction namespace changed during operation"
+                    )
+                if current is None:
+                    governed_amendments = ()
+                else:
+                    predecessor = query._read_bound_effective_from(
+                        scope,
+                        docset_id,
+                        effective_contract.target,
+                        pointer=current,
+                    )
+                    predecessor_asset = predecessor.asset
+                    governed_amendments = query._read_effective_lineage_from(
+                        scope,
+                        docset_id,
+                        effective_contract.target,
+                        predecessor,
+                    )
+                scope.validate()
+            governed.validate()
     except FoundryCurrentStaleError as exc:
         raise FoundryInputError(
             "feedback base is no longer the normative current asset"
         ) from exc
-    if normative_current.asset_id != case.base_asset_id:
-        raise FoundryInputError("feedback base is no longer the normative current asset")
-    _, governed_release = _load_governed_release(
-        project_root, docset_id, case.base_asset_id
-    )
     if release != governed_release:
         raise FoundryInputError(
             "normative release does not match the approved base artifacts"
@@ -237,14 +436,11 @@ def _approve_feedback_case_locked(
     if normative_release_digest(release) != proposal.normative_release_digest:
         raise FoundryInputError("normative release evidence binding is stale")
     _validate_deterministic_feedback(
-        store.load_docset(project_root, docset_id),
+        docset,
         release,
         bundle,
         assessment,
         proposal,
-    )
-    governed_amendments = query.load_bound_effective_amendments(
-        project_root, docset_id, proposal.scope
     )
     governed_by_id = {
         governed.amendment_id: governed for governed in governed_amendments
@@ -281,37 +477,83 @@ def _approve_feedback_case_locked(
         )
     _reject_sensitive_values(amendment.model_dump(mode="json"))
 
-    governed_docset_root = docset_root or paths.docset_dir(project_root, docset_id)
     amendment_relative = f"feedback/cases/{case_id}/approved-amendment.json"
-    amendment_path = (
-        governed_docset_root / "feedback" / "cases" / case_id
-        / "approved-amendment.json"
+    store.validate_directory_relative(
+        docset_parent_fd, f"feedback/cases/{case_id}", case_parent_fd
     )
-    if case_parent_fd is not None:
-        amendment_existed, identity = store.write_once_model_relative(
-            case_parent_fd, "approved-amendment.json", amendment
-        )
-        if not amendment_existed and owned_outputs is not None:
-            owned_outputs.append(
-                (case_parent_fd, "approved-amendment.json", identity, amendment_relative)
+    amendment_snapshot: store.HeadSnapshot
+    if existing is not None:
+        # A repeat Effective release may reuse this case's amendment only after
+        # the same amendment is already present in the governed scope lineage.
+        # An equal-content leaf alone is never a retry receipt: it could have
+        # been pre-planted before this case was first approved.
+        amendment_snapshot, stored_amendment = (
+            store.read_head_model_snapshot_relative(
+                case_parent_fd,
+                CompatibilityAmendment,
+                "approved-amendment.json",
+                "approved amendment",
             )
+        )
+        if stored_amendment != amendment:
+            raise FoundryInputError("approved amendment does not match this case")
+        store.validate_head_snapshot_relative(
+            case_parent_fd,
+            "approved-amendment.json",
+            amendment_snapshot,
+        )
     else:
-        amendment_existed = amendment_path.exists()
-        _write_once_or_verify(amendment_path, amendment)
+        amendment_publication = store.ImmutableEntryPublication()
+        try:
+            _created, identity = store.write_once_model_relative(
+                case_parent_fd,
+                "approved-amendment.json",
+                amendment,
+                outcome=amendment_publication,
+            )
+        except BaseException as primary:
+            if amendment_publication.owned_entry:
+                if amendment_publication.identity is None:
+                    failure = FoundryPublicationError(
+                        "approved amendment ownership is unavailable"
+                    )
+                    failure.recovery_required = True  # type: ignore[attr-defined]
+                    raise failure from primary
+                owned_outputs.append(
+                    (
+                        case_parent_fd,
+                        "approved-amendment.json",
+                        amendment_publication.identity,
+                        amendment_relative,
+                    )
+                )
+            raise
+        owned_outputs.append(
+            (case_parent_fd, "approved-amendment.json", identity, amendment_relative)
+        )
+        amendment_snapshot, stored_amendment = store.read_head_model_snapshot_relative(
+            case_parent_fd,
+            CompatibilityAmendment,
+            "approved-amendment.json",
+            "approved amendment",
+        )
+        if stored_amendment != amendment:
+            raise FoundryPublicationError(
+                "approved amendment changed during publication"
+            )
 
-    scope_digest = canonical_digest(effective_contract.target)
-    _safe_segment(scope_digest, "scope digest")
     effective_asset_id = effective_contract.effective_contract_id
     _safe_segment(effective_asset_id, "effective asset id")
-    current = store.load_effective_current(project_root, docset_id, scope_digest)
-    predecessor_asset: EffectiveAsset | None = None
-    if current is not None:
-        if current.scope_digest != scope_digest or current.target != effective_contract.target:
-            raise FoundryInputError("effective current pointer target scope is stale")
-        _safe_segment(current.current_asset, "effective asset id")
-        predecessor_asset, _ = query.load_bound_effective_asset(
-            project_root, docset_id, effective_contract.target
+    if (
+        existing is not None
+        and current is not None
+        and current.current_asset == effective_asset_id
+    ):
+        raise FoundryInputError(
+            "governed immutable output already exists: effective asset"
         )
+    if current is not None:
+        _safe_segment(current.current_asset, "effective asset id")
     supersedes = (
         predecessor_asset.effective_asset_id
         if predecessor_asset is not None
@@ -363,125 +605,78 @@ def _approve_feedback_case_locked(
     )
     assets_relative = f"effective/scopes/{scope_digest}/assets"
     destination_relative = f"{assets_relative}/{effective_asset_id}"
-    local_effective_assets_fd = (
-        effective_assets_fd
-        if effective_assets_fd is not None
-        else store.ensure_directory_relative(docset_parent_fd, assets_relative)
-        if docset_parent_fd is not None
-        else -1
-    )
-    effective_assets_root = (
-        store.directory_fd_path(local_effective_assets_fd)
-        if local_effective_assets_fd >= 0
-        else governed_docset_root / assets_relative
-    )
-    destination = effective_assets_root / effective_asset_id
     destination_existed = (
-        store.entry_identity_relative(local_effective_assets_fd, effective_asset_id)
+        store.entry_identity_relative(effective_assets_fd, effective_asset_id)
         is not None
-        if local_effective_assets_fd >= 0
-        else destination.exists()
     )
     if destination_existed:
-        try:
-            _verify_existing_effective_asset(
-                destination,
-                asset=asset,
-                effective_contract=effective_contract,
-                amendment=amendment,
-                provenance=provenance,
-            )
-        finally:
-            if local_effective_assets_fd >= 0 and effective_assets_fd is None:
-                os.close(local_effective_assets_fd)
-                local_effective_assets_fd = -1
+        _verify_existing_effective_asset(
+            effective_assets_fd,
+            effective_asset_id,
+            asset=asset,
+            effective_contract=effective_contract,
+            amendment=amendment,
+            provenance=provenance,
+        )
     else:
         publication = store.AssetPublication()
-        if local_effective_assets_fd < 0:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            stage = Path(
-                tempfile.mkdtemp(prefix=f".{effective_asset_id}-", dir=destination.parent)
-            )
-            stage_fd = -1
-            stage_identity = None
-        else:
-            stage_name, stage_fd, stage_identity = store.create_owned_directory_relative(
-                local_effective_assets_fd, prefix=f".{effective_asset_id}-"
-            )
-            stage = store.directory_fd_path(stage_fd)
+        stage_name, stage_fd, stage_identity = store.create_owned_directory_relative(
+            effective_assets_fd, prefix=f".{effective_asset_id}-"
+        )
         try:
-            if stage_fd >= 0:
-                artifact_fd = store.ensure_directory_relative(stage_fd, "artifacts")
-                os.close(artifact_fd)
-                store.write_model_relative(
-                    stage_fd, "artifacts/effective-contract.json", effective_contract
-                )
-                store.write_model_relative(
-                    stage_fd, "artifacts/compatibility-amendment.json", amendment
-                )
-                store.write_model_relative(
-                    stage_fd, "artifacts/provenance.json", provenance
-                )
-                store.write_model_relative(stage_fd, "asset.json", asset)
-                store.publish_asset(
-                    Path(stage_name),
-                    destination,
-                    outcome=publication,
-                    parent_fd=local_effective_assets_fd,
-                    expected_identity=stage_identity,
-                )
-            else:
-                artifact_dir = stage / "artifacts"
-                artifact_dir.mkdir()
-                _write_model(
-                    artifact_dir / "effective-contract.json", effective_contract
-                )
-                _write_model(
-                    artifact_dir / "compatibility-amendment.json", amendment
-                )
-                _write_model(artifact_dir / "provenance.json", provenance)
-                _write_model(stage / "asset.json", asset)
-                os.replace(stage, destination)
-                publication = store.AssetPublication()
+            artifact_fd = store.ensure_directory_relative(stage_fd, "artifacts")
+            os.close(artifact_fd)
+            store.write_model_relative(
+                stage_fd, "artifacts/effective-contract.json", effective_contract
+            )
+            store.write_model_relative(
+                stage_fd, "artifacts/compatibility-amendment.json", amendment
+            )
+            store.write_model_relative(
+                stage_fd, "artifacts/provenance.json", provenance
+            )
+            store.write_model_relative(stage_fd, "asset.json", asset)
+            store.validate_directory_relative(
+                docset_parent_fd, assets_relative, effective_assets_fd
+            )
+            store.publish_asset(
+                Path(stage_name),
+                Path(effective_asset_id),
+                outcome=publication,
+                parent_fd=effective_assets_fd,
+                expected_identity=stage_identity,
+            )
         except BaseException:
-            if (
-                publication.owned_root
-                and publication.identity is not None
-                and owned_outputs is not None
-            ):
+            if publication.owned_root and publication.identity is not None:
                 owned_outputs.append(
                     (
-                        local_effective_assets_fd,
+                        effective_assets_fd,
                         effective_asset_id,
                         publication.identity,
                         destination_relative,
                     )
                 )
-            if stage_fd >= 0 and stage_identity is not None:
-                store.remove_owned_entry_relative(
-                    local_effective_assets_fd, stage_name, stage_identity
-                )
-            elif stage.exists():
-                shutil.rmtree(stage)
-            if local_effective_assets_fd >= 0 and effective_assets_fd is None:
-                os.close(local_effective_assets_fd)
-                local_effective_assets_fd = -1
+            store.remove_owned_entry_relative(
+                effective_assets_fd, stage_name, stage_identity
+            )
             raise
         finally:
-            if stage_fd >= 0:
-                os.close(stage_fd)
-        if owned_outputs is not None and publication.identity is not None:
+            os.close(stage_fd)
+        if publication.identity is not None:
             owned_outputs.append(
                 (
-                    local_effective_assets_fd,
+                    effective_assets_fd,
                     effective_asset_id,
                     publication.identity,
                     destination_relative,
                 )
             )
-    if local_effective_assets_fd >= 0 and effective_assets_fd is None:
-        os.close(local_effective_assets_fd)
 
+    store.validate_head_snapshot_relative(
+        case_parent_fd,
+        "approved-amendment.json",
+        amendment_snapshot,
+    )
     # This is the sole externally consumed promotion signal and therefore last.
     store.save_effective_current(
         project_root,
@@ -510,6 +705,12 @@ def _approve_feedback_case_locked(
         ),
         parent_fd=docset_parent_fd,
         scope_parent_fd=scope_parent_fd,
+        outcome=current_snapshot,
+    )
+    store.validate_head_snapshot_relative(
+        case_parent_fd,
+        "approved-amendment.json",
+        amendment_snapshot,
     )
     return asset
 
@@ -529,7 +730,7 @@ def approve_feedback_case(
     _safe_segment(effective_contract.effective_contract_id, "effective asset id")
     transaction = store.begin_governance_transaction(project_root, docset_id)
     scope_digest = canonical_digest(effective_contract.target)
-    current_bytes: bytes | None = None
+    current_snapshot: store.HeadSnapshot | None = None
     preflight_complete = False
     owned_outputs: list[tuple[int, str, tuple[int, int], str]] = []
     scope_parent_fd = case_parent_fd = effective_assets_fd = -1
@@ -546,8 +747,11 @@ def approve_feedback_case(
             transaction.docset_fd, f"feedback/cases/{case_id}"
         )
         transaction.own_fd(case_parent_fd)
-        current_bytes = store.read_head_relative(scope_parent_fd, "current.json")
+        current_snapshot = store.read_head_snapshot_relative(
+            scope_parent_fd, "current.json"
+        )
         preflight_complete = True
+        assert current_snapshot is not None
         asset = _approve_feedback_case_locked(
             transaction.project_root,
             docset_id,
@@ -556,11 +760,13 @@ def approve_feedback_case(
             effective_contract,
             release=release,
             composition_amendments=composition_amendments,
-            docset_root=store.directory_fd_path(transaction.docset_fd),
+            root_parent_fd=transaction.root_fd,
+            api_parent_fd=transaction.api_fd,
             docset_parent_fd=transaction.docset_fd,
             case_parent_fd=case_parent_fd,
             scope_parent_fd=scope_parent_fd,
             effective_assets_fd=effective_assets_fd,
+            current_snapshot=current_snapshot,
             owned_outputs=owned_outputs,
         )
         store.validate_directory_relative(
@@ -579,6 +785,7 @@ def approve_feedback_case(
         store.validate_governance_namespace(
             transaction.project_root,
             docset_id,
+            root_fd=transaction.root_fd,
             api_fd=transaction.api_fd,
             docset_fd=transaction.docset_fd,
             assets_fd=transaction.assets_fd,
@@ -591,7 +798,7 @@ def approve_feedback_case(
             _rollback_feedback_outputs(
                 transaction,
                 current_parent_fd=scope_parent_fd,
-                current_bytes=current_bytes,
+                current_snapshot=current_snapshot,
                 owned_outputs=owned_outputs,
             )
             if preflight_complete
@@ -618,7 +825,7 @@ def approve_feedback_case(
         failures = _rollback_feedback_outputs(
             transaction,
             current_parent_fd=scope_parent_fd,
-            current_bytes=current_bytes,
+            current_snapshot=current_snapshot,
             owned_outputs=owned_outputs,
         )
         if failures:
@@ -640,17 +847,18 @@ def _rollback_feedback_outputs(
     transaction: store.GovernanceTransaction,
     *,
     current_parent_fd: int,
-    current_bytes: bytes | None,
+    current_snapshot: store.HeadSnapshot | None,
     owned_outputs: list[tuple[int, str, tuple[int, int], str]],
 ) -> list[tuple[str, BaseException]]:
     failures: list[tuple[str, BaseException]] = []
-    try:
-        store.restore_head_relative(
-            current_parent_fd, "current.json", current_bytes
-        )
-    except BaseException as exc:
-        failures.append(("effective current", exc))
-        return failures
+    if current_snapshot is not None:
+        try:
+            store.restore_head_relative(
+                current_parent_fd, "current.json", current_snapshot
+            )
+        except BaseException as exc:
+            failures.append(("effective current", exc))
+            return failures
     for parent_fd, name, identity, label in reversed(owned_outputs):
         try:
             store.remove_owned_entry_relative(parent_fd, name, identity)
@@ -675,333 +883,50 @@ def _effective_provenance(
     )
 
 
+def _effective_current_from_snapshot(
+    snapshot: store.HeadSnapshot,
+) -> EffectiveCurrentPointer | None:
+    """Parse the one scope head captured before feedback approval started."""
+    if snapshot.content is None:
+        return None
+    try:
+        return EffectiveCurrentPointer.model_validate_json(snapshot.content)
+    except ValueError as exc:
+        raise FoundryInputError("effective current pointer is invalid") from exc
+
+
 def _verify_existing_effective_asset(
-    destination: Path,
+    effective_assets_fd: int,
+    effective_asset_id: str,
     *,
     asset: EffectiveAsset,
     effective_contract: EffectiveContract,
     amendment: CompatibilityAmendment,
     provenance: EffectiveProvenance,
 ) -> None:
-    expected = (
-        (EffectiveAsset, destination / "asset.json", asset),
-        (
-            EffectiveContract,
-            destination / "artifacts" / "effective-contract.json",
-            effective_contract,
-        ),
-        (
-            CompatibilityAmendment,
-            destination / "artifacts" / "compatibility-amendment.json",
-            amendment,
-        ),
-        (
-            EffectiveProvenance,
-            destination / "artifacts" / "provenance.json",
-            provenance,
-        ),
-    )
-    for model_type, path, value in expected:
-        if _read_model(model_type, path, path.name) != value:
-            raise FoundryInputError(
-                f"immutable effective asset differs: {asset.effective_asset_id}"
+    root_fd = store.open_directory_relative(effective_assets_fd, effective_asset_id)
+    try:
+        expected = (
+            (EffectiveAsset, "asset.json", asset),
+            (
+                EffectiveContract,
+                "artifacts/effective-contract.json",
+                effective_contract,
+            ),
+            (
+                CompatibilityAmendment,
+                "artifacts/compatibility-amendment.json",
+                amendment,
+            ),
+            (EffectiveProvenance, "artifacts/provenance.json", provenance),
+        )
+        for model_type, relative, value in expected:
+            actual = store.read_model_relative(
+                root_fd, model_type, relative, relative
             )
-
-
-def _load_bound_case(
-    project_root: Path,
-    docset_id: str,
-    case_id: str,
-    *,
-    require_proposal: bool,
-) -> tuple[
-    FeedbackCase,
-    ObservationBundle,
-    FeedbackAssessment,
-    CompatibilityAmendmentProposal | None,
-]:
-    _safe_segment(docset_id, "docset id")
-    _safe_segment(case_id, "case id")
-    case = store.load_feedback_case(project_root, docset_id, case_id)
-    if case.docset_id != docset_id or case.case_id != case_id:
-        raise FoundryInputError("feedback case identity does not match its path")
-    case_dir = paths.feedback_case_dir(project_root, docset_id, case_id)
-    bundle = _read_model(
-        ObservationBundle, case_dir / "observation-bundle.json", "observation bundle"
-    )
-    assessment = _read_model(
-        FeedbackAssessment,
-        case_dir / "feedback-assessment.json",
-        "feedback assessment",
-    )
-    proposal_path = case_dir / "amendment-proposal.json"
-    proposal = (
-        _read_model(
-            CompatibilityAmendmentProposal,
-            proposal_path,
-            "compatibility amendment proposal",
-        )
-        if proposal_path.is_file()
-        else None
-    )
-    if require_proposal and proposal is None:
-        raise FoundryInputError("feedback case has no amendment proposal")
-    if canonical_digest(bundle) != case.bundle_digest:
-        raise FoundryInputError("feedback case observation bundle digest is stale")
-    if canonical_digest(assessment) != case.assessment_digest:
-        raise FoundryInputError("feedback case assessment digest is stale")
-    actual_proposal_digest = (
-        canonical_digest(proposal) if proposal is not None else None
-    )
-    if actual_proposal_digest != case.proposal_digest:
-        raise FoundryInputError("feedback case amendment proposal digest is stale")
-    return case, bundle, assessment, proposal
-
-
-def _validate_decision(
-    decision: FeedbackReviewDecision,
-    case: FeedbackCase,
-    bundle: ObservationBundle,
-    assessment: FeedbackAssessment,
-    proposal: CompatibilityAmendmentProposal | None,
-) -> None:
-    expected = {
-        "case_id": case.case_id,
-        "base_asset_id": case.base_asset_id,
-        "base_contract_digest": case.base_contract_digest,
-        "bundle_id": case.bundle_id,
-        "bundle_digest": case.bundle_digest,
-        "redaction_policy_version": case.redaction_policy_version,
-        "policy_version": case.policy_version,
-        "assessment_id": case.assessment_id,
-        "assessment_digest": case.assessment_digest,
-        "proposal_id": proposal.proposal_id if proposal is not None else None,
-        "proposal_digest": case.proposal_digest,
-    }
-    for field, value in expected.items():
-        if getattr(decision, field) != value:
-            raise FoundryInputError(f"feedback review decision has stale {field}")
-    if decision.decided_at < bundle.applicability.observed_until:
-        raise FoundryInputError(
-            "feedback review decision must not precede observation completion"
-        )
-    if proposal is not None and decision.decided_at < proposal.created_at:
-        raise FoundryInputError(
-            "feedback review decision must not precede proposal creation"
-        )
-    if decision.approved_by.id in {bundle.producer.id, bundle.runner.id}:
-        raise FoundryInputError(
-            "feedback approver cannot be the feedback producer or runner"
-        )
-    if assessment.producer != bundle.producer or assessment.runner != bundle.runner:
-        raise FoundryInputError("feedback assessment actor binding is stale")
-
-
-def _validate_proposal(
-    proposal: CompatibilityAmendmentProposal,
-    bundle: ObservationBundle,
-    assessment: FeedbackAssessment,
-) -> None:
-    bindings = {
-        "base": (proposal.base, bundle.base),
-        "normative release digest": (
-            proposal.normative_release_digest,
-            assessment.normative_release_digest,
-        ),
-        "assessment id": (proposal.assessment_id, assessment.assessment_id),
-        "assessment digest": (
-            proposal.assessment_digest,
-            canonical_digest(assessment),
-        ),
-        "observation bundle id": (
-            proposal.observation_bundle_id,
-            bundle.bundle_id,
-        ),
-        "observation bundle digest": (
-            proposal.observation_bundle_digest,
-            canonical_digest(bundle),
-        ),
-        "policy version": (proposal.policy_version, bundle.policy_version),
-        "redaction policy version": (
-            proposal.redaction_policy_version,
-            bundle.redaction_policy_version,
-        ),
-        "scope": (proposal.scope, bundle.applicability),
-        "producer": (proposal.producer, bundle.producer),
-        "runner": (proposal.runner, bundle.runner),
-    }
-    for label, (actual, expected) in bindings.items():
-        if actual != expected:
-            raise FoundryInputError(
-                f"compatibility amendment proposal has stale {label}"
-            )
-
-
-def _validate_deterministic_feedback(
-    docset,
-    release: NormativeRelease,
-    bundle: ObservationBundle,
-    assessment: FeedbackAssessment,
-    proposal: CompatibilityAmendmentProposal | None,
-) -> None:
-    """Re-derive feedback before any governed case or release can be accepted."""
-    try:
-        expected_assessment = ContractConformance().assess(
-            release,
-            bundle,
-            provider=docset.provider,
-            product=docset.product,
-        )
-    except ConformanceInputError as exc:
-        raise FoundryInputError(f"feedback assessment is not deterministic: {exc}") from exc
-    if assessment != expected_assessment:
-        raise FoundryInputError(
-            "feedback assessment does not match deterministic reassessment"
-        )
-    if proposal is None:
-        return
-    try:
-        expected_proposals = ContractConformance().propose(
-            expected_assessment,
-            now=proposal.created_at,
-        )
-    except ConformanceInputError as exc:
-        raise FoundryInputError(f"feedback proposal is not deterministic: {exc}") from exc
-    if proposal not in expected_proposals:
-        raise FoundryInputError(
-            "feedback proposal does not match deterministic proposal"
-        )
-
-
-def _validate_amendment(
-    amendment: CompatibilityAmendment,
-    case: FeedbackCase,
-    proposal: CompatibilityAmendmentProposal,
-    decision: FeedbackReviewDecision,
-) -> None:
-    approval = amendment.approval
-    if amendment.proposal != proposal:
-        raise FoundryInputError("approved amendment proposal is stale")
-    bindings = {
-        "base asset id": (approval.base_asset_id, case.base_asset_id),
-        "assessment id": (approval.assessment_id, case.assessment_id),
-        "observation bundle id": (approval.observation_bundle_id, case.bundle_id),
-        "proposal digest": (approval.proposal_digest, decision.proposal_digest),
-        "assessment digest": (approval.assessment_digest, case.assessment_digest),
-        "observation bundle digest": (
-            approval.observation_bundle_digest,
-            case.bundle_digest,
-        ),
-        "base contract digest": (
-            approval.base_contract_digest,
-            case.base_contract_digest,
-        ),
-        "policy version": (approval.policy_version, case.policy_version),
-        "redaction policy version": (
-            approval.redaction_policy_version,
-            case.redaction_policy_version,
-        ),
-        "approver": (approval.approved_by, decision.approved_by),
-        "approval time": (approval.approved_at, decision.decided_at),
-        "expiry": (amendment.expires_at, decision.expires_at),
-    }
-    for label, (actual, expected) in bindings.items():
-        if actual != expected:
-            raise FoundryInputError(f"approved amendment has stale {label}")
-
-
-def _validate_effective_contract(
-    effective: EffectiveContract,
-    case: FeedbackCase,
-    amendment: CompatibilityAmendment,
-) -> None:
-    if effective.base != amendment.proposal.base:
-        raise FoundryInputError("effective contract base binding is stale")
-    if effective.target != amendment.proposal.scope:
-        raise FoundryInputError(
-            "effective contract target scope does not match amendment"
-        )
-    if amendment.amendment_id not in effective.applied_amendment_ids:
-        raise FoundryInputError("effective contract omits the approved amendment")
-    if contract_digest(effective.normative_contract) != case.base_contract_digest:
-        raise FoundryInputError("effective contract normative base digest is stale")
-
-
-def _read_model(model_type, path: Path, label: str):
-    if not path.is_file() or path.is_symlink():
-        raise FoundryInputError(f"required {label} is missing or unsafe")
-    try:
-        return model_type.model_validate_json(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise FoundryInputError(f"{label} is invalid: {str(exc)[:200]}") from exc
-
-
-def _write_once_or_verify(path: Path, model: BaseModel) -> None:
-    if path.exists():
-        existing = _read_model(type(model), path, path.name)
-        if existing != model:
-            raise FoundryInputError(f"immutable persisted file differs: {path.name}")
-        return
-    temporary = path.with_name(f".{path.name}.tmp")
-    try:
-        _write_model(temporary, model)
-        if path.exists():
-            raise FoundryInputError(
-                f"immutable persisted file already exists: {path.name}"
-            )
-        os.replace(temporary, path)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
-
-
-def _write_model(path: Path, model: BaseModel) -> None:
-    path.write_text(model.model_dump_json(indent=2), encoding="utf-8")
-
-
-def _safe_segment(value: str, label: str) -> None:
-    if not value or value in {".", ".."} or "/" in value or "\\" in value:
-        raise FoundryInputError(f"unsafe {label}: {value!r}")
-
-
-def _reject_symlink_components(
-    project_root: Path, path: Path, label: str
-) -> None:
-    root = project_root.resolve()
-    try:
-        relative = path.relative_to(project_root)
-    except ValueError as exc:
-        raise FoundryInputError(f"unsafe {label} path") from exc
-    current = project_root
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            raise FoundryInputError(f"unsafe symlink in {label} path")
-    if path.exists():
-        try:
-            path.resolve().relative_to(root)
-        except ValueError as exc:
-            raise FoundryInputError(f"unsafe {label} path") from exc
-
-
-def _reject_sensitive_values(value: object, *, path: str = "$") -> None:
-    finding = find_sensitive_value(value, path=path)
-    if finding is not None:
-        kind, finding_path = finding
-        raise FoundryInputError(f"raw {kind} is forbidden at {finding_path}")
-
-
-def _load_governed_release(
-    project_root: Path, docset_id: str, asset_id: str
-):
-    from loop_apidoc.feedback.loader import (
-        FeedbackInputError,
-        load_approved_contract,
-    )
-
-    try:
-        return load_approved_contract(project_root, docset_id, asset_id)
-    except FeedbackInputError as exc:
-        raise FoundryInputError(
-            f"approved normative base is invalid: {exc}"
-        ) from exc
+            if actual != value:
+                raise FoundryInputError(
+                    f"immutable effective asset differs: {asset.effective_asset_id}"
+                )
+    finally:
+        os.close(root_fd)

@@ -9,7 +9,7 @@ import httpx
 from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.manifest.scanner import ManifestScanError, scan_sources
 from loop_apidoc.manifest.urls import probe_url
-from loop_apidoc.preparation.coverage import UrlCoverage
+from loop_apidoc.url_coverage import UrlCoverage
 from loop_apidoc.rendered_url import canonicalize_url, verified_rendered_url_sources
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from loop_apidoc.foundry import store
+from . import store
 from loop_apidoc.foundry.models import (
     Catalog,
     CatalogDocsetEntry,
@@ -30,6 +30,8 @@ def register_docset(
     docset_identity: tuple[int, int] | None = None
     staging_name: str | None = None
     existing_docset = False
+    catalog_snapshot: store.HeadSnapshot | None = None
+    docset_snapshot: store.HeadSnapshot | None = None
     catalog_bytes: bytes | None
     docset_bytes: bytes | None = None
     preflight_complete = False
@@ -51,19 +53,21 @@ def register_docset(
 
     def rollback() -> list[tuple[str, BaseException]]:
         failures: list[tuple[str, BaseException]] = []
-        try:
-            store.restore_head_relative(
-                transaction.api_fd, "catalog.json", catalog_bytes
-            )
-        except BaseException as exc:
-            failures.append(("catalog.json", exc))
-        if existing_docset:
+        if catalog_snapshot is not None:
             try:
                 store.restore_head_relative(
-                    docset_fd, "docset.json", docset_bytes
+                    transaction.api_fd, "catalog.json", catalog_snapshot
                 )
             except BaseException as exc:
-                failures.append(("docset.json", exc))
+                failures.append(("catalog.json", exc))
+        if existing_docset:
+            if docset_snapshot is not None:
+                try:
+                    store.restore_head_relative(
+                        docset_fd, "docset.json", docset_snapshot
+                    )
+                except BaseException as exc:
+                    failures.append(("docset.json", exc))
             try:
                 store.validate_directory_relative(
                     transaction.docsets_fd, docset.docset_id, docset_fd
@@ -83,9 +87,10 @@ def register_docset(
 
     try:
         # Complete all fallible head capture before the first mutation.
-        catalog_bytes = store.read_head_relative(
+        catalog_snapshot = store.read_head_snapshot_relative(
             transaction.api_fd, "catalog.json"
         )
+        catalog_bytes = catalog_snapshot.content
         existing_identity = store.entry_identity_relative(
             transaction.docsets_fd, docset.docset_id
         )
@@ -108,7 +113,10 @@ def register_docset(
                     "governance namespace changed during publication: "
                     f"{docset.docset_id}"
                 )
-            docset_bytes = store.read_head_relative(docset_fd, "docset.json")
+            docset_snapshot = store.read_head_snapshot_relative(
+                docset_fd, "docset.json"
+            )
+            docset_bytes = docset_snapshot.content
             if docset_bytes is not None:
                 if not exist_ok:
                     raise FoundryInputError(
@@ -125,7 +133,10 @@ def register_docset(
         preflight_complete = True
 
         store.save_docset(
-            transaction.project_root, docset, parent_fd=docset_fd
+            transaction.project_root,
+            docset,
+            parent_fd=docset_fd,
+            outcome=docset_snapshot,
         )
         if not existing_docset:
             assert staging_name is not None and docset_identity is not None
@@ -159,7 +170,10 @@ def register_docset(
             ),
         )
         store.save_catalog(
-            transaction.project_root, catalog, parent_fd=transaction.api_fd
+            transaction.project_root,
+            catalog,
+            parent_fd=transaction.api_fd,
+            outcome=catalog_snapshot,
         )
         store.validate_directory_relative(
             transaction.docsets_fd, docset.docset_id, docset_fd

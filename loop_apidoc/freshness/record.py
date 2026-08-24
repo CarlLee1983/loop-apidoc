@@ -14,7 +14,7 @@ from loop_apidoc.freshness.models import (
 )
 from loop_apidoc.freshness.signals import fetch_url_signal
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceAuthority
-from loop_apidoc.preparation.coverage import CoverageInputError, ResultStatus, load_coverage
+from loop_apidoc.url_coverage import CoverageInputError, ResultStatus, load_coverage
 
 _USABLE_URL_STATUSES = {ResultStatus.FETCHED, ResultStatus.FETCHED_RENDERED}
 

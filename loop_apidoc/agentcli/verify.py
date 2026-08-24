@@ -21,7 +21,7 @@ from loop_apidoc.agentcli.evidence import (
     verify_extraction_evidence,
 )
 from loop_apidoc.agentcli.gate import check_extraction
-from loop_apidoc.agentcli.identity import extraction_identities
+from loop_apidoc.operation_identity import extraction_identities
 from loop_apidoc.focus.gate import falsified_expectations, focus_evidence_references
 from loop_apidoc.focus.loader import load_focus_package
 from loop_apidoc.manifest.builder import build_manifest
