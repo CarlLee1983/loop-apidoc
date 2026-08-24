@@ -74,13 +74,16 @@ def test_verify_ownership_rejects_an_unowned_stage_entry(tmp_path: Path) -> None
 
 def test_verify_ownership_rejects_a_replaced_owned_directory(tmp_path: Path) -> None:
     """A same-name directory replacement cannot inherit output ownership."""
-    directory_fd = _directory_fd(tmp_path)
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    directory_fd = _directory_fd(stage)
     try:
         with output_path_from_fd(directory_fd) as output:
             (output / "artifacts").mkdir()
-            os.rename(tmp_path / "artifacts", tmp_path / "replaced-artifacts")
-            os.rmdir(tmp_path / "replaced-artifacts")
-            (tmp_path / "artifacts").mkdir()
+            # Keep the displaced inode alive outside the output stage.  Removing
+            # it would allow Linux to reuse the same inode for the replacement.
+            os.rename(stage / "artifacts", tmp_path / "replaced-artifacts")
+            (stage / "artifacts").mkdir()
 
             with pytest.raises(DescriptorOutputError, match="output directory identity changed"):
                 output.verify_ownership()
