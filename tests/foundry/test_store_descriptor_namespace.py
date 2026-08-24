@@ -76,9 +76,9 @@ def test_owned_directory_creation_cleans_up_after_parent_fsync_failure(
             descriptor_namespace.create_owned_directory_relative(
                 parent_fd, prefix=".stage-"
             )
-            retired_entries = tuple(tmp_path.iterdir())
-            assert len(retired_entries) == 1
-            assert "-cleanup-" in retired_entries[0].name
+        retired_entries = tuple(tmp_path.iterdir())
+        assert len(retired_entries) == 1
+        assert "-cleanup-" in retired_entries[0].name
 
         name, descriptor, _identity = descriptor_namespace.create_owned_directory_relative(
             parent_fd, prefix=".retry-"
@@ -601,5 +601,92 @@ def test_remove_owned_entry_retains_its_verified_quarantine(
         assert not owned.exists()
         assert len(quarantines) == 1
         assert quarantines[0].read_text(encoding="utf-8") == "owned"
+    finally:
+        os.close(parent_fd)
+
+
+@pytest.mark.parametrize(
+    "name",
+    ("", ".", "..", "/outside", "nested/../outside", "nested\\outside"),
+)
+def test_ensure_directory_relative_rejects_unsafe_relative_names(
+    tmp_path: Path, name: str
+) -> None:
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        with pytest.raises(FoundryInputError, match="unsafe governance relative path"):
+            descriptor_namespace.ensure_directory_relative(parent_fd, name)
+    finally:
+        os.close(parent_fd)
+
+
+def test_remove_owned_entry_rejects_replaced_original_name_without_touching_it(
+    tmp_path: Path,
+) -> None:
+    owned = tmp_path / "owned.json"
+    owned.write_text("owned", encoding="utf-8")
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        identity = descriptor_namespace.entry_identity_relative(parent_fd, "owned.json")
+        assert identity is not None
+        owned.rename(tmp_path / "retired-owned.json")
+        owned.write_text("foreign", encoding="utf-8")
+
+        with pytest.raises(FoundryPublicationError, match="identity changed") as error:
+            descriptor_namespace.remove_owned_entry_relative(
+                parent_fd, "owned.json", identity
+            )
+
+        assert getattr(error.value, "recovery_required", False)
+        assert owned.read_text(encoding="utf-8") == "foreign"
+        assert (tmp_path / "retired-owned.json").read_text(encoding="utf-8") == "owned"
+    finally:
+        os.close(parent_fd)
+
+
+def test_remove_entry_relative_rejects_non_regular_owned_entry(tmp_path: Path) -> None:
+    fifo = tmp_path / "owned.fifo"
+    os.mkfifo(fifo)
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        identity = descriptor_namespace.entry_identity_relative(parent_fd, "owned.fifo")
+        assert identity is not None
+
+        with pytest.raises(FoundryPublicationError, match="identity changed") as error:
+            descriptor_namespace.remove_entry_relative(
+                parent_fd, "owned.fifo", expected_identity=identity
+            )
+
+        assert getattr(error.value, "recovery_required", False)
+        assert stat.S_ISFIFO(fifo.stat().st_mode)
+    finally:
+        os.close(parent_fd)
+
+
+def test_move_owned_directory_rejects_destination_collision_and_identity_change(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source"
+    destination = tmp_path / "destination"
+    source.mkdir()
+    destination.mkdir()
+    parent_fd = os.open(tmp_path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        source_identity = descriptor_namespace.entry_identity_relative(parent_fd, "source")
+        assert source_identity is not None
+
+        with pytest.raises(FoundryInputError, match="destination already exists"):
+            descriptor_namespace.move_owned_directory_relative(
+                parent_fd, "source", "destination", source_identity
+            )
+        assert source.is_dir()
+        assert destination.is_dir()
+
+        with pytest.raises(FoundryPublicationError, match="identity changed"):
+            descriptor_namespace.move_owned_directory_relative(
+                parent_fd, "source", "moved", (source_identity[0], source_identity[1] + 1)
+            )
+        assert source.is_dir()
+        assert not (tmp_path / "moved").exists()
     finally:
         os.close(parent_fd)
