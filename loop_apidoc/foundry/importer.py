@@ -264,11 +264,19 @@ def _finalize_backup_quarantines(
         with governed.open_governed_docset(project_root, docset_id) as governed_docset:
             with governed_docset.open_directory("candidates") as candidates:
                 for quarantine in quarantines:
-                    descriptor_namespace.remove_owned_entry_relative(
-                        candidates.descriptor,
-                        quarantine.quarantine_name,
-                        quarantine.identity,
-                    )
+                    try:
+                        descriptor_namespace.remove_owned_entry_relative(
+                            candidates.descriptor,
+                            quarantine.quarantine_name,
+                            quarantine.identity,
+                        )
+                    except (FoundryInputError, FoundryPublicationError, OSError):
+                        # The committed import remains valid when one retained
+                        # tombstone cannot be retired.  Keep that exact entry
+                        # for trusted maintenance and continue with unrelated
+                        # quarantines, whose filesystem enumeration order is
+                        # deliberately unspecified.
+                        continue
                 candidates.validate()
             governed_docset.validate()
     except (FoundryInputError, FoundryPublicationError, OSError):

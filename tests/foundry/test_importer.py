@@ -368,7 +368,7 @@ def test_repeated_overwrites_retain_only_the_immediate_predecessor(
 
 
 def test_overwrite_prunes_only_exact_stale_backups_without_following_symlink(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _register(tmp_path)
     run_dir = write_run_dir(tmp_path / "output" / _RUN_ID)
@@ -384,6 +384,17 @@ def test_overwrite_prunes_only_exact_stale_backups_without_following_symlink(
     symlink_backup.symlink_to(retained_sentinel, target_is_directory=True)
     unrelated = candidates / f".{_RUN_ID}-backupish"
     unrelated.mkdir()
+
+    original_listdir = importer.os.listdir
+
+    def linked_backup_first(path: object) -> list[str]:
+        names = original_listdir(path)
+        return sorted(names, key=lambda name: (name != symlink_backup.name, name))
+
+    # A directory's enumeration order is unspecified.  Force the symlink
+    # quarantine to be finalized first, matching the Linux ordering that
+    # previously left a later real stale backup behind.
+    monkeypatch.setattr(importer.os, "listdir", linked_backup_first)
 
     importer.import_run(tmp_path, "tappay-backend", run_dir, overwrite=True)
 
