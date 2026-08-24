@@ -22,7 +22,7 @@ from loop_apidoc.review import (
     ReviewWaiver,
     ReviewWorkflow,
 )
-from loop_apidoc.review.models import ReviewSnapshot, ReviewSubjectKind
+from loop_apidoc.review.models import ReviewDecision, ReviewSnapshot, ReviewSubjectKind
 from loop_apidoc.review.binding import artifact_digests
 from loop_apidoc.score.models import ScoreProfile, ScoreReport, ScoreStatus
 from tests.foundry._fixtures import write_run_dir
@@ -332,7 +332,10 @@ def test_save_decision_rejects_unknown_subject_and_persists_valid_handoff(tmp_pa
         ),
     )
 
-    decision = store.load_review_decision(tmp_path, "vendor-payments", run.name)
+    raw_decision = store.load_review_decision_bytes(
+        tmp_path, "vendor-payments", run.name
+    )
+    decision = ReviewDecision.model_validate_json(raw_decision)
     assert decision is not None
     assert saved.decision == decision
     assert paths.candidate_review_decision_path(tmp_path, "vendor-payments", run.name).is_file()

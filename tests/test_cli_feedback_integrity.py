@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from loop_apidoc.foundry.models import FoundryPublicationError
 from tests.test_cli_feedback import _approved_contract, _bundle_payload, app, runner
 
 
@@ -93,6 +94,29 @@ def test_feedback_review_records_non_approval_route_without_proposal(
     decision = json.loads(decision_path.read_text(encoding="utf-8"))
     assert decision["disposition"] == "needs_evidence"
     assert decision["requested_route"] == "provider_clarification"
+
+
+def test_feedback_review_reports_governed_publication_failure_as_exit_2(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from loop_apidoc.feedback import cli as feedback_cli
+
+    def fail_review(*_args: object, **_kwargs: object) -> None:
+        raise FoundryPublicationError("governance namespace changed")
+
+    monkeypatch.setattr(feedback_cli.FeedbackWorkflow, "review", fail_review)
+    result = runner.invoke(
+        app,
+        [
+            "feedback", "review", "--project", str(tmp_path), "--docset", "demo-api",
+            "--case", "case-1", "--reviewed-by", "reviewer", "--reviewer-version", "1",
+            "--at", "2026-08-02T10:30:00Z", "--disposition", "needs_evidence",
+            "--route", "provider_clarification",
+        ],
+    )
+
+    assert result.exit_code == 2, result.output
+    assert "feedback review error: governance namespace changed" in result.output
 
 
 def test_feedback_submit_recomputes_proposal_before_persistence(

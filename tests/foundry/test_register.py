@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from loop_apidoc.foundry import paths, register, store
+from loop_apidoc.foundry import descriptor_namespace, governed, head_io, paths, register, store
 from loop_apidoc.foundry.models import (
     Docset,
     FoundryInputError,
@@ -119,17 +119,17 @@ def test_register_preflight_failure_preserves_captured_catalog(
     docset_path = paths.docset_manifest_path(tmp_path, "tappay-backend")
     catalog_before = catalog_path.read_bytes()
     docset_before = docset_path.read_bytes()
-    original_read_head = store.read_head_relative
+    original_read_head = head_io.read_head_snapshot_relative
     reads = 0
 
-    def fail_second_snapshot(parent_fd: int, name: str) -> bytes | None:
+    def fail_second_snapshot(parent_fd: int, name: str) -> head_io.HeadSnapshot:
         nonlocal reads
         reads += 1
         if reads == 2:
             raise OSError("docset snapshot failed")
         return original_read_head(parent_fd, name)
 
-    monkeypatch.setattr(store, "read_head_relative", fail_second_snapshot)
+    monkeypatch.setattr(head_io, "read_head_snapshot_relative", fail_second_snapshot)
 
     with pytest.raises(OSError, match="docset snapshot failed"):
         register.register_docset(
@@ -177,7 +177,7 @@ def test_register_rejects_existing_docset_replaced_between_stat_and_open(
     catalog_before = paths.catalog_path(tmp_path).read_bytes()
     docset_root = paths.docset_dir(tmp_path, "tappay-backend")
     displaced_root = docset_root.with_name("original-docset-displaced")
-    original_open = store.open_directory_relative
+    original_open = descriptor_namespace.open_directory_relative
     replaced = False
 
     def replace_before_open(parent_fd: int, name: str) -> int:
@@ -189,7 +189,7 @@ def test_register_rejects_existing_docset_replaced_between_stat_and_open(
             (docset_root / "foreign.txt").write_text("foreign", encoding="utf-8")
         return original_open(parent_fd, name)
 
-    monkeypatch.setattr(store, "open_directory_relative", replace_before_open)
+    monkeypatch.setattr(descriptor_namespace, "open_directory_relative", replace_before_open)
 
     with pytest.raises(FoundryPublicationError, match="namespace changed"):
         register.register_docset(
@@ -283,12 +283,44 @@ def test_reregistration_failure_restores_the_previous_docset_manifest(
     assert [entry.title for entry in catalog.docsets] == ["TapPay Backend API"]
 
 
+def test_catalog_head_substitute_is_not_overwritten_during_registration_rollback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    register.register_docset(tmp_path, _docset())
+    catalog_path = paths.catalog_path(tmp_path)
+    displaced = catalog_path.with_name("transaction-owned-catalog.json")
+    original_save_catalog = store.save_catalog
+    published: bytes | None = None
+
+    def publish_then_substitute(*args: object, **kwargs: object) -> None:
+        nonlocal published
+        original_save_catalog(*args, **kwargs)
+        published = catalog_path.read_bytes()
+        catalog_path.rename(displaced)
+        catalog_path.write_bytes(published)
+        raise OSError("injected post-publication catalog failure")
+
+    monkeypatch.setattr(store, "save_catalog", publish_then_substitute)
+
+    with pytest.raises(FoundryPublicationError, match="rollback failures"):
+        register.register_docset(
+            tmp_path,
+            _docset(title="Updated Backend API"),
+            exist_ok=True,
+        )
+
+    assert published is not None
+    assert catalog_path.read_bytes() == published
+    assert catalog_path.stat().st_ino != displaced.stat().st_ino
+    assert (tmp_path / ".foundry/api/.catalog-governance.lock").is_dir()
+
+
 def test_registration_reports_a_lock_release_failure_after_a_clean_rollback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Releasing the lock validates the namespace; a change there is not silent."""
     register.register_docset(tmp_path, _docset())
-    original_validate = store.validate_catalog_namespace
+    original_validate = governed.validate_catalog_namespace
     calls: list[int] = []
 
     def fail_on_lock_release(*args: object, **kwargs: object) -> None:
@@ -298,6 +330,6 @@ def test_registration_reports_a_lock_release_failure_after_a_clean_rollback(
             raise FoundryPublicationError("governance namespace changed")
         original_validate(*args, **kwargs)  # type: ignore[arg-type]
 
-    monkeypatch.setattr(store, "validate_catalog_namespace", fail_on_lock_release)
+    monkeypatch.setattr(governed, "validate_catalog_namespace", fail_on_lock_release)
     with pytest.raises(FoundryPublicationError, match="lock cleanup failed"):
         register.register_docset(tmp_path, _docset(docset_id="other-backend"))

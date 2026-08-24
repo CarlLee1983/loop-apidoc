@@ -18,10 +18,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from loop_apidoc.agentcli.extraction import _expand_methods
-from loop_apidoc.agentcli.identity import (
+from loop_apidoc.operation_identity import (
     endpoint_identity as _key,
     entries as _entries,
+    expand_methods,
 )
 
 
@@ -33,8 +33,8 @@ def _names(payload: dict, section: str) -> set[str]:
 
 
 def _count_violations(inventory: dict, endpoints: list[tuple[str, dict]]) -> list[str]:
-    expected = len(_expand_methods(_entries(inventory, "endpoints")))
-    actual = sum(len(_expand_methods([endpoint])) for _, endpoint in endpoints)
+    expected = len(expand_methods(_entries(inventory, "endpoints")))
+    actual = sum(len(expand_methods([endpoint])) for _, endpoint in endpoints)
     if expected == actual:
         return []
     return [
@@ -52,12 +52,12 @@ def _identity_set_violations(
     by `_count_violations`, so this only has to answer "which identity is on exactly
     one side"."""
     inventory_keys = {
-        key for key in (_key(e) for e in _expand_methods(_entries(inventory, "endpoints")))
+        key for key in (_key(e) for e in expand_methods(_entries(inventory, "endpoints")))
         if key is not None
     }
     keyed_endpoints = [
         (name, ep) for name, endpoint in endpoints
-        for ep in _expand_methods([endpoint]) if _key(ep) is not None
+        for ep in expand_methods([endpoint]) if _key(ep) is not None
     ]
     file_keys = {_key(ep) for _, ep in keyed_endpoints}
 
@@ -77,7 +77,7 @@ def _identity_set_violations(
 def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
     seen: dict[str, list[str]] = {}
     for name, endpoint in endpoints:
-        for expanded in _expand_methods([endpoint]):
+        for expanded in expand_methods([endpoint]):
             key = _key(expanded)
             if key is None:
                 continue
@@ -94,7 +94,7 @@ def _duplicate_violations(endpoints: list[tuple[str, dict]]) -> list[str]:
 
 def _identity_keys(entry: dict) -> frozenset[str]:
     return frozenset(
-        key for key in (_key(expanded) for expanded in _expand_methods([entry]))
+        key for key in (_key(expanded) for expanded in expand_methods([entry]))
         if key is not None
     )
 
@@ -251,13 +251,13 @@ def _operational_reference_violations(
     endpoint_keys = {
         key
         for _, endpoint in endpoints
-        for expanded in _expand_methods([endpoint])
+        for expanded in expand_methods([endpoint])
         if (key := _key(expanded)) is not None
     }
     endpoints_by_key = {
         key: expanded
         for _, endpoint in endpoints
-        for expanded in _expand_methods([endpoint])
+        for expanded in expand_methods([endpoint])
         if (key := _key(expanded)) is not None
     }
     out: list[str] = []
@@ -296,7 +296,7 @@ def _integration_operation_reference_violations(
     endpoint_keys = {
         key
         for _, endpoint in endpoints
-        for expanded in _expand_methods([endpoint])
+        for expanded in expand_methods([endpoint])
         if (key := _key(expanded)) is not None
     }
     section_fields = {

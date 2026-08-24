@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import yaml
 
+from loop_apidoc.descriptor_output import OutputPath
 from loop_apidoc.generate.examples import build_examples
 from loop_apidoc.generate.handoff import build_handoff
 from loop_apidoc.generate.integration import build_integration_document
@@ -33,7 +32,7 @@ def build_result(plan: NormalizationPlan, manifest: Manifest) -> GenerateResult:
 
 
 def generate_outputs(
-    plan: NormalizationPlan, manifest: Manifest, run_dir: Path
+    plan: NormalizationPlan, manifest: Manifest, run_dir: OutputPath
 ) -> GenerateResult:
     result = build_result(plan, manifest)
     run_dir.mkdir(parents=True, exist_ok=True)

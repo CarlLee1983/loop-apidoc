@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from loop_apidoc.core.conformance import canonical_digest
 from loop_apidoc.diff import DiffInputError, build_diff_report, load_run_artifacts
 from loop_apidoc.foundry import approve, importer, paths, query, store
@@ -197,10 +199,20 @@ class ReviewWorkflow:
                 diff=diff,
                 base_digests=base_digests,
             )
-            decision = store.load_review_decision(
+            raw_decision = store.load_review_decision_bytes(
                 self.project_root, docset_id, candidate_run_id
             )
-        except (DiffInputError, FoundryInputError, ReviewInputError) as exc:
+            decision = (
+                ReviewDecision.model_validate_json(raw_decision)
+                if raw_decision is not None
+                else None
+            )
+        except (
+            DiffInputError,
+            FoundryInputError,
+            ReviewInputError,
+            ValidationError,
+        ) as exc:
             raise ReviewInputError(str(exc)) from exc
         if decision is not None and decision.binding != binding:
             raise ReviewConflictError("saved review decision is stale for current evidence")

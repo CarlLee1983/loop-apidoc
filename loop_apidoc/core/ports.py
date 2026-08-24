@@ -6,16 +6,17 @@ from typing import Protocol
 from loop_apidoc.core.models import (
     ApprovalDecision,
     ContractRelease,
-    CurrentPointer,
-    DomainEvent,
     EvidenceBundle,
     ExtractionWorkItem,
-    GroundedClaim,
     RuntimeResult,
     SourceSet,
-    WorkflowRecord,
 )
-from loop_apidoc.domain.models import GroundedApiContract
+from loop_apidoc.core.persistence import (
+    CommandReservation,
+    CommitResult,
+    CoreSnapshot,
+    LifecycleCommit,
+)
 from loop_apidoc.domain.projections import Projection
 
 
@@ -27,38 +28,32 @@ class SourcePort(Protocol):
     def acquire(self, source_set: SourceSet) -> EvidenceBundle: ...
 
 
-class EvidenceStore(Protocol):
-    def put_source_set(self, source_set: SourceSet) -> None: ...
-    def get_source_set(self, source_set_id: str) -> SourceSet: ...
-    def put_bundle(self, bundle: EvidenceBundle) -> None: ...
-    def get_bundle(self, source_set_id: str) -> EvidenceBundle: ...
+class CoreUnitOfWork(Protocol):
+    """Atomic lifecycle persistence with one aggregate-exclusive command fence."""
 
+    def load(self, source_set_id: str) -> CoreSnapshot | None: ...
 
-class ContractStore(Protocol):
-    def put_workflow(self, record: WorkflowRecord) -> None: ...
-    def get_workflow(self, source_set_id: str) -> WorkflowRecord: ...
-    def put_runtime_result(self, source_set_id: str, result: RuntimeResult) -> None: ...
-    def get_runtime_result(self, source_set_id: str) -> RuntimeResult: ...
-    def put_claims(
-        self, source_set_id: str, claims: tuple[GroundedClaim, ...]
+    def reserve(
+        self,
+        source_set_id: str,
+        idempotency_key: str,
+    ) -> CommandReservation: ...
+
+    def commit(self, change: LifecycleCommit) -> CommitResult: ...
+
+    def release(
+        self,
+        source_set_id: str,
+        idempotency_key: str,
+        reservation_token: str,
     ) -> None: ...
-    def get_claims(self, source_set_id: str) -> tuple[GroundedClaim, ...]: ...
-    def put_contract(
-        self, source_set_id: str, contract: GroundedApiContract
-    ) -> None: ...
-    def get_contract(self, source_set_id: str) -> GroundedApiContract: ...
-    def put_projections(
-        self, source_set_id: str, projections: tuple[Projection, ...]
-    ) -> None: ...
-    def get_projections(self, source_set_id: str) -> tuple[Projection, ...]: ...
-    def put_release(self, release: ContractRelease) -> None: ...
-    def get_release(self, release_id: str) -> ContractRelease: ...
-    def put_current(self, pointer: CurrentPointer) -> None: ...
 
 
 class ArtifactSink(Protocol):
+    """Content-addressed publication sink; retrying identical content is safe."""
+
     def publish(
-        self, release_id: str, projections: tuple[Projection, ...]
+        self, release: ContractRelease, projections: tuple[Projection, ...]
     ) -> tuple[str, ...]: ...
 
 
@@ -72,7 +67,3 @@ class IdentityProvider(Protocol):
 
 class Clock(Protocol):
     def now(self) -> datetime: ...
-
-
-class EventSink(Protocol):
-    def append(self, event: DomainEvent) -> None: ...

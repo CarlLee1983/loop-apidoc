@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import httpx
 import yaml
 
-from loop_apidoc.preparation.coverage import UrlCoverage
+from loop_apidoc.url_coverage import UrlCoverage
 
 
 class OpenApiSnapshotError(ValueError):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -50,7 +51,15 @@ from loop_apidoc.feedback.loader import (
 )
 from loop_apidoc.feedback.erratum import ProviderErratumMetadata
 from loop_apidoc.feedback.report import write_proposal_reports
-from loop_apidoc.foundry import feedback, paths, query, register, store
+from loop_apidoc.foundry import (
+    descriptor_io,
+    feedback,
+    normative,
+    paths,
+    query,
+    register,
+    store,
+)
 from loop_apidoc.foundry.models import (
     Asset,
     AssetArtifactDigests,
@@ -524,6 +533,37 @@ def test_load_approved_contract_returns_immutable_release_from_governed_artifact
     assert release.fragments == _normative_fragments()
 
 
+def test_load_approved_contract_rejects_asset_directory_swap_after_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    asset_root = paths.asset_dir(tmp_path, "payments", "payments-base")
+    foreign_root = tmp_path / "foreign-asset"
+    moved_root = tmp_path / "moved-asset"
+    shutil.copytree(asset_root, foreign_root)
+    original_open = normative.descriptor_namespace.open_directory_relative
+    swapped = False
+
+    def open_then_swap(*args: object, **kwargs: object) -> int:
+        nonlocal swapped
+        directory = original_open(*args, **kwargs)  # type: ignore[arg-type]
+        relative = args[1] if len(args) > 1 else kwargs.get("name")
+        if relative == "assets/payments-base":
+            asset_root.rename(moved_root)
+            foreign_root.rename(asset_root)
+            swapped = True
+        return directory
+
+    monkeypatch.setattr(
+        normative.descriptor_namespace, "open_directory_relative", open_then_swap
+    )
+
+    with pytest.raises(FeedbackInputError, match="governed normative base path is unsafe"):
+        load_approved_contract(tmp_path, "payments", "payments-base")
+
+    assert swapped
+
+
 def test_load_approved_contract_resolves_core_contract_from_its_manifest_binding(
     tmp_path: Path,
 ) -> None:
@@ -994,12 +1034,10 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
     )
     decision = _decision(case, proposal)
     feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
-    assert (
+    with pytest.raises(FoundryInputError, match="already exists"):
         feedback.record_feedback_review(
             tmp_path, "payments", case.case_id, decision
         )
-        == decision
-    )
     amendment = _amendment(proposal, decision)
     effective = _effective(amendment)
 
@@ -1012,7 +1050,7 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
         release=_release(amendment),
         composition_amendments=(amendment,),
     )
-    assert (
+    with pytest.raises(FoundryInputError, match="already exists"):
         feedback.approve_feedback_case(
             tmp_path,
             "payments",
@@ -1022,8 +1060,6 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
             release=_release(amendment),
             composition_amendments=(amendment,),
         )
-        == asset
-    )
 
     loaded = query.load_current_effective_asset(
         tmp_path, "payments", _scope(), now=_LATER
@@ -1045,12 +1081,12 @@ def test_approval_persists_amendment_and_queries_exact_scoped_effective_asset(
         / case.case_id
     )
     assert (case_dir / "approved-amendment.json").is_file()
-    effective_path = query.resolve_current_effective_artifact(
+    effective_bytes = query.read_current_effective_artifact(
         tmp_path, "payments", _scope(), "effective_contract", now=_LATER
     )
     assert (
         EffectiveContract.model_validate_json(
-            effective_path.read_text(encoding="utf-8")
+            effective_bytes
         )
         == effective
     )
@@ -1156,6 +1192,56 @@ def test_effective_current_failure_rolls_back_owned_feedback_outputs_and_allows_
     assert asset.effective_asset_id == effective.effective_contract_id
 
 
+def test_effective_head_substitute_is_not_overwritten_during_feedback_rollback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    scope_digest = canonical_digest(effective.target)
+    current_path = paths.effective_current_path(
+        tmp_path, "payments", scope_digest
+    )
+    displaced = current_path.with_name("transaction-owned-effective-current.json")
+    original_save_current = store.save_effective_current
+    published: bytes | None = None
+
+    def publish_then_substitute(*args: object, **kwargs: object) -> None:
+        nonlocal published
+        original_save_current(*args, **kwargs)
+        published = current_path.read_bytes()
+        current_path.rename(displaced)
+        current_path.write_bytes(published)
+        raise OSError("injected post-publication effective current failure")
+
+    monkeypatch.setattr(store, "save_effective_current", publish_then_substitute)
+
+    with pytest.raises(FoundryPublicationError, match="rollback/cleanup failures"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    assert published is not None
+    assert current_path.read_bytes() == published
+    assert current_path.stat().st_ino != displaced.stat().st_ino
+    assert (paths.docset_dir(tmp_path, "payments") / ".governance.lock").is_dir()
+    assert (tmp_path / ".foundry/api/.catalog-governance.lock").is_dir()
+
+
 def test_feedback_preflight_failure_releases_both_governance_locks(
     tmp_path: Path,
 ) -> None:
@@ -1223,7 +1309,7 @@ def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
     effective = _effective(amendment)
     docset_root = paths.docset_dir(tmp_path, "payments")
     moved_docset = tmp_path / "pinned-docset"
-    original_write_once = store.write_once_model_relative
+    original_write_once = descriptor_io.write_once_model_relative
     replaced = False
 
     def replace_then_write(*args: object, **kwargs: object):
@@ -1235,7 +1321,7 @@ def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
             (docset_root / "sentinel.txt").write_text("foreign", encoding="utf-8")
         return original_write_once(*args, **kwargs)
 
-    monkeypatch.setattr(store, "write_once_model_relative", replace_then_write)
+    monkeypatch.setattr(descriptor_io, "write_once_model_relative", replace_then_write)
 
     with pytest.raises(FoundryPublicationError, match="namespace changed"):
         feedback.approve_feedback_case(
@@ -1260,6 +1346,50 @@ def test_feedback_namespace_replacement_does_not_write_the_foreign_tree(
         / case.case_id
         / "approved-amendment.json"
     ).exists()
+
+
+def test_feedback_approval_rolls_back_amendment_after_post_link_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(
+        tmp_path, "payments", bundle, assessment, proposal
+    )
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = _effective(amendment)
+    original_write_once = descriptor_io.write_once_model_relative
+
+    def write_then_fail(*args: object, **kwargs: object) -> object:
+        result = original_write_once(*args, **kwargs)
+        if len(args) >= 2 and args[1] == "approved-amendment.json":
+            raise OSError("injected post-link failure")
+        return result
+
+    monkeypatch.setattr(descriptor_io, "write_once_model_relative", write_then_fail)
+
+    with pytest.raises(OSError, match="post-link failure"):
+        feedback.approve_feedback_case(
+            tmp_path,
+            "payments",
+            case.case_id,
+            amendment,
+            effective,
+            release=_release(amendment),
+            composition_amendments=(amendment,),
+        )
+
+    amendment_path = (
+        paths.feedback_case_dir(tmp_path, "payments", case.case_id)
+        / "approved-amendment.json"
+    )
+    assert not amendment_path.exists()
+    assert not (paths.docset_dir(tmp_path, "payments") / ".governance.lock").exists()
+    assert not (tmp_path / ".foundry/api/.catalog-governance.lock").exists()
 
 
 def test_feedback_nested_scope_replacement_rolls_back_the_pinned_tree(
@@ -1305,7 +1435,10 @@ def test_feedback_nested_scope_replacement_rolls_back_the_pinned_tree(
         / "approved-amendment.json"
     ).exists()
     assert not list(moved_effective.rglob("current.json"))
-    assert not list(moved_effective.rglob("asset.json"))
+    assert all(
+        any("-cleanup-" in part for part in path.relative_to(moved_effective).parts)
+        for path in moved_effective.rglob("asset.json")
+    )
 
 
 def test_feedback_lock_cleanup_failure_rolls_back_publication_for_retry(
@@ -1402,6 +1535,69 @@ def test_effective_current_rejects_tampered_normative_pointer(
         query.load_current_effective_asset(
             tmp_path, "payments", effective.target, now=_LATER
         )
+
+
+def test_effective_current_rejects_scope_directory_swap_after_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _setup_base(tmp_path)
+    bundle = _bundle()
+    assessment = _assessment(bundle)
+    proposal = _proposal(bundle, assessment)
+    case = feedback.persist_feedback_case(tmp_path, "payments", bundle, assessment, proposal)
+    decision = _decision(case, proposal)
+    feedback.record_feedback_review(tmp_path, "payments", case.case_id, decision)
+    amendment = _amendment(proposal, decision)
+    effective = feedback.approve_feedback_case(
+        tmp_path,
+        "payments",
+        case.case_id,
+        amendment,
+        _effective(amendment),
+        release=_release(amendment),
+        composition_amendments=(amendment,),
+    )
+    effective_root = paths.docset_dir(tmp_path, "payments") / "effective"
+    foreign_root = tmp_path / "foreign-effective"
+    moved_root = tmp_path / "moved-effective"
+    shutil.copytree(effective_root, foreign_root)
+    original_open = query.governed_io.open_governed_docset
+    swapped = False
+
+    class SwappingGovernedDocset:
+        def __init__(self, inner: object) -> None:
+            self._inner = inner
+
+        def __enter__(self) -> object:
+            self._inner.__enter__()  # type: ignore[union-attr]
+            return self
+
+        def __exit__(self, *args: object) -> object:
+            return self._inner.__exit__(*args)  # type: ignore[union-attr]
+
+        def __getattr__(self, name: str) -> object:
+            return getattr(self._inner, name)
+
+        def open_directory(self, relative: str) -> object:
+            nonlocal swapped
+            directory = self._inner.open_directory(relative)  # type: ignore[union-attr]
+            if relative == f"effective/scopes/{effective.scope_digest}":
+                effective_root.rename(moved_root)
+                foreign_root.rename(effective_root)
+                swapped = True
+            return directory
+
+    def open_then_swap(*args: object, **kwargs: object) -> object:
+        return SwappingGovernedDocset(original_open(*args, **kwargs))
+
+    monkeypatch.setattr(query.governed_io, "open_governed_docset", open_then_swap)
+
+    with pytest.raises(FoundryInputError, match="effective governed path is unsafe"):
+        query.load_current_effective_asset(
+            tmp_path, "payments", effective.target, now=_LATER
+        )
+
+    assert swapped
 
 
 def test_feedback_approval_rejects_tampered_normative_pointer(

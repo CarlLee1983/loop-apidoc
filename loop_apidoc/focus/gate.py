@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from loop_apidoc.agentcli.identity import extraction_identities
+from loop_apidoc.operation_identity import extraction_identities
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 from loop_apidoc.focus.codes import extraction_error_codes
 from loop_apidoc.focus.fields import extraction_field_names

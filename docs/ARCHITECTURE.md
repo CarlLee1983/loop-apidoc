@@ -30,6 +30,22 @@ the claim is supported, missing, conflicting, unverified, waived, or superseded.
 OpenAPI and the review payload are projections of the Canonical API Contract IR, not its
 source of truth.
 
+Before any Core use case invokes a source, runtime, approval, or artifact port, its Unit of
+Work atomically reserves the complete source-set aggregate and returns a fencing token.
+The token must accompany the CAS commit; an exact completed retry replays its durable snapshot,
+while any live command is `in_progress` and cannot repeat an external effect. Pure preflight
+failures release the reservation; an unknown source/runtime/approval outcome remains fenced
+rather than being reissued automatically. Content-addressed artifact publication is the sole
+retry-safe effect.
+The optional local directory artifact sink pins its configured root with
+no-follow descriptors, verifies a complete single-link content tree twice before
+it returns references, and retains a hidden staging directory after a failed or
+raced publication. Its path references are durable locators in a sink-owned root,
+not immutable capabilities: the root must not be changed out of band between
+publication and consumption. Portable POSIX cannot prove that a recursive pathname
+cleanup still names its original inode, so automatic cleanup could otherwise delete
+a replacement supplied by another writer.
+
 The Canonical Contract Core stays domain-neutral. Payment-only Amount Direction and Line
 Currency Policy values are owned by one optional `PaymentProfile`; a non-payment contract
 has no profile. Legacy v0.27 top-level collection names are read/write compatibility
@@ -172,8 +188,10 @@ immutable hash chain; governed and user-facing traversal verifies each predecess
 and amendment artifact digest. This permits a new reviewed amendment to recover expired lineage,
 while making any historical asset-metadata, amendment, or supersession tampering fail closed
 before it can contaminate a later approval/composition.
-All governed lineage traversal is centralized in `foundry.query`, the single read-side I/O for
-this chain; adapters do not implement a parallel traversal.
+All public governed lineage traversal is centralized in `foundry.query`, the single public
+read-side I/O for this chain. Its package-internal `foundry.effective_binding` adapter performs
+the descriptor-held pointer/asset/lineage verification shared with the Effective approval
+transaction; it neither opens a project path nor exposes a parallel public reader.
 
 A formal **Provider Erratum** has documentary authority and therefore bypasses empirical
 composition: acquire it as supplemental supplier material and run the complete existing
@@ -290,7 +308,7 @@ validation pass/fail 的語意。配合 `--target-score`/`--prev-score`/`--round
 
 URL 來源另有一條 fail-loud 的涵蓋檢核:agent 依 catalog 寫出
 `url_sources/coverage.json` 帳本,經 `assemble --url-coverage` 傳入後由
-`preparation/coverage.py` 解析,`preparation/assess.py` 的 `_assess_url_coverage`
+`url_coverage.py` 解析,`preparation/assess.py` 的 `_assess_url_coverage`
 產生**只有 warning** 的 `url_coverage` phase(預期 vs 實際撈取的遺漏檢查),
 不影響 validation 的 severity 閘。
 
@@ -331,7 +349,7 @@ flowchart TD
 
 URL 來源走「先建目錄、再明確選取、才快取」的分段流程(`skills/loop-apidoc/reference/url-fetching.md`):`catalog-url` 只下載入口頁一次並寫出導航 catalog(絕不自動跟連結,catalog 是**涵蓋宇宙**而非抓取清單);`select-url` 純選取(`--branch`/`--term`/`--url`,不下載);`cache-url-pages` 把 catalog 全頁快取成本機 corpus(`raw/` 原始 HTML + `body/` 正文 + `corpus.json` 精簡卡片:標題/標頭/內部連結/實體/雜湊,**不送模型**);`cache-url-entry` 是單頁(空 catalog/一頁式文件)變體;`related-url-pages` 依正文連結與共享實體輸出候選頁卡片;`normalize-html-snapshot` 把已下載的靜態 HTML 正規化成 Markdown 並寫 URL/hash provenance sidecar(`*.source.json`)。受 challenge 保護但可由互動式瀏覽器合法顯示的頁面走 `import-rendered-url`：`rendered_url.py` 離線保存原始 HTML/Markdown、版本化 capture provenance 與 `fetched_rendered` coverage；`manifest --url-coverage`／`assemble --url-coverage` 只在 URL、路徑、method 與 SHA-256 全部匹配時省略該 origin probe，任何 mismatch 都在 run-dir 建立前 fail closed。這些模組是頂層的 `url_catalog.py`/`url_corpus.py`/`html_snapshot.py`/`rendered_url.py`。
 
-`assess-sources --source-risk` 是擷取前的品質 gate，會驗證並嵌入 source-risk audit(`source_quality/`:`loader.py`/`assess.py`/`diff.py`/`models.py`/`report.py`)；其 output 目錄可經 `assemble --source-quality` 輸入。`reject` 會在建立 run-dir 前中止，`pass` 的 report 與 source diff 會被寫入 `<run-dir>/source-quality/`，使後續 Foundry 匯入保留稽核證據。`agentcli/` 內含八個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`input_schema.py`(pydantic 型別守衛)、`source_guard.py`(三項輸入邊界檢查,違規即 `exit 2` 且不建立 run 目錄:`source` 引用格式、`endpoints[].path` 根路徑、`path` 為 `null` 的 webhook/callback 端點必須帶 `summary`;`source` 以「檔案」為範圍——整份檔無一引用命中 manifest 才擋,部分命中則交給 validate 逐筆報 `SOURCE_UNVERIFIED`)、`cross_file.py`(純函式,檢查 `endpoints/*.json` 與 `inventory.json` 的六項跨檔不變式:端點檔數等於 inventory 筆數、身份多重集合相等(有 `path` 用 `(method, path)`,`path` 為 `null` 的 webhook/callback 端點改用 `(method, summary)`)、同一身份不得寫進兩個檔案、`schema_ref` 與 `security[]` 各自指向 inventory 既有的 schema/security scheme 名稱、`endpoints[].server` 需指向某個 `environments[].name`;null-path 端點不再豁免多重集合與重複檢查——`source_guard` 已在邊界保證它們必有 `summary`)、`gate.py`(`check_extraction`,`assemble` 與 `verify-extraction` 共用的唯一聚合閘門,兩個入口因此不可能漂移)、`verify.py`(`verify-extraction` 的薄殼:建 manifest → 讀擷取目錄 → 呼叫閘門;只讀不寫,不建立 run 目錄)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(編排 PDF／DOCX→markdown，先驗證整批 DOCX 再寫檔)。`docx_normalization.py` 以 bounded、fail-closed OOXML gate 產生 deterministic Markdown 與 `.source.json` provenance，不執行或解析外部 relationship。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。`preparation/` 內含 `assess.py`(`assess_preparation` 把 manifest + inventory + endpoints + plan 評成就緒度報告,phase/finding、severity `error`/`warning`、status `blocked`/`needs_attention`/`ready`;另 `_assess_url_coverage` 在有 URL 來源時附加**只有 warning** 的 `url_coverage` phase)、`coverage.py`(`load_coverage`,本套件唯一讀檔函式,fail-loud 解析 agent 寫出的 `url_sources/coverage.json` 帳本)與 `report.py`(寫出 `preparation-report.{json,md}`),在 `assemble` 內於 plan 之後、generate 之前執行,並被 `diff/` 讀回比較。`score/` 內含 `loader.py`(`load_score_inputs`)、`evaluate.py`(`evaluate_score`,五類加權 openapi_validity/completeness/consistency/source_grounding/reviewability → 0–100,`ci`/`review` profile)、`loop.py`(`loop_verdict`,分數自循環判定 `continue`/`converged`/`plateau`/`exhausted`)與 `report.py`(寫出 `score/score.{json,md}`),經 `score` 命令或 `assemble --score` 產生,不改變 validation pass/fail。
+`assess-sources --source-risk` 是擷取前的品質 gate，會驗證並嵌入 source-risk audit(`source_quality/`:`loader.py`/`assess.py`/`diff.py`/`models.py`/`report.py`)；其 output 目錄可經 `assemble --source-quality` 輸入。`reject` 會在建立 run-dir 前中止，`pass` 的 report 與 source diff 會被寫入 `<run-dir>/source-quality/`，使後續 Foundry 匯入保留稽核證據。`agentcli/` 內含八個檔案:`assemble.py`(組裝 agent 寫出的 JSON)、`input_schema.py`(pydantic 型別守衛)、`source_guard.py`(三項輸入邊界檢查,違規即 `exit 2` 且不建立 run 目錄:`source` 引用格式、`endpoints[].path` 根路徑、`path` 為 `null` 的 webhook/callback 端點必須帶 `summary`;`source` 以「檔案」為範圍——整份檔無一引用命中 manifest 才擋,部分命中則交給 validate 逐筆報 `SOURCE_UNVERIFIED`)、`cross_file.py`(純函式,檢查 `endpoints/*.json` 與 `inventory.json` 的六項跨檔不變式:端點檔數等於 inventory 筆數、身份多重集合相等(有 `path` 用 `(method, path)`,`path` 為 `null` 的 webhook/callback 端點改用 `(method, summary)`)、同一身份不得寫進兩個檔案、`schema_ref` 與 `security[]` 各自指向 inventory 既有的 schema/security scheme 名稱、`endpoints[].server` 需指向某個 `environments[].name`;null-path 端點不再豁免多重集合與重複檢查——`source_guard` 已在邊界保證它們必有 `summary`)、`gate.py`(`check_extraction`,`assemble` 與 `verify-extraction` 共用的唯一聚合閘門,兩個入口因此不可能漂移)、`verify.py`(`verify-extraction` 的薄殼:建 manifest → 讀擷取目錄 → 呼叫閘門;只讀不寫,不建立 run 目錄)、`extraction.py`(把 `inventory.json` 轉成 plan 各 stage 的初始答案)、`preprocess.py`(編排 PDF／DOCX→markdown，先驗證整批 DOCX 再寫檔)。`operation_identity.py` 是跨檔端點 identity 的中立 pure owner。`docx_normalization.py` 以 bounded、fail-closed OOXML gate 產生 deterministic Markdown 與 `.source.json` provenance，不執行或解析外部 relationship。`diff/` 內含四個檔案:`loader.py`(讀取已完成 run-dir 的產物,輸入有誤拋 `DiffInputError`)、`compare.py`(跨 `openapi.yaml`/`integration-contract.json`/`provenance.json`/`validation/report.json`/`manifest.json` 分類差異)、`models.py`(`DiffFinding`/`DiffImpact`/`DiffReport`)、`report.py`(輸出 `diff/report.{json,md}`)。`preparation/` 內含 `assess.py`(`assess_preparation` 把 manifest + inventory + endpoints + plan 評成就緒度報告,phase/finding、severity `error`/`warning`、status `blocked`/`needs_attention`/`ready`;另 `_assess_url_coverage` 在有 URL 來源時附加**只有 warning** 的 `url_coverage` phase)與 `report.py`(寫出 `preparation-report.{json,md}`)；頂層 `url_coverage.py` 是唯一讀檔 owner，fail-loud 解析 agent 寫出的 `url_sources/coverage.json` 帳本。它們在 `assemble` 內於 plan 之後、generate 之前執行，並被 `diff/` 讀回比較。`score/` 內含 `loader.py`(`load_score_inputs`)、`evaluate.py`(`evaluate_score`,五類加權 openapi_validity/completeness/consistency/source_grounding/reviewability → 0–100,`ci`/`review` profile)、`loop.py`(`loop_verdict`,分數自循環判定 `continue`/`converged`/`plateau`/`exhausted`)與 `report.py`(寫出 `score/score.{json,md}`),經 `score` 命令或 `assemble --score` 產生,不改變 validation pass/fail。
 
 DOCX 邊界保留 `docx_normalization.py` 作為穩定 facade 與 bounded source read；型別、純 OOXML 驗證、純 Markdown rendering、分段暫存且於可回報寫入失敗時回滾的 Markdown/provenance publication 分別位於 `docx_models.py`、`docx_validation.py`、`docx_render.py`、`docx_publish.py`。package validation 會掃描每個 Word XML part，active DDE field、markup-compatibility alternate content 與無法忠實輸出的合併儲存格一律在發布前 fail closed。
 
@@ -343,7 +361,7 @@ source-quality blocker observation 可攜帶來源明確連出的 `required_sour
 
 `assess-sources` 現在必須帶 `--source-risk`；它只接受同 manifest/source binding 的 current pass audit，並對目前 bytes 重跑 deterministic inspection、要求完整 report 相符後才嵌入 `source-quality-report.json`。每個 `assemble` 都必須帶 `--source-quality`，重建 manifest後再次重跑檢查並驗證嵌入 audit，避免遭竄改或來源 bytes 在審查後替換；不符時 exit 2 且不建立 run-dir；這能拒絕未稽核 run，但不能證明流程外 agent 讀取來源的時間順序。
 
-**檔案 I/O 出口**:`generate/`、`run/`、`agentcli/preprocess.py`、report writers（含 `source_risk/report.py` 與 `feedback/report.py`）、Foundry persistence（含 write-once feedback inputs 與後續附加的 governance records）、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot`、`rendered_url.import_rendered_url` 與 `docx_publish.py` 會寫檔；`feedback/loader.py`、`docx_normalization.py`、`source_risk/inspect.py`／`loader.py`、`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外。`core/conformance.py`、`domain/conformance.py`、`docx_validation.py`／`docx_render.py`、其餘 draft scanner 與 GraphQL／AsyncAPI compiler 保持純函式，且 feedback／conformance Core 不做 provider network I/O。
+**檔案 I/O 出口**:`generate/`、`run/`、`agentcli/preprocess.py`、report writers（含 `source_risk/report.py` 與 `feedback/report.py`）、Foundry persistence（含 write-once feedback inputs 與後續附加的 governance records）、URL corpus 快取、`gitbook_llms.cache_gitbook_llms`（來源／sidecar／coverage）、`html_snapshot.normalize_html_snapshot`、`rendered_url.import_rendered_url` 與 `docx_publish.py` 會寫檔；`feedback/loader.py`、`url_coverage.py`、`docx_normalization.py`、`source_risk/inspect.py`／`loader.py`、`rendered_url.verified_rendered_url_sources`、`markdown_drafts.collect` 是只讀例外。`core/conformance.py`、`domain/conformance.py`、`docx_validation.py`／`docx_render.py`、其餘 draft scanner 與 GraphQL／AsyncAPI compiler 保持純函式，且 feedback／conformance Core 不做 provider network I/O。
 
 ## 資料流與關鍵 seam
 
@@ -388,7 +406,7 @@ output/<run-id>/
 ```
 
 - **docset** 是一組來源文件的分組,這些文件共同定義一個 API 契約。
-- **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)。
+- **import** 將已完成的 run 複製到 `candidates/` 目錄(完整性由重用的 `diff` 載入器把關)；成功的同 run-id overwrite 在治理交易鎖內只保留一個、即時前任 candidate 的 backup。較舊 backup 先以 identity-pinned quarantine 可回復地暫置；交易完成後會退役到隱藏 tombstone，而非以 pathname 實體刪除。Portable POSIX 沒有 expected-inode `unlink`，因此 physical removal 是可信任 operator maintenance 的工作，不能由可能遭目錄交換的交易自動猜測執行。
 - **approve** 將候選資產複製到自含、不可變的 `assets/<asset-id>/artifacts/` 目錄,記錄 `asset.json`(狀態、驗證、評分、來源雜湊、產物路徑、取代關係(supersedes)、批准元資料),取代先前的已批准資產,並更新 `current.json` / `docset.json` / `catalog.json`。
 - 下游工作(SDK 編寫、CI 契約檢查、整合)經由 `foundry current` / `query.load_current_asset` 讀取**當前**資產,而不是任意的 run 目錄。
 
@@ -399,6 +417,16 @@ entries, rejects unsafe filesystem objects, and computes the declared digest.  I
 not a second public reader and it never supplies a legacy fallback; approval uses it
 only while staging a new immutable asset, while query performs the verified projection
 consumed by CLI, review, and feedback.
+
+Foundry writes are capability-owned rather than routed through a broad persistence
+facade: `descriptor_namespace.py` pins and mutates namespace entries,
+`descriptor_tree.py` copies trusted artifact trees, `descriptor_io.py` owns bounded
+JSON and immutable-entry content, and `head_io.py` owns mutable-head snapshots,
+compare-and-swap publication, and rollback. `store.py` retains transactions and
+high-level persistence policy only; callers import the lower-level owner they use.
+`feedback.py` remains the public case/review facade; `effective_approval.py` owns the
+single pinned-docset Effective amendment/asset/current publication transaction and its
+attempt-owned rollback. The public Effective read API remains in `query.py`.
 
 Normative `asset.json` 與 `current.json` 使用 strict、versioned `normative-asset/v1`
 與 `normative-current/v1` schemas；未知欄位或缺少版本會拒絕讀取，不會默默 fallback
@@ -421,7 +449,7 @@ read-modify-write 會序列化。Lock 取得前會拒絕 project root 到 assets
 symlink／非目錄 ancestor，lock 會涵蓋
 baseline、predecessor、staging、head publication、rollback 與 cleanup。Lock cleanup failure
 會以 operational publication error 回報，並要求先確認沒有活躍交易再移除 stale lock。
-Staging、immutable publication、head rollback 與 owned-output cleanup 都相對於 transaction
+Staging、immutable publication、head rollback 與 owned-output quarantine 都相對於 transaction
 持有的 directory descriptors 執行；publication identity 在 rename 前取得並在 rename 後
 驗證，commit 前也會拒絕已被替換的 canonical namespace。任何 head restore 或 ownership
 驗證失敗都保留雙鎖供人工復原，不會猜測性刪除或把 rollback 寫入同名 replacement tree。
@@ -429,6 +457,11 @@ Feedback final-pointer 失敗會恢復原 effective current，並移除只由
 本次 transaction 建立的 amendment 與 effective asset，使相同輸入可以重試。
 Review update baseline 只從 manifest 宣告且 digest/kind 綁定的 artifacts 建立；manifest 與
 preparation report 缺少 binding 或 bytes 改變都會 fail closed。
+Effective artifacts are exposed only through
+`query.read_current_effective_artifact`, which returns a verified byte snapshot.  The
+former path-returning `resolve_current_effective_artifact` API is intentionally retired:
+silently changing that name to return bytes would hide a security-relevant public-contract
+break.
 
 Implementation feedback does not alter that normative promotion path. A persisted case
 lives under `.foundry/api/docsets/<docset-id>/feedback/cases/<case-id>/`: its digest-bound
