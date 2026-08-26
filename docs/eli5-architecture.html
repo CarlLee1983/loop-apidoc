@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loop-apidoc 架構圖解</title>
+<style>
+:root{
+  --bg:#fbf9f5; --card:#ffffff; --ink:#1e1b16; --muted:#6b6558;
+  --line:#e2ddd2; --accent:#c96442; --accent2:#3f7d63; --accent3:#6a5acd;
+  --warn:#c98a1f; --stop:#c0392b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17150f; --card:#211e17; --ink:#f2eee6; --muted:#a49c8c;
+    --line:#332e24; --accent:#e08663; --accent2:#6fb894; --accent3:#9b8cf0;
+    --warn:#e0b45c; --stop:#e0705f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17150f; --card:#211e17; --ink:#f2eee6; --muted:#a49c8c;
+  --line:#332e24; --accent:#e08663; --accent2:#6fb894; --accent3:#9b8cf0;
+  --warn:#e0b45c; --stop:#e0705f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:"Noto Sans TC","PingFang TC","Helvetica Neue",system-ui,sans-serif;
+ line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding:56px 24px 100px}
+h1{font-size:clamp(2rem,6vw,3.2rem);line-height:1.2;margin:0 0 .3em;letter-spacing:-.02em}
+h2{font-size:clamp(1.4rem,3.6vw,2rem);margin:0 0 .4em;letter-spacing:-.01em}
+.lede{font-size:1.25rem;color:var(--muted);margin:0 0 8px}
+section{margin:72px 0 0;padding-top:8px}
+.step{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+.num{flex:none;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;
+ display:grid;place-items:center;font-weight:700;font-size:1.1rem;transform:translateY(6px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 26px;margin:22px 0}
+.big{font-size:1.35rem;font-weight:600}
+.muted{color:var(--muted)}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.scroll{overflow-x:auto}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.tile .emoji{font-size:2.2rem;display:block;margin-bottom:6px}
+.tile b{display:block;font-size:1.08rem;margin-bottom:2px}
+.tile span.d{color:var(--muted);font-size:.95rem}
+.rule{border-left:6px solid var(--accent);padding:18px 22px;background:var(--card);
+ border-radius:0 16px 16px 0;font-size:1.2rem}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+.foot{margin-top:80px;color:var(--muted);font-size:.9rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>loop-apidoc 是什麼？</h1>
+<p class="lede">把「別人給的一堆亂七八糟 API 文件」變成「一份整齊、可驗證的 API 規格書」。</p>
+
+<div class="card scroll">
+<svg viewBox="0 0 900 200" role="img" aria-label="亂七八糟的文件經過機器變成整齊的規格書">
+  <g font-family="sans-serif">
+    <text x="80" y="46" font-size="52" text-anchor="middle">📄</text>
+    <text x="45" y="86" font-size="40" text-anchor="middle">📕</text>
+    <text x="118" y="90" font-size="36" text-anchor="middle">🌐</text>
+    <text x="80" y="132" font-size="34" text-anchor="middle">📝</text>
+    <text x="80" y="176" font-size="16" fill="currentColor" text-anchor="middle" opacity=".65">PDF・Word・網頁・JSON</text>
+
+    <path d="M180 100 H320" stroke="var(--accent)" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M305 86 L325 100 L305 114 Z" fill="var(--accent)"/>
+
+    <rect x="340" y="42" width="220" height="116" rx="22" fill="none" stroke="var(--accent)" stroke-width="5"/>
+    <text x="450" y="100" font-size="42" text-anchor="middle">⚙️</text>
+    <text x="450" y="136" font-size="17" fill="currentColor" text-anchor="middle">loop-apidoc</text>
+
+    <path d="M580 100 H720" stroke="var(--accent2)" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M705 86 L725 100 L705 114 Z" fill="var(--accent2)"/>
+
+    <rect x="740" y="46" width="112" height="108" rx="12" fill="none" stroke="var(--accent2)" stroke-width="5"/>
+    <path d="M762 78 H830 M762 100 H830 M762 122 H806" stroke="var(--accent2)" stroke-width="5" stroke-linecap="round"/>
+    <text x="796" y="176" font-size="16" fill="currentColor" text-anchor="middle" opacity=".65">OpenAPI + 中文文件</text>
+  </g>
+</svg>
+</div>
+
+<section>
+<h2>最重要的一條規矩</h2>
+<div class="rule">
+文件<b>沒寫</b>的東西，就<b>留空白</b>。<br>
+絕不猜、絕不用「大家通常都這樣」補上去。
+</div>
+<div class="card scroll">
+<svg viewBox="0 0 860 150" role="img" aria-label="文件有寫就寫進去，沒寫就留空並記在缺漏清單">
+  <g font-family="sans-serif" font-size="18" fill="currentColor">
+    <rect x="20" y="24" width="380" height="100" rx="18" fill="none" stroke="var(--accent2)" stroke-width="4"/>
+    <text x="60" y="72" font-size="34">✅</text>
+    <text x="108" y="66">文件有寫</text>
+    <text x="108" y="96" opacity=".7">→ 寫進規格，並附上出處</text>
+
+    <rect x="450" y="24" width="390" height="100" rx="18" fill="none" stroke="var(--stop)" stroke-width="4"/>
+    <text x="490" y="72" font-size="34">🚫</text>
+    <text x="538" y="66">文件沒寫</text>
+    <text x="538" y="96" opacity=".7">→ 留 null，記進「缺漏清單」</text>
+  </g>
+</svg>
+</div>
+</section>
+
+<section>
+<h2>整條產線長這樣</h2>
+<p class="muted">每一關沒過，就停在那一關。不會硬著頭皮往下做。</p>
+
+<div class="card scroll">
+<svg viewBox="0 0 900 620" role="img" aria-label="從收文件到產出規格的七個關卡">
+  <g font-family="sans-serif" fill="currentColor">
+    <g font-size="19">
+      <rect x="60" y="20" width="780" height="62" rx="16" fill="none" stroke="var(--line)" stroke-width="3"/>
+      <text x="96" y="60" font-size="30">📥</text>
+      <text x="146" y="52">收文件・轉檔</text>
+      <text x="146" y="74" font-size="15" opacity=".65">PDF / Word 先轉成看得懂的 Markdown</text>
+
+      <rect x="60" y="102" width="780" height="62" rx="16" fill="none" stroke="var(--line)" stroke-width="3"/>
+      <text x="96" y="142" font-size="30">📋</text>
+      <text x="146" y="134">造清冊（manifest）</text>
+      <text x="146" y="156" font-size="15" opacity=".65">哪些檔案、各自指紋是什麼，全部登記</text>
+
+      <rect x="60" y="184" width="780" height="62" rx="16" fill="none" stroke="var(--stop)" stroke-width="3"/>
+      <text x="96" y="224" font-size="30">🛡️</text>
+      <text x="146" y="216">安檢：文件裡有沒有陷阱？</text>
+      <text x="146" y="238" font-size="15" opacity=".65">藏起來的指令、密碼、個資、卡號 → 有問題就擋下</text>
+
+      <rect x="60" y="266" width="780" height="62" rx="16" fill="none" stroke="var(--warn)" stroke-width="3"/>
+      <text x="96" y="306" font-size="30">🔍</text>
+      <text x="146" y="298">品質檢查：文件夠用嗎？</text>
+      <text x="146" y="320" font-size="15" opacity=".65">缺頁、看不懂的格式 → 退件，要對方補</text>
+
+      <rect x="60" y="348" width="780" height="62" rx="16" fill="none" stroke="var(--accent3)" stroke-width="3"/>
+      <text x="96" y="388" font-size="30">👥</text>
+      <text x="146" y="380">分頭閱讀：一群小幫手同時讀</text>
+      <text x="146" y="402" font-size="15" opacity=".65">一人負責一個 API，各自交一份 JSON；只准讀、不准改原文</text>
+
+      <rect x="60" y="430" width="780" height="62" rx="16" fill="none" stroke="var(--accent)" stroke-width="3"/>
+      <text x="96" y="470" font-size="30">🧾</text>
+      <text x="146" y="462">交卷檢查（verify-extraction）</text>
+      <text x="146" y="484" font-size="15" opacity=".65">數量對不對、有沒有寫出處、有沒有互相打架</text>
+
+      <rect x="60" y="512" width="780" height="62" rx="16" fill="none" stroke="var(--accent2)" stroke-width="3"/>
+      <text x="96" y="552" font-size="30">🏗️</text>
+      <text x="146" y="544">組裝（assemble）＝ 規劃 → 產出 → 驗證</text>
+      <text x="146" y="566" font-size="15" opacity=".65">程式做的，同樣輸入永遠得到同樣結果</text>
+    </g>
+    <g stroke="var(--muted)" stroke-width="3" opacity=".5">
+      <path d="M450 82 V102"/><path d="M450 164 V184"/><path d="M450 246 V266"/>
+      <path d="M450 328 V348"/><path d="M450 410 V430"/><path d="M450 492 V512"/>
+    </g>
+  </g>
+</svg>
+</div>
+</section>
+
+<section>
+<h2>分工：誰負責讀，誰負責挑毛病</h2>
+<div class="card scroll">
+<svg viewBox="0 0 880 300" role="img" aria-label="AI 負責閱讀，程式負責檢查與組裝">
+  <g font-family="sans-serif" fill="currentColor">
+    <rect x="30" y="30" width="370" height="230" rx="22" fill="none" stroke="var(--accent3)" stroke-width="4"/>
+    <text x="215" y="92" font-size="46" text-anchor="middle">🤖</text>
+    <text x="215" y="132" font-size="22" text-anchor="middle">AI（會讀字的那個）</text>
+    <text x="215" y="170" font-size="17" text-anchor="middle" opacity=".72">看文件、抄下重點</text>
+    <text x="215" y="200" font-size="17" text-anchor="middle" opacity=".72">寫成一份份 JSON</text>
+    <text x="215" y="230" font-size="17" text-anchor="middle" opacity=".72">被退件就回去重讀</text>
+
+    <rect x="480" y="30" width="370" height="230" rx="22" fill="none" stroke="var(--accent2)" stroke-width="4"/>
+    <text x="665" y="92" font-size="46" text-anchor="middle">📐</text>
+    <text x="665" y="132" font-size="22" text-anchor="middle">程式（不會通融的那個）</text>
+    <text x="665" y="170" font-size="17" text-anchor="middle" opacity=".72">檢查、組裝、驗證</text>
+    <text x="665" y="200" font-size="17" text-anchor="middle" opacity=".72">出處對不上就擋</text>
+    <text x="665" y="230" font-size="17" text-anchor="middle" opacity=".72">從不自己編內容</text>
+
+    <path d="M400 120 H480" stroke="var(--muted)" stroke-width="4" opacity=".6"/>
+    <path d="M468 108 L484 120 L468 132 Z" fill="var(--muted)" opacity=".6"/>
+    <text x="440" y="106" font-size="14" text-anchor="middle" opacity=".6">交卷</text>
+    <path d="M480 190 H400" stroke="var(--muted)" stroke-width="4" opacity=".6"/>
+    <path d="M412 178 L396 190 L412 202 Z" fill="var(--muted)" opacity=".6"/>
+    <text x="440" y="222" font-size="14" text-anchor="middle" opacity=".6">退件重寫</text>
+  </g>
+</svg>
+</div>
+<p class="muted">AI 只負責「讀」，判斷合不合格的永遠是程式。所以換一個 AI，結果的合格標準不會跟著變。</p>
+</section>
+
+<section>
+<h2>最後會拿到什麼</h2>
+<div class="grid">
+  <div class="tile"><span class="emoji">📘</span><b>openapi.yaml</b><span class="d">機器看得懂的 API 規格</span></div>
+  <div class="tile"><span class="emoji">🇹🇼</span><b>中文說明文件</b><span class="d">人看得懂的串接說明</span></div>
+  <div class="tile"><span class="emoji">🔗</span><b>provenance.json</b><span class="d">每一句話出自哪份文件哪一行</span></div>
+  <div class="tile"><span class="emoji">🖥️</span><b>review.html</b><span class="d">離線就能翻的審閱頁</span></div>
+  <div class="tile"><span class="emoji">✅</span><b>驗證報告</b><span class="d">哪裡過了、哪裡有洞</span></div>
+  <div class="tile"><span class="emoji">💯</span><b>品質分數</b><span class="d">0–100，只是參考，不決定過不過</span></div>
+</div>
+</section>
+
+<section>
+<h2>紅燈與黃燈</h2>
+<div class="card scroll">
+<svg viewBox="0 0 860 170" role="img" aria-label="錯誤會擋住整份文件，警告只是提醒">
+  <g font-family="sans-serif" fill="currentColor">
+    <circle cx="80" cy="60" r="30" fill="var(--stop)"/>
+    <text x="130" y="52" font-size="22">紅燈 error</text>
+    <text x="130" y="82" font-size="17" opacity=".7">整份不算過。修好再來一次。</text>
+
+    <circle cx="80" cy="132" r="24" fill="var(--warn)"/>
+    <text x="130" y="126" font-size="22">黃燈 warning</text>
+    <text x="130" y="152" font-size="17" opacity=".7">記下來提醒你，但不擋路。</text>
+  </g>
+</svg>
+</div>
+<p class="muted">看的是「燈的顏色」，不是「哪一條規則」——同一條規則在不同情況下可能是紅燈也可能是黃燈。</p>
+</section>
+
+<section>
+<h2>做好之後：進保險箱</h2>
+<div class="card scroll">
+<svg viewBox="0 0 880 210" role="img" aria-label="產出物先送審，人按下同意後才成為正式版本">
+  <g font-family="sans-serif" fill="currentColor" font-size="18">
+    <rect x="20" y="60" width="180" height="90" rx="16" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <text x="110" y="105" font-size="30" text-anchor="middle">📦</text>
+    <text x="110" y="134" text-anchor="middle" font-size="16">產出物</text>
+
+    <path d="M210 105 H280" stroke="var(--muted)" stroke-width="4"/><path d="M268 94 L284 105 L268 116 Z" fill="var(--muted)"/>
+
+    <rect x="295" y="60" width="200" height="90" rx="16" fill="none" stroke="var(--warn)" stroke-width="3"/>
+    <text x="395" y="105" font-size="30" text-anchor="middle">👀</text>
+    <text x="395" y="134" text-anchor="middle" font-size="16">人來看一遍</text>
+
+    <path d="M505 105 H575" stroke="var(--muted)" stroke-width="4"/><path d="M563 94 L579 105 L563 116 Z" fill="var(--muted)"/>
+
+    <rect x="590" y="60" width="260" height="90" rx="16" fill="none" stroke="var(--accent2)" stroke-width="3"/>
+    <text x="720" y="105" font-size="30" text-anchor="middle">🔐</text>
+    <text x="720" y="134" text-anchor="middle" font-size="16">Foundry 保險箱 · 正式版</text>
+    <text x="720" y="30" text-anchor="middle" font-size="15" opacity=".65">沒有人按同意，就不會有正式版</text>
+  </g>
+</svg>
+</div>
+</section>
+
+<section>
+<h2>程式碼是怎麼分家的</h2>
+<div class="grid">
+  <div class="tile"><span class="emoji">🧠</span><b>domain/</b><span class="d">名詞與規則的定義。不碰檔案、不上網。</span></div>
+  <div class="tile"><span class="emoji">⚖️</span><b>core/</b><span class="d">判官：這句話有沒有證據撐住。</span></div>
+  <div class="tile"><span class="emoji">🔌</span><b>adapters/</b><span class="d">跟外界接觸的插座（讀檔、抓片段）。</span></div>
+  <div class="tile"><span class="emoji">🧪</span><b>evaluation/</b><span class="d">評測區，永遠碰不到正式資料。</span></div>
+</div>
+<div class="card">
+  <p class="big">一個貫穿全部的習慣：<b>會寫檔案的地方就那幾個</b>。</p>
+  <p class="muted">其他每個模組都是「輸入什麼、就回什麼」的純函式。哪些檔案有寫入權限被列成一張清單，有測試看著——偷偷多一個寫檔的地方，測試就會紅。</p>
+</div>
+</section>
+
+<hr style="margin-top:72px">
+<p class="foot">依 <code>AGENTS.md</code>／<code>docs/ARCHITECTURE.md</code> 整理 · 2026-08-26</p>
+
+</div>
+</body>
+</html>
