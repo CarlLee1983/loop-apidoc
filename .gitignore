@@ -16,6 +16,13 @@ output/
 **/notebooklm-skill/**/browser_state*
 
 # 來源文件(操作者本機提供,不入庫;spec:sources 為人工前置)
+# 刻意不加 root anchor,是整份檔案唯一的例外。理由不是 benchmark ——
+# benchmarks/.gitignore 的 */sources/ 才是那裡真正生效的規則。理由是
+# 巢狀 sources/ 是實際存在的擺法(work/、.work/、tmp/、.loop-apidoc/、
+# runs/ 底下各有一個),而 sources 屬於 disclosure root:誤入庫是散布他人
+# 文件,事後 git rm 也收不回來,所以多一條重疊規則是便宜的保險。
+# 代價是未來若出現 loop_apidoc/sources/ 模組會被靜默忽略——這個取捨由
+# tests/test_gitignore_contract.py 明文釘住。
 sources/
 # stray / 衍生檔
 extract_pdf_tmp.py
@@ -23,10 +30,10 @@ pdf_text.txt
 .superpowers/
 .omx/
 .worktrees/
-# 本機執行產物 / 暫存
-.loop-apidoc/
-runs/
-tmp/
+# 本機執行產物 / 暫存(一律 root-anchored:同名的巢狀目錄是原始碼,不該被靜默忽略)
+/.loop-apidoc/
+/runs/
+/tmp/
 /.work/
 /work/
 /out/

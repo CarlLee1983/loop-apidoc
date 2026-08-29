@@ -373,6 +373,28 @@ operator to escalate to the repository owner instead of just removing the direct
   operator's local copies on disk. That is a forward commit, not a Git history rewrite;
   this gate never asks for one. Purging history is a separate owner decision about
   redistribution rights, and it is never a step in clearing a hygiene failure.
+- **`.gitignore` prevents, the gate detects, and the two are held in agreement by
+  `tests/test_gitignore_contract.py`** — which asks Git via `git check-ignore -v` rather
+  than reimplementing the pattern language, and asserts *which* rule won, so a developer's
+  global `core.excludesFile` can never satisfy the contract. Prevention lives in two files:
+  the root `.gitignore` and `benchmarks/.gitignore`, whose `*/sources/`, `*/work/`,
+  `*/raw/`, `*/output/` and `*/source-quality/` cover the per-case operator material. Every root in the inventory must have an ignore
+  entry, or the gate becomes the only line of defence and fails the contributor at commit
+  time instead of preventing the mistake. The run-artifact entries are root-anchored
+  (`/tmp/`, `/runs/`, `/.loop-apidoc/`): unanchored, they also swallowed any same-named
+  directory at any depth, so a future `loop_apidoc/tmp/` module would have vanished from
+  `git add` with no error — the silent failure this boundary exists to prevent.
+- **`sources/` is deliberately *not* anchored** — the one exception, and worth stating
+  precisely because the obvious reason for it is wrong. It is *not* that the benchmark
+  snapshots depend on it: `benchmarks/.gitignore`'s `*/sources/` is the rule that actually
+  wins there, and anchoring the root entry leaves every committed case still ignored. The
+  real reason is that a nested `sources/` holding supplier material is a layout operators
+  actually use — one exists under each of `work/`, `.work/`, `tmp/`, `.loop-apidoc/` and
+  `runs/` — and `sources` is a disclosure root, where the failure is redistributing someone
+  else's document and a later `git rm` does not undo it. A second overlapping rule is cheap
+  insurance there. The cost is real and accepted: a future `loop_apidoc/sources/` module
+  would be ignored silently, and the root-anchored gate cannot cover the nested case either.
+  Both the exception and its cost are pinned by tests that fail if the entry is anchored.
 - Where material *should* go — reviewed, reproducible test cases in `benchmarks/`,
   reader-facing samples in `examples/` — is contributor guidance and lives in
   `CONTRIBUTING.md`.
