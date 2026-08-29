@@ -306,6 +306,49 @@ release, never a force-moved tag.
 - The canonical four-layer model, thirteen-case inventory, terminology, and case-addition
   workflow are in `docs/BENCHMARK_VALIDATION_PLAN.md`.
 
+## Repository hygiene
+
+Some directories at the repository root are *generated*, not authored: a run writes
+them and a later run overwrites them. Committing one adds thousands of files nobody
+reviews, and that happened — root `work/` was tracked on `main` for several releases
+because nothing checked. `.gitignore` stops the next accidental `git add`; the gate is
+what fails loudly if one lands anyway.
+
+`scripts/quality_gate.py::REPOSITORY_HYGIENE_FORBIDDEN_ROOTS` is a reviewed inventory in
+the same family as the four above, and the table is its human-readable presentation —
+checked against it by `tests/docs/test_repository_hygiene_documentation.py`, never
+generated from it.
+
+| Forbidden tracked root | What a run writes there |
+| --- | --- |
+| `work/` | URL raw/cache, extraction JSON, agent answers, source-quality and source-risk reports, assemble run outputs |
+
+- **The criterion**, deliberately narrow: a tracked path violates repository hygiene
+  when its **first** path segment is exactly a listed root *and* at least one more
+  segment follows. Not a substring match — `workflows/ci.yml` and `work.json` are
+  ordinary files. Not a root-level file — a tracked file named exactly `work` is
+  authored, and `git rm -r --cached work` over it would remove the wrong thing. Not a
+  nested match, so
+  `benchmarks/<case>/work/` (governed by `benchmarks/.gitignore`) and a package's own
+  `work/` directory are untouched. `.work/` is a different name and has its own rule.
+- Widening the inventory is a decision, not a tidy-up. Other gitignored scratch
+  directories (`runs/`, `tmp/`, `out/`) are deliberately absent until each is separately
+  reviewed. Adding a root requires a matching table row in the same change;
+  `test_documented_hygiene_table_matches_the_controlled_list` enforces exact set parity
+  in both directions, so neither the code nor this table can move alone.
+- `repository_hygiene_violations` is a pure function over the Git-tracked path list —
+  never a filesystem walk, so ignored and untracked local files are out of scope by
+  construction — and `main()` runs it before any gate step, so a dirty tree fails in
+  milliseconds. The failure names relative paths and the remedy; it never opens a file,
+  so a leaked artifact's contents can never reach the gate's output.
+- The remedy for an already-tracked root is `git rm -r --cached <root>`, which leaves the
+  operator's local copies on disk. That is a forward commit, not a Git history rewrite;
+  this gate never asks for one. Purging history is a separate owner decision about
+  redistribution rights, and it is never a step in clearing a hygiene failure.
+- Where material *should* go — reviewed, reproducible test cases in `benchmarks/`,
+  reader-facing samples in `examples/` — is contributor guidance and lives in
+  `CONTRIBUTING.md`.
+
 ## Further docs
 
 - Architecture + data flow (with diagrams): `docs/ARCHITECTURE.md`
