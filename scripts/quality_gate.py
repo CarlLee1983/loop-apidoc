@@ -437,6 +437,54 @@ def _excerpt(text: str, limit: int = 4000) -> str:
     return text[:head] + "\n...[truncated]...\n" + text[-tail:]
 
 
+# --- Repository hygiene (0.41 stabilization slice 1) -------------------------
+#
+# `work/` at the repository root is the local pipeline scratch directory: URL
+# caches, extraction JSON, agent answers, assemble outputs. It was tracked on
+# `main` for several releases because nothing checked. `.gitignore` stops the
+# next accidental `git add`; this rule is what fails loudly if one lands anyway.
+#
+# **The criterion**, deliberately narrow: a tracked path violates repository
+# hygiene when its *first* path segment is exactly `work`. Not a substring match
+# — `workflows/ci.yml` and `work.json` are ordinary files — and not a nested
+# match, so `benchmarks/<case>/work/` and a package's own `work/` directory stay
+# untouched. `.work/` is a different name and is already gitignored. The rule
+# reads paths only; it never opens a file, so a leaked artifact's contents can
+# never reach the gate's output.
+REPOSITORY_WORK_ARTIFACT_ROOT = "work"
+
+REPOSITORY_HYGIENE_REMEDY = (
+    "root work/ is a local pipeline scratch directory and must not be committed: "
+    "run `git rm -r --cached work` and keep the /work/ entry in .gitignore. "
+    "Reviewed test material belongs in benchmarks/, reader-facing samples in examples/."
+)
+
+
+def repository_hygiene_violations(tracked_paths: Iterable[str]) -> list[str]:
+    """Tracked paths under the root `work/` scratch directory, sorted and
+    de-duplicated so a failure reads the same on every machine. Pure: the
+    argument is the Git-tracked path list, never a filesystem walk, so ignored
+    and untracked local files are out of scope by construction."""
+    violations = {
+        path
+        for path in tracked_paths
+        if "/" in path and path.split("/", 1)[0] == REPOSITORY_WORK_ARTIFACT_ROOT
+    }
+    return sorted(violations)
+
+
+def tracked_repository_paths(*, runner: Runner = _default_runner) -> list[str]:
+    """Every path Git tracks, from `git ls-files -z` — NUL-delimited so a path
+    containing a newline cannot split into two entries."""
+    result = runner(["git", "ls-files", "-z"])
+    if result.returncode != 0:
+        raise QualityGateFailure(
+            "repository hygiene could not list tracked paths: "
+            f"git ls-files exited {result.returncode}\n{_excerpt(result.stderr)}"
+        )
+    return [path for path in result.stdout.split("\0") if path]
+
+
 def required_benchmark_cases() -> tuple[str, ...]:
     return REQUIRED_BENCHMARK_CASES
 
@@ -784,6 +832,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     try:
+        print("[quality-gate] repository hygiene")
+        hygiene_violations = repository_hygiene_violations(tracked_repository_paths())
+        if hygiene_violations:
+            raise QualityGateFailure(
+                "tracked generated work artifacts:\n"
+                + "\n".join(f"  {path}" for path in hygiene_violations)
+                + "\n"
+                + REPOSITORY_HYGIENE_REMEDY
+            )
+        print("[quality-gate] PASS repository hygiene")
         if args.strict_local:
             missing = missing_benchmark_sources()
             if missing:
