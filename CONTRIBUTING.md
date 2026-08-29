@@ -82,14 +82,19 @@ source-backed assertions 會 SKIP；**SKIP 不代表 benchmark PASS**。只有�
 
 ## 版本庫衛生
 
-repo root 的 `work/` 是**本機 pipeline 工作目錄**(URL 快取、extraction JSON、agent 回答、
-assemble 產物),已列入 `.gitignore`,一律不得提交。素材該去哪裡:
+repo root 底下有一組目錄**不是在這裡寫出來的**,已列入 `.gitignore`,一律不得提交:
+`work/`、`out/`、`runs/`、`tmp/`、`.loop-apidoc/` 是本機執行產物(URL 快取、extraction
+JSON、agent 回答、assemble 產物);`sources/` 與 `teams-archive-preview/` 則裝著**別人的
+素材**——供應商來源快照與 Teams 匯出的聊天內容,誤提交是外洩而非弄髒,而且事後 `git rm`
+並不會讓它從歷史與既有 clone 消失。素材該去哪裡:
 
 - 可重現、經審核的測試素材 → `benchmarks/<case>/`(規則見上方 Benchmark harness contract)。
 - 使用者可閱讀的公開範例 → `examples/`。
 
-`uv run python scripts/quality_gate.py` 會在跑任何步驟前擋下這類檔案,誤入庫時以
-`git rm -r --cached work` 移除即可。守門判準、受控目錄清單與為何刻意不擴大範圍,見
+`uv run python scripts/quality_gate.py` 會在跑任何步驟前擋下這類檔案。誤入庫時先以
+`git rm -r --cached <目錄>` 從版本樹移除;若目錄是 `sources/` 或 `teams-archive-preview/`,
+移除**不是**完整修正——請把路徑通報 repo owner 由其判斷是否清理歷史,通報時不要引用內容,
+也不要自行改寫歷史。(`benchmarks/<case>/sources/` 是巢狀路徑,不受此規則影響。)守門判準、受控目錄清單與為何刻意不擴大範圍,見
 [`AGENTS.md`](AGENTS.md) 的 Repository hygiene 一節。
 
 ## 提交流程

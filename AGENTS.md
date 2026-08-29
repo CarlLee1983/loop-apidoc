@@ -308,10 +308,10 @@ release, never a force-moved tag.
 
 ## Repository hygiene
 
-Some directories at the repository root are *generated*, not authored: a run writes
-them and a later run overwrites them. Committing one adds thousands of files nobody
-reviews, and that happened — root `work/` was tracked on `main` for several releases
-because nothing checked. `.gitignore` stops the next accidental `git add`; the gate is
+Some directories at the repository root are *generated* or *supplied*, never authored
+here: a run writes them, or an operator drops someone else's material into them.
+Committing one adds thousands of files nobody reviews — and that happened, root `work/`
+was tracked on `main` for several releases because nothing checked. `.gitignore` stops the next accidental `git add`; the gate is
 what fails loudly if one lands anyway.
 
 `scripts/quality_gate.py::REPOSITORY_HYGIENE_FORBIDDEN_ROOTS` is a reviewed inventory in
@@ -319,9 +319,20 @@ the same family as the four above, and the table is its human-readable presentat
 checked against it by `tests/docs/test_repository_hygiene_documentation.py`, never
 generated from it.
 
-| Forbidden tracked root | What a run writes there |
-| --- | --- |
-| `work/` | URL raw/cache, extraction JSON, agent answers, source-quality and source-risk reports, assemble run outputs |
+| Forbidden tracked root | Kind | Why it must not be committed |
+| --- | --- | --- |
+| `work/` | run artifact | local pipeline scratch: URL raw/cache, extraction JSON, agent answers, source-quality and source-risk reports, assemble run outputs |
+| `out/` | run artifact | operator-chosen assemble output root (`--output` has no default) |
+| `runs/` | run artifact | accumulated run directories |
+| `tmp/` | run artifact | ad-hoc scratch |
+| `.loop-apidoc/` | run artifact | local tool state |
+| `sources/` | third-party material | operator-provided supplier snapshots, redistribution rights uncertain |
+| `teams-archive-preview/` | third-party material | local Teams export containing chat content |
+
+The `Kind` column is not decoration: `third-party material` is what makes the gate tell an
+operator to escalate to the repository owner instead of just removing the directory.
+`test_documented_kinds_match_the_disclosure_subset` holds it to
+`REPOSITORY_HYGIENE_DISCLOSURE_ROOTS`.
 
 - **The criterion**, deliberately narrow: a tracked path violates repository hygiene
   when its **first** path segment is exactly a listed root *and* at least one more
@@ -329,11 +340,28 @@ generated from it.
   ordinary files. Not a root-level file — a tracked file named exactly `work` is
   authored, and `git rm -r --cached work` over it would remove the wrong thing. Not a
   nested match, so
-  `benchmarks/<case>/work/` (governed by `benchmarks/.gitignore`) and a package's own
-  `work/` directory are untouched. `.work/` is a different name and has its own rule.
-- Widening the inventory is a decision, not a tidy-up. Other gitignored scratch
-  directories (`runs/`, `tmp/`, `out/`) are deliberately absent until each is separately
-  reviewed. Adding a root requires a matching table row in the same change;
+  `benchmarks/<case>/work/` and `benchmarks/<case>/sources/` (governed by
+  `benchmarks/.gitignore`, and the latter is exactly the snapshot the harness binds to)
+  are untouched, as would be a package that ever adds its own `sources/` module. Widening this to a nested match
+  would break the benchmark harness contract, not merely over-report. `.work/` is a different name and has its own rule.
+- **Two kinds of root, and the second is why the rule earns its place.** The first five
+  hold regenerable clutter. `sources/` and `teams-archive-preview/` hold *other people's
+  material* — operator-provided supplier snapshots whose redistribution rights are
+  uncertain, and a Teams export containing chat content. Committing one of those is a
+  disclosure, not a mess, and unlike clutter a later `git rm` does not undo it: the blob
+  stays reachable in history and in every existing clone. That is why the gate refuses
+  the commit rather than trusting review to catch it, and why
+  `REPOSITORY_HYGIENE_DISCLOSURE_ROOTS` names that subset: the failure message for those
+  roots says removal is not the whole fix, routes the purge decision to the repository
+  owner, and tells the reporter not to quote the contents. A contributor never performs
+  a purge, and this gate never performs one either.
+- Widening the inventory is a decision, not a tidy-up. Third-party tool caches
+  (`node_modules/`, `.venv/`, `dist/`, `graft/`, `htmlcov/`, `__pycache__/`) are
+  deliberately absent — committing them is an ecosystem-wide mistake every contributor's
+  tooling already flags, not a property of this repository, and `dist/` is a directory
+  some projects commit on purpose. `benchmark_out/`, `benchmark_work/` and `output/` stay
+  out too: listing a root nothing has ever written is guessing. Adding a root requires a
+  matching table row in the same change;
   `test_documented_hygiene_table_matches_the_controlled_list` enforces exact set parity
   in both directions, so neither the code nor this table can move alone.
 - `repository_hygiene_violations` is a pure function over the Git-tracked path list —

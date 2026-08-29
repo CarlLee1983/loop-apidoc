@@ -635,10 +635,18 @@ def test_repository_hygiene_flags_every_root_in_the_controlled_inventory():
             f"{root}/generated.json"
         ]
 
-    assert quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS == ("work",), (
-        "the inventory is deliberately one entry; runs/, tmp/ and out/ join only "
-        "after separate review, and widening it means updating AGENTS.md's table "
-        "in the same change"
+    assert set(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS) == {
+        "work",
+        "out",
+        "runs",
+        "tmp",
+        ".loop-apidoc",
+        "sources",
+        "teams-archive-preview",
+    }, (
+        "the inventory is reviewed, not open: third-party tool caches "
+        "(node_modules/, .venv/, dist/, graft/, htmlcov/) are deliberately out, "
+        "and widening it means updating AGENTS.md's table in the same change"
     )
 
 
@@ -650,7 +658,9 @@ def test_repository_hygiene_remedy_names_the_root_it_reports():
         remedy = quality_gate.repository_hygiene_remedy([f"{root}/generated.json"])
 
         assert f"git rm -r --cached {root}" in remedy
-        assert f"/{root}/" in remedy
+        # Unanchored: four of the seven .gitignore entries have no leading slash,
+        # so printing `/runs/` sent contributors looking for a line that isn't there.
+        assert f"{root}/" in remedy
 
 
 def test_repository_hygiene_remedy_covers_every_violated_root():
@@ -662,6 +672,28 @@ def test_repository_hygiene_remedy_covers_every_violated_root():
     assert "git rm -r --cached work" in remedy
     # The remedy is a forward commit; nothing here ever asks for a history purge.
     assert "history rewrite" in remedy
+
+
+def test_repository_hygiene_failure_headline_does_not_misclassify_a_disclosure(
+    monkeypatch, capsys
+):
+    """The remedy was fixed but the headline above it still said "generated work
+    artifacts", so a leaked Teams export was announced as clutter. Assert over the
+    whole stderr, which is what an operator actually reads."""
+    monkeypatch.setattr(
+        quality_gate,
+        "tracked_repository_paths",
+        lambda: ["teams-archive-preview/conversation.json"],
+    )
+    monkeypatch.setattr(
+        quality_gate, "run_step", lambda *a, **k: pytest.fail("no step may run")
+    )
+
+    assert quality_gate.main([]) == 1
+    err = capsys.readouterr().err
+    assert "generated" not in err
+    assert "teams-archive-preview/conversation.json" in err
+    assert "repository owner" in err
 
 
 def test_repository_hygiene_failure_message_carries_the_derived_remedy(monkeypatch, capsys):
@@ -676,3 +708,91 @@ def test_repository_hygiene_failure_message_carries_the_derived_remedy(monkeypat
     err = capsys.readouterr().err
     assert "work/out/run.json" in err
     assert "git rm -r --cached work" in err
+
+
+def test_repository_hygiene_flags_the_confidentiality_roots():
+    """`sources/` and `teams-archive-preview/` are not mere clutter: one holds
+    supplier source snapshots of uncertain redistribution rights, the other a
+    Teams export containing chat content. Committing either is the failure the
+    0.41 security assessment flagged, one step worse."""
+    assert quality_gate.repository_hygiene_violations(
+        ["sources/vendor-spec.pdf", "teams-archive-preview/conversation.json"]
+    ) == ["sources/vendor-spec.pdf", "teams-archive-preview/conversation.json"]
+
+
+def test_repository_hygiene_leaves_per_case_benchmark_sources_alone():
+    """The load-bearing nested case. `benchmarks/<case>/sources/` is the
+    operator-provided snapshot the harness binds to, gitignored by
+    `benchmarks/.gitignore`'s own rule. A root-anchored inventory must never
+    reach it — widening to a nested match would break the benchmark contract."""
+    assert quality_gate.repository_hygiene_violations(
+        [
+            "benchmarks/newebpay-mpg/sources/spec.md",
+            "benchmarks/ecpay-creditcard-pdf/raw/gw_p110.pdf",
+            "loop_apidoc/adapters/sources/reader.py",
+            "docs/out/index.html",
+        ]
+    ) == []
+
+
+def test_repository_hygiene_flags_a_dot_prefixed_run_root():
+    """`.loop-apidoc/` is a run root despite the leading dot; `.work/` is a
+    different name and stays out of the inventory."""
+    assert quality_gate.repository_hygiene_violations(
+        [".loop-apidoc/state.json", ".work/local.json"]
+    ) == [".loop-apidoc/state.json"]
+
+
+def test_disclosure_roots_are_a_pinned_proper_subset_of_the_inventory():
+    """`<=` alone let the split drift both ways: dropping
+    `teams-archive-preview` and escalating `work` both passed. Pin the set, and
+    keep it a *proper* subset — if every root were a disclosure the distinction
+    would have collapsed."""
+    disclosure = set(quality_gate.REPOSITORY_HYGIENE_DISCLOSURE_ROOTS)
+
+    assert disclosure == {"sources", "teams-archive-preview"}
+    assert disclosure < set(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS)
+
+
+def test_every_disclosure_root_escalates_and_no_run_root_does():
+    """Both directions, for every root, so neither half of the split can drift
+    silently — the mutation that dropped `teams-archive-preview` passed without
+    this."""
+    for root in quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS:
+        remedy = quality_gate.repository_hygiene_remedy([f"{root}/leaked.json"])
+        escalates = "repository owner" in remedy
+
+        assert escalates is (root in quality_gate.REPOSITORY_HYGIENE_DISCLOSURE_ROOTS), root
+
+
+def test_remedy_for_a_run_artifact_root_stays_a_plain_removal():
+    remedy = quality_gate.repository_hygiene_remedy(["runs/2026/run.json"])
+
+    assert "git rm -r --cached runs" in remedy
+    assert "forward commit, not a Git history rewrite" in remedy
+    # Nothing here was disclosed, so the message must not escalate.
+    assert "repository owner" not in remedy
+
+
+def test_remedy_for_a_disclosure_root_says_removal_is_not_enough():
+    """Widening the inventory made the old wording wrong: `sources/` is not a
+    scratch directory, and `git rm -r --cached` does not undo a disclosure. The
+    message must name the root, say the blob survives in history and in existing
+    clones, and route the purge decision to the owner rather than implying the
+    contributor should perform one."""
+    remedy = quality_gate.repository_hygiene_remedy(
+        ["sources/vendor-spec.pdf", "runs/2026/run.json"]
+    )
+
+    assert "git rm -r --cached sources" in remedy
+    assert "sources" in remedy
+    assert "existing clones" in remedy
+    assert "repository owner" in remedy
+    # The gate still never rewrites history itself.
+    assert "forward commit, not a Git history rewrite" in remedy
+
+
+def test_remedy_does_not_call_third_party_material_a_scratch_directory():
+    remedy = quality_gate.repository_hygiene_remedy(["teams-archive-preview/chat.json"])
+
+    assert "scratch" not in remedy.lower()

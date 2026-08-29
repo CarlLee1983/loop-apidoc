@@ -29,10 +29,12 @@ _SEPARATOR_ROW = re.compile(r"^[|\s:-]+$")
 def _table_rows() -> list[str]:
     """The inventory table's data rows — pipe lines inside the section, minus
     the header and the `| --- |` separator. The surrounding prose is
-    deliberately out of scope: it names `.work/`, `benchmarks/<case>/work/`, and
-    the deliberately-excluded `runs/` / `tmp/` / `out/` precisely to say they are
-    *not* forbidden, and no parser should read those as entries. If the excluded
-    trio is ever promoted into a table of its own, this selector must learn to
+    deliberately out of scope: it names `.work/`, `benchmarks/<case>/work/`,
+    `benchmarks/<case>/sources/`, and the deliberately-excluded tool caches
+    (`node_modules/`, `.venv/`, `dist/`, `graft/`, `htmlcov/`, `__pycache__/`,
+    `benchmark_out/`, `benchmark_work/`, `output/`) precisely to say they are
+    *not* forbidden, and no parser should read those as entries. If that excluded
+    set is ever promoted into a table of its own, this selector must learn to
     tell the two tables apart."""
     rows = [line for line in _section().splitlines() if line.lstrip().startswith("|")]
     body = [row for row in rows if not _SEPARATOR_ROW.match(row)]
@@ -40,32 +42,50 @@ def _table_rows() -> list[str]:
     return body[1:]
 
 
-def _first_cell(row: str) -> str:
-    return row.strip().strip("|").split("|")[0]
+def _cells(row: str) -> list[str]:
+    return [cell.strip() for cell in row.strip().strip("|").split("|")]
 
 
-def _documented_roots() -> set[str]:
-    """Every root the table names, as a bare directory name. Only the first cell
-    counts, so a description mentioning `benchmarks/` or `examples/` cannot
-    register a phantom entry, and each row must contribute exactly one root, so a
-    row written `runs` instead of `runs/` fails loudly instead of vanishing —
-    the same guard `test_acquisition_evidence_tiers.py` puts on its row count."""
-    roots: set[str] = set()
+def _documented_roots() -> dict[str, str]:
+    """Every root the table names, mapped to its declared kind. Only the first
+    cell may name a root, so a description mentioning `benchmarks/` or
+    `examples/` cannot register a phantom entry, and each row must contribute
+    exactly one root, so a row written `runs` instead of `runs/` fails loudly
+    instead of vanishing — the same guard `test_acquisition_evidence_tiers.py`
+    puts on its row count."""
+    documented: dict[str, str] = {}
     rows = _table_rows()
     for row in rows:
+        cells = _cells(row)
+        assert len(cells) == 3, f"row must be root | kind | reason: {row!r}"
         named = [
             span[:-1]
-            for span in _CODE_SPAN.findall(_first_cell(row))
+            for span in _CODE_SPAN.findall(cells[0])
             if span.endswith("/") and span.count("/") == 1
         ]
         assert len(named) == 1, f"row must name exactly one root: {row!r}"
-        roots.add(named[0])
-    assert len(roots) == len(rows), "the table repeats a root"
-    return roots
+        documented[named[0]] = cells[1]
+    assert len(documented) == len(rows), "the table repeats a root"
+    return documented
+
+
+RUN_ARTIFACT = "run artifact"
+THIRD_PARTY = "third-party material"
 
 
 def test_documented_hygiene_table_matches_the_controlled_list():
-    assert _documented_roots() == set(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS)
+    assert set(_documented_roots()) == set(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS)
+
+
+def test_documented_kinds_match_the_disclosure_subset():
+    """The clutter/disclosure split is the load-bearing distinction — it decides
+    whether the gate tells an operator to escalate to the repository owner — so
+    it gets the same doc-vs-code guard as the inventory itself."""
+    documented = _documented_roots()
+    third_party = {root for root, kind in documented.items() if kind == THIRD_PARTY}
+
+    assert set(documented.values()) <= {RUN_ARTIFACT, THIRD_PARTY}
+    assert third_party == set(quality_gate.REPOSITORY_HYGIENE_DISCLOSURE_ROOTS)
 
 
 def test_the_section_points_at_the_enforced_inventory():
@@ -75,6 +95,7 @@ def test_the_section_points_at_the_enforced_inventory():
 
     assert "scripts/quality_gate.py" in section
     assert "REPOSITORY_HYGIENE_FORBIDDEN_ROOTS" in section
+    assert "REPOSITORY_HYGIENE_DISCLOSURE_ROOTS" in section
     assert "test_documented_hygiene_table_matches_the_controlled_list" in section
     assert len(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS) > 0, "inventory is empty"
 
