@@ -545,3 +545,134 @@ def test_scanner_prefix_does_not_depend_on_how_the_root_was_spelled():
     assert quality_gate.modules_with_file_writes(
         package_root=absolute
     ) == quality_gate.modules_with_file_writes()
+
+
+# --- Repository hygiene ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "tracked",
+    [
+        "work/inventory.json",
+        "work/out/run.json",
+    ],
+)
+def test_repository_hygiene_flags_tracked_root_work_artifacts(tracked):
+    assert quality_gate.repository_hygiene_violations([tracked]) == [tracked]
+
+
+@pytest.mark.parametrize(
+    "tracked",
+    [
+        ".work/local.json",
+        # A root-level *file* named `work` is authored; only a directory below a
+        # listed root is generated. Pinned so the guard cannot be dropped silently.
+        "work",
+        "benchmarks/example/work/note.json",
+        "some-package/work/item.py",
+        "workflows/ci.yml",
+        "work.json",
+    ],
+)
+def test_repository_hygiene_ignores_paths_outside_root_work(tracked):
+    assert quality_gate.repository_hygiene_violations([tracked]) == []
+
+
+def test_repository_hygiene_returns_empty_for_a_clean_tree():
+    assert quality_gate.repository_hygiene_violations(
+        ["README.md", "loop_apidoc/cli.py", "benchmarks/newebpay-mpg/notes.md"]
+    ) == []
+
+
+def test_repository_hygiene_output_is_sorted_and_deduplicated():
+    assert quality_gate.repository_hygiene_violations(
+        [
+            "work/out/run.json",
+            "README.md",
+            "work/inventory.json",
+            "work/out/run.json",
+        ]
+    ) == ["work/inventory.json", "work/out/run.json"]
+
+
+def test_repository_hygiene_reads_tracked_paths_from_git():
+    calls: list[list[str]] = []
+
+    def runner(cmd: list[str]) -> FakeResult:
+        calls.append(cmd)
+        return FakeResult(stdout="README.md\0work/inventory.json\0")
+
+    assert quality_gate.tracked_repository_paths(runner=runner) == [
+        "README.md",
+        "work/inventory.json",
+    ]
+    assert calls == [["git", "ls-files", "-z"]]
+
+
+def test_quality_gate_fails_before_any_step_when_root_work_is_tracked(monkeypatch, capsys):
+    monkeypatch.setattr(
+        quality_gate,
+        "tracked_repository_paths",
+        lambda: ["README.md", "work/out/run.json"],
+    )
+
+    def fail(*args, **kwargs):  # pragma: no cover - must not be reached
+        raise AssertionError("no gate step may run once hygiene has failed")
+
+    monkeypatch.setattr(quality_gate, "run_step", fail)
+
+    assert quality_gate.main([]) == 1
+    err = capsys.readouterr().err
+    assert "work/out/run.json" in err
+    assert "run.json" in err
+
+
+def test_repository_hygiene_flags_every_root_in_the_controlled_inventory():
+    """The inventory drives the rule rather than decorating it: adding a root
+    must change behaviour, and today the tuple holds exactly `work`."""
+    for root in quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS:
+        assert quality_gate.repository_hygiene_violations([f"{root}/generated.json"]) == [
+            f"{root}/generated.json"
+        ]
+
+    assert quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS == ("work",), (
+        "the inventory is deliberately one entry; runs/, tmp/ and out/ join only "
+        "after separate review, and widening it means updating AGENTS.md's table "
+        "in the same change"
+    )
+
+
+def test_repository_hygiene_remedy_names_the_root_it_reports():
+    """MEDIUM from review: the remedy was hardcoded to `work` while the rule
+    became a list, so a second root would have told the operator to remove the
+    first one. Derive it from the violations instead."""
+    for root in quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS:
+        remedy = quality_gate.repository_hygiene_remedy([f"{root}/generated.json"])
+
+        assert f"git rm -r --cached {root}" in remedy
+        assert f"/{root}/" in remedy
+
+
+def test_repository_hygiene_remedy_covers_every_violated_root():
+    remedy = quality_gate.repository_hygiene_remedy(
+        ["work/out/run.json", "scratch/a.json", "work/inventory.json"]
+    )
+
+    assert "git rm -r --cached scratch" in remedy
+    assert "git rm -r --cached work" in remedy
+    # The remedy is a forward commit; nothing here ever asks for a history purge.
+    assert "history rewrite" in remedy
+
+
+def test_repository_hygiene_failure_message_carries_the_derived_remedy(monkeypatch, capsys):
+    monkeypatch.setattr(
+        quality_gate, "tracked_repository_paths", lambda: ["work/out/run.json"]
+    )
+    monkeypatch.setattr(
+        quality_gate, "run_step", lambda *a, **k: pytest.fail("no step may run")
+    )
+
+    assert quality_gate.main([]) == 1
+    err = capsys.readouterr().err
+    assert "work/out/run.json" in err
+    assert "git rm -r --cached work" in err
