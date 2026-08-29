@@ -96,6 +96,9 @@ def test_the_section_points_at_the_enforced_inventory():
     assert "scripts/quality_gate.py" in section
     assert "REPOSITORY_HYGIENE_FORBIDDEN_ROOTS" in section
     assert "REPOSITORY_HYGIENE_DISCLOSURE_ROOTS" in section
+    # `.gitignore` prevents; the gate detects. The section must point at the
+    # test holding the two in agreement, or the prevention half is unowned.
+    assert "tests/test_gitignore_contract.py" in section
     assert "test_documented_hygiene_table_matches_the_controlled_list" in section
     assert len(quality_gate.REPOSITORY_HYGIENE_FORBIDDEN_ROOTS) > 0, "inventory is empty"
 
