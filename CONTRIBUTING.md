@@ -88,10 +88,9 @@ assemble 產物),已列入 `.gitignore`,一律不得提交。素材該去哪裡:
 - 可重現、經審核的測試素材 → `benchmarks/<case>/`(規則見上方 Benchmark harness contract)。
 - 使用者可閱讀的公開範例 → `examples/`。
 
-`uv run python scripts/quality_gate.py` 會在跑任何步驟前檢查 Git 已追蹤路徑
-(`scripts/quality_gate.py::repository_hygiene_violations`),只要 root `work/` 底下有
-tracked file 就直接失敗並列出路徑;它只讀路徑,不讀檔案內容。誤入庫時以
-`git rm -r --cached work` 移除即可。
+`uv run python scripts/quality_gate.py` 會在跑任何步驟前擋下這類檔案,誤入庫時以
+`git rm -r --cached work` 移除即可。守門判準、受控目錄清單與為何刻意不擴大範圍,見
+[`AGENTS.md`](AGENTS.md) 的 Repository hygiene 一節。
 
 ## 提交流程
 

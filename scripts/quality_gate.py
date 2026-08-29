@@ -445,30 +445,56 @@ def _excerpt(text: str, limit: int = 4000) -> str:
 # next accidental `git add`; this rule is what fails loudly if one lands anyway.
 #
 # **The criterion**, deliberately narrow: a tracked path violates repository
-# hygiene when its *first* path segment is exactly `work`. Not a substring match
-# — `workflows/ci.yml` and `work.json` are ordinary files — and not a nested
-# match, so `benchmarks/<case>/work/` and a package's own `work/` directory stay
-# untouched. `.work/` is a different name and is already gitignored. The rule
-# reads paths only; it never opens a file, so a leaked artifact's contents can
-# never reach the gate's output.
-REPOSITORY_WORK_ARTIFACT_ROOT = "work"
+# hygiene when its *first* path segment is exactly a listed root and at least
+# one more segment follows — a root-level *file* named `work` is authored, and
+# telling an operator to `git rm -r --cached work` over it would remove the
+# wrong thing. Not a substring match — `workflows/ci.yml` and `work.json` are ordinary files — and
+# not a nested match, so `benchmarks/<case>/work/` and a package's own `work/`
+# directory stay untouched. `.work/` is a different name and is already
+# gitignored. The rule reads paths only; it never opens a file, so a leaked
+# artifact's contents can never reach the gate's output.
+#
+# This is a reviewed inventory in the same family as the four above, not an open
+# list: widening it is a decision, so adding a root requires a matching row in
+# AGENTS.md's "Repository hygiene" table in the same change, and
+# `test_documented_hygiene_table_matches_the_controlled_list` enforces exact set
+# parity in both directions. Other gitignored scratch directories (`runs/`,
+# `tmp/`, `out/`) are deliberately absent until each is separately reviewed —
+# sweeping them in unexamined is how a narrow rule becomes an unreviewed one.
+REPOSITORY_HYGIENE_FORBIDDEN_ROOTS = ("work",)
 
-REPOSITORY_HYGIENE_REMEDY = (
-    "root work/ is a local pipeline scratch directory and must not be committed: "
-    "run `git rm -r --cached work` and keep the /work/ entry in .gitignore. "
-    "Reviewed test material belongs in benchmarks/, reader-facing samples in examples/."
-)
+
+
+def repository_hygiene_remedy(violations: Iterable[str]) -> str:
+    """The fix, derived from the reported paths rather than hardcoded, so
+    adding a root to the inventory cannot leave the operator told to remove a
+    different directory. `git rm -r --cached` is a forward commit that leaves
+    local copies alone; clearing a hygiene failure never means rewriting
+    history."""
+    roots = sorted({path.split("/", 1)[0] for path in violations})
+    return (
+        "these are local pipeline scratch directories and must not be committed: run "
+        + ", ".join(f"`git rm -r --cached {root}`" for root in roots)
+        + " and keep the "
+        + ", ".join(f"/{root}/" for root in roots)
+        + " entry in .gitignore. That is a forward commit, not a Git history rewrite. "
+        "Reviewed test material belongs in benchmarks/, reader-facing samples in examples/."
+    )
 
 
 def repository_hygiene_violations(tracked_paths: Iterable[str]) -> list[str]:
-    """Tracked paths under the root `work/` scratch directory, sorted and
-    de-duplicated so a failure reads the same on every machine. Pure: the
+    """Tracked paths under a root listed in `REPOSITORY_HYGIENE_FORBIDDEN_ROOTS`,
+    sorted and de-duplicated so a failure reads the same on every machine. A
+    path with no `/` is a root-level *file* and never a violation — a file named
+    `work` is authored, and only a directory below a listed root is generated.
+    Pure: the
     argument is the Git-tracked path list, never a filesystem walk, so ignored
     and untracked local files are out of scope by construction."""
+    forbidden = frozenset(REPOSITORY_HYGIENE_FORBIDDEN_ROOTS)
     violations = {
         path
         for path in tracked_paths
-        if "/" in path and path.split("/", 1)[0] == REPOSITORY_WORK_ARTIFACT_ROOT
+        if "/" in path and path.split("/", 1)[0] in forbidden
     }
     return sorted(violations)
 
@@ -839,7 +865,7 @@ def main(argv: list[str] | None = None) -> int:
                 "tracked generated work artifacts:\n"
                 + "\n".join(f"  {path}" for path in hygiene_violations)
                 + "\n"
-                + REPOSITORY_HYGIENE_REMEDY
+                + repository_hygiene_remedy(hygiene_violations)
             )
         print("[quality-gate] PASS repository hygiene")
         if args.strict_local:
