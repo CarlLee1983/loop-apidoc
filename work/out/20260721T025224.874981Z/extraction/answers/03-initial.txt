@@ -1,3 +1,0 @@
-```json
-{"environments": [{"name": "production", "base_url": "https://api.vg-organization.com", "version": null, "source": "vg-wen-dang.md"}]}
-```

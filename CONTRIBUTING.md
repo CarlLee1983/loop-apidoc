@@ -80,6 +80,19 @@ source-backed assertions 會 SKIP；**SKIP 不代表 benchmark PASS**。只有�
 
 > **已知**:`tests/plan/test_classify.py` 的兩個 path-boundary 測試曾出現一次無法重現的偶發失敗;目前判定為一次性 heisenbug(非順序、非 hash-seed 相依)。若你穩定重現了它,請附上環境與 seed 開 issue。
 
+## 版本庫衛生
+
+repo root 的 `work/` 是**本機 pipeline 工作目錄**(URL 快取、extraction JSON、agent 回答、
+assemble 產物),已列入 `.gitignore`,一律不得提交。素材該去哪裡:
+
+- 可重現、經審核的測試素材 → `benchmarks/<case>/`(規則見上方 Benchmark harness contract)。
+- 使用者可閱讀的公開範例 → `examples/`。
+
+`uv run python scripts/quality_gate.py` 會在跑任何步驟前檢查 Git 已追蹤路徑
+(`scripts/quality_gate.py::repository_hygiene_violations`),只要 root `work/` 底下有
+tracked file 就直接失敗並列出路徑;它只讀路徑,不讀檔案內容。誤入庫時以
+`git rm -r --cached work` 移除即可。
+
 ## 提交流程
 
 1. 從 `main`(或 `master`)開新分支,勿直接在主幹上開發。
