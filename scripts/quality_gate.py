@@ -439,10 +439,11 @@ def _excerpt(text: str, limit: int = 4000) -> str:
 
 # --- Repository hygiene (0.41 stabilization slice 1) -------------------------
 #
-# `work/` at the repository root is the local pipeline scratch directory: URL
-# caches, extraction JSON, agent answers, assemble outputs. It was tracked on
-# `main` for several releases because nothing checked. `.gitignore` stops the
-# next accidental `git add`; this rule is what fails loudly if one lands anyway.
+# Some directories at the repository root are generated or supplied, never
+# authored here — a run writes them, or an operator drops someone else's
+# material into them. Root `work/` was tracked on `main` for several releases
+# because nothing checked. `.gitignore` stops the next accidental `git add`;
+# this rule is what fails loudly if one lands anyway.
 #
 # **The criterion**, deliberately narrow: a tracked path violates repository
 # hygiene when its *first* path segment is exactly a listed root and at least
@@ -458,10 +459,37 @@ def _excerpt(text: str, limit: int = 4000) -> str:
 # list: widening it is a decision, so adding a root requires a matching row in
 # AGENTS.md's "Repository hygiene" table in the same change, and
 # `test_documented_hygiene_table_matches_the_controlled_list` enforces exact set
-# parity in both directions. Other gitignored scratch directories (`runs/`,
-# `tmp/`, `out/`) are deliberately absent until each is separately reviewed —
-# sweeping them in unexamined is how a narrow rule becomes an unreviewed one.
-REPOSITORY_HYGIENE_FORBIDDEN_ROOTS = ("work",)
+# parity in both directions.
+#
+# Two kinds of root are listed, and the second is why this rule is worth more
+# than tidiness. The run roots hold regenerable clutter. `sources/` and
+# `teams-archive-preview/` hold *other people's material* — operator-provided
+# supplier snapshots of uncertain redistribution rights, and a Teams export
+# containing chat content — so committing one is a disclosure, not a mess, and
+# unlike clutter it is not undone by a later `git rm`.
+#
+# Third-party tool caches (`node_modules/`, `.venv/`, `dist/`, `graft/`,
+# `htmlcov/`, `__pycache__/`) are deliberately absent: committing them is an
+# ecosystem-wide mistake that every contributor's tooling already flags, not a
+# property of this repository, and `dist/` is a directory some projects commit
+# on purpose. Empty-today candidates (`benchmark_out/`, `benchmark_work/`,
+# `output/`) stay out too — listing a root nothing has ever written is guessing.
+REPOSITORY_HYGIENE_FORBIDDEN_ROOTS = (
+    # Local run artifacts: a run writes them, a later run overwrites them.
+    "work",
+    "out",
+    "runs",
+    "tmp",
+    ".loop-apidoc",
+    # Third-party material: committing one discloses something.
+    "sources",
+    "teams-archive-preview",
+)
+
+# The subset whose failure is a disclosure rather than clutter. `git rm` clears
+# the working tree but not history or anybody's existing clone, so the remedy for
+# these has a second half the contributor cannot perform — and must not attempt.
+REPOSITORY_HYGIENE_DISCLOSURE_ROOTS = ("sources", "teams-archive-preview")
 
 
 
@@ -472,14 +500,27 @@ def repository_hygiene_remedy(violations: Iterable[str]) -> str:
     local copies alone; clearing a hygiene failure never means rewriting
     history."""
     roots = sorted({path.split("/", 1)[0] for path in violations})
-    return (
-        "these are local pipeline scratch directories and must not be committed: run "
+    disclosed = [
+        root for root in roots if root in REPOSITORY_HYGIENE_DISCLOSURE_ROOTS
+    ]
+    message = (
+        "these roots are not authored here and must not be committed: run "
         + ", ".join(f"`git rm -r --cached {root}`" for root in roots)
-        + " and keep the "
-        + ", ".join(f"/{root}/" for root in roots)
-        + " entry in .gitignore. That is a forward commit, not a Git history rewrite. "
+        + ", keeping the matching .gitignore entries for "
+        + ", ".join(f"{root}/" for root in roots)
+        + ". That is a forward commit, not a Git history rewrite. "
         "Reviewed test material belongs in benchmarks/, reader-facing samples in examples/."
     )
+    if disclosed:
+        message += (
+            " Removal is not the whole fix for "
+            + ", ".join(f"{root}/" for root in disclosed)
+            + ": they hold third-party material, and the committed blobs stay reachable "
+            "in Git history and in existing clones. Report the paths to the repository "
+            "owner, who decides whether a history purge is warranted. Do not attempt one "
+            "here, and do not quote the contents when reporting."
+        )
+    return message
 
 
 def repository_hygiene_violations(tracked_paths: Iterable[str]) -> list[str]:
@@ -862,7 +903,7 @@ def main(argv: list[str] | None = None) -> int:
         hygiene_violations = repository_hygiene_violations(tracked_repository_paths())
         if hygiene_violations:
             raise QualityGateFailure(
-                "tracked generated work artifacts:\n"
+                "tracked paths under a forbidden repository root:\n"
                 + "\n".join(f"  {path}" for path in hygiene_violations)
                 + "\n"
                 + repository_hygiene_remedy(hygiene_violations)
