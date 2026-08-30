@@ -7,23 +7,23 @@ from loop_apidoc.gitbook_llms import parse_llms_index
 def test_parse_llms_index_keeps_safe_same_prefix_markdown_urls_once():
     index = """# Docs
 
-- [Overview](https://docs.example.com/vg-docs/overview.md)
-- [Transfer](https://docs.example.com/vg-docs/api/transfer.md#request)
-- [Duplicate](https://docs.example.com/vg-docs/overview.md)
-- [Duplicate destination](https://docs.example.com/vg-docs/overview.md?revision=2)
-- [Other host](https://other.example.com/vg-docs/other.md)
+- [Overview](https://docs.example.com/sample-docs/overview.md)
+- [Transfer](https://docs.example.com/sample-docs/api/transfer.md#request)
+- [Duplicate](https://docs.example.com/sample-docs/overview.md)
+- [Duplicate destination](https://docs.example.com/sample-docs/overview.md?revision=2)
+- [Other host](https://other.example.com/sample-docs/other.md)
 - [Outside prefix](https://docs.example.com/other.md)
-- [Asset](https://docs.example.com/vg-docs/logo.png)
-- [Escape](https://docs.example.com/vg-docs/../secret.md)
+- [Asset](https://docs.example.com/sample-docs/logo.png)
+- [Escape](https://docs.example.com/sample-docs/../secret.md)
 """
 
-    parsed = parse_llms_index("https://docs.example.com/vg-docs", index)
+    parsed = parse_llms_index("https://docs.example.com/sample-docs", index)
 
-    assert parsed.entry_url == "https://docs.example.com/vg-docs/"
-    assert parsed.index_url == "https://docs.example.com/vg-docs/llms.txt"
+    assert parsed.entry_url == "https://docs.example.com/sample-docs/"
+    assert parsed.index_url == "https://docs.example.com/sample-docs/llms.txt"
     assert [(page.url, page.destination.as_posix()) for page in parsed.pages] == [
-        ("https://docs.example.com/vg-docs/overview.md", "overview.md"),
-        ("https://docs.example.com/vg-docs/api/transfer.md", "api/transfer.md"),
+        ("https://docs.example.com/sample-docs/overview.md", "overview.md"),
+        ("https://docs.example.com/sample-docs/api/transfer.md", "api/transfer.md"),
     ]
 
 
@@ -51,15 +51,15 @@ def test_cache_gitbook_llms_preserves_paths_and_records_page_failures(tmp_path):
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(str(request.url))
-        if request.url.path == "/vg-docs/llms.txt":
+        if request.url.path == "/sample-docs/llms.txt":
             return httpx.Response(
                 200,
                 text=(
-                    "[Overview](https://docs.example.com/vg-docs/overview.md)\n"
-                    "[Transfer](https://docs.example.com/vg-docs/api/transfer.md)\n"
+                    "[Overview](https://docs.example.com/sample-docs/overview.md)\n"
+                    "[Transfer](https://docs.example.com/sample-docs/api/transfer.md)\n"
                 ),
             )
-        if request.url.path == "/vg-docs/overview.md":
+        if request.url.path == "/sample-docs/overview.md":
             return httpx.Response(200, content=b"# Overview\n")
         return httpx.Response(503, text="unavailable")
 
@@ -67,29 +67,29 @@ def test_cache_gitbook_llms_preserves_paths_and_records_page_failures(tmp_path):
     coverage_path = tmp_path / "coverage.json"
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         result = cache_gitbook_llms(
-            "https://docs.example.com/vg-docs",
+            "https://docs.example.com/sample-docs",
             sources=sources,
             coverage_output=coverage_path,
             client=client,
         )
 
     assert requests == [
-        "https://docs.example.com/vg-docs/llms.txt",
-        "https://docs.example.com/vg-docs/overview.md",
-        "https://docs.example.com/vg-docs/api/transfer.md",
+        "https://docs.example.com/sample-docs/llms.txt",
+        "https://docs.example.com/sample-docs/overview.md",
+        "https://docs.example.com/sample-docs/api/transfer.md",
     ]
     assert result.fetched == 1
     assert result.failed == 1
     page = sources / "overview.md"
     assert page.read_text(encoding="utf-8") == "# Overview\n"
     sidecar = json.loads((sources / "overview.md.source.json").read_text(encoding="utf-8"))
-    assert sidecar["url"] == "https://docs.example.com/vg-docs/overview.md"
+    assert sidecar["url"] == "https://docs.example.com/sample-docs/overview.md"
     assert len(sidecar["content_sha256"]) == 64
     assert sidecar["fetched_at"].endswith("Z")
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
     assert [item["url"] for item in coverage["expected"]] == [
-        "https://docs.example.com/vg-docs/overview.md",
-        "https://docs.example.com/vg-docs/api/transfer.md",
+        "https://docs.example.com/sample-docs/overview.md",
+        "https://docs.example.com/sample-docs/api/transfer.md",
     ]
     assert [item["status"] for item in coverage["results"]] == ["fetched", "fetch_failed"]
     assert coverage["results"][1]["note"] == "HTTPStatusError"

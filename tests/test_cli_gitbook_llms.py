@@ -20,7 +20,7 @@ def test_cache_gitbook_llms_exposes_explicit_source_and_coverage_paths(tmp_path:
     def fake_cache(url: str, *, sources: Path, coverage_output: Path, **_kwargs):
         calls.append((url, sources, coverage_output))
         return GitBookCacheResult(
-            index_url="https://docs.example.com/vg-docs/llms.txt",
+            index_url="https://docs.example.com/sample-docs/llms.txt",
             sources=sources,
             coverage_path=coverage_output,
             fetched=2,
@@ -33,16 +33,16 @@ def test_cache_gitbook_llms_exposes_explicit_source_and_coverage_paths(tmp_path:
         app,
         [
             "cache-gitbook-llms",
-            "--url", "https://docs.example.com/vg-docs",
+            "--url", "https://docs.example.com/sample-docs",
             "--sources", str(sources),
             "--coverage", str(coverage),
         ],
     )
 
     assert result.exit_code == 0, result.stdout
-    assert calls == [("https://docs.example.com/vg-docs", sources, coverage)]
+    assert calls == [("https://docs.example.com/sample-docs", sources, coverage)]
     assert json.loads(result.stdout) == {
-        "index_url": "https://docs.example.com/vg-docs/llms.txt",
+        "index_url": "https://docs.example.com/sample-docs/llms.txt",
         "sources": str(sources),
         "coverage": str(coverage),
         "fetched": 2,
@@ -60,7 +60,7 @@ def test_cache_gitbook_llms_uses_exit_two_for_invalid_index(tmp_path: Path, monk
         app,
         [
             "cache-gitbook-llms",
-            "--url", "https://docs.example.com/vg-docs",
+            "--url", "https://docs.example.com/sample-docs",
             "--sources", str(tmp_path / "sources"),
             "--coverage", str(tmp_path / "coverage.json"),
         ],
