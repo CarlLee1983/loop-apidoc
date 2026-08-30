@@ -5,6 +5,7 @@ import pytest
 from loop_apidoc.url_safety import (
     UrlFetchPolicy,
     UrlSafetyError,
+    redact_text,
     redact_url,
     validate_url,
 )
@@ -585,3 +586,63 @@ def test_url_userinfo_is_redacted_whole():
     assert redact_url("https://docs.example.com/a@b/spec") == (
         "https://docs.example.com/a@b/spec"
     )
+
+
+def test_redact_text_redacts_each_url_it_finds_and_leaves_the_prose_alone():
+    """A locator is human-written prose that may quote a URL. Handing the whole
+    string to `redact_url` treats the words after the URL as part of a query
+    value and swallows them, so a section reference would vanish."""
+    assert redact_text("見 https://a.example/s?token=s3cret 第 3 節") == (
+        "見 https://a.example/s?token=[REDACTED] 第 3 節"
+    )
+
+
+def test_redact_text_is_a_no_op_on_text_that_names_no_url():
+    for text in ["§3.2 交易查詢", "manual.md p.4", ""]:
+        assert redact_text(text) == text
+
+
+def test_redact_text_handles_more_than_one_url():
+    assert redact_text("a https://x.test/?key=1 b https://y.test/?sig=2 c") == (
+        "a https://x.test/?key=[REDACTED] b https://y.test/?sig=[REDACTED] c"
+    )
+
+
+def test_redact_text_does_not_swallow_trailing_punctuation_into_the_url():
+    assert redact_text("見 (https://a.example/s?token=s3cret)。") == (
+        "見 (https://a.example/s?token=[REDACTED])。"
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # A scheme is optional in what an operator pastes.
+        (
+            "www.a.example/s?token=s3cret",
+            "www.a.example/s?token=[REDACTED]",
+        ),
+        (
+            "//a.example/s?token=s3cret",
+            "//a.example/s?token=[REDACTED]",
+        ),
+        # Traditional Chinese prose does not separate words with spaces, so a
+        # whitespace-bounded match swallows the sentence after the URL.
+        (
+            "見https://a.example/s?token=s3cret第三節",
+            "見https://a.example/s?token=[REDACTED]第三節",
+        ),
+        # A second URL is not part of the first one's query.
+        (
+            "https://a.test/x?token=s3cret,https://b.test/y?sig=al5o",
+            "https://a.test/x?token=[REDACTED],https://b.test/y?sig=[REDACTED]",
+        ),
+        # A comma inside one URL's query still belongs to it.
+        (
+            "https://a.test/x?ids=1,2,3&token=s3cret",
+            "https://a.test/x?ids=1,2,3&token=[REDACTED]",
+        ),
+    ],
+)
+def test_redact_text_finds_the_end_of_a_url_that_prose_does_not_delimit(text, expected):
+    assert redact_text(text) == expected

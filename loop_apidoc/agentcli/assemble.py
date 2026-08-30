@@ -72,6 +72,7 @@ from loop_apidoc.agentcli.fact_coverage import build_fact_coverage
 from loop_apidoc.operation_identity import expand_methods, extraction_identities
 from loop_apidoc.validate.report import write_reports as write_validation_reports
 from loop_apidoc.validate.validator import validate_outputs
+from loop_apidoc.url_safety import redact_url
 
 
 class AssembleInputError(ValueError):
@@ -108,12 +109,12 @@ def backfill_snapshot_files(manifest: Manifest, coverage: UrlCoverage) -> Manife
     local_paths = [s.relative_path for s in manifest.local_sources]
     updated: list[UrlSource] = []
     for url_source in manifest.url_sources:
-        key = normalize_url(url_source.url)
+        key = normalize_url(url_source.citation_id)
         candidates: set[str] = set()
         for result in coverage.results:
             if result.file is None or result.status not in _MAPPING_STATUSES:
                 continue
-            if normalize_url(result.url) != key:
+            if normalize_url(redact_url(result.url)) != key:
                 continue
             for rel in local_paths:
                 if _ledger_file_matches(result.file, rel):

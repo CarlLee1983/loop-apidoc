@@ -307,3 +307,74 @@ def test_sole_normative_source_ignores_a_supplementary_excerpt():
     # 邊界檢查走的是這一個:加一份摘錄不該讓整個 run 在 run 目錄產生前被拒。
     # 兩個函式的分野只有這裡釘著,AGENTS.md 曾把兩者的敘述對調(#124)。
     assert sole_normative_source(_manual_plus_excerpt()) == "manual.md"
+
+
+# ── Issue #158: the citation identity never carries a credential ──────────────
+
+_SIGNED = "https://a.example/spec?X-Amz-Signature=s3cret"
+_SIGNED_ID = "https://a.example/spec?X-Amz-Signature=[REDACTED]"
+
+
+def _signed_manifest() -> Manifest:
+    return Manifest(
+        sources_root="/src", generated_at=_now(),
+        local_sources=[],
+        url_sources=[_url_src(_SIGNED)],
+    )
+
+
+def test_sole_source_names_a_url_by_its_redacted_identity():
+    assert sole_source(_signed_manifest()) == _SIGNED_ID
+
+
+def test_sole_normative_source_names_a_url_by_its_redacted_identity():
+    assert sole_normative_source(_signed_manifest()) == _SIGNED_ID
+
+
+def test_a_locator_quoting_the_redacted_url_matches():
+    """The agent reads a corpus and a coverage ledger that are already redacted,
+    so the URL it quotes back in a locator is the redacted one."""
+    assert match_manifest_source(f"見 {_SIGNED_ID} 第 3 節", _signed_manifest()) == _SIGNED_ID
+
+
+def test_a_locator_quoting_the_raw_url_still_matches():
+    """An operator writing a locator by hand has the signed link in front of
+    them, so the raw form has to keep matching — and must still be reported by
+    its redacted identity."""
+    assert match_manifest_source(f"見 {_SIGNED} 第 3 節", _signed_manifest()) == _SIGNED_ID
+
+
+def test_a_citation_records_the_redacted_identity():
+    _status, citation = classify_item(
+        None, query_id="q1", answer_path="a.json", manifest=_signed_manifest()
+    )
+
+    assert citation.manifest_source == _SIGNED_ID
+
+
+def test_a_locator_quoting_a_signed_url_is_stored_redacted():
+    """Issue #158. `manifest_source` is derived and was redacted; `locator` is
+    the operator's or agent's own words and was stored verbatim, so the same
+    JSON object carried both spellings into plan.json and review.html. A
+    locator that names no URL is byte-identical, so section references are
+    unaffected."""
+    _status, citation = classify_item(
+        f"見 {_SIGNED} 第 3 節",
+        query_id="q1",
+        answer_path="a.json",
+        manifest=_signed_manifest(),
+    )
+
+    assert citation.locator == f"見 {_SIGNED_ID} 第 3 節"
+    assert "s3cret" not in citation.model_dump_json()
+
+
+def test_a_locator_naming_no_url_is_untouched():
+    _status, citation = classify_item(
+        "§3.2 交易查詢",
+        query_id="q1",
+        answer_path="a.json",
+        manifest=_signed_manifest(),
+    )
+
+    assert citation.locator == "§3.2 交易查詢"

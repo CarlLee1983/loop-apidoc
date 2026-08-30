@@ -219,9 +219,16 @@ def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
         if source.authority is SourceAuthority.SUPPLEMENTARY:
             supplementary_sources.append(source.relative_path)
 
+    # Grouped by the redacted identity, not the fetched URL (issue #158): this
+    # key becomes the descriptor locator, the acquisition metadata and the
+    # citation key, all of which are written into governed artifacts and joined
+    # against `plan.json`'s `manifest_source`. Two links differing only in their
+    # signature therefore collapse to one source, which is the right reading —
+    # they were never two documents — and a conflicting content digest between
+    # them is reported as the ambiguity it is (ADR 0015).
     urls_by_locator: dict[str, list] = {}
     for source in manifest.url_sources:
-        urls_by_locator.setdefault(source.url, []).append(source)
+        urls_by_locator.setdefault(source.citation_id, []).append(source)
     for url, sources in sorted(urls_by_locator.items()):
         descriptor = _descriptor(kind="url", locator=url, media_type=None)
         descriptors.append(descriptor)
@@ -1679,7 +1686,7 @@ def _canonical_source_metadata(manifest: Manifest) -> list[dict[str, str | None]
     for source in manifest.url_sources:
         metadata.append(
             {
-                "identity": source.url,
+                "identity": source.citation_id,
                 "kind": "url",
                 "content_digest": source.content_sha256,
                 "usability": (

@@ -636,3 +636,58 @@ def test_remote_snapshot_format_follows_the_manifest_classifier():
         assert _format_from_path(name) is detect_format(Path(name)), name
 
     assert _format_from_path("page.html") is SourceFormat.HTML
+
+
+def test_a_signed_url_descriptor_still_finds_its_snapshot(tmp_path, monkeypatch):
+    """Issue #158. The descriptor locator is the redacted citation identity, so
+    a lookup keyed on the manifest's raw fetch URL misses and the snapshot is
+    never materialized — silently, as a missing fragment rather than an error."""
+    monkeypatch.setattr(
+        httpx, "get", lambda *_a, **_k: pytest.fail("network used")
+    )
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text('{"items":[{"name":"amount"}]}', encoding="utf-8")
+    source_set = SourceSet(
+        id="sources",
+        version="1",
+        sources=(
+            SourceDescriptor(
+                id="remote",
+                kind="url",
+                locator="https://example.test/openapi.json?token=[REDACTED]",
+                media_type="application/json",
+            ),
+        ),
+    )
+    manifest = Manifest(
+        sources_root=str(tmp_path),
+        generated_at=NOW,
+        url_sources=[
+            UrlSource(
+                url="https://example.test/openapi.json?token=s3cret",
+                fetched_at=NOW,
+                http_status=200,
+                snapshot_file="snapshot.json",
+            )
+        ],
+    )
+
+    bundle = acquire_fragment_bundle(
+        source_set,
+        manifest,
+        FactIndex(),
+        (
+            FragmentRequest(
+                source_id="remote",
+                locator=JsonPointerLocator(pointer="/items/0/name"),
+            ),
+        ),
+        NOW,
+    )
+
+    fragment = next(
+        item
+        for item in bundle.fragments
+        if isinstance(item.locator, JsonPointerLocator)
+    )
+    assert fragment.semantic_value == "amount"

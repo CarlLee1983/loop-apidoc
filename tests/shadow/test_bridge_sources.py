@@ -117,11 +117,11 @@ def test_url_without_content_digest_has_descriptor_but_no_artifact():
     built = build_evidence(_manifest(url_sources=[source]), NOW)
 
     assert built.source_set.sources[0].kind == "url"
-    assert built.source_set.sources[0].locator == source.url
+    assert built.source_set.sources[0].locator == source.citation_id
     assert built.source_set.sources[0].media_type is None
     assert built.evidence.artifacts == ()
     assert built.evidence.fragments == ()
-    assert built.resolve_citation(source.url) == ()
+    assert built.resolve_citation(source.citation_id) == ()
 
 
 def test_url_with_digest_maps_to_whole_fragment_without_invented_media_type():
@@ -133,8 +133,8 @@ def test_url_with_digest_maps_to_whole_fragment_without_invented_media_type():
     fragment = built.evidence.fragments[0]
     assert artifact.content_digest == source.content_sha256
     assert artifact.media_type == "application/octet-stream"
-    assert artifact.acquisition_metadata == (("url", source.url),)
-    assert built.resolve_citation(source.url) == (fragment.id,)
+    assert artifact.acquisition_metadata == (("url", source.citation_id),)
+    assert built.resolve_citation(source.citation_id) == (fragment.id,)
 
 
 def test_url_snapshot_allows_url_to_resolve_to_local_fragment():
@@ -147,7 +147,7 @@ def test_url_snapshot_allows_url_to_resolve_to_local_fragment():
 
     local_refs = built.resolve_citation("snapshot.md")
     assert local_refs
-    assert built.resolve_citation(source.url) == local_refs
+    assert built.resolve_citation(source.citation_id) == local_refs
 
 
 def test_url_snapshot_with_own_digest_resolves_to_url_and_local_fragments():
@@ -158,9 +158,9 @@ def test_url_snapshot_with_own_digest_resolves_to_url_and_local_fragments():
         _manifest(local_sources=[snapshot], url_sources=[source]), NOW
     )
 
-    assert len(built.resolve_citation(source.url)) == 2
+    assert len(built.resolve_citation(source.citation_id)) == 2
     assert set(built.resolve_citation("snapshot.md")) <= set(
-        built.resolve_citation(source.url)
+        built.resolve_citation(source.citation_id)
     )
 
 
@@ -206,9 +206,9 @@ def test_conflicting_duplicate_url_is_deterministic_and_not_groundable():
     assert forward.evidence == reverse.evidence
     assert len(forward.source_set.sources) == 1
     assert forward.evidence.artifacts == ()
-    assert forward.resolve_citation(first.url) == ()
+    assert forward.resolve_citation(first.citation_id) == ()
     assert forward.diagnostics[0].code == "SOURCE_LOCATOR_AMBIGUOUS"
-    assert forward.diagnostics[0].manifest_source == first.url
+    assert forward.diagnostics[0].manifest_source == first.citation_id
 
 
 def test_identical_duplicate_url_is_deduplicated():
@@ -219,3 +219,26 @@ def test_identical_duplicate_url_is_deduplicated():
     assert len(built.source_set.sources) == 1
     assert len(built.evidence.artifacts) == 1
     assert len(built.evidence.fragments) == 1
+
+
+# ── Issue #158 ────────────────────────────────────────────────────────────────
+
+SIGNED = "https://docs.example.test/api?X-Amz-Signature=s3cret"
+SIGNED_ID = "https://docs.example.test/api?X-Amz-Signature=[REDACTED]"
+
+
+def test_a_signed_url_is_named_by_its_redacted_identity_throughout_the_bridge():
+    """The descriptor locator and the acquisition metadata are both written into
+    governed artifacts, and the citation key is what `plan.json`'s
+    `manifest_source` is looked up in — so all three must be the identity, or
+    the leak survives in one of them and the join breaks in another."""
+    source = _url(url=SIGNED)
+
+    built = build_evidence(_manifest(url_sources=[source]), NOW)
+
+    descriptor = built.source_set.sources[0]
+    artifact = built.evidence.artifacts[0]
+    assert descriptor.locator == SIGNED_ID
+    assert artifact.acquisition_metadata == (("url", SIGNED_ID),)
+    assert built.resolve_citation(SIGNED_ID) == (built.evidence.fragments[0].id,)
+    assert "s3cret" not in repr(built)

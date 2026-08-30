@@ -317,6 +317,43 @@ def safe_client(
     )
 
 
+# A URL inside prose. Two things end it, and neither is whitespace: a character
+# that cannot appear in a URI at all — Traditional Chinese prose puts the next
+# sentence hard against the link, with no space to stop at — and the start of a
+# second URL, because `,` is a legal URI character and `a?token=X,https://b`
+# would otherwise read as one.
+_URI_CHARACTERS = r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]"
+_URL_IN_TEXT = re.compile(
+    rf"(?:https?://|www\.|//)(?:(?!https?://){_URI_CHARACTERS})+",
+    re.IGNORECASE,
+)
+# Punctuation a writer puts *after* a URL rather than in it — a locator reads
+# `見 (https://…)。` — trimmed from the end so the redacted form is still the URL
+# that was quoted.
+_TRAILING_PUNCTUATION = ")]}>,;:.!?'\""
+
+
+def redact_text(text: str) -> str:
+    """Redact every URL that appears inside a larger piece of text.
+
+    Not the same job as `redact_url`, and the difference matters: given
+    `見 https://a/?token=X 第 3 節`, `redact_url` reads the words after the URL
+    as part of the query value and replaces them along with the credential.
+    Prose written by a person or an agent — a citation locator — goes through
+    here so only the URL changes.
+    """
+
+    def replace(match: re.Match[str]) -> str:
+        candidate = match.group(0)
+        tail = ""
+        while candidate and candidate[-1] in _TRAILING_PUNCTUATION:
+            tail = candidate[-1] + tail
+            candidate = candidate[:-1]
+        return redact_url(candidate) + tail
+
+    return _URL_IN_TEXT.sub(replace, text)
+
+
 # The seam. A URL is redacted on its way to disk and never in memory: a fetcher
 # holds the model before it fetches (`gitbook_llms` reads `page.url` to issue
 # the request), so redacting at construction would break acquisition itself.

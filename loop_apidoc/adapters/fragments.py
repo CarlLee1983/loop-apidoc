@@ -150,7 +150,11 @@ def acquire_fragment_bundle(
         for source in manifest.local_sources
         if source.status is ProcessingStatus.PENDING
     }
-    url_by_locator = {source.url: source for source in manifest.url_sources}
+    # Keyed by the citation identity, because that is what a descriptor's
+    # locator is (issue #158); the raw fetch URL would never match.
+    url_by_locator = {
+        source.citation_id: source for source in manifest.url_sources
+    }
     facts_by_path = {source.relative_path: source for source in facts.sources}
     requests_by_source: dict[str, list[FragmentRequest]] = {}
     for request in requests:

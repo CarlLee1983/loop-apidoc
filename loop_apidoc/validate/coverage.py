@@ -62,13 +62,19 @@ def check_manifest_coverage(
         ]
         usable_local_ids = set(usable_local_sources)
         document_ids = list(usable_local_sources)
-        document_ids.extend(
-            source.url
+        # The identity, not the fetched URL (issue #158): this list is matched
+        # against provenance `manifest_source`, and it is also what
+        # `Issue.location` reports back to the operator. De-duplicated because
+        # two URL sources differing only in their signature share one identity,
+        # and naming the same document twice is noise.
+        url_document_ids = dict.fromkeys(
+            source.citation_id
             for source in manifest.url_sources
             if source.http_status is not None
             and 200 <= source.http_status < 300
             and source.snapshot_file not in usable_local_ids
         )
+        document_ids.extend(url_document_ids)
         for document_id in document_ids:
             if document_id not in cited_sources:
                 issues.append(
