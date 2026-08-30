@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from loop_apidoc.plan.models import PlanItemStatus
+from loop_apidoc.url_safety import RedactedUrl
 
 
 class ProvenanceEntry(BaseModel):
@@ -15,7 +16,7 @@ class ProvenanceEntry(BaseModel):
 
 
 class ProvenanceDocument(BaseModel):
-    notebook_url: str
+    notebook_url: RedactedUrl
     entries: list[ProvenanceEntry] = Field(default_factory=list)
 
 

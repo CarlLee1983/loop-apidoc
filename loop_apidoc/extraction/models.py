@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from loop_apidoc.extraction.stages import QueryKind
+from loop_apidoc.url_safety import RedactedUrl
 
 
 class QueryRecord(BaseModel):
@@ -24,7 +25,7 @@ class AnswerArtifact(BaseModel):
 
 
 class ExtractionResult(BaseModel):
-    notebook_url: str
+    notebook_url: RedactedUrl
     artifacts: list[AnswerArtifact] = Field(default_factory=list)
 
     def for_stage(self, stage_id: str) -> list[AnswerArtifact]:

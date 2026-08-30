@@ -4,6 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
+from ..url_safety import RedactedUrl
 
 
 class SourceFormat(str, Enum):
@@ -65,7 +66,7 @@ class LocalSource(BaseModel):
 
 
 class UrlSource(BaseModel):
-    url: str
+    url: RedactedUrl
     fetched_at: datetime
     http_status: int | None
     content_sha256: str | None = None

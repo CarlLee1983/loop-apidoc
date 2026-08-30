@@ -18,6 +18,7 @@ from loop_apidoc.run.runid import make_run_id
 from loop_apidoc.score.models import ScoreProfile
 from loop_apidoc.shadow.models import ArchitectureMode
 from loop_apidoc.url_corpus import UrlCorpus
+from loop_apidoc.url_safety import redact_url
 from loop_apidoc.validate import validate_run_dir, write_reports
 
 app = typer.Typer(
@@ -285,7 +286,7 @@ def cache_gitbook_llms_command(
     typer.echo(
         json.dumps(
             {
-                "index_url": result.index_url,
+                "index_url": redact_url(result.index_url),
                 "sources": str(result.sources),
                 "coverage": str(result.coverage_path),
                 "fetched": result.fetched,

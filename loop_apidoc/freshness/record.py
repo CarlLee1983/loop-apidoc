@@ -4,7 +4,7 @@ from pathlib import Path
 
 import httpx
 
-from ..url_safety import safe_client
+from ..url_safety import REDACTED, safe_client
 import yaml
 
 from loop_apidoc.freshness.models import (
@@ -76,6 +76,12 @@ def build_fingerprint(
             raise FreshnessInputError(str(exc)) from exc
         seen: set[str] = set()
         for result in coverage.results:
+            # coverage.json 是證據,URL 寫進去時已遮蔽(ADR 0015),而這裡會把它
+            # 讀回來重新抓取。遮蔽過的 URL 抓不到 —— 而且簽章連結本來就短命,
+            # 拿它當基準線在憑證過期後一樣失效。略過而非致命失敗:本地來源
+            # 仍然構成指紋,空指紋另有既有的失敗路徑接手。
+            if REDACTED in result.url:
+                continue
             if result.status in _USABLE_URL_STATUSES and result.url not in seen:
                 seen.add(result.url)
                 url_ids.append(result.url)

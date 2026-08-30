@@ -232,7 +232,7 @@ def test_snapshot_openapi_url_wraps_fetch_errors_and_closes_owned_client(
     client = FailingClient()
     monkeypatch.setattr("loop_apidoc.openapi_snapshot.httpx.Client", lambda **_kwargs: client)
 
-    with pytest.raises(OpenApiSnapshotError, match="fetch failed: offline"):
+    with pytest.raises(OpenApiSnapshotError, match="fetch failed: ConnectError"):
         snapshot_openapi_url(
             "https://spec.example.com/openapi.json",
             sources=tmp_path / "sources",
@@ -528,3 +528,53 @@ def test_snapshot_openapi_url_rollback_tolerates_removed_snapshot(
     assert not snapshot.exists()
     assert coverage.read_bytes() == competing_coverage
     assert list(sources.iterdir()) == []
+
+
+def test_snapshot_openapi_url_keeps_the_credential_out_of_the_coverage_ledger(tmp_path: Path):
+    """Issue #156. A signed spec link is the motivating case for this whole
+    control: the credential is needed to fetch and must not survive the write."""
+    signed = "https://spec.example.com/openapi.json?X-Goog-Signature=s3cret&v=3"
+    requested: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(
+            200,
+            json={"openapi": "3.0.4", "info": {"title": "T", "version": "1"}, "paths": {}},
+            headers={"content-type": "application/json"},
+        )
+
+    coverage = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        snapshot_openapi_url(
+            signed,
+            sources=tmp_path / "sources",
+            coverage_output=coverage,
+            client=client,
+        )
+
+    assert requested == [signed]
+    written = coverage.read_text(encoding="utf-8")
+    assert "s3cret" not in written
+    assert "X-Goog-Signature=[REDACTED]" in written
+    assert "v=3" in written
+
+
+def test_snapshot_openapi_url_does_not_put_the_fetched_url_in_its_error(tmp_path: Path):
+    """Issue #156. `httpx.HTTPStatusError` stringifies as "... for url '<full
+    url>'", so interpolating the exception writes the credential to stderr and
+    into any CI log. `gitbook_llms` already reports the class name only."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, text="nope")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(OpenApiSnapshotError) as raised:
+            snapshot_openapi_url(
+                "https://spec.example.com/openapi.json?token=s3cret",
+                sources=tmp_path / "sources",
+                coverage_output=tmp_path / "coverage.json",
+                client=client,
+            )
+
+    assert "s3cret" not in str(raised.value)

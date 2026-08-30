@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from loop_apidoc.url_catalog import _Element, _TreeParser, _walk
+from loop_apidoc.url_safety import redact_url
 
 #: How far a cell may credibly span. Real parameter tables stay well inside these;
 #: anything larger is broken markup, and expanding it verbatim invents a table shape
@@ -332,5 +333,5 @@ def normalize_html_snapshot(input_file: Path, url: str, output: Path) -> Path:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(html_to_markdown(raw.decode("utf-8", errors="replace")), encoding="utf-8")
     sidecar = output.with_suffix(output.suffix + ".source.json")
-    sidecar.write_text(json.dumps({"url": url, "raw_file": str(input_file), "raw_sha256": sha256(raw).hexdigest(), "normalized_file": str(output), "normalized_at": datetime.now(timezone.utc).isoformat()}, ensure_ascii=False, indent=2), encoding="utf-8")
+    sidecar.write_text(json.dumps({"url": redact_url(url), "raw_file": str(input_file), "raw_sha256": sha256(raw).hexdigest(), "normalized_file": str(output), "normalized_at": datetime.now(timezone.utc).isoformat()}, ensure_ascii=False, indent=2), encoding="utf-8")
     return sidecar
