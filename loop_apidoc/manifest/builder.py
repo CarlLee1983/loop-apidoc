@@ -6,6 +6,8 @@ from pathlib import Path
 
 import httpx
 
+from ..url_safety import safe_client
+
 from loop_apidoc.manifest.models import Manifest, UrlSource
 from loop_apidoc.manifest.scanner import ManifestScanError, scan_sources
 from loop_apidoc.manifest.urls import probe_url
@@ -50,7 +52,7 @@ def build_manifest(
         owns_client = client is None
         probed: dict[str, UrlSource] = {}
         if urls_to_probe:
-            active_client = client or httpx.Client(timeout=10.0, follow_redirects=True)
+            active_client = client or safe_client(timeout=10.0)
             try:
                 probed = {
                     url: probe_url(url, fetched_at=generated_at, client=active_client)

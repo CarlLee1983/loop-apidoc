@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
+
+from ..url_safety import UrlSafetyError
 import yaml
 
 from loop_apidoc.freshness.models import (
@@ -101,6 +103,14 @@ def fetch_url_signal(
         headers["if-modified-since"] = prior_last_modified
     try:
         response = client.get(url, headers=headers)
+    except UrlSafetyError as exc:
+        # A refusal means we could not determine whether the source changed, so
+        # it must reach `classify` as a failure and come out INCONCLUSIVE. Left
+        # to escape, it would exit 1 — which the exit-code contract reads as
+        # CHANGED, the opposite of the truth.
+        return ObservedSignal(
+            signal=None, failed=True, error=f"refused by egress policy: {exc}"
+        )
     except httpx.HTTPError as exc:
         return ObservedSignal(signal=None, failed=True, error=f"fetch failed: {exc}")
     if response.status_code == 304:

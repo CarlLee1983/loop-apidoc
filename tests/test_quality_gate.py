@@ -796,3 +796,69 @@ def test_remedy_does_not_call_third_party_material_a_scratch_directory():
     remedy = quality_gate.repository_hygiene_remedy(["teams-archive-preview/chat.json"])
 
     assert "scratch" not in remedy.lower()
+
+
+# --- Egress gate ------------------------------------------------------------
+
+
+def test_only_the_egress_gate_constructs_an_http_client():
+    """Eight modules were fixed to fetch through `safe_client`; nothing stopped
+    a ninth from appearing. A module that builds its own `httpx.Client` skips
+    the SSRF check entirely, and that is invisible in review — the line looks
+    ordinary. See issue #155."""
+    assert quality_gate.modules_constructing_http_clients() == {
+        "loop_apidoc/url_safety.py"
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "why"),
+    [
+        ("import httpx\nc = httpx.Client(timeout=5)\n", "the shape the first version caught"),
+        ("import httpx\nc = httpx.AsyncClient()\n", "async client"),
+        ("import httpx\nr = httpx.get('http://169.254.169.254/')\n",
+         "module-level verb: builds its own client with trust_env=True and skips the gate"),
+        ("import httpx\nr = httpx.stream('GET', u)\n", "module-level stream"),
+        ("import httpx\nr = httpx.request('GET', u)\n", "module-level request"),
+        ("import httpx\nr = httpx.post(u, json={})\n", "module-level post"),
+        ("from httpx import Client\nc = Client()\n", "from-import rebinds the name"),
+        ("import httpx as h\nc = h.Client()\n", "aliased module"),
+        ("from httpx import get as fetch\nr = fetch(u)\n", "aliased from-import"),
+        ("import urllib.request\nurllib.request.urlopen(u)\n", "stdlib, always available"),
+        ("import requests\nrequests.get(u)\n", "a dependency someone might add"),
+    ],
+)
+def test_the_egress_scanner_sees_every_shape_of_bypass(tmp_path, body, why):
+    """The first version matched `httpx.Client` as an attribute on the name
+    `httpx`, and missed all of these. `httpx.get(...)` is the sharp one: one
+    ordinary line, no client constructed, and it defaults to `trust_env=True`,
+    so it honours proxy variables `safe_client` deliberately ignores."""
+    package = _write_module(tmp_path, "fetcher.py", body)
+
+    assert quality_gate.modules_constructing_http_clients(package_root=package) == {
+        "pkg/fetcher.py"
+    }, why
+
+
+def test_the_egress_scanner_ignores_a_generated_code_string(tmp_path):
+    """`generate/examples.py` emits `httpx.request(...)` as text in a sample
+    snippet for the reader. That is a string, not a call."""
+    package = _write_module(
+        tmp_path,
+        "gen.py",
+        'SNIPPET = "resp = httpx.Client()\\nresp = httpx.request(...)"\n',
+    )
+
+    assert quality_gate.modules_constructing_http_clients(package_root=package) == set()
+
+
+def test_the_egress_scanner_ignores_an_unrelated_get(tmp_path):
+    """`d.get(k)` and `session.get(k)` are everywhere. Only a name bound to a
+    networking module counts, or the inventory would be noise."""
+    package = _write_module(
+        tmp_path,
+        "plain.py",
+        "import json\nd = {}\nv = d.get('k')\nj = json.loads('{}')\n",
+    )
+
+    assert quality_gate.modules_constructing_http_clients(package_root=package) == set()

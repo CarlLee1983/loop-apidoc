@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 import httpx
+
+from ..url_safety import safe_client
 from pydantic import ValidationError
 
 from loop_apidoc.freshness.check import check_freshness
@@ -76,7 +78,7 @@ def scan_watchlist(
     active_client = client
     owns_client = False
     if active_client is None and watchlist.items:
-        active_client = httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+        active_client = safe_client()
         owns_client = True
 
     results: list[BatchItemResult] = []

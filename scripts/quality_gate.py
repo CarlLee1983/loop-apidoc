@@ -371,6 +371,112 @@ def modules_with_file_writes(
     return tuple(found)
 
 
+# --- Egress gate (issue #155) -----------------------------------------------
+#
+# Eight modules fetched URLs with a bare `httpx.Client(follow_redirects=True)`
+# and no check on where the request went, so a supplier-supplied URL could aim
+# the pipeline at a cloud metadata endpoint or an internal service and the
+# response would be content-addressed into the corpus as a source. They now all
+# go through `url_safety.safe_client`, whose request hook validates the caller's
+# URL and every redirect hop.
+#
+# Fixing the eight does not stop a ninth. A module that builds its own client
+# skips the check entirely, and the line that does it looks completely ordinary
+# in review — which is exactly the shape of mistake an inventory catches and a
+# reviewer does not.
+#
+# **The criterion**: calling anything that can itself issue a request. The first
+# version of this rule matched only `httpx.Client` as an attribute of the name
+# `httpx`, which missed every other shape — `httpx.get(...)` most sharply, since
+# it constructs no client, is one ordinary line, and defaults to
+# `trust_env=True`, so it honours the proxy variables `safe_client` deliberately
+# ignores. Imports are resolved first (`import httpx as h`, `from httpx import
+# get as fetch`), because a rule keyed on the spelling rather than the binding
+# is bypassed by a rename. A string containing such text is not a call, so the
+# generated example snippets in `generate/examples.py` are untouched.
+EGRESS_GATE_MODULE = "loop_apidoc/url_safety.py"
+
+# Modules that can put a request on the wire. `socket` is absent on purpose:
+# `url_safety.py` resolves DNS with it, and a blanket ban would either fail the
+# gate itself or need an exemption that invites more.
+NETWORK_MODULES = frozenset({"httpx", "requests", "aiohttp", "urllib", "urllib.request"})
+
+# Callables on those modules that issue or can issue a request.
+NETWORK_CALLABLES = frozenset(
+    {
+        "Client",
+        "AsyncClient",
+        "Session",
+        "ClientSession",
+        "get",
+        "post",
+        "put",
+        "patch",
+        "delete",
+        "head",
+        "options",
+        "request",
+        "stream",
+        "urlopen",
+    }
+)
+
+
+def _network_bindings(tree: ast.AST) -> tuple[set[str], set[str]]:
+    """Names in this module that reach a networking module: `modules` are bound
+    to the module itself (`import httpx as h`), `callables` straight to one of
+    its request-issuing attributes (`from httpx import get as fetch`)."""
+    modules: set[str] = set()
+    callables: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.split(".")[0] in NETWORK_MODULES:
+                    modules.add(alias.asname or alias.name.split(".")[0])
+        elif isinstance(node, ast.ImportFrom):
+            if node.module and node.module.split(".")[0] in NETWORK_MODULES:
+                for alias in node.names:
+                    if alias.name in NETWORK_CALLABLES:
+                        callables.add(alias.asname or alias.name)
+                    else:
+                        modules.add(alias.asname or alias.name)
+    return modules, callables
+
+
+def _issues_request(node: ast.AST, modules: set[str], callables: set[str]) -> bool:
+    if not isinstance(node, ast.Call):
+        return False
+    func = node.func
+    if isinstance(func, ast.Name):
+        return func.id in callables
+    if isinstance(func, ast.Attribute) and func.attr in NETWORK_CALLABLES:
+        # `httpx.get`, `h.Client`, and `urllib.request.urlopen` alike: walk to
+        # the leftmost name and ask whether it was bound to a network module.
+        root: ast.expr = func.value
+        while isinstance(root, ast.Attribute):
+            root = root.value
+        return isinstance(root, ast.Name) and root.id in modules
+    return False
+
+
+def modules_constructing_http_clients(
+    *, package_root: Path = PACKAGE_ROOT
+) -> set[str]:
+    """Every module that can issue a request of its own, as `<root>/<path>`."""
+    found: set[str] = set()
+    for path in sorted(package_root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError):
+            continue
+        modules, callables = _network_bindings(tree)
+        if not modules and not callables:
+            continue
+        if any(_issues_request(node, modules, callables) for node in ast.walk(tree)):
+            found.add(f"{package_root.name}/{path.relative_to(package_root).as_posix()}")
+    return found
+
+
 def file_io_registry_gaps(modules: Iterable[str]) -> dict[str, list[str]]:
     """Both directions of drift between the scanned modules and
     `FILE_IO_EXIT_MODULES`: `unregistered` writes without being listed, `stale`

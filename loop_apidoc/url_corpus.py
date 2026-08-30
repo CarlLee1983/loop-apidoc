@@ -11,6 +11,8 @@ from typing import Literal
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
+
+from .url_safety import UrlSafetyError, safe_client
 from pydantic import BaseModel, Field
 
 from loop_apidoc.url_adapters import resolve_fetch_url
@@ -337,7 +339,7 @@ def cache_catalog_pages(
     body_dir.mkdir(parents=True, exist_ok=True)
 
     own_client = client is None
-    active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+    active_client = client or safe_client()
     pages: list[CorpusPage] = []
     shell_urls: list[str] = []
     try:
@@ -359,7 +361,7 @@ def cache_catalog_pages(
                     raw = b"".join(chunks)
                     text = raw.decode(response.encoding or "utf-8", errors="replace")
             except (httpx.HTTPError, ValueError) as exc:
-                pages.append(CorpusPage(url=url, status="fetch_failed", note=exc.__class__.__name__))
+                pages.append(CorpusPage(url=url, status="fetch_failed", note=(f"refused by egress policy: {exc}" if isinstance(exc, UrlSafetyError) else exc.__class__.__name__)))
                 continue
 
             is_markdown = target.representation == "markdown"

@@ -12,6 +12,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
+
+from .url_safety import UrlSafetyError, safe_client
 import yaml
 
 from loop_apidoc.url_coverage import UrlCoverage
@@ -114,7 +116,7 @@ def snapshot_openapi_url(
     if max_bytes < 1:
         raise OpenApiSnapshotError("max_bytes must be positive")
 
-    active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+    active_client = client or safe_client()
     owns_client = client is None
     try:
         response = active_client.get(
@@ -122,6 +124,10 @@ def snapshot_openapi_url(
             headers={"accept": "application/json, application/yaml, text/yaml"},
         )
         response.raise_for_status()
+    except UrlSafetyError as exc:
+        # Surface as this module's own error so the CLI handler catches it and
+        # exits 2 with a message, rather than printing a traceback.
+        raise OpenApiSnapshotError(f"refused by egress policy: {exc}") from exc
     except httpx.HTTPError as exc:
         raise OpenApiSnapshotError(f"fetch failed: {exc}") from exc
     finally:
