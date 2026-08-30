@@ -395,6 +395,12 @@ operator to escalate to the repository owner instead of just removing the direct
   insurance there. The cost is real and accepted: a future `loop_apidoc/sources/` module
   would be ignored silently, and the root-anchored gate cannot cover the nested case either.
   Both the exception and its cost are pinned by tests that fail if the entry is anchored.
+- **A leak that already reached history is the repository owner's to purge, never this
+  gate's.** The gate reports paths and exits non-zero; it does not rewrite history, delete
+  refs, or force-push, and asking the host to garbage-collect afterwards is part of that
+  purge rather than a follow-up. Root `work/` was purged on this basis on 2026-08-30 —
+  scope, evidence, and falsification condition in
+  [ADR 0014](docs/adr/0014-a-leaked-third-party-document-is-purged-by-the-owner-not-the-gate.md).
 - Where material *should* go — reviewed, reproducible test cases in `benchmarks/`,
   reader-facing samples in `examples/` — is contributor guidance and lives in
   `CONTRIBUTING.md`.
