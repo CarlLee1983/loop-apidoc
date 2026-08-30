@@ -15,19 +15,19 @@ record fixes who performs it, on what evidence, and what the gate's role is not.
 their removal from the tree closes the matter. Three findings made that reading wrong, each
 established by looking rather than inferred.
 
-**The cached pages were access-controlled.** Eleven of the files were URL-corpus caches of
-`vg-organization.gitbook.io/vg-docs`. The corpus metadata records no cookie, authorization, token,
+**The cached pages were access-controlled.** Eleven of the files were URL-corpus caches of a
+supplier's hosted documentation site. The corpus metadata records no cookie, authorization, token,
 or key, which was first read as evidence of an anonymous fetch of a public site. That inference was
 wrong: the authentication is embedded in the page, not in the metadata. Each cached page carries a
-signed HS256 GitBook site token scoped to organization and site — expired 2026-07-23, `sub` a
+signed HS256 site token scoped to organization and site — expired 2026-07-23, `sub` a
 48-character internal identifier rather than a person, so no credential rotation is warranted, but
 its presence establishes that the pages were rendered under access control rather than fetched
 anonymously.
 
 **The derived artifacts carry the same document.** Purging only the eleven caches would have been
-theatre. 192 of the 429 files carry the vendor's site or API identifiers, and the majority are not
-caches: `endpoints/ep*.json`, the extraction answers, and the `examples/post_vgtransfer_*` request
-and response pairs are the *extracted* form of the same access-controlled document — more usable to
+theatre. 192 of the 429 files carry the supplier's site or API identifiers, and the majority are not
+caches: `endpoints/ep*.json`, the extraction answers, and the per-operation request and response
+example pairs are the *extracted* form of the same access-controlled document — more usable to
 someone seeking the API than the raw HTML is.
 
 **Removal from the tree does not remove reachability.** A force-push rewrites refs; it does not
@@ -36,6 +36,12 @@ pre-rewrite commits still resolved. The SHAs are not obscure: they are printed o
 request pages of the very slices that did the cleanup. GitHub also rejected `refs/pull/*` during the
 mirror push (`deny updating a hidden ref`), so those refs still point at pre-rewrite commits — a
 live ref, not a merely-unreclaimed object.
+
+**The supplier is deliberately unnamed in this record.** Naming them here would publish, in a
+permanent and search-indexed file on the default branch, both who they are and that their material
+leaked — a wider disclosure than the buried blobs this purge removed, and one the record does not
+need: every finding, the evidence strength, and the falsification condition read identically without
+it. The identity is known to the repository owner and was communicated to the supplier directly.
 
 ## Decision
 
