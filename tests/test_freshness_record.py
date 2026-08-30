@@ -91,3 +91,25 @@ def test_write_fingerprint_refuses_overwrite(tmp_path: Path):
         write_fingerprint(fp, out)
     write_fingerprint(fp, out, force=True)  # ok
     assert json.loads(out.read_text())["openapi_version"] == "2.3.0"
+
+
+def test_a_redacted_coverage_url_is_skipped_rather_than_fetched(tmp_path: Path):
+    """Issue #156 / ADR 0015. `coverage.json` is evidence, so its URLs are
+    written redacted — but `freshness record` reads them back and re-fetches
+    them. A redacted URL cannot be fetched, and fetching `?token=[REDACTED]`
+    would either 401 or, worse, hit some other resource. It is skipped, and the
+    local sources still carry the fingerprint."""
+    run = _write_run_dir(tmp_path, with_url=True)
+    coverage = run / "url_sources" / "coverage.json"
+    payload = json.loads(coverage.read_text(encoding="utf-8"))
+    signed = "https://api.example.com/openapi.json?X-Amz-Signature=[REDACTED]"
+    payload["results"][0]["url"] = signed
+    coverage.write_text(json.dumps(payload), encoding="utf-8")
+
+    def refuse(request):  # pragma: no cover - reached only on a regression
+        raise AssertionError(f"a redacted URL must not be fetched: {request.url}")
+
+    with httpx.Client(transport=httpx.MockTransport(refuse), trust_env=False) as c:
+        fp = build_fingerprint(run, client=c)
+
+    assert [entry.id for entry in fp.sources] == ["spec.pdf"]

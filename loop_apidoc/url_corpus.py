@@ -12,7 +12,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 
-from .url_safety import UrlSafetyError, safe_client
+from .url_safety import RedactedUrl, UrlSafetyError, redact_url, safe_client
 from pydantic import BaseModel, Field
 
 from loop_apidoc.url_adapters import resolve_fetch_url
@@ -26,19 +26,19 @@ class PageSection(BaseModel):
 
 
 class PageMetadata(BaseModel):
-    url: str
+    url: RedactedUrl
     title: str | None = None
     headings: list[str] = Field(default_factory=list)
     body_text: str
-    internal_links: list[str] = Field(default_factory=list)
+    internal_links: list[RedactedUrl] = Field(default_factory=list)
     entities: list[str] = Field(default_factory=list)
 
 
 class CorpusPage(BaseModel):
-    url: str
+    url: RedactedUrl
     status: Literal["fetched", "fetch_failed"]
     source_kind: Literal["document", "openapi_spec"] = "document"
-    discovered_from: list[str] = Field(default_factory=list)
+    discovered_from: list[RedactedUrl] = Field(default_factory=list)
     raw_file: str | None = None
     body_file: str | None = None
     content_sha256: str | None = None
@@ -46,7 +46,7 @@ class CorpusPage(BaseModel):
     title: str | None = None
     headings: list[str] = Field(default_factory=list)
     breadcrumb: list[str] = Field(default_factory=list)
-    internal_links: list[str] = Field(default_factory=list)
+    internal_links: list[RedactedUrl] = Field(default_factory=list)
     entities: list[str] = Field(default_factory=list)
     sections: list[PageSection] = Field(default_factory=list)
     body_characters: int = 0
@@ -56,12 +56,12 @@ class CorpusPage(BaseModel):
 
 class UrlCorpus(BaseModel):
     schema_version: str = "1.0"
-    entry_url: str
+    entry_url: RedactedUrl
     pages: list[CorpusPage] = Field(default_factory=list)
 
 
 class RelatedPage(BaseModel):
-    url: str
+    url: RedactedUrl
     title: str | None = None
     headings: list[str] = Field(default_factory=list)
     breadcrumb: list[str] = Field(default_factory=list)
@@ -438,9 +438,14 @@ def find_related_pages(
     """Return evidence-based candidate cards without loading corpus body text."""
     if limit < 1:
         raise ValueError("limit must be positive")
-    target = next((page for page in corpus.pages if page.url == url), None)
+    # The corpus was read back from a corpus.json whose URLs are redacted, while
+    # `url` is what the operator typed and still carries its credential. Compare
+    # both through the same redaction, and report the redacted form: the message
+    # reaches stderr and CI logs.
+    wanted = redact_url(url)
+    target = next((page for page in corpus.pages if redact_url(page.url) == wanted), None)
     if target is None:
-        raise ValueError(f"URL is not in corpus: {url}")
+        raise ValueError(f"URL is not in corpus: {wanted}")
 
     related: list[RelatedPage] = []
     target_entities = set(target.entities)

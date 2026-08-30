@@ -93,3 +93,40 @@ def test_cache_gitbook_llms_preserves_paths_and_records_page_failures(tmp_path):
     ]
     assert [item["status"] for item in coverage["results"]] == ["fetched", "fetch_failed"]
     assert coverage["results"][1]["note"] == "HTTPStatusError"
+
+
+def test_cache_gitbook_llms_fetches_with_the_credential_but_never_writes_it_down(tmp_path):
+    """Issue #156. The credential must reach the server and must not reach any
+    artifact: redaction happens on the way to disk, not on the way to the wire."""
+    import httpx
+
+    from loop_apidoc.gitbook_llms import cache_gitbook_llms
+
+    requests: list[str] = []
+    signed = "https://docs.example.com/sample-docs/overview.md?X-Amz-Signature=s3cret&page=2"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        if request.url.path == "/sample-docs/llms.txt":
+            return httpx.Response(200, text=f"[Overview]({signed})\n")
+        return httpx.Response(200, content=b"# Overview\n")
+
+    sources = tmp_path / "sources"
+    coverage_path = tmp_path / "coverage.json"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        cache_gitbook_llms(
+            "https://docs.example.com/sample-docs",
+            sources=sources,
+            coverage_output=coverage_path,
+            client=client,
+        )
+
+    assert signed in requests
+    written = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(tmp_path.rglob("*"))
+        if path.is_file()
+    )
+    assert "s3cret" not in written
+    assert "X-Amz-Signature=[REDACTED]" in written
+    assert "page=2" in written

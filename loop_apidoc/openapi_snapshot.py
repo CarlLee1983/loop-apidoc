@@ -129,7 +129,12 @@ def snapshot_openapi_url(
         # exits 2 with a message, rather than printing a traceback.
         raise OpenApiSnapshotError(f"refused by egress policy: {exc}") from exc
     except httpx.HTTPError as exc:
-        raise OpenApiSnapshotError(f"fetch failed: {exc}") from exc
+        # The class name only: `HTTPStatusError` stringifies as "... for url
+        # '<the full URL>'", which puts a signed link's credential on stderr and
+        # into every CI log that captures it.
+        raise OpenApiSnapshotError(
+            f"fetch failed: {exc.__class__.__name__}"
+        ) from exc
     finally:
         if owns_client:
             active_client.close()

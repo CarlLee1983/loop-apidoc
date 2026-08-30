@@ -12,7 +12,7 @@ from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
 
-from .url_safety import UrlSafetyError, safe_client
+from .url_safety import UrlSafetyError, redact_url, safe_client
 
 from loop_apidoc.url_coverage import (
     CoverageExpected,
@@ -285,7 +285,7 @@ def _preflight_outputs(index: GitBookIndex, *, sources: Path, coverage_output: P
 
 def _write_sidecar(destination: Path, url: str, raw: bytes) -> None:
     payload = {
-        "url": url,
+        "url": redact_url(url),
         "content_sha256": hashlib.sha256(raw).hexdigest(),
         "fetched_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }

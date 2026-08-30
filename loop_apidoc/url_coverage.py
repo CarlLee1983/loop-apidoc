@@ -13,6 +13,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from .url_safety import RedactedUrl
+
 
 class CoverageInputError(Exception):
     """Raised when url_sources/coverage.json is unreadable or malformed."""
@@ -43,7 +45,7 @@ class FetchMethod(str, Enum):
 class CoverageExpected(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    url: str
+    url: RedactedUrl
     title: str | None = None
     source: ExpectedSource
 
@@ -51,7 +53,7 @@ class CoverageExpected(BaseModel):
 class CoverageResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    url: str
+    url: RedactedUrl
     status: ResultStatus
     file: str | None = None
     method: FetchMethod | None = None
@@ -62,7 +64,7 @@ class CoverageResult(BaseModel):
 class UrlCoverage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entry_url: str
+    entry_url: RedactedUrl
     confirmed_by_user: bool = False
     expected: list[CoverageExpected] = []
     results: list[CoverageResult] = []

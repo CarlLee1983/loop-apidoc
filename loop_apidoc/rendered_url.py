@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from loop_apidoc.manifest.models import LocalSource, SourceFormat, UrlSource
 from loop_apidoc.url_coverage import UrlCoverage
+from loop_apidoc.url_safety import RedactedUrl, redact_url
 
 
 class RenderedUrlImportError(ValueError):
@@ -30,8 +31,8 @@ class RenderedProvenance(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal[1]
-    original_url: str
-    canonical_url: str
+    original_url: RedactedUrl
+    canonical_url: RedactedUrl
     captured_at: datetime
     capture_method: CaptureMethod
     imported_sha256: str
@@ -54,7 +55,18 @@ class RenderedUrlImport:
 
 
 def canonicalize_url(url: str) -> str:
-    parts = urlsplit(url)
+    """The identity of a URL, for comparing one against another.
+
+    Redacted, and that is the point rather than a side effect: a URL is written
+    into coverage and provenance with its credentials removed, then read back
+    and matched against the `--url` the operator supplied, which still has them.
+    The two sides can only agree if identity is redaction-invariant. Redaction
+    is idempotent, so it does not matter which side has been through it.
+
+    This is never a URL to fetch — it has already lost the credential the fetch
+    needs. `url_catalog` deliberately does not use it for that reason.
+    """
+    parts = urlsplit(redact_url(url))
     if parts.scheme.lower() not in {"http", "https"} or not parts.netloc:
         raise RenderedUrlImportError("url must be an absolute http(s) URL")
     if parts.username or parts.password:
@@ -132,8 +144,8 @@ def import_rendered_url(
     relative_provenance = provenance_path.name
     provenance = {
         "schema_version": 1,
-        "original_url": original_url,
-        "canonical_url": canonical_url,
+        "original_url": redact_url(original_url),
+        "canonical_url": redact_url(canonical_url),
         "captured_at": captured.isoformat(),
         "capture_method": method.value,
         "imported_sha256": digest,

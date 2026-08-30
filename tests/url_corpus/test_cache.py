@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from loop_apidoc.url_catalog import CatalogNode, UrlCatalog
-from loop_apidoc.url_corpus import cache_catalog_pages
+from loop_apidoc.url_corpus import CorpusPage, cache_catalog_pages
 
 
 def test_cache_catalog_pages_preserves_raw_evidence_and_writes_compact_page_cards(tmp_path):
@@ -109,3 +109,54 @@ def test_cache_catalog_pages_rejects_too_many_unique_documents_before_writing(tm
 
     assert requested == []
     assert not output.exists()
+
+
+def test_cache_catalog_pages_keeps_credentials_out_of_the_written_corpus(tmp_path):
+    """Issue #156. The corpus is serialized to `corpus.json`, so the assertion
+    is on the serialized form — in memory the URL stays whole, which is what
+    lets the fetch and the internal-link graph keep working."""
+    signed = "https://docs.example.com/transfer/a?X-Amz-Signature=s3cret&page=2"
+    catalog = UrlCatalog(
+        entry_url=signed,
+        nodes=[CatalogNode(url=signed, title="A")],
+    )
+    requested: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(str(request.url))
+        return httpx.Response(
+            200,
+            text='<main><h1>A</h1><a href="/transfer/b?token=s3cret">B</a></main>',
+        )
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        corpus = cache_catalog_pages(catalog, tmp_path, client=client)
+
+    assert requested == [signed]
+    assert corpus.pages[0].url == signed
+
+    written = corpus.model_dump_json(indent=2)
+    assert "s3cret" not in written
+    assert "X-Amz-Signature=[REDACTED]" in written
+    assert "page=2" in written
+    assert "token=[REDACTED]" in written
+
+
+def test_find_related_pages_matches_a_corpus_read_back_from_disk(tmp_path):
+    """Issue #156. `related-url-pages` takes the operator's raw `--url` and a
+    corpus.json whose URLs are redacted, so the match must be redaction-
+    invariant — and the failure message must not echo the raw URL back."""
+    from loop_apidoc.url_corpus import UrlCorpus, find_related_pages
+
+    signed = "https://docs.example.com/a?token=s3cret"
+    written = UrlCorpus(
+        entry_url=signed,
+        pages=[CorpusPage(url=signed, status="fetched")],
+    ).model_dump_json()
+    read_back = UrlCorpus.model_validate_json(written)
+
+    assert find_related_pages(read_back, signed) == []
+
+    with pytest.raises(ValueError) as raised:
+        find_related_pages(read_back, "https://docs.example.com/missing?token=s3cret")
+    assert "s3cret" not in str(raised.value)

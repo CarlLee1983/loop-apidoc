@@ -30,12 +30,17 @@ majority of the exposure, and pinning stays a separate decision.
 from __future__ import annotations
 
 import ipaddress
+import re
 import socket
 from collections.abc import Callable
 from dataclasses import dataclass
-from urllib.parse import urlsplit
+from typing import Annotated
+from urllib.parse import unquote, urlsplit
 
 import httpx
+from pydantic import PlainSerializer
+
+from . import privacy
 
 Resolver = Callable[[str, int], list[str]]
 
@@ -153,6 +158,125 @@ def validate_url(url: str, *, resolver: Resolver = _resolve) -> ValidatedTarget:
     return ValidatedTarget(url=url, host=host.lower(), port=port, addresses=addresses)
 
 
+REDACTED = "[REDACTED]"
+
+# Which *names* denote a credential is `privacy.py`'s question — AGENTS.md makes
+# it the single owner of sensitive field detection, and a second vocabulary here
+# would drift from it. What this module owns is the URL mechanics: where a name
+# ends and a value begins, and how to put a replacement back without disturbing
+# anything else.
+_CREDENTIAL_SEGMENT = re.compile(
+    rf"\A(?:{privacy.JWT_BODY}"
+    # An AWS access key id: a fixed four-character type prefix plus 16
+    # upper-alphanumeric. Only unambiguous formats are matched, never an entropy
+    # or length heuristic — the path is where provenance is read, and a
+    # heuristic eats a 40-hex digest, a version number and a long slug alike.
+    r"|(?:AKIA|ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ABIA|ACCA)[0-9A-Z]{16}"
+    r")\Z"
+)
+
+# `urlsplit` silently drops these, so a segment carrying one is not the segment
+# that goes on the wire. They are stripped before the shape test and then vanish
+# with the segment if it matches: a credential is no less one for having a
+# newline glued to it.
+_URL_STRIPPED = str.maketrans("", "", "\t\r\n")
+
+# `;` stopped being a query separator for `parse_qsl` in 3.9.2, but generators
+# and servers still emit it. Splitting on both and keeping the separator that
+# was there is what lets the fail-safe reading coexist with byte-for-byte
+# round-tripping of a query this never touches.
+_QUERY_SEPARATOR = re.compile(r"([&;])")
+
+
+def _redact_query(query: str) -> str:
+    parts = _QUERY_SEPARATOR.split(query)
+    for index in range(0, len(parts), 2):
+        key, sep, _value = parts[index].partition("=")
+        if sep and privacy.is_credential_key(unquote(key)):
+            parts[index] = f"{key}={REDACTED}"
+    return "".join(parts)
+
+
+def _redact_path(path: str) -> str:
+    return "/".join(
+        REDACTED
+        if _CREDENTIAL_SEGMENT.match(segment.translate(_URL_STRIPPED))
+        else segment
+        for segment in path.split("/")
+    )
+
+
+def _redact_fragment(fragment: str) -> str:
+    """A fragment is either a SPA hash route — a path that happens to live after
+    the `#`, so it can carry a segment-shaped credential — or a parameter list.
+    The OAuth implicit and hybrid responses return their tokens as the second
+    shape, `&`-joined with no `?` at all, and that is the likeliest way a
+    credential ever reaches a fragment."""
+    route, question, query = fragment.partition("?")
+    if not question and "=" in route:
+        return _redact_query(route)
+    return f"{_redact_path(route)}{question}{_redact_query(query)}"
+
+
+def _redact_userinfo(origin: str) -> str:
+    """`scheme://user:pw@host` becomes `scheme://[REDACTED]@host`, username
+    included: HTTP basic auth is a routine way to carry an API key, so the name
+    half is not reliably a name. `validate_url` refuses userinfo outright, but
+    not every command fetches — `normalize-html-snapshot` takes its `--url` as
+    operator metadata and writes it to a sidecar without ever passing the gate —
+    so the write side cannot lean on the read side's guarantee.
+    """
+    mark = origin.rfind("@")
+    if mark == -1:
+        return origin
+    return f"{origin[:origin.find('//') + 2]}{REDACTED}{origin[mark:]}"
+
+
+def _split_origin(before: str) -> tuple[str, str]:
+    """`scheme://authority` and the path after it, cut from the original string.
+
+    Deliberately not `urlsplit`: its `path` is a *normalized* view — control
+    characters removed — so splicing by its length lands off by one on any URL
+    that contains one, and its parser raises on a malformed authority, which in
+    a serializer turns a bad input into a crashed write.
+    """
+    mark = before.find("//")
+    if mark == -1 or not before[:mark].endswith(":"):
+        return "", before
+    slash = before.find("/", mark + 2)
+    return (before, "") if slash == -1 else (before[:slash], before[slash:])
+
+
+def redact_url(url: str) -> str:
+    """Replace credential values in `url`, leaving every other byte as it was.
+
+    Splices replacements into the original string rather than re-encoding it:
+    `parse_qsl` + `urlencode` does not round-trip a real query string, and a URL
+    recorded in an artifact that no longer matches the URL fetched breaks the
+    content-addressing and provenance comparison the artifact exists for.
+
+    Userinfo is out of scope — `https://user:pw@host/` is returned with its
+    credential intact — because `validate_url` refuses such a URL outright, so
+    nothing this pipeline fetches can carry one. A caller that redacts a URL
+    which has not been through that gate does not get that guarantee.
+    """
+    # Cut at whichever of `?` or `#` comes first: a `?` inside a fragment
+    # belongs to the fragment, and treating it as the query separator both
+    # mangles the path and drops the `#`.
+    cut = next(
+        (index for index in sorted(url.find(ch) for ch in "?#") if index >= 0),
+        len(url),
+    )
+    origin, path = _split_origin(url[:cut])
+    query, hash_, fragment = url[cut:].partition("#")
+    if query.startswith("?"):
+        query = "?" + _redact_query(query[1:])
+    return (
+        f"{_redact_userinfo(origin)}{_redact_path(path)}"
+        f"{query}{hash_}{_redact_fragment(fragment)}"
+    )
+
+
 def safe_client(
     *,
     policy: UrlFetchPolicy | None = None,
@@ -191,3 +315,12 @@ def safe_client(
         event_hooks={"request": [_validate_request]},
         transport=transport,
     )
+
+
+# The seam. A URL is redacted on its way to disk and never in memory: a fetcher
+# holds the model before it fetches (`gitbook_llms` reads `page.url` to issue
+# the request), so redacting at construction would break acquisition itself.
+# Annotating the field rather than calling `redact_url` at each write site moves
+# the leak from a forgotten call inside a writer to a wrong type on a model, and
+# `tests/test_url_redaction_contract.py` fails on that type.
+RedactedUrl = Annotated[str, PlainSerializer(redact_url, return_type=str)]

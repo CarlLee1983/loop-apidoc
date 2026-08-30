@@ -44,9 +44,14 @@ _CAMEL_CASE_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 _KEY_SEPARATOR = re.compile(r"[^A-Za-z0-9]+")
 #: 自證性密鑰材料:結構本身就是證據,不需要判斷內容是真是假。PEM 私鑰
 #: 區塊與 JWT 幾乎不可能是文件裡的示意寫法,所以來源風險閘把它當 blocker。
+#: A JWT, as a body with no anchors, so one definition serves both the
+#: document scan (`SECRET_MATERIAL`, word-bounded) and the URL path-segment
+#: check in `url_safety` (anchored). `eyJ`, not `ey`: the first segment decodes
+#: from `{"`, and `ey` alone matches ordinary words like `eyebrow.guide.md`.
+JWT_BODY = r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"
 SECRET_MATERIAL = re.compile(
     r"(?i)(?:-----BEGIN [A-Z ]*PRIVATE KEY-----|"
-    r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b)"
+    rf"\b{JWT_BODY}\b)"
 )
 #: 憑證引用:`Authorization: Bearer <TOKEN>`、`API-Key: YOUR_API_KEY` 這類。
 #: 在治理酬載裡它們是真值,在來源文件裡幾乎總是佔位符 —— 同一組樣式,兩種
@@ -265,3 +270,43 @@ def _card_window_from(
 
 def _contains_payment_card_number(value: str) -> bool:
     return next(iter_payment_card_numbers(value), None) is not None
+
+
+#: 憑證性的參數／欄位名稱。與 `FORBIDDEN_KEYS` 分開:那組是治理酬載裡「不得
+#: 出現」的欄位名(含低熵 PII),這組回答的是另一個問題 —— 一個 URL query key
+#: 的「值」是不是憑證。兩者重疊但不相等,合併會讓 `?email=` 被當成憑證遮蔽,
+#: 或讓 `sig` 混進治理端的禁用欄位。
+#:
+#: 比對方式刻意不對稱:長而明確的形狀用子字串比對,因為憑證 key 幾乎總是帶
+#: 廠商前綴(`X-Amz-Signature`、`X-Goog-Signature`),精確集合會全數漏掉 ——
+#: 而漏掉的代價是靜默洩漏。短而歧義的名稱用完整比對,因為 `key` 會吃掉
+#: `keywords`,`code` 會吃掉 `country_code`,而誤遮的代價是 provenance 讀不懂。
+CREDENTIAL_KEY_MARKERS = (
+    "signature",
+    "credential",
+    "secret",
+    "password",
+    "passwd",
+    "apikey",
+    "accesskey",
+    "privatekey",
+    "token",
+    "bearer",
+    "authorization",
+    "sessionid",
+    "sessionkey",
+    "sessid",
+    "ticket",
+)
+
+CREDENTIAL_KEY_NAMES = frozenset(
+    {"key", "sig", "code", "auth", "pwd", "pass", "token", "secret", "signature"}
+)
+
+
+def is_credential_key(key: str) -> bool:
+    """名稱本身就表明其值是憑證。純函式,大小寫與分隔符無關。"""
+    compact = _KEY_SEPARATOR.sub("", key).lower()
+    if compact in CREDENTIAL_KEY_NAMES:
+        return True
+    return any(marker in compact for marker in CREDENTIAL_KEY_MARKERS)

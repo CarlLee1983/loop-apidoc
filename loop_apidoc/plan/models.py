@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
+from loop_apidoc.url_safety import RedactedUrl
 
 
 class PlanItemStatus(str, Enum):
@@ -32,7 +33,7 @@ class _Cited(BaseModel):
 
 class EnvironmentEntry(_Cited):
     name: str | None = None
-    base_url: str | None = None
+    base_url: RedactedUrl | None = None
     version: str | None = None
 
 
@@ -228,7 +229,7 @@ class UnverifiedItem(BaseModel):
 
 
 class NormalizationPlan(BaseModel):
-    notebook_url: str
+    notebook_url: RedactedUrl
     source_inventory_note: str = ""
     overview_note: str = ""
     conflicts_note: str = ""

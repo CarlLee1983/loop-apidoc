@@ -5,6 +5,7 @@ import pytest
 from loop_apidoc.url_safety import (
     UrlFetchPolicy,
     UrlSafetyError,
+    redact_url,
     validate_url,
 )
 
@@ -375,3 +376,212 @@ def test_the_policy_is_frozen_and_carries_the_documented_bounds():
     assert policy.timeout_seconds == 20.0
     with pytest.raises(Exception):
         policy.max_redirects = 1  # type: ignore[misc]
+
+
+# --- credential redaction (issue #156) ---------------------------------------
+
+
+def test_a_signed_query_credential_is_replaced_and_the_rest_is_untouched():
+    assert redact_url(
+        "https://docs.example.com/spec.json?X-Amz-Signature=deadbeef&page=2"
+    ) == "https://docs.example.com/spec.json?X-Amz-Signature=[REDACTED]&page=2"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        # `parse_qsl` stopped splitting on `;` in 3.9.2, so a re-encoding
+        # redactor turns this whole string into one key.
+        "https://docs.example.com/spec.json?a=1;b=2",
+        # A valueless parameter must not gain an `=`.
+        "https://docs.example.com/spec.json?flag",
+        # `%20` must not become `+`.
+        "https://docs.example.com/spec.json?q=a%20b",
+        "https://docs.example.com/spec.json",
+    ],
+)
+def test_a_url_carrying_no_credential_is_returned_byte_for_byte(url):
+    assert redact_url(url) == url
+
+
+def test_only_the_credential_value_changes_when_it_sits_among_awkward_neighbours():
+    assert redact_url(
+        "https://docs.example.com/s?flag&X-Amz-Signature=abc&q=a%20b;c=d#frag"
+    ) == "https://docs.example.com/s?flag&X-Amz-Signature=[REDACTED]&q=a%20b;c=d#frag"
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        # The motivating formats. An exact-match key set covered none of the
+        # first three, which is why this predicate matches by marker instead.
+        "X-Amz-Signature",
+        "X-Amz-Credential",
+        "X-Goog-Signature",
+        "sig",
+        "signature",
+        "token",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "api_key",
+        "apikey",
+        "x-api-key",
+        "key",
+        "secret",
+        "client_secret",
+        "password",
+        "passwd",
+        "pwd",
+        "bearer",
+        "auth",
+        "Authorization",
+        "code",
+        "sessionid",
+    ],
+)
+def test_every_credential_key_shape_is_redacted(key):
+    url = f"https://docs.example.com/s?{key}=s3cret"
+
+    assert redact_url(url) == f"https://docs.example.com/s?{key}=[REDACTED]"
+    assert "s3cret" not in redact_url(url)
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["page", "version", "format", "keywords", "monkey", "q", "lang", "tab"],
+)
+def test_a_key_that_merely_looks_like_a_credential_key_is_left_alone(key):
+    url = f"https://docs.example.com/s?{key}=value"
+
+    assert redact_url(url) == url
+
+
+@pytest.mark.parametrize(
+    "segment",
+    [
+        "AKIAIOSFODNN7EXAMPLE",  # AWS access key id
+        "ASIAY34FZKBOKMUTVV7A",  # STS temporary access key id
+        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1",
+    ],
+)
+def test_a_credential_shaped_path_segment_is_redacted(segment):
+    url = f"https://docs.example.com/docs/v1/{segment}/spec.json"
+
+    assert redact_url(url) == "https://docs.example.com/docs/v1/[REDACTED]/spec.json"
+
+
+@pytest.mark.parametrize(
+    "segment",
+    [
+        # Content-addressed names, version numbers and long slugs are exactly
+        # what the path is read for; an entropy heuristic would eat all three.
+        "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        "v1.2.3",
+        "AUTHENTICATION-AND-AUTHORIZATION",
+        "REFERENCE0123456789",
+        "spec.json",
+    ],
+)
+def test_an_ordinary_path_segment_survives(segment):
+    url = f"https://docs.example.com/docs/{segment}/spec.json"
+
+    assert redact_url(url) == url
+
+
+def test_a_question_mark_inside_a_fragment_does_not_start_a_query_string():
+    """The fragment is redacted too — an implicit-flow access token arrives
+    there — but as a fragment, so the path before it stays intact and the `#`
+    survives."""
+    url = "https://docs.example.com/AKIAIOSFODNN7EXAMPLE/s#/ref?token=abc"
+
+    assert redact_url(url) == "https://docs.example.com/[REDACTED]/s#/ref?token=[REDACTED]"
+
+
+def test_an_ordinary_anchor_fragment_is_untouched():
+    url = "https://docs.example.com/guide#authentication-and-tokens"
+
+    assert redact_url(url) == url
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        # `ey` is not `eyJ`: a JWT's first segment decodes from `{"`, so only
+        # `eyJ` is evidence. `ey` alone eats ordinary words.
+        "https://docs.example.com/docs/eyebrow.guide.md",
+        "https://docs.example.com/docs/eye-tracking.v1.x/spec.json",
+    ],
+)
+def test_a_word_beginning_ey_is_not_mistaken_for_a_jwt(url):
+    assert redact_url(url) == url
+
+
+def test_a_semicolon_separated_credential_is_redacted_without_reflowing_the_query():
+    """`;` is no longer a query separator for `parse_qsl`, but servers and older
+    generators still emit it. Fail-safe means splitting on it, and the splice
+    keeps the original separator character where it was."""
+    assert redact_url("https://docs.example.com/p?a=1;token=s3cret;b=2") == (
+        "https://docs.example.com/p?a=1;token=[REDACTED];b=2"
+    )
+
+
+def test_a_url_containing_a_stripped_control_character_keeps_its_path_intact():
+    """`urlsplit` drops tab/CR/LF, so a splice that trusts `len(parsed.path)`
+    lands one character off and doubles a separator. The control character is
+    matched as part of the segment it sits in and disappears with it — a
+    credential does not become less of one for having a newline glued to it."""
+    assert redact_url("https://docs.example.com/x/AKIAIOSFODNN7EXAMPLE\n/y") == (
+        "https://docs.example.com/x/[REDACTED]/y"
+    )
+
+
+def test_a_malformed_url_is_returned_unchanged_rather_than_raising():
+    """This runs as a serializer. A control whose failure mode is a traceback
+    inside `model_dump_json` turns a bad input into a crashed write."""
+    assert redact_url("https://[::1") == "https://[::1"
+
+
+@pytest.mark.parametrize("key", ["session_key", "PHPSESSID", "ticket", "pass"])
+def test_further_credential_key_shapes_are_redacted(key):
+    assert redact_url(f"https://docs.example.com/s?{key}=s3cret") == (
+        f"https://docs.example.com/s?{key}=[REDACTED]"
+    )
+
+
+def test_a_credential_shaped_segment_inside_a_hash_route_is_redacted():
+    """A SPA hash route is a path that happens to live after the `#`."""
+    assert redact_url(
+        "https://docs.example.com/app#/keys/AKIAIOSFODNN7EXAMPLE?token=s3cret"
+    ) == "https://docs.example.com/app#/keys/[REDACTED]?token=[REDACTED]"
+
+
+def test_an_oauth_implicit_fragment_with_no_question_mark_is_redacted():
+    """The implicit/hybrid OAuth response puts its tokens straight after the
+    `#`, `&`-joined and with no `?` — the single most likely way a credential
+    reaches a fragment."""
+    assert redact_url(
+        "https://docs.example.com/g#access_token=ya29.LEAKED&token_type=Bearer"
+    # `token_type` is marker-matched too. Over-redacting the word "Bearer"
+    # costs nothing: identity is redaction-invariant, so nothing downstream
+    # compares against the unredacted form.
+    ) == "https://docs.example.com/g#access_token=[REDACTED]&token_type=[REDACTED]"
+
+
+def test_a_plain_anchor_is_still_not_treated_as_a_parameter_list():
+    assert redact_url("https://docs.example.com/g#section-2") == (
+        "https://docs.example.com/g#section-2"
+    )
+
+
+def test_url_userinfo_is_redacted_whole():
+    """`validate_url` refuses userinfo, but not every command fetches:
+    `normalize-html-snapshot` takes `--url` as pure operator metadata and writes
+    it to a sidecar without the URL ever passing the egress gate. The username
+    half goes too — HTTP basic auth is a routine way to carry an API key."""
+    assert redact_url("https://user:S3CRET@docs.example.com/spec") == (
+        "https://[REDACTED]@docs.example.com/spec"
+    )
+    assert redact_url("https://docs.example.com/a@b/spec") == (
+        "https://docs.example.com/a@b/spec"
+    )
