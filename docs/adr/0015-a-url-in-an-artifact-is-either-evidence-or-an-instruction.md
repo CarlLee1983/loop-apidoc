@@ -119,27 +119,70 @@ making identity redaction-invariant, and it is the right trade only because the 
 identity that carries the credential — is the leak this record exists to close. Two re-signed links
 to the same page were never two sources.
 
-**Open residual: the citation identity still carries the credential.** This record closes the
-acquisition artifacts. It does not close the plan and generation artifacts. `RedactedUrl` acts at
-serialization, but `agentcli/assemble.py` builds the manifest in memory and hands the whole object
-downstream, so `plan/classify.py`'s `sole_source` and `match_manifest_source` return the raw
-`UrlSource.url` and it is copied into plain `str` fields — `manifest_source`, `location`, `locator`
-— that reach `plan.json`, the validation report, the generated Markdown and the review HTML. The
-contract test cannot see it: those field names are not URL-shaped. Closing it means redacting the
-citation identity at every point it is produced, including `shadow/bridge.py`'s `citations` keys,
-which are joined against it — the same both-sides treatment `canonicalize_url` received. Tracked
-as #158; until it is done, the write side is closed for acquisition and open for generation, and
-no release note should say otherwise.
+**The citation identity is the redacted form** (issue #158, closed). `RedactedUrl` protects a
+model's own serialization and nothing else, so `plan/classify.py` copying a raw `UrlSource.url` into
+`manifest_source` — a plain `str` — carried the credential into `plan.json`, the validation report,
+the generated Markdown and the review HTML. `UrlSource.citation_id` is now the single derivation:
+`.url` is for fetching, `citation_id` is for naming, comparing and writing down.
+
+Applying it fixed two joins that had silently stopped matching, which is the more instructive half.
+Both break the same way: a value that has been through disk is redacted and its counterpart in memory
+is not.
+
+`backfill_snapshot_files` compares an in-memory manifest against a coverage ledger loaded from disk,
+so it returned `None` for every signed link's snapshot binding. `check_manifest_coverage` matches a
+manifest's URL sources against provenance `manifest_source`, and reaches that state only on the path
+that reads both files back — `validate_run_dir`, behind the `validate` command — where the manifest
+side was already redacted at write time and `manifest_source` was not. Measured on `main`:
+`loop-apidoc validate` reported every signed URL source as uncited, while the same check on the
+in-memory `assemble` path matched, because there both sides were still raw. Both are pinned by tests
+that round-trip the models through JSON, which is what makes the disk path reproducible in a test at
+all.
+
+A third comparison, `Manifest.readable_source_identities`, is now spelled in the identity for a
+different reason: it is checked against a `source` field an agent writes, and an agent only ever reads
+redacted artifacts. That is an argument about agent behaviour rather than a failure anyone has
+observed, and it is recorded as such.
+
+The raw accessor is named `fetch_url` rather than `url`, while the serialized key stays `url`. A name
+nothing else in the package uses turns "every read of the credential" into an exact check
+(`tests/test_citation_identity_contract.py`) instead of a heuristic over the shapes someone happened
+to think of, and turns a missed attribute read into an `AttributeError` instead of a leak. It does not
+reach `dict(source)`, `getattr`, or `source.__dict__`, none of which occur here. Two consequences of
+the rename are worth knowing: `model_dump(exclude={"url"})` no longer excludes the field — the field
+name is `fetch_url` — and `model_copy(update={"url": ...})` is a silent no-op. Neither is used
+anywhere in the package. The pydantic floor is `>=2.11` because `serialize_by_alias` arrived there and
+an unknown config key is ignored silently; below it every manifest would be written with a `fetch_url`
+key that no reader accepts.
+
+A citation locator is prose that may quote a URL, so it goes through `redact_text`, which finds the
+URLs inside a larger string and leaves the surrounding words alone. Its hard part is knowing where a
+URL ends when nothing delimits it: Traditional Chinese prose puts the next sentence hard against the
+link, and `,` is a legal URI character, so `?token=X,https://b/` would otherwise read as one URL.
+
+**Known consequence of the collapse.** Two URL sources differing only in their signature now share one
+identity. `shadow/bridge.py` reports the conflicting-digest case as `SOURCE_LOCATOR_AMBIGUOUS`;
+`adapters/fragments.py` and `diff/compare.py`'s manifest map are plain dict comprehensions, so the
+last of the two wins unconditionally and neither says so, and the generated Markdown and review HTML
+list the collapsed source twice. `validate/coverage.py` de-duplicates. Deduplicating at manifest
+construction with a diagnostic is the right place to fix this and is not done here; it needs an
+operator to have supplied both links in one run.
+
+`match_manifest_source` therefore matches both spellings and returns the identity: the agent quotes
+what it read, and an operator writing a locator by hand has the signed link itself in front of them.
 
 A smaller residual of the same kind: an error that reports only its exception class still chains the
 original, so `raise ... from exc` keeps the full URL on `__cause__`. Harmless behind the CLI's
 handlers, visible under `--pdb` or a crash reporter.
 
-**Falsified if:** the two roles stop being distinguishable, or the exception stops being held by the
-gate rather than by convention. Concretely, this decision no longer holds when a module listed in
-`tests/test_url_redaction_contract.py`'s `EXEMPT_MODULES` is read back for anything other than
+**Falsified if:** the two roles stop being distinguishable, or a control here stops being held by
+something a test can check. Concretely, this decision no longer holds when a field listed in
+`tests/test_url_redaction_contract.py`'s `EXEMPT_FIELDS` is read back for anything other than
 fetching; when `loop_apidoc/url_catalog.py` starts writing an artifact outside the roots in
 `scripts/quality_gate.py`'s `REPOSITORY_HYGIENE_FORBIDDEN_ROOTS`; when
 `loop_apidoc/rendered_url.py`'s `canonicalize_url` stops redacting, so URL identity is no longer
-redaction-invariant; or when `loop_apidoc/url_safety.py` grows its own credential-name vocabulary
-instead of calling `loop_apidoc/privacy.py`'s `is_credential_key`.
+redaction-invariant; when `loop_apidoc/url_safety.py` grows its own credential-name vocabulary
+instead of calling `loop_apidoc/privacy.py`'s `is_credential_key`; when `loop_apidoc/manifest/models.py`
+gives `UrlSource` a `url` attribute again, so the exact check in
+`tests/test_citation_identity_contract.py` degrades to a heuristic; or when that file's `ALLOWED`
+grows an entry for a module that writes the value down rather than fetching with it.

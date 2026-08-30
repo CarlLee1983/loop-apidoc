@@ -20,7 +20,7 @@ def test_probe_url_success_records_status_and_hash(fixed_now):
     with _client(handler) as client:
         result = probe_url("https://example.com/api", fetched_at=fixed_now, client=client)
 
-    assert result.url == "https://example.com/api"
+    assert result.fetch_url == "https://example.com/api"
     assert result.http_status == 200
     assert result.content_sha256 == hashlib.sha256(body).hexdigest()
     assert result.fetched_at == fixed_now

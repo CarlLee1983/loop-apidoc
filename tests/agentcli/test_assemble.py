@@ -1122,3 +1122,44 @@ def test_pipeline_uses_verified_rendered_snapshot_without_origin_fetch(
     )
     assert manifest_payload["url_sources"][0]["note"] == "fetched_rendered"
     assert manifest_payload["url_sources"][0]["snapshot_file"] == "rendered.md"
+
+
+def test_backfill_matches_a_coverage_ledger_that_was_read_back_redacted():
+    """Issue #158. The manifest is built in memory and still holds the signed
+    URL; the coverage ledger has been through disk and holds the redacted one.
+    Matching on the raw form silently backfills `None`, which loses the snapshot
+    binding for exactly the runs a signed link is used for."""
+    signed = "https://a.example/overview?X-Amz-Signature=s3cret"
+    manifest = _manifest([_local("overview.md")], [_url(signed)])
+    coverage = _coverage([
+        CoverageResult(
+            url="https://a.example/overview?X-Amz-Signature=[REDACTED]",
+            status=ResultStatus.FETCHED,
+            file="sources/overview.md",
+            method=FetchMethod.DEFUDDLE,
+        ),
+    ])
+
+    out = backfill_snapshot_files(manifest, coverage)
+
+    assert out.url_sources[0].snapshot_file == "overview.md"
+
+
+def test_backfill_matches_a_ledger_that_has_not_been_through_disk():
+    """`backfill_snapshot_files` is a public pure function, so it must not
+    assume its ledger arrived redacted; today's only caller loads one from
+    disk, and a caller that builds one in memory would silently get `None`."""
+    signed = "https://a.example/overview?X-Amz-Signature=s3cret"
+    manifest = _manifest([_local("overview.md")], [_url(signed)])
+    coverage = _coverage([
+        CoverageResult(
+            url=signed,
+            status=ResultStatus.FETCHED,
+            file="sources/overview.md",
+            method=FetchMethod.DEFUDDLE,
+        ),
+    ])
+
+    out = backfill_snapshot_files(manifest, coverage)
+
+    assert out.url_sources[0].snapshot_file == "overview.md"

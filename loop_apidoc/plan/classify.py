@@ -7,6 +7,7 @@ from pathlib import Path
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
 from loop_apidoc.manifest.models import Manifest, ProcessingStatus, SourceAuthority
 from loop_apidoc.plan.models import PlanItemStatus, SourceCitation
+from loop_apidoc.url_safety import redact_text
 
 _UNUSABLE = (
     ProcessingStatus.UNREADABLE,
@@ -44,9 +45,15 @@ def match_manifest_source(locator: str | None, manifest: Manifest) -> str | None
             return source.relative_path
     # URLs are long and specific; a full-string match keeps them safe from the
     # short-basename false positives that motivated bounded matching for paths.
+    #
+    # Both spellings match, and the asymmetry is deliberate (issue #158): the
+    # agent quotes what it read, and what it read — corpus, coverage — is
+    # already redacted, while an operator writing a locator by hand has the
+    # signed link itself in front of them. Either way the answer is the
+    # identity, never the credential.
     for url_source in manifest.url_sources:
-        if url_source.url.lower() in low:
-            return url_source.url
+        if url_source.fetch_url.lower() in low or url_source.citation_id.lower() in low:
+            return url_source.citation_id
     return None
 
 
@@ -88,7 +95,7 @@ def sole_source(manifest: Manifest) -> str | None:
     for url_source in manifest.url_sources:
         if url_source.snapshot_file is not None and url_source.snapshot_file in usable_set:
             continue  # 這個 URL 就是某可用本地快照檔,不另計一份文件
-        documents.append(url_source.url)
+        documents.append(url_source.citation_id)
     return documents[0] if len(documents) == 1 else None
 
 
@@ -117,7 +124,7 @@ def sole_normative_source(manifest: Manifest) -> str | None:
     for url_source in manifest.url_sources:
         if url_source.snapshot_file is not None and url_source.snapshot_file in usable_set:
             continue
-        documents.append(url_source.url)
+        documents.append(url_source.citation_id)
     return documents[0] if len(documents) == 1 else None
 
 
@@ -141,7 +148,13 @@ def classify_item(
         query_id=query_id,
         answer_path=answer_path,
         manifest_source=manifest_source,
-        locator=locator,
+        # The locator is whatever the agent or operator wrote, and this function
+        # exists partly because that can be a signed URL quoted verbatim. It is
+        # stored beside `manifest_source` in plan.json and review.html, so
+        # redacting only the derived field left the credential in the sibling.
+        # `redact_text` redacts the URLs it finds inside prose and leaves the
+        # surrounding words alone, so a section reference is unaffected.
+        locator=redact_text(locator) if locator else locator,
         evidence=tuple(evidence),
     )
     return status, citation

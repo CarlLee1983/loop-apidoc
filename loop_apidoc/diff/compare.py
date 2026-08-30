@@ -789,7 +789,7 @@ def _manifest_url_map(artifacts: RunArtifacts) -> dict[str, dict]:
     # Same rationale as local sources: `fetched_at` is a rerun timestamp, not a
     # content signal (content_sha256/http_status carry that).
     return {
-        source.url: source.model_dump(mode="json", exclude={"fetched_at"})
+        source.citation_id: source.model_dump(mode="json", exclude={"fetched_at"})
         for source in artifacts.manifest.url_sources
     }
 

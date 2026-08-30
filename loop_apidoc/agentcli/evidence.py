@@ -187,7 +187,7 @@ def _source_set(manifest: Manifest) -> tuple[SourceSet, dict[str, str]]:
         for source in manifest.readable_local_sources()
     ]
     descriptors += [
-        _descriptor("url", source.url, None)
+        _descriptor("url", source.citation_id, None)
         for source in manifest.readable_url_sources()
     ]
 

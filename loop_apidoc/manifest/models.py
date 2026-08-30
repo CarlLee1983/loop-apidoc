@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
-from ..url_safety import RedactedUrl
+from pydantic import BaseModel, ConfigDict, Field
+from ..url_safety import RedactedUrl, redact_url
 
 
 class SourceFormat(str, Enum):
@@ -66,12 +66,43 @@ class LocalSource(BaseModel):
 
 
 class UrlSource(BaseModel):
-    url: RedactedUrl
+    #: Named `fetch_url` and not `url` on purpose. `RedactedUrl` covers this
+    #: model's own serialization and nothing else, so a raw value copied into a
+    #: plain `str` field elsewhere — a citation, a descriptor locator, a join
+    #: key — carries the credential with it, silently. Spelling the raw
+    #: accessor differently from the JSON key makes every such read say what it
+    #: is, and makes a missed one an `AttributeError` rather than a leak.
+    #: `citation_id` is the identity; this is only for issuing the request.
+    #: The serialized key stays `url`, so the manifest schema is unchanged.
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    fetch_url: RedactedUrl = Field(alias="url")
     fetched_at: datetime
     http_status: int | None
     content_sha256: str | None = None
     note: str | None = None
     snapshot_file: str | None = None
+
+    @property
+    def citation_id(self) -> str:
+        """How this source is named anywhere but a fetch: in a citation, as a
+        descriptor locator, as a join key.
+
+        Redacted, and that is the point rather than a side effect. A ledger
+        that has been through disk holds the redacted form and an in-memory
+        manifest holds the raw one, so any comparison between them must run
+        both sides through the same derivation or it silently never matches.
+        Redaction is idempotent, so it does not matter which side has already
+        been through it, and `redact_url` leaves a local relative path
+        untouched, so a local source's identity is unaffected.
+
+        Deliberately recomputed rather than cached. `model_copy` carries an
+        instance's `__dict__` across verbatim, so a cached identity survives an
+        update of the field it was derived from — and the model is not frozen,
+        so a plain assignment does the same. A few regex passes per source per
+        citation is a price worth paying for an identity that cannot be stale.
+        """
+        return redact_url(self.fetch_url)
 
 
 class Manifest(BaseModel):
@@ -97,10 +128,14 @@ class Manifest(BaseModel):
 
     def readable_source_identities(self) -> set[str]:
         """可讀來源的身份字串 —— evidence 的 `source` 與 focus 的
-        `searched_sources` 共用同一組詞彙,兩邊不可能各自認定一套。"""
+        `searched_sources` 共用同一組詞彙,兩邊不可能各自認定一套。
+
+        URL 用 `citation_id` 而非 `url`(issue #158):agent 讀到的 corpus 與
+        coverage 都已遮蔽,它寫回來的 `source` 只會是遮蔽形式,拿帶憑證的
+        字串當詞彙表永遠對不上。"""
         return (
             {source.relative_path for source in self.readable_local_sources()}
-            | {source.url for source in self.readable_url_sources()}
+            | {source.citation_id for source in self.readable_url_sources()}
         )
 
     def all_source_identities(self) -> set[str]:
@@ -111,7 +146,7 @@ class Manifest(BaseModel):
         """
         return (
             {source.relative_path for source in self.local_sources}
-            | {source.url for source in self.url_sources}
+            | {source.citation_id for source in self.url_sources}
         )
 
     def unsupported(self) -> list[LocalSource]:

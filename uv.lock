@@ -325,7 +325,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "jsonschema", specifier = ">=4.21" },
     { name = "openapi-spec-validator", specifier = ">=0.7" },
-    { name = "pydantic", specifier = ">=2.6" },
+    { name = "pydantic", specifier = ">=2.11" },
     { name = "pymupdf", specifier = ">=1.24" },
     { name = "pymupdf4llm", specifier = ">=1.27.2.3" },
     { name = "pyyaml", specifier = ">=6.0" },

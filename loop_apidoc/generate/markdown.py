@@ -31,7 +31,7 @@ def _title(plan: NormalizationPlan) -> str:
 def _scope(plan: NormalizationPlan, manifest: Manifest) -> list[str]:
     lines = [plan.overview_note or _EMPTY, "", "本次輸入來源："]
     sources = [s.relative_path for s in manifest.local_sources]
-    sources += [u.url for u in manifest.url_sources]
+    sources += [u.citation_id for u in manifest.url_sources]
     if sources:
         lines += [f"- `{s}`" for s in sources]
     else:

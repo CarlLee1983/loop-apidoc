@@ -120,7 +120,7 @@ def _source_rows(manifest: Manifest) -> str:
             url_status = f"http {source.http_status}"
         rows.append(
             "<tr>"
-            f"<td>{_h(source.url)}</td>"
+            f"<td>{_h(source.citation_id)}</td>"
             "<td>url</td>"
             f"<td>{_h(url_status)}</td>"
             "</tr>"
