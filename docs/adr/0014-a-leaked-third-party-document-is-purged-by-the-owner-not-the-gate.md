@@ -41,7 +41,8 @@ live ref, not a merely-unreclaimed object.
 permanent and search-indexed file on the default branch, both who they are and that their material
 leaked — a wider disclosure than the buried blobs this purge removed, and one the record does not
 need: every finding, the evidence strength, and the falsification condition read identically without
-it. The identity is known to the repository owner and was communicated to the supplier directly.
+it. The identity is known to the repository owner, who decided against notifying the supplier;
+that decision is recorded in the consequences below rather than implied by this omission.
 
 ## Decision
 
@@ -93,6 +94,13 @@ and recoverable, against losing commits that exist nowhere else.
 A full mirror backup taken before the rewrite is the only route back, and it necessarily still
 contains everything removed. It is therefore itself material to keep off any public host and to
 delete once the host's garbage collection is confirmed.
+
+**The supplier was not notified.** The owner considered a disclosure notice and decided against
+it on 2026-08-30. Recording the decision matters because anonymising the record and declining to
+notify look identical from outside, and they are not the same choice: this record omits the name to
+avoid publishing a leak the supplier has not been told about, not because the supplier already
+knows. Anyone later reasoning about the residual risk, or drafting a supplier communication, should
+start from that fact rather than assume prior contact.
 
 **Open residual: the garbage-collection request was submitted to GitHub Support on 2026-08-30 and
 has not yet been actioned.** The rewrite is done and a fresh clone is clean, but old objects remain
