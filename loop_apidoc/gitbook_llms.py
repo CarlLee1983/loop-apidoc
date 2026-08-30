@@ -12,6 +12,8 @@ from urllib.parse import unquote, urlsplit, urlunsplit
 
 import httpx
 
+from .url_safety import UrlSafetyError, safe_client
+
 from loop_apidoc.url_coverage import (
     CoverageExpected,
     CoverageResult,
@@ -105,7 +107,7 @@ def cache_gitbook_llms(
     if max_bytes < 1:
         raise GitBookLlmsError("max_bytes must be positive")
     own_client = client is None
-    active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+    active_client = client or safe_client()
     try:
         normalized_entry = normalize_entry_url(entry_url)
         index_url = f"{normalized_entry}llms.txt"
@@ -240,6 +242,15 @@ def _safe_destination(relative_path: str) -> PurePosixPath | None:
 
 
 def _fetch_markdown(client: httpx.Client, url: str, *, max_bytes: int) -> bytes:
+    try:
+        return _fetch_markdown_unchecked(client, url, max_bytes=max_bytes)
+    except UrlSafetyError as exc:
+        # Same reason as openapi_snapshot: the CLI handler catches
+        # GitBookLlmsError and exits 2; an escaping UrlSafetyError tracebacks.
+        raise GitBookLlmsError(f"refused by egress policy: {exc}") from exc
+
+
+def _fetch_markdown_unchecked(client: httpx.Client, url: str, *, max_bytes: int) -> bytes:
     with client.stream("GET", url, headers={"Accept": "text/markdown,text/plain;q=0.9"}) as response:
         response.raise_for_status()
         chunks: list[bytes] = []

@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import httpx
+
+from ..url_safety import safe_client
 import yaml
 
 from loop_apidoc.freshness.models import (
@@ -79,7 +81,7 @@ def build_fingerprint(
                 url_ids.append(result.url)
 
     if url_ids:
-        active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+        active_client = client or safe_client()
         owns_client = client is None
         try:
             for url in url_ids:

@@ -5,6 +5,8 @@ from datetime import datetime
 
 import httpx
 
+from ..url_safety import UrlSafetyError
+
 from loop_apidoc.manifest.models import UrlSource
 
 # Default ceiling on probed URL content. Probing only needs a content hash, so
@@ -51,6 +53,19 @@ def probe_url(
                 http_status=status,
                 content_sha256=digest.hexdigest(),
             )
+    except UrlSafetyError as error:
+        # The probe is best-effort metadata gathering, so a refusal degrades the
+        # same way a network error does: no status, no digest, and a visible
+        # note. Nothing downstream can mistake it for a source that was fetched.
+        # The acquisition commands do the opposite and let the refusal propagate,
+        # because fetching is the whole of what they were asked to do.
+        return UrlSource(
+            url=url,
+            fetched_at=fetched_at,
+            http_status=None,
+            content_sha256=None,
+            note=f"refused by egress policy: {error}",
+        )
     except httpx.HTTPError as error:
         return UrlSource(
             url=url,

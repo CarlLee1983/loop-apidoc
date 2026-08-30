@@ -13,6 +13,8 @@ from typing import Iterable
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
+
+from .url_safety import safe_client
 from pydantic import BaseModel, Field
 
 from loop_apidoc.url_adapters import resolve_fetch_url
@@ -301,7 +303,7 @@ def fetch_catalog(
         raise ValueError("max_bytes must be positive")
     target = resolve_fetch_url(entry_url)
     own_client = client is None
-    active_client = client or httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+    active_client = client or safe_client()
     try:
         with active_client.stream("GET", target.url, headers={"Accept": target.accept}) as response:
             response.raise_for_status()

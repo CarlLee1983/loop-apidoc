@@ -4,6 +4,8 @@ from pathlib import Path
 
 import httpx
 
+from ..url_safety import safe_client
+
 from loop_apidoc.freshness.models import (
     FingerprintEntry,
     FreshnessReport,
@@ -39,7 +41,7 @@ def check_freshness(
     active_client = client
     owns_client = False
     if needs_network and active_client is None:
-        active_client = httpx.Client(timeout=20, follow_redirects=True, trust_env=False)
+        active_client = safe_client()
         owns_client = True
 
     results: list[SourceResult] = []
