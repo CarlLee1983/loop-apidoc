@@ -88,10 +88,12 @@ A full mirror backup taken before the rewrite is the only route back, and it nec
 contains everything removed. It is therefore itself material to keep off any public host and to
 delete once the host's garbage collection is confirmed.
 
-**Open residual at the time of writing: the garbage-collection request has not been submitted.** The
-rewrite is done and a fresh clone is clean, but old objects remain reachable by direct SHA. This
-record does not describe a closed matter, and saying otherwise in a release note or a supplier
-communication would be false.
+**Open residual: the garbage-collection request was submitted to GitHub Support on 2026-08-30 and
+has not yet been actioned.** The rewrite is done and a fresh clone is clean, but old objects remain
+reachable — not merely unreclaimed: `refs/pull/*` are live refs pointing at pre-rewrite commits, so
+ordinary collection would never reach them, and fetching `refs/pull/149/head` still returns the full
+removed tree. This record does not describe a closed matter until that fetch comes back empty, and
+saying otherwise in a release note or a supplier communication would be false.
 
 **Falsified if:** the split between detection and purge stops holding. Concretely, this decision no
 longer holds when `scripts/quality_gate.py` gains any code that rewrites history, deletes remote
