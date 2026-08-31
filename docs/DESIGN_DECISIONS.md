@@ -166,6 +166,20 @@ Cached pages retain URL, timestamp, SHA-256, extracted metadata, and coverage
 information. Unrendered SPA pages receive a deliberately narrow same-origin OpenAPI
 probe; non-spec responses are not treated as API evidence.
 
+Acquisition is also bounded in *where* it may connect and *what* it may write down.
+Every outbound fetch passes one egress gate: HTTP(S) scheme, no URL userinfo, and every
+address the host resolves to globally routable — every, not any, because a name resolving
+to one public and one private address is the standard bypass. The gate sits on the request,
+not the response, and covers each redirect hop, so a fetcher cannot forget it and a 302 into
+a private address cannot slip past. On the write side, a credential carried in a source URL
+is replaced before the URL reaches any artifact, and the replacement is spliced into the
+original string rather than re-encoded, so a URL carrying no credential still round-trips
+byte for byte and content-addressing is unaffected. The one artifact that keeps whole URLs
+is the navigation catalog, because the pipeline reads it back and fetches from it — there a
+URL is an instruction rather than evidence, and a redacted instruction cannot be carried out
+(ADR 0015). URL identity is redaction-invariant, so an artifact and the operator's own
+`--url` still match.
+
 GitBook acquisition uses one `llms.txt` index, safe same-origin path filtering,
 immutable sidecars, and explicit coverage. Markdown drafts and extraction scaffolds are
 line-cited, non-authoritative review aids. They never replace agent source review or

@@ -104,6 +104,33 @@ against its rebuilt manifest before creating a run directory. This is a narrow p
 and hidden-control-text boundary for model-facing document text, not a malware scanner, content
 moderation system, or new authority for API facts.
 
+### Delivered security boundary: bound where acquisition connects and what it records
+
+The source-risk boundary above governs document *content* before a model reads it. Two further
+boundaries govern acquisition itself, and they answer separate questions.
+
+*Where may we connect.* Every outbound fetch now goes through one egress gate rather than eight
+call sites. A URL is fetched only when its scheme is HTTP(S), it carries no userinfo, and every
+address it resolves to is globally routable — excluding multicast, the NAT64 and 6to4 translation
+ranges, and cloud metadata endpoints, which the registry-level "is global" test reports as routable
+and which are precisely where an SSRF is aimed. The check runs on the request and on each redirect
+hop, and proxy environment variables are ignored, so neither a forgotten call site nor a redirect
+nor an environment variable can route a fetch past the criterion. DNS rebinding stays out of scope:
+defeating it means pinning the connection to the address that was checked, which is a separate and
+more invasive decision.
+
+*What may we write down.* A supplier's documentation link is routinely signed, so its credential
+travelled in the query string into `corpus.json`, coverage ledgers and provenance sidecars — the
+same artifacts the repository-hygiene boundary exists to keep out of version control, reached one
+layer earlier. Credential values are now replaced on the way to disk, in the acquisition artifacts
+and in the generated plan, validation report and documents alike, while the URL stays whole in
+memory so the fetch still works. The decision and its one deliberate exception are recorded in
+ADR 0015.
+
+Neither boundary is a network policy engine or a secret scanner. They are two narrow, fail-closed
+criteria on a pipeline whose inputs arrive from a supplier's portal rather than from the operator's
+own typing.
+
 ## Product and domain boundary
 
 `loop-apidoc` remains a domain-neutral, source-grounded API contract product.

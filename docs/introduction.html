@@ -1169,6 +1169,8 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
               <li><strong>文件轉換：</strong><code>preprocess</code> 會將 PDF／DOCX 轉成可掃描文字；DOCX 先通過 bounded、fail-closed OOXML 驗證，並附上 source-hash provenance。DOCX 與 GitBook 兩條路徑<strong>未經真實來源驗證</strong>——十三個 benchmark case 都不是 Word 或 GitBook 來源，證據強度等同 benchmark 的 skipped，請當成可用但未證實。</li>
               <li><strong>來源風險：</strong><code>inspect-source-risk</code> 會在任何 agent 讀取前檢查 manifest 綁定的精確 bytes；它不改寫來源，也不回顯命中的 payload。</li>
               <li><strong>受保護頁面：</strong>直接 HTTP 被擋、但瀏覽器可顯示時，<code>import-rendered-url</code> 會保存原始位元組與 capture provenance；只有 URL、path、method 與 SHA-256 全數吻合，才會略過 origin fetch。</li>
+              <li><strong>Egress 閘門：</strong>任何對外抓取都先通過同一道閘門——只放行 HTTP(S)、URL 不得帶 userinfo，且解析出的每個位址都必須公開可路由；轉址進私有或雲端 metadata 位址一樣拒絕，並忽略 proxy 環境變數。</li>
+              <li><strong>憑證遮蔽：</strong>來源 URL 若帶簽章憑證，會用於下載但在 <code>corpus.json</code>、<code>coverage.json</code>、provenance sidecar 與產出文件中記為 <code>?X-Amz-Signature=[REDACTED]</code>，其餘部分逐位元組保留，遮蔽後身分仍可比對。</li>
               <li><strong>GitBook 與草稿：</strong>若提供 <code>llms.txt</code>，系統會快取同範圍 Markdown，再產生具行號、待人工覆核的 extraction scaffold；它必須複製、核對並補齊後，才能作為正式 extraction。</li>
               <li><strong>第三方授權：</strong>DOCX ZIP/XML fallback 改編自 MIT 授權的 <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a>（固定 revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>）。本專案另加嚴格 gate，且不宣稱支援 EPUB／RTF／MOBI；詳見<a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">第三方公告</a>。</li>
             </ul>

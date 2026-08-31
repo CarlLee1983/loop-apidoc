@@ -369,6 +369,8 @@ artifacts.
 
 PDF, Markdown, Microsoft Word (`.docx`), OpenAPI JSON/YAML, static HTML snapshots, public URLs.
 
+Every outbound fetch passes the same egress gate first: HTTP(S) only, no URL userinfo, and every address the host resolves to must be publicly routable — a redirect into a private or cloud-metadata address is refused too, and proxy environment variables are ignored.
+
 `.docx` and GitBook (`cache-gitbook-llms`) are **not validated against a real source**. Both subsystems are complete and covered by unit tests, but none of the thirteen benchmark cases has a Word or GitBook source, and every DOCX under `tests/` is synthesised in `tmp_path`. Their evidence strength is exactly the benchmark's *skipped*: code that passes on synthetic input, with no supplier document having gone through end to end. Read them as available but unproven, never as validated. The label goes away when the first real Word delivery or GitBook site arrives and becomes a benchmark case — that arrival is the trigger, not a date.
 
 Legacy binary `.doc`, spreadsheets (`.xlsx`/`.xls`), plain text (`.txt`), and `.csv` are **deliberately unsupported**, and no converter is planned: the manifest recognises the format, marks it unsupported, and names the export that resolves it (`.doc` → `.docx` or PDF; a spreadsheet → a Markdown table; `.txt` → rename to `.md`; `.csv` → a Markdown table). The conversion judgement stays with the person who can see the original file — reasoning and falsification condition in [ADR 0012](docs/adr/0012-no-converter-for-legacy-word-or-spreadsheets.md). When a spreadsheet's content must enter the pipeline as evidence, it goes in along the supplementary-carrier path ([ADR 0010](docs/adr/0010-supplementary-carriers-are-accountable-not-verifiable.md)).
@@ -499,6 +501,12 @@ the original/canonical URL, capture timestamp and method, and SHA-256. It refuse
 provenance inputs and all output collisions. A matching `fetched_rendered` result lets
 `manifest` and `assemble` use the verified local snapshot without probing the protected origin;
 URL, path, method, or digest mismatches fail closed.
+
+When the source URL itself carries a signing credential — a signed documentation link, for
+example — the credential is used for the actual fetch but recorded as
+`?X-Amz-Signature=[REDACTED]` in `corpus.json`, `coverage.json`, provenance sidecars, and the
+generated documents; the rest of the URL is preserved byte for byte, and the redacted URL
+identity still matches downstream.
 
 ### Supplementary evidence: supplier notes
 
