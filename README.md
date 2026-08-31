@@ -254,7 +254,7 @@ skill 在讀取來源前會先說明並詢問交付層級：`minimal`（預設�
 契約；未選取的衍生產物不會載入 agent context 或在 agent 間傳遞，以減少 token 消耗。
 這是 agent 交付策略，不改變 CLI 的來源依據、驗證或相容 run-dir 結構。
 
-發行說明：[`0.40.0`](docs/RELEASE_NOTES_0.40.0.md)。
+發行說明：[`0.41.0`](docs/RELEASE_NOTES_0.41.0.md)。
 
 ---
 
@@ -341,6 +341,8 @@ npm run docs:check
 ## 支援的來源格式
 
 PDF、Markdown、Microsoft Word（`.docx`）、OpenAPI JSON／YAML、靜態 HTML 快照、公開 URL。
+
+所有對外抓取都先通過同一道 egress 閘門：只放行 HTTP(S)、URL 不得帶 userinfo，且解析出的每個位址都必須公開可路由——轉址進私有或雲端 metadata 位址一樣拒絕，並忽略 proxy 環境變數。
 
 其中 `.docx` 與 GitBook（`cache-gitbook-llms`）標記為**未經真實來源驗證**。兩個子系統都完整、也有單元測試，但十三個 benchmark case 沒有任何一個的來源是 Word 或 GitBook，`tests/` 底下的 DOCX 全部在 `tmp_path` 裡合成。它們的證據強度恰好等於 benchmark 的 *skipped*：程式跑得過合成檔，沒有任何一份真實供應商來源走過全程。請當成「可用但未證實」，不要讀成已驗證。收到第一份真實 Word 交件或 GitBook 站台、並補成 benchmark case 時移除這個標註——觸發條件是那份來源到手，不是某個日期。
 
@@ -462,6 +464,10 @@ importer 會保留原始位元組，並寫出含原始／canonical URL、擷取�
 versioned provenance sidecar；格式錯誤與任何輸出碰撞都會拒絕。匹配的
 `fetched_rendered` 結果讓 `manifest`／`assemble` 使用通過驗證的本機快照，不再探測受保護
 origin；URL、路徑、method 或 digest 不一致則 fail closed。
+
+若來源 URL 本身帶簽章憑證（例如以 signed link 提供的文件），憑證會用於實際下載，但寫入
+`corpus.json`、`coverage.json`、provenance sidecar 與產出文件時一律記為
+`?X-Amz-Signature=[REDACTED]`；URL 其餘部分逐位元組保留，遮蔽後的 URL 身分仍可比對。
 
 ### 次級佐證：供應商補充說明
 

@@ -1170,6 +1170,8 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
               <li><strong>Document conversion:</strong> <code>preprocess</code> converts PDF/DOCX into scannable text. DOCX first passes a bounded, fail-closed OOXML gate and receives source-hash provenance. The DOCX and GitBook paths are <strong>not validated against a real source</strong> — none of the thirteen benchmark cases has a Word or GitBook source, so their evidence strength equals the benchmark's <em>skipped</em>: available but unproven.</li>
               <li><strong>Source risk:</strong> <code>inspect-source-risk</code> checks the exact manifest-bound bytes before any agent reads them. It neither rewrites source bytes nor echoes a matched payload.</li>
               <li><strong>Protected pages:</strong> When direct HTTP is blocked but a browser can render the page, <code>import-rendered-url</code> preserves the bytes and capture provenance. Origin fetch is skipped only when URL, path, method, and SHA-256 all match.</li>
+              <li><strong>Egress gate:</strong> Every outbound fetch passes the same gate first — HTTP(S) only, no URL userinfo, and every address the host resolves to must be publicly routable. A redirect into a private or cloud-metadata address is refused too, and proxy environment variables are ignored.</li>
+              <li><strong>Credential redaction:</strong> When a source URL carries a signing credential, it is used for the fetch but recorded as <code>?X-Amz-Signature=[REDACTED]</code> in <code>corpus.json</code>, <code>coverage.json</code>, provenance sidecars, and the generated documents. The rest of the URL is preserved byte for byte, and the redacted identity still matches.</li>
               <li><strong>GitBook and scaffolds:</strong> When <code>llms.txt</code> is available, the pipeline caches in-scope Markdown and creates a line-cited extraction scaffold for human review. It must be copied, verified, and completed before use as the real extraction.</li>
               <li><strong>Third-party license:</strong> The DOCX ZIP/XML fallback is adapted from MIT-licensed <a href="https://github.com/virgiliojr94/book-to-skill">book-to-skill</a> at revision <code>efda3b2212ce1b2c052126e85e14de40a32442e8</code>. This project adds stricter gates and does not claim EPUB/RTF/MOBI support; see the <a href="https://github.com/CarlLee1983/loop-apidoc/blob/main/THIRD_PARTY_NOTICES.md">third-party notice</a>.</li>
             </ul>
@@ -1564,7 +1566,7 @@ ln -s /path/to/loop-apidoc/skills/loop-apidoc ~/.codex/skills/loop-apidoc</code>
 </section>
 
 <footer>
-  Generated from the project docs · loop-apidoc v0.40.0 · a source-grounded API documentation pipeline
+  Generated from the project docs · loop-apidoc v0.41.0 · a source-grounded API documentation pipeline
 </footer>
 
 </body>
