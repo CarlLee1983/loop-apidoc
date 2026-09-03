@@ -17,7 +17,7 @@ workflow:
 baseline:
   repository: CarlLee1983/loop-apidoc
   branch: main
-  commit: 6ea79d728c5117725d404107691ede7f6774ea97
+  commit: e253c9705bbedd43b2d306748cce1a71c7b98d91
   dirty_worktree: true
   story_owned_paths:
     - .github/workflows/ci.yml
@@ -71,4 +71,8 @@ verification:
 * Post-LAP-001 `make verify` passed tag policy, documentation consistency, and
   the Python quality gate in 80.18s, with coverage at 92.58% against the 92.5%
   floor.
+* LAP-001 landed on `main` as merge commit
+  `e253c9705bbedd43b2d306748cce1a71c7b98d91` (PR #162); CI passed in 2m33s. The
+  baseline above is that commit, and the only difference from it is this
+  baseline update itself.
 * The story that follows LAP-001 is not selected.
