@@ -126,6 +126,26 @@ def test_required_source_derivation_benchmark_cases_match_committed_descriptors(
     assert set(cases) == committed == {"ecpay-creditcard-pdf"}
 
 
+def test_exact_evidence_parity_cases_are_a_reviewed_subset_of_the_required_inventory():
+    """The lane is a review boundary, not a derivation.
+
+    Every committed case declares the exact-evidence contract in
+    `core-parity.json`, so membership cannot be read off the files: this list is
+    which cases have an executable full-parity replay today, and adding one is
+    an intentional widening exactly like the other reviewed inventories.
+    """
+    cases = quality_gate.required_exact_evidence_parity_benchmark_cases()
+    benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
+
+    assert set(cases) <= set(quality_gate.required_benchmark_cases())
+    assert set(cases) == {"funkygames-transfer-operator", "rsg-game-transfer-wallet"}
+    for case in cases:
+        parity = json.loads(
+            (benchmark_root / case / "expected" / "core-parity.json").read_text("utf-8")
+        )
+        assert parity["require_exact_evidence_for_all_material_claims"] is True
+
+
 def test_every_cli_command_is_graded_or_explicitly_excluded():
     registered = registered_cli_commands()
 

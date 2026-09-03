@@ -205,6 +205,79 @@ source is a supplier delivery with no public URL; it joins the lane only once th
 file is available, and until then keeps exactly the evidence strength it already
 had.
 
+## Per-case attestation
+
+Everything above grades the harness. None of it says, in one place a machine can
+read, *which* level each individual case reached in one concrete run — and that
+gap is exactly where "the benchmarks pass" gets written about a suite whose
+source-backed assertions all skipped. Run:
+
+```bash
+uv run python scripts/benchmark_attestation.py \
+  --mode ci-safe \
+  --json-out out/benchmark-attestation.json \
+  --markdown-out out/benchmark-attestation.md
+```
+
+The command is repository-level, non-interactive, and identical locally and in
+CI. It is not part of `make verify`, which remains the only repository
+completion contract; it produces evidence about a run, it does not gate one.
+
+It reports every case in `REQUIRED_BENCHMARK_CASES` exactly once, from that list
+alone — there is no second inventory to update — and for each case states the
+assets it needs and whether they are present, which of committed, discovered,
+prerequisites-unavailable, source-backed executed, sanitized-fixture executed,
+exact-evidence parity and strict-local eligible/passed actually hold, and, kept
+separate from all of that, whether the harness matched its expectation and
+whether the resulting contract validation is `PASS` or `EXPECTED_FAIL`. An
+`EXPECTED_FAIL` case can be conformant while its contract validation status
+stays `FAIL`; the two are never collapsed. Harness conformance is tri-state,
+because `false` has to mean the harness *contradicted* its expectation: a case
+whose assertions never ran reports `not established`, never a conformance
+failure and never a pass.
+
+What actually executed is read from one pytest run's JUnit XML, never from
+pytest's prose, and a result is attributed to a case only by its parametrization
+id. Three test names bind an assurance level to the check that establishes it —
+`test_benchmark_case`, `test_case_obeys_declared_core_parity_contract` and
+`test_sanitized_fixture_proves_fixture_backed_exact_evidence_parity` — and
+`tests/test_benchmark_attestation.py` fails if one is renamed, so a rename can
+never silently downgrade every case to "nothing was established". Exact-evidence
+parity in particular comes only from a replay *result*: every committed case
+declares `require_exact_evidence_for_all_material_claims`, and that declaration
+is what a case must meet, never evidence that it did.
+`scripts/quality_gate.py::EXACT_EVIDENCE_PARITY_BENCHMARK_CASES` is a fourth
+reviewed inventory in the same family as the three above, naming the cases with
+an executable full-parity replay today.
+
+The JSON is `benchmark-attestation/v1`, validated against a strict schema in
+which an unknown field fails closed, and it binds the repository commit and
+worktree state, the `loop-apidoc` version, the execution mode, and the
+`core-parity`, `sanitized-fixture` and `source-derivation` contract versions.
+The Markdown carries the same per-case status and the same reasons. Ordering is
+deterministic and the report holds no wall-clock timestamp, so the same
+revision, assets and execution results render the same document.
+
+The command fails closed and writes nothing on a malformed, missing, stale,
+tampered or self-contradictory input — an unreadable expectation, a
+`current_status` that is neither `PASS` nor `FAIL`, a `core-parity.json` at the
+wrong schema version or disagreeing with the expectation, a sanitized subset
+whose bytes no longer match its recorded digest, a locally stale derived
+Markdown, or a descriptor path escaping its case directory. Output paths are
+created with `O_EXCL | O_NOFOLLOW`: an existing file or a symlink is refused, and
+because the document is complete before the first byte is written a refusal
+leaves nothing that could be mistaken for a result.
+
+The report is governance evidence and never carries supplier material. Source
+content and excerpts are never read into it, paths are case-relative so no local
+absolute path is persisted, declared source URLs go through `redact_url`, and
+any text derived from the pytest subprocess is stripped of URLs, filesystem
+paths and credential-shaped values before it is stored.
+
+On a machine without the private supplier snapshots every case correctly reports
+`prerequisites unavailable`. That is the honest result, and it is never a
+source-backed PASS.
+
 ## Acquisition paths outside the harness
 
 The four layers grade *cases*. They say nothing about an acquisition path that no case
@@ -264,6 +337,8 @@ Use these terms consistently in issues, release notes, and review comments:
 | **Sanitized-fixture exact-evidence passed** | A reviewed redistributable subset replayed the retained claims with exact fragment support; this is not source-backed or strict-local success. |
 | **Not validated against a real source** | A shipped path whose code is complete but which no benchmark case has ever used; the first real source along it becomes a case. |
 | **Outside the harness by construction** | A path that issues network requests, so no offline-reproducible case can exercise it until a replayable recording contract exists. Never interchangeable with the row above. |
+| **Prerequisites unavailable** | A required case's `sources/`, `source-quality/`, or required original document is absent, so no source-backed assertion could execute. |
+| **Attested** | A per-case `benchmark-attestation/v1` report recorded which assurance level each case reached in one bound run; the attestation reports assurance, it never raises it. |
 | **Source-derivation verified** | A PDF case's local Markdown matches the SHA-256 recorded in its committed `source-derivation.json`, and — when the original PDF is also present locally — was re-derived byte-identically from it; this is part of the existing source-backed layer, not new evidence strength. |
 
 Do not shorten “committed and discovered” to “validated,” and do not describe
@@ -279,6 +354,7 @@ a CI run containing source-related skips as benchmark success.
 | `uv run python scripts/quality_gate.py --sanitized-fixtures` | CI-safe checks plus the reviewed sanitized exact-evidence lane | No; only committed sanitized subsets |
 | `uv run pytest tests/test_benchmarks.py -q` | Source-backed execution for cases whose sources are present; absent sources skip | Yes, for a complete pass |
 | `uv run pytest tests/test_benchmarks.py -k test_local_markdown_matches_recorded_source_derivation -q` | Source-derivation lane for PDF cases; Markdown digest checked whenever `sources/` is present, re-derivation additionally needs `raw/` | Yes: `sources/` for the digest check, `raw/` for re-derivation |
+| `uv run python scripts/benchmark_attestation.py --json-out <path> --markdown-out <path>` | Per-case attestation of every layer reached in one run | No; unavailable prerequisites are reported as such |
 | `uv run python scripts/quality_gate.py --strict-local` | All four layers, with sources present and zero skips | Yes, for all thirteen cases |
 
 The full benchmark module creates more than thirteen pytest items because each
@@ -411,6 +487,22 @@ case。`tests/test_benchmarks.py` 只要本機 `sources/` 存在,就無條件比
 只有重跑 preprocess 這半段,才比照其他來源支撐斷言在原始檔不在時 SKIP。目前只有
 `ecpay-creditcard-pdf` 在此清單裡，`jili-legacy-gaming-pdf` 是供應商交件、沒有公開 URL，
 要等拿到檔案才會加入。
+
+另有一份不屬於任何一層、也不改變任何證據強度的逐案例證據報告:
+`uv run python scripts/benchmark_attestation.py --json-out <路徑> --markdown-out <路徑>`。
+它以 `REQUIRED_BENCHMARK_CASES` 為唯一名單,每個 required case 恰好出現一次,列出該案例
+需要哪些資產、是否存在,並分別標示 committed、discovered、缺少前置條件、source-backed 已
+執行、sanitized-fixture 已執行、exact-evidence parity,以及 strict-local 是否合格/通過;
+harness 是否符合預期與產出的契約驗證是 `PASS` 還是 `EXPECTED_FAIL`,則分開陳述 ——
+`EXPECTED_FAIL` 案例可以同時是 harness 相符與契約驗證 `FAIL`,兩者永不合併。已執行與否來自
+一次 pytest 的 JUnit XML,不解析人類輸出;exact-evidence parity 只由實際重播結果建立,不從
+`core-parity.json` 的期待值推測。JSON 是 `benchmark-attestation/v1`,以嚴格 schema 驗證
+(未知欄位一律失敗),並綁定 repository commit、`loop-apidoc` 版本、執行模式與相關契約版本。
+輸入若毀損、缺漏、過期、被竄改或自相矛盾,命令非零退出且不留下任何輸出;輸出路徑以
+`O_EXCL | O_NOFOLLOW` 建立,既有檔案或 symlink 一律拒絕。報告本身不保存供應商內容、來源片段、
+未遮罩憑證 URL 或本機絕對路徑。它不是 `make verify` 的一部分 —— `make verify` 仍是唯一的
+完成門檻。在沒有私有來源快照的機器上,每個案例都會如實標記為「缺少前置條件」,那不是
+source-backed PASS。
 
 新增 case 時，先加入 extraction／expected 宣告，再刻意更新
 `REQUIRED_BENCHMARK_CASES`，跑 exact-parity 測試，最後才在持有原始來源快照的機器上

@@ -47,6 +47,17 @@ SANITIZED_BENCHMARK_CASES = ("rsg-game-transfer-wallet",)
 # output for a specific, dated, checksummed original PDF — not merely a hand
 # transcription. See `source-derivation.json` in each listed case.
 SOURCE_DERIVATION_BENCHMARK_CASES = ("ecpay-creditcard-pdf",)
+# Cases whose retained source snapshot is structured enough to replay the full
+# Core parity contract — every material claim addressable by an *exact* source
+# fragment. Every committed case declares that contract in `core-parity.json`,
+# so this cannot be derived from the files: the declaration is what the case
+# must eventually meet, and this list is which cases have an executable replay
+# today. A browser-flattened snapshot can satisfy the legacy source-backed
+# layer and still belong nowhere near this inventory.
+EXACT_EVIDENCE_PARITY_BENCHMARK_CASES = (
+    "funkygames-transfer-operator",
+    "rsg-game-transfer-wallet",
+)
 
 
 # --- Acquisition-path evidence grading (issue #121) -------------------------
@@ -664,6 +675,10 @@ def required_benchmark_cases() -> tuple[str, ...]:
 
 def required_sanitized_benchmark_cases() -> tuple[str, ...]:
     return SANITIZED_BENCHMARK_CASES
+
+
+def required_exact_evidence_parity_benchmark_cases() -> tuple[str, ...]:
+    return EXACT_EVIDENCE_PARITY_BENCHMARK_CASES
 
 
 def missing_benchmark_sources(

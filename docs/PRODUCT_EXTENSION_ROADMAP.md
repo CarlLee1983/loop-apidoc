@@ -170,6 +170,12 @@ snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable l
 eligible restored sources, but cannot turn an unavailable original snapshot into a
 strict-local pass.
 
+Which of those states each case is actually in, in one concrete run, is recorded by
+`scripts/benchmark_attestation.py` as `benchmark-attestation/v1` — the per-case evidence
+report described in `docs/BENCHMARK_VALIDATION_PLAN.md`. It changes no case's evidence
+strength; it makes the strength each case reached machine-readable, so roadmap counts and
+release notes are written from a bound report rather than from recollection.
+
 ## Recommended sequence
 
 ### 1. Make exact evidence first-class, then graduate Core

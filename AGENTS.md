@@ -318,8 +318,25 @@ release, never a force-moved tag.
 - Never replace an unavailable historical snapshot with a newer document, synthetic
   fixture, or error page. Record the unavailable evidence, run deterministic CI checks,
   and perform a legitimate targeted source-backed spot-check instead.
-- The canonical four-layer model, thirteen-case inventory, terminology, and case-addition
-  workflow are in `docs/BENCHMARK_VALIDATION_PLAN.md`.
+- `scripts/quality_gate.py::EXACT_EVIDENCE_PARITY_BENCHMARK_CASES` is a fourth reviewed
+  inventory: the cases with an executable full Core-parity replay today. It cannot be
+  derived from the files — every committed case *declares*
+  `require_exact_evidence_for_all_material_claims` in `core-parity.json`, and a
+  declaration is the bar a case must meet, never evidence that it met it.
+  `test_case_obeys_declared_core_parity_contract` is parametrized over it.
+- `uv run python scripts/benchmark_attestation.py --json-out <path> --markdown-out <path>`
+  writes a per-case `benchmark-attestation/v1` report: every required case exactly once,
+  its assets and their availability, and which of committed, discovered,
+  prerequisites-unavailable, source-backed executed, sanitized-fixture executed,
+  exact-evidence parity and strict-local eligible/passed actually holds — with harness
+  conformance and the `PASS`/`EXPECTED_FAIL` contract validation stated separately, so an
+  `EXPECTED_FAIL` case stays `FAIL` while being conformant. What executed is read from one
+  pytest run's JUnit XML, never from pytest prose. It reports assurance and never raises
+  it: it is not part of `make verify`, it fails closed on malformed, stale, tampered or
+  contradictory input, it refuses an existing or symlinked output path, and it persists no
+  supplier content, absolute path, or unredacted credential.
+- The canonical four-layer model, thirteen-case inventory, terminology, per-case
+  attestation, and case-addition workflow are in `docs/BENCHMARK_VALIDATION_PLAN.md`.
 
 ## Repository hygiene
 

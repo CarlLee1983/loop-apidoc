@@ -50,6 +50,7 @@ from loop_apidoc.score import (
     write_reports as write_score_reports,
 )
 from scripts.quality_gate import (
+    required_exact_evidence_parity_benchmark_cases,
     required_sanitized_benchmark_cases,
     required_source_derivation_benchmark_cases,
 )
@@ -959,11 +960,19 @@ def test_funkygames_two_hop_schema_ref_fields_have_exact_derivations(
         ) == 2
 
 
-def test_funkygames_obeys_declared_core_parity_contract(tmp_path_factory) -> None:
-    """The retained source snapshot satisfies its full Core graduation contract."""
-    case = _case_by_name("funkygames-transfer-operator")
+@pytest.mark.parametrize("case_id", required_exact_evidence_parity_benchmark_cases())
+def test_case_obeys_declared_core_parity_contract(case_id, tmp_path_factory) -> None:
+    """A retained source snapshot satisfies its full Core graduation contract.
+
+    Parametrized over the reviewed exact-evidence lane rather than written once
+    per case: the two bodies were byte-identical apart from the case name, and a
+    per-case copy is how one of them silently stops asserting the exact-fragment
+    half. The parametrized id is also what makes this replay attributable to a
+    case in `scripts/benchmark_attestation.py` without a name heuristic.
+    """
+    case = _case_by_name(case_id)
     if not _has_sources(case):
-        pytest.skip("funkygames-transfer-operator: sources/ not present")
+        pytest.skip(f"{case_id}: sources/ not present")
 
     expected = json.loads(
         (case / "expected" / "core-parity.json").read_text("utf-8")
@@ -971,7 +980,7 @@ def test_funkygames_obeys_declared_core_parity_contract(tmp_path_factory) -> Non
     result = run_assemble_pipeline(
         sources_root=case / "sources",
         extraction_dir=case / "extraction",
-        output_root=tmp_path_factory.mktemp("funky-parity-shadow"),
+        output_root=tmp_path_factory.mktemp(f"{case_id}-parity-shadow"),
         run_id="bench-shadow",
         generated_at=_FIXED_TS,
         architecture_mode=ArchitectureMode.SHADOW,
@@ -998,56 +1007,7 @@ def test_funkygames_obeys_declared_core_parity_contract(tmp_path_factory) -> Non
     assert comparison["only_in_core"] == expected["allowed_semantic_differences"]
     assert expected["require_exact_evidence_for_all_material_claims"] is True
     assert comparison["claim_counts"]["unverified"] == 0
-    assert all(
-        relationship["relationship"] in {"explicit_support", "derived_support"}
-        and precision_by_id[relationship["fragment_id"]] == "exact"
-        and all(
-            precision_by_id[fragment_id] == "exact"
-            for fragment_id in relationship["context_fragment_ids"]
-        )
-        for relationship in relationships
-    )
-
-
-def test_rsg_obeys_declared_core_parity_contract(tmp_path_factory) -> None:
-    """The structured RSG source snapshot satisfies its Core graduation contract."""
-    case = _case_by_name("rsg-game-transfer-wallet")
-    if not _has_sources(case):
-        pytest.skip("rsg-game-transfer-wallet: sources/ not present")
-
-    expected = json.loads(
-        (case / "expected" / "core-parity.json").read_text("utf-8")
-    )
-    result = run_assemble_pipeline(
-        sources_root=case / "sources",
-        extraction_dir=case / "extraction",
-        output_root=tmp_path_factory.mktemp("rsg-parity-shadow"),
-        run_id="bench-shadow",
-        generated_at=_FIXED_TS,
-        architecture_mode=ArchitectureMode.SHADOW,
-    )
-    run_dir = Path(result.run_dir)
-    comparison = json.loads(
-        (run_dir / "core" / "comparison.json").read_text("utf-8")
-    )
-    relationships = json.loads(
-        (run_dir / "core" / "relationships.json").read_text("utf-8")
-    )
-    evidence = json.loads((run_dir / "core" / "evidence.json").read_text("utf-8"))
-    precision_by_id = {
-        fragment["id"]: fragment["precision"]
-        for fragment in evidence["fragments"]
-    }
-
-    assert (
-        comparison["legacy_status"]
-        == expected["expected_legacy_status"].lower() + "ed"
-    )
-    assert comparison["core_verdict"] == expected["expected_core_verdict"]
-    assert comparison["verdict_match"] is expected["require_verdict_match"]
-    assert comparison["only_in_core"] == expected["allowed_semantic_differences"]
-    assert expected["require_exact_evidence_for_all_material_claims"] is True
-    assert comparison["claim_counts"]["unverified"] == 0
+    assert relationships
     assert all(
         relationship["relationship"] in {"explicit_support", "derived_support"}
         and precision_by_id[relationship["fragment_id"]] == "exact"
