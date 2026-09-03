@@ -68,6 +68,10 @@ skip。已探索或被 skip 的 case，並未通過來源支撐的重新驗證�
 exact-evidence 相關變更可另跑 `scripts/quality_gate.py --sanitized-fixtures`，在 CI
 重播經審核、保留原始行號的來源片段；這是範圍較窄的 fixture-backed 保證，不能稱為
 source-backed 或 strict-local PASS。
+`scripts/benchmark_attestation.py` 會把上述分級寫成逐案例紀錄：每個 required case 恰好
+出現一次，列出所需資產與該案例在這一次執行中真正達到的層級，輸出嚴格的
+`benchmark-attestation/v1` JSON 與對應 Markdown。它只回報保證等級、不會提升等級——本機
+沒有私有快照的案例會被如實標記為「缺少前置條件」，不是 source-backed PASS。
 Implementation-backed conformance benchmark 是第三條、分開回報的 assurance lane；它只衡量
 宣告的 Applicability Envelope、時間與 suite version 內觀察到的行為，不能算成 source-backed
 `--strict-local` pass，也不能增加 documentary grounding coverage。

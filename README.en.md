@@ -71,6 +71,11 @@ skips. A discovered or skipped case has not passed source-backed revalidation. S
 For exact-evidence changes, `scripts/quality_gate.py --sanitized-fixtures` adds a
 reviewed, line-preserving CI replay of retained source fragments. It is a narrower
 fixture-backed assurance and never counts as source-backed or strict-local success.
+`scripts/benchmark_attestation.py` writes the per-case record of all of this: every
+required case exactly once, its assets, and which level it actually reached in one bound
+run, as strict `benchmark-attestation/v1` JSON and matching Markdown. It reports assurance
+and never raises it — a case whose private snapshot is unavailable is attested as
+`prerequisites unavailable`, never as a source-backed PASS.
 Implementation-backed conformance benchmarks form a third, separately reported assurance
 lane. They measure observed behavior only for their declared Applicability Envelope, time,
 and suite version; they never count as source-backed `--strict-local` passes or documentary

@@ -40,6 +40,7 @@ feeds several parametrized tests.
 | Discovery guard | `uv run pytest tests/test_benchmarks.py -k test_benchmark_harness_discovers_cases -q` | Fixtures are enumerated without local sources. |
 | Source-backed execution | `uv run pytest tests/test_benchmarks.py -q` with original snapshots present | Applicable assemble and artifact assertions execute and pass. |
 | Strict-local preflight | `uv run python scripts/quality_gate.py --strict-local` | Required/committed parity, non-empty sources for every case, all checks executed, and zero skips. |
+| Per-case attestation | `uv run python scripts/benchmark_attestation.py --json-out <path> --markdown-out <path>` | Each required case's assets and the level it actually reached, bound to the commit, version, and mode. Reports assurance; never raises it. |
 
 A committed or discovered case is not necessarily source-backed. A pytest
 SKIP caused by a missing source snapshot is not a benchmark pass. The canonical
