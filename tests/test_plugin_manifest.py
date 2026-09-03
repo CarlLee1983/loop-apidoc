@@ -46,10 +46,11 @@ def test_tagsmith_release_line_and_scripts_are_explicit():
     assert package["scripts"]["release:github"] == "uv run python scripts/release.py github"
 
 
-def test_docsentry_document_governance_is_configured_and_runs_in_ci():
+def test_docsentry_document_governance_is_configured_and_runs_via_canonical_gate():
     package = json.loads((ROOT / "package.json").read_text("utf-8"))
     config = json.loads((ROOT / ".docsentry.json").read_text("utf-8"))
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
+    makefile = (ROOT / "Makefile").read_text("utf-8")
 
     assert package["devDependencies"]["@carllee1983/docsentry"] == "^0.5.0"
     assert package["scripts"]["docs:check"] == "docsentry check --config .docsentry.json"
@@ -65,7 +66,8 @@ def test_docsentry_document_governance_is_configured_and_runs_in_ci():
             "docs/**/*.md",
         ],
     }
-    assert "npm run docs:check" in workflow
+    assert "npm run docs:check" in makefile
+    assert "run: make verify" in workflow
 
 
 def test_skill_has_frontmatter_and_assemble_call():

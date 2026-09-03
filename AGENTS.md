@@ -2,6 +2,21 @@
 
 This file provides guidance to Codex (OpenAI Codex CLI) when working with code in this repository.
 
+## ForgeFlow Story Development
+
+When work names a Story ID or targets `specs/stories/`, use the repository-local
+`skills/story-development/SKILL.md`. Read the Story's `story.md` and
+`acceptance.md` before implementation; an optional `task.md` records progress
+only and never overrides Story intent.
+
+Keep the Story's In Scope and Out of Scope boundaries. Map every acceptance
+criterion to an observable result or verification. Behavior changes continue to
+follow the Red → Green → Verify workflow below, and final verification is
+always `make verify`. A failed check remains a failure: never delete tests,
+lower coverage, or change requirements to obtain PASS. PASS only makes the work
+eligible for human review; it does not approve or merge it. Update
+`specs/handoff.md` when work changes hands.
+
 ## What this is
 
 `loop-apidoc` is a **source-grounded API documentation pipeline**: its current compatibility flow turns heterogeneous API integration docs into OpenAPI artifacts. The Core also owns protocol-neutral contracts and deterministic GraphQL/AsyncAPI compilers, but those formats have no public run integration until a named downstream consumer establishes the required source and acceptance contract. Every supported run retains a Traditional-Chinese guide, offline review page, provenance, and validation reports.

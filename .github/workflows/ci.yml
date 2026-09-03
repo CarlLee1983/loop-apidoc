@@ -18,13 +18,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify tag policy
-        run: |
-          npm ci
-          npm run tag:check
-
-      - name: Verify repository documentation
-        run: npm run docs:check
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
@@ -34,11 +29,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --dev
 
-      - name: Quality gate
+      - name: Canonical verification
         # The full suite includes tests/test_benchmarks.py. Benchmark *case* runs
         # SKIP in CI (sources/ are operator-provided and gitignored), but the
         # discovery guard test_benchmark_harness_discovers_cases still runs and
         # FAILS if any required benchmark case is lost — so coverage can't silently
         # go vacuous. See docs/RELEASE_CHECKLIST.md for what needs local sources.
         # The default gate tolerates benchmark skips; only --strict-local fails on skips.
-        run: uv run python scripts/quality_gate.py
+        run: make verify
