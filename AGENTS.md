@@ -17,6 +17,42 @@ lower coverage, or change requirements to obtain PASS. PASS only makes the work
 eligible for human review; it does not approve or merge it. Update
 `specs/handoff.md` when work changes hands.
 
+### Review Preparation
+
+After PASS, prepare Human Review with:
+
+* a Story and acceptance criteria mapping summary
+* important design and boundary decisions or architecture impacts
+* test and verification evidence
+* assumptions, unresolved risks, and suggested attention points
+
+Check Classification truthfulness against the actual trust boundaries and
+baseline behavior, including the required conditional evidence. Confirm
+verification freshness: the complete PASS must cover the current
+implementation. A source, test, configuration, or other behavior-affecting
+change after PASS requires a new full `make verify`; attribute a final
+handoff-only documentation change so the human can judge its impact.
+
+This report supports review without self-approval. Only a human may accept
+REVIEW and advance the Story to DONE. If review requests an implementation
+change, return to IMPLEMENTING and run full `make verify` again before REVIEW.
+If feedback changes or exposes missing requirements, move the Story from REVIEW
+to SPEC_BLOCKED for human revision and approval instead of changing Story
+intent.
+
+### Code Quality
+
+* Follow the repository's existing formatter, lint, type, and architecture
+  settings.
+* Do not disable, bypass, or weaken existing rules merely to obtain PASS.
+* Keep new code consistent with neighboring code and the existing architecture.
+* Treat `make verify` as the authority for every automated judgment.
+* Leave design judgments that cannot be automated to Human Review.
+
+An agent may prepare a Story for REVIEW after the current implementation passes
+`make verify`; it must not approve, merge, release, tag, push, publish, or mark
+the Story DONE.
+
 ## What this is
 
 `loop-apidoc` is a **source-grounded API documentation pipeline**: its current compatibility flow turns heterogeneous API integration docs into OpenAPI artifacts. The Core also owns protocol-neutral contracts and deterministic GraphQL/AsyncAPI compilers, but those formats have no public run integration until a named downstream consumer establishes the required source and acceptance contract. Every supported run retains a Traditional-Chinese guide, offline review page, provenance, and validation reports.
