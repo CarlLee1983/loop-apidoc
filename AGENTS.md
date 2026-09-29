@@ -5,7 +5,7 @@ This file provides guidance to Codex (OpenAI Codex CLI) when working with code i
 ## ForgeFlow Story Development
 
 When work names a Story ID or targets `specs/stories/`, use the repository-local
-`skills/story-development/SKILL.md`. Read the Story's `story.md` and
+`.agents/skills/story-development/SKILL.md`. Read the Story's `story.md` and
 `acceptance.md` before implementation; an optional `task.md` records progress
 only and never overrides Story intent.
 
