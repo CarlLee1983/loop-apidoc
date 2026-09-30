@@ -2,45 +2,41 @@
 
 This file provides guidance to Codex (OpenAI Codex CLI) when working with code in this repository.
 
-## ForgeFlow Story Development
+## Warrant
 
-When work names a Story ID or targets `specs/stories/`, use the repository-local
-`.agents/skills/story-development/SKILL.md`. Read the Story's `story.md` and
-`acceptance.md` before implementation; an optional `task.md` records progress
-only and never overrides Story intent.
+This repository follows Warrant. Work is bounded by human-approved intent and
+proven by this repository's own verification.
 
-Keep the Story's In Scope and Out of Scope boundaries. Map every acceptance
-criterion to an observable result or verification. Behavior changes continue to
-follow the Red → Green → Verify workflow below, and final verification is
-always `make verify`. A failed check remains a failure: never delete tests,
-lower coverage, or change requirements to obtain PASS. PASS only makes the work
-eligible for human review; it does not approve or merge it. Update
-`specs/handoff.md` when work changes hands.
+**Verification command:** `make verify`
 
-### Review Preparation
+1. **Intent is approved by a human.** Work starts from a Story at
+   `specs/stories/<slug>.md` with Goal, Out of Scope, and Acceptance Criteria.
+   A Story is approved only when a human has committed it to the default
+   branch, or has explicitly assigned it in the current session. When it is
+   not committed and the human only asks you to implement it, ask once whether
+   they approve it as written; only a yes counts. A Story you
+   drafted or committed yourself is not approved: stop and wait. Approval is
+   not a work queue; the human chooses which Story to do.
+2. **Completion is proven by evidence.** Run the verification command above and
+   repair failures until it passes; if the repair lies outside the Story, stop
+   and report it. Map every acceptance criterion to a reproducible observation:
+   the command you ran and its output, or the `file:line` you inspected. If no
+   verification command is declared, report that and stop; do not choose
+   checks yourself.
+3. **The standard is not yours to change.** Do not change requirements, weaken
+   or reinterpret acceptance criteria, delete or skip failing tests, edit the
+   Story to fit the work, or widen scope. When work outside the Story is
+   needed, or a criterion conflicts with Out of Scope, stop and report it.
 
-After PASS, prepare Human Review with:
+Finish with a completion report of three sections: (1) each acceptance
+criterion → command run → observed result; (2) skipped or blocked checks;
+(3) residual risks. An inference or substitute check is not an observation.
+If the verification command did not pass, or any criterion lacks a passing
+observation, the report says **partial**, never done.
 
-* a Story and acceptance criteria mapping summary
-* important design and boundary decisions or architecture impacts
-* test and verification evidence
-* assumptions, unresolved risks, and suggested attention points
+Directories under `specs/stories/` are legacy records, not pending work.
 
-Check Classification truthfulness against the actual trust boundaries and
-baseline behavior, including the required conditional evidence. Confirm
-verification freshness: the complete PASS must cover the current
-implementation. A source, test, configuration, or other behavior-affecting
-change after PASS requires a new full `make verify`; attribute a final
-handoff-only documentation change so the human can judge its impact.
-
-This report supports review without self-approval. Only a human may accept
-REVIEW and advance the Story to DONE. If review requests an implementation
-change, return to IMPLEMENTING and run full `make verify` again before REVIEW.
-If feedback changes or exposes missing requirements, move the Story from REVIEW
-to SPEC_BLOCKED for human revision and approval instead of changing Story
-intent.
-
-### Code Quality
+## Code Quality
 
 * Follow the repository's existing formatter, lint, type, and architecture
   settings.
@@ -48,10 +44,6 @@ intent.
 * Keep new code consistent with neighboring code and the existing architecture.
 * Treat `make verify` as the authority for every automated judgment.
 * Leave design judgments that cannot be automated to Human Review.
-
-An agent may prepare a Story for REVIEW after the current implementation passes
-`make verify`; it must not approve, merge, release, tag, push, publish, or mark
-the Story DONE.
 
 ## What this is
 
