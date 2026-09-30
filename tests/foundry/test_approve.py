@@ -173,11 +173,17 @@ def test_real_no_replace_collision_preserves_foreign_empty_asset_root(
     """A destination appearing between the check and rename is never replaced."""
     _setup(tmp_path)
     original_exclusive_rename = descriptor_namespace._rename_noreplace
+    foreign_root = paths.asset_dir(
+        tmp_path, "tappay-backend", "tappay-backend-20260702-120000"
+    )
 
     def foreign_root_then_exclusive_rename(
         staged_root: Path, asset_root: Path, **kwargs: object
     ) -> None:
-        asset_root.mkdir()
+        # 只在發布到絕對路徑的 asset root 時插入外來目錄；cleanup 傳入的相對路徑
+        # 是相對 parent_fd 解析，不能在 process cwd 建立任何東西。
+        if asset_root == foreign_root:
+            foreign_root.mkdir()
         original_exclusive_rename(staged_root, asset_root, **kwargs)
 
     monkeypatch.setattr(
@@ -189,9 +195,8 @@ def test_real_no_replace_collision_preserves_foreign_empty_asset_root(
             tmp_path, "tappay-backend", _RUN_ID, approved_by="operator", now=_NOW
         )
 
-    foreign_root = paths.asset_dir(
-        tmp_path, "tappay-backend", "tappay-backend-20260702-120000"
-    )
+    assert foreign_root.is_dir()
+    assert list(foreign_root.iterdir()) == []
     (foreign_root / "sentinel").write_text("owned elsewhere", encoding="utf-8")
     assert (foreign_root / "sentinel").read_text(encoding="utf-8") == "owned elsewhere"
 
