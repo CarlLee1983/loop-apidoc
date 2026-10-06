@@ -54,14 +54,28 @@ def _best_cpu_seconds(scan: Callable[[str], object], text: str, runs: int = 3) -
     return best
 
 
+#: 起點規模最多加倍幾次。八次是 256 倍,夠把毫秒級的小邊推過門檻;還推不過去
+#: 代表量的東西本身太便宜,不是機器太快。
+MAX_CALIBRATION_DOUBLINGS = 8
+
+
 def _growth(
     scan: Callable[[str], object], unit: str, base_units: int, runs: int = 3
 ) -> tuple[float, float]:
-    small = _best_cpu_seconds(scan, unit * base_units, runs=runs)
-    large = _best_cpu_seconds(scan, unit * (base_units * GROWTH_FACTOR), runs=runs)
-    assert small > MIN_MEASURABLE_SECONDS, (
+    """小邊與大邊的成本。`base_units` 是起點而不是定值:CI 機器夠快時,寫死的
+    規模會讓小邊掉到門檻以下而隨機紅(`6fefe7b` 上是 0.0094s),所以先用同一個
+    估計式逐次加倍,直到小邊高過門檻兩倍——與 `_calibrated` 的收件標準相同。"""
+    units = base_units
+    small = _best_cpu_seconds(scan, unit * units, runs=runs)
+    for _ in range(MAX_CALIBRATION_DOUBLINGS):
+        if small > MIN_MEASURABLE_SECONDS * 2:
+            break
+        units *= 2
+        small = _best_cpu_seconds(scan, unit * units, runs=runs)
+    assert small > MIN_MEASURABLE_SECONDS * 2, (
         f"小邊只花 {small:.4f}s,低於可量測門檻,比值沒有意義"
     )
+    large = _best_cpu_seconds(scan, unit * (units * GROWTH_FACTOR), runs=runs)
     return small, large
 
 
@@ -141,9 +155,12 @@ def test_the_ratio_limit_separates_quadratic_from_linear() -> None:
     對照組是 #101 之前的無界限樣式,規模縮小讓這條測試維持在一秒級;比值不隨
     規模改變,所以縮小不影響結論。
     """
-    # 二次成本讓大邊本身就是秒級,所以取兩次而不是三次。
+    # 二次成本讓大邊本身就是秒級,所以取兩次而不是三次。起點 320:200 時 CI
+    # 量到 0.009s、本機 0.015s,二次放大 2.56 倍後兩邊都約在門檻兩倍以上。二次式
+    # 每加倍一次成本跳四倍,起點落在門檻下方一點,校準就會把大邊推到十秒級,所以
+    # 加倍只留給更快的機器當保險。
     quadratic_small, quadratic_large = _growth(
-        QUADRATIC_CONTROL.findall, CSS_UNIT, base_units=200, runs=2
+        QUADRATIC_CONTROL.findall, CSS_UNIT, base_units=320, runs=2
     )
     quadratic_ratio = quadratic_large / quadratic_small
 
