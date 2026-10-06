@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from loop_apidoc.diff.compare import build_diff_report, _looks_like_object
+from loop_apidoc.diff.compare import build_diff_report
 from loop_apidoc.diff.loader import RunArtifacts
 from loop_apidoc.diff.models import DiffImpact
+from loop_apidoc.diff.openapi_compare import _looks_like_object
 from loop_apidoc.generate.models import ProvenanceDocument
 from loop_apidoc.manifest.models import Manifest
 from loop_apidoc.validate.models import ValidationReport
