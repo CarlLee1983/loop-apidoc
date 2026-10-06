@@ -88,8 +88,10 @@ or supersession tampering fail closed before it can contaminate later approval/c
 **Falsified if:** an Implementation Observation changes supplier-source support; an
 unconfirmed observed value mutates a Normative Contract or approved asset; an Effective
 Contract applies an amendment outside its exact Applicability Envelope or loses authority
-lineage; a global effective current replaces scope-specific selection; or active probing
-is introduced before the passive-evidence governance boundary is enforced; a non-approval
+lineage, where the models in `loop_apidoc/domain/conformance.py` and the composition in
+`loop_apidoc/core/conformance.py` enforce that separation; a global effective current
+replaces scope-specific selection; or active probing is introduced into `loop_apidoc/feedback/`
+before the passive-evidence governance boundary is enforced; a non-approval
 review silently publishes an amendment; an inconclusive/out-of-scope target is counted as
 assessed; or current resolution accepts a stale Effective Contract, amendment, or provenance
 artifact; a decision predates its evidence/proposal; low-entropy PII is persisted as a hash; or

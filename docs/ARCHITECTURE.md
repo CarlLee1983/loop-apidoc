@@ -539,3 +539,25 @@ agent 擷取會收斂成 `inventory.json`(系統概覽 + endpoint 清單 + 共�
 ## 來源追溯與驗證對齊
 
 `provenance.json` 的 `target` 字串與 OpenAPI 位置**逐一對齊**(如 `paths.{path}.{method}`、`components.schemas.{name}`、`components.securitySchemes.{name}`),驗證的禁止推測檢查即在這些 target 上做交叉比對:任何進入輸出的內容都必須能追溯回具來源依據的計畫項目,否則視為違規。
+
+## 決策邊界
+
+以下每則 ADR 的 `**Falsified if:**` 段落以反引號點名了該決策所依賴的檔案。改動這些檔案,就等於讓對應的決策重新回到視線內:先重讀該 ADR,確認決策仍然成立,再決定是否更新或取代它。`tests/docs/test_adr_boundary_list.py` 會比對本表與 `docs/adr/`,新增 ADR 或變更其守護路徑卻沒有同步本表時,`make verify` 會失敗。
+
+| ADR | 決策 | 守護路徑 |
+| --- | --- | --- |
+| [0001](adr/0001-keep-a-general-core-with-payment-profile.md) | Keep a general contract core with an optional payment profile | `loop_apidoc/agentcli/input_schema.py`, `loop_apidoc/plan/models.py`, `loop_apidoc/domain/models.py`, `loop_apidoc/validate/integration.py` |
+| [0002](adr/0002-separate-documentary-and-empirical-authority.md) | Separate documentary and empirical authority | `loop_apidoc/domain/conformance.py`, `loop_apidoc/core/conformance.py`, `loop_apidoc/feedback/` |
+| [0003](adr/0003-measure-coverage-on-a-platform-independent-denominator.md) | Measure coverage on a platform-independent denominator | `pyproject.toml`, `loop_apidoc/foundry/store.py`, `tests/foundry/test_store.py` |
+| [0004](adr/0004-focus-directives-never-enter-comparable-artifacts.md) | Focus directives never enter comparable artifacts | `loop_apidoc/generate/provenance.py`, `loop_apidoc/score/evaluate.py`, `loop_apidoc/foundry/` |
+| [0005](adr/0005-the-error-code-floor-comes-from-source-structure-alone.md) | The documented error-code floor comes from source structure alone | `loop_apidoc/source_facts/markdown.py`, `loop_apidoc/source_facts/models.py`, `loop_apidoc/validate/focus.py` |
+| [0006](adr/0006-requiring-exhaustive-error-codes-stays-a-directive.md) | Requiring exhaustive error codes stays something a requester asks for | `loop_apidoc/source_facts/gate.py` |
+| [0007](adr/0007-source-fact-scanning-stays-limited-to-well-structured-markdown.md) | Source-fact scanning stays limited to well-structured Markdown, and the cost is disclosed | `loop_apidoc/source_facts/collect.py`, `loop_apidoc/validate/fact_coverage.py` |
+| [0008](adr/0008-an-unclosed-fence-is-reported-not-guessed-shut.md) | An unclosed fence is reported, not guessed shut | `loop_apidoc/source_facts/markdown.py`, `loop_apidoc/validate/fact_coverage.py` |
+| [0009](adr/0009-the-two-markdown-scanners-stay-separate.md) | The two Markdown scanners stay separate, and their divergences are pinned | `loop_apidoc/source_facts/markdown.py`, `loop_apidoc/markdown_drafts/markdown.py`, `tests/source_facts/test_scanner_divergence.py` |
+| [0010](adr/0010-supplementary-carriers-are-accountable-not-verifiable.md) | Supplementary carriers buy accountability, not verifiability | `loop_apidoc/agentcli/source_guard.py`, `loop_apidoc/validate/authority.py`, `loop_apidoc/shadow/bridge.py`, `loop_apidoc/freshness/record.py`, `loop_apidoc/manifest/models.py` |
+| [0011](adr/0011-a-labelled-method-is-a-literal-not-an-inference.md) | A labelled method on the declaration line is a literal, not an inference | `loop_apidoc/source_facts/markdown.py`, `tests/source_facts/test_labelled_endpoint.py` |
+| [0012](adr/0012-no-converter-for-legacy-word-or-spreadsheets.md) | No converter is built for legacy Word or spreadsheets — the operator converts, the pipeline says so | `loop_apidoc/manifest/formats.py`, `loop_apidoc/preparation/assess.py`, `loop_apidoc/validate/coverage.py`, `loop_apidoc/score/evaluate.py`, `loop_apidoc/cli.py`, `loop_apidoc/agentcli/preprocess.py` |
+| [0013](adr/0013-a-pdf-case-asserts-derivability-not-a-second-pipeline.md) | A PDF case asserts that its Markdown is derivable, rather than running a second pipeline from the PDF | `tests/test_benchmarks.py`, `scripts/quality_gate.py`, `benchmarks/ecpay-creditcard-pdf/source-derivation.json`, `uv.lock` |
+| [0014](adr/0014-a-leaked-third-party-document-is-purged-by-the-owner-not-the-gate.md) | A leaked third-party document is purged from history by the repository owner, and the gate never does it | `scripts/quality_gate.py`, `tests/test_quality_gate.py` |
+| [0015](adr/0015-a-url-in-an-artifact-is-either-evidence-or-an-instruction.md) | A URL in an artifact is either evidence or an instruction, and only evidence is redacted | `tests/test_url_redaction_contract.py`, `loop_apidoc/url_catalog.py`, `scripts/quality_gate.py`, `loop_apidoc/rendered_url.py`, `loop_apidoc/url_safety.py`, `loop_apidoc/privacy.py`, `loop_apidoc/manifest/models.py`, `tests/test_citation_identity_contract.py` |
