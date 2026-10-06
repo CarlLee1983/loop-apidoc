@@ -56,7 +56,7 @@ legacy-imported assets indistinguishable from verified ones.
 **Falsified if:** the exit condition stops being the trigger, or the cutover departs from the
 answers above. Concretely, this decision no longer describes the system when
 `loop_apidoc/shadow/models.py`'s `ArchitectureMode` loses `legacy` or `shadow` while fewer
-than all restored cases have exact-evidence parity; when `loop_apidoc/cli.py` changes the
+than all restored cases have exact-evidence parity; when `loop_apidoc/commands/extraction.py` changes the
 `--architecture-mode` default before that parity holds; when parity holds for every restored
 case and both older modes are still present with no superseding record; when a case with an
 unavailable snapshot is made to block graduation without a superseding record; when a release

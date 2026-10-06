@@ -124,6 +124,6 @@ link here for the reasoning, rather than restating the trade-off in three places
 decision no longer holds when `loop_apidoc/manifest/formats.py` maps `.doc`, `.xls`, `.xlsx`, `.txt`
 or `.csv` to a supported format or drops their remedies; when any of the four reporting sites stops
 reading them — `loop_apidoc/preparation/assess.py`, `loop_apidoc/validate/coverage.py`,
-`loop_apidoc/score/evaluate.py`, `loop_apidoc/cli.py` (the `preprocess` passthrough line lives there,
+`loop_apidoc/score/evaluate.py`, `loop_apidoc/commands/extraction.py` (the `preprocess` passthrough line lives there,
 not in the preprocess module) — and hardcodes its own wording instead; or when
 `loop_apidoc/agentcli/preprocess.py` converts any of the four instead of passing it through.
