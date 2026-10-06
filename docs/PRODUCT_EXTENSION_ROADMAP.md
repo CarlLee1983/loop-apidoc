@@ -180,7 +180,7 @@ release notes are written from a bound report rather than from recollection.
 
 ### 1. Make exact evidence first-class, then graduate Core
 
-**Graduation condition (proposed):** [ADR 0016](adr/0016-core-graduates-when-every-restored-benchmark-reaches-exact-evidence-parity.md) records when Core replaces the `legacy` and `shadow` modes, and the questions still open.
+**Graduation condition (accepted):** [ADR 0016](adr/0016-core-graduates-when-every-restored-benchmark-reaches-exact-evidence-parity.md) records when Core replaces the `legacy` and `shadow` modes, and how the cutover treats unavailable snapshots and legacy-imported Foundry assets.
 
 **Goal:** move from legacy document-level citations to deterministic,
 claim-level support backed by exact source fragments.
