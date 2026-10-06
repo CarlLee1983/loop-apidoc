@@ -42,8 +42,9 @@ To resume, the consumer and its acceptance contract are added to this record, or
 superseding ADR is written, before any implementation starts.
 
 **Falsified if:** a GraphQL or AsyncAPI path reaches the run without a named consumer.
-Concretely, this decision no longer holds when `loop_apidoc/cli.py` exposes a command or
-option that runs the GraphQL or AsyncAPI compilers in
-`loop_apidoc/domain/graphql_projection.py` and `loop_apidoc/domain/asyncapi_projection.py`,
+Concretely, this decision no longer holds when `loop_apidoc/cli.py` or
+`loop_apidoc/commands/` exposes a command or option that runs the GraphQL or AsyncAPI
+compilers in `loop_apidoc/domain/graphql_projection.py` and
+`loop_apidoc/domain/asyncapi_projection.py`,
 or when a run artifact, validation, diff/score, or Foundry module calls those compilers,
 while this record still names no consumer.
