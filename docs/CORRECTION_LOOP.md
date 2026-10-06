@@ -32,8 +32,8 @@ follow-up explaining why executable coverage is not practical.
    - unit/integration test for deterministic code;
    - benchmark extraction/expected update for document-shape regressions;
    - adversarial quality-gate scenario for CLI boundary behavior;
-   - `docs/PIPELINE_FOLLOWUPS.md` entry for larger work that should not ship in
-     the current patch.
+   - GitHub issue on `CarlLee1983/loop-apidoc` for larger work that should not
+     ship in the current patch.
 4. Verify the regression fails for the intended reason.
 5. Implement the smallest fix at the responsible boundary.
 6. Run the focused test, then:
@@ -63,7 +63,7 @@ Strict-local mode fails if benchmark cases skip because local sources are absent
 ## Failure Record Template
 
 Add this shape to the relevant benchmark `notes.md`, commit message body, or
-`docs/PIPELINE_FOLLOWUPS.md` entry:
+GitHub issue:
 
 ```markdown
 ## Finding

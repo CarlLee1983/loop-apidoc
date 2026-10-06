@@ -1,5 +1,9 @@
 # ForgeFlow Handoff
 
+> **Legacy record.** This file is a ForgeFlow-era record kept for history. Its lifecycle
+> block is not current state and names no pending work. The current contract is the
+> `## Warrant` section of `AGENTS.md`.
+
 The lifecycle block is authoritative. A human accepted
 LAP-002-forgeflow-0-3-5-adoption-upgrade; the next Story is not selected.
 
