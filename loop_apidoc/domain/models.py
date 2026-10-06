@@ -41,7 +41,7 @@ class ContractMetadata(FrozenModel):
 
 
 class Environment(FrozenModel):
-    name: str
+    name: str | None = None
     servers: tuple[str, ...] = ()
     evidence: tuple[EvidenceBinding, ...] = ()
 
