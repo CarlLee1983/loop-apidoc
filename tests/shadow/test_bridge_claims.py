@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 
@@ -32,10 +33,12 @@ from loop_apidoc.plan.models import (
     SystemGroup,
     TransportPolicy,
 )
+from loop_apidoc.domain.evidence import JsonPointerLocator
 from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
     SHADOW_RUNTIME_VERSION,
     ShadowMetadataError,
+    _openapi_pointer_derivation_name,
     build_contract_metadata,
     build_evidence,
     build_runtime_result,
@@ -529,3 +532,47 @@ def test_metadata_uses_source_set_identity_and_source_stated_values():
     assert metadata.version == "2026-07"
     assert metadata.source_set_id == bridge.source_set.id
     assert metadata.source_set_version == bridge.source_set.version
+
+
+_INLINE_SCHEMA = (
+    "/paths/~1v1~1things/post/requestBody/content/"
+    "application~1x-www-form-urlencoded/schema"
+)
+
+
+@pytest.mark.parametrize(
+    "claim_path, pointer, expected",
+    [
+        (
+            "/parameters/body/amount/name",
+            f"{_INLINE_SCHEMA}/properties/amount",
+            "openapi_inline_request_body_property_name_from_pointer",
+        ),
+        (
+            "/parameters/body/amount/required",
+            _INLINE_SCHEMA,
+            "openapi_inline_request_body_property_required_from_schema_pointer",
+        ),
+        (
+            "/parameters/body/amount/name",
+            "/components/schemas/Thing/properties/amount",
+            "openapi_request_body_property_name_from_pointer",
+        ),
+        (
+            "/parameters/body/amount/required",
+            "/components/schemas/Thing",
+            "openapi_request_body_property_required_from_schema_pointer",
+        ),
+        (
+            "/parameters/body/amount/required",
+            "/paths/~1v1~1things/post/parameters/0/required",
+            None,
+        ),
+    ],
+)
+def test_body_claims_select_inline_derivation_only_for_inline_schema_pointers(
+    claim_path, pointer, expected
+):
+    fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
+
+    assert _openapi_pointer_derivation_name("operation", claim_path, fragment) == expected
