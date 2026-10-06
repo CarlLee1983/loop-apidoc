@@ -36,14 +36,16 @@ from loop_apidoc.domain.models import (
     Schema,
     SchemaField,
 )
+from loop_apidoc.domain.asyncapi_projection import AsyncApiProjectionCompiler
+from loop_apidoc.domain.graphql_projection import GraphqlProjectionCompiler
+from loop_apidoc.domain.openapi_projection import OpenApiProjectionCompiler
 from loop_apidoc.domain.projections import (
-    AsyncApiProjectionCompiler,
-    OpenApiProjectionCompiler,
-    GraphqlProjectionCompiler,
     ProjectionInput,
+    UnsupportedProjectionError,
+)
+from loop_apidoc.domain.trace_projections import (
     ProvenanceProjectionCompiler,
     ReviewProjectionCompiler,
-    UnsupportedProjectionError,
 )
 
 NOW = datetime(2026, 7, 20, tzinfo=timezone.utc)

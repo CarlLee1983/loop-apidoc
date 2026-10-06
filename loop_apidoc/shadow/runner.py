@@ -14,8 +14,8 @@ from loop_apidoc.adapters.memory import (
 from loop_apidoc.adapters.runtime import CallableRuntimeAdapter
 from loop_apidoc.core.models import ContractRelease, PolicyProfile
 from loop_apidoc.core.service import EvidenceToContractService
-from loop_apidoc.domain.projections import (
-    OpenApiProjectionCompiler,
+from loop_apidoc.domain.openapi_projection import OpenApiProjectionCompiler
+from loop_apidoc.domain.trace_projections import (
     ProvenanceProjectionCompiler,
     ReviewProjectionCompiler,
 )

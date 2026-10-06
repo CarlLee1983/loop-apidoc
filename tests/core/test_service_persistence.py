@@ -43,7 +43,7 @@ from loop_apidoc.domain.evidence import (
     fragment_digest,
 )
 from loop_apidoc.domain.models import ContractMetadata
-from loop_apidoc.domain.projections import OpenApiProjectionCompiler
+from loop_apidoc.domain.openapi_projection import OpenApiProjectionCompiler
 from loop_apidoc.domain.rules import ApiDomainRulePack
 
 
