@@ -87,6 +87,24 @@ def test_openapi_projection_is_reproducible():
     assert payload["paths"]["/health"]["get"]["responses"]["200"]["description"] == "OK"
 
 
+def test_openapi_projection_omits_server_description_for_an_unnamed_environment():
+    contract = _contract().model_copy(
+        update={
+            "environments": (
+                Environment(name="production", servers=("https://api.example.com",)),
+                Environment(servers=("https://unnamed.example.com",)),
+            )
+        }
+    )
+
+    payload = json.loads(OpenApiProjectionCompiler(version="1").compile(contract).content)
+
+    assert payload["servers"] == [
+        {"url": "https://api.example.com", "description": "production"},
+        {"url": "https://unnamed.example.com"},
+    ]
+
+
 def test_openapi_projection_preserves_operation_request_schema_reference():
     contract = GroundedApiContract(
         metadata=ContractMetadata(

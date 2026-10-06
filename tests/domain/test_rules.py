@@ -231,6 +231,42 @@ def test_rules_report_only_dangling_http_interaction_server_and_security_refs():
     ]
 
 
+def test_rules_do_not_resolve_a_server_reference_against_an_unnamed_environment():
+    contract = GroundedApiContract(
+        metadata=_metadata(),
+        environments=(Environment(servers=("https://unnamed.example.com",)),),
+        interactions=(
+            Interaction(
+                identity="interaction:http:GET:/unset",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="GET",
+                    path="/unset",
+                    responses=(Response(status_code="200"),),
+                ),
+                evidence=(EvidenceBinding(fragment_id="fragment-1"),),
+            ),
+            Interaction(
+                identity="interaction:http:GET:/named",
+                mode=InteractionMode.REQUEST_REPLY,
+                binding=HttpTransportBinding(
+                    method="GET",
+                    path="/named",
+                    server="None",
+                    responses=(Response(status_code="200"),),
+                ),
+                evidence=(EvidenceBinding(fragment_id="fragment-1"),),
+            ),
+        ),
+    )
+
+    findings = ApiDomainRulePack(version="1").evaluate(contract)
+
+    assert [
+        (finding.code, finding.message, finding.location) for finding in findings
+    ] == [("SERVER_REFERENCE_UNRESOLVED", "None", "interactions[1]")]
+
+
 def test_rules_apply_common_evidence_requirement_to_graphql_interactions():
     contract = GroundedApiContract(
         metadata=_metadata(),

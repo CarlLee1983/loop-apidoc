@@ -36,7 +36,11 @@ class ApiDomainRulePack(FrozenModel):
         findings: list[DomainFinding] = []
         schema_names = {schema.name for schema in contract.schemas}
         security_names = {scheme.name for scheme in contract.security}
-        environment_names = {environment.name for environment in contract.environments}
+        environment_names = {
+            environment.name
+            for environment in contract.environments
+            if environment.name is not None
+        }
         operation_ids: set[str] = set()
 
         for index, operation in enumerate(contract.operations):

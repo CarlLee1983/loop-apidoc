@@ -91,7 +91,12 @@ class OpenApiProjectionCompiler:
             "openapi": "3.1.0",
             "info": info,
             "servers": [
-                {"url": server, "description": environment.name}
+                {"url": server}
+                | (
+                    {"description": environment.name}
+                    if environment.name is not None
+                    else {}
+                )
                 for environment in contract.environments
                 for server in environment.servers
             ],

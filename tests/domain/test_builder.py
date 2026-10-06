@@ -62,6 +62,24 @@ def test_supported_environment_accepts_the_generic_evidence_binding():
     assert contract.payment_profile is None
 
 
+def test_supported_environment_without_a_stated_name_keeps_name_none():
+    contract = build_grounded_contract(
+        _metadata(),
+        (
+            ContractClaimInput(
+                identity="claim:environment:unnamed:definition",
+                claim_kind="environment",
+                value={"servers": ["https://api.example.test"]},
+                status=ClaimStatus.SUPPORTED,
+                evidence_refs=("fragment-manual",),
+            ),
+        ),
+    )
+
+    assert contract.environments[0].name is None
+    assert contract.environments[0].servers == ("https://api.example.test",)
+
+
 def test_builder_attaches_parameter_binding_to_exact_child():
     identity = "claim:operation:POST /payments:definition"
     relationship = _relationship(
