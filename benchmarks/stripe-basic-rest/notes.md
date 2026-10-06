@@ -43,6 +43,20 @@
    - **修**:http 型由 details/name 推導 scheme(含 bearer→bearer、basic→basic);無法推導則退回 missing-source apiKey placeholder(不輸出非法 http)。含 RED→GREEN 測試;stripe 重跑 PASS。
 2. ⚠️ **[擷取教訓 / 輕量 pipeline 觀察]**:inventory.endpoints 用小寫 method(取自 spec path key),endpoint detail 用大寫 → endpoint 比對**區分大小寫**,產生重複端點(半數無 response)。本次修擷取(統一大寫)解決;另記:pipeline endpoint 比對/dedup 對 method 大小寫敏感,未來可考慮正規化。
 
+## Source-verbatim correction (2026-10-06)
+
+原擷取為人工正規化,部分值並非來源所述(舊版 legacy 驗證放行,Core shadow replay 拒絕)。已對照 `spec3.sdk.json`
+(SHA-256 `a58d0f7ce76116839b2031fe1fff178283f5c686c6cdbdeaf324d6670a97fe9e`,immutable commit `3881db83dff8d170d4b7ef7e00e1801cd617e891`)
+逐值校正:每個值若非與來源引用位置逐字相同,即為 `null` 並記入所屬 `missing`。
+
+- description 一律逐字複製來源字串(含換行,不截斷);來源無 description 者為 `null`。
+- `anyOf` 聯集欄位(18 個 body 參數、4 個 schema 欄位)type 為 `null`,`missing` 列出聯集成員。
+- response description 為來源的 `Successful response.`;`schema_ref` 與 schema 名稱為來源 key `payment_intent`。
+- security scheme `details` 為 scheme 自身的 `description`;environment `name` 為 `null`(`servers` 僅有 url)。
+- request `description` 為 `null`(requestBody 未陳述);path 參數無 description 者為 `null`。
+- `operational` 僅保留逐字引用 securitySchemes description 的兩筆,其餘不屬來源陳述者移除。
+- 操作、參數名稱、schema 欄位集合不變。
+
 ## Follow-up
 
 - Generator: 已修 #1(http scheme)。可考慮 endpoint method 比對正規化(#2 觀察)。

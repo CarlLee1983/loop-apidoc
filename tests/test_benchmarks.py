@@ -1044,7 +1044,7 @@ def _mutate_stripe_extraction(src: Path, dst: Path) -> None:
     known mutations that each produce exactly one diff finding:
       (breaking) remove the /capture endpoint (ep5.json + inventory entry),
       (additive) add a new increment_authorization endpoint (ep6.json + entry),
-      (changed)  flip PaymentIntent.description from required:true to false.
+      (changed)  flip payment_intent.description from required:true to false.
     Proven against real stripe data before this plan was written."""
     shutil.copytree(src, dst)
     inv = json.loads((dst / "inventory.json").read_text("utf-8"))
@@ -1071,7 +1071,7 @@ def _mutate_stripe_extraction(src: Path, dst: Path) -> None:
         "request": {"content_type": "application/x-www-form-urlencoded",
                     "schema": None, "required": True, "description": "Form body."},
         "responses": [{"status": "200", "description": "Returns the PaymentIntent object.",
-                       "schema": None, "schema_ref": "PaymentIntent"}],
+                       "schema": None, "schema_ref": "payment_intent"}],
         "tags": ["Payment Intents"],
         "security": ["bearerAuth"],
         "examples": [],
@@ -1122,7 +1122,7 @@ def test_benchmark_diff_detects_change(tmp_path_factory, tmp_path) -> None:
         for f in by_impact[DiffImpact.ADDITIVE]
     ), f"missing additive (increment added): {[(f.location, f.summary) for f in by_impact[DiffImpact.ADDITIVE]]}"
     assert any(
-        f.location == "components.schemas.PaymentIntent.description"
+        f.location == "components.schemas.payment_intent.description"
         and f.summary == "property no longer required"
         for f in by_impact[DiffImpact.CHANGED]
     ), f"missing changed (description loosened): {[(f.location, f.summary) for f in by_impact[DiffImpact.CHANGED]]}"
