@@ -110,7 +110,7 @@ Generate one representative run and eyeball the products (validation PASS does
 - [ ] No fabricated content: anything a source does not state stays `null` and is
   recorded in `missing`; fail-closed gaps are reported, never guessed.
 - [ ] Any defect fixed in this release has a regression test, benchmark fixture,
-  quality-gate scenario, or documented follow-up in `docs/PIPELINE_FOLLOWUPS.md`.
+  quality-gate scenario, or a GitHub issue recording the follow-up.
 - [ ] When document preprocessing or source-risk behavior changes, exercise a supported DOCX and
   a rejected DOCX before release: confirm full-batch preflight, deterministic Markdown plus
   `.source.json` hashes/policy version, no-overwrite behavior, and exit `2` on unsafe or colliding

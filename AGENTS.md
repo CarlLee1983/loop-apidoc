@@ -436,4 +436,4 @@ operator to escalate to the repository owner instead of just removing the direct
 - Product design decisions: `docs/DESIGN_DECISIONS.md`
 - Contributing: `CONTRIBUTING.md`
 - CI workflow: `.github/workflows/ci.yml`; release checklist: `docs/RELEASE_CHECKLIST.md`
-- Pipeline follow-ups (post-benchmark improvements): `docs/PIPELINE_FOLLOWUPS.md`
+- Pipeline follow-ups (deferred work): GitHub issues on `CarlLee1983/loop-apidoc`

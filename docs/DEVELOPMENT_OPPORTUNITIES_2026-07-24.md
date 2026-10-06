@@ -13,7 +13,7 @@ This inventory excludes downstream delivery/enforcement (roadmap priority 4),
 per the current product decision. It also does not reopen the old pipeline
 follow-ups: their status marks items 2–7 and the preprocess collision as
 delivered, while the diff ledger records its remaining listed fixes as resolved
-([`PIPELINE_FOLLOWUPS.md`, lines 6–10 and 255–323](PIPELINE_FOLLOWUPS.md)).
+([`PIPELINE_FOLLOWUPS.md`, lines 6–10 and 255–323](https://github.com/CarlLee1983/loop-apidoc/blob/001c8a1/docs/PIPELINE_FOLLOWUPS.md)).
 
 The best next implementation slice is an **operator-facing runtime evaluation
 laboratory**. It is independent of unavailable source snapshots and has a clear
