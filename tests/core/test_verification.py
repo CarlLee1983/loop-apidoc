@@ -1950,13 +1950,10 @@ def _assert_derived(relationship, observed):
     assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
 
 
-def _assert_refused(relationship):
-    assert relationship.relationship is not SupportRelationshipType.DERIVED_SUPPORT
-    assert relationship.relationship is not SupportRelationshipType.EXPLICIT_SUPPORT
-    assert relationship.reason_code in {
-        "DERIVATION_INAPPLICABLE",
-        "EVIDENCE_VALUE_MISMATCH",
-    }
+def _assert_refused(relationship, reason_code="DERIVATION_INAPPLICABLE"):
+    """Refusal carries the reason code the component derivation gives."""
+    assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
+    assert relationship.reason_code == reason_code
 
 
 def test_inline_request_body_property_pointer_proves_body_field_name():
@@ -1976,16 +1973,37 @@ def test_inline_request_body_schema_proves_required_false():
     _assert_derived(_inline_required(INLINE_SCHEMA, False, field="note"), False)
 
 
-def test_inline_request_body_array_property_name_stays_plain():
-    """The extraction contract names an array body field without ``[]``."""
+def test_inline_request_body_array_property_name_carries_array_marker():
+    """An inline array property gets ``[]`` like a component property."""
     _assert_derived(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/items",
+            INLINE_SCHEMA["properties"]["items"],
+            field="items[]",
+        ),
+        "items[]",
+    )
+
+
+def test_inline_request_body_array_property_refuses_a_plain_name():
+    # The component derivation reports DERIVATION_CLAIM_PATH_MISMATCH here.
+    _assert_refused(
         _inline_name(
             f"{INLINE_SCHEMA_POINTER}/properties/items",
             INLINE_SCHEMA["properties"]["items"],
             field="items",
         ),
-        "items",
+        "DERIVATION_CLAIM_PATH_MISMATCH",
     )
+
+
+def test_inline_request_body_required_accepts_an_array_marked_claim():
+    _assert_derived(_inline_required(INLINE_SCHEMA, False, field="items[]"), False)
+
+
+def test_inline_request_body_required_refuses_inconsistent_array_markers():
+    _assert_refused(_inline_required(INLINE_SCHEMA, False, field="items"))
+    _assert_refused(_inline_required(INLINE_SCHEMA, False, field="amount[]"))
 
 
 @pytest.mark.parametrize(
@@ -2025,8 +2043,14 @@ def test_inline_request_body_derivations_refuse_an_absent_property():
 
 
 def test_inline_request_body_required_refuses_a_disagreeing_flag():
-    _assert_refused(_inline_required(INLINE_SCHEMA, False))
-    _assert_refused(_inline_required(INLINE_SCHEMA, True, field="note"))
+    # The component derivation reports DERIVATION_OUTPUT_MISMATCH here.
+    _assert_refused(
+        _inline_required(INLINE_SCHEMA, False), "DERIVATION_OUTPUT_MISMATCH"
+    )
+    _assert_refused(
+        _inline_required(INLINE_SCHEMA, True, field="note"),
+        "DERIVATION_OUTPUT_MISMATCH",
+    )
 
 
 @pytest.mark.parametrize(

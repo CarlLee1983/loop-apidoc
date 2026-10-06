@@ -40,6 +40,8 @@ lacks (ADR 0016).
   and versions.
 - Adding `evidence[]` to any committed benchmark, or changing
   `EXACT_EVIDENCE_PARITY_BENCHMARK_CASES`.
+- Any other change to `benchmarks/stripe-basic-rest/extraction/`. The one exception is the
+  owner-approved amendment in criterion 9.
 
 ## Acceptance Criteria
 
@@ -51,8 +53,11 @@ lacks (ADR 0016).
    - a name claim proven by `/paths/~1v1~1things/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/amount`;
    - a `required: true` claim and a `required: false` claim proven by the inline schema
      pointer.
-2. Each of these fails closed with `DERIVATION_INAPPLICABLE` or `EVIDENCE_VALUE_MISMATCH`
-   (never support), and each has a test:
+2. Each of these fails closed and never produces support. Each refusal uses the same
+   reason code that the corresponding component-schema derivation returns for the
+   equivalent case; for example, a disagreeing `required` flag yields
+   `DERIVATION_OUTPUT_MISMATCH`, as it does for
+   `openapi_request_body_property_required_from_schema_pointer`. Each case has a test:
    1. the pointer names a different path or method from the claim's operation;
    2. the property is absent from the inline schema's `properties`;
    3. the claimed `required` flag disagrees with the schema's `required` array;
@@ -77,6 +82,15 @@ lacks (ADR 0016).
 6. `wc -l` reports at most 800 lines for `loop_apidoc/core/openapi_pointers.py`,
    `loop_apidoc/core/openapi_derivation.py`, and `loop_apidoc/core/verification.py`.
 7. `git diff --name-status main...HEAD` lists only those three core modules,
-   `loop_apidoc/shadow/bridge.py`, test files under `tests/core/` or `tests/shadow/`, and
+   `loop_apidoc/shadow/bridge.py`, test files under `tests/core/` or `tests/shadow/`,
+   `benchmarks/stripe-basic-rest/extraction/endpoints/*.json` (criterion 9 only), and
    this Story file (`specs/stories/core-inline-request-body-derivation.md`).
 8. `make verify` exits 0.
+9. Owner-approved amendment. The inline name derivation names array properties the way
+   the component derivation does, with a `[]` suffix (for example `gameCodes[]` in
+   FunkyGames), so one source array has one structural name whether its body is inline
+   or a component. To match, the stripe extraction's body parameters
+   `expand`, `payment_method_types`, and `excluded_payment_method_types` (9 occurrences
+   across its endpoints) are renamed with the `[]` suffix. No other value changes, and
+   `git diff main...HEAD -- benchmarks/` touches only those `name` values. The stripe
+   reproduction in criterion 5 still reports 194 claims, all supported.

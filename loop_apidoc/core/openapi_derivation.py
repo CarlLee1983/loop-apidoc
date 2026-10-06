@@ -168,9 +168,6 @@ def _openapi_pointer_derivation(
         if required_info is None:
             return None, "DERIVATION_INAPPLICABLE"
         expected_claim_path, derived_value = required_info
-        # A flag the inline schema contradicts is not a derivation of it.
-        if canonical_json(derived_value) != canonical_json(claim_value):
-            return None, "DERIVATION_INAPPLICABLE"
     elif derivation == (
         "openapi_request_body_ref_property_name_from_fragments",
         "1",

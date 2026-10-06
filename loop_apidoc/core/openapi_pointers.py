@@ -254,7 +254,11 @@ def _openapi_inline_request_body_property_from_pointer(
         or not isinstance(source_property, Mapping)
     ):
         return None
-    return _inline_request_body_field_name(tail[1])
+    property_name = _inline_request_body_field_name(tail[1])
+    if property_name is None:
+        return None
+    # Same structural name as a component property: arrays carry ``[]``.
+    return f"{property_name}[]" if source_property.get("type") == "array" else property_name
 
 
 def _openapi_inline_request_body_property_required_from_schema_pointer(
@@ -276,13 +280,17 @@ def _openapi_inline_request_body_property_required_from_schema_pointer(
         or parts[3] != "required"
     ):
         return None
-    field_name = _inline_request_body_field_name(parts[2])
+    claimed_name = _decode_json_pointer_segment(parts[2])
+    if not claimed_name:
+        return None
+    field_name = _inline_request_body_field_name(claimed_name.removesuffix("[]"))
     properties = source_schema.get("properties")
-    if (
-        field_name is None
-        or not isinstance(properties, Mapping)
-        or not isinstance(properties.get(field_name), Mapping)
-    ):
+    source_property = (
+        properties.get(field_name) if isinstance(properties, Mapping) else None
+    )
+    if field_name is None or not isinstance(source_property, Mapping):
+        return None
+    if claimed_name.endswith("[]") != (source_property.get("type") == "array"):
         return None
     required = source_schema.get("required", ())
     if not isinstance(required, (list, tuple)) or not all(
