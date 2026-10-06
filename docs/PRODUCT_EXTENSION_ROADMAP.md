@@ -180,6 +180,8 @@ release notes are written from a bound report rather than from recollection.
 
 ### 1. Make exact evidence first-class, then graduate Core
 
+**Graduation condition (proposed):** [ADR 0016](adr/0016-core-graduates-when-every-restored-benchmark-reaches-exact-evidence-parity.md) records when Core replaces the `legacy` and `shadow` modes, and the questions still open.
+
 **Goal:** move from legacy document-level citations to deterministic,
 claim-level support backed by exact source fragments.
 
@@ -413,6 +415,8 @@ exhaustiveness remains something a requester asks for, in one line of
 [ADR 0006](adr/0006-requiring-exhaustive-error-codes-stays-a-directive.md).
 
 ## Defer protocol main-flow integration until preceding blockers are resolved
+
+**Decision record:** [ADR 0017](adr/0017-graphql-and-asyncapi-stay-out-of-the-run-until-a-named-consumer-exists.md).
 
 Do not add GraphQL or AsyncAPI as conditional branches in the current
 HTTP/OpenAPI-oriented compatibility model. The protocol/transport seam and isolated
