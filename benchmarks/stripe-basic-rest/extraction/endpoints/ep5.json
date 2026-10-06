@@ -8,7 +8,7 @@
       "in": "path",
       "type": "string",
       "required": true,
-      "description": ""
+      "description": null
     },
     {
       "name": "amount_details",
@@ -29,7 +29,7 @@
       "in": "body",
       "type": "integer",
       "required": false,
-      "description": "The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. The amount of the application fee collected will be capped at the "
+      "description": "The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. The amount of the application fee collected will be capped at the total amount captured. For more information, see the PaymentIntents [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts)."
     },
     {
       "name": "expand",
@@ -43,7 +43,7 @@
       "in": "body",
       "type": "boolean",
       "required": false,
-      "description": "Defaults to `true`. When capturing a PaymentIntent, setting `final_capture` to `false` notifies Stripe to not release the remaining uncaptured funds to make sure that they're captured in future requests. You can only use"
+      "description": "Defaults to `true`. When capturing a PaymentIntent, setting `final_capture` to `false` notifies Stripe to not release the remaining uncaptured funds to make sure that they're captured in future requests. You can only use this setting when [multicapture](https://docs.stripe.com/payments/multicapture) is available for PaymentIntents."
     },
     {
       "name": "hooks",
@@ -55,14 +55,14 @@
     {
       "name": "metadata",
       "in": "body",
-      "type": "object",
+      "type": null,
       "required": false,
-      "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset"
+      "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."
     },
     {
       "name": "payment_details",
       "in": "body",
-      "type": "object",
+      "type": null,
       "required": false,
       "description": "Provides industry-specific information about the charge."
     },
@@ -71,35 +71,35 @@
       "in": "body",
       "type": "string",
       "required": false,
-      "description": "Text that appears on the customer's statement as the statement descriptor for a non-card charge. This value overrides the account's default statement descriptor. For information about requirements, including the 22-chara"
+      "description": "Text that appears on the customer's statement as the statement descriptor for a non-card charge. This value overrides the account's default statement descriptor. For information about requirements, including the 22-character limit, see [the Statement Descriptor docs](https://docs.stripe.com/get-started/account/statement-descriptors).\n\nSetting this value for a card charge returns an error. For card charges, set the [statement_descriptor_suffix](https://docs.stripe.com/get-started/account/statement-descriptors#dynamic) instead."
     },
     {
       "name": "statement_descriptor_suffix",
       "in": "body",
       "type": "string",
       "required": false,
-      "description": "Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor th"
+      "description": "Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor that appears on the customer's statement."
     },
     {
       "name": "transfer_data",
       "in": "body",
       "type": "object",
       "required": false,
-      "description": "The parameters that you can use to automatically create a transfer after the payment is captured. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts)."
+      "description": "The parameters that you can use to automatically create a transfer after the payment\nis captured. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts)."
     }
   ],
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": null,
     "required": false,
-    "description": "Form-urlencoded body. Capture a PaymentIntent"
+    "description": null
   },
   "responses": [
     {
       "status": "200",
-      "description": "Returns the PaymentIntent object.",
+      "description": "Successful response.",
       "schema": null,
-      "schema_ref": "PaymentIntent"
+      "schema_ref": "payment_intent"
     }
   ],
   "tags": [
@@ -111,6 +111,10 @@
   ],
   "examples": [],
   "missing": [
-    "No request example captured in this spec subset."
+    "No request example captured in this spec subset.",
+    "path parameter `intent` has no description in the source",
+    "`metadata` is anyOf [object, string]; no single type is stated",
+    "`payment_details` is anyOf [object, string]; no single type is stated",
+    "requestBody has no description in the source"
   ]
 }

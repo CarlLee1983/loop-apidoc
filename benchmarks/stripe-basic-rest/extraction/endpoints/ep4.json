@@ -8,7 +8,7 @@
       "in": "path",
       "type": "string",
       "required": true,
-      "description": ""
+      "description": null
     },
     {
       "name": "cancellation_reason",
@@ -29,14 +29,14 @@
     "content_type": "application/x-www-form-urlencoded",
     "schema": null,
     "required": false,
-    "description": "Form-urlencoded body. Cancel a PaymentIntent"
+    "description": null
   },
   "responses": [
     {
       "status": "200",
-      "description": "Returns the PaymentIntent object.",
+      "description": "Successful response.",
       "schema": null,
-      "schema_ref": "PaymentIntent"
+      "schema_ref": "payment_intent"
     }
   ],
   "tags": [
@@ -48,6 +48,8 @@
   ],
   "examples": [],
   "missing": [
-    "No request example captured in this spec subset."
+    "No request example captured in this spec subset.",
+    "path parameter `intent` has no description in the source",
+    "requestBody has no description in the source"
   ]
 }

@@ -8,16 +8,16 @@
       "in": "path",
       "type": "string",
       "required": true,
-      "description": ""
+      "description": null
     }
   ],
   "request": null,
   "responses": [
     {
       "status": "200",
-      "description": "Returns the PaymentIntent object.",
+      "description": "Successful response.",
       "schema": null,
-      "schema_ref": "PaymentIntent"
+      "schema_ref": "payment_intent"
     }
   ],
   "tags": [
@@ -28,5 +28,7 @@
     "basicAuth"
   ],
   "examples": [],
-  "missing": []
+  "missing": [
+    "path parameter `intent` has no description in the source"
+  ]
 }
