@@ -33,11 +33,16 @@ from loop_apidoc.plan.models import (
     SystemGroup,
     TransportPolicy,
 )
-from loop_apidoc.domain.evidence import JsonPointerLocator
+from loop_apidoc.domain.evidence import (
+    JsonPointerLocator,
+    VerificationMethod,
+    fragment_digest,
+)
 from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
     SHADOW_RUNTIME_VERSION,
     ShadowMetadataError,
+    _claim_support_proposal,
     _document_security_support_proposal,
     _openapi_pointer_derivation_name,
     build_contract_metadata,
@@ -667,3 +672,36 @@ def test_document_security_proposal_pairs_requirement_with_own_operation():
 )
 def test_document_security_proposal_refuses_unmatched_fragments(fragments):
     assert _document_security_proposal(*fragments) is None
+
+
+def test_derivation_input_digest_accepts_yaml_timestamps():
+    """A YAML source's unquoted timestamps reach the bridge as `datetime`.
+
+    The derivation input digest must be the domain serializer's, so Core
+    recomputes the same value instead of the bridge failing on `json.dumps`.
+    """
+    fragment = SimpleNamespace(
+        id="schema",
+        locator=JsonPointerLocator(pointer="/components/schemas/APIs"),
+        semantic_value={
+            "example": {"added": datetime(2015, 2, 22, 20, 0, 45, tzinfo=timezone.utc)}
+        },
+    )
+
+    proposal = _claim_support_proposal(
+        fragment=fragment,
+        method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        claim_kind="schema",
+        value={"name": "APIs", "fields": []},
+        claim_path="/name",
+        plan_location="plan",
+        exact_reference=object(),
+    )
+
+    (step,) = proposal.derivation_steps
+    assert step.input_digests == (
+        fragment_digest(
+            '{"locator":{"kind":"json_pointer","pointer":"/components/schemas/APIs"},'
+            '"semantic_value":{"example":{"added":"2015-02-22T20:00:45+00:00"}}}'
+        ),
+    )

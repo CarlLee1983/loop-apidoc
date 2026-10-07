@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import unicodedata
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Annotated, Any, Literal, Mapping
 
@@ -261,7 +261,7 @@ def _jsonable(value: Any) -> Any:
         return value.model_dump(mode="json", exclude_none=True)
     if isinstance(value, Enum):
         return value.value
-    if isinstance(value, datetime):
+    if isinstance(value, (date, datetime)):
         return value.isoformat()
     if isinstance(value, Mapping):
         return {str(key): _jsonable(item) for key, item in value.items()}
