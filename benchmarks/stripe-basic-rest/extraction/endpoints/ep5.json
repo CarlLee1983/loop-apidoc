@@ -116,5 +116,347 @@
     "`metadata` is anyOf [object, string]; no single type is stated",
     "`payment_details` is anyOf [object, string]; no single type is stated",
     "requestBody has no description in the source"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post"
+      },
+      "fragment_digest": "2df5aa27d0afdcfd1d7e5268283ce8b8b15d35b853c47cd880c0fc5299154c5b",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/amount_details"
+      },
+      "fragment_digest": "234c81a59623ed8bf37c83330af5ce5306263ce71940c6641a27350981dfd84d",
+      "claim_path": "/parameters/body/amount_details/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/amount_details/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/amount_to_capture"
+      },
+      "fragment_digest": "b0acca20a9390b74a02a003eba143e832dcc82046cde3c37c1d06fae35171337",
+      "claim_path": "/parameters/body/amount_to_capture/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/amount_to_capture/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/application_fee_amount"
+      },
+      "fragment_digest": "605aec538b893d5f886442464ae96e9aac3f4514062d77c1700a45c9995b652b",
+      "claim_path": "/parameters/body/application_fee_amount/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/application_fee_amount/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/expand"
+      },
+      "fragment_digest": "a94c2f1b29c8c96d01729e5dad74449a984e689ff2a798b5f1cf7e095ae576c7",
+      "claim_path": "/parameters/body/expand[]/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/expand[]/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/final_capture"
+      },
+      "fragment_digest": "c643f136b069c63d14f962d26fff5fce7abf3b439a77397f4177ad0f4a180f49",
+      "claim_path": "/parameters/body/final_capture/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/final_capture/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/hooks"
+      },
+      "fragment_digest": "97cdd9557d9ec816c2cc876a040f0deb6b4c42df3f7d71f50fac71291f62c4b8",
+      "claim_path": "/parameters/body/hooks/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/hooks/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/metadata"
+      },
+      "fragment_digest": "0879c549b1915a500665f16e8619ba1f10dbd4a3b1670aebb4620a7db20ea183",
+      "claim_path": "/parameters/body/metadata/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/metadata/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_details"
+      },
+      "fragment_digest": "c3b56b8b8397f66f3870d80d7fcb9ad6724ae1530946e34ddb8cf7f8111fb7bf",
+      "claim_path": "/parameters/body/payment_details/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/payment_details/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/statement_descriptor"
+      },
+      "fragment_digest": "6bc9f0632249780550e5eeee1fe5df1f8b578c41cc7d46cb4a54b3624e7aeb97",
+      "claim_path": "/parameters/body/statement_descriptor/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/statement_descriptor/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/statement_descriptor_suffix"
+      },
+      "fragment_digest": "0478aa44bea0dbc85af2129b7bdb9acc900c9e74e7629321dbd165e06ea97371",
+      "claim_path": "/parameters/body/statement_descriptor_suffix/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/statement_descriptor_suffix/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/transfer_data"
+      },
+      "fragment_digest": "d20a0378ac4f72d65ea58a7c32ae80bf2863f0d20dba7f5401d419d48c325b16",
+      "claim_path": "/parameters/body/transfer_data/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "8ea154bdbf5a9bcb953341862d0d7459717be1535282f363a740ea9ebac90934",
+      "claim_path": "/parameters/body/transfer_data/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/parameters/0/name"
+      },
+      "fragment_digest": "3a4c15e51a0dff4a561a2966e5bd7d49b6914f42ff3cd950832b476ee6ac25f8",
+      "claim_path": "/parameters/path/intent/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/intent/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post"
+      },
+      "fragment_digest": "2df5aa27d0afdcfd1d7e5268283ce8b8b15d35b853c47cd880c0fc5299154c5b",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/responses/200/description"
+      },
+      "fragment_digest": "902fd83f59ae06f15ba728e5cf34c9f378f0a457835bf339bc77232e7316e1ee",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "28d177a13cdc76ed4ef020df331b9578025da374af2be2579d66fb85d9dfc832",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/responses/200"
+      },
+      "fragment_digest": "95e1a2343cceae0af4112e0c275d0dfaa2b2bdff9762970cdf962bc1507f8c59",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/0"
+      },
+      "fragment_digest": "af8f88eb6b6802ecc68cfc79e89b95f718f05505d32dfa2b4686f22d34454739",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post"
+      },
+      "fragment_digest": "2df5aa27d0afdcfd1d7e5268283ce8b8b15d35b853c47cd880c0fc5299154c5b",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/1"
+      },
+      "fragment_digest": "91247281f3b3967645f089c33e2fbc3601c85295e7d690e4371d047fccf81945",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post"
+      },
+      "fragment_digest": "2df5aa27d0afdcfd1d7e5268283ce8b8b15d35b853c47cd880c0fc5299154c5b",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1capture/post/summary"
+      },
+      "fragment_digest": "79be885e48f5008a36f38dc11a7e49207a5604931ba744f0da1bededfd7696a0",
+      "claim_path": "/summary"
+    }
   ]
 }

@@ -30,5 +30,127 @@
   "examples": [],
   "missing": [
     "path parameter `intent` has no description in the source"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get"
+      },
+      "fragment_digest": "46b006fa050a09f9edd83abd7350f724073bfc978ec652b30300c5861188a839",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/parameters/2/name"
+      },
+      "fragment_digest": "3a4c15e51a0dff4a561a2966e5bd7d49b6914f42ff3cd950832b476ee6ac25f8",
+      "claim_path": "/parameters/path/intent/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/parameters/2/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/intent/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get"
+      },
+      "fragment_digest": "46b006fa050a09f9edd83abd7350f724073bfc978ec652b30300c5861188a839",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/responses/200/description"
+      },
+      "fragment_digest": "902fd83f59ae06f15ba728e5cf34c9f378f0a457835bf339bc77232e7316e1ee",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "28d177a13cdc76ed4ef020df331b9578025da374af2be2579d66fb85d9dfc832",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/responses/200"
+      },
+      "fragment_digest": "95e1a2343cceae0af4112e0c275d0dfaa2b2bdff9762970cdf962bc1507f8c59",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/0"
+      },
+      "fragment_digest": "af8f88eb6b6802ecc68cfc79e89b95f718f05505d32dfa2b4686f22d34454739",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get"
+      },
+      "fragment_digest": "46b006fa050a09f9edd83abd7350f724073bfc978ec652b30300c5861188a839",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/1"
+      },
+      "fragment_digest": "91247281f3b3967645f089c33e2fbc3601c85295e7d690e4371d047fccf81945",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get"
+      },
+      "fragment_digest": "46b006fa050a09f9edd83abd7350f724073bfc978ec652b30300c5861188a839",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}/get/summary"
+      },
+      "fragment_digest": "d5d38fefb3e7f82b3321d181aee1e0722114a10e0254d540d930eaad7ca83c14",
+      "claim_path": "/summary"
+    }
   ]
 }

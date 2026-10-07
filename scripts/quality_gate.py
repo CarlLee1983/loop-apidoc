@@ -57,6 +57,7 @@ SOURCE_DERIVATION_BENCHMARK_CASES = ("ecpay-creditcard-pdf",)
 EXACT_EVIDENCE_PARITY_BENCHMARK_CASES = (
     "funkygames-transfer-operator",
     "rsg-game-transfer-wallet",
+    "stripe-basic-rest",
 )
 
 

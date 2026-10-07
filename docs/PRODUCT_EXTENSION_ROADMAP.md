@@ -1,10 +1,10 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence parity is complete for 2 of 7 restored
-source-backed benchmarks; 5 restored cases still need claim-complete parity and 6
+**Status:** In progress — exact-evidence parity is complete for 3 of 7 restored
+source-backed benchmarks; 4 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
-**Updated:** 2026-08-02
+**Updated:** 2026-10-07
 
 ## Purpose
 
@@ -264,6 +264,16 @@ insufficient. This clears RSG only; it does not substitute a newer source for an
 six unavailable historical snapshots or lower the parity bar for the five other restored
 cases.
 
+**Stripe source-backed parity (2026-10-07):** `snapshot-openapi-url` re-acquired
+`spec3.sdk.json` from immutable commit `3881db83dff8d170d4b7ef7e00e1801cd617e891` with
+the recorded SHA-256. Every material claim of the Payment Intents subset (6 operations,
+the `payment_intent` schema, both security schemes, the server) is bound to an exact JSON
+Pointer, including inline form-body fields and document-level security requirements. The
+replay is legacy `passed` / Core `accept` with 10/10 Core claims supported. Two extracted
+values were corrected rather than bound: the array field `payment_method_types` now reads
+`payment_method_types[]`, and two `operational` entries whose topics the source never
+states were removed. Exact-evidence parity now covers 3 of 7 restored cases.
+
 ### 2. Continuous source and contract governance
 
 **Goal:** turn one-off analysis runs into a controlled update cycle.
@@ -497,8 +507,8 @@ implementation-backed benchmark 與 source-backed strict-local 分開計算；�
 
 0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
 coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
-Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG 已完成
-claim-complete exact evidence，另 5 份待補，6 份歷史快照不可得。
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe 已完成
+claim-complete exact evidence，另 4 份待補，6 份歷史快照不可得。
 
 GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
 與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。

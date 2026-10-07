@@ -199,5 +199,567 @@
     "`receipt_email` is anyOf [string, string]; no single type is stated",
     "`shipping` is anyOf [object, string]; no single type is stated",
     "requestBody has no description in the source"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post"
+      },
+      "fragment_digest": "7da054ae82d879464ab5bfe87115970e15b32340d788ba0196e91010b0578acf",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/amount_details"
+      },
+      "fragment_digest": "f5ece2bffdf77536d53f26e631be274948cabed2b1154f06d9620481d64eb19e",
+      "claim_path": "/parameters/body/amount_details/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/amount_details/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/amount_to_confirm"
+      },
+      "fragment_digest": "145bf53382491f0da3169e26d3faf60be427dbf0efebedc0b7a6a88068aa3687",
+      "claim_path": "/parameters/body/amount_to_confirm/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/amount_to_confirm/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/capture_method"
+      },
+      "fragment_digest": "b0f094203cd1466163850b1baa4a21172caf1a50f87ae55197fb4905765e45f6",
+      "claim_path": "/parameters/body/capture_method/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/capture_method/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/confirmation_token"
+      },
+      "fragment_digest": "c7458c3bd8a5d47d177115ebb535fbe7ab4a89195d3f36059bc34095a6dd9eb4",
+      "claim_path": "/parameters/body/confirmation_token/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/confirmation_token/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/error_on_requires_action"
+      },
+      "fragment_digest": "781562cb3661b9652c6c83c3c46cf78dd37d29e6c839c616c26eb41e1c194b7e",
+      "claim_path": "/parameters/body/error_on_requires_action/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/error_on_requires_action/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/excluded_payment_method_types"
+      },
+      "fragment_digest": "2f685047081544dcac6ab0521f4b6732ef524d242ec1ae7e890193ff41d190d2",
+      "claim_path": "/parameters/body/excluded_payment_method_types/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/excluded_payment_method_types/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/expand"
+      },
+      "fragment_digest": "a94c2f1b29c8c96d01729e5dad74449a984e689ff2a798b5f1cf7e095ae576c7",
+      "claim_path": "/parameters/body/expand[]/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/expand[]/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/hooks"
+      },
+      "fragment_digest": "97cdd9557d9ec816c2cc876a040f0deb6b4c42df3f7d71f50fac71291f62c4b8",
+      "claim_path": "/parameters/body/hooks/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/hooks/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/mandate"
+      },
+      "fragment_digest": "c6f877b617c2fb81f2ecff8f06fd9db3cdfcfa92322159f4d0b144f94bed28af",
+      "claim_path": "/parameters/body/mandate/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/mandate/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/mandate_data"
+      },
+      "fragment_digest": "578b3fc6079337a99b78e7aa7f5df836ca919bc5a6d4423fa0a9b41f72ecebe3",
+      "claim_path": "/parameters/body/mandate_data/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/mandate_data/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/off_session"
+      },
+      "fragment_digest": "b790e44b55e73e209c0d0ad01ea31339be7db042ff9af0aded896a8e2ddc7a88",
+      "claim_path": "/parameters/body/off_session/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/off_session/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_details"
+      },
+      "fragment_digest": "63885238b00b39d08501168c4454a86f4d9ed96238135ae985e72f9926e0b014",
+      "claim_path": "/parameters/body/payment_details/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/payment_details/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_method"
+      },
+      "fragment_digest": "401102f25d72b6e1877ee8686d173f7f1e0f7321c6fcf5690d919f46d6f91d6f",
+      "claim_path": "/parameters/body/payment_method/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/payment_method/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_method_data"
+      },
+      "fragment_digest": "512fdf457689d79c8c3c1d4098237fab8ba6aba378c807639d521675cf04dd43",
+      "claim_path": "/parameters/body/payment_method_data/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/payment_method_data/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_method_options"
+      },
+      "fragment_digest": "8e91b7aa301e4e53730031cdfda624262eb0e2377941d97a5d058f11e7bac26b",
+      "claim_path": "/parameters/body/payment_method_options/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/payment_method_options/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/payment_method_types"
+      },
+      "fragment_digest": "d4aae1297b854e4a87971a301a14f19fa78e7f5256195963186cf9553f426af7",
+      "claim_path": "/parameters/body/payment_method_types[]/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/payment_method_types[]/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/radar_options"
+      },
+      "fragment_digest": "6dcff980b34a47eb24d5667d0f7b1e189d6c315accaf9effb2704db1b0b0f92e",
+      "claim_path": "/parameters/body/radar_options/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/radar_options/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/receipt_email"
+      },
+      "fragment_digest": "f29e2cc52768a219e4ab857cbce706ad50f00601b0a2c65c3c5b0d4ec9900080",
+      "claim_path": "/parameters/body/receipt_email/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/receipt_email/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/return_url"
+      },
+      "fragment_digest": "ad116be02b3055246d3f07cd1275ce91652db829bf8a4c056309d1e9051862a8",
+      "claim_path": "/parameters/body/return_url/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/return_url/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/setup_future_usage"
+      },
+      "fragment_digest": "8fdd4b9b88f2e35d64db761ff7bf4f3b70eda805e8e7f76a374589d30441ddcf",
+      "claim_path": "/parameters/body/setup_future_usage/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/setup_future_usage/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/shipping"
+      },
+      "fragment_digest": "58d74509d30a530d9bb7ab9e9467d34f1a8c50bbf3ebd7db58c74f347d51904d",
+      "claim_path": "/parameters/body/shipping/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/shipping/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/use_stripe_sdk"
+      },
+      "fragment_digest": "c52db38d7769791ebb4645cd44c4979c3ec9017046aab3becbc6dfb14d86bf94",
+      "claim_path": "/parameters/body/use_stripe_sdk/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/requestBody/content/application~1x-www-form-urlencoded/schema"
+      },
+      "fragment_digest": "ab88dc3dbfd4891add6cbe35d5e9244274c6da671bb6782375bcf51b702db40c",
+      "claim_path": "/parameters/body/use_stripe_sdk/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/parameters/0/name"
+      },
+      "fragment_digest": "3a4c15e51a0dff4a561a2966e5bd7d49b6914f42ff3cd950832b476ee6ac25f8",
+      "claim_path": "/parameters/path/intent/name"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/parameters/0/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/intent/required"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post"
+      },
+      "fragment_digest": "7da054ae82d879464ab5bfe87115970e15b32340d788ba0196e91010b0578acf",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/responses/200/description"
+      },
+      "fragment_digest": "902fd83f59ae06f15ba728e5cf34c9f378f0a457835bf339bc77232e7316e1ee",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "28d177a13cdc76ed4ef020df331b9578025da374af2be2579d66fb85d9dfc832",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/responses/200"
+      },
+      "fragment_digest": "95e1a2343cceae0af4112e0c275d0dfaa2b2bdff9762970cdf962bc1507f8c59",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/0"
+      },
+      "fragment_digest": "af8f88eb6b6802ecc68cfc79e89b95f718f05505d32dfa2b4686f22d34454739",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post"
+      },
+      "fragment_digest": "7da054ae82d879464ab5bfe87115970e15b32340d788ba0196e91010b0578acf",
+      "claim_path": "/security/basicAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/security/1"
+      },
+      "fragment_digest": "91247281f3b3967645f089c33e2fbc3601c85295e7d690e4371d047fccf81945",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post"
+      },
+      "fragment_digest": "7da054ae82d879464ab5bfe87115970e15b32340d788ba0196e91010b0578acf",
+      "claim_path": "/security/bearerAuth"
+    },
+    {
+      "version": 1,
+      "source": "spec3.sdk.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1v1~1payment_intents~1{intent}~1confirm/post/summary"
+      },
+      "fragment_digest": "c6edd72b1184b9bddebe160dcf7f9966840ebffd46d9b0dd8a5b8eb3d93b95b5",
+      "claim_path": "/summary"
+    }
   ]
 }

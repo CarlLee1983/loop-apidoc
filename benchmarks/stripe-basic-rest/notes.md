@@ -61,3 +61,14 @@
 
 - Generator: 已修 #1(http scheme)。可考慮 endpoint method 比對正規化(#2 觀察)。
 - 若要強化:補全 PaymentIntent 45 欄與巢狀子 schema、加 request examples。
+
+## Exact-evidence parity (2026-10-07)
+
+以 `uv run loop-apidoc snapshot-openapi-url --url https://raw.githubusercontent.com/stripe/openapi/3881db83dff8d170d4b7ef7e00e1801cd617e891/openapi/spec3.sdk.json --confirmed-by-user --max-bytes 20000000`
+重新取得 `sources/spec3.sdk.json`,SHA-256 與上方紀錄相同(`a58d0f7c…`),產出的 coverage 與已入庫 `url_sources/coverage.json` 相同。
+
+- 每個 material claim 都以 v1 `evidence[]` 綁定 exact JSON Pointer:operation、path/query 參數、inline form body 欄位與 required、response、文件層級 `security`(搭配 operation 物件作為 context)、`payment_intent` schema 欄位、兩個 security scheme、server。
+- Shadow replay:legacy `passed` / Core `accept`,10/10 Core claims supported、0 unverified。本 case 已列入 `EXACT_EVIDENCE_PARITY_BENCHMARK_CASES`。
+- 兩項值校正(非綁定,經核准):
+  1. schema 欄位 `payment_method_types` 改為 `payment_method_types[]` — 來源為 `type: array`,Core 由 pointer 推導的結構名稱帶 `[]`,與本擷取 body 參數 `expand[]` 的寫法一致;產出 OpenAPI 屬性名稱不變。
+  2. 移除兩筆 `operational` — topic `Authentication (bearerAuth)` / `Authentication (basicAuth)` 不是來源陳述(來源中出現 0 次),detail 與 `security_schemes` 的 details 完全重複。`operational` 為空因此多一筆 `REQUIRED_INFO_MISSING` warning(6 → 7),已同步 `expected/validation.expect.json`。
