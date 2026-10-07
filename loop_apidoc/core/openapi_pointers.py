@@ -605,6 +605,77 @@ def _openapi_schema_name_from_pointer(pointer: str) -> str | None:
     return _decode_json_pointer_segment(segments[3])
 
 
+def _openapi_security_scheme_name_from_pointer(pointer: str) -> str | None:
+    """Return the key of one direct ``components.securitySchemes`` member."""
+    segments = pointer.split("/")
+    if len(segments) != 4 or segments[0] or segments[1:3] != ["components", "securitySchemes"]:
+        return None
+    return _decode_json_pointer_segment(segments[3])
+
+
+def _security_requirement_scheme(requirement: Any) -> str | None:
+    """Return the sole scheme of a ``{scheme: []}`` requirement, else ``None``.
+
+    Several keys (AND), non-empty scopes and ``{}`` (anonymous) fail closed.
+    """
+    if not isinstance(requirement, Mapping) or len(requirement) != 1:
+        return None
+    ((scheme, scopes),) = requirement.items()
+    valid = isinstance(scheme, str) and isinstance(scopes, (list, tuple)) and not scopes
+    return scheme if valid else None
+
+
+def _operation_pointer_matches(pointer: str, operation_value: Any) -> bool:
+    """Whether ``/paths/<p>/<m>`` names the claim's own operation."""
+    operation = _openapi_operation_from_pointer(pointer)
+    if operation is None or not isinstance(operation_value, Mapping):
+        return False
+    method = operation_value.get("method")
+    return isinstance(method, str) and operation == (operation_value.get("path"), method.upper())
+
+
+def _openapi_operation_security_from_operation_requirement(
+    pointer: str, requirement: Any, operation_value: Any
+) -> str | None:
+    """Return the scheme of ``/paths/<p>/<m>/security/<i>`` for its own operation."""
+    segments = pointer.split("/")
+    if (
+        len(segments) != 6
+        or segments[4] != "security"
+        or not (segments[5].isascii() and segments[5].isdigit())
+        or not _operation_pointer_matches("/".join(segments[:4]), operation_value)
+    ):
+        return None
+    return _security_requirement_scheme(requirement)
+
+
+def _openapi_operation_security_from_document_requirement(
+    *,
+    pointer: str,
+    requirement: Any,
+    operation_pointer: str,
+    operation_source: Any,
+    operation_value: Any,
+) -> str | None:
+    """Return the scheme of ``/security/<i>`` applying to the claim's operation.
+
+    The context operation object must be the claim's own and declare no
+    ``security`` key, so the document-level requirement is the one in force.
+    """
+    segments = pointer.split("/")
+    if (
+        len(segments) != 3
+        or segments[0]
+        or segments[1] != "security"
+        or not (segments[2].isascii() and segments[2].isdigit())
+        or not isinstance(operation_source, Mapping)
+        or "security" in operation_source
+        or not _operation_pointer_matches(operation_pointer, operation_value)
+    ):
+        return None
+    return _security_requirement_scheme(requirement)
+
+
 def _schema_name_from_claim_identity(claim_identity: str) -> str | None:
     prefix = "claim:schema:"
     suffix = ":definition"

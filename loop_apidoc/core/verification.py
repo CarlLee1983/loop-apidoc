@@ -66,6 +66,9 @@ _ALLOWED_DERIVATIONS = frozenset(
         ("openapi_schema_property_name_from_pointer", "1"),
         ("openapi_schema_property_type_from_pointer", "1"),
         ("openapi_schema_property_required_from_schema_pointer", "1"),
+        ("openapi_security_scheme_name_from_pointer", "1"),
+        ("openapi_operation_security_from_operation_requirement", "1"),
+        ("openapi_operation_security_from_document_requirement", "1"),
         ("unicode_nfc", "1"),
     }
 )

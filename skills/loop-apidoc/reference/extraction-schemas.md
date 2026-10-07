@@ -62,6 +62,14 @@ items use the same claim path. Core rechecks every target, order, field path, an
 do not use these forms for arbitrary `$ref` chains, unrelated secondary sources, or
 convenience citations.
 
+One further two-fragment form covers an operation `/security/<scheme>` claim stated only by
+a document-level `security` list: the requirement fragment `/security/<i>` (exactly
+`{"<scheme>": []}`) comes first, then the operation object `/paths/<p>/<m>` of that same
+operation, which must declare no `security` of its own. Both items use the same claim path
+and artifact. An operation-level `/paths/<p>/<m>/security/<i>` requirement and a
+`/components/securitySchemes/<key>` scheme name each need one fragment. Requirements with
+several keys, scopes, or `{}` are never supported.
+
 `verify-extraction` and `assemble` reopen the manifest snapshot and compare the typed
 locator's materialized digest and material claim path before any run directory exists. In Core shadow, a v1
 reference owns its declared `claim_path`: legacy locator fallback is disabled for that

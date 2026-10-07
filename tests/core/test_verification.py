@@ -2101,3 +2101,256 @@ def test_inline_request_body_derivations_refuse_an_operation_with_request_schema
     _assert_refused(
         _inline_required(INLINE_SCHEMA, True, request_schema_ref="ThingRequest")
     )
+
+
+SECURITY_PATH = "/v1/things"
+SECURITY_OPERATION_POINTER = "/paths/~1v1~1things/post"
+SECURITY_OPERATION = {"method": "POST", "path": SECURITY_PATH, "security": ["bearerAuth"]}
+SECURITY_OPERATION_OBJECT = {"operationId": "createThing", "responses": {}}
+SECURITY_SCHEME_DERIVATION = "openapi_security_scheme_name_from_pointer"
+SECURITY_OPERATION_DERIVATION = (
+    "openapi_operation_security_from_operation_requirement"
+)
+SECURITY_DOCUMENT_DERIVATION = "openapi_operation_security_from_document_requirement"
+
+
+def _verify_security(
+    derivation: str,
+    primary: tuple[str, object],
+    *,
+    context: tuple[str, object, str] | None = None,
+    claim_kind: str = "operation",
+    claim_value: object = None,
+    claim_path: str = "/security/bearerAuth",
+    derived: object = "bearerAuth",
+):
+    """Verify one security derivation; ``primary`` is (pointer, semantic value)."""
+    pointer, source_value = primary
+    inputs = [{"locator": {"kind": "json_pointer", "pointer": pointer}, "semantic_value": source_value}]
+    fragments = [
+        _exact_fragment(
+            "primary",
+            canonical_json(source_value),
+            locator=JsonPointerLocator(pointer=pointer),
+            semantic_value=source_value,
+            semantic_role="structured.value",
+        )
+    ]
+    context_ids: tuple[str, ...] = ()
+    if context is not None:
+        context_pointer, context_value, context_artifact = context
+        inputs.append(
+            {
+                "locator": {"kind": "json_pointer", "pointer": context_pointer},
+                "semantic_value": context_value,
+            }
+        )
+        fragments.append(
+            _exact_fragment(
+                "context",
+                canonical_json(context_value),
+                locator=JsonPointerLocator(pointer=context_pointer),
+                semantic_value=context_value,
+                semantic_role="structured.value",
+                artifact_id=context_artifact,
+            )
+        )
+        context_ids = ("context",)
+    support = ClaimSupportProposal(
+        fragment_id="primary",
+        context_fragment_ids=context_ids,
+        claim_path=claim_path,
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name=derivation,
+                version="1",
+                input_digests=tuple(
+                    fragment_digest(canonical_json(item)) for item in inputs
+                ),
+                output_digest=fragment_digest(canonical_json(derived)),
+            ),
+        ),
+    )
+    value = SECURITY_OPERATION if claim_value is None else claim_value
+    return verify_claim_support(
+        _proposal(value, support, claim_kind=claim_kind),
+        _bundle(
+            *fragments,
+            artifacts=(_artifact("artifact-1"), _artifact("artifact-2")),
+        ),
+    )[0]
+
+
+def _verify_scheme_name(pointer: str, claimed: str = "bearerAuth", **kwargs):
+    return _verify_security(
+        SECURITY_SCHEME_DERIVATION,
+        (pointer, {"type": "http", "scheme": "bearer"}),
+        claim_kind="security",
+        claim_value={"name": claimed, "type": "http"},
+        claim_path="/name",
+        derived=kwargs.pop("derived", claimed),
+        **kwargs,
+    )
+
+
+def _verify_operation_requirement(
+    requirement,
+    pointer=f"{SECURITY_OPERATION_POINTER}/security/0",
+    **kwargs,
+):
+    return _verify_security(
+        SECURITY_OPERATION_DERIVATION, (pointer, requirement), **kwargs
+    )
+
+
+def _verify_document_requirement(
+    requirement,
+    context_pointer=SECURITY_OPERATION_POINTER,
+    context_value=SECURITY_OPERATION_OBJECT,
+    context_artifact="artifact-1",
+    pointer="/security/1",
+    **kwargs,
+):
+    return _verify_security(
+        SECURITY_DOCUMENT_DERIVATION,
+        (pointer, requirement),
+        context=(context_pointer, context_value, context_artifact),
+        **kwargs,
+    )
+
+
+def test_security_scheme_pointer_proves_scheme_name():
+    _assert_derived(
+        _verify_scheme_name("/components/securitySchemes/bearerAuth"), "bearerAuth"
+    )
+
+
+def test_operation_level_requirement_proves_operation_security():
+    _assert_derived(_verify_operation_requirement({"bearerAuth": []}), "bearerAuth")
+
+
+def test_document_level_requirement_with_operation_context_proves_security():
+    _assert_derived(_verify_document_requirement({"bearerAuth": []}), "bearerAuth")
+
+
+@pytest.mark.parametrize(
+    "requirement",
+    [{"basicAuth": []}, {"bearerAuth": [], "basicAuth": []}, {"bearerAuth": ["read"]}, {}],
+)
+def test_security_requirements_refuse_a_different_key_and_unsupported_shapes(
+    requirement,
+):
+    """A differing key trips the claim-path check; other shapes are inapplicable."""
+    code = (
+        "DERIVATION_CLAIM_PATH_MISMATCH"
+        if requirement == {"basicAuth": []}
+        else "DERIVATION_INAPPLICABLE"
+    )
+    _assert_refused(_verify_operation_requirement(requirement), code)
+    _assert_refused(_verify_document_requirement(requirement), code)
+
+
+def test_security_scheme_name_refuses_a_different_key():
+    _assert_refused(
+        _verify_scheme_name("/components/securitySchemes/basicAuth", derived="basicAuth"),
+        "DERIVATION_VALUE_MISMATCH",
+    )
+
+
+@pytest.mark.parametrize(
+    "pointer",
+    [
+        "/components/securitySchemes/bearerAuth/type",
+        "/components/securitySchemes",
+        "/components/schemas/bearerAuth",
+        "/components/securitySchemes/bearer~2Auth",
+    ],
+)
+def test_security_scheme_name_refuses_a_non_exact_pointer(pointer):
+    _assert_refused(_verify_scheme_name(pointer))
+
+
+@pytest.mark.parametrize(
+    "pointer",
+    [
+        "/paths/~1v1~1other/post/security/0",
+        "/paths/~1v1~1things/get/security/0",
+        "/paths/~1v1~1things/post/security/first",
+        "/paths/~1v1~1things/post/security",
+    ],
+)
+def test_operation_requirement_refuses_another_operation_or_index(pointer):
+    _assert_refused(_verify_operation_requirement({"bearerAuth": []}, pointer))
+
+
+def test_operation_requirement_method_binding_ignores_case_only():
+    _assert_derived(
+        _verify_operation_requirement(
+            {"bearerAuth": []},
+            claim_value={**SECURITY_OPERATION, "method": "post"},
+        ),
+        "bearerAuth",
+    )
+
+
+def test_document_requirement_without_context_is_refused():
+    _assert_refused(
+        _verify_security(
+            SECURITY_DOCUMENT_DERIVATION, ("/security/1", {"bearerAuth": []})
+        ),
+        "DERIVATION_CONTEXT_INVALID",
+    )
+
+
+def test_document_requirement_refuses_context_from_another_artifact():
+    _assert_refused(
+        _verify_document_requirement(
+            {"bearerAuth": []}, context_artifact="artifact-2"
+        ),
+        "DERIVATION_CONTEXT_ARTIFACT_MISMATCH",
+    )
+
+
+@pytest.mark.parametrize("own_security", [[{"basicAuth": []}], []])
+def test_document_requirement_refuses_an_operation_with_its_own_security(
+    own_security,
+):
+    _assert_refused(
+        _verify_document_requirement(
+            {"bearerAuth": []},
+            context_value={**SECURITY_OPERATION_OBJECT, "security": own_security},
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "context_pointer",
+    ["/paths/~1v1~1other/post", "/paths/~1v1~1things/get", "/paths/~1v1~1things"],
+)
+def test_document_requirement_refuses_a_context_for_another_operation(
+    context_pointer,
+):
+    _assert_refused(
+        _verify_document_requirement(
+            {"bearerAuth": []}, context_pointer=context_pointer
+        )
+    )
+
+
+def test_document_requirement_refuses_a_non_document_pointer():
+    _assert_refused(
+        _verify_document_requirement({"bearerAuth": []}, pointer="/paths/x/security/1")
+    )
+
+
+def test_operation_derivations_refuse_context_fragments():
+    _assert_refused(
+        _verify_security(
+            SECURITY_OPERATION_DERIVATION,
+            (f"{SECURITY_OPERATION_POINTER}/security/0", {"bearerAuth": []}),
+            context=(SECURITY_OPERATION_POINTER, SECURITY_OPERATION_OBJECT, "artifact-1"),
+        ),
+        "DERIVATION_CONTEXT_INVALID",
+    )

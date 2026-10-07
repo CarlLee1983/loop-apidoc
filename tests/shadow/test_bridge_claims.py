@@ -576,3 +576,33 @@ def test_body_claims_select_inline_derivation_only_for_inline_schema_pointers(
     fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
 
     assert _openapi_pointer_derivation_name("operation", claim_path, fragment) == expected
+
+
+@pytest.mark.parametrize(
+    "claim_kind, claim_path, pointer, expected",
+    [
+        (
+            "security",
+            "/name",
+            "/components/securitySchemes/bearerAuth",
+            "openapi_security_scheme_name_from_pointer",
+        ),
+        ("security", "/name", "/components/securitySchemes/bearerAuth/type", None),
+        ("security", "/type", "/components/securitySchemes/bearerAuth", None),
+        (
+            "operation",
+            "/security/bearerAuth",
+            "/paths/~1v1~1things/post/security/0",
+            "openapi_operation_security_from_operation_requirement",
+        ),
+        ("operation", "/security/bearerAuth", "/security/0", None),
+        ("operation", "/security/bearerAuth", "/paths/~1v1~1things/post", None),
+        ("operation", "/path", "/paths/~1v1~1things/post/security/0", "openapi_path_from_pointer"),
+    ],
+)
+def test_security_claims_select_derivation_only_for_matching_pointer_shapes(
+    claim_kind, claim_path, pointer, expected
+):
+    fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
+
+    assert _openapi_pointer_derivation_name(claim_kind, claim_path, fragment) == expected
