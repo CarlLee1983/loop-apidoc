@@ -8,6 +8,8 @@ from loop_apidoc.core.openapi_pointers import (
     _openapi_inline_request_body_property_from_pointer,
     _openapi_inline_request_body_property_required_from_schema_pointer,
     _openapi_operation_from_pointer,
+    _openapi_operation_security_from_document_requirement,
+    _openapi_operation_security_from_operation_requirement,
     _openapi_request_body_property_from_pointer,
     _openapi_request_body_property_required_from_schema_pointer,
     _openapi_request_body_ref_property_from_fragments,
@@ -21,6 +23,7 @@ from loop_apidoc.core.openapi_pointers import (
     _openapi_schema_ref_property_from_fragments,
     _openapi_schema_ref_property_required_from_fragments,
     _openapi_schema_two_hop_ref_property_from_fragments,
+    _openapi_security_scheme_name_from_pointer,
     _schema_name_from_claim_identity,
 )
 from loop_apidoc.domain.claim_paths import escape_segment
@@ -69,6 +72,9 @@ def _openapi_pointer_derivation(
             ("openapi_schema_property_name_from_pointer", "1"),
             ("openapi_schema_property_type_from_pointer", "1"),
             ("openapi_schema_property_required_from_schema_pointer", "1"),
+            ("openapi_security_scheme_name_from_pointer", "1"),
+            ("openapi_operation_security_from_operation_requirement", "1"),
+            ("openapi_operation_security_from_document_requirement", "1"),
         }
     )
     if not pointer_steps:
@@ -85,6 +91,7 @@ def _openapi_pointer_derivation(
         ("openapi_schema_two_hop_ref_property_name_from_fragments", "1"),
         ("openapi_schema_two_hop_ref_property_type_from_fragments", "1"),
         ("openapi_schema_two_hop_ref_property_required_from_fragments", "1"),
+        ("openapi_operation_security_from_document_requirement", "1"),
     }
     if derivation not in ref_linked_derivations and context_fragments:
         return None, "DERIVATION_CONTEXT_INVALID"
@@ -306,6 +313,40 @@ def _openapi_pointer_derivation(
         if required_info is None:
             return None, "DERIVATION_INAPPLICABLE"
         expected_claim_path, derived_value = required_info
+    elif derivation == ("openapi_security_scheme_name_from_pointer", "1"):
+        scheme = _openapi_security_scheme_name_from_pointer(fragment.locator.pointer)
+        if scheme is None:
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = "/name"
+        derived_value = scheme
+    elif derivation == (
+        "openapi_operation_security_from_operation_requirement",
+        "1",
+    ):
+        scheme = _openapi_operation_security_from_operation_requirement(
+            fragment.locator.pointer, fragment.semantic_value, operation_value
+        )
+        if scheme is None:
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = f"/security/{escape_segment(scheme)}"
+        derived_value = scheme
+    elif derivation == (
+        "openapi_operation_security_from_document_requirement",
+        "1",
+    ):
+        if len(context_fragments) != 1:
+            return None, "DERIVATION_CONTEXT_INVALID"
+        scheme = _openapi_operation_security_from_document_requirement(
+            pointer=fragment.locator.pointer,
+            requirement=fragment.semantic_value,
+            operation_pointer=context_fragments[0].locator.pointer,
+            operation_source=context_fragments[0].semantic_value,
+            operation_value=operation_value,
+        )
+        if scheme is None:
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = f"/security/{escape_segment(scheme)}"
+        derived_value = scheme
     else:
         operation = _openapi_operation_from_pointer(fragment.locator.pointer)
         if operation is None:

@@ -38,6 +38,7 @@ from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
     SHADOW_RUNTIME_VERSION,
     ShadowMetadataError,
+    _document_security_support_proposal,
     _openapi_pointer_derivation_name,
     build_contract_metadata,
     build_evidence,
@@ -576,3 +577,93 @@ def test_body_claims_select_inline_derivation_only_for_inline_schema_pointers(
     fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
 
     assert _openapi_pointer_derivation_name("operation", claim_path, fragment) == expected
+
+
+@pytest.mark.parametrize(
+    "claim_kind, claim_path, pointer, expected",
+    [
+        (
+            "security",
+            "/name",
+            "/components/securitySchemes/bearerAuth",
+            "openapi_security_scheme_name_from_pointer",
+        ),
+        ("security", "/name", "/components/securitySchemes/bearerAuth/type", None),
+        ("security", "/type", "/components/securitySchemes/bearerAuth", None),
+        (
+            "operation",
+            "/security/bearerAuth",
+            "/paths/~1v1~1things/post/security/0",
+            "openapi_operation_security_from_operation_requirement",
+        ),
+        ("operation", "/security/bearerAuth", "/security/0", None),
+        ("operation", "/security/bearerAuth", "/paths/~1v1~1things/post", None),
+        ("operation", "/path", "/paths/~1v1~1things/post/security/0", "openapi_path_from_pointer"),
+    ],
+)
+def test_security_claims_select_derivation_only_for_matching_pointer_shapes(
+    claim_kind, claim_path, pointer, expected
+):
+    fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
+
+    assert _openapi_pointer_derivation_name(claim_kind, claim_path, fragment) == expected
+
+
+_SECURITY_OPERATION = {"method": "POST", "path": "/v1/things", "security": ["bearerAuth"]}
+
+
+def _security_fragment(fragment_id, pointer, semantic_value):
+    return SimpleNamespace(
+        id=fragment_id,
+        locator=JsonPointerLocator(pointer=pointer),
+        semantic_value=semantic_value,
+    )
+
+
+def _document_security_proposal(*fragments):
+    exact = [(fragment, None, object()) for fragment in fragments]
+    return _document_security_support_proposal(
+        exact=exact,
+        claim_kind="operation",
+        value=_SECURITY_OPERATION,
+        claim_path="/security/bearerAuth",
+        plan_location="plan",
+    )
+
+
+_REQUIREMENT = _security_fragment("req", "/security/1", {"bearerAuth": []})
+_OPERATION = _security_fragment(
+    "op", "/paths/~1v1~1things/post", {"operationId": "createThing"}
+)
+
+
+def test_document_security_proposal_pairs_requirement_with_own_operation():
+    proposal = _document_security_proposal(_OPERATION, _REQUIREMENT)
+
+    assert proposal.fragment_id == "req"
+    assert proposal.context_fragment_ids == ("op",)
+    assert proposal.claim_path == "/security/bearerAuth"
+    assert [step.name for step in proposal.derivation_steps] == [
+        "openapi_operation_security_from_document_requirement"
+    ]
+
+
+@pytest.mark.parametrize(
+    "fragments",
+    [
+        [_REQUIREMENT],
+        [_REQUIREMENT, _security_fragment("op", "/paths/~1v1~1other/post", {})],
+        [_REQUIREMENT, _security_fragment("op", "/paths/~1v1~1things/get", {})],
+        [_security_fragment("req", "/security/1", {"basicAuth": []}), _OPERATION],
+        [_security_fragment("req", "/security/1", {"bearerAuth": ["read"]}), _OPERATION],
+    ],
+    ids=[
+        "no-operation",
+        "other-path",
+        "other-method",
+        "other-scheme",
+        "non-empty-scopes",
+    ],
+)
+def test_document_security_proposal_refuses_unmatched_fragments(fragments):
+    assert _document_security_proposal(*fragments) is None

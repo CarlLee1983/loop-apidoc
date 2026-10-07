@@ -802,6 +802,14 @@ def _semantic_support_proposals(
                     claim_path=path,
                     plan_location=plan_location,
                 )
+            if ref_linked_proposal is None:
+                ref_linked_proposal = _document_security_support_proposal(
+                    exact=exact,
+                    claim_kind=claim_kind,
+                    value=value,
+                    claim_path=path,
+                    plan_location=plan_location,
+                )
             if ref_linked_proposal is not None:
                 proposals[
                     _canonical_json(ref_linked_proposal.model_dump(mode="json"))
@@ -1425,6 +1433,83 @@ def _ref_linked_body_required_support_proposal(
     return None
 
 
+def _document_security_support_proposal(
+    *,
+    exact: list[
+        tuple[
+            EvidenceFragment,
+            VerificationMethod,
+            ExtractionEvidenceReference | None,
+        ]
+    ],
+    claim_kind: str,
+    value: Any,
+    claim_path: str,
+    plan_location: str,
+) -> ClaimSupportProposal | None:
+    """Group a document-level security requirement with its operation object.
+
+    The requirement fragment is primary and the claim's own operation object is
+    the context.  The Core repeats every structural check.
+    """
+    parts = claim_path.strip("/").split("/")
+    if claim_kind != "operation" or len(parts) != 2 or parts[0] != "security":
+        return None
+    claim_value = claim_value_at(claim_kind, value, claim_path)
+    method = value.get("method") if isinstance(value, Mapping) else None
+    if not isinstance(claim_value, str) or not isinstance(method, str):
+        return None
+    located = sorted(
+        (
+            (fragment, _json_pointer_parts(fragment.locator.pointer) or ())
+            for fragment, _method, reference in exact
+            if reference is not None
+            and isinstance(fragment.locator, JsonPointerLocator)
+        ),
+        key=lambda item: item[0].id,
+    )
+    requirements = [
+        fragment
+        for fragment, parts in located
+        if len(parts) == 2
+        and parts[0] == "security"
+        and fragment.semantic_value == {claim_value: []}
+    ]
+    operations = [
+        fragment
+        for fragment, parts in located
+        if len(parts) == 3
+        and parts[0] == "paths"
+        and parts[1:] == (value.get("path"), method.lower())
+    ]
+    if not requirements or not operations:
+        return None
+    pair = (requirements[0], operations[0])
+    derivation_inputs = tuple(
+        {
+            "locator": fragment.locator.model_dump(mode="json"),
+            "semantic_value": fragment.semantic_value,
+        }
+        for fragment in pair
+    )
+    return ClaimSupportProposal(
+        fragment_id=pair[0].id,
+        context_fragment_ids=(pair[1].id,),
+        claim_path=claim_path,
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name="openapi_operation_security_from_document_requirement",
+                version="1",
+                input_digests=tuple(_digest_value(item) for item in derivation_inputs),
+                output_digest=_digest_value(claim_value),
+            ),
+        ),
+        runtime_observation=plan_location,
+    )
+
+
 def _openapi_pointer_derivation_name(
     claim_kind: str,
     claim_path: str,
@@ -1465,6 +1550,14 @@ def _openapi_pointer_derivation_name(
         ):
             return "openapi_schema_property_required_from_schema_pointer"
         return None
+    if (
+        claim_kind == "security"
+        and claim_path == "/name"
+        and pointer_parts is not None
+        and len(pointer_parts) == 3
+        and pointer_parts[:2] == ("components", "securitySchemes")
+    ):
+        return "openapi_security_scheme_name_from_pointer"
     direct = {
         "/method": "openapi_method_from_pointer",
         "/path": "openapi_path_from_pointer",
@@ -1474,6 +1567,15 @@ def _openapi_pointer_derivation_name(
     if claim_path == "/request_schema_ref":
         return "openapi_request_schema_name_from_ref"
     parts = claim_path.strip("/").split("/")
+    if (
+        len(parts) == 2
+        and parts[0] == "security"
+        and pointer_parts is not None
+        and len(pointer_parts) == 5
+        and pointer_parts[0] == "paths"
+        and pointer_parts[3] == "security"
+    ):
+        return "openapi_operation_security_from_operation_requirement"
     inline_body_schema = (
         pointer_parts is not None
         and len(pointer_parts) >= 7
