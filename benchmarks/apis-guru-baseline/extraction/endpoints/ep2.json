@@ -7,7 +7,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "OK; inline object schema with property `data` (type array of string, minItems 1, item minLength 1)",
+      "description": "OK",
       "schema": null,
       "schema_ref": null
     }
@@ -20,5 +20,57 @@
   "missing": [
     "parameters not declared",
     "response schema is inline (no named $ref)"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1providers.json/get"
+      },
+      "fragment_digest": "c8907197c006d8883aed90448a72a4cc5b1fe8729a20f328bbc9378207fbd27d",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1providers.json/get"
+      },
+      "fragment_digest": "c8907197c006d8883aed90448a72a4cc5b1fe8729a20f328bbc9378207fbd27d",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1providers.json/get/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1providers.json/get/responses/200"
+      },
+      "fragment_digest": "c9a2c1f64b1a4f6756e048441032ae3f062d4be794ff21fa60508845fae0ce65",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1providers.json/get/summary"
+      },
+      "fragment_digest": "02e162624b2e6e3098d6928724d85dd8ba6c31fbeaf91d175fd3b39876d9d59a",
+      "claim_path": "/summary"
+    }
   ]
 }

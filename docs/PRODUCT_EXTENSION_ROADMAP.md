@@ -1,7 +1,7 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence parity is complete for 3 of 7 restored
-source-backed benchmarks; 4 restored cases still need claim-complete parity and 6
+**Status:** In progress — exact-evidence parity is complete for 4 of 7 restored
+source-backed benchmarks; 3 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
 **Updated:** 2026-10-07
@@ -164,8 +164,8 @@ they did not advance Core production graduation:
   `required_source_refs` capture guidance for sources that direct HTTP cannot obtain.
 
 The maintained priority-1 count is therefore 13 committed benchmark cases: 7 currently
-have local historical sources, of which FunkyGames and RSG have claim-complete exact
-evidence; the other 5 restored cases still require parity work, and 6 historical
+have local historical sources, of which FunkyGames, RSG, Stripe, and APIs.guru have
+claim-complete exact evidence; the other 3 restored cases still require parity work, and 6 historical
 snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
 eligible restored sources, but cannot turn an unavailable original snapshot into a
 strict-local pass.
@@ -272,7 +272,20 @@ Pointer, including inline form-body fields and document-level security requireme
 replay is legacy `passed` / Core `accept` with 10/10 Core claims supported. Two extracted
 values were corrected rather than bound: the array field `payment_method_types` now reads
 `payment_method_types[]`, and two `operational` entries whose topics the source never
-states were removed. Exact-evidence parity now covers 3 of 7 restored cases.
+states were removed. Stripe became the third parity case.
+
+**APIs.guru source-backed parity (2026-10-07):** `snapshot-openapi-url` re-acquired the
+2.2.0 YAML from immutable commit `fa500d341c242326279e64402a547ff7c0717e0d` with the
+recorded SHA-256. Its schema examples hold unquoted YAML timestamps, which the shadow
+bridge could not digest until it adopted the domain serializer (#184). All 7 operations,
+the 4 schemas, and the server are bound to exact JSON Pointers, including path parameters
+behind `components.parameters` references. The replay is legacy `passed` / Core `accept`
+with 12/12 Core claims supported. Values the source does not state were corrected rather
+than bound: the environment name and two response descriptions, five paraphrased
+`operational` notes (the public-API authentication fact moved to `missing`), the array
+field `datasets[]`, and two `{*}` fields that stood for `additionalProperties` maps the
+pipeline cannot represent, now recorded as schema gaps. Exact-evidence parity covers 4 of
+7 restored cases.
 
 ### 2. Continuous source and contract governance
 
@@ -507,8 +520,8 @@ implementation-backed benchmark 與 source-backed strict-local 分開計算；�
 
 0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
 coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
-Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe 已完成
-claim-complete exact evidence，另 4 份待補，6 份歷史快照不可得。
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru 已完成
+claim-complete exact evidence，另 3 份待補，6 份歷史快照不可得。
 
 GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
 與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。

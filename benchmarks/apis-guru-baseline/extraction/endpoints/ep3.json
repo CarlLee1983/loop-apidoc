@@ -27,5 +27,87 @@
   "examples": [],
   "missing": [
     "provider parameter has no description (only example, maxLength 255, minLength 1)"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get"
+      },
+      "fragment_digest": "2652ae3d95750e0b3b9f9972e1c48f437b324d52289e2373f9130f152f89f3f4",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/parameters/provider/name"
+      },
+      "fragment_digest": "ae2250bb2563882a230d0bc3a65275643452aa6461380b2508ef449e9d752f91",
+      "claim_path": "/parameters/path/provider/name"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/parameters/provider/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/provider/required"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get"
+      },
+      "fragment_digest": "2652ae3d95750e0b3b9f9972e1c48f437b324d52289e2373f9130f152f89f3f4",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "84d6ce01ab30949ef1a1a6b164acea6c606750da3a87b745374b6a6beccfab02",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get/responses/200"
+      },
+      "fragment_digest": "cb9d10b2b237fe28dc5f9c81991e8bdec66275bf0991c64687fd9afcbef6ec6b",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}.json/get/summary"
+      },
+      "fragment_digest": "685b1511fac35c61463651ee5321b8ce8057797153e9fd6552db814198c7cf0d",
+      "claim_path": "/summary"
+    }
   ]
 }

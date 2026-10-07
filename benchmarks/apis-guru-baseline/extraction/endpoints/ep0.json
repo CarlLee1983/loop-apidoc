@@ -19,5 +19,67 @@
   "examples": [],
   "missing": [
     "parameters not declared"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get"
+      },
+      "fragment_digest": "8691fa86cb5f4a0b9a5df109baf6be2d608ab9acb7c9cd044642673e5501051d",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get"
+      },
+      "fragment_digest": "8691fa86cb5f4a0b9a5df109baf6be2d608ab9acb7c9cd044642673e5501051d",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "84d6ce01ab30949ef1a1a6b164acea6c606750da3a87b745374b6a6beccfab02",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get/responses/200"
+      },
+      "fragment_digest": "cb9d10b2b237fe28dc5f9c81991e8bdec66275bf0991c64687fd9afcbef6ec6b",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1list.json/get/summary"
+      },
+      "fragment_digest": "9c97ab3b99e1e4535dac27515766383c8b4894903491757444d5229420ecd9bd",
+      "claim_path": "/summary"
+    }
   ]
 }

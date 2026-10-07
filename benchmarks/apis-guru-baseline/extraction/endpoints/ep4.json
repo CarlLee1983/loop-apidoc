@@ -15,7 +15,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "OK; inline object schema with property `data` (type array of string, minItems 1, item minLength 0)",
+      "description": "OK",
       "schema": null,
       "schema_ref": null
     }
@@ -28,5 +28,77 @@
   "missing": [
     "provider parameter has no description (only example, maxLength 255, minLength 1)",
     "response schema is inline (no named $ref)"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}~1services.json/get"
+      },
+      "fragment_digest": "dc651df825108a04474192b7382a87673829449ac4adb8505f4674d70c1fceb5",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/parameters/provider/name"
+      },
+      "fragment_digest": "ae2250bb2563882a230d0bc3a65275643452aa6461380b2508ef449e9d752f91",
+      "claim_path": "/parameters/path/provider/name"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/parameters/provider/required"
+      },
+      "fragment_digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+      "claim_path": "/parameters/path/provider/required"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}~1services.json/get"
+      },
+      "fragment_digest": "dc651df825108a04474192b7382a87673829449ac4adb8505f4674d70c1fceb5",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}~1services.json/get/responses/200/description"
+      },
+      "fragment_digest": "98c4922bb641c65c7a30b7bcafdf230b9b00b6693631c56146ab25b2786ee4a3",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}~1services.json/get/responses/200"
+      },
+      "fragment_digest": "d1e5337598363c2c2a5def58c7133de6eec53e3869448013823249da9e6a8fd7",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "apis-guru-2.2.0.openapi.yaml",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1{provider}~1services.json/get/summary"
+      },
+      "fragment_digest": "98d934303f8aa5073430db640afbc97344b4bb131d65a847420175f94005f143",
+      "claim_path": "/summary"
+    }
   ]
 }
