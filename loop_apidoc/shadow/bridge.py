@@ -1474,6 +1474,23 @@ def _openapi_pointer_derivation_name(
     if claim_path == "/request_schema_ref":
         return "openapi_request_schema_name_from_ref"
     parts = claim_path.strip("/").split("/")
+    inline_body_schema = (
+        pointer_parts is not None
+        and len(pointer_parts) >= 7
+        and pointer_parts[0] == "paths"
+        and pointer_parts[3:5] == ("requestBody", "content")
+        and pointer_parts[6] == "schema"
+    )
+    if (
+        len(parts) == 4
+        and parts[0] == "parameters"
+        and parts[1] == "body"
+        and inline_body_schema
+    ):
+        if parts[3] == "name":
+            return "openapi_inline_request_body_property_name_from_pointer"
+        if parts[3] == "required":
+            return "openapi_inline_request_body_property_required_from_schema_pointer"
     if (
         len(parts) == 4
         and parts[0] == "parameters"

@@ -95,14 +95,14 @@
       "description": "Set to `true` to fail the payment attempt if the PaymentIntent transitions into `requires_action`. Use this parameter for simpler integrations that don't handle customer actions, such as [saving cards without authentication](https://docs.stripe.com/payments/save-card-without-authentication). This parameter can only be used with [`confirm=true`](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-confirm)."
     },
     {
-      "name": "excluded_payment_method_types",
+      "name": "excluded_payment_method_types[]",
       "in": "body",
       "type": "array",
       "required": false,
       "description": "The list of payment method types to exclude from use with this payment."
     },
     {
-      "name": "expand",
+      "name": "expand[]",
       "in": "body",
       "type": "array",
       "required": false,
@@ -186,7 +186,7 @@
       "description": "Payment method-specific configuration for this PaymentIntent."
     },
     {
-      "name": "payment_method_types",
+      "name": "payment_method_types[]",
       "in": "body",
       "type": "array",
       "required": false,

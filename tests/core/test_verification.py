@@ -1842,3 +1842,262 @@ def test_relationship_identity_and_order_are_deterministic():
     assert first == second
     assert tuple(item.fragment_id for item in first) == ("fragment-a", "fragment-b")
     assert all(item.id.startswith("relationship-") for item in first)
+
+
+INLINE_PATH = "/v1/things"
+INLINE_SCHEMA_POINTER = (
+    "/paths/~1v1~1things/post/requestBody/content/"
+    "application~1x-www-form-urlencoded/schema"
+)
+INLINE_SCHEMA = {
+    "type": "object",
+    "required": ["amount"],
+    "properties": {
+        "amount": {"type": "integer"},
+        "note": {"type": "string"},
+        "nested": {"type": "object", "properties": {"inner": {"type": "string"}}},
+        "items": {"type": "array", "items": {"type": "object"}},
+    },
+}
+
+
+def _inline_operation(
+    field: str,
+    *,
+    required: bool = True,
+    path: str = INLINE_PATH,
+    method: str = "POST",
+    request_schema_ref: str | None = None,
+) -> dict:
+    operation: dict = {
+        "method": method,
+        "path": path,
+        "parameters": [{"name": field, "location": "body", "required": required}],
+    }
+    if request_schema_ref is not None:
+        operation["request_schema_ref"] = request_schema_ref
+    return operation
+
+
+def _verify_inline(
+    derivation: str,
+    pointer: str,
+    source_value: object,
+    claim_path: str,
+    derived: object,
+    operation: dict,
+):
+    derivation_input = {
+        "locator": {"kind": "json_pointer", "pointer": pointer},
+        "semantic_value": source_value,
+    }
+    support = ClaimSupportProposal(
+        fragment_id="inline-fragment",
+        claim_path=claim_path,
+        proposed_relationship=SupportRelationshipType.DERIVED_SUPPORT,
+        verification_method=VerificationMethod.STRUCTURED_FIELD_PATH,
+        derivation_steps=(
+            DerivationStep(
+                name=derivation,
+                version="1",
+                input_digests=(fragment_digest(canonical_json(derivation_input)),),
+                output_digest=fragment_digest(canonical_json(derived)),
+            ),
+        ),
+    )
+    return verify_claim_support(
+        _proposal(operation, support, claim_kind="operation"),
+        _bundle(
+            _exact_fragment(
+                "inline-fragment",
+                canonical_json(source_value),
+                locator=JsonPointerLocator(pointer=pointer),
+                semantic_value=source_value,
+                semantic_role="structured.value",
+            )
+        ),
+    )[0]
+
+
+def _inline_name(pointer, source_value, field="amount", **operation_kwargs):
+    return _verify_inline(
+        "openapi_inline_request_body_property_name_from_pointer",
+        pointer,
+        source_value,
+        f"/parameters/body/{field}/name",
+        field,
+        _inline_operation(field, **operation_kwargs),
+    )
+
+
+def _inline_required(
+    source_value, claim_required, field="amount", pointer=INLINE_SCHEMA_POINTER,
+    **operation_kwargs,
+):
+    return _verify_inline(
+        "openapi_inline_request_body_property_required_from_schema_pointer",
+        pointer,
+        source_value,
+        f"/parameters/body/{field}/required",
+        claim_required,
+        _inline_operation(field, required=claim_required, **operation_kwargs),
+    )
+
+
+def _assert_derived(relationship, observed):
+    assert relationship.relationship is SupportRelationshipType.DERIVED_SUPPORT
+    assert relationship.observed_value == observed
+    assert relationship.reason_code == "OPENAPI_POINTER_DERIVATION_MATCH"
+
+
+def _assert_refused(relationship, reason_code="DERIVATION_INAPPLICABLE"):
+    """Refusal carries the reason code the component derivation gives."""
+    assert relationship.relationship is SupportRelationshipType.INSUFFICIENT
+    assert relationship.reason_code == reason_code
+
+
+def test_inline_request_body_property_pointer_proves_body_field_name():
+    _assert_derived(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/amount", {"type": "integer"}
+        ),
+        "amount",
+    )
+
+
+def test_inline_request_body_schema_proves_required_true():
+    _assert_derived(_inline_required(INLINE_SCHEMA, True), True)
+
+
+def test_inline_request_body_schema_proves_required_false():
+    _assert_derived(_inline_required(INLINE_SCHEMA, False, field="note"), False)
+
+
+def test_inline_request_body_array_property_name_carries_array_marker():
+    """An inline array property gets ``[]`` like a component property."""
+    _assert_derived(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/items",
+            INLINE_SCHEMA["properties"]["items"],
+            field="items[]",
+        ),
+        "items[]",
+    )
+
+
+def test_inline_request_body_array_property_refuses_a_plain_name():
+    # The component derivation reports DERIVATION_CLAIM_PATH_MISMATCH here.
+    _assert_refused(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/items",
+            INLINE_SCHEMA["properties"]["items"],
+            field="items",
+        ),
+        "DERIVATION_CLAIM_PATH_MISMATCH",
+    )
+
+
+def test_inline_request_body_required_accepts_an_array_marked_claim():
+    _assert_derived(_inline_required(INLINE_SCHEMA, False, field="items[]"), False)
+
+
+def test_inline_request_body_required_refuses_inconsistent_array_markers():
+    _assert_refused(_inline_required(INLINE_SCHEMA, False, field="items"))
+    _assert_refused(_inline_required(INLINE_SCHEMA, False, field="amount[]"))
+
+
+@pytest.mark.parametrize(
+    "operation_kwargs",
+    [
+        {"path": "/v1/other"},
+        {"method": "GET"},
+    ],
+)
+def test_inline_request_body_derivations_refuse_a_different_operation(operation_kwargs):
+    _assert_refused(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/amount",
+            {"type": "integer"},
+            **operation_kwargs,
+        )
+    )
+    _assert_refused(_inline_required(INLINE_SCHEMA, True, **operation_kwargs))
+
+
+def test_inline_request_body_method_binding_ignores_case_only():
+    _assert_derived(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/amount",
+            {"type": "integer"},
+            method="post",
+        ),
+        "amount",
+    )
+
+
+def test_inline_request_body_derivations_refuse_an_absent_property():
+    _assert_refused(
+        _inline_name(f"{INLINE_SCHEMA_POINTER}/properties/ghost", None, field="ghost")
+    )
+    _assert_refused(_inline_required(INLINE_SCHEMA, False, field="ghost"))
+
+
+def test_inline_request_body_required_refuses_a_disagreeing_flag():
+    # The component derivation reports DERIVATION_OUTPUT_MISMATCH here.
+    _assert_refused(
+        _inline_required(INLINE_SCHEMA, False), "DERIVATION_OUTPUT_MISMATCH"
+    )
+    _assert_refused(
+        _inline_required(INLINE_SCHEMA, True, field="note"),
+        "DERIVATION_OUTPUT_MISMATCH",
+    )
+
+
+@pytest.mark.parametrize(
+    "suffix, value, field",
+    [
+        ("/properties/nested/properties/inner", {"type": "string"}, "nested.inner"),
+        ("/properties/nested/properties/inner", {"type": "string"}, "inner"),
+        ("/properties/items/items", {"type": "object"}, "items"),
+        ("/properties/items/items/properties/id", {"type": "string"}, "id"),
+    ],
+)
+def test_inline_request_body_name_refuses_nested_or_items_pointers(
+    suffix, value, field
+):
+    _assert_refused(
+        _inline_name(f"{INLINE_SCHEMA_POINTER}{suffix}", value, field=field)
+    )
+
+
+def test_inline_request_body_required_refuses_a_nested_schema_pointer():
+    nested = INLINE_SCHEMA["properties"]["nested"]
+    _assert_refused(
+        _inline_required(
+            nested,
+            False,
+            field="inner",
+            pointer=f"{INLINE_SCHEMA_POINTER}/properties/nested",
+        )
+    )
+
+
+def test_inline_request_body_required_refuses_a_ref_schema():
+    ref_schema = {"$ref": "#/components/schemas/Thing"}
+    _assert_refused(_inline_required(ref_schema, True))
+    _assert_refused(
+        _inline_required({**INLINE_SCHEMA, "$ref": "#/components/schemas/Thing"}, True)
+    )
+
+
+def test_inline_request_body_derivations_refuse_an_operation_with_request_schema_ref():
+    _assert_refused(
+        _inline_name(
+            f"{INLINE_SCHEMA_POINTER}/properties/amount",
+            {"type": "integer"},
+            request_schema_ref="ThingRequest",
+        )
+    )
+    _assert_refused(
+        _inline_required(INLINE_SCHEMA, True, request_schema_ref="ThingRequest")
+    )

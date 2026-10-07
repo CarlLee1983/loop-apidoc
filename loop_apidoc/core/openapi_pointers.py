@@ -196,6 +196,110 @@ def _openapi_request_body_property_required_from_schema_pointer(
     return claim_path, property_name in required
 
 
+def _inline_request_body_pointer_tail(
+    pointer: str,
+    operation_value: Any,
+) -> list[str] | None:
+    """Return the pointer segments below an inline request-body schema.
+
+    The pointer must name ``/paths/<p>/<m>/requestBody/content/<mt>/schema``
+    for the very operation the claim belongs to, and that operation must not
+    declare a ``request_schema_ref`` (the component derivations apply then).
+    """
+    segments = pointer.split("/")
+    if (
+        len(segments) < 8
+        or segments[4:6] != ["requestBody", "content"]
+        or segments[7] != "schema"
+        or not isinstance(operation_value, Mapping)
+        or operation_value.get("request_schema_ref") is not None
+    ):
+        return None
+    operation = _openapi_operation_from_pointer("/".join(segments[:4]))
+    media_type = _decode_json_pointer_segment(segments[6])
+    method = operation_value.get("method")
+    if (
+        operation is None
+        or not media_type
+        or not isinstance(method, str)
+        or operation != (operation_value.get("path"), method.upper())
+    ):
+        return None
+    return segments[8:]
+
+
+def _inline_request_body_field_name(encoded_name: str) -> str | None:
+    """Decode a direct property name, refusing names the structural notation reserves."""
+    name = _decode_json_pointer_segment(encoded_name)
+    if not name or "." in name or name.endswith("[]"):
+        return None
+    return name
+
+
+def _openapi_inline_request_body_property_from_pointer(
+    pointer: str,
+    operation_value: Any,
+    source_property: Any,
+) -> str | None:
+    """Return the direct body field named by an inline request-schema property.
+
+    Only ``<inline schema>/properties/<name>`` is accepted; nested properties,
+    array ``items`` and ``$ref`` hops fail closed.
+    """
+    tail = _inline_request_body_pointer_tail(pointer, operation_value)
+    if (
+        tail is None
+        or len(tail) != 2
+        or tail[0] != "properties"
+        or not isinstance(source_property, Mapping)
+    ):
+        return None
+    property_name = _inline_request_body_field_name(tail[1])
+    if property_name is None:
+        return None
+    # Same structural name as a component property: arrays carry ``[]``.
+    return f"{property_name}[]" if source_property.get("type") == "array" else property_name
+
+
+def _openapi_inline_request_body_property_required_from_schema_pointer(
+    *,
+    pointer: str,
+    source_schema: Any,
+    operation_value: Any,
+    claim_path: str,
+) -> tuple[str, bool] | None:
+    """Derive one direct body field's required flag from its inline request schema."""
+    if _inline_request_body_pointer_tail(pointer, operation_value) != []:
+        return None
+    if not isinstance(source_schema, Mapping) or "$ref" in source_schema:
+        return None
+    parts = claim_path.strip("/").split("/")
+    if (
+        len(parts) != 4
+        or parts[:2] != ["parameters", "body"]
+        or parts[3] != "required"
+    ):
+        return None
+    claimed_name = _decode_json_pointer_segment(parts[2])
+    if not claimed_name:
+        return None
+    field_name = _inline_request_body_field_name(claimed_name.removesuffix("[]"))
+    properties = source_schema.get("properties")
+    source_property = (
+        properties.get(field_name) if isinstance(properties, Mapping) else None
+    )
+    if field_name is None or not isinstance(source_property, Mapping):
+        return None
+    if claimed_name.endswith("[]") != (source_property.get("type") == "array"):
+        return None
+    required = source_schema.get("required", ())
+    if not isinstance(required, (list, tuple)) or not all(
+        isinstance(name, str) for name in required
+    ):
+        return None
+    return claim_path, field_name in required
+
+
 def _openapi_request_body_ref_property_from_fragments(
     *,
     property_pointer: str,

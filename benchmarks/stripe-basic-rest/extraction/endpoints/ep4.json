@@ -18,7 +18,7 @@
       "description": "Reason for canceling this PaymentIntent. Possible values are: `duplicate`, `fraudulent`, `requested_by_customer`, or `abandoned`"
     },
     {
-      "name": "expand",
+      "name": "expand[]",
       "in": "body",
       "type": "array",
       "required": false,

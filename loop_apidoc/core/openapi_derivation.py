@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from loop_apidoc.core.openapi_pointers import (
+    _openapi_inline_request_body_property_from_pointer,
+    _openapi_inline_request_body_property_required_from_schema_pointer,
     _openapi_operation_from_pointer,
     _openapi_request_body_property_from_pointer,
     _openapi_request_body_property_required_from_schema_pointer,
@@ -53,6 +55,8 @@ def _openapi_pointer_derivation(
             ("openapi_request_schema_name_from_ref", "1"),
             ("openapi_request_body_property_name_from_pointer", "1"),
             ("openapi_request_body_property_required_from_schema_pointer", "1"),
+            ("openapi_inline_request_body_property_name_from_pointer", "1"),
+            ("openapi_inline_request_body_property_required_from_schema_pointer", "1"),
             ("openapi_request_body_ref_property_name_from_fragments", "1"),
             ("openapi_request_body_ref_property_required_from_fragments", "1"),
             ("openapi_schema_ref_property_name_from_fragments", "1"),
@@ -133,6 +137,33 @@ def _openapi_pointer_derivation(
             source_schema=fragment.semantic_value,
             operation_value=operation_value,
             claim_path=support.claim_path,
+        )
+        if required_info is None:
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path, derived_value = required_info
+    elif derivation == ("openapi_inline_request_body_property_name_from_pointer", "1"):
+        property_name = _openapi_inline_request_body_property_from_pointer(
+            fragment.locator.pointer,
+            operation_value,
+            fragment.semantic_value,
+        )
+        if property_name is None:
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = (
+            f"/parameters/body/{escape_segment(property_name)}/name"
+        )
+        derived_value = property_name
+    elif derivation == (
+        "openapi_inline_request_body_property_required_from_schema_pointer",
+        "1",
+    ):
+        required_info = (
+            _openapi_inline_request_body_property_required_from_schema_pointer(
+                pointer=fragment.locator.pointer,
+                source_schema=fragment.semantic_value,
+                operation_value=operation_value,
+                claim_path=support.claim_path,
+            )
         )
         if required_info is None:
             return None, "DERIVATION_INAPPLICABLE"
