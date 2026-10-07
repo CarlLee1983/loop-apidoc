@@ -7,7 +7,19 @@
       "name": null,
       "base_url": "https://api.stripe.com/",
       "version": null,
-      "source": "servers"
+      "source": "servers",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/servers/0/url"
+          },
+          "fragment_digest": "a9526f2353a0c3a858a49e89b33298fafc4b298be91a7abb392a259dead3242d",
+          "claim_path": "/servers/https:~1~1api.stripe.com~1"
+        }
+      ]
     }
   ],
   "security_schemes": [
@@ -16,14 +28,58 @@
       "type": "http",
       "location": "header",
       "details": "Bearer HTTP authentication. Allowed headers-- Authorization: Bearer <api_key>",
-      "source": "components.securitySchemes.bearerAuth"
+      "source": "components.securitySchemes.bearerAuth",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/bearerAuth"
+          },
+          "fragment_digest": "e0460696d9ab2cb4576a5e23fa393561db4baf8a256e2e1bde4ce4be021c189f",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/bearerAuth/type"
+          },
+          "fragment_digest": "a321f717224d7f734e098a468af88534a4b8e212f49fd254a9a8475dc3b248f3",
+          "claim_path": "/type"
+        }
+      ]
     },
     {
       "name": "basicAuth",
       "type": "http",
       "location": "header",
       "details": "Basic HTTP authentication. Allowed headers-- Authorization: Basic <api_key> | Authorization: Basic <base64 hash of `api_key:`>",
-      "source": "components.securitySchemes.basicAuth"
+      "source": "components.securitySchemes.basicAuth",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/basicAuth"
+          },
+          "fragment_digest": "1d92da7df34053fe9c41ae3a749f616d1c53d4fbcb36f4141005395ff1ba6c72",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/basicAuth/type"
+          },
+          "fragment_digest": "a321f717224d7f734e098a468af88534a4b8e212f49fd254a9a8475dc3b248f3",
+          "claim_path": "/type"
+        }
+      ]
     }
   ],
   "endpoints": [
@@ -72,141 +128,742 @@
           "name": "id",
           "type": "string",
           "required": true,
-          "description": "Unique identifier for the object."
+          "description": "Unique identifier for the object.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/id"
+              },
+              "fragment_digest": "ea9f420cd0c14c2d1fa78ffbf8abbfacf6287d30532568ba91dc3443a056258c",
+              "claim_path": "/fields/id/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/id/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/id"
+              },
+              "fragment_digest": "ea9f420cd0c14c2d1fa78ffbf8abbfacf6287d30532568ba91dc3443a056258c",
+              "claim_path": "/fields/id/type"
+            }
+          ]
         },
         {
           "name": "object",
           "type": "string",
           "required": true,
-          "description": "String representing the object's type. Objects of the same type share the same value."
+          "description": "String representing the object's type. Objects of the same type share the same value.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/object"
+              },
+              "fragment_digest": "6d88c1a07860a5583863509c2c96958add176584607b2602e9a37d6d77f06d3e",
+              "claim_path": "/fields/object/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/object/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/object"
+              },
+              "fragment_digest": "6d88c1a07860a5583863509c2c96958add176584607b2602e9a37d6d77f06d3e",
+              "claim_path": "/fields/object/type"
+            }
+          ]
         },
         {
           "name": "amount",
           "type": "integer",
           "required": true,
-          "description": "Amount intended to be collected by this PaymentIntent. A positive integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal) (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The minimum amount is $0.50 US or [equivalent in charge currency](https://docs.stripe.com/currencies#minimum-and-maximum-charge-amounts). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99)."
+          "description": "Amount intended to be collected by this PaymentIntent. A positive integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal) (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The minimum amount is $0.50 US or [equivalent in charge currency](https://docs.stripe.com/currencies#minimum-and-maximum-charge-amounts). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/amount"
+              },
+              "fragment_digest": "ed0e431fd246bbecd8c0b3a752b6387d88644dda3bb31484e842037bf401e5e3",
+              "claim_path": "/fields/amount/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/amount/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/amount"
+              },
+              "fragment_digest": "ed0e431fd246bbecd8c0b3a752b6387d88644dda3bb31484e842037bf401e5e3",
+              "claim_path": "/fields/amount/type"
+            }
+          ]
         },
         {
           "name": "amount_received",
           "type": "integer",
           "required": true,
-          "description": "Amount that this PaymentIntent collects."
+          "description": "Amount that this PaymentIntent collects.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/amount_received"
+              },
+              "fragment_digest": "6185082e6cc28f17cd5683232b8d6eeb9f890725b4e866c429c1e92fc524b82c",
+              "claim_path": "/fields/amount_received/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/amount_received/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/amount_received"
+              },
+              "fragment_digest": "6185082e6cc28f17cd5683232b8d6eeb9f890725b4e866c429c1e92fc524b82c",
+              "claim_path": "/fields/amount_received/type"
+            }
+          ]
         },
         {
           "name": "currency",
           "type": "string",
           "required": true,
-          "description": "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."
+          "description": "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/currency"
+              },
+              "fragment_digest": "2cf32df4ffd7efce8bb9d1ba56c33102ab13c98eddab2fc9a2bdc313cf14b5cf",
+              "claim_path": "/fields/currency/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/currency/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/currency"
+              },
+              "fragment_digest": "2cf32df4ffd7efce8bb9d1ba56c33102ab13c98eddab2fc9a2bdc313cf14b5cf",
+              "claim_path": "/fields/currency/type"
+            }
+          ]
         },
         {
           "name": "status",
           "type": "string",
           "required": true,
-          "description": "Status of this PaymentIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `requires_capture`, `canceled`, or `succeeded`. Read more about each PaymentIntent [status](https://docs.stripe.com/payments/intents#intent-statuses)."
+          "description": "Status of this PaymentIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `requires_capture`, `canceled`, or `succeeded`. Read more about each PaymentIntent [status](https://docs.stripe.com/payments/intents#intent-statuses).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/status"
+              },
+              "fragment_digest": "0ab59d89301c2d1fd94787b9d1e78e12df6a61121ae545f85ad0ffbbed0ab2db",
+              "claim_path": "/fields/status/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/status/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/status"
+              },
+              "fragment_digest": "0ab59d89301c2d1fd94787b9d1e78e12df6a61121ae545f85ad0ffbbed0ab2db",
+              "claim_path": "/fields/status/type"
+            }
+          ]
         },
         {
           "name": "client_secret",
           "type": "string",
           "required": true,
-          "description": "The client secret of this PaymentIntent. Used for client-side retrieval using a publishable key. \n\nThe client secret can be used to complete a payment from your frontend. It should not be stored, logged, or exposed to anyone other than the customer. Make sure that you have TLS enabled on any page that includes the client secret.\n\nRefer to our docs to [accept a payment](https://docs.stripe.com/payments/accept-a-payment?ui=elements) and learn about how `client_secret` should be handled."
+          "description": "The client secret of this PaymentIntent. Used for client-side retrieval using a publishable key. \n\nThe client secret can be used to complete a payment from your frontend. It should not be stored, logged, or exposed to anyone other than the customer. Make sure that you have TLS enabled on any page that includes the client secret.\n\nRefer to our docs to [accept a payment](https://docs.stripe.com/payments/accept-a-payment?ui=elements) and learn about how `client_secret` should be handled.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/client_secret"
+              },
+              "fragment_digest": "118b4f99269743a4c322150e09233be1275b352a7575ee300e7c31247e41dea7",
+              "claim_path": "/fields/client_secret/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/client_secret/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/client_secret"
+              },
+              "fragment_digest": "118b4f99269743a4c322150e09233be1275b352a7575ee300e7c31247e41dea7",
+              "claim_path": "/fields/client_secret/type"
+            }
+          ]
         },
         {
           "name": "customer",
           "type": null,
           "required": true,
-          "description": "ID of the Customer this PaymentIntent belongs to, if one exists.\n\nPayment methods attached to other Customers cannot be used with this PaymentIntent.\n\nIf [setup_future_usage](https://api.stripe.com#payment_intent_object-setup_future_usage) is set and this PaymentIntent's payment method is not `card_present`, then the payment method attaches to the Customer after the PaymentIntent has been confirmed and any required actions from the user are complete. If the payment method is `card_present` and isn't a digital wallet, then a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card is created and attached to the Customer instead."
+          "description": "ID of the Customer this PaymentIntent belongs to, if one exists.\n\nPayment methods attached to other Customers cannot be used with this PaymentIntent.\n\nIf [setup_future_usage](https://api.stripe.com#payment_intent_object-setup_future_usage) is set and this PaymentIntent's payment method is not `card_present`, then the payment method attaches to the Customer after the PaymentIntent has been confirmed and any required actions from the user are complete. If the payment method is `card_present` and isn't a digital wallet, then a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card is created and attached to the Customer instead.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/customer"
+              },
+              "fragment_digest": "ec5c1d0da03befc2328bba82150a4361bb79d969ebdf68c22635417d45b34dab",
+              "claim_path": "/fields/customer/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/customer/required"
+            }
+          ]
         },
         {
           "name": "payment_method",
           "type": null,
           "required": true,
-          "description": "ID of the payment method used in this PaymentIntent."
+          "description": "ID of the payment method used in this PaymentIntent.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/payment_method"
+              },
+              "fragment_digest": "c5f01e40d7dd4a6ade689cae57e423a62dc413b6a2474f8028382f7fccbd5f99",
+              "claim_path": "/fields/payment_method/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/payment_method/required"
+            }
+          ]
         },
         {
-          "name": "payment_method_types",
+          "name": "payment_method_types[]",
           "type": "array",
           "required": true,
-          "description": "The list of payment method types (e.g. card) that this PaymentIntent is allowed to use. A comprehensive list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type)."
+          "description": "The list of payment method types (e.g. card) that this PaymentIntent is allowed to use. A comprehensive list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/payment_method_types"
+              },
+              "fragment_digest": "ff73663e13d1c26ca27fb0a01ae57b3160750c9859327c2dab9f6fbf2e696acf",
+              "claim_path": "/fields/payment_method_types[]/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/payment_method_types[]/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/payment_method_types"
+              },
+              "fragment_digest": "ff73663e13d1c26ca27fb0a01ae57b3160750c9859327c2dab9f6fbf2e696acf",
+              "claim_path": "/fields/payment_method_types[]/type"
+            }
+          ]
         },
         {
           "name": "capture_method",
           "type": "string",
           "required": true,
-          "description": "Controls when the funds will be captured from the customer's account."
+          "description": "Controls when the funds will be captured from the customer's account.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/capture_method"
+              },
+              "fragment_digest": "b0f094203cd1466163850b1baa4a21172caf1a50f87ae55197fb4905765e45f6",
+              "claim_path": "/fields/capture_method/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/capture_method/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/capture_method"
+              },
+              "fragment_digest": "b0f094203cd1466163850b1baa4a21172caf1a50f87ae55197fb4905765e45f6",
+              "claim_path": "/fields/capture_method/type"
+            }
+          ]
         },
         {
           "name": "confirmation_method",
           "type": "string",
           "required": true,
-          "description": "Describes whether we can confirm this PaymentIntent automatically, or if it requires customer action to confirm the payment."
+          "description": "Describes whether we can confirm this PaymentIntent automatically, or if it requires customer action to confirm the payment.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/confirmation_method"
+              },
+              "fragment_digest": "66c37cf513c3fbc839d0e61c0077be652d3d1b27ed34627ef68e4199174dc57e",
+              "claim_path": "/fields/confirmation_method/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/confirmation_method/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/confirmation_method"
+              },
+              "fragment_digest": "66c37cf513c3fbc839d0e61c0077be652d3d1b27ed34627ef68e4199174dc57e",
+              "claim_path": "/fields/confirmation_method/type"
+            }
+          ]
         },
         {
           "name": "created",
           "type": "integer",
           "required": true,
-          "description": "Time at which the object was created. Measured in seconds since the Unix epoch."
+          "description": "Time at which the object was created. Measured in seconds since the Unix epoch.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/created"
+              },
+              "fragment_digest": "e95842cd44613032e0680d88a09d5cafc423469324ac85a8080607519ad454a9",
+              "claim_path": "/fields/created/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/created/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/created"
+              },
+              "fragment_digest": "e95842cd44613032e0680d88a09d5cafc423469324ac85a8080607519ad454a9",
+              "claim_path": "/fields/created/type"
+            }
+          ]
         },
         {
           "name": "description",
           "type": "string",
           "required": true,
-          "description": "An arbitrary string attached to the object. Often useful for displaying to users."
+          "description": "An arbitrary string attached to the object. Often useful for displaying to users.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/description"
+              },
+              "fragment_digest": "7012c4d279177ac850c3b1012f33e9a1851b4b29f60b34b72a4419709f9a0393",
+              "claim_path": "/fields/description/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/description/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/description"
+              },
+              "fragment_digest": "7012c4d279177ac850c3b1012f33e9a1851b4b29f60b34b72a4419709f9a0393",
+              "claim_path": "/fields/description/type"
+            }
+          ]
         },
         {
           "name": "latest_charge",
           "type": null,
           "required": true,
-          "description": "ID of the latest [Charge object](https://docs.stripe.com/api/charges) created by this PaymentIntent. This property is `null` until PaymentIntent confirmation is attempted."
+          "description": "ID of the latest [Charge object](https://docs.stripe.com/api/charges) created by this PaymentIntent. This property is `null` until PaymentIntent confirmation is attempted.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/latest_charge"
+              },
+              "fragment_digest": "0302ac5adafedf99d51929e9c6d5a1ce3a9b83b81ed54b10d5649e4473747959",
+              "claim_path": "/fields/latest_charge/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/latest_charge/required"
+            }
+          ]
         },
         {
           "name": "next_action",
           "type": null,
           "required": true,
-          "description": "If present, this property tells you what actions you need to take in order for your customer to fulfill a payment using the provided source."
+          "description": "If present, this property tells you what actions you need to take in order for your customer to fulfill a payment using the provided source.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/next_action"
+              },
+              "fragment_digest": "9afe59bb1cc9f372b6335a091ce77519283cc5e2eb08ec8783e0f976ae8252f8",
+              "claim_path": "/fields/next_action/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/next_action/required"
+            }
+          ]
         },
         {
           "name": "receipt_email",
           "type": "string",
           "required": true,
-          "description": "Email address that the receipt for the resulting payment will be sent to. If `receipt_email` is specified for a payment in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails)."
+          "description": "Email address that the receipt for the resulting payment will be sent to. If `receipt_email` is specified for a payment in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/receipt_email"
+              },
+              "fragment_digest": "567ffbfcdf804253eb28bc22202128f6c0003b619f2a7cbe1eb16df2ba3319fa",
+              "claim_path": "/fields/receipt_email/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/receipt_email/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/receipt_email"
+              },
+              "fragment_digest": "567ffbfcdf804253eb28bc22202128f6c0003b619f2a7cbe1eb16df2ba3319fa",
+              "claim_path": "/fields/receipt_email/type"
+            }
+          ]
         },
         {
           "name": "setup_future_usage",
           "type": "string",
           "required": true,
-          "description": "Indicates that you intend to make future payments with this PaymentIntent's payment method.\n\nIf you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](/api/payment_methods/attach) the payment method to a Customer after the transaction completes.\n\nIf the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead.\n\nWhen processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](/strong-customer-authentication)."
+          "description": "Indicates that you intend to make future payments with this PaymentIntent's payment method.\n\nIf you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](/api/payment_methods/attach) the payment method to a Customer after the transaction completes.\n\nIf the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead.\n\nWhen processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](/strong-customer-authentication).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/setup_future_usage"
+              },
+              "fragment_digest": "ad9319c1338632131c1499ec04826dcf9d9d2dda10b4ce15bf152109540f4d1d",
+              "claim_path": "/fields/setup_future_usage/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/setup_future_usage/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/setup_future_usage"
+              },
+              "fragment_digest": "ad9319c1338632131c1499ec04826dcf9d9d2dda10b4ce15bf152109540f4d1d",
+              "claim_path": "/fields/setup_future_usage/type"
+            }
+          ]
         },
         {
           "name": "metadata",
           "type": "object",
           "required": true,
-          "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Learn more about [storing information in metadata](https://docs.stripe.com/payments/payment-intents/creating-payment-intents#storing-information-in-metadata)."
+          "description": "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Learn more about [storing information in metadata](https://docs.stripe.com/payments/payment-intents/creating-payment-intents#storing-information-in-metadata).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/metadata"
+              },
+              "fragment_digest": "af5902a64b5dc05b0dfccdb1e8716a8d017b8a336c905fc6e4ade009fb5d286b",
+              "claim_path": "/fields/metadata/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/metadata/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/metadata"
+              },
+              "fragment_digest": "af5902a64b5dc05b0dfccdb1e8716a8d017b8a336c905fc6e4ade009fb5d286b",
+              "claim_path": "/fields/metadata/type"
+            }
+          ]
         },
         {
           "name": "livemode",
           "type": "boolean",
           "required": true,
-          "description": "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."
+          "description": "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/livemode"
+              },
+              "fragment_digest": "c9bd599db665e27ee5853949bcc88e3fa00fd03b047c1a54c0f971903b24f114",
+              "claim_path": "/fields/livemode/name"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent"
+              },
+              "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+              "claim_path": "/fields/livemode/required"
+            },
+            {
+              "version": 1,
+              "source": "spec3.sdk.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/payment_intent/properties/livemode"
+              },
+              "fragment_digest": "c9bd599db665e27ee5853949bcc88e3fa00fd03b047c1a54c0f971903b24f114",
+              "claim_path": "/fields/livemode/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "A PaymentIntent guides you through the process of collecting a payment from your customer.\nWe recommend that you create exactly one PaymentIntent for each order or\ncustomer session in your system. You can reference the PaymentIntent later to\nsee the history of payment attempts for a particular session.\n\nA PaymentIntent transitions through\n[multiple statuses](/payments/paymentintents/lifecycle)\nthroughout its lifetime as it interfaces with Stripe.js to perform\nauthentication flows and ultimately creates at most one successful charge.\n\nRelated guide: [Payment Intents API](https://docs.stripe.com/payments/payment-intents)",
-      "source": "components.schemas.payment_intent"
+      "source": "components.schemas.payment_intent",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "spec3.sdk.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/payment_intent"
+          },
+          "fragment_digest": "a9e1a388b9fb36b2ba58d1bfaafb2c1468535584e85e34de3643b432e33a4e50",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "errors": [],
-  "operational": [
-    {
-      "topic": "Authentication (bearerAuth)",
-      "detail": "Bearer HTTP authentication. Allowed headers-- Authorization: Bearer <api_key>",
-      "source": "components.securitySchemes.bearerAuth.description"
-    },
-    {
-      "topic": "Authentication (basicAuth)",
-      "detail": "Basic HTTP authentication. Allowed headers-- Authorization: Basic <api_key> | Authorization: Basic <base64 hash of `api_key:`>",
-      "source": "components.securitySchemes.basicAuth.description"
-    }
-  ],
+  "operational": [],
   "missing": [
     "Per-operation error responses / status codes are not captured in this subset (Stripe uses a global error object schema).",
     "The PaymentIntent schema has ~45 properties; only ~20 representative core fields are captured here.",

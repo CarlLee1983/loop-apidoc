@@ -138,7 +138,11 @@ def test_exact_evidence_parity_cases_are_a_reviewed_subset_of_the_required_inven
     benchmark_root = Path(__file__).resolve().parents[1] / "benchmarks"
 
     assert set(cases) <= set(quality_gate.required_benchmark_cases())
-    assert set(cases) == {"funkygames-transfer-operator", "rsg-game-transfer-wallet"}
+    assert set(cases) == {
+        "funkygames-transfer-operator",
+        "rsg-game-transfer-wallet",
+        "stripe-basic-rest",
+    }
     for case in cases:
         parity = json.loads(
             (benchmark_root / case / "expected" / "core-parity.json").read_text("utf-8")
