@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -35,6 +34,7 @@ from loop_apidoc.domain.evidence import (
     WholeDocumentLocator,
     XPathLocator,
     CssSelectorLocator,
+    canonical_json,
 )
 from loop_apidoc.domain.models import ContractMetadata, FrozenModel
 from loop_apidoc.extraction.evidence import ExtractionEvidenceReference
@@ -179,12 +179,7 @@ class _BridgeLookup:
 
 def build_evidence(manifest: Manifest, generated_at: datetime) -> BridgeInputs:
     metadata = _canonical_source_metadata(manifest)
-    canonical = json.dumps(
-        metadata,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    canonical = canonical_json(metadata)
     source_set_digest = hashlib.sha256(canonical.encode()).hexdigest()
     source_set_id = f"source-set-{source_set_digest[:20]}"
 
@@ -645,12 +640,9 @@ def _to_claim_proposal(
 
 
 def _canonical_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    # The domain serializer, so YAML-parsed `date`/`datetime` values digest the
+    # way Core recomputes them.
+    return canonical_json(value)
 
 
 def _diagnostic_text(diagnostic: BridgeDiagnostic) -> str:

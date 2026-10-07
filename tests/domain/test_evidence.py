@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import ValidationError
 import pytest
 
@@ -11,6 +13,7 @@ from loop_apidoc.domain.evidence import (
     SupportRelationshipType,
     TableCellLocator,
     VerificationMethod,
+    canonical_json,
     fragment_digest,
     make_fragment_id,
     make_relationship_id,
@@ -114,3 +117,14 @@ def test_relationship_id_is_stable_for_canonical_payload():
 
     assert first == second
     assert first.startswith("relationship-")
+
+
+def test_canonical_json_serializes_a_yaml_date_as_iso_text():
+    # `yaml.safe_load` turns a bare `2015-02-22` into `datetime.date`.
+    assert canonical_json({"d": date(2015, 2, 22)}) == '{"d":"2015-02-22"}'
+
+
+def test_canonical_json_output_is_unchanged_for_plain_json_values():
+    value = {"b": [1, 2.5, None, True], "a": "é", "c": {"z": "x"}}
+
+    assert canonical_json(value) == '{"a":"é","b":[1,2.5,null,true],"c":{"z":"x"}}'
