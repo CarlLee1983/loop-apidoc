@@ -4,10 +4,22 @@
   "overview": "Wikipedia for Web APIs. Repository of API definitions in OpenAPI format. **Warning**: If you want to be notified about changes in advance please join our [Slack channel](https://join.slack.com/t/mermade/shared_invite/zt-g78g7xir-MLE_CTCcXCdfJfG3CJe9qA). Client sample: [[Demo]](https://apis.guru/simple-ui) [[Repo]](https://github.com/APIs-guru/simple-ui)",
   "environments": [
     {
-      "name": "default",
+      "name": null,
       "base_url": "https://api.apis.guru/v2",
       "version": null,
-      "source": "servers"
+      "source": "servers",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "apis-guru-2.2.0.openapi.yaml",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/servers/0/url"
+          },
+          "fragment_digest": "f5415a340ac3eb5652d3a12a2068361b64b9e552679170ecb9e753dfe07af81d",
+          "claim_path": "/servers/https:~1~1api.apis.guru~1v2"
+        }
+      ]
     }
   ],
   "security_schemes": [],
@@ -63,44 +75,157 @@
           "name": "added",
           "type": "string",
           "required": true,
-          "description": "Timestamp when the API was first added to the directory (format: date-time)"
+          "description": "Timestamp when the API was first added to the directory (format: date-time)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/added"
+              },
+              "fragment_digest": "df358b4dcc2feed2fe2ad5c877c588cb4fc264c766d08e8ec65dd3499167571d",
+              "claim_path": "/fields/added/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API"
+              },
+              "fragment_digest": "98ec86e4fc00716af3748faf5ebf22802fd6ddc5db76fedee24cdd4a4e6ec25e",
+              "claim_path": "/fields/added/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/added"
+              },
+              "fragment_digest": "df358b4dcc2feed2fe2ad5c877c588cb4fc264c766d08e8ec65dd3499167571d",
+              "claim_path": "/fields/added/type"
+            }
+          ]
         },
         {
           "name": "preferred",
           "type": "string",
           "required": true,
-          "description": "Recommended version"
+          "description": "Recommended version",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/preferred"
+              },
+              "fragment_digest": "fa854e7ca652d5a71a6e26fbdeda3fd8d11540b9e62bbdfe78fe9cb050d8e3a9",
+              "claim_path": "/fields/preferred/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API"
+              },
+              "fragment_digest": "98ec86e4fc00716af3748faf5ebf22802fd6ddc5db76fedee24cdd4a4e6ec25e",
+              "claim_path": "/fields/preferred/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/preferred"
+              },
+              "fragment_digest": "fa854e7ca652d5a71a6e26fbdeda3fd8d11540b9e62bbdfe78fe9cb050d8e3a9",
+              "claim_path": "/fields/preferred/type"
+            }
+          ]
         },
         {
           "name": "versions",
           "type": "object",
           "required": true,
-          "description": "List of supported versions of the API"
-        },
-        {
-          "name": "versions.{*}",
-          "type": "ApiVersion",
-          "required": null,
-          "description": "additionalProperties is $ref ApiVersion; map keyed by version id, minProperties 1"
+          "description": "List of supported versions of the API",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/versions"
+              },
+              "fragment_digest": "ef8e82b6bc36ed9a38a74f819fe67f2e2c4852fd4625ab994aabc0ffa856a8dc",
+              "claim_path": "/fields/versions/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API"
+              },
+              "fragment_digest": "98ec86e4fc00716af3748faf5ebf22802fd6ddc5db76fedee24cdd4a4e6ec25e",
+              "claim_path": "/fields/versions/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/API/properties/versions"
+              },
+              "fragment_digest": "ef8e82b6bc36ed9a38a74f819fe67f2e2c4852fd4625ab994aabc0ffa856a8dc",
+              "claim_path": "/fields/versions/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "additionalProperties: false; description: Meta information about API; versions is a map (additionalProperties -> ApiVersion, minProperties 1)",
-      "source": "components.schemas.API"
+      "source": "components.schemas.API",
+      "missing": [
+        "`versions` is an additionalProperties map of `ApiVersion`, which the extraction contract cannot represent as named fields"
+      ],
+      "evidence": [
+        {
+          "version": 1,
+          "source": "apis-guru-2.2.0.openapi.yaml",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/API"
+          },
+          "fragment_digest": "98ec86e4fc00716af3748faf5ebf22802fd6ddc5db76fedee24cdd4a4e6ec25e",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "APIs",
-      "fields": [
-        {
-          "name": "{*}",
-          "type": "API",
-          "required": null,
-          "description": "additionalProperties is $ref API; map keyed by API IDs (`<provider>[:<service>]`)"
-        }
-      ],
+      "fields": [],
       "enums": [],
       "constraints": "type object; additionalProperties -> API (map); minProperties 1; description: List of API details. It is a JSON object with API IDs(`<provider>[:<service>]`) as keys.",
-      "source": "components.schemas.APIs"
+      "source": "components.schemas.APIs",
+      "missing": [
+        "`APIs` is an additionalProperties map of `API`, which the extraction contract cannot represent as named fields"
+      ],
+      "evidence": [
+        {
+          "version": 1,
+          "source": "apis-guru-2.2.0.openapi.yaml",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/APIs"
+          },
+          "fragment_digest": "b2d7b3c85e63402e9224c7dad294a907c1ed1f5d086aeea794b29a630c70687b",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "ApiVersion",
@@ -109,190 +234,937 @@
           "name": "added",
           "type": "string",
           "required": true,
-          "description": "Timestamp when the version was added (format: date-time)"
+          "description": "Timestamp when the version was added (format: date-time)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/added"
+              },
+              "fragment_digest": "8732d42bab62eee9fbb156e5e9df9608c7477e0caf17336bfb7283fce1962e19",
+              "claim_path": "/fields/added/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/added/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/added"
+              },
+              "fragment_digest": "8732d42bab62eee9fbb156e5e9df9608c7477e0caf17336bfb7283fce1962e19",
+              "claim_path": "/fields/added/type"
+            }
+          ]
         },
         {
           "name": "externalDocs",
           "type": "object",
           "required": false,
-          "description": "Copy of `externalDocs` section from OpenAPI definition (minProperties 1)"
+          "description": "Copy of `externalDocs` section from OpenAPI definition (minProperties 1)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/externalDocs"
+              },
+              "fragment_digest": "101a8b0f38f08eaa23cbc88e7573196a1a4a80c7b1cb744ba20d0a00003a9fe0",
+              "claim_path": "/fields/externalDocs/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/externalDocs/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/externalDocs"
+              },
+              "fragment_digest": "101a8b0f38f08eaa23cbc88e7573196a1a4a80c7b1cb744ba20d0a00003a9fe0",
+              "claim_path": "/fields/externalDocs/type"
+            }
+          ]
         },
         {
           "name": "info",
           "type": "object",
           "required": true,
-          "description": "Copy of `info` section from OpenAPI definition (minProperties 1)"
+          "description": "Copy of `info` section from OpenAPI definition (minProperties 1)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/info"
+              },
+              "fragment_digest": "9cc0161af2f45d345567e4b1bf0b58b440a32b9abe6244557e7f74945d0bf9aa",
+              "claim_path": "/fields/info/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/info/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/info"
+              },
+              "fragment_digest": "9cc0161af2f45d345567e4b1bf0b58b440a32b9abe6244557e7f74945d0bf9aa",
+              "claim_path": "/fields/info/type"
+            }
+          ]
         },
         {
           "name": "link",
           "type": "string",
           "required": false,
-          "description": "Link to the individual API entry for this API (format: url)"
+          "description": "Link to the individual API entry for this API (format: url)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/link"
+              },
+              "fragment_digest": "8771f9734bea7f02c729cc97a9c7466580a5bedf03b8eae47b852a60450e3b2a",
+              "claim_path": "/fields/link/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/link/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/link"
+              },
+              "fragment_digest": "8771f9734bea7f02c729cc97a9c7466580a5bedf03b8eae47b852a60450e3b2a",
+              "claim_path": "/fields/link/type"
+            }
+          ]
         },
         {
           "name": "openapiVer",
           "type": "string",
           "required": true,
-          "description": "The value of the `openapi` or `swagger` property of the source definition"
+          "description": "The value of the `openapi` or `swagger` property of the source definition",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/openapiVer"
+              },
+              "fragment_digest": "891a033dea89a9c96d2ef1b5af09271637a90dda64878a2f7ff6426072ae9208",
+              "claim_path": "/fields/openapiVer/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/openapiVer/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/openapiVer"
+              },
+              "fragment_digest": "891a033dea89a9c96d2ef1b5af09271637a90dda64878a2f7ff6426072ae9208",
+              "claim_path": "/fields/openapiVer/type"
+            }
+          ]
         },
         {
           "name": "swaggerUrl",
           "type": "string",
           "required": true,
-          "description": "URL to OpenAPI definition in JSON format (format: url)"
+          "description": "URL to OpenAPI definition in JSON format (format: url)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/swaggerUrl"
+              },
+              "fragment_digest": "ac6839470d39f14190456831d11ca5d4da386ceb8cb273311da8c277beb2e78c",
+              "claim_path": "/fields/swaggerUrl/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/swaggerUrl/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/swaggerUrl"
+              },
+              "fragment_digest": "ac6839470d39f14190456831d11ca5d4da386ceb8cb273311da8c277beb2e78c",
+              "claim_path": "/fields/swaggerUrl/type"
+            }
+          ]
         },
         {
           "name": "swaggerYamlUrl",
           "type": "string",
           "required": true,
-          "description": "URL to OpenAPI definition in YAML format (format: url)"
+          "description": "URL to OpenAPI definition in YAML format (format: url)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/swaggerYamlUrl"
+              },
+              "fragment_digest": "5bff72854c2a79f008e0d19ef75f60caf3a893b1d0c7be6522c423508c747d53",
+              "claim_path": "/fields/swaggerYamlUrl/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/swaggerYamlUrl/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/swaggerYamlUrl"
+              },
+              "fragment_digest": "5bff72854c2a79f008e0d19ef75f60caf3a893b1d0c7be6522c423508c747d53",
+              "claim_path": "/fields/swaggerYamlUrl/type"
+            }
+          ]
         },
         {
           "name": "updated",
           "type": "string",
           "required": true,
-          "description": "Timestamp when the version was updated (format: date-time)"
+          "description": "Timestamp when the version was updated (format: date-time)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/updated"
+              },
+              "fragment_digest": "95cca28476cccabf1a6f069e4df9a2d3e5dfa682235d5da70f49097df94be646",
+              "claim_path": "/fields/updated/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion"
+              },
+              "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+              "claim_path": "/fields/updated/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApiVersion/properties/updated"
+              },
+              "fragment_digest": "95cca28476cccabf1a6f069e4df9a2d3e5dfa682235d5da70f49097df94be646",
+              "claim_path": "/fields/updated/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "additionalProperties: false; type object",
-      "source": "components.schemas.ApiVersion"
+      "source": "components.schemas.ApiVersion",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "apis-guru-2.2.0.openapi.yaml",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/ApiVersion"
+          },
+          "fragment_digest": "4fc3447636d804d9c3d450a1701f112e9612ad1e6c374041a448c87a6ce866d5",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "Metrics",
       "fields": [
         {
-          "name": "datasets",
+          "name": "datasets[]",
           "type": "array",
           "required": false,
-          "description": "Data used for charting etc (items: {})"
+          "description": "Data used for charting etc (items: {})",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/datasets"
+              },
+              "fragment_digest": "52de5be4a1c5f5cf05083b5bb3c61ce673fedb1c5951c027b91d5572076ad745",
+              "claim_path": "/fields/datasets[]/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/datasets[]/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/datasets"
+              },
+              "fragment_digest": "52de5be4a1c5f5cf05083b5bb3c61ce673fedb1c5951c027b91d5572076ad745",
+              "claim_path": "/fields/datasets[]/type"
+            }
+          ]
         },
         {
           "name": "fixedPct",
           "type": "integer",
           "required": false,
-          "description": "Percentage of all APIs where auto fixes have been applied"
+          "description": "Percentage of all APIs where auto fixes have been applied",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/fixedPct"
+              },
+              "fragment_digest": "44bd39347c7557a801144bb9aaac45ffbdffaa7d946a40f08ee5353dcf21f60f",
+              "claim_path": "/fields/fixedPct/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/fixedPct/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/fixedPct"
+              },
+              "fragment_digest": "44bd39347c7557a801144bb9aaac45ffbdffaa7d946a40f08ee5353dcf21f60f",
+              "claim_path": "/fields/fixedPct/type"
+            }
+          ]
         },
         {
           "name": "fixes",
           "type": "integer",
           "required": false,
-          "description": "Total number of fixes applied across all APIs"
+          "description": "Total number of fixes applied across all APIs",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/fixes"
+              },
+              "fragment_digest": "65f9edadc8ccab4ffc079c32a80242ad6704a9c679be8a978d685b89ebee2dc8",
+              "claim_path": "/fields/fixes/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/fixes/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/fixes"
+              },
+              "fragment_digest": "65f9edadc8ccab4ffc079c32a80242ad6704a9c679be8a978d685b89ebee2dc8",
+              "claim_path": "/fields/fixes/type"
+            }
+          ]
         },
         {
           "name": "invalid",
           "type": "integer",
           "required": false,
-          "description": "Number of newly invalid APIs"
+          "description": "Number of newly invalid APIs",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/invalid"
+              },
+              "fragment_digest": "e1fb33577887b6db11a7968745e21f49b09651b02517bbe28495f8c431aba33f",
+              "claim_path": "/fields/invalid/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/invalid/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/invalid"
+              },
+              "fragment_digest": "e1fb33577887b6db11a7968745e21f49b09651b02517bbe28495f8c431aba33f",
+              "claim_path": "/fields/invalid/type"
+            }
+          ]
         },
         {
           "name": "issues",
           "type": "integer",
           "required": false,
-          "description": "Open GitHub issues on our main repo"
+          "description": "Open GitHub issues on our main repo",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/issues"
+              },
+              "fragment_digest": "4e3442f6d17fee8cb2d75a21dabc44fa62b4429cc4e1e4986dd02eaa35d5e800",
+              "claim_path": "/fields/issues/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/issues/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/issues"
+              },
+              "fragment_digest": "4e3442f6d17fee8cb2d75a21dabc44fa62b4429cc4e1e4986dd02eaa35d5e800",
+              "claim_path": "/fields/issues/type"
+            }
+          ]
         },
         {
           "name": "numAPIs",
           "type": "integer",
           "required": true,
-          "description": "Number of unique APIs (minimum 1)"
+          "description": "Number of unique APIs (minimum 1)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numAPIs"
+              },
+              "fragment_digest": "a1ffbac51bcfe93c650e9519b7218739b3f6b49ac9d8a88d43ae281975f2cfdb",
+              "claim_path": "/fields/numAPIs/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/numAPIs/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numAPIs"
+              },
+              "fragment_digest": "a1ffbac51bcfe93c650e9519b7218739b3f6b49ac9d8a88d43ae281975f2cfdb",
+              "claim_path": "/fields/numAPIs/type"
+            }
+          ]
         },
         {
           "name": "numDrivers",
           "type": "integer",
           "required": false,
-          "description": "Number of methods of API retrieval"
+          "description": "Number of methods of API retrieval",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numDrivers"
+              },
+              "fragment_digest": "9161ae688aac51bdb08c238eb2333a1af774f67edd9c9dc6ea0284fbba5f8c00",
+              "claim_path": "/fields/numDrivers/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/numDrivers/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numDrivers"
+              },
+              "fragment_digest": "9161ae688aac51bdb08c238eb2333a1af774f67edd9c9dc6ea0284fbba5f8c00",
+              "claim_path": "/fields/numDrivers/type"
+            }
+          ]
         },
         {
           "name": "numEndpoints",
           "type": "integer",
           "required": true,
-          "description": "Total number of endpoints inside all definitions (minimum 1)"
+          "description": "Total number of endpoints inside all definitions (minimum 1)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numEndpoints"
+              },
+              "fragment_digest": "29d655bdb9fe4310dc01814e89521e12ed1dc21501137208f4c77ed01101933f",
+              "claim_path": "/fields/numEndpoints/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/numEndpoints/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numEndpoints"
+              },
+              "fragment_digest": "29d655bdb9fe4310dc01814e89521e12ed1dc21501137208f4c77ed01101933f",
+              "claim_path": "/fields/numEndpoints/type"
+            }
+          ]
         },
         {
           "name": "numProviders",
           "type": "integer",
           "required": false,
-          "description": "Number of API providers in directory"
+          "description": "Number of API providers in directory",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numProviders"
+              },
+              "fragment_digest": "50b4928c870a5d7df7fea24c68bfbc686362edcce3f5b110bc7451e49e884fcd",
+              "claim_path": "/fields/numProviders/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/numProviders/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numProviders"
+              },
+              "fragment_digest": "50b4928c870a5d7df7fea24c68bfbc686362edcce3f5b110bc7451e49e884fcd",
+              "claim_path": "/fields/numProviders/type"
+            }
+          ]
         },
         {
           "name": "numSpecs",
           "type": "integer",
           "required": true,
-          "description": "Number of API definitions including different versions of the same API (minimum 1)"
+          "description": "Number of API definitions including different versions of the same API (minimum 1)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numSpecs"
+              },
+              "fragment_digest": "896b90e8079bd4933186701fc0ee432027c48bf7aa04639a8c96e910ce7df7fb",
+              "claim_path": "/fields/numSpecs/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/numSpecs/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/numSpecs"
+              },
+              "fragment_digest": "896b90e8079bd4933186701fc0ee432027c48bf7aa04639a8c96e910ce7df7fb",
+              "claim_path": "/fields/numSpecs/type"
+            }
+          ]
         },
         {
           "name": "stars",
           "type": "integer",
           "required": false,
-          "description": "GitHub stars for our main repo"
+          "description": "GitHub stars for our main repo",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/stars"
+              },
+              "fragment_digest": "48d1dd0db326c93acbeffcfd91183a35b52f9042c886b2930fc804d147280be2",
+              "claim_path": "/fields/stars/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/stars/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/stars"
+              },
+              "fragment_digest": "48d1dd0db326c93acbeffcfd91183a35b52f9042c886b2930fc804d147280be2",
+              "claim_path": "/fields/stars/type"
+            }
+          ]
         },
         {
           "name": "thisWeek",
           "type": "object",
           "required": false,
-          "description": "Summary totals for the last 7 days"
+          "description": "Summary totals for the last 7 days",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek"
+              },
+              "fragment_digest": "e8acd82ec70c3ca30b12aa32d4fb965fb97980d8b1de3049cc819b9aa2c1fedd",
+              "claim_path": "/fields/thisWeek/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/thisWeek/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek"
+              },
+              "fragment_digest": "e8acd82ec70c3ca30b12aa32d4fb965fb97980d8b1de3049cc819b9aa2c1fedd",
+              "claim_path": "/fields/thisWeek/type"
+            }
+          ]
         },
         {
           "name": "thisWeek.added",
           "type": "integer",
           "required": null,
-          "description": "APIs added in the last week"
+          "description": "APIs added in the last week",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek/properties/added"
+              },
+              "fragment_digest": "5bf5b3eff835f7632b1c0bfeee84098cb0723ab0b330a5efb6f8cc2f23a814ae",
+              "claim_path": "/fields/thisWeek.added/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek/properties/added"
+              },
+              "fragment_digest": "5bf5b3eff835f7632b1c0bfeee84098cb0723ab0b330a5efb6f8cc2f23a814ae",
+              "claim_path": "/fields/thisWeek.added/type"
+            }
+          ]
         },
         {
           "name": "thisWeek.updated",
           "type": "integer",
           "required": null,
-          "description": "APIs updated in the last week"
+          "description": "APIs updated in the last week",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek/properties/updated"
+              },
+              "fragment_digest": "2fef081a86f94d7890d66f79b29ddcbd0f8ff2e5f63b9ca5272dd9c644bbff7e",
+              "claim_path": "/fields/thisWeek.updated/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/thisWeek/properties/updated"
+              },
+              "fragment_digest": "2fef081a86f94d7890d66f79b29ddcbd0f8ff2e5f63b9ca5272dd9c644bbff7e",
+              "claim_path": "/fields/thisWeek.updated/type"
+            }
+          ]
         },
         {
           "name": "unofficial",
           "type": "integer",
           "required": false,
-          "description": "Number of unofficial APIs"
+          "description": "Number of unofficial APIs",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/unofficial"
+              },
+              "fragment_digest": "0c08f6443e9e77489c31f773cc322a46bf21b05fe972b2ff89534f1767bb8773",
+              "claim_path": "/fields/unofficial/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/unofficial/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/unofficial"
+              },
+              "fragment_digest": "0c08f6443e9e77489c31f773cc322a46bf21b05fe972b2ff89534f1767bb8773",
+              "claim_path": "/fields/unofficial/type"
+            }
+          ]
         },
         {
           "name": "unreachable",
           "type": "integer",
           "required": false,
-          "description": "Number of unreachable (4XX,5XX status) APIs"
+          "description": "Number of unreachable (4XX,5XX status) APIs",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/unreachable"
+              },
+              "fragment_digest": "55aab366e0a60ca11e530cf9f4d0165d769ac8110a2b09a414bb3de10aefc0bc",
+              "claim_path": "/fields/unreachable/name"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics"
+              },
+              "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+              "claim_path": "/fields/unreachable/required"
+            },
+            {
+              "version": 1,
+              "source": "apis-guru-2.2.0.openapi.yaml",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Metrics/properties/unreachable"
+              },
+              "fragment_digest": "55aab366e0a60ca11e530cf9f4d0165d769ac8110a2b09a414bb3de10aefc0bc",
+              "claim_path": "/fields/unreachable/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "additionalProperties: false; type object; description: List of basic metrics",
-      "source": "components.schemas.Metrics"
+      "source": "components.schemas.Metrics",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "apis-guru-2.2.0.openapi.yaml",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/Metrics"
+          },
+          "fragment_digest": "d2bb6ee015f27864b4f37f6d879abb39b0b9c78c88baf5c748c254eb29f8afdc",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "errors": [],
-  "operational": [
-    {
-      "topic": "Authentication",
-      "detail": "來源明示 root security: [] 且無 securitySchemes,此 API 公開無需驗證",
-      "source": "security / components.securitySchemes"
-    },
-    {
-      "topic": "Path parameters",
-      "detail": "Reusable path parameters: `provider` (required string, maxLength 255, minLength 1, example apis.guru), `api` (required string, maxLength 255, minLength 1, example 2.1.0), and inline `service` (required string, maxLength 255, minLength 1, example graph)",
-      "source": "components.parameters / paths./specs/{provider}/{service}/{api}.json.get.parameters"
-    },
-    {
-      "topic": "License",
-      "detail": "CC0 1.0 — https://github.com/APIs-guru/openapi-directory#licenses",
-      "source": "info.license"
-    },
-    {
-      "topic": "Contact",
-      "detail": "APIs.guru — mike.ralphson@gmail.com — https://APIs.guru",
-      "source": "info.contact"
-    },
-    {
-      "topic": "External documentation",
-      "detail": "https://github.com/APIs-guru/openapi-directory/blob/master/API.md",
-      "source": "externalDocs"
-    }
-  ],
+  "operational": [],
   "missing": [
     "No error responses/codes are documented; every operation documents only a 200 OK response",
-    "providers.json and {provider}/services.json return inline anonymous object schemas (property `data`: array of strings) that are not named components.schemas entries"
+    "providers.json and {provider}/services.json return inline anonymous object schemas (property `data`: array of strings) that are not named components.schemas entries",
+    "Authentication: the source declares root `security: []` and no components.securitySchemes; it states no authentication mechanism"
   ]
 }

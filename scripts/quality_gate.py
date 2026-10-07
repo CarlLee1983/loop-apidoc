@@ -58,6 +58,7 @@ EXACT_EVIDENCE_PARITY_BENCHMARK_CASES = (
     "funkygames-transfer-operator",
     "rsg-game-transfer-wallet",
     "stripe-basic-rest",
+    "apis-guru-baseline",
 )
 
 

@@ -9,9 +9,9 @@
     "examples_present": true
   },
   "current_issue_classes": {
-    "REQUIRED_INFO_MISSING.warning": 9
+    "REQUIRED_INFO_MISSING.warning": 12
   },
-  "acceptable_warnings": "7× endpoint 缺 examples(GET 且 spec 無 example;產出仍含 curl/ts/py)，另有 /providers.json 與 /{provider}/services.json 兩個成功 response 無可用 schema 欄位。",
+  "acceptable_warnings": "7× endpoint 缺 examples(GET 且 spec 無 example;產出仍含 curl/ts/py)，另有 /providers.json 與 /{provider}/services.json 兩個成功 response 無可用 schema 欄位。2026-10-07 起再加 3 筆:operational 為空(五筆非來源陳述的 operational 已移除),以及 /list.json 與 /{provider}.json 的成功 response schema `APIs` 已無可表示欄位(`{*}` additionalProperties map 改記為 missing)。",
   "resolved_issue_was": {
     "kind": "validator-false-positive",
     "code": "REQUIRED_INFO_MISSING",

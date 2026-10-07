@@ -56,3 +56,19 @@
 
 - Validator changes:`_has_auth_marker` 認可 operational 的 authentication 註記(讓公開 API 能 PASS)。
 - 其餘:warning 級 examples 屬來源缺漏,無需處理。
+
+## Exact-evidence parity (2026-10-07)
+
+以 `uv run loop-apidoc snapshot-openapi-url --url https://raw.githubusercontent.com/APIs-guru/openapi-directory/fa500d341c242326279e64402a547ff7c0717e0d/APIs/apis.guru/2.2.0/openapi.yaml --filename apis-guru-2.2.0.openapi.yaml --confirmed-by-user`
+重新取得 `sources/apis-guru-2.2.0.openapi.yaml`,SHA-256 與上方紀錄相同(`dee46291…`),產出的 coverage 與已入庫 `url_sources/coverage.json` 相同。
+
+- 每個 material claim 都以 v1 `evidence[]` 綁定 exact JSON Pointer:7 個 operation(method/path/summary/response)、path 參數(`$ref` 者指向 `components.parameters`,inline `service` 指向 operation 參數)、4 個 schema 與其欄位(含巢狀 `thisWeek.*`)、server。
+- `APIs` schema 的 example 含未加引號的 YAML 時間戳;需 #184(bridge 改用 domain serializer)才能完成 shadow replay。
+- Shadow replay:legacy `passed` / Core `accept`,12/12 Core claims supported、0 unverified。本 case 已列入 `EXACT_EVIDENCE_PARITY_BENCHMARK_CASES`。
+- 值校正(非綁定,經核准;理由皆為「來源未逐字陳述此值」):
+  1. environment `name` `"default"` → `null`:來源 `servers` 只有 `url`。
+  2. `GET /providers.json`、`GET /{provider}/services.json` 的 response description → 來源的 `OK`;原本附帶的 inline schema 說明已在 `missing`。
+  3. 移除 5 筆 `operational`(Authentication / Path parameters / License / Contact / External documentation):topic 非來源字串,detail 為改寫或多值拼接。公開 API 的驗證事實改記於 inventory `missing`(文字含 authentication),`_has_auth_marker` 仍成立。
+  4. `Metrics.datasets` → `datasets[]`:來源為 `type: array`,與 Core 推導的結構名稱一致。
+  5. 移除 `APIs.{*}` 與 `API.versions.{*}`,改記於各自 schema 的 `missing`:兩者代表 `additionalProperties` map,目前的擷取契約無法表示;舊產出把它們輸出成名為 `{*}` 的屬性。
+- 因此 legacy warning 由 9 增為 12(`expected/validation.expect.json` 已同步):`operational` 為空 1 筆,`GET /list.json` 與 `GET /{provider}.json` 的成功 response schema `APIs` 已無可表示欄位 2 筆。
