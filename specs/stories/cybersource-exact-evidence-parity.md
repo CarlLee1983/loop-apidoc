@@ -39,8 +39,10 @@ the cited section of its source:
   of all six operation responses (five `201`, one `400`).
 - The `topic` and `detail` of the four `operational` entries. A `topic` that is not
   source text becomes the heading of the section that its `source` names.
-- The `name` of each `crypto` entry that is not source text, which becomes the heading of
-  the README section it cites.
+- The three `crypto` entries are removed. The source names JWT, HTTP Signature, and MLE
+  but states no signing or encryption steps, so Core reports
+  `CRYPTOGRAPHIC_CHAIN_INCOMPLETE` once they are supported. The security schemes, the MLE
+  `operational` entry, and `missing` keep these facts.
 - The `when` of the three `field_conditions`, and the `name` of the one `test_cases`
   entry.
 - The `type` of the two security schemes, which becomes the README's
@@ -92,7 +94,8 @@ The `Production` environment is moved to `missing`. The source gives only the ho
    or its new `missing` entry. Its output is in the completion report.
 9. `git diff main...HEAD -- benchmarks/cybersource-payments/expected/minimum.json`
    changes only `counts.servers`, from `2` to `1`, recorded with
-   `scripts/benchmark_counts.py --record`.
+   `scripts/benchmark_counts.py --record`, and `integration.crypto_required`, from `true`
+   to `false`.
 10. `git diff --name-status main...HEAD -- benchmarks/cybersource-payments/expected/validation.expect.json`
     prints nothing, or its diff changes only `current_issue_classes` counts and their
     explanatory text and names each warning that was added or removed.
