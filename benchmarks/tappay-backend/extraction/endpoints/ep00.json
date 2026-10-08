@@ -189,6 +189,7 @@
   "request": {
     "content_type": "application/json",
     "schema": "PayByPrimeRequest",
+    "schema_ref": "PayByPrimeRequest",
     "required": true,
     "description": "JSON body. Header: Content-Type: application/json, x-api-key: YourPartnerKey. Sandbox https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime ; Production https://prod.tappaysdk.com/tpc/payment/pay-by-prime"
   },

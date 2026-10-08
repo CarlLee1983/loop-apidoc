@@ -42,6 +42,7 @@
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": "CreditDetailQueryTradeRequest",
+    "schema_ref": "CreditDetailQueryTradeRequest",
     "required": true,
     "description": "查詢信用卡單筆明細記錄：查詢訂單信用卡授權主檔與關帳明細（測試環境無法使用）"
   },
@@ -238,6 +239,17 @@
       },
       "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
       "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 935,
+        "end_line": 935
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/request_schema_ref"
     }
   ]
 }

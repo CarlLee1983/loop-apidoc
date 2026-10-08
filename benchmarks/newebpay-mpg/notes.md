@@ -50,6 +50,15 @@
 
 全部修復含 RED→GREEN 單元測試(tests/validate/test_completeness.py、test_validate_integration.py、test_generate_examples.py、generate/test_markdown.py),全測 PASS、ruff clean。
 
+
+## `request.schema_ref`(2026-10-08)
+
+3 個端點(電子錢包退款、BNPL 取消/退款、BNPL 請款)的 `request` 補上 `schema_ref`,值逐字複製自既有的 `request.schema`(它就是
+inventory 的 schema 名稱)。`schema_ref` 才是指向 inventory schema 的 key:claim projection
+只讀它來產生 operation 的 `request_schema_ref`,cross-file gate 也只檢查它;只寫在
+`schema` 的名稱,Core 看不到、gate 也不檢查。`schema` 保持不變,因為 generator 仍讀它。
+本 case 的來源未還原,這次搬遷沒有對照來源,只以 cross-file 檢查確認 `schema_ref` 解析得到。
+
 ## Follow-up
 
 - Extraction prompt changes:在 SKILL inventory.schemas[].fields 明確要求 name/type/required/description(英文 key);確認 4.6~4.8 是否有 PHP 範例。

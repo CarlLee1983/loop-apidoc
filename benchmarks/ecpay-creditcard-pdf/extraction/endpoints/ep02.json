@@ -42,6 +42,7 @@
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": "QueryTradeInfoRequest",
+    "schema_ref": "QueryTradeInfoRequest",
     "required": true,
     "description": "查詢訂單：特店以背景 POST 傳送參數查詢訂單付款結果（產生訂單後 40 分鐘未收到通知時可查詢）"
   },
@@ -236,6 +237,17 @@
       },
       "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
       "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 857,
+        "end_line": 857
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/request_schema_ref"
     }
   ]
 }

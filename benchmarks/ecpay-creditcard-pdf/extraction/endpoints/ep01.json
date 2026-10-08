@@ -126,6 +126,7 @@
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": "PaymentResultNotification",
+    "schema_ref": "PaymentResultNotification",
     "required": true,
     "description": "付款結果通知 (Server 端 ReturnURL)：綠界以背景 ServerPost 將付款結果參數以 form-data 回傳至特店設定的 ReturnURL；特店須驗證 CheckMacValue"
   },

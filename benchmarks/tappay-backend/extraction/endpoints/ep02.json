@@ -56,6 +56,7 @@
   "request": {
     "content_type": "application/json",
     "schema": "RefundRequest",
+    "schema_ref": "RefundRequest",
     "required": true,
     "description": "JSON body. Header x-api-key. Refund a transaction (reverses capture+authorization; amount only for partial refund)"
   },

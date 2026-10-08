@@ -154,6 +154,7 @@
   "request": {
     "content_type": "application/json",
     "schema": "BackendNotifyBody",
+    "schema_ref": "BackendNotifyBody",
     "required": true,
     "description": "Server-to-merchant JSON notification sent by TapPay to backend_notify_url after e-payment / Direct Pay 3D transactions"
   },
