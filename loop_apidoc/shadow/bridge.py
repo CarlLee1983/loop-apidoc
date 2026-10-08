@@ -1559,6 +1559,16 @@ def _openapi_pointer_derivation_name(
         and pointer_parts[3] == "responses"
     ):
         return "openapi_error_code_from_response_pointer"
+    if (
+        claim_kind == "integration_mechanic"
+        and claim_path.startswith("/operation_refs/")
+        and pointer_parts is not None
+        and len(pointer_parts) == 8
+        and pointer_parts[0] == "paths"
+        and pointer_parts[3:5] == ("requestBody", "content")
+        and pointer_parts[6] == "examples"
+    ):
+        return "openapi_operation_ref_from_request_example_pointer"
     direct = {
         "/method": "openapi_method_from_pointer",
         "/path": "openapi_path_from_pointer",

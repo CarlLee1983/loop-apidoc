@@ -798,3 +798,48 @@ def test_error_code_selects_derivation_only_for_error_code_on_a_response_pointer
     fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
 
     assert _openapi_pointer_derivation_name(claim_kind, claim_path, fragment) == expected
+
+
+_REQUEST_EXAMPLE_POINTER = (
+    "/paths/~1payments/post/requestBody/content/application~1json/examples/card-direct"
+)
+_OPERATION_REF_PATH = "/operation_refs/operation:POST:~1payments"
+
+
+@pytest.mark.parametrize(
+    "claim_kind, claim_path, pointer, expected",
+    [
+        (
+            "integration_mechanic",
+            _OPERATION_REF_PATH,
+            _REQUEST_EXAMPLE_POINTER,
+            "openapi_operation_ref_from_request_example_pointer",
+        ),
+        (
+            "integration_mechanic",
+            _OPERATION_REF_PATH,
+            "/paths/~1payments/post/responses/200/content/application~1json/examples/ok",
+            None,
+        ),
+        (
+            "integration_mechanic",
+            _OPERATION_REF_PATH,
+            "/components/examples/post-payments-card-direct",
+            None,
+        ),
+        (
+            "integration_mechanic",
+            _OPERATION_REF_PATH,
+            _REQUEST_EXAMPLE_POINTER + "/value",
+            None,
+        ),
+        ("integration_mechanic", "/name", _REQUEST_EXAMPLE_POINTER, None),
+        ("transport_policy", _OPERATION_REF_PATH, _REQUEST_EXAMPLE_POINTER, None),
+    ],
+)
+def test_request_example_selects_derivation_only_for_an_operation_ref_claim(
+    claim_kind, claim_path, pointer, expected
+):
+    fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
+
+    assert _openapi_pointer_derivation_name(claim_kind, claim_path, fragment) == expected

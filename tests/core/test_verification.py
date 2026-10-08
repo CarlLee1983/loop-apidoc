@@ -2431,3 +2431,94 @@ def test_error_code_refuses_another_claim_kind_that_has_a_code_path():
             claim_kind="idempotency_rule", claim_value={"code": "400"}
         )
     )
+
+
+EXAMPLE_OPERATION_DERIVATION = "openapi_operation_ref_from_request_example_pointer"
+EXAMPLE_POINTER = (
+    "/paths/~1payments/post/requestBody/content/application~1json/examples/card-direct"
+)
+EXAMPLE_OBJECT = {"$ref": "#/components/examples/post-payments-card-direct"}
+PAYMENTS_OPERATION = "operation:POST:/payments"
+
+
+def _verify_example_operation(
+    pointer: str = EXAMPLE_POINTER,
+    *,
+    source_value: object = None,
+    claim_kind: str = "integration_mechanic",
+    claim_path: str = "/operation_refs/operation:POST:~1payments",
+    derived: str = PAYMENTS_OPERATION,
+):
+    return _verify_security(
+        EXAMPLE_OPERATION_DERIVATION,
+        (pointer, EXAMPLE_OBJECT if source_value is None else source_value),
+        claim_kind=claim_kind,
+        claim_value={
+            "name": "card-direct",
+            "kind": "test_case",
+            "operation_refs": [PAYMENTS_OPERATION],
+        },
+        claim_path=claim_path,
+        derived=derived,
+    )
+
+
+def test_request_example_pointer_proves_the_operation_reference():
+    _assert_derived(_verify_example_operation(), PAYMENTS_OPERATION)
+
+
+def test_request_example_refuses_a_response_example_pointer():
+    _assert_refused(
+        _verify_example_operation(
+            "/paths/~1payments/post/responses/200/content/application~1json"
+            "/examples/card-direct"
+        ),
+        "DERIVATION_INAPPLICABLE",
+    )
+
+
+def test_request_example_refuses_a_components_example_pointer():
+    _assert_refused(
+        _verify_example_operation("/components/examples/post-payments-card-direct"),
+        "DERIVATION_INAPPLICABLE",
+    )
+
+
+@pytest.mark.parametrize(
+    "pointer",
+    [
+        "/paths/~1payments/post/requestBody/content/application~1json/example",
+        EXAMPLE_POINTER + "/value",
+    ],
+    ids=["singular-example", "segment-beyond-key"],
+)
+def test_request_example_refuses_a_singular_example_or_extra_segments(pointer):
+    _assert_refused(_verify_example_operation(pointer), "DERIVATION_INAPPLICABLE")
+
+
+def test_request_example_refuses_a_different_operation():
+    _assert_refused(
+        _verify_example_operation(
+            "/paths/~1payments~1details/post/requestBody/content/application~1json"
+            "/examples/card-direct",
+            derived="operation:POST:/payments/details",
+        ),
+        "DERIVATION_CLAIM_PATH_MISMATCH",
+    )
+
+
+@pytest.mark.parametrize(
+    "source_value", ["card-direct", ["a"], 0], ids=["str", "list", "int"]
+)
+def test_request_example_refuses_a_non_object_fragment_value(source_value):
+    _assert_refused(
+        _verify_example_operation(source_value=source_value),
+        "DERIVATION_INAPPLICABLE",
+    )
+
+
+def test_request_example_refuses_a_non_integration_mechanic_claim_kind():
+    _assert_refused(
+        _verify_example_operation(claim_kind="transport_policy"),
+        "DERIVATION_INAPPLICABLE",
+    )

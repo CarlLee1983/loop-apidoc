@@ -49,6 +49,7 @@ _ALLOWED_DERIVATIONS = frozenset(
         ("openapi_path_from_pointer", "1"),
         ("openapi_response_status_from_pointer", "1"),
         ("openapi_error_code_from_response_pointer", "1"),
+        ("openapi_operation_ref_from_request_example_pointer", "1"),
         ("openapi_schema_name_from_ref", "1"),
         ("openapi_request_schema_name_from_ref", "1"),
         ("openapi_request_body_property_name_from_pointer", "1"),
