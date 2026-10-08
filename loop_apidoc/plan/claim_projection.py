@@ -134,7 +134,11 @@ def _subject(entry: Any, plan_location: str) -> str:
     if isinstance(entry, OperationalEntry):
         return entry.topic or plan_location
     if isinstance(entry, FieldCondition):
-        return entry.scope or plan_location
+        # One scope often carries several conditions; each is its own source fact,
+        # so `when` keeps them from reconciling as one conflicting claim.
+        scope = entry.scope or plan_location
+        when = (entry.when or "").strip()
+        return f"{scope} when {when}" if when else scope
     if isinstance(entry, ContractTestCase):
         return entry.name or plan_location
     if isinstance(entry, TransportPolicy):

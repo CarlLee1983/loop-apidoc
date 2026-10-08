@@ -422,6 +422,43 @@ def test_pathless_endpoint_projects_as_webhook_for_core_governance():
     }
 
 
+def test_conditions_sharing_a_scope_project_distinct_subjects():
+    conditions = [
+        FieldCondition(
+            status=PlanItemStatus.SUPPORTED,
+            citations=[CITATION],
+            scope="AioCheckOutRequest",
+            when=when,
+        )
+        for when in ("BindingCard=1", "使用信用卡分期")
+    ]
+
+    projections = iter_plan_claim_projections(
+        _plan(integration=IntegrationContract(field_conditions=conditions))
+    )
+
+    assert [projection.subject for projection in projections] == [
+        "AioCheckOutRequest when BindingCard=1",
+        "AioCheckOutRequest when 使用信用卡分期",
+    ]
+
+
+@pytest.mark.parametrize("when", [None, "   "])
+def test_condition_without_when_keeps_scope_as_subject(when):
+    condition = FieldCondition(
+        status=PlanItemStatus.SUPPORTED,
+        citations=[CITATION],
+        scope="AioCheckOutRequest",
+        when=when,
+    )
+
+    projection = iter_plan_claim_projections(
+        _plan(integration=IntegrationContract(field_conditions=[condition]))
+    )[0]
+
+    assert projection.subject == "AioCheckOutRequest"
+
+
 def test_domain_semantics_have_distinct_canonical_claim_kinds():
     contract = IntegrationContract(
         transport=[

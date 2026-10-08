@@ -8,6 +8,7 @@ from pathlib import Path
 from loop_apidoc.core.models import LifecycleState
 from loop_apidoc.domain.evidence import (
     JsonPointerLocator,
+    LineRangeLocator,
     SupportRelationshipType,
     canonical_json,
     fragment_digest,
@@ -449,6 +450,69 @@ def test_precise_line_citation_supports_matching_claim_path(tmp_path):
         is SupportRelationshipType.EXPLICIT_SUPPORT
         for relationship in artifacts.claims[0].support_relationships
     )
+
+
+def test_supported_conditions_sharing_a_scope_stay_separate_claims(tmp_path):
+    text = "BindingCard=1 requires MerchantMemberID\n使用信用卡分期 requires CreditInstallment\n"
+    manifest, facts = _write_manifest(tmp_path, text)
+
+    def condition(line: int, when: str) -> FieldCondition:
+        excerpt = text.splitlines()[line - 1]
+        evidence = tuple(
+            ExtractionEvidenceReference(
+                version=1,
+                source="manual.md",
+                locator=LineRangeLocator(start_line=line, end_line=line),
+                fragment_digest=fragment_digest(excerpt),
+                claim_path=claim_path,
+            )
+            for claim_path in ("/name", f"/steps/{when}")
+        )
+        return FieldCondition(
+            status=PlanItemStatus.SUPPORTED,
+            citations=[
+                SourceCitation(
+                    query_id="integration",
+                    answer_path="integration.json",
+                    manifest_source="manual.md",
+                    evidence=evidence,
+                )
+            ],
+            scope="AioCheckOutRequest",
+            when=when,
+        )
+
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        integration=IntegrationContract(
+            field_conditions=[
+                condition(1, "BindingCard=1"),
+                condition(2, "使用信用卡分期"),
+            ]
+        ),
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    assert [(claim.canonical_identity, claim.status) for claim in artifacts.claims] == [
+        (
+            "claim:integration_mechanic:AioCheckOutRequest when BindingCard=1:definition",
+            ClaimStatus.SUPPORTED,
+        ),
+        (
+            "claim:integration_mechanic:AioCheckOutRequest when 使用信用卡分期:definition",
+            ClaimStatus.SUPPORTED,
+        ),
+    ]
 
 
 def test_json_pointer_citation_supports_matching_scalar_path(tmp_path):
