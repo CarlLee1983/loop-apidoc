@@ -56,6 +56,7 @@
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": "DoActionRequest",
+    "schema_ref": "DoActionRequest",
     "required": true,
     "description": "信用卡請退款：依交易狀態執行關帳(C)/退刷(R)/取消(E)/放棄(N)（測試環境無法使用）"
   },
@@ -296,6 +297,17 @@
       },
       "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
       "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1193,
+        "end_line": 1193
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/request_schema_ref"
     }
   ]
 }

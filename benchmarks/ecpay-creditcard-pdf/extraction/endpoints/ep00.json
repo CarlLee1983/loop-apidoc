@@ -259,6 +259,7 @@
   "request": {
     "content_type": "application/x-www-form-urlencoded",
     "schema": "AioCheckOutRequest",
+    "schema_ref": "AioCheckOutRequest",
     "required": true,
     "description": "產生訂單：特店以 HTTP POST (application/x-www-form-urlencoded) 傳送訂單參數至綠界開始付款；所有參數需納入 CheckMacValue (SHA256) 計算"
   },
@@ -1072,6 +1073,17 @@
       },
       "fragment_digest": "2103dfb60fd7ff3bd2849799aca24fec5645a2b11a141c1e39057b331764f151",
       "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 355,
+        "end_line": 355
+      },
+      "fragment_digest": "2103dfb60fd7ff3bd2849799aca24fec5645a2b11a141c1e39057b331764f151",
+      "claim_path": "/request_schema_ref"
     }
   ]
 }

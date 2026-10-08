@@ -70,6 +70,7 @@
   "request": {
     "content_type": null,
     "schema": "電子錢包退款請求-外層及EncryptData_內含參數",
+    "schema_ref": "電子錢包退款請求-外層及EncryptData_內含參數",
     "required": true,
     "description": "此 API 將請求字串以 JSON Encode 方式組成（非 http_build_query），再以商店 Hash Key/Hash IV 執行 AES-256-CBC（PKCS7 填充）轉十六進制後帶入 EncryptData_；HashData_ 為加密字串前後加上 HashKey=/HashIV= 後 SHA256 壓碼轉大寫"
   },

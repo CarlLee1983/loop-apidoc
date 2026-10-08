@@ -49,6 +49,7 @@
   "request": {
     "content_type": "application/json",
     "schema": "RecordRequest",
+    "schema_ref": "RecordRequest",
     "required": true,
     "description": "JSON body. Header x-api-key. Retrieve trade records with filters/paging (time filter required, frame ≤ 90 days)"
   },

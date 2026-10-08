@@ -77,6 +77,7 @@
   "request": {
     "content_type": null,
     "schema": "BNPL取消交易/退款請求-外層及EncryptData_內含參數",
+    "schema_ref": "BNPL取消交易/退款請求-外層及EncryptData_內含參數",
     "required": true,
     "description": "請求字串以 http_build_query 組成 Query String（當 RespondType_=String），再以商店 Hash Key/Hash IV 執行 AES-256-CBC（PKCS7 填充）轉十六進制後帶入 EncryptData_；HashData_ 為加密字串前後加上 HashKey=/HashIV= 後 SHA256 壓碼轉大寫"
   },

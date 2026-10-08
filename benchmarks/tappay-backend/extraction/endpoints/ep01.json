@@ -182,6 +182,7 @@
   "request": {
     "content_type": "application/json",
     "schema": "PayByCardTokenRequest",
+    "schema_ref": "PayByCardTokenRequest",
     "required": true,
     "description": "JSON body. Header x-api-key. Pay using a permanent card_key/card_token; Sandbox/Production /tpc/payment/pay-by-token"
   },
