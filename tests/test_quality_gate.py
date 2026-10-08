@@ -145,6 +145,7 @@ def test_exact_evidence_parity_cases_are_a_reviewed_subset_of_the_required_inven
         "apis-guru-baseline",
         "ecpay-creditcard-pdf",
         "cybersource-payments",
+        "adyen-payments-multimethod",
     }
     for case in cases:
         parity = json.loads(

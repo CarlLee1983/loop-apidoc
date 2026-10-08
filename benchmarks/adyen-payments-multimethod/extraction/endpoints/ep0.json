@@ -36,10 +36,18 @@
       "in": "body",
       "type": "object",
       "required": true,
-      "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+      "one_of": [
+        "CardDetails",
+        "IdealDetails",
+        "ApplePayDetails"
+      ],
       "discriminator": {
         "property_name": "type",
-        "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+        "mapping": {
+          "scheme": "CardDetails",
+          "ideal": "IdealDetails",
+          "applepay": "ApplePayDetails"
+        }
       },
       "description": "The type and required details of a payment method to use, selected by the `type` discriminator. The full spec lists 40+ members; this benchmark captures three representative ones (CardDetails / IdealDetails / ApplePayDetails)."
     }
@@ -48,42 +56,43 @@
     "content_type": "application/json",
     "schema": "PaymentRequest",
     "required": true,
-    "description": "PaymentRequest: amount + merchantAccount + reference + returnUrl + paymentMethod (oneOf union, see CardDetails/IdealDetails/ApplePayDetails)."
+    "description": "PaymentRequest: amount + merchantAccount + reference + returnUrl + paymentMethod (oneOf union, see CardDetails/IdealDetails/ApplePayDetails).",
+    "schema_ref": "PaymentRequest"
   },
   "responses": [
     {
       "status": "200",
-      "description": "Payment result.",
+      "description": "OK - the request has succeeded.",
       "schema": null,
       "schema_ref": "PaymentResponse"
     },
     {
       "status": "400",
-      "description": "Bad request.",
+      "description": "Bad Request - a problem reading or understanding the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "401",
-      "description": "Unauthorized.",
+      "description": "Unauthorized - authentication required.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "403",
-      "description": "Forbidden.",
+      "description": "Forbidden - insufficient permissions to process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "422",
-      "description": "Unprocessable entity.",
+      "description": "Unprocessable Entity - a request validation error.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "500",
-      "description": "Internal server error.",
+      "description": "Internal Server Error - the server could not process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     }
@@ -96,5 +105,347 @@
     "BasicAuth"
   ],
   "examples": [],
-  "missing": []
+  "missing": [],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post"
+      },
+      "fragment_digest": "fcd6884c12786058a34d6501f814462ad709c59ce2b62f273499b3a5c72a2d1a",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest/properties/amount"
+      },
+      "fragment_digest": "1ea2f7cb0d7a10de607fc5b40e8d50232310ac4105778d1397730c32f5ef8cdf",
+      "claim_path": "/parameters/body/amount/name"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest"
+      },
+      "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+      "claim_path": "/parameters/body/amount/required"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest/properties/merchantAccount"
+      },
+      "fragment_digest": "3c9a8496a5a72438f070e72768789275e3124b068bffc284f0250d353c532635",
+      "claim_path": "/parameters/body/merchantAccount/name"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest"
+      },
+      "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+      "claim_path": "/parameters/body/merchantAccount/required"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest/properties/paymentMethod"
+      },
+      "fragment_digest": "c8dd4949741cc71fd61b0a2b803922b9dff265737abe5a7f5a22cc8d1fe10320",
+      "claim_path": "/parameters/body/paymentMethod/name"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest"
+      },
+      "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+      "claim_path": "/parameters/body/paymentMethod/required"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest/properties/reference"
+      },
+      "fragment_digest": "bbf807b75a39b8d83b41470bb272466f008735f80aab93940a2c20cfbbe05acc",
+      "claim_path": "/parameters/body/reference/name"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest"
+      },
+      "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+      "claim_path": "/parameters/body/reference/required"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest/properties/returnUrl"
+      },
+      "fragment_digest": "627a66f3ee86a54262922abea4ea67dc06bf652843f0a7fa8d0dec81ed3e3ecc",
+      "claim_path": "/parameters/body/returnUrl/name"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/components/schemas/PaymentRequest"
+      },
+      "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+      "claim_path": "/parameters/body/returnUrl/required"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post"
+      },
+      "fragment_digest": "fcd6884c12786058a34d6501f814462ad709c59ce2b62f273499b3a5c72a2d1a",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/requestBody/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "07720dca1f7103a964efb28fa41938aceb8c96bd5436eadb615c2418dd7e2539",
+      "claim_path": "/request_schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/200/description"
+      },
+      "fragment_digest": "89c7209444116b765a3213671f458a09d5425b312144bf15e7ffec95b771267b",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/200/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "f97e5a2af9286b03c49352b9fa8beb36eb13e253a03265e02acee04d0560d070",
+      "claim_path": "/responses/200/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/200"
+      },
+      "fragment_digest": "42b307ae0c3ffa315cb0abcaf454c09f8021df586b20d0111246cb92bea9252e",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/400/description"
+      },
+      "fragment_digest": "043bb162fc3c154d877c5ec450f78c67d5a06853ecfa0c6ac9bbd3f2c7c1c5bf",
+      "claim_path": "/responses/400/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/400/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "305d4402e20a50f8d524c2d849c137dec907d0e9b80e7d6c3a797c1d796512cb",
+      "claim_path": "/responses/400/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/400"
+      },
+      "fragment_digest": "9f994268de5f918ae20fa96f3566610cc85638d93e5371890b2e6016c2ac338b",
+      "claim_path": "/responses/400/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/401/description"
+      },
+      "fragment_digest": "69ccda25ec5d2fa18d913d7a8767ac0eae3bdd87e5cd7b979787cba5714d22a1",
+      "claim_path": "/responses/401/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/401/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "305d4402e20a50f8d524c2d849c137dec907d0e9b80e7d6c3a797c1d796512cb",
+      "claim_path": "/responses/401/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/401"
+      },
+      "fragment_digest": "1a19b8b433f48bb93d81a4b8c9fd0920b67b67b717e04dfe907ffb69f3acba2d",
+      "claim_path": "/responses/401/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/403/description"
+      },
+      "fragment_digest": "aa3d145a5a979aca01efa9eee73ba1dd8dcf9251521d38d3d2524f3df751a3e3",
+      "claim_path": "/responses/403/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/403/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "305d4402e20a50f8d524c2d849c137dec907d0e9b80e7d6c3a797c1d796512cb",
+      "claim_path": "/responses/403/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/403"
+      },
+      "fragment_digest": "8252475ffecc76e069bc3c61dcca788bfeb41d5decd1c43489184800d1bd1ea5",
+      "claim_path": "/responses/403/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/422/description"
+      },
+      "fragment_digest": "414c16de04dfc5498c2ad65bccdb77f13836a617022c25d2b4bb3d39e1eb13f5",
+      "claim_path": "/responses/422/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/422/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "305d4402e20a50f8d524c2d849c137dec907d0e9b80e7d6c3a797c1d796512cb",
+      "claim_path": "/responses/422/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/422"
+      },
+      "fragment_digest": "4f925a8d012c599a0d90a6912e5712229b8819263d65d19fb4925a91f90e96cc",
+      "claim_path": "/responses/422/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/500/description"
+      },
+      "fragment_digest": "7486a17f29babb096b40cae6df8ee66df6a6b6ed08e859bf6f8d2c4c82ae4a53",
+      "claim_path": "/responses/500/description"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/500/content/application~1json/schema/$ref"
+      },
+      "fragment_digest": "305d4402e20a50f8d524c2d849c137dec907d0e9b80e7d6c3a797c1d796512cb",
+      "claim_path": "/responses/500/schema_ref"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/responses/500"
+      },
+      "fragment_digest": "f1a875f2f00de00ff04f8e61d73a8231d111d65b197d46bc70629bca7ff8bc6a",
+      "claim_path": "/responses/500/status_code"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/security/1"
+      },
+      "fragment_digest": "1f0517b2491b8198c01e70ded50ea5b8c5889d99d60f1c3e74f73a14a4bcd863",
+      "claim_path": "/security/ApiKeyAuth"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/security/0"
+      },
+      "fragment_digest": "c21717e8c29095fa39b7ac15240f371b6f53684bfd0b1e2c4074bc4fa9d113bb",
+      "claim_path": "/security/BasicAuth"
+    },
+    {
+      "version": 1,
+      "source": "CheckoutService-v71.json",
+      "locator": {
+        "kind": "json_pointer",
+        "pointer": "/paths/~1payments/post/summary"
+      },
+      "fragment_digest": "b0f3aa80c8917b537828cbbafb4940530e23f41820613b17476add768f35aa03",
+      "claim_path": "/summary"
+    }
+  ]
 }

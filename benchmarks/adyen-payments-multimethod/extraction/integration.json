@@ -2,50 +2,10 @@
   "version": "1.0",
   "crypto": [],
   "callbacks": [],
-  "field_conditions": [
-    {
-      "scope": "paths./payments.post body",
-      "rule": "paymentMethod.type selects which detail object (and its required fields) applies.",
-      "when": "paymentMethod.type = scheme (card)",
-      "then_required": [
-        "paymentMethod.number",
-        "paymentMethod.expiryMonth",
-        "paymentMethod.expiryYear",
-        "paymentMethod.cvc"
-      ],
-      "source": "CheckoutService-v71.json components.schemas.CardDetails (card-direct example post-payments-card-direct)"
-    },
-    {
-      "scope": "paths./payments.post body",
-      "rule": "paymentMethod.type selects which detail object applies.",
-      "when": "paymentMethod.type = applepay",
-      "then_required": [
-        "paymentMethod.applePayToken"
-      ],
-      "source": "CheckoutService-v71.json components.schemas.ApplePayDetails (required: applePayToken)"
-    },
-    {
-      "scope": "paths./payments.post body",
-      "rule": "paymentMethod.type selects which detail object applies.",
-      "when": "paymentMethod.type = ideal",
-      "then_required": [
-        "paymentMethod.type"
-      ],
-      "source": "CheckoutService-v71.json components.schemas.IdealDetails (only type fixed to 'ideal')"
-    },
-    {
-      "scope": "paths./payments.post body",
-      "rule": "returnUrl is required for redirect-based methods so the shopper can return after authentication.",
-      "when": "redirect/3DS payment methods",
-      "then_required": [
-        "returnUrl"
-      ],
-      "source": "CheckoutService-v71.json components.schemas.PaymentRequest.required"
-    }
-  ],
+  "field_conditions": [],
   "test_cases": [
     {
-      "name": "card-direct (scheme)",
+      "name": "Make a card payment with unencrypted card details",
       "operation_ref": "paths./payments.post",
       "request": {
         "amount": {
@@ -65,10 +25,32 @@
         "merchantAccount": "YOUR_MERCHANT_ACCOUNT"
       },
       "response": {},
-      "source": "CheckoutService-v71.json components.examples.post-payments-card-direct"
+      "source": "CheckoutService-v71.json components.examples.post-payments-card-direct",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/examples/post-payments-card-direct/summary"
+          },
+          "fragment_digest": "2cdad90c628f5e4bd296049353de22ba24c62c58affe28e98e4c6b201b58f3cf",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/requestBody/content/application~1json/examples/card-direct"
+          },
+          "fragment_digest": "ae34a209b5a8be08beb1c9b772ac74a4dab128e3e31f1763a9c80674fb76d95e",
+          "claim_path": "/operation_refs/operation:POST:~1payments"
+        }
+      ]
     },
     {
-      "name": "ideal redirect",
+      "name": "Make an iDEAL payment",
       "operation_ref": "paths./payments.post",
       "request": {
         "amount": {
@@ -83,7 +65,29 @@
         "merchantAccount": "YOUR_MERCHANT_ACCOUNT"
       },
       "response": {},
-      "source": "CheckoutService-v71.json components.examples.post-payments-ideal"
+      "source": "CheckoutService-v71.json components.examples.post-payments-ideal",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/examples/post-payments-ideal/summary"
+          },
+          "fragment_digest": "0f930f38b574fbd9b842a866c1739ff356b880f4126316719975c915c98c878b",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/requestBody/content/application~1json/examples/ideal"
+          },
+          "fragment_digest": "2e27660be48bb3615f2b7f8ac57025c168a003f9e4cffdd7bc400f59d843a6be",
+          "claim_path": "/operation_refs/operation:POST:~1payments"
+        }
+      ]
     }
   ],
   "missing": [

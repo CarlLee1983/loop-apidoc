@@ -4,10 +4,21 @@
   "overview": "Adyen Checkout API v71. A single multi-method payment entry point: POST /payments starts a transaction for any of 40+ payment methods, distinguished by the paymentMethod.type discriminator (a oneOf union over per-method detail objects). POST /payments/details continues redirect/3DS flows; POST /paymentMethods lists the methods available to a shopper. The same path therefore serves many payment products.",
   "environments": [
     {
-      "name": "test",
       "base_url": "https://checkout-test.adyen.com/v71",
       "version": "v71",
-      "source": "CheckoutService-v71.json servers[0].url"
+      "source": "CheckoutService-v71.json servers[0].url",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/servers/0/url"
+          },
+          "fragment_digest": "51bd87ec090af6fd2ef36b985fd295de0d63b4d34b9f525f229f881859afc71a",
+          "claim_path": "/servers/https:~1~1checkout-test.adyen.com~1v71"
+        }
+      ]
     }
   ],
   "security_schemes": [
@@ -16,14 +27,58 @@
       "type": "apiKey",
       "location": "header (X-API-Key)",
       "details": "API key sent in the X-API-Key request header.",
-      "source": "CheckoutService-v71.json components.securitySchemes.ApiKeyAuth"
+      "source": "CheckoutService-v71.json components.securitySchemes.ApiKeyAuth",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/ApiKeyAuth"
+          },
+          "fragment_digest": "ab718306e1907ce22523096b8b84991cdbdf608c3fc77c1fda718475718c746a",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/ApiKeyAuth/type"
+          },
+          "fragment_digest": "8a6f6b02aaa3a5455135fa6d2cdaf0d39d9a24e8d744f8133de69bba2c32c92f",
+          "claim_path": "/type"
+        }
+      ]
     },
     {
       "name": "BasicAuth",
       "type": "http",
       "location": "Authorization header",
       "details": "HTTP Basic authentication (scheme: basic).",
-      "source": "CheckoutService-v71.json components.securitySchemes.BasicAuth"
+      "source": "CheckoutService-v71.json components.securitySchemes.BasicAuth",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/BasicAuth"
+          },
+          "fragment_digest": "fc8df715f5002444bd24a513321945bcc008e4949ec4a8f492d0ef1c29e0e32c",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/securitySchemes/BasicAuth/type"
+          },
+          "fragment_digest": "a321f717224d7f734e098a468af88534a4b8e212f49fd254a9a8475dc3b248f3",
+          "claim_path": "/type"
+        }
+      ]
     }
   ],
   "endpoints": [
@@ -54,79 +109,409 @@
           "name": "currency",
           "type": "string",
           "required": true,
-          "description": "The three-character [ISO currency code](https://docs.adyen.com/development-resources/currency-codes#currency-codes) of the amount."
+          "description": "The three-character [ISO currency code](https://docs.adyen.com/development-resources/currency-codes#currency-codes) of the amount.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount/properties/currency"
+              },
+              "fragment_digest": "2af3c62b98181b7c2acdb2c2f3443ec78a257530a2ed0d0806c9916e7b0dde26",
+              "claim_path": "/fields/currency/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount"
+              },
+              "fragment_digest": "d88d5ceb61df1afbd362f5f564df997771172e180a5537dc187cca0258323653",
+              "claim_path": "/fields/currency/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount/properties/currency"
+              },
+              "fragment_digest": "2af3c62b98181b7c2acdb2c2f3443ec78a257530a2ed0d0806c9916e7b0dde26",
+              "claim_path": "/fields/currency/type"
+            }
+          ]
         },
         {
           "name": "value",
           "type": "integer",
           "required": true,
-          "description": "The numeric value of the amount, in [minor units](https://docs.adyen.com/development-resources/currency-codes#minor-units)."
+          "description": "The numeric value of the amount, in [minor units](https://docs.adyen.com/development-resources/currency-codes#minor-units).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount/properties/value"
+              },
+              "fragment_digest": "6234ae7d29deb6b5414b2ed194e0a93a3a446ace2012ba060237ce1760a7890d",
+              "claim_path": "/fields/value/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount"
+              },
+              "fragment_digest": "d88d5ceb61df1afbd362f5f564df997771172e180a5537dc187cca0258323653",
+              "claim_path": "/fields/value/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/Amount/properties/value"
+              },
+              "fragment_digest": "6234ae7d29deb6b5414b2ed194e0a93a3a446ace2012ba060237ce1760a7890d",
+              "claim_path": "/fields/value/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "currency: ISO 4217 three-letter code; value: minor units (integer).",
-      "source": "CheckoutService-v71.json components.schemas.Amount"
+      "source": "CheckoutService-v71.json components.schemas.Amount",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/Amount"
+          },
+          "fragment_digest": "d88d5ceb61df1afbd362f5f564df997771172e180a5537dc187cca0258323653",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentRequest",
       "fields": [
         {
           "name": "amount",
-          "type": "object",
           "required": true,
-          "description": "The amount information for the transaction (Amount object)."
+          "description": "The amount information for the transaction (Amount object).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/amount"
+              },
+              "fragment_digest": "1ea2f7cb0d7a10de607fc5b40e8d50232310ac4105778d1397730c32f5ef8cdf",
+              "claim_path": "/fields/amount/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/amount/required"
+            }
+          ]
         },
         {
           "name": "merchantAccount",
           "type": "string",
           "required": true,
-          "description": "The merchant account identifier, with which you want to process the transaction."
+          "description": "The merchant account identifier, with which you want to process the transaction.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/merchantAccount"
+              },
+              "fragment_digest": "3c9a8496a5a72438f070e72768789275e3124b068bffc284f0250d353c532635",
+              "claim_path": "/fields/merchantAccount/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/merchantAccount/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/merchantAccount"
+              },
+              "fragment_digest": "3c9a8496a5a72438f070e72768789275e3124b068bffc284f0250d353c532635",
+              "claim_path": "/fields/merchantAccount/type"
+            }
+          ]
         },
         {
           "name": "reference",
           "type": "string",
           "required": true,
-          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. To provide multiple references for one transaction, separate the reference values with the hyphen (`-`) characte..."
+          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. To provide multiple references for one transaction, separate the reference values with the hyphen (`-`) characte...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/reference"
+              },
+              "fragment_digest": "bbf807b75a39b8d83b41470bb272466f008735f80aab93940a2c20cfbbe05acc",
+              "claim_path": "/fields/reference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/reference/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/reference"
+              },
+              "fragment_digest": "bbf807b75a39b8d83b41470bb272466f008735f80aab93940a2c20cfbbe05acc",
+              "claim_path": "/fields/reference/type"
+            }
+          ]
         },
         {
           "name": "returnUrl",
           "type": "string",
           "required": true,
-          "description": "The URL to return to in case of a redirection. The format depends on the channel. * For web, include the protocol `http://` or `https://`. You can also include your own additional query parameters, for example, shopper ID or order refere..."
+          "description": "The URL to return to in case of a redirection. The format depends on the channel. * For web, include the protocol `http://` or `https://`. You can also include your own additional query parameters, for example, shopper ID or order refere...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/returnUrl"
+              },
+              "fragment_digest": "627a66f3ee86a54262922abea4ea67dc06bf652843f0a7fa8d0dec81ed3e3ecc",
+              "claim_path": "/fields/returnUrl/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/returnUrl/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/returnUrl"
+              },
+              "fragment_digest": "627a66f3ee86a54262922abea4ea67dc06bf652843f0a7fa8d0dec81ed3e3ecc",
+              "claim_path": "/fields/returnUrl/type"
+            }
+          ]
         },
         {
           "name": "paymentMethod",
-          "type": "object",
           "required": true,
-          "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+          "one_of": [
+            "CardDetails",
+            "IdealDetails",
+            "ApplePayDetails"
+          ],
           "discriminator": {
             "property_name": "type",
-            "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+            "mapping": {
+              "scheme": "CardDetails",
+              "ideal": "IdealDetails",
+              "applepay": "ApplePayDetails"
+            }
           },
-          "description": "The type and required details of a payment method, selected by the `type` discriminator (scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ...). The full spec lists 40+ members; three representative ones are captured here as named schemas."
+          "description": "The type and required details of a payment method, selected by the `type` discriminator (scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ...). The full spec lists 40+ members; three representative ones are captured here as named schemas.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/paymentMethod"
+              },
+              "fragment_digest": "c8dd4949741cc71fd61b0a2b803922b9dff265737abe5a7f5a22cc8d1fe10320",
+              "claim_path": "/fields/paymentMethod/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/paymentMethod/required"
+            }
+          ]
         },
         {
           "name": "channel",
           "type": "string",
           "required": false,
-          "description": "The platform where a payment transaction takes place. This field is optional for filtering out payment methods that are only available on specific platforms. If this value is not set, then we will try to infer it from the `sdkVersion` or..."
+          "description": "The platform where a payment transaction takes place. This field is optional for filtering out payment methods that are only available on specific platforms. If this value is not set, then we will try to infer it from the `sdkVersion` or...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/channel"
+              },
+              "fragment_digest": "234bec4f43e95db5fa9153c3c64ffc0b0b5c7bc9dded13d4de16204ade446c7b",
+              "claim_path": "/fields/channel/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/channel/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/channel"
+              },
+              "fragment_digest": "234bec4f43e95db5fa9153c3c64ffc0b0b5c7bc9dded13d4de16204ade446c7b",
+              "claim_path": "/fields/channel/type"
+            }
+          ]
         },
         {
           "name": "countryCode",
           "type": "string",
           "required": false,
-          "description": "The shopper country code. Format: [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) Example: NL or DE"
+          "description": "The shopper country code. Format: [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) Example: NL or DE",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/countryCode"
+              },
+              "fragment_digest": "e94b7ea6aedc503348368cd9ab312082eb002fde8c266a75a18a6aa743febddb",
+              "claim_path": "/fields/countryCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/countryCode/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/countryCode"
+              },
+              "fragment_digest": "e94b7ea6aedc503348368cd9ab312082eb002fde8c266a75a18a6aa743febddb",
+              "claim_path": "/fields/countryCode/type"
+            }
+          ]
         },
         {
           "name": "shopperReference",
           "type": "string",
           "required": false,
-          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. Minimum length: 3 characters. > Your reference must not include personally identifiable information (PII), for example ..."
+          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. Minimum length: 3 characters. > Your reference must not include personally identifiable information (PII), for example ...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/shopperReference"
+              },
+              "fragment_digest": "ca89baf8fd79beadd8a01548415c44c0f81a6dbed86874eb613793141a0ffb44",
+              "claim_path": "/fields/shopperReference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest"
+              },
+              "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+              "claim_path": "/fields/shopperReference/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentRequest/properties/shopperReference"
+              },
+              "fragment_digest": "ca89baf8fd79beadd8a01548415c44c0f81a6dbed86874eb613793141a0ffb44",
+              "claim_path": "/fields/shopperReference/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "paymentMethod is a oneOf union discriminated by paymentMethod.type.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentRequest"
+      "source": "CheckoutService-v71.json components.schemas.PaymentRequest",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/PaymentRequest"
+          },
+          "fragment_digest": "3586afb3e863cb36e98167c279022be3cfd1e9e55e4ab43d81c682a54047ba7d",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "CardDetails",
@@ -135,73 +520,337 @@
           "name": "type",
           "type": "string",
           "required": null,
-          "description": "Default payment method details. Common for scheme payment methods, and for simple payment method details."
+          "description": "Default payment method details. Common for scheme payment methods, and for simple payment method details.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/type"
+              },
+              "fragment_digest": "56cc82dc652914713480fdaa86f15349eff15b89d8e1780aa0d0165d2435dfde",
+              "claim_path": "/fields/type/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/type"
+              },
+              "fragment_digest": "56cc82dc652914713480fdaa86f15349eff15b89d8e1780aa0d0165d2435dfde",
+              "claim_path": "/fields/type/type"
+            }
+          ]
         },
         {
           "name": "number",
           "type": "string",
           "required": null,
-          "description": "The card number. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+          "description": "The card number. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/number"
+              },
+              "fragment_digest": "152f6cc72001d637ce0fe67f5c2ef16c3c38ff656afb1b557d011efd69144382",
+              "claim_path": "/fields/number/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/number"
+              },
+              "fragment_digest": "152f6cc72001d637ce0fe67f5c2ef16c3c38ff656afb1b557d011efd69144382",
+              "claim_path": "/fields/number/type"
+            }
+          ]
         },
         {
           "name": "expiryMonth",
           "type": "string",
           "required": null,
-          "description": "The card expiry month. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+          "description": "The card expiry month. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/expiryMonth"
+              },
+              "fragment_digest": "4a4fd175ccf97d4d8a2bbd97366b695c4fef1878c1634bf47518cd5ccd150b8e",
+              "claim_path": "/fields/expiryMonth/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/expiryMonth"
+              },
+              "fragment_digest": "4a4fd175ccf97d4d8a2bbd97366b695c4fef1878c1634bf47518cd5ccd150b8e",
+              "claim_path": "/fields/expiryMonth/type"
+            }
+          ]
         },
         {
           "name": "expiryYear",
           "type": "string",
           "required": null,
-          "description": "The card expiry year. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+          "description": "The card expiry year. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/expiryYear"
+              },
+              "fragment_digest": "e9a53c4ee6f9586d349c689b963beac88da0d4bd94f908364a10db4fc697b8ba",
+              "claim_path": "/fields/expiryYear/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/expiryYear"
+              },
+              "fragment_digest": "e9a53c4ee6f9586d349c689b963beac88da0d4bd94f908364a10db4fc697b8ba",
+              "claim_path": "/fields/expiryYear/type"
+            }
+          ]
         },
         {
           "name": "cvc",
           "type": "string",
           "required": null,
-          "description": "The card verification code. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide)."
+          "description": "The card verification code. Only collect raw card data if you are [fully PCI compliant](https://docs.adyen.com/development-resources/pci-dss-compliance-guide).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/cvc"
+              },
+              "fragment_digest": "ee269c3dcf7e42a17abf8043ad71d6d999e1c792966b5bfaa73abb98bb91a525",
+              "claim_path": "/fields/cvc/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/cvc"
+              },
+              "fragment_digest": "ee269c3dcf7e42a17abf8043ad71d6d999e1c792966b5bfaa73abb98bb91a525",
+              "claim_path": "/fields/cvc/type"
+            }
+          ]
         },
         {
           "name": "holderName",
           "type": "string",
           "required": null,
-          "description": "The name of the card holder."
+          "description": "The name of the card holder.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/holderName"
+              },
+              "fragment_digest": "9d737ad6e3c5d09078f965c4186da7c8ad75a5aa4e1b08af110046d6a811d622",
+              "claim_path": "/fields/holderName/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/holderName"
+              },
+              "fragment_digest": "9d737ad6e3c5d09078f965c4186da7c8ad75a5aa4e1b08af110046d6a811d622",
+              "claim_path": "/fields/holderName/type"
+            }
+          ]
         },
         {
           "name": "encryptedCardNumber",
           "type": "string",
           "required": null,
-          "description": "The encrypted card number."
+          "description": "The encrypted card number.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedCardNumber"
+              },
+              "fragment_digest": "79c7c8e3206a8d01e813cf75c8b6ffae5ad9ee8e782520111ea2e18976e7dd63",
+              "claim_path": "/fields/encryptedCardNumber/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedCardNumber"
+              },
+              "fragment_digest": "79c7c8e3206a8d01e813cf75c8b6ffae5ad9ee8e782520111ea2e18976e7dd63",
+              "claim_path": "/fields/encryptedCardNumber/type"
+            }
+          ]
         },
         {
           "name": "encryptedExpiryMonth",
           "type": "string",
           "required": null,
-          "description": "The encrypted card expiry month."
+          "description": "The encrypted card expiry month.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedExpiryMonth"
+              },
+              "fragment_digest": "ebe0b438c531abc43582b56eb180777915cd07cc0475b5d7173a8f47b0a8a091",
+              "claim_path": "/fields/encryptedExpiryMonth/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedExpiryMonth"
+              },
+              "fragment_digest": "ebe0b438c531abc43582b56eb180777915cd07cc0475b5d7173a8f47b0a8a091",
+              "claim_path": "/fields/encryptedExpiryMonth/type"
+            }
+          ]
         },
         {
           "name": "encryptedExpiryYear",
           "type": "string",
           "required": null,
-          "description": "The encrypted card expiry year."
+          "description": "The encrypted card expiry year.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedExpiryYear"
+              },
+              "fragment_digest": "050b32f9a10428bee78c99868953584262946898d28077395754ba077ba8e113",
+              "claim_path": "/fields/encryptedExpiryYear/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedExpiryYear"
+              },
+              "fragment_digest": "050b32f9a10428bee78c99868953584262946898d28077395754ba077ba8e113",
+              "claim_path": "/fields/encryptedExpiryYear/type"
+            }
+          ]
         },
         {
           "name": "encryptedSecurityCode",
           "type": "string",
           "required": null,
-          "description": "The encrypted card verification code."
+          "description": "The encrypted card verification code.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedSecurityCode"
+              },
+              "fragment_digest": "304f863e5daf574592abacbdaef15c9ea82f4a3f7f668d46358a05891b139283",
+              "claim_path": "/fields/encryptedSecurityCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/encryptedSecurityCode"
+              },
+              "fragment_digest": "304f863e5daf574592abacbdaef15c9ea82f4a3f7f668d46358a05891b139283",
+              "claim_path": "/fields/encryptedSecurityCode/type"
+            }
+          ]
         },
         {
           "name": "brand",
           "type": "string",
           "required": null,
-          "description": "Secondary brand of the card. For example: **plastix**, **hmclub**."
+          "description": "Secondary brand of the card. For example: **plastix**, **hmclub**.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/brand"
+              },
+              "fragment_digest": "704f8fa66c43e16bff224f3bece3e7d4deb10c1c577a1967bc50395459f4ca79",
+              "claim_path": "/fields/brand/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/brand"
+              },
+              "fragment_digest": "704f8fa66c43e16bff224f3bece3e7d4deb10c1c577a1967bc50395459f4ca79",
+              "claim_path": "/fields/brand/type"
+            }
+          ]
         },
         {
           "name": "storedPaymentMethodId",
           "type": "string",
           "required": null,
-          "description": "This is the `recurringDetailReference` returned in the response when you created the token."
+          "description": "This is the `recurringDetailReference` returned in the response when you created the token.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/storedPaymentMethodId"
+              },
+              "fragment_digest": "0e9df42441b16f7180f742555464f3954f0c70350089757ab0cfdeec96a36013",
+              "claim_path": "/fields/storedPaymentMethodId/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/CardDetails/properties/storedPaymentMethodId"
+              },
+              "fragment_digest": "0e9df42441b16f7180f742555464f3954f0c70350089757ab0cfdeec96a36013",
+              "claim_path": "/fields/storedPaymentMethodId/type"
+            }
+          ]
         }
       ],
       "enums": [
@@ -213,7 +862,19 @@
         "clicktopay"
       ],
       "constraints": "type discriminator default 'scheme'. Use raw number/expiry/cvc (card-direct) OR the encrypted* fields (client-side encryption); the spec does not state the encryption algorithm.",
-      "source": "CheckoutService-v71.json components.schemas.CardDetails"
+      "source": "CheckoutService-v71.json components.schemas.CardDetails",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/CardDetails"
+          },
+          "fragment_digest": "9f8cb599bc7810a4e989b6b9a91f5c6c6955664978cc21bc22e6cad9afff8397",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "IdealDetails",
@@ -222,26 +883,104 @@
           "name": "type",
           "type": "string",
           "required": null,
-          "description": "**ideal**"
+          "description": "**ideal**",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/type"
+              },
+              "fragment_digest": "c3035e1a2be57b3028e75ded70f718d42c4c516b4132f75e358cac167f1bc2ff",
+              "claim_path": "/fields/type/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/type"
+              },
+              "fragment_digest": "c3035e1a2be57b3028e75ded70f718d42c4c516b4132f75e358cac167f1bc2ff",
+              "claim_path": "/fields/type/type"
+            }
+          ]
         },
         {
           "name": "issuer",
           "type": "string",
           "required": null,
-          "description": "The iDEAL issuer value of the shopper's selected bank. Set this to an **id** of an iDEAL issuer to preselect it."
+          "description": "The iDEAL issuer value of the shopper's selected bank. Set this to an **id** of an iDEAL issuer to preselect it.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/issuer"
+              },
+              "fragment_digest": "8bbad7950efb31d1be68a0644cf8e36cf72f5e439b6fceb6171afe75d2baa2f3",
+              "claim_path": "/fields/issuer/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/issuer"
+              },
+              "fragment_digest": "8bbad7950efb31d1be68a0644cf8e36cf72f5e439b6fceb6171afe75d2baa2f3",
+              "claim_path": "/fields/issuer/type"
+            }
+          ]
         },
         {
           "name": "storedPaymentMethodId",
           "type": "string",
           "required": null,
-          "description": "This is the `recurringDetailReference` returned in the response when you created the token."
+          "description": "This is the `recurringDetailReference` returned in the response when you created the token.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/storedPaymentMethodId"
+              },
+              "fragment_digest": "0e9df42441b16f7180f742555464f3954f0c70350089757ab0cfdeec96a36013",
+              "claim_path": "/fields/storedPaymentMethodId/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/IdealDetails/properties/storedPaymentMethodId"
+              },
+              "fragment_digest": "0e9df42441b16f7180f742555464f3954f0c70350089757ab0cfdeec96a36013",
+              "claim_path": "/fields/storedPaymentMethodId/type"
+            }
+          ]
         }
       ],
       "enums": [
         "ideal"
       ],
       "constraints": "type discriminator fixed 'ideal'.",
-      "source": "CheckoutService-v71.json components.schemas.IdealDetails"
+      "source": "CheckoutService-v71.json components.schemas.IdealDetails",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/IdealDetails"
+          },
+          "fragment_digest": "f28190225542af47bbaac10e300a8da4df56898d79ccf64cd95aa3bc2d7edc70",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "ApplePayDetails",
@@ -250,26 +989,134 @@
           "name": "type",
           "type": "string",
           "required": false,
-          "description": "**applepay**"
+          "description": "**applepay**",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/type"
+              },
+              "fragment_digest": "03016040135e06586d7ee7f6a453aa3b474bc957f01915935529252cb73dc3d7",
+              "claim_path": "/fields/type/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails"
+              },
+              "fragment_digest": "4e9b88f05c5ed588b645fbc0c34f39de502366925237e6da832faf0a88077098",
+              "claim_path": "/fields/type/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/type"
+              },
+              "fragment_digest": "03016040135e06586d7ee7f6a453aa3b474bc957f01915935529252cb73dc3d7",
+              "claim_path": "/fields/type/type"
+            }
+          ]
         },
         {
           "name": "applePayToken",
           "type": "string",
           "required": true,
-          "description": "The stringified and base64 encoded `paymentData` you retrieved from the Apple framework."
+          "description": "The stringified and base64 encoded `paymentData` you retrieved from the Apple framework.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/applePayToken"
+              },
+              "fragment_digest": "bc1190839ae21329c0adc207f0a6fabe192e5c13e80ce67ba54ab5066252a5ac",
+              "claim_path": "/fields/applePayToken/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails"
+              },
+              "fragment_digest": "4e9b88f05c5ed588b645fbc0c34f39de502366925237e6da832faf0a88077098",
+              "claim_path": "/fields/applePayToken/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/applePayToken"
+              },
+              "fragment_digest": "bc1190839ae21329c0adc207f0a6fabe192e5c13e80ce67ba54ab5066252a5ac",
+              "claim_path": "/fields/applePayToken/type"
+            }
+          ]
         },
         {
           "name": "fundingSource",
           "type": "string",
           "required": false,
-          "description": "The funding source that should be used when multiple sources are available. For Brazilian combo cards, by default the funding source is credit. To use debit, set this value to **debit**."
+          "description": "The funding source that should be used when multiple sources are available. For Brazilian combo cards, by default the funding source is credit. To use debit, set this value to **debit**.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/fundingSource"
+              },
+              "fragment_digest": "1ae5df8a8d559ed40b5c068bf7bce6f76a54d2e79f41af9da8a42dc695ef5a92",
+              "claim_path": "/fields/fundingSource/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails"
+              },
+              "fragment_digest": "4e9b88f05c5ed588b645fbc0c34f39de502366925237e6da832faf0a88077098",
+              "claim_path": "/fields/fundingSource/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ApplePayDetails/properties/fundingSource"
+              },
+              "fragment_digest": "1ae5df8a8d559ed40b5c068bf7bce6f76a54d2e79f41af9da8a42dc695ef5a92",
+              "claim_path": "/fields/fundingSource/type"
+            }
+          ]
         }
       ],
       "enums": [
         "applepay"
       ],
       "constraints": "type discriminator default 'applepay'; applePayToken is required.",
-      "source": "CheckoutService-v71.json components.schemas.ApplePayDetails"
+      "source": "CheckoutService-v71.json components.schemas.ApplePayDetails",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/ApplePayDetails"
+          },
+          "fragment_digest": "4e9b88f05c5ed588b645fbc0c34f39de502366925237e6da832faf0a88077098",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentResponse",
@@ -278,43 +1125,175 @@
           "name": "resultCode",
           "type": "string",
           "required": null,
-          "description": "The result of the payment. For more information, see [Result codes](https://docs.adyen.com/online-payments/payment-result-codes). Possible values: * **AuthenticationFinished** – The payment has been successfully authenticated with 3D Sec..."
+          "description": "The result of the payment. For more information, see [Result codes](https://docs.adyen.com/online-payments/payment-result-codes). Possible values: * **AuthenticationFinished** – The payment has been successfully authenticated with 3D Sec...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/resultCode"
+              },
+              "fragment_digest": "80b4490479e2a2f498faec09b308e28553509822b3c57ea76315e3901b0b6230",
+              "claim_path": "/fields/resultCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/resultCode"
+              },
+              "fragment_digest": "80b4490479e2a2f498faec09b308e28553509822b3c57ea76315e3901b0b6230",
+              "claim_path": "/fields/resultCode/type"
+            }
+          ]
         },
         {
           "name": "pspReference",
           "type": "string",
           "required": null,
-          "description": "Adyen's 16-character string reference associated with the transaction/request. This value is globally unique; quote it when communicating with us about this request. > For payment methods that require a redirect or additional action, you..."
+          "description": "Adyen's 16-character string reference associated with the transaction/request. This value is globally unique; quote it when communicating with us about this request. > For payment methods that require a redirect or additional action, you...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/pspReference"
+              },
+              "fragment_digest": "caed8e6a1e0fa03905b7a6620276ab549833fa99ca816bb76e5ea0cc5922f5f3",
+              "claim_path": "/fields/pspReference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/pspReference"
+              },
+              "fragment_digest": "caed8e6a1e0fa03905b7a6620276ab549833fa99ca816bb76e5ea0cc5922f5f3",
+              "claim_path": "/fields/pspReference/type"
+            }
+          ]
         },
         {
           "name": "action",
-          "type": null,
           "required": null,
-          "description": "Action to be taken for completing the payment."
+          "description": "Action to be taken for completing the payment.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/action"
+              },
+              "fragment_digest": "7221103c429aa424a0c9772889d67eed4eeebc39d3076deb49001ae07f527cb5",
+              "claim_path": "/fields/action/name"
+            }
+          ]
         },
         {
           "name": "refusalReason",
           "type": "string",
           "required": null,
-          "description": "If the payment's authorisation is refused or an error occurs during authorisation, this field holds Adyen's mapped reason for the refusal or a description of the error. When a transaction fails, the authorisation response includes `resul..."
+          "description": "If the payment's authorisation is refused or an error occurs during authorisation, this field holds Adyen's mapped reason for the refusal or a description of the error. When a transaction fails, the authorisation response includes `resul...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/refusalReason"
+              },
+              "fragment_digest": "94767f835bffd0c460ed32e8028ec02ae5c9e7430ec4784796930ad3116297a8",
+              "claim_path": "/fields/refusalReason/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/refusalReason"
+              },
+              "fragment_digest": "94767f835bffd0c460ed32e8028ec02ae5c9e7430ec4784796930ad3116297a8",
+              "claim_path": "/fields/refusalReason/type"
+            }
+          ]
         },
         {
           "name": "refusalReasonCode",
           "type": "string",
           "required": null,
-          "description": "Code that specifies the refusal reason. For more information, see [Authorisation refusal reasons](https://docs.adyen.com/development-resources/refusal-reasons)."
+          "description": "Code that specifies the refusal reason. For more information, see [Authorisation refusal reasons](https://docs.adyen.com/development-resources/refusal-reasons).",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/refusalReasonCode"
+              },
+              "fragment_digest": "6c4578ea42db4ddadc9589b78edf2d252e8ad15dc31292931b620948a9974b17",
+              "claim_path": "/fields/refusalReasonCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/refusalReasonCode"
+              },
+              "fragment_digest": "6c4578ea42db4ddadc9589b78edf2d252e8ad15dc31292931b620948a9974b17",
+              "claim_path": "/fields/refusalReasonCode/type"
+            }
+          ]
         },
         {
           "name": "merchantReference",
           "type": "string",
           "required": null,
-          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. We recommend using a unique value per payment; however, it is not a requirement. If you need to provide multiple..."
+          "description": "The reference to uniquely identify a payment. This reference is used in all communication with you about the payment status. We recommend using a unique value per payment; however, it is not a requirement. If you need to provide multiple...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/merchantReference"
+              },
+              "fragment_digest": "5427e32e0ccfada502cd6c6ae5e901dea66aa223aa2e31fb5724d9298c4b591b",
+              "claim_path": "/fields/merchantReference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/merchantReference"
+              },
+              "fragment_digest": "5427e32e0ccfada502cd6c6ae5e901dea66aa223aa2e31fb5724d9298c4b591b",
+              "claim_path": "/fields/merchantReference/type"
+            }
+          ]
         },
         {
           "name": "amount",
-          "type": "object",
           "required": null,
-          "description": "Authorised amount in the transaction."
+          "description": "Authorised amount in the transaction.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentResponse/properties/amount"
+              },
+              "fragment_digest": "927077413db293d30303b271c898955eb8e9f94ef761a3a5774ec883545ee4fc",
+              "claim_path": "/fields/amount/name"
+            }
+          ]
         }
       ],
       "enums": [
@@ -334,33 +1313,142 @@
         "Success"
       ],
       "constraints": "resultCode drives the next step (Authorised / RedirectShopper / ChallengeShopper / Refused / Pending ...). When not final, 'action' tells the client what to do next.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentResponse"
+      "source": "CheckoutService-v71.json components.schemas.PaymentResponse",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/PaymentResponse"
+          },
+          "fragment_digest": "80f09a4ddbbeae0bc47d77a714706c3d94ea3820fbf54030d1d801192e9f74ec",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentDetailsRequest",
       "fields": [
         {
           "name": "details",
-          "type": "object",
           "required": true,
-          "description": "Use this collection to submit the details that were returned as a result of the `/payments` call."
+          "description": "Use this collection to submit the details that were returned as a result of the `/payments` call.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest/properties/details"
+              },
+              "fragment_digest": "fe02e20676d9647269f14fb29e61cd506a3820671efcf68bf0496a9e096960dd",
+              "claim_path": "/fields/details/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest"
+              },
+              "fragment_digest": "2a7a343ab13680a5ad2bb51e415f94ebff2afd758134c26fdd8df18ab29d020a",
+              "claim_path": "/fields/details/required"
+            }
+          ]
         },
         {
           "name": "paymentData",
           "type": "string",
           "required": false,
-          "description": "Encoded payment data. For [authorizing a payment after using 3D Secure 2 Authentication-only](https://docs.adyen.com/online-payments/3d-secure/other-3ds-flows/authentication-only/#authorise-the-payment-with-adyen): If you received `resul..."
+          "description": "Encoded payment data. For [authorizing a payment after using 3D Secure 2 Authentication-only](https://docs.adyen.com/online-payments/3d-secure/other-3ds-flows/authentication-only/#authorise-the-payment-with-adyen): If you received `resul...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest/properties/paymentData"
+              },
+              "fragment_digest": "c2046a504961425b3ad5de6225f260f39b084d0bf672fb900587d7f94132e1a8",
+              "claim_path": "/fields/paymentData/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest"
+              },
+              "fragment_digest": "2a7a343ab13680a5ad2bb51e415f94ebff2afd758134c26fdd8df18ab29d020a",
+              "claim_path": "/fields/paymentData/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest/properties/paymentData"
+              },
+              "fragment_digest": "c2046a504961425b3ad5de6225f260f39b084d0bf672fb900587d7f94132e1a8",
+              "claim_path": "/fields/paymentData/type"
+            }
+          ]
         },
         {
           "name": "threeDSAuthenticationOnly",
           "type": "boolean",
           "required": false,
-          "description": "Change the `authenticationOnly` indicator originally set in the `/payments` request. Only needs to be set if you want to modify the value set previously."
+          "description": "Change the `authenticationOnly` indicator originally set in the `/payments` request. Only needs to be set if you want to modify the value set previously.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest/properties/threeDSAuthenticationOnly"
+              },
+              "fragment_digest": "e23a98d7d4f01c13d0cc5785a72514b3141b6bb2f173912bc02b792de7ebdfdb",
+              "claim_path": "/fields/threeDSAuthenticationOnly/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest"
+              },
+              "fragment_digest": "2a7a343ab13680a5ad2bb51e415f94ebff2afd758134c26fdd8df18ab29d020a",
+              "claim_path": "/fields/threeDSAuthenticationOnly/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentDetailsRequest/properties/threeDSAuthenticationOnly"
+              },
+              "fragment_digest": "e23a98d7d4f01c13d0cc5785a72514b3141b6bb2f173912bc02b792de7ebdfdb",
+              "claim_path": "/fields/threeDSAuthenticationOnly/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "details: key-value pairs returned by the redirect/3DS step.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentDetailsRequest"
+      "source": "CheckoutService-v71.json components.schemas.PaymentDetailsRequest",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/PaymentDetailsRequest"
+          },
+          "fragment_digest": "2a7a343ab13680a5ad2bb51e415f94ebff2afd758134c26fdd8df18ab29d020a",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentMethodsRequest",
@@ -369,68 +1457,349 @@
           "name": "merchantAccount",
           "type": "string",
           "required": true,
-          "description": "The merchant account identifier, with which you want to process the transaction."
+          "description": "The merchant account identifier, with which you want to process the transaction.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/merchantAccount"
+              },
+              "fragment_digest": "3c9a8496a5a72438f070e72768789275e3124b068bffc284f0250d353c532635",
+              "claim_path": "/fields/merchantAccount/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/merchantAccount/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/merchantAccount"
+              },
+              "fragment_digest": "3c9a8496a5a72438f070e72768789275e3124b068bffc284f0250d353c532635",
+              "claim_path": "/fields/merchantAccount/type"
+            }
+          ]
         },
         {
           "name": "amount",
-          "type": "object",
           "required": false,
-          "description": "The amount information for the transaction (in [minor units](https://docs.adyen.com/development-resources/currency-codes)). For [BIN or card verification](https://docs.adyen.com/payment-methods/cards/bin-data-and-card-verification) reque..."
+          "description": "The amount information for the transaction (in [minor units](https://docs.adyen.com/development-resources/currency-codes)). For [BIN or card verification](https://docs.adyen.com/payment-methods/cards/bin-data-and-card-verification) reque...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/amount"
+              },
+              "fragment_digest": "1ea2f7cb0d7a10de607fc5b40e8d50232310ac4105778d1397730c32f5ef8cdf",
+              "claim_path": "/fields/amount/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/amount/required"
+            }
+          ]
         },
         {
           "name": "countryCode",
           "type": "string",
           "required": false,
-          "description": "The shopper's country code."
+          "description": "The shopper's country code.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/countryCode"
+              },
+              "fragment_digest": "264209ce621032a579321832a51232358fab5a44854227424588be8ab97048a5",
+              "claim_path": "/fields/countryCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/countryCode/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/countryCode"
+              },
+              "fragment_digest": "264209ce621032a579321832a51232358fab5a44854227424588be8ab97048a5",
+              "claim_path": "/fields/countryCode/type"
+            }
+          ]
         },
         {
           "name": "channel",
           "type": "string",
           "required": false,
-          "description": "The platform where a payment transaction takes place. This field can be used for filtering out payment methods that are only available on specific platforms. Possible values: * iOS * Android * Web"
+          "description": "The platform where a payment transaction takes place. This field can be used for filtering out payment methods that are only available on specific platforms. Possible values: * iOS * Android * Web",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/channel"
+              },
+              "fragment_digest": "bd970b5f05b92f2c1faad7768322131a038b5c02b246db01a43c40a338a8dace",
+              "claim_path": "/fields/channel/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/channel/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/channel"
+              },
+              "fragment_digest": "bd970b5f05b92f2c1faad7768322131a038b5c02b246db01a43c40a338a8dace",
+              "claim_path": "/fields/channel/type"
+            }
+          ]
         },
         {
           "name": "shopperReference",
           "type": "string",
           "required": false,
-          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. The value is case-sensitive and must be at least three characters. > Your reference must not include personally identif..."
+          "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. The value is case-sensitive and must be at least three characters. > Your reference must not include personally identif...",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/shopperReference"
+              },
+              "fragment_digest": "28e79ca562827a68ce8eb73dfdb559a18c22828334c06bf4ddf1ea78c10c7aea",
+              "claim_path": "/fields/shopperReference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/shopperReference/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/shopperReference"
+              },
+              "fragment_digest": "28e79ca562827a68ce8eb73dfdb559a18c22828334c06bf4ddf1ea78c10c7aea",
+              "claim_path": "/fields/shopperReference/type"
+            }
+          ]
         },
         {
-          "name": "allowedPaymentMethods",
+          "name": "allowedPaymentMethods[]",
           "type": "array",
           "required": false,
-          "description": "List of payment methods to be presented to the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"allowedPaymentMethods\":[\"ideal\",\"applepay\"]`"
+          "description": "List of payment methods to be presented to the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"allowedPaymentMethods\":[\"ideal\",\"applepay\"]`",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/allowedPaymentMethods"
+              },
+              "fragment_digest": "a174399be26e1fe7fd0e7f2cf2f4ea265afc7e1e997a7b035cd63cacf5bbab61",
+              "claim_path": "/fields/allowedPaymentMethods[]/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/allowedPaymentMethods[]/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/allowedPaymentMethods"
+              },
+              "fragment_digest": "a174399be26e1fe7fd0e7f2cf2f4ea265afc7e1e997a7b035cd63cacf5bbab61",
+              "claim_path": "/fields/allowedPaymentMethods[]/type"
+            }
+          ]
         },
         {
-          "name": "blockedPaymentMethods",
+          "name": "blockedPaymentMethods[]",
           "type": "array",
           "required": false,
-          "description": "List of payment methods to be hidden from the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"blockedPaymentMethods\":[\"ideal\",\"applepay\"]`"
+          "description": "List of payment methods to be hidden from the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"blockedPaymentMethods\":[\"ideal\",\"applepay\"]`",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/blockedPaymentMethods"
+              },
+              "fragment_digest": "e7c8a362c332b10532b0ff5ec1b5aa5e9d8c68392df72d15aee7e8e8458abfb4",
+              "claim_path": "/fields/blockedPaymentMethods[]/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest"
+              },
+              "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+              "claim_path": "/fields/blockedPaymentMethods[]/required"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsRequest/properties/blockedPaymentMethods"
+              },
+              "fragment_digest": "e7c8a362c332b10532b0ff5ec1b5aa5e9d8c68392df72d15aee7e8e8458abfb4",
+              "claim_path": "/fields/blockedPaymentMethods[]/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "merchantAccount required.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsRequest"
+      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsRequest",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/PaymentMethodsRequest"
+          },
+          "fragment_digest": "63a1a9b344c465258c4a37fa84a04a67b58df60ef88dc82e7a3ceb5d123e8244",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentMethodsResponse",
       "fields": [
         {
-          "name": "paymentMethods",
+          "name": "paymentMethods[]",
           "type": "array",
           "required": null,
-          "description": "Detailed list of payment methods required to generate payment forms."
+          "description": "Detailed list of payment methods required to generate payment forms.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsResponse/properties/paymentMethods"
+              },
+              "fragment_digest": "1af1ff25c935db932b37b95852d8b9c7435c0cd29a2d2532afb74910f014e413",
+              "claim_path": "/fields/paymentMethods[]/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsResponse/properties/paymentMethods"
+              },
+              "fragment_digest": "1af1ff25c935db932b37b95852d8b9c7435c0cd29a2d2532afb74910f014e413",
+              "claim_path": "/fields/paymentMethods[]/type"
+            }
+          ]
         },
         {
-          "name": "storedPaymentMethods",
+          "name": "storedPaymentMethods[]",
           "type": "array",
           "required": null,
-          "description": "List of all stored payment methods."
+          "description": "List of all stored payment methods.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsResponse/properties/storedPaymentMethods"
+              },
+              "fragment_digest": "e7f4d73dcfa8dbca0635f5e5456053c09a4fe57e238e51c8680171f782263dd5",
+              "claim_path": "/fields/storedPaymentMethods[]/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/PaymentMethodsResponse/properties/storedPaymentMethods"
+              },
+              "fragment_digest": "e7f4d73dcfa8dbca0635f5e5456053c09a4fe57e238e51c8680171f782263dd5",
+              "claim_path": "/fields/storedPaymentMethods[]/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "paymentMethods: methods available for the given amount/country/shopper.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsResponse"
+      "source": "CheckoutService-v71.json components.schemas.PaymentMethodsResponse",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/PaymentMethodsResponse"
+          },
+          "fragment_digest": "d4cdb12950cdcc2d11109dfe83c91e90c7dfaabecc34517366db9afec7a17262",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "ServiceError",
@@ -439,82 +1808,303 @@
           "name": "status",
           "type": "integer",
           "required": null,
-          "description": "The HTTP response status."
+          "description": "The HTTP response status.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/status"
+              },
+              "fragment_digest": "21439ecc514d43f9ebfabf948b9240e0905983199811463b93a9fee5a777d9a1",
+              "claim_path": "/fields/status/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/status"
+              },
+              "fragment_digest": "21439ecc514d43f9ebfabf948b9240e0905983199811463b93a9fee5a777d9a1",
+              "claim_path": "/fields/status/type"
+            }
+          ]
         },
         {
           "name": "errorCode",
           "type": "string",
           "required": null,
-          "description": "The error code mapped to the error message."
+          "description": "The error code mapped to the error message.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/errorCode"
+              },
+              "fragment_digest": "6722cc2760642f3f8714832798cff99a2b68e8c564feca76af33f530a500981b",
+              "claim_path": "/fields/errorCode/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/errorCode"
+              },
+              "fragment_digest": "6722cc2760642f3f8714832798cff99a2b68e8c564feca76af33f530a500981b",
+              "claim_path": "/fields/errorCode/type"
+            }
+          ]
         },
         {
           "name": "message",
           "type": "string",
           "required": null,
-          "description": "A short explanation of the issue."
+          "description": "A short explanation of the issue.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/message"
+              },
+              "fragment_digest": "cb9c4220d6c9f2de8b29699b42e169b853eecd7ba1f20241d6ab2f2c26ddc6d5",
+              "claim_path": "/fields/message/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/message"
+              },
+              "fragment_digest": "cb9c4220d6c9f2de8b29699b42e169b853eecd7ba1f20241d6ab2f2c26ddc6d5",
+              "claim_path": "/fields/message/type"
+            }
+          ]
         },
         {
           "name": "errorType",
           "type": "string",
           "required": null,
-          "description": "The category of the error."
+          "description": "The category of the error.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/errorType"
+              },
+              "fragment_digest": "52fd2b39e9d5ed23b1f6b14190173d6d2ccd5cdc963bbc5a5ee74d867e0735a6",
+              "claim_path": "/fields/errorType/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/errorType"
+              },
+              "fragment_digest": "52fd2b39e9d5ed23b1f6b14190173d6d2ccd5cdc963bbc5a5ee74d867e0735a6",
+              "claim_path": "/fields/errorType/type"
+            }
+          ]
         },
         {
           "name": "pspReference",
           "type": "string",
           "required": null,
-          "description": "The PSP reference of the payment."
+          "description": "The PSP reference of the payment.",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/pspReference"
+              },
+              "fragment_digest": "9c6a5f37c2d23d55767e283f900d34c84cc75584b83fb5a8ebbe930367c3c318",
+              "claim_path": "/fields/pspReference/name"
+            },
+            {
+              "version": 1,
+              "source": "CheckoutService-v71.json",
+              "locator": {
+                "kind": "json_pointer",
+                "pointer": "/components/schemas/ServiceError/properties/pspReference"
+              },
+              "fragment_digest": "9c6a5f37c2d23d55767e283f900d34c84cc75584b83fb5a8ebbe930367c3c318",
+              "claim_path": "/fields/pspReference/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "Returned for 400/401/403/422/500 responses.",
-      "source": "CheckoutService-v71.json components.schemas.ServiceError"
+      "source": "CheckoutService-v71.json components.schemas.ServiceError",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/components/schemas/ServiceError"
+          },
+          "fragment_digest": "528e96912ba174ac650a161ecca4ae5c49d3dbf214f454f47c7cf2a97d23a4e0",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "errors": [
     {
       "code": "400",
-      "meaning": "Bad request (ServiceError).",
+      "meaning": "Bad Request - a problem reading or understanding the request.",
       "http_status": "400",
-      "source": "CheckoutService-v71.json paths./payments.post.responses.400"
+      "source": "CheckoutService-v71.json paths./payments.post.responses.400",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/400"
+          },
+          "fragment_digest": "9f994268de5f918ae20fa96f3566610cc85638d93e5371890b2e6016c2ac338b",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/400/description"
+          },
+          "fragment_digest": "043bb162fc3c154d877c5ec450f78c67d5a06853ecfa0c6ac9bbd3f2c7c1c5bf",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "401",
-      "meaning": "Unauthorized (ServiceError).",
+      "meaning": "Unauthorized - authentication required.",
       "http_status": "401",
-      "source": "CheckoutService-v71.json paths./payments.post.responses.401"
+      "source": "CheckoutService-v71.json paths./payments.post.responses.401",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/401"
+          },
+          "fragment_digest": "1a19b8b433f48bb93d81a4b8c9fd0920b67b67b717e04dfe907ffb69f3acba2d",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/401/description"
+          },
+          "fragment_digest": "69ccda25ec5d2fa18d913d7a8767ac0eae3bdd87e5cd7b979787cba5714d22a1",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "403",
-      "meaning": "Forbidden (ServiceError).",
+      "meaning": "Forbidden - insufficient permissions to process the request.",
       "http_status": "403",
-      "source": "CheckoutService-v71.json paths./payments.post.responses.403"
+      "source": "CheckoutService-v71.json paths./payments.post.responses.403",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/403"
+          },
+          "fragment_digest": "8252475ffecc76e069bc3c61dcca788bfeb41d5decd1c43489184800d1bd1ea5",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/403/description"
+          },
+          "fragment_digest": "aa3d145a5a979aca01efa9eee73ba1dd8dcf9251521d38d3d2524f3df751a3e3",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "422",
-      "meaning": "Unprocessable entity (ServiceError).",
+      "meaning": "Unprocessable Entity - a request validation error.",
       "http_status": "422",
-      "source": "CheckoutService-v71.json paths./payments.post.responses.422"
+      "source": "CheckoutService-v71.json paths./payments.post.responses.422",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/422"
+          },
+          "fragment_digest": "4f925a8d012c599a0d90a6912e5712229b8819263d65d19fb4925a91f90e96cc",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/422/description"
+          },
+          "fragment_digest": "414c16de04dfc5498c2ad65bccdb77f13836a617022c25d2b4bb3d39e1eb13f5",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "500",
-      "meaning": "Internal server error (ServiceError).",
+      "meaning": "Internal Server Error - the server could not process the request.",
       "http_status": "500",
-      "source": "CheckoutService-v71.json paths./payments.post.responses.500"
+      "source": "CheckoutService-v71.json paths./payments.post.responses.500",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/500"
+          },
+          "fragment_digest": "f1a875f2f00de00ff04f8e61d73a8231d111d65b197d46bc70629bca7ff8bc6a",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "CheckoutService-v71.json",
+          "locator": {
+            "kind": "json_pointer",
+            "pointer": "/paths/~1payments/post/responses/500/description"
+          },
+          "fragment_digest": "7486a17f29babb096b40cae6df8ee66df6a6b6ed08e859bf6f8d2c4c82ae4a53",
+          "claim_path": "/description"
+        }
+      ]
     }
   ],
-  "operational": [
-    {
-      "topic": "multi-method entry point",
-      "detail": "POST /payments serves all payment methods; the paymentMethod.type discriminator selects which detail object (and therefore which required fields) apply.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentRequest.properties.paymentMethod"
-    },
-    {
-      "topic": "redirect / 3DS continuation",
-      "detail": "When resultCode is RedirectShopper/ChallengeShopper, the client follows 'action' then calls POST /payments/details with the returned details.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentResponse.properties.resultCode"
-    }
-  ],
+  "operational": [],
   "missing": [
     "Client-side encryption (CSE) algorithm for the encrypted* card fields is not stated in this spec.",
     "Webhook/notification payloads and HMAC signing live in a separate Adyen Notification API, not in the Checkout spec — no callbacks captured here."

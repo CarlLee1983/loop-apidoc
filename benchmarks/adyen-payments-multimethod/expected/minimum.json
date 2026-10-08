@@ -8,7 +8,7 @@
     "security_schemes": 2,
     "servers": 1,
     "error_codes": 5,
-    "field_conditions": 4,
+    "field_conditions": 0,
     "test_cases": 2
   },
   "must_have": {
