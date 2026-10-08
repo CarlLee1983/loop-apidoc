@@ -61,6 +61,7 @@ EXACT_EVIDENCE_PARITY_BENCHMARK_CASES = (
     "apis-guru-baseline",
     "ecpay-creditcard-pdf",
     "cybersource-payments",
+    "adyen-payments-multimethod",
 )
 
 
