@@ -47,7 +47,10 @@ def _openapi_pointer_derivation(
     *,
     claim_kind: str,
 ) -> tuple[Any, str | None] | None:
-    """Verify the fixed OpenAPI pointer-to-operation-path mapping, if proposed."""
+    """Verify the fixed OpenAPI pointer-to-operation-path mapping, if proposed.
+
+    ``claim_kind`` is only read by derivations that must restrict the claim kind.
+    """
     pointer_steps = tuple(
         step
         for step in support.derivation_steps
@@ -112,9 +115,12 @@ def _openapi_pointer_derivation(
         )
     elif derivation == ("openapi_error_code_from_response_pointer", "1"):
         status = _openapi_response_status_from_pointer(fragment.locator.pointer)
-        if claim_kind != "error" or status is None or status[0] not in "45":
-            return None, "DERIVATION_INAPPLICABLE"
-        if not status[1:].isdigit():
+        if (
+            claim_kind != "error"
+            or status is None
+            or status[0] not in "45"
+            or status[1:] == "XX"
+        ):
             return None, "DERIVATION_INAPPLICABLE"
         expected_claim_path = "/code"
         derived_value = status

@@ -2394,9 +2394,12 @@ def test_response_key_proves_error_code(status):
         ("200", "200", "DERIVATION_INAPPLICABLE"),
         ("default", "default", "DERIVATION_INAPPLICABLE"),
         ("4XX", "4XX", "DERIVATION_INAPPLICABLE"),
+        ("100", "100", "DERIVATION_INAPPLICABLE"),
+        ("302", "302", "DERIVATION_INAPPLICABLE"),
+        ("5XX", "5XX", "DERIVATION_INAPPLICABLE"),
         ("401", "400", "DERIVATION_VALUE_MISMATCH"),
     ],
-    ids=["2xx", "default", "range", "different-code"],
+    ids=["2xx", "default", "range", "1xx", "3xx", "5xx-range", "different-code"],
 )
 def test_error_code_refuses_non_error_keys_and_different_codes(
     status, claimed, reason
