@@ -36,6 +36,21 @@ change nothing else:
   claims already carry. `notes.md` records what they said.
 - The 2 `operational` entries are removed. Their text is the extraction's own
   explanation, not source text.
+- Each endpoint's `request` gains `schema_ref`, equal to its existing `request.schema`.
+  The claim projection reads `request.schema_ref` (`loop_apidoc/plan/claim_projection.py`),
+  and the request-body field derivations need the operation's `request_schema_ref`.
+  `funkygames-transfer-operator` carries both keys the same way.
+- The four array fields `PaymentMethodsRequest.allowedPaymentMethods`,
+  `PaymentMethodsRequest.blockedPaymentMethods`, `PaymentMethodsResponse.paymentMethods`,
+  and `PaymentMethodsResponse.storedPaymentMethods` gain the `[]` suffix that the source's
+  `type: array` requires, as `apis-guru-baseline`'s `datasets[]` did.
+- The `type` is removed from the five fields whose source property states no type, only a
+  `$ref` or a `oneOf`: `amount` in `PaymentRequest`, `PaymentResponse`, and
+  `PaymentMethodsRequest`; `PaymentDetailsRequest.details`; and
+  `PaymentRequest.paymentMethod`.
+- The `200` response `schema_ref` of `POST /payments/details` becomes `null`. The source
+  references `PaymentDetailsResponse`, not the extracted `PaymentResponse`, and that schema
+  is not in the extraction.
 
 ## Out of Scope
 
