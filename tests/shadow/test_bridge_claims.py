@@ -38,6 +38,7 @@ from loop_apidoc.domain.evidence import (
     VerificationMethod,
     fragment_digest,
 )
+from loop_apidoc.domain.identity import canonical_operation_identity
 from loop_apidoc.shadow.bridge import (
     SHADOW_RUNTIME_IDENTITY,
     SHADOW_RUNTIME_VERSION,
@@ -285,6 +286,38 @@ def test_operation_references_use_domain_canonical_identity():
     assert result.claim_proposals[1].value["operation_refs"] == [
         "operation:POST:/payments"
     ]
+
+
+def _test_case_operation_refs(operation_ref: str) -> list[str]:
+    case = ContractTestCase(
+        status=PlanItemStatus.SUPPORTED,
+        citations=[CITATION],
+        name="card payment",
+        operation_ref=operation_ref,
+    )
+    projection = iter_plan_claim_projections(
+        _plan(integration=IntegrationContract(test_cases=[case]))
+    )[0]
+    return projection.value["operation_refs"]
+
+
+def test_test_case_documented_paths_reference_uses_canonical_identity():
+    assert _test_case_operation_refs("paths./Cashier/AioCheckOut/V5.post") == [
+        canonical_operation_identity("POST", "/Cashier/AioCheckOut/V5")
+    ]
+
+
+def test_test_case_paths_reference_splits_method_after_the_last_dot():
+    assert _test_case_operation_refs("paths./list.json.get") == [
+        canonical_operation_identity("GET", "/list.json")
+    ]
+
+
+@pytest.mark.parametrize(
+    "operation_ref", ["POST /payments", "operation:POST:/payments"]
+)
+def test_test_case_method_path_and_identity_references_are_unchanged(operation_ref):
+    assert _test_case_operation_refs(operation_ref) == ["operation:POST:/payments"]
 
 
 def test_unresolved_and_absent_citations_emit_diagnostics_without_references():

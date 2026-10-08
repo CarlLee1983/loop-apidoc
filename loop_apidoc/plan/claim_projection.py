@@ -355,7 +355,13 @@ def _put(target: dict[str, Any], key: str, value: Any) -> None:
 def _canonical_operation_reference(value: str) -> str:
     if value.startswith("operation:"):
         return value
-    method, separator, path = value.strip().partition(" ")
+    reference = value.strip()
+    if reference.startswith("paths."):
+        # The contract's test-case form, split as the legacy validator does. Every
+        # caller accepts it, not only test cases.
+        path, separator, method = reference.removeprefix("paths.").rpartition(".")
+    else:
+        method, separator, path = reference.partition(" ")
     if not separator:
         return value
     try:
