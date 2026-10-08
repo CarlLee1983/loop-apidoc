@@ -1550,6 +1550,15 @@ def _openapi_pointer_derivation_name(
         and pointer_parts[:2] == ("components", "securitySchemes")
     ):
         return "openapi_security_scheme_name_from_pointer"
+    if (
+        claim_kind == "error"
+        and claim_path == "/code"
+        and pointer_parts is not None
+        and len(pointer_parts) == 5
+        and pointer_parts[0] == "paths"
+        and pointer_parts[3] == "responses"
+    ):
+        return "openapi_error_code_from_response_pointer"
     direct = {
         "/method": "openapi_method_from_pointer",
         "/path": "openapi_path_from_pointer",

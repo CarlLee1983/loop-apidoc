@@ -775,3 +775,26 @@ def test_derivation_input_digest_accepts_yaml_timestamps():
             '"semantic_value":{"example":{"added":"2015-02-22T20:00:45+00:00"}}}'
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "claim_kind, claim_path, pointer, expected",
+    [
+        (
+            "error",
+            "/code",
+            "/paths/~1payments/post/responses/400",
+            "openapi_error_code_from_response_pointer",
+        ),
+        ("error", "/code", "/paths/~1payments/post/responses/400/description", None),
+        ("error", "/code", "/components/schemas/Error", None),
+        ("error", "/description", "/paths/~1payments/post/responses/400", None),
+        ("idempotency_rule", "/code", "/paths/~1payments/post/responses/400", None),
+    ],
+)
+def test_error_code_selects_derivation_only_for_error_code_on_a_response_pointer(
+    claim_kind, claim_path, pointer, expected
+):
+    fragment = SimpleNamespace(locator=JsonPointerLocator(pointer=pointer))
+
+    assert _openapi_pointer_derivation_name(claim_kind, claim_path, fragment) == expected

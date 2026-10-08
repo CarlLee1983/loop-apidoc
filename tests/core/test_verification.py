@@ -2354,3 +2354,80 @@ def test_operation_derivations_refuse_context_fragments():
         ),
         "DERIVATION_CONTEXT_INVALID",
     )
+
+
+ERROR_CODE_DERIVATION = "openapi_error_code_from_response_pointer"
+ERROR_RESPONSE_OBJECT = {"description": "Bad request"}
+
+
+def _verify_error_code(
+    status: str = "400",
+    claimed: str = "400",
+    *,
+    pointer: str | None = None,
+    claim_kind: str = "error",
+    claim_value: object = None,
+):
+    return _verify_security(
+        ERROR_CODE_DERIVATION,
+        (
+            pointer or f"/paths/~1payments/post/responses/{status}",
+            ERROR_RESPONSE_OBJECT,
+        ),
+        claim_kind=claim_kind,
+        claim_value={"code": claimed, "description": "Bad request"}
+        if claim_value is None
+        else claim_value,
+        claim_path="/code",
+        derived=status,
+    )
+
+
+@pytest.mark.parametrize("status", ["400", "401", "403", "422", "500", "599"])
+def test_response_key_proves_error_code(status):
+    _assert_derived(_verify_error_code(status, status), status)
+
+
+@pytest.mark.parametrize(
+    "status, claimed, reason",
+    [
+        ("200", "200", "DERIVATION_INAPPLICABLE"),
+        ("default", "default", "DERIVATION_INAPPLICABLE"),
+        ("4XX", "4XX", "DERIVATION_INAPPLICABLE"),
+        ("100", "100", "DERIVATION_INAPPLICABLE"),
+        ("302", "302", "DERIVATION_INAPPLICABLE"),
+        ("5XX", "5XX", "DERIVATION_INAPPLICABLE"),
+        ("401", "400", "DERIVATION_VALUE_MISMATCH"),
+    ],
+    ids=["2xx", "default", "range", "1xx", "3xx", "5xx-range", "different-code"],
+)
+def test_error_code_refuses_non_error_keys_and_different_codes(
+    status, claimed, reason
+):
+    _assert_refused(_verify_error_code(status, claimed), reason)
+
+
+def test_error_code_refuses_a_pointer_below_the_response_key():
+    _assert_refused(
+        _verify_error_code(
+            pointer="/paths/~1payments/post/responses/400/description"
+        )
+    )
+
+
+def test_error_code_refuses_a_non_error_claim_kind():
+    _assert_refused(
+        _verify_error_code(
+            claim_kind="operation", claim_value={"path": "/payments", "code": "400"}
+        ),
+        "CLAIM_PATH_UNKNOWN",
+    )
+
+
+def test_error_code_refuses_another_claim_kind_that_has_a_code_path():
+    """idempotency_rule also has ``/code``; only an ``error`` claim may use it."""
+    _assert_refused(
+        _verify_error_code(
+            claim_kind="idempotency_rule", claim_value={"code": "400"}
+        )
+    )

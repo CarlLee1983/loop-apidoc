@@ -44,8 +44,13 @@ def _openapi_pointer_derivation(
     claim_identity: str,
     claim_value: Any,
     operation_value: Any,
+    *,
+    claim_kind: str,
 ) -> tuple[Any, str | None] | None:
-    """Verify the fixed OpenAPI pointer-to-operation-path mapping, if proposed."""
+    """Verify the fixed OpenAPI pointer-to-operation-path mapping, if proposed.
+
+    ``claim_kind`` is only read by derivations that must restrict the claim kind.
+    """
     pointer_steps = tuple(
         step
         for step in support.derivation_steps
@@ -54,6 +59,7 @@ def _openapi_pointer_derivation(
             ("openapi_path_from_pointer", "1"),
             ("openapi_method_from_pointer", "1"),
             ("openapi_response_status_from_pointer", "1"),
+            ("openapi_error_code_from_response_pointer", "1"),
             ("openapi_schema_name_from_ref", "1"),
             ("openapi_request_schema_name_from_ref", "1"),
             ("openapi_request_body_property_name_from_pointer", "1"),
@@ -107,6 +113,17 @@ def _openapi_pointer_derivation(
             if derived_value is not None
             else None
         )
+    elif derivation == ("openapi_error_code_from_response_pointer", "1"):
+        status = _openapi_response_status_from_pointer(fragment.locator.pointer)
+        if (
+            claim_kind != "error"
+            or status is None
+            or status[0] not in "45"
+            or status[1:] == "XX"
+        ):
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = "/code"
+        derived_value = status
     elif derivation == ("openapi_schema_name_from_ref", "1"):
         schema_ref = _openapi_response_schema_ref_from_pointer(
             fragment.locator.pointer,
