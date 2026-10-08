@@ -67,6 +67,47 @@
 - False positives：無
 - False negatives：無
 
+### Exact-evidence parity（2026-10-08）
+
+本 case 已列入 `EXACT_EVIDENCE_PARITY_BENCHMARK_CASES`。重播結果:legacy `passed` /
+Core `accept`,34/34 Core claim supported、0 unverified,
+`test_case_obeys_declared_core_parity_contract[cybersource-payments]` 通過。
+
+- README 改名:manifest 掃描器的 `DEFAULT_EXCLUDES` 會忽略 `README*`,原本的
+  `README.md` 在 `url_sources/source-manifest.json` 裡是 `ignored`、沒有 SHA-256,
+  證據無法引用。本機副本與 client commit `a9dde2993c9c7ccb5ad0267822a9dd475823b19d`
+  的 README 逐位元組相同(SHA-256 `124b39bc…`),改名為 `sources/client-README.md`,
+  extraction 的 `source` 欄位同步改名,manifest 重新產生(25 份皆 supported)。
+- 證據:1151 筆 v1 `evidence`,全是指向 25 份來源的 `line_range`。schema 欄位的
+  `/fields/...` 證據放在 schema 項目上,不放在欄位上:欄位沒有自己的 `source`,在
+  25 份來源的語料中 legacy 無法判定它屬於哪一份,會標成 `SOURCE_UNVERIFIED`。
+- 範圍規則:沿用 `specs/stories/ecpay-exact-evidence-parity.md` 的條款 1–4,以腳本
+  檢查,0 違規。條款 4 的識別字為 schema 名、`schema_ref`、environment 名、
+  field-condition scope、integration `kind`、`operation_refs`。另加條款 5(型別):
+  欄位 `/type` 的範圍須含該欄位的表格列,且 Type 欄對應到所宣稱的型別
+  (`**str**`→string、`**bool**`→boolean、`**int**`→integer、`**float**`→number、
+  `list[...]`→array、連結的 model→object)。
+- 改成原文的轉述:
+  - `create_payment`、`refund_payment`、`void_payment` 的 summary。
+  - 六個 response description,改為 Return type 的 model 名稱;`400` 改為
+    `PtsV2PaymentsPost400Response`。
+  - 四個 `operational` 的 detail;`Response format (HAL)` 與 `Environment switching`
+    的 topic 改為所引章節標題。
+  - 三個 `field_conditions.when` 與 `test_cases[0].name`(`simple_authorizationinternet`)。
+  - security type 改為 README `authentication_type` 的值:`HTTP_Signature`、`JWT`。
+- 移除與移動:
+  - `Production` environment 移到 `missing`:來源只給 SDK `run_environment` 的 host
+    `api.cybersource.com`,沒寫 URL scheme。`minimum.json` 的 `counts.servers` 2→1。
+  - 三個 `crypto`(JWT、HTTP Signature、MLE)移除:來源只寫機制名稱,沒有簽章或加密
+    步驟,claim 一旦 supported,Core 會以 `CRYPTOGRAPHIC_CHAIN_INCOMPLETE` 拒絕。這些
+    事實仍由 security schemes、MLE 的 `operational` 與 `missing` 保留。
+    `minimum.json` 的 `integration.crypto_required` true→false。
+- `validation.expect.json`:`SOURCE_FACTS_UNSCANNED.warning` 24→25,新增的一筆是
+  改名後成為來源的 `client-README.md`。
+- 殘餘風險:response 的 `201`/`400` 狀態碼只出現在 SDK model 名稱裡(例如
+  `PtsV2PaymentsPost201Response`),來源沒有直接寫出狀態碼;`400` response 也只由
+  `PtsV2PaymentsPost400Response.md` 這份 model 文件支持,API 文件本身沒有列出。
+
 ## Pipeline 缺陷
 
 **本 case 未揭新 pipeline 缺陷**（第一輪每個 case 都揭 1+ 缺陷;pipeline 已成熟）。

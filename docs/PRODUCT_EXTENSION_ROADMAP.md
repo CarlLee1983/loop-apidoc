@@ -1,7 +1,7 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence parity is complete for 5 of 7 restored
-source-backed benchmarks; 2 restored cases still need claim-complete parity and 6
+**Status:** In progress — exact-evidence parity is complete for 6 of 7 restored
+source-backed benchmarks; 1 restored case still needs claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
 **Updated:** 2026-10-08
@@ -164,8 +164,8 @@ they did not advance Core production graduation:
   `required_source_refs` capture guidance for sources that direct HTTP cannot obtain.
 
 The maintained priority-1 count is therefore 13 committed benchmark cases: 7 currently
-have local historical sources, of which FunkyGames, RSG, Stripe, APIs.guru, and ECPay have
-claim-complete exact evidence; the other 2 restored cases still require parity work, and 6 historical
+have local historical sources, of which FunkyGames, RSG, Stripe, APIs.guru, ECPay, and CyberSource have
+claim-complete exact evidence; the other restored case still requires parity work, and 6 historical
 snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
 eligible restored sources, but cannot turn an unavailable original snapshot into a
 strict-local pass.
@@ -299,8 +299,25 @@ response descriptions, error meanings, operational topics and details, the callb
 the CheckMacValue steps, field-condition `when` text, the test-case name, and seven
 field types written `String (9)` in the source. Two Core fixes were prerequisites:
 each field condition now has its own claim identity (#186), and a test case's
-`paths.{path}.{method}` reference resolves to its operation (#187). Exact-evidence
-parity covers 5 of 7 restored cases.
+`paths.{path}.{method}` reference resolves to its operation (#187). ECPay became the fifth
+parity case.
+
+**CyberSource source-backed parity (2026-10-08):** the case cites 25 restored Markdown
+files: SDK model and API docs, the SDK README, and the official authorization sample.
+The manifest scanner ignores `README*` files, so the README, byte-identical to client
+commit `a9dde29`, was renamed `client-README.md` and the source manifest regenerated.
+All 1151 v1 evidence entries are `line_range` references held to the ECPay range rule,
+plus a clause that maps each SDK Type cell (`**str**`, `list[...]`, a linked model) to
+the normalized field type. Field paths are bound on their schema item: a field with
+evidence but no `source` of its own cannot be attributed in a 25-document corpus. The
+replay is legacy `passed` / Core `accept` with 34/34 Core claims supported.
+Paraphrases were corrected to source text: three operation summaries, every response
+description, the operational topics and details, field-condition `when` text, the
+test-case name, and the security types (`HTTP_Signature`, `JWT`). The production
+server moved to `missing`, since the source gives only the host. The three crypto
+entries were removed: the source names JWT, HTTP Signature, and MLE but states no
+signing or encryption steps, which Core rejects as `CRYPTOGRAPHIC_CHAIN_INCOMPLETE`.
+Exact-evidence parity covers 6 of 7 restored cases.
 
 ### 2. Continuous source and contract governance
 
@@ -535,8 +552,8 @@ implementation-backed benchmark 與 source-backed strict-local 分開計算；�
 
 0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
 coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
-Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru／ECPay 已完成
-claim-complete exact evidence，另 2 份待補，6 份歷史快照不可得。
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru／ECPay／CyberSource 已完成
+claim-complete exact evidence，另 1 份待補，6 份歷史快照不可得。
 
 GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
 與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。
