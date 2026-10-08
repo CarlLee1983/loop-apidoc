@@ -216,13 +216,13 @@
   "responses": [
     {
       "status": "201",
-      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsPost201Response object as application/hal+json.",
+      "description": "PtsV2PaymentsPost201Response",
       "schema": null,
       "schema_ref": "PtsV2PaymentsPost201Response"
     },
     {
       "status": "400",
-      "description": "Error response. The request was rejected; see PtsV2PaymentsPost400Response for status/reason/message.",
+      "description": "PtsV2PaymentsPost400Response",
       "schema": null,
       "schema_ref": "PtsV2PaymentsPost400Response"
     }

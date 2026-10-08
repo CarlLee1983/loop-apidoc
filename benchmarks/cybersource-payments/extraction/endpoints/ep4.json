@@ -76,7 +76,7 @@
   "responses": [
     {
       "status": "201",
-      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsReversalsPost201Response object as application/hal+json.",
+      "description": "PtsV2PaymentsReversalsPost201Response",
       "schema": null,
       "schema_ref": "PtsV2PaymentsReversalsPost201Response"
     }

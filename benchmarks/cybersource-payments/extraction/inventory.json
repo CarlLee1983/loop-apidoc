@@ -7,36 +7,30 @@
       "name": "Sandbox",
       "base_url": "https://apitest.cybersource.com",
       "version": null,
-      "source": "README.md > Switching between the sandbox environment and the production environment: 'For TESTING use self.run_environment = \"apitest.cybersource.com\"'"
-    },
-    {
-      "name": "Production",
-      "base_url": "https://api.cybersource.com",
-      "version": null,
-      "source": "README.md > Switching between the sandbox environment and the production environment: 'For PRODUCTION use self.run_environment = \"api.cybersource.com\"'"
+      "source": "client-README.md > Switching between the sandbox environment and the production environment: 'For TESTING use self.run_environment = \"apitest.cybersource.com\"'"
     }
   ],
   "security_schemes": [
     {
       "name": "JWT",
-      "type": "jwt",
+      "type": "JWT",
       "location": "header",
       "details": "README.md Authentication section states: 'JWT with Shared Secret is the recommended migration path — it uses the same merchant_keyid and merchant_secretkey credentials, requires only two property changes, and enables MLE (Message Level Encryption) support that HTTP Signature does not provide.' Uses jwt_key_type: SHARED_SECRET, merchantid, merchant_keyid, and merchant_secretkey. The exact HTTP header name and construction is NOT stated in this source.",
-      "source": "README.md > Authentication > For JWT authentication with Shared Secret (Recommended migration from HTTP Signature)"
+      "source": "client-README.md > Authentication > For JWT authentication with Shared Secret (Recommended migration from HTTP Signature)"
     },
     {
       "name": "HTTP Signature",
-      "type": "httpSignature",
+      "type": "HTTP_Signature",
       "location": "header",
       "details": "README.md Authentication section states: 'HTTP Signature authentication is being deprecated' and requires authentication_type: HTTP_Signature, merchantid, merchant_keyid, and merchant_secretkey. The exact Signature header construction and signed headers list is NOT stated in this source.",
-      "source": "README.md > Authentication > For HTTP Signature authentication (Deprecated — migrate to JWT with Shared Secret)"
+      "source": "client-README.md > Authentication > For HTTP Signature authentication (Deprecated — migrate to JWT with Shared Secret)"
     }
   ],
   "endpoints": [
     {
       "method": "POST",
       "path": "/pts/v2/payments",
-      "summary": "A payment authorizes the amount for the transaction. There are a number of supported payment features, such as E-commerce and Card Present - Credit Card/Debit Card, Echeck, e-Wallets, Level II/III Data, etc. A payment response includes the status of the request. It also includes processor-specific information when the request is successful and errors if unsuccessful. Authorization can be requested with Capture, Decision Manager, Payer Authentication(3ds), and Token Creation.",
+      "summary": "A payment authorizes the amount for the transaction. There are a number of supported payment features, such as E-commerce and Card Present - Credit Card/Debit Card, Echeck, e-Wallets, Level II/III Data, etc..  A payment response includes the status of the request. It also includes processor-specific information when the request is successful and errors if unsuccessful. See the [Payments Developer Guides Page](https://developer.cybersource.com/docs/cybs/en-us/payments/developer/ctv/rest/payments/payments-intro.html).  Authorization can be requested with Capture, Decision Manager, Payer Authentication(3ds), and Token Creation.",
       "source": "PaymentsApi.md > create_payment"
     },
     {
@@ -48,13 +42,13 @@
     {
       "method": "POST",
       "path": "/pts/v2/payments/{id}/refunds",
-      "summary": "Refund a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to refund the payment amount.",
+      "summary": "Refund a Payment API is only used, if you have requested Authorization and Capture together in [/pts/v2/payments](https://developer.cybersource.com/api-reference-assets/index.html#payments_payments) API call. Include the payment ID in the POST request to refund the payment amount.",
       "source": "RefundApi.md > refund_payment"
     },
     {
       "method": "POST",
       "path": "/pts/v2/payments/{id}/voids",
-      "summary": "Void a Payment API is only used, if you have requested Authorization and Capture together in /pts/v2/payments API call. Include the payment ID in the POST request to cancel the payment.",
+      "summary": "Void a Payment API is only used, if you have requested Authorization and Capture together in [/pts/v2/payments](https://developer.cybersource.com/api-reference-assets/index.html#payments_payments) API call. Include the payment ID in the POST request to cancel the payment.",
       "source": "VoidApi.md > void_payment"
     },
     {
@@ -2032,23 +2026,23 @@
   "operational": [
     {
       "topic": "Message Level Encryption (MLE)",
-      "detail": "README.md states MLE provides encryption of messages at the application level before they are sent over the network; MLE is supported with JWT authentication, particularly with shared secret and MetaKey configurations.",
-      "source": "README.md > Features > Message Level Encryption (MLE) Feature"
+      "detail": "This feature ensures secure communication by encrypting messages at the application level before they are sent over the network.",
+      "source": "client-README.md > Features > Message Level Encryption (MLE) Feature"
     },
     {
       "topic": "MetaKey Support",
-      "detail": "README.md describes a Meta Key as a single key usable by one, some, or all merchants in a portfolio; the Portfolio or Parent Account owns the key and is the transaction submitter. Supported with HTTP Signature, JWT P12, and JWT Shared Secret.",
-      "source": "README.md > MetaKey Support"
+      "detail": "A Meta Key is a single key that can be used by one, some, or all merchants (or accounts, if created by a Portfolio user) in the portfolio. The Portfolio or Parent Account owns the key and is considered the transaction submitter when a Meta Key is used, while the merchant owns the transaction.",
+      "source": "client-README.md > MetaKey Support"
     },
     {
-      "topic": "Response format (HAL)",
-      "detail": "All endpoints specify Accept: application/hal+json;charset=utf-8, indicating a HAL (Hypertext Application Language) hypermedia response with _links support.",
+      "topic": "HTTP request headers",
+      "detail": "**Accept**: application/hal+json;charset=utf-8",
       "source": "PaymentsApi.md, CaptureApi.md, RefundApi.md, VoidApi.md, ReversalApi.md > HTTP request headers"
     },
     {
-      "topic": "Environment switching",
-      "detail": "By default the SDK communicates with the sandbox; switch run_environment to api.cybersource.com for production. API credentials differ per environment.",
-      "source": "README.md > Switching between the sandbox environment and the production environment"
+      "topic": "Switching between the sandbox environment and the production environment",
+      "detail": "By default, this SDK is configured to communicate with the sandbox environment. To switch to the production environment, set the `run_environment` property in the SDK Configuration.",
+      "source": "client-README.md > Switching between the sandbox environment and the production environment"
     }
   ],
   "missing": [
@@ -2057,6 +2051,7 @@
     "Per-field requiredness/constraints inside request schemas: the SDK docs mark every property [optional]; the true conditional requiredness lives in per-processor guides not included here.",
     "Error responses beyond create_payment's 400 (e.g. 4xx/5xx for capture/refund/void/reversal) are not enumerated in the source Api.md files.",
     "HATEOAS _links structure and navigation semantics are not described in these sources.",
-    "Rate limiting, idempotency-key handling, timeout/retry guidance, and API version numbering are not stated in these sources."
+    "Rate limiting, idempotency-key handling, timeout/retry guidance, and API version numbering are not stated in these sources.",
+    "Production environment base URL: the source gives only the host api.cybersource.com, as the SDK run_environment setting, and states no URL scheme."
   ]
 }

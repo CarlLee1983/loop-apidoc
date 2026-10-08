@@ -62,7 +62,7 @@
   "responses": [
     {
       "status": "201",
-      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsVoidsPost201Response object as application/hal+json.",
+      "description": "PtsV2PaymentsVoidsPost201Response",
       "schema": null,
       "schema_ref": "PtsV2PaymentsVoidsPost201Response"
     }
