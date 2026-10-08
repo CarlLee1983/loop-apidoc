@@ -143,6 +143,7 @@ def test_exact_evidence_parity_cases_are_a_reviewed_subset_of_the_required_inven
         "rsg-game-transfer-wallet",
         "stripe-basic-rest",
         "apis-guru-baseline",
+        "ecpay-creditcard-pdf",
     }
     for case in cases:
         parity = json.loads(

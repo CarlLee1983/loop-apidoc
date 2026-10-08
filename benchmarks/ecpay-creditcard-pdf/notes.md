@@ -76,6 +76,40 @@
 --strict-local` 迴圈(ADR 0013)。`jili-legacy-gaming-pdf` 因無公開
 URL、未取得供應商原始檔,本次不列入此 lane。
 
+### Exact-evidence parity（2026-10-08）
+
+本 case 已列入 `EXACT_EVIDENCE_PARITY_BENCHMARK_CASES`。重播結果:legacy `passed` /
+Core `accept`,38/38 Core claim supported、0 unverified,
+`test_case_obeys_declared_core_parity_contract[ecpay-creditcard-pdf]` 通過。
+
+- 證據:extraction 內 491 筆 v1 `evidence`,全是指向 `gw_p110.pdf.md`(SHA-256
+  `d42d3337…`)的 `line_range`。
+- 範圍規則:Core 對 `line_range` 只核對來源、位置、digest 與 claim path,不比對文字
+  (`CLAIM_BOUND_EXACT_REFERENCE`),所以每筆證據另以腳本檢查,0 違規。規則如下(全文見
+  `specs/stories/ecpay-exact-evidence-parity.md`):
+  - `flat(s)` = 移除 `*`、`|`、`<br>`,再把連續空白縮成一格。
+  - 每段範圍至多 40 行。
+  - 字串值經 `flat` 後須出現在範圍內。
+  - 非字串值(如 `required`)的範圍須含該欄位名稱。
+  - 來源沒寫出名稱的識別字(schema 名、`schema_ref`、environment 名、field-condition
+    scope、integration `kind`、`operation_refs`,以及來源寫明「並無參數名稱」的
+    `PaymentResultResponse.response`)須沿用同一項目已被文字檢查的範圍。
+- 改成原文的轉述(只改值、不重新命名識別字):
+  - 4 個 operation 與 path-less webhook 的 `summary` 及 `200` 回應 `description`。
+  - webhook 的 `CheckMacValue` 參數 `description`。
+  - 7 個 `errors.meaning`。
+  - 7 個 `operational` 的 `topic`(改成來源章節標題)與 `detail`。
+  - `callbacks[0]` 的 `name`/`verification`/`expected_response`。
+  - CheckMacValue 的 6 個步驟。
+  - 4 個 `field_conditions.when`。
+  - `test_cases[0].name`。
+  - 7 個來源寫作 `String (9)`/`String (20)`/`String (1)` 的欄位 `type`。
+- 前置 Core 修正:
+  - 同一 scope 的多個 field condition 各有 claim identity(#186)。
+  - test case 的 `paths.{path}.{method}` 參照可解析到對應 operation(#187);test case 的
+    `operation_refs` 證據綁在 `/operation_refs/operation:POST:~1Cashier~1AioCheckOut~1V5`。
+- `validation.expect.json` 不變(5 × `REQUIRED_INFO_MISSING.warning` 照舊)。
+
 ## Pipeline 缺陷（本 case 揭 2 項真 bug,皆 TDD 修)
 
 ### 1. 純簽章 auth 誤觸 no-auth gap

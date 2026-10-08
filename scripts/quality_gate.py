@@ -59,6 +59,7 @@ EXACT_EVIDENCE_PARITY_BENCHMARK_CASES = (
     "rsg-game-transfer-wallet",
     "stripe-basic-rest",
     "apis-guru-baseline",
+    "ecpay-creditcard-pdf",
 )
 
 
