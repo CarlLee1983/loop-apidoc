@@ -381,7 +381,7 @@
             "end_line": 277
           },
           "fragment_digest": "d35337b82d22fbbfaea9f54288ef997985d3564ebdd0f7f38e90a5714327ce72",
-          "claim_path": "/operation_refs/paths.~1Cashier~1AioCheckOut~1V5.post"
+          "claim_path": "/operation_refs/operation:POST:~1Cashier~1AioCheckOut~1V5"
         }
       ]
     }

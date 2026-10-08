@@ -1,10 +1,10 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence parity is complete for 4 of 7 restored
-source-backed benchmarks; 3 restored cases still need claim-complete parity and 6
+**Status:** In progress — exact-evidence parity is complete for 5 of 7 restored
+source-backed benchmarks; 2 restored cases still need claim-complete parity and 6
 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
-**Updated:** 2026-10-07
+**Updated:** 2026-10-08
 
 ## Purpose
 
@@ -164,8 +164,8 @@ they did not advance Core production graduation:
   `required_source_refs` capture guidance for sources that direct HTTP cannot obtain.
 
 The maintained priority-1 count is therefore 13 committed benchmark cases: 7 currently
-have local historical sources, of which FunkyGames, RSG, Stripe, and APIs.guru have
-claim-complete exact evidence; the other 3 restored cases still require parity work, and 6 historical
+have local historical sources, of which FunkyGames, RSG, Stripe, APIs.guru, and ECPay have
+claim-complete exact evidence; the other 2 restored cases still require parity work, and 6 historical
 snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
 eligible restored sources, but cannot turn an unavailable original snapshot into a
 strict-local pass.
@@ -284,8 +284,23 @@ with 12/12 Core claims supported. Values the source does not state were correcte
 than bound: the environment name and two response descriptions, five paraphrased
 `operational` notes (the public-API authentication fact moved to `missing`), the array
 field `datasets[]`, and two `{*}` fields that stood for `additionalProperties` maps the
-pipeline cannot represent, now recorded as schema gaps. Exact-evidence parity covers 4 of
-7 restored cases.
+pipeline cannot represent, now recorded as schema gaps. APIs.guru became the fourth parity case.
+
+**ECPay source-backed parity (2026-10-08):** the case cites the Markdown that
+`loop-apidoc preprocess` derives from the restored V5.6.1 PDF; both hashes match
+`source-derivation.json`. All 491 v1 evidence entries are `line_range` references into
+that Markdown. Core accepts a line range as claim-bound support without comparing text,
+so each range is held to a scripted rule: at most 40 lines, every claim string present
+in its range after removing table markup, every non-string value's field named there,
+and every unstated identifier reusing a range its item cites for checked text. The
+replay is legacy `passed` / Core `accept` with 38/38 Core claims supported. Paraphrases
+were corrected to source text rather than bound: operation and webhook summaries and
+response descriptions, error meanings, operational topics and details, the callback,
+the CheckMacValue steps, field-condition `when` text, the test-case name, and seven
+field types written `String (9)` in the source. Two Core fixes were prerequisites:
+each field condition now has its own claim identity (#186), and a test case's
+`paths.{path}.{method}` reference resolves to its operation (#187). Exact-evidence
+parity covers 5 of 7 restored cases.
 
 ### 2. Continuous source and contract governance
 
@@ -520,8 +535,8 @@ implementation-backed benchmark 與 source-backed strict-local 分開計算；�
 
 0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
 coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
-Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru 已完成
-claim-complete exact evidence，另 3 份待補，6 份歷史快照不可得。
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru／ECPay 已完成
+claim-complete exact evidence，另 2 份待補，6 份歷史快照不可得。
 
 GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
 與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。
