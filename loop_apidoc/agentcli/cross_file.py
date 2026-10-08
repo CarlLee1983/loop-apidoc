@@ -167,6 +167,34 @@ def _reference_violations(
     return out
 
 
+def _schema_name_without_ref_violations(
+    inventory: dict, endpoints: list[tuple[str, dict]]
+) -> list[str]:
+    """不變式 7:`schema` 若恰為 inventory schema 名稱,必須同時寫 `schema_ref`。
+
+    claim projection 與不變式 4 只讀 `schema_ref`;名稱只寫在 `schema`
+    會讓連結無聲遺失。只檢查缺 `schema_ref`,不比對不同的 `schema_ref`。
+    """
+    schema_names = _names(inventory, "schemas")
+    out: list[str] = []
+    for name, endpoint in endpoints:
+        bodies: list[tuple[str, Any]] = [("request", endpoint.get("request"))]
+        responses = endpoint.get("responses")
+        if isinstance(responses, list):
+            bodies += [(f"responses[{idx}]", response)
+                       for idx, response in enumerate(responses)]
+        for field, body in bodies:
+            if not isinstance(body, dict) or body.get("schema_ref") is not None:
+                continue
+            schema = body.get("schema")
+            if isinstance(schema, str) and schema in schema_names:
+                out.append(
+                    f"{name}: {field}.schema 是 inventory schema 名稱:"
+                    f"{schema!r},請寫進 schema_ref"
+                )
+    return out
+
+
 def _server_violations(inventory: dict) -> list[str]:
     """不變式 6:`endpoints[].server` 若存在,必須指向某個 environments[].name。
 
@@ -337,6 +365,7 @@ def cross_file_violations(
         + _duplicate_violations(endpoints)
         + _shared_methods_violations(inventory, endpoints)
         + _reference_violations(inventory, endpoints)
+        + _schema_name_without_ref_violations(inventory, endpoints)
         + _server_violations(inventory)
         + _operational_reference_violations(inventory, endpoints)
         + _integration_operation_reference_violations(endpoints, integration)

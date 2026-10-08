@@ -275,6 +275,55 @@ def test_null_schema_ref_is_allowed():
     assert cross_file_violations(inventory, endpoints) == []
 
 
+# ── 不變式 7:schema 寫了 inventory schema 名稱卻沒有 schema_ref ─────
+
+def test_request_schema_name_without_schema_ref_is_a_violation():
+    inventory = _inv(_ep(), schemas=("PayRequest",))
+    endpoints = [("ep0.json", _ep(request={"schema": "PayRequest",
+                                           "schema_ref": None}))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert len(violations) == 1
+    assert "ep0.json" in violations[0]
+    assert "request.schema" in violations[0]
+    assert "'PayRequest'" in violations[0]
+
+
+def test_response_schema_name_without_schema_ref_is_a_violation():
+    inventory = _inv(_ep(), schemas=("PayResult",))
+    endpoints = [("ep0.json", _ep(responses=[{"status": "200",
+                                              "schema": "PayResult"}]))]
+
+    violations = cross_file_violations(inventory, endpoints)
+
+    assert len(violations) == 1
+    assert "responses[0].schema" in violations[0]
+    assert "'PayResult'" in violations[0]
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        _ep(request={"schema": "PayRequest", "schema_ref": "PayRequest"},
+            responses=[{"schema": "PayRequest", "schema_ref": "PayRequest"}]),
+        _ep(request={"schema": "JSON body with an amount", "schema_ref": None},
+            responses=[{"schema": "empty object"}]),
+        _ep(request={"schema": None, "schema_ref": None},
+            responses=[{"schema": None}]),
+        _ep(request=None),
+    ],
+    ids=["both-equal-name", "prose-not-a-name", "null-schema", "null-request"],
+)
+def test_schema_name_rule_ignores_non_violations(endpoint):
+    inventory = _inv(_ep(), schemas=("PayRequest",))
+
+    violations = cross_file_violations(inventory, [("ep0.json", endpoint)])
+
+    assert not any("請寫進 schema_ref" in v for v in violations)
+    assert violations == []
+
+
 # ── 不變式 5:security[] 必須指向 inventory.security_schemes[].name ────
 
 def test_unknown_security_scheme_is_a_violation():
