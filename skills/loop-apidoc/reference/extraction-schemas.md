@@ -232,7 +232,7 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 - **`security`**: the **exact `name`s** of the `inventory.security_schemes` entries this
   endpoint requires (e.g. `["AES256 (TradeInfo)"]`) → the operation's `security`. Empty when
   the source states no auth/signing here; never name a scheme absent from inventory.
-- **`schema_ref`**: when a response body equals a named `inventory.schemas` entry, set
+- **`schema_ref`**: when a request or response body equals a named `inventory.schemas` entry, set
   `schema_ref` to that schema's **exact `name`** (OpenAPI then links via `$ref` instead of
   restating fields). `null` when no such named schema; never invent a name.
 - **Response status formalization**: `status` is an OpenAPI response key. Copy a documented

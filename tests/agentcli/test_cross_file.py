@@ -312,15 +312,16 @@ def test_response_schema_name_without_schema_ref_is_a_violation():
         _ep(request={"schema": None, "schema_ref": None},
             responses=[{"schema": None}]),
         _ep(request=None),
+        _ep(request={"schema": "PayRequest", "schema_ref": "Other"}),
     ],
-    ids=["both-equal-name", "prose-not-a-name", "null-schema", "null-request"],
+    ids=["both-equal-name", "prose-not-a-name", "null-schema", "null-request",
+         "differing-schema-ref"],
 )
 def test_schema_name_rule_ignores_non_violations(endpoint):
-    inventory = _inv(_ep(), schemas=("PayRequest",))
+    inventory = _inv(_ep(), schemas=("PayRequest", "Other"))
 
     violations = cross_file_violations(inventory, [("ep0.json", endpoint)])
 
-    assert not any("請寫進 schema_ref" in v for v in violations)
     assert violations == []
 
 

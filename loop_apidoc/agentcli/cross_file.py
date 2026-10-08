@@ -129,18 +129,23 @@ def _shared_methods_violations(
     return out
 
 
-def _schema_refs(endpoint: dict) -> list[tuple[str, Any]]:
-    out: list[tuple[str, Any]] = []
+def _bodies(endpoint: dict) -> list[tuple[str, dict]]:
+    """端點的 request 與 responses[] 中為 dict 的本體,附欄位路徑前綴。"""
+    out: list[tuple[str, dict]] = []
     request = endpoint.get("request")
     if isinstance(request, dict):
-        out.append(("request.schema_ref", request.get("schema_ref")))
+        out.append(("request", request))
     responses = endpoint.get("responses")
     if isinstance(responses, list):
-        for idx, response in enumerate(responses):
-            if isinstance(response, dict):
-                out.append((f"responses[{idx}].schema_ref",
-                            response.get("schema_ref")))
+        out.extend((f"responses[{idx}]", response)
+                   for idx, response in enumerate(responses)
+                   if isinstance(response, dict))
     return out
+
+
+def _schema_refs(endpoint: dict) -> list[tuple[str, Any]]:
+    return [(f"{field}.schema_ref", body.get("schema_ref"))
+            for field, body in _bodies(endpoint)]
 
 
 def _reference_violations(
@@ -167,34 +172,6 @@ def _reference_violations(
     return out
 
 
-def _schema_name_without_ref_violations(
-    inventory: dict, endpoints: list[tuple[str, dict]]
-) -> list[str]:
-    """不變式 7:`schema` 若恰為 inventory schema 名稱,必須同時寫 `schema_ref`。
-
-    claim projection 與不變式 4 只讀 `schema_ref`;名稱只寫在 `schema`
-    會讓連結無聲遺失。只檢查缺 `schema_ref`,不比對不同的 `schema_ref`。
-    """
-    schema_names = _names(inventory, "schemas")
-    out: list[str] = []
-    for name, endpoint in endpoints:
-        bodies: list[tuple[str, Any]] = [("request", endpoint.get("request"))]
-        responses = endpoint.get("responses")
-        if isinstance(responses, list):
-            bodies += [(f"responses[{idx}]", response)
-                       for idx, response in enumerate(responses)]
-        for field, body in bodies:
-            if not isinstance(body, dict) or body.get("schema_ref") is not None:
-                continue
-            schema = body.get("schema")
-            if isinstance(schema, str) and schema in schema_names:
-                out.append(
-                    f"{name}: {field}.schema 是 inventory schema 名稱:"
-                    f"{schema!r},請寫進 schema_ref"
-                )
-    return out
-
-
 def _server_violations(inventory: dict) -> list[str]:
     """不變式 6:`endpoints[].server` 若存在,必須指向某個 environments[].name。
 
@@ -210,6 +187,29 @@ def _server_violations(inventory: dict) -> list[str]:
                 f"inventory.json: endpoints[{idx}].server 未指向任何 "
                 f"environments[].name:{server!r}"
             )
+    return out
+
+
+def _schema_name_without_ref_violations(
+    inventory: dict, endpoints: list[tuple[str, dict]]
+) -> list[str]:
+    """不變式 7:`schema` 若恰為 inventory schema 名稱,必須同時寫 `schema_ref`。
+
+    claim projection 與不變式 4 只讀 `schema_ref`;名稱只寫在 `schema`
+    會讓連結無聲遺失。只檢查缺 `schema_ref`,不比對不同的 `schema_ref`。
+    """
+    schema_names = _names(inventory, "schemas")
+    out: list[str] = []
+    for name, endpoint in endpoints:
+        for field, body in _bodies(endpoint):
+            if body.get("schema_ref") is not None:
+                continue
+            schema = body.get("schema")
+            if isinstance(schema, str) and schema in schema_names:
+                out.append(
+                    f"{name}: {field}.schema 是 inventory schema 名稱:"
+                    f"{schema!r},請寫進 schema_ref"
+                )
     return out
 
 
@@ -365,8 +365,8 @@ def cross_file_violations(
         + _duplicate_violations(endpoints)
         + _shared_methods_violations(inventory, endpoints)
         + _reference_violations(inventory, endpoints)
-        + _schema_name_without_ref_violations(inventory, endpoints)
         + _server_violations(inventory)
+        + _schema_name_without_ref_violations(inventory, endpoints)
         + _operational_reference_violations(inventory, endpoints)
         + _integration_operation_reference_violations(endpoints, integration)
     )
