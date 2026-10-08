@@ -62,7 +62,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "以 form-data「參數=值」回傳，RtnCode=1 代表成功",
+      "description": "訂單結果會直接回傳至頁面，並以「參數=值」表示",
       "schema": "DoActionResponse",
       "schema_ref": "DoActionResponse",
       "source": "gw_p110.pdf p.31 §8 信用卡請退款功能 回傳參數說明"

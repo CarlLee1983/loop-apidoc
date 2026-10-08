@@ -48,7 +48,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "以 JSON 回傳，含主要授權資訊與明細資訊 (close_data 陣列)；RtnMsg 為空代表成功",
+      "description": "查詢結果會直接回傳至頁面，並以 JSON 格式表示。",
       "schema": "CreditDetailQueryTradeResponse",
       "schema_ref": "CreditDetailQueryTradeResponse",
       "source": "gw_p110.pdf p.25-p.28 §7 查詢信用卡單筆明細記錄 回傳參數說明"

@@ -16,12 +16,12 @@
       "payload_assembly": [
         {
           "step": 1,
-          "desc": "除 CheckMacValue 外所有參數依參數名英文字母 A→Z 排序，以 & 串連為「key=value&key=value」",
+          "desc": "將傳遞參數依照第一個英文字母，由 A 到 Z 的順序來排序",
           "fields": []
         },
         {
           "step": 2,
-          "desc": "字串前面加上 HashKey=、後面加上 &HashIV=",
+          "desc": "參數最前面加上 HashKey、最後面加上 HashIV",
           "fields": [
             "HashKey",
             "HashIV"
@@ -29,7 +29,7 @@
         },
         {
           "step": 3,
-          "desc": "整串進行 URL encode",
+          "desc": "將整串字串進行 URL encode",
           "fields": []
         },
         {
@@ -39,17 +39,17 @@
         },
         {
           "step": 5,
-          "desc": "依 .NET URLEncode 轉換表更換特定字元",
+          "desc": "依 urlencode 轉換表更換字元 (若使用 PHP 進行 URL encode 時使用)",
           "fields": []
         },
         {
           "step": 6,
-          "desc": "以 SHA256 加密產生雜湊值",
+          "desc": "以 SHA256 加密方式來產生雜凑值",
           "fields": []
         },
         {
           "step": 7,
-          "desc": "轉為大寫，即為 CheckMacValue",
+          "desc": "再轉大寫產生 CheckMacValue",
           "fields": [
             "CheckMacValue"
           ]
@@ -65,12 +65,12 @@
   ],
   "callbacks": [
     {
-      "name": "付款結果通知 (ReturnURL)",
+      "name": "Server 端方式(ReturnURL)",
       "trigger": "消費者付款完成後綠界以背景 ServerPost 通知",
       "transport": "HTTP POST application/x-www-form-urlencoded (form-data)",
       "payload_ref": "schemas.PaymentResultNotification",
-      "verification": "特店須以 CheckMacValue 驗證通知內容",
-      "expected_response": "純字串 1|OK；未正確回應時每 5~15 分鐘重送、當天最多 4 次",
+      "verification": "收到付款結果訊息，並判斷檢查碼是否相符",
+      "expected_response": "檢查碼相符後，回傳 1|OK",
       "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知"
     }
   ],
@@ -78,7 +78,7 @@
     {
       "scope": "AioCheckOutRequest",
       "rule": "分期付款時 CreditInstallment 必填",
-      "when": "使用信用卡分期",
+      "when": "提供刷卡分期期數",
       "then_required": [
         "CreditInstallment"
       ],
@@ -87,7 +87,7 @@
     {
       "scope": "AioCheckOutRequest",
       "rule": "使用記憶卡號 (BindingCard=1) 時須提供 MerchantMemberID，且特店須有會員系統",
-      "when": "BindingCard=1",
+      "when": "使用記憶信用卡 使用：請傳1",
       "then_required": [
         "MerchantMemberID"
       ],
@@ -96,14 +96,14 @@
     {
       "scope": "AioCheckOutRequest",
       "rule": "OrderResultURL 不支援銀聯卡及非即時交易 (ATM/CVS/BARCODE)",
-      "when": "ChoosePayment 為銀聯卡或非即時付款",
+      "when": "銀聯卡及非即時交易(ATM、CVS、 BARCODE)",
       "then_required": [],
       "source": "gw_p110.pdf p.13 §4 OrderResultURL 說明"
     },
     {
       "scope": "CreditDetailQueryTradeRequest",
       "rule": "CreditRefundId 需先於產生訂單時將 NeedExtraPaidInfo 設為 Y，才能由付款結果通知取得 gwsr",
-      "when": "欲查詢信用卡單筆明細",
+      "when": "提供查詢訂單信用卡單筆明細記錄",
       "then_required": [
         "NeedExtraPaidInfo"
       ],
@@ -112,7 +112,7 @@
   ],
   "test_cases": [
     {
-      "name": "測試環境信用卡成功付款",
+      "name": "信用卡測試卡號",
       "operation_ref": "paths./Cashier/AioCheckOut/V5.post",
       "request": {
         "MerchantID": "2000132",

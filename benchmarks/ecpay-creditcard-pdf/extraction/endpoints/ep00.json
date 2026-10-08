@@ -265,7 +265,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "以 HTML 表單重新導向至綠界付款頁面供消費者操作；付款結果另以付款結果通知 (ReturnURL) 及 OrderResultURL 回傳，非本 API 直接回應",
+      "description": "接受訂單並檢核資料。",
       "schema": null,
       "schema_ref": null,
       "source": "gw_p110.pdf p.10 §4 產生訂單 應用場景"

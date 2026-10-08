@@ -48,7 +48,7 @@
   "responses": [
     {
       "status": "200",
-      "description": "以 form-data「參數=值」回傳訂單資訊（TradeStatus 表付款狀態）；特店須驗證 CheckMacValue",
+      "description": "訂單結果會以下表 form-data 格式參數直接回傳至頁面，並以「參數=值」表示",
       "schema": "QueryTradeInfoResponse",
       "schema_ref": "QueryTradeInfoResponse",
       "source": "gw_p110.pdf p.24 §6 查詢訂單 回傳參數說明"
