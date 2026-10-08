@@ -114,3 +114,10 @@ A source-stated constraint on how a product line selects or binds currency. The
 absence of a request currency field is not evidence of a single-currency policy.
 It belongs to the Payment Profile.
 _Avoid_: Currency inference, assumed single-currency line
+
+**Structural Derivation**:
+A fixed, Core-recomputed rule that reads a claim value from where a structured source
+places a fact rather than from a value it writes, such as a response status from its
+key. Structured evidence supports a claim only by an equal value or by an allowed
+Structural Derivation; it is never accepted as a reference without comparison.
+_Avoid_: Inferred claim, claim-bound pointer
