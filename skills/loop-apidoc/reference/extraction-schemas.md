@@ -207,7 +207,7 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 ```json
 {"method":"str","methods":["str"],"path":"str","source":"str",
  "parameters":[{"name":"str","in":"query|header|path|body|null","type":"str|null","required":"bool|null","description":"str|null"}],
- "request":{"content_type":"str|null","schema":"str|null","required":"bool|null","description":"str|null"} ,
+ "request":{"content_type":"str|null","schema":"str|null","schema_ref":"str|null","required":"bool|null","description":"str|null"} ,
  "responses":[{"status":"str","description":"str|null","schema":"str|null","schema_ref":"str|null"}],
  "tags":["str"],"security":["str"],
  "examples":[{}],"missing":["str"]}
@@ -215,6 +215,10 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 
 - `request` is `null` when there is no body. Fields the source omits → `null` / empty
   array, and add them to `missing`.
+- `schema_ref` (in `request` and in each `responses[]` entry) names an
+  `inventory.schemas[].name`; `schema` is a prose or type description. A schema name
+  written only in `schema`, with `schema_ref` null or absent, is rejected by the
+  cross-file gate: put the name in `schema_ref`.
 - `methods` is the additive multi-method form for a shared endpoint contract. It
   has the same identical-contract constraint as `inventory.json`; use `method`
   when a detail file represents only one operation. One inventory `methods`
@@ -228,7 +232,7 @@ endpoint **in parallel** (≤6 concurrent, then batch the rest).
 - **`security`**: the **exact `name`s** of the `inventory.security_schemes` entries this
   endpoint requires (e.g. `["AES256 (TradeInfo)"]`) → the operation's `security`. Empty when
   the source states no auth/signing here; never name a scheme absent from inventory.
-- **`schema_ref`**: when a response body equals a named `inventory.schemas` entry, set
+- **`schema_ref`**: when a request or response body equals a named `inventory.schemas` entry, set
   `schema_ref` to that schema's **exact `name`** (OpenAPI then links via `$ref` instead of
   restating fields). `null` when no such named schema; never invent a name.
 - **Response status formalization**: `status` is an OpenAPI response key. Copy a documented
