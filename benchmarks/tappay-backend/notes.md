@@ -53,6 +53,15 @@
 1. ✅ **[bug] integration payload_ref 解析未 sanitize**:SKILL 定 `payload_ref = schemas.{inventory schema name}`,但含空白的名稱(如「Backend Notify Body」)在 OpenAPI 被 sanitize 成 key「Backend_Notify_Body」;`validate/integration.py` `_refs` 用**裸名**比對 OpenAPI keys → false OUTPUT_MISMATCH。endpoint 的 `schema_ref` 走 `component_key`/`schema_key_map` 能正確解析,但 integration `_refs` 沒有 → 兩者不一致。
    - **修**:`_refs` 也用 `component_key(name)` sanitize 後比對(裸名與 sanitized 任一命中即有效)。含 RED→GREEN 測試;tappay 重跑 PASS。
 
+
+## `request.schema_ref`(2026-10-08)
+
+5 個端點的 `request` 補上 `schema_ref`,值逐字複製自既有的 `request.schema`(它就是
+inventory 的 schema 名稱)。`schema_ref` 才是指向 inventory schema 的 key:claim projection
+只讀它來產生 operation 的 `request_schema_ref`,cross-file gate 也只檢查它;只寫在
+`schema` 的名稱,Core 看不到、gate 也不檢查。`schema` 保持不變,因為 generator 仍讀它。
+本 case 的來源未還原,這次搬遷沒有對照來源,只以 cross-file 檢查確認 `schema_ref` 解析得到。
+
 ## Follow-up
 
 - Generator/validator changes:已修 #1(payload_ref sanitize)。

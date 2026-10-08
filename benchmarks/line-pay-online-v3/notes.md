@@ -35,6 +35,15 @@
 - 無新 pipeline finding(HMAC 非 CBC → 正確 fail-closed gap)。
 - **來源取得限制(非 pipeline bug)**:LINE Pay v3 文件為 JS SPA,逐 endpoint 子頁無法以 curl/defuddle 取得;本 case 以總覽頁為據,屬「文件不完整」型樣本(endpoint body 多進 missing)。若要完整逐欄,需 Playwright 渲染子頁(未做)。
 
+
+## `request.schema_ref`(2026-10-08)
+
+`POST /v3/payments/request` 的 `request` 補上 `schema_ref`,值逐字複製自既有的 `request.schema`(它就是
+inventory 的 schema 名稱)。`schema_ref` 才是指向 inventory schema 的 key:claim projection
+只讀它來產生 operation 的 `request_schema_ref`,cross-file gate 也只檢查它;只寫在
+`schema` 的名稱,Core 看不到、gate 也不檢查。`schema` 保持不變,因為 generator 仍讀它。
+本 case 的來源未還原,這次搬遷沒有對照來源,只以 cross-file 檢查確認 `schema_ref` 解析得到。
+
 ## Follow-up
 
 - 若要強化此 case:用 Playwright 抓各 endpoint 子頁補齊 request/response 欄位表。

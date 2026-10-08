@@ -82,7 +82,7 @@ URL、未取得供應商原始檔,本次不列入此 lane。
 Core `accept`,38/38 Core claim supported、0 unverified,
 `test_case_obeys_declared_core_parity_contract[ecpay-creditcard-pdf]` 通過。
 
-- 證據:extraction 內 491 筆 v1 `evidence`,全是指向 `gw_p110.pdf.md`(SHA-256
+- 證據:extraction 內 495 筆 v1 `evidence`,全是指向 `gw_p110.pdf.md`(SHA-256
   `d42d3337…`)的 `line_range`。
 - 範圍規則:Core 對 `line_range` 只核對來源、位置、digest 與 claim path,不比對文字
   (`CLAIM_BOUND_EXACT_REFERENCE`),所以每筆證據另以腳本檢查,0 違規。規則如下(全文見
@@ -109,6 +109,16 @@ Core `accept`,38/38 Core claim supported、0 unverified,
   - test case 的 `paths.{path}.{method}` 參照可解析到對應 operation(#187);test case 的
     `operation_refs` 證據綁在 `/operation_refs/operation:POST:~1Cashier~1AioCheckOut~1V5`。
 - `validation.expect.json` 不變(5 × `REQUIRED_INFO_MISSING.warning` 照舊)。
+
+### `request.schema_ref`(2026-10-08)
+
+5 個端點的 `request` 補上 `schema_ref`,值與既有的 `request.schema` 相同。
+`schema_ref` 才是指向 inventory schema 的 key:claim projection 只讀它來產生
+operation 的 `request_schema_ref`,cross-file gate 也只檢查它;只寫在 `schema` 的名稱,
+Core 看不到、gate 也不檢查。`schema` 保持不變,因為 generator 仍讀它,產出的 OpenAPI
+不變。4 個有 path 的 operation 各多一筆 `/request_schema_ref` 證據,沿用同一端點
+`/method` 的範圍(範圍規則第 4 條的識別字,加上 `/request_schema_ref`);path-less
+webhook 投影成 webhook claim,不帶 request schema。
 
 ## Pipeline 缺陷（本 case 揭 2 項真 bug,皆 TDD 修)
 
