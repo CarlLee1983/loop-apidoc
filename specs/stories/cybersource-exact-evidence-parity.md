@@ -72,7 +72,8 @@ The `Production` environment is moved to `missing`. The source gives only the ho
    regenerates the committed manifest. In it, `client-README.md` is `supported` with
    that SHA-256, no entry is `ignored`, and the other 24 entries keep the SHA-256 they
    have on `main`.
-3. `grep -rn '"README.md' benchmarks/cybersource-payments/extraction` prints nothing.
+3. `grep -rn '"source": "README.md' benchmarks/cybersource-payments/extraction` prints
+   nothing.
 4. `uv run loop-apidoc verify-extraction --sources benchmarks/cybersource-payments/sources --extraction benchmarks/cybersource-payments/extraction`
    exits 0.
 5. A script outside the repository applies the range rule, with clause 5, to every
