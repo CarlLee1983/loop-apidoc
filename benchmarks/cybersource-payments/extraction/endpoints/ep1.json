@@ -125,7 +125,7 @@
   "responses": [
     {
       "status": "201",
-      "description": "Successful response (HTTP 201). Returns the PtsV2PaymentsCapturesPost201Response object as application/hal+json.",
+      "description": "PtsV2PaymentsCapturesPost201Response",
       "schema": null,
       "schema_ref": "PtsV2PaymentsCapturesPost201Response"
     }
@@ -140,5 +140,447 @@
   "examples": [],
   "missing": [
     "Per-field requiredness is not source-stated (SDK docs mark every property [optional]); conditional requiredness lives in per-processor guides not in these sources."
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 7,
+        "end_line": 7
+      },
+      "fragment_digest": "4eac1fd810fa57e77391c052b97932756b9d8a72387ee69e05e16f353a4bbe0e",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 13,
+        "end_line": 13
+      },
+      "fragment_digest": "8abd7f96f1ae8b55b0623d27acab7a618d93d74c91978c0d38bac0f6513b61c2",
+      "claim_path": "/parameters/body/aggregator_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 13,
+        "end_line": 13
+      },
+      "fragment_digest": "8abd7f96f1ae8b55b0623d27acab7a618d93d74c91978c0d38bac0f6513b61c2",
+      "claim_path": "/parameters/body/aggregator_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 10,
+        "end_line": 10
+      },
+      "fragment_digest": "c4f046a03d53ce3ec3d5c730af9706c40fd826f891fce904f434372d758a58c7",
+      "claim_path": "/parameters/body/buyer_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 10,
+        "end_line": 10
+      },
+      "fragment_digest": "c4f046a03d53ce3ec3d5c730af9706c40fd826f891fce904f434372d758a58c7",
+      "claim_path": "/parameters/body/buyer_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 6,
+        "end_line": 6
+      },
+      "fragment_digest": "f766f4645e4d730e176bf03178d22244d9beaa0ec7dae91efa8af31f09f2ee3c",
+      "claim_path": "/parameters/body/client_reference_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 6,
+        "end_line": 6
+      },
+      "fragment_digest": "f766f4645e4d730e176bf03178d22244d9beaa0ec7dae91efa8af31f09f2ee3c",
+      "claim_path": "/parameters/body/client_reference_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 11,
+        "end_line": 11
+      },
+      "fragment_digest": "e08f98f9226646c4c6d1e1457d4db606abfd5a1768a6f1ddc82901dfe4c93837",
+      "claim_path": "/parameters/body/device_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 11,
+        "end_line": 11
+      },
+      "fragment_digest": "e08f98f9226646c4c6d1e1457d4db606abfd5a1768a6f1ddc82901dfe4c93837",
+      "claim_path": "/parameters/body/device_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 17,
+        "end_line": 17
+      },
+      "fragment_digest": "e1946d03cd9074881b4440a9646b37d0dbc046345818fb64c032bac6881ecc27",
+      "claim_path": "/parameters/body/installment_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 17,
+        "end_line": 17
+      },
+      "fragment_digest": "e1946d03cd9074881b4440a9646b37d0dbc046345818fb64c032bac6881ecc27",
+      "claim_path": "/parameters/body/installment_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 15,
+        "end_line": 15
+      },
+      "fragment_digest": "c467479131b1d97f949144c54a5f454ae60d3620e9d6f7fbe42a6f895943f628",
+      "claim_path": "/parameters/body/merchant_defined_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 15,
+        "end_line": 15
+      },
+      "fragment_digest": "c467479131b1d97f949144c54a5f454ae60d3620e9d6f7fbe42a6f895943f628",
+      "claim_path": "/parameters/body/merchant_defined_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 16,
+        "end_line": 16
+      },
+      "fragment_digest": "1b6dae91b44c9cafae856438fa5e533133aa12ed24debedb3ac21245ac942266",
+      "claim_path": "/parameters/body/merchant_defined_secure_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 16,
+        "end_line": 16
+      },
+      "fragment_digest": "1b6dae91b44c9cafae856438fa5e533133aa12ed24debedb3ac21245ac942266",
+      "claim_path": "/parameters/body/merchant_defined_secure_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 12,
+        "end_line": 12
+      },
+      "fragment_digest": "61ec4add75ab303eb396513b70b04e1b7c328c0993f9f0249580d34fa99511be",
+      "claim_path": "/parameters/body/merchant_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 12,
+        "end_line": 12
+      },
+      "fragment_digest": "61ec4add75ab303eb396513b70b04e1b7c328c0993f9f0249580d34fa99511be",
+      "claim_path": "/parameters/body/merchant_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 9,
+        "end_line": 9
+      },
+      "fragment_digest": "f5992434b69dd1a3ddaf084d7dab4033bd5ebd7ee194349a5efb4eee1e8a83c6",
+      "claim_path": "/parameters/body/order_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 9,
+        "end_line": 9
+      },
+      "fragment_digest": "f5992434b69dd1a3ddaf084d7dab4033bd5ebd7ee194349a5efb4eee1e8a83c6",
+      "claim_path": "/parameters/body/order_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 8,
+        "end_line": 8
+      },
+      "fragment_digest": "dbb4a792226a9ae6938c22c6f6354d8f0d58835d4abbfa9f862cd30472b34112",
+      "claim_path": "/parameters/body/payment_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 8,
+        "end_line": 8
+      },
+      "fragment_digest": "dbb4a792226a9ae6938c22c6f6354d8f0d58835d4abbfa9f862cd30472b34112",
+      "claim_path": "/parameters/body/payment_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 14,
+        "end_line": 14
+      },
+      "fragment_digest": "6dc2f55b05d74bd7585f71338d1c5e2eb781220e334fffe002a43adec0cfd060",
+      "claim_path": "/parameters/body/point_of_sale_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 14,
+        "end_line": 14
+      },
+      "fragment_digest": "6dc2f55b05d74bd7585f71338d1c5e2eb781220e334fffe002a43adec0cfd060",
+      "claim_path": "/parameters/body/point_of_sale_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 7,
+        "end_line": 7
+      },
+      "fragment_digest": "dad757e9b3bcd23ecf13a1a5ffd4ed8b6486a49c89c3e4a73d32f74f271e7c47",
+      "claim_path": "/parameters/body/processing_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 7,
+        "end_line": 7
+      },
+      "fragment_digest": "dad757e9b3bcd23ecf13a1a5ffd4ed8b6486a49c89c3e4a73d32f74f271e7c47",
+      "claim_path": "/parameters/body/processing_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 20,
+        "end_line": 20
+      },
+      "fragment_digest": "daab29476b1acd6971c4a5d3c050aef8c0410439fca6b04588c59731918ae601",
+      "claim_path": "/parameters/body/processor_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 20,
+        "end_line": 20
+      },
+      "fragment_digest": "daab29476b1acd6971c4a5d3c050aef8c0410439fca6b04588c59731918ae601",
+      "claim_path": "/parameters/body/processor_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 19,
+        "end_line": 19
+      },
+      "fragment_digest": "6a1bc3617e0ad38abefdafcd2b274ce4d9c4b5379768df449de1efde0f3874f8",
+      "claim_path": "/parameters/body/promotion_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 19,
+        "end_line": 19
+      },
+      "fragment_digest": "6a1bc3617e0ad38abefdafcd2b274ce4d9c4b5379768df449de1efde0f3874f8",
+      "claim_path": "/parameters/body/promotion_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 18,
+        "end_line": 18
+      },
+      "fragment_digest": "b816935f0975c6a52d329ccf24b97b5446a80b1b2aeee0c2dbea8fb7317de6b6",
+      "claim_path": "/parameters/body/travel_information/name"
+    },
+    {
+      "version": 1,
+      "source": "CapturePaymentRequest.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 18,
+        "end_line": 18
+      },
+      "fragment_digest": "b816935f0975c6a52d329ccf24b97b5446a80b1b2aeee0c2dbea8fb7317de6b6",
+      "claim_path": "/parameters/body/travel_information/required"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 43,
+        "end_line": 43
+      },
+      "fragment_digest": "49bd406b7bca12fa351cb59a13c88bec92feb8986e21788c34d96b69cb1d67f2",
+      "claim_path": "/parameters/path/id/name"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 43,
+        "end_line": 43
+      },
+      "fragment_digest": "49bd406b7bca12fa351cb59a13c88bec92feb8986e21788c34d96b69cb1d67f2",
+      "claim_path": "/parameters/path/id/required"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 7,
+        "end_line": 7
+      },
+      "fragment_digest": "4eac1fd810fa57e77391c052b97932756b9d8a72387ee69e05e16f353a4bbe0e",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 11,
+        "end_line": 11
+      },
+      "fragment_digest": "8a5c9533a9cad428b9e161b310c191972240674d7a4d334dccd1b1e8e6f1a3dc",
+      "claim_path": "/responses/201/description"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 11,
+        "end_line": 11
+      },
+      "fragment_digest": "8a5c9533a9cad428b9e161b310c191972240674d7a4d334dccd1b1e8e6f1a3dc",
+      "claim_path": "/responses/201/status_code"
+    },
+    {
+      "version": 1,
+      "source": "client-README.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 36,
+        "end_line": 36
+      },
+      "fragment_digest": "6be03e2d28c43c0c875347e3d622d8b2b07e0d68550f00bb97019cb6de2df255",
+      "claim_path": "/security/HTTP Signature"
+    },
+    {
+      "version": 1,
+      "source": "client-README.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 36,
+        "end_line": 36
+      },
+      "fragment_digest": "6be03e2d28c43c0c875347e3d622d8b2b07e0d68550f00bb97019cb6de2df255",
+      "claim_path": "/security/JWT"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 15,
+        "end_line": 15
+      },
+      "fragment_digest": "f4bf78b96f606b7cdf1c3bf2ffa2ad43b57366c425a54880963df5e19d83107c",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "CaptureApi.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 11,
+        "end_line": 11
+      },
+      "fragment_digest": "8a5c9533a9cad428b9e161b310c191972240674d7a4d334dccd1b1e8e6f1a3dc",
+      "claim_path": "/responses/201/schema_ref"
+    }
   ]
 }

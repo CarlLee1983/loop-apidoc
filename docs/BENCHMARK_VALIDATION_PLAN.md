@@ -54,8 +54,9 @@ must still be addressable by an exact source fragment. For example, a
 browser-flattened one-line rendition may preserve readable content but cannot
 be assigned invented claim locators; retain it as an observed legacy replay and
 obtain the original structured snapshot before declaring exact-evidence parity.
-The retained FunkyGames Swagger, RSG Markdown, Stripe OpenAPI, APIs.guru OpenAPI, and
-ECPay PDF-derived Markdown cases are the five current executable full-parity replays; each other restored source snapshot must meet this same contract
+The retained FunkyGames Swagger, RSG Markdown, Stripe OpenAPI, APIs.guru OpenAPI,
+ECPay PDF-derived Markdown, and CyberSource SDK Markdown cases are the six current
+executable full-parity replays; each other restored source snapshot must meet this same contract
 rather than a lower, source-availability-dependent bar.
 
 The required inventory is explicit in

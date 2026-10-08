@@ -1,102 +1,113 @@
 {
   "version": "1.0",
-  "crypto": [
-    {
-      "name": "JWT (Shared Secret)",
-      "purpose": "signature",
-      "algorithm": null,
-      "mode": null,
-      "padding": null,
-      "encoding": null,
-      "key_source": {
-        "key": "merchant_secretkey (paired with merchant_keyid and merchantid)",
-        "iv": null,
-        "note": "README recommends JWT with jwt_key_type=SHARED_SECRET, reusing the HTTP Signature merchant_keyid + merchant_secretkey credentials and enabling MLE. The exact HTTP header carrying the JWT, the JWT header/claims, and the signing algorithm are NOT in this source (documented in the developer portal)."
-      },
-      "payload_assembly": [],
-      "verify": {
-        "field": null,
-        "method": "JWT signed with the shared secret",
-        "desc": "Recommended authentication. Wire format (header name + JWT structure) not stated in source."
-      },
-      "source": "README.md > Authentication > For JWT authentication with Shared Secret (Recommended)"
-    },
-    {
-      "name": "HTTP Signature",
-      "purpose": "signature",
-      "algorithm": null,
-      "mode": null,
-      "padding": null,
-      "encoding": null,
-      "key_source": {
-        "key": "merchant_secretkey (paired with merchant_keyid and merchantid)",
-        "iv": null,
-        "note": "Deprecated per README. The Signature header construction (signed-headers list, digest algorithm, keyid/algorithm tokens, timestamp format) is NOT in this source."
-      },
-      "payload_assembly": [],
-      "verify": {
-        "field": null,
-        "method": "HTTP request signature",
-        "desc": "Deprecated; migrate to JWT with Shared Secret. Wire format not stated in source."
-      },
-      "source": "README.md > Authentication > For HTTP Signature authentication (Deprecated)"
-    },
-    {
-      "name": "Message Level Encryption (MLE)",
-      "purpose": "encryption",
-      "algorithm": null,
-      "mode": null,
-      "padding": null,
-      "encoding": null,
-      "key_source": {
-        "key": null,
-        "iv": null,
-        "note": "README states MLE encrypts messages at the application level before they are sent, and is supported with JWT (shared secret) and MetaKey. The encryption algorithm/keys/steps are in the SDK's Logging/MLE feature docs, not in these sources."
-      },
-      "payload_assembly": [],
-      "verify": {
-        "field": null,
-        "method": "Application-level message encryption",
-        "desc": "Optional, enabled via enableRequestMleForOptionalApisGlobally / enableResponseMleGlobally."
-      },
-      "source": "README.md > Features > Message Level Encryption (MLE) Feature"
-    }
-  ],
+  "crypto": [],
   "callbacks": [],
   "field_conditions": [
     {
       "scope": "orderInformation.amountDetails (create_payment / authorization)",
       "rule": "currency is a required field for Authorization; for an authorization reversal or capture you must use the same currency as the original authorization.",
-      "when": "Authorization (POST /pts/v2/payments)",
+      "when": "Used by Authorization Required field",
       "then_required": [
         "order_information.amount_details.currency"
       ],
-      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > currency ('Used by Authorization Required field')"
+      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > currency ('Used by Authorization Required field')",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsOrderInformationAmountDetails.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 11,
+            "end_line": 11
+          },
+          "fragment_digest": "512888cae111e14fd7cebdd0039e1a0fe9b421fd2713888a8764ad2a09daacc9",
+          "claim_path": "/steps/Used by Authorization Required field"
+        },
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsOrderInformationAmountDetails.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 11,
+            "end_line": 11
+          },
+          "fragment_digest": "512888cae111e14fd7cebdd0039e1a0fe9b421fd2713888a8764ad2a09daacc9",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "scope": "orderInformation.amountDetails (create_payment)",
       "rule": "Include either totalAmount or the first line item's unitPrice for the order (Card Present).",
-      "when": "Card Present authorization",
+      "when": "Card Present Required to include either this field or &#x60;orderInformation.lineItems[].unitPrice&#x60; for the order.",
       "then_required": [
         "order_information.amount_details.total_amount"
       ],
-      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > totalAmount ('Card Present Required to include either this field or orderInformation.lineItems[].unitPrice')"
+      "source": "Ptsv2paymentsOrderInformationAmountDetails.md > totalAmount ('Card Present Required to include either this field or orderInformation.lineItems[].unitPrice')",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsOrderInformationAmountDetails.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 9,
+            "end_line": 9
+          },
+          "fragment_digest": "9b7229351b436ad565b05b220002a0ee678a355a85386dc3fc13d622364f5551",
+          "claim_path": "/steps/Card Present Required to include either this field or &#x60;orderInformation.lineItems[].unitPrice&#x60; for the order."
+        },
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsOrderInformationAmountDetails.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 9,
+            "end_line": 9
+          },
+          "fragment_digest": "9b7229351b436ad565b05b220002a0ee678a355a85386dc3fc13d622364f5551",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "scope": "paymentInformation.card (create_payment)",
       "rule": "Card number and expiration month/year are required if pointOfSaleInformation.entryMode=keyed (optional only if the account is configured for relaxed requirements).",
-      "when": "pointOfSaleInformation.entryMode = keyed",
+      "when": "Required if &#x60;pointOfSaleInformation.entryMode&#x3D;keyed&#x60;",
       "then_required": [
         "payment_information.card.number",
         "payment_information.card.expiration_month",
         "payment_information.card.expiration_year"
       ],
-      "source": "Ptsv2paymentsPaymentInformationCard.md > number / expirationMonth / expirationYear ('Required if pointOfSaleInformation.entryMode=keyed')"
+      "source": "Ptsv2paymentsPaymentInformationCard.md > number / expirationMonth / expirationYear ('Required if pointOfSaleInformation.entryMode=keyed')",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsPaymentInformationCard.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 6,
+            "end_line": 6
+          },
+          "fragment_digest": "a66b504eec9c27e3de750799c7b8758b669a732565cbaa6d5c54ac22b64b8003",
+          "claim_path": "/steps/Required if &#x60;pointOfSaleInformation.entryMode&#x3D;keyed&#x60;"
+        },
+        {
+          "version": 1,
+          "source": "Ptsv2paymentsPaymentInformationCard.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 6,
+            "end_line": 6
+          },
+          "fragment_digest": "a66b504eec9c27e3de750799c7b8758b669a732565cbaa6d5c54ac22b64b8003",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "test_cases": [
     {
-      "name": "Process a Payment (authorization) — representative request",
+      "name": "simple_authorizationinternet",
       "operation_ref": "paths./pts/v2/payments.post",
       "request": {
         "clientReferenceInformation": {
@@ -132,7 +143,31 @@
         }
       },
       "response": {},
-      "source": "samples/simple-authorizationinternet.md (official CyberSource Python sample: clientReferenceInformation.code=TC50171_3, card 4111111111111111 exp 12/2031, totalAmount 102.21 USD, billTo John Doe)."
+      "source": "samples/simple-authorizationinternet.md (official CyberSource Python sample: clientReferenceInformation.code=TC50171_3, card 4111111111111111 exp 12/2031, totalAmount 102.21 USD, billTo John Doe).",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "simple-authorizationinternet.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 19,
+            "end_line": 19
+          },
+          "fragment_digest": "b62fe270ce34fb26d31514dac100c182510fdd1cfefc59f42f8bcccf1c735c3b",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "simple-authorizationinternet.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 19,
+            "end_line": 19
+          },
+          "fragment_digest": "b62fe270ce34fb26d31514dac100c182510fdd1cfefc59f42f8bcccf1c735c3b",
+          "claim_path": "/operation_refs/operation:POST:~1pts~1v2~1payments"
+        }
+      ]
     }
   ],
   "missing": [
