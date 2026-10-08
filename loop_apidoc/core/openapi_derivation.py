@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from loop_apidoc.core.openapi_pointers import (
+    _decode_json_pointer_segment,
     _openapi_inline_request_body_property_from_pointer,
     _openapi_inline_request_body_property_required_from_schema_pointer,
     _openapi_operation_from_pointer,
@@ -35,6 +36,7 @@ from loop_apidoc.domain.evidence import (
     canonical_json,
     fragment_digest,
 )
+from loop_apidoc.domain.identity import canonical_operation_identity
 
 
 def _openapi_pointer_derivation(
@@ -60,6 +62,7 @@ def _openapi_pointer_derivation(
             ("openapi_method_from_pointer", "1"),
             ("openapi_response_status_from_pointer", "1"),
             ("openapi_error_code_from_response_pointer", "1"),
+            ("openapi_operation_ref_from_request_example_pointer", "1"),
             ("openapi_schema_name_from_ref", "1"),
             ("openapi_request_schema_name_from_ref", "1"),
             ("openapi_request_body_property_name_from_pointer", "1"),
@@ -124,6 +127,17 @@ def _openapi_pointer_derivation(
             return None, "DERIVATION_INAPPLICABLE"
         expected_claim_path = "/code"
         derived_value = status
+    elif derivation == ("openapi_operation_ref_from_request_example_pointer", "1"):
+        derived_value = _operation_identity_from_request_example_pointer(
+            fragment.locator.pointer
+        )
+        if (
+            claim_kind != "integration_mechanic"
+            or derived_value is None
+            or not isinstance(fragment.semantic_value, dict)
+        ):
+            return None, "DERIVATION_INAPPLICABLE"
+        expected_claim_path = f"/operation_refs/{escape_segment(derived_value)}"
     elif derivation == ("openapi_schema_name_from_ref", "1"):
         schema_ref = _openapi_response_schema_ref_from_pointer(
             fragment.locator.pointer,
@@ -405,6 +419,31 @@ def _openapi_pointer_derivation(
     if canonical_json(derived_value) != canonical_json(claim_value):
         return derived_value, "DERIVATION_VALUE_MISMATCH"
     return derived_value, None
+
+
+def _operation_identity_from_request_example_pointer(pointer: str) -> str | None:
+    """Return the operation identity of a request-body example entry pointer.
+
+    Lives here because ``openapi_pointers.py`` is at its 800-line cap.
+    """
+    segments = pointer.split("/")
+    if (
+        len(segments) != 9
+        or segments[4:6] != ["requestBody", "content"]
+        or segments[7] != "examples"
+        or not segments[6]
+        or not segments[8]
+        or _decode_json_pointer_segment(segments[6]) is None
+        or _decode_json_pointer_segment(segments[8]) is None
+    ):
+        return None
+    operation = _openapi_operation_from_pointer("/".join(segments[:4]))
+    if operation is None:
+        return None
+    path, method = operation
+    if path != path.strip():
+        return None
+    return canonical_operation_identity(method, path)
 
 
 def _value_digest(value: Any) -> str:
