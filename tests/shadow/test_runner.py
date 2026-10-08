@@ -515,6 +515,71 @@ def test_supported_conditions_sharing_a_scope_stay_separate_claims(tmp_path):
     ]
 
 
+def test_test_case_paths_reference_resolves_to_its_operation(tmp_path):
+    text = "POST /payments creates a payment\ncard payment example\n"
+    manifest, facts = _write_manifest(tmp_path, text)
+
+    def cite(line: int, claim_paths: tuple[str, ...]) -> list[SourceCitation]:
+        evidence = tuple(
+            ExtractionEvidenceReference(
+                version=1,
+                source="manual.md",
+                locator=LineRangeLocator(start_line=line, end_line=line),
+                fragment_digest=fragment_digest(text.splitlines()[line - 1]),
+                claim_path=claim_path,
+            )
+            for claim_path in claim_paths
+        )
+        return [
+            SourceCitation(
+                query_id="cite",
+                answer_path="answer.json",
+                manifest_source="manual.md",
+                evidence=evidence,
+            )
+        ]
+
+    plan = NormalizationPlan(
+        notebook_url="",
+        system_groups=[SystemGroup(name="Demo API", version="1")],
+        endpoints=[
+            EndpointEntry(
+                status=PlanItemStatus.SUPPORTED,
+                citations=cite(1, ("/method", "/path")),
+                method="POST",
+                path="/payments",
+            )
+        ],
+        integration=IntegrationContract(
+            test_cases=[
+                ContractTestCase(
+                    status=PlanItemStatus.SUPPORTED,
+                    citations=cite(
+                        2, ("/name", "/operation_refs/operation:POST:~1payments")
+                    ),
+                    name="card payment example",
+                    operation_ref="paths./payments.post",
+                )
+            ]
+        ),
+    )
+
+    artifacts = execute_shadow(
+        manifest=manifest,
+        plan=plan,
+        facts=facts,
+        sources_root=tmp_path,
+        legacy_report=ValidationReport(),
+        legacy_status=RunStatus.PASSED,
+        generated_at=NOW,
+    )
+
+    assert all(claim.status is ClaimStatus.SUPPORTED for claim in artifacts.claims)
+    assert "INTEGRATION_REFERENCE_UNRESOLVED" not in {
+        finding.code for finding in artifacts.decision.findings
+    }
+
+
 def test_json_pointer_citation_supports_matching_scalar_path(tmp_path):
     source = tmp_path / "openapi.json"
     source.write_text('{"detail":"10 requests/s"}', encoding="utf-8")
