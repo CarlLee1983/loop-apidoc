@@ -146,5 +146,40 @@
   "missing": [
     "回呼路徑由特店 ReturnURL 決定，來源未指定固定 path"
   ],
-  "summary": "當消費者付款完成後，接受綠界的付款結果訊息，並回應接收訊息"
+  "summary": "當消費者付款完成後，接受綠界的付款結果訊息，並回應接收訊息",
+  "evidence": [
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 713,
+        "end_line": 713
+      },
+      "fragment_digest": "602297cd82d8168de589a7dca38afb99e15cfaa1698272350705af12f3539b14",
+      "claim_path": "/expected_response"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 597,
+        "end_line": 597
+      },
+      "fragment_digest": "bae40290bbf0d7d0db8219d46a840e9b9d3cded4c344d9e84b0bc0bbf5e62352",
+      "claim_path": "/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 697,
+        "end_line": 697
+      },
+      "fragment_digest": "0b956b469e94923ad594bafba3c871177b6188264fc190195d8499c9698bf2b6",
+      "claim_path": "/verification"
+    }
+  ]
 }

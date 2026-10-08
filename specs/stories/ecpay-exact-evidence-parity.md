@@ -55,6 +55,8 @@ the cited section of `gw_p110.pdf.md`:
   webhook claim's `verification` and `expected_response`.
 - The `steps` of the `CheckMacValue` crypto entry, the `when` of the four
   `field_conditions`, and the `name` of the one `test_cases` entry.
+- The `type` of the seven schema fields whose table row writes the type with a space
+  before the parenthesis (`String (9)`, `String (20)`, `String (1)`).
 
 ## Out of Scope
 

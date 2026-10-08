@@ -60,7 +60,108 @@
         "method": "SHA256",
         "desc": "送出與接收綠界資料時皆須以相同步驟計算並比對 CheckMacValue；EncryptType 固定為 1 (SHA256)"
       },
-      "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制"
+      "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1638,
+            "end_line": 1638
+          },
+          "fragment_digest": "3444f74ce596c062e382abcf1e435a2443da6674a7832361f4cbeb7e2fa66e9f",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1691,
+            "end_line": 1691
+          },
+          "fragment_digest": "07dbf6bfbef5155993d798e6f1cec539fbee103ebc7b149b6f0c56f45ffbdcad",
+          "claim_path": "/steps/以 SHA256 加密方式來產生雜凑值"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1687,
+            "end_line": 1687
+          },
+          "fragment_digest": "cbde825ea47baea83bd3fa287fc56b6898a99a9437758d52ad4d99b14eabfc9f",
+          "claim_path": "/steps/依 urlencode 轉換表更換字元 (若使用 PHP 進行 URL encode 時使用)"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1695,
+            "end_line": 1695
+          },
+          "fragment_digest": "ab384fb17864296b5d73e575930997b62fdd9c54cff0f0f8e6a4333018525c75",
+          "claim_path": "/steps/再轉大寫產生 CheckMacValue"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1652,
+            "end_line": 1652
+          },
+          "fragment_digest": "a411596fc7e4224ceb3b4648103c3244ced60f9e32c45b92258269fbd6894fd4",
+          "claim_path": "/steps/參數最前面加上 HashKey、最後面加上 HashIV"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1646,
+            "end_line": 1646
+          },
+          "fragment_digest": "307618eb1ead264a86ce720c34467ac6fb052e62c4ceadd5d9490a6caa444f32",
+          "claim_path": "/steps/將傳遞參數依照第一個英文字母，由 A 到 Z 的順序來排序"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1656,
+            "end_line": 1656
+          },
+          "fragment_digest": "08bd24bdeefb2abc11d18d1c4840874aa522d7658214104cf11f0a0efd8381b9",
+          "claim_path": "/steps/將整串字串進行 URL encode"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1664,
+            "end_line": 1664
+          },
+          "fragment_digest": "65fe05c036bb56d5fcb5e19d717fa738824d9f24923641104891ed9cd469a728",
+          "claim_path": "/steps/轉為小寫"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1638,
+            "end_line": 1638
+          },
+          "fragment_digest": "3444f74ce596c062e382abcf1e435a2443da6674a7832361f4cbeb7e2fa66e9f",
+          "claim_path": "/kind"
+        }
+      ]
     }
   ],
   "callbacks": [
@@ -71,7 +172,42 @@
       "payload_ref": "schemas.PaymentResultNotification",
       "verification": "收到付款結果訊息，並判斷檢查碼是否相符",
       "expected_response": "檢查碼相符後，回傳 1|OK",
-      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知"
+      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 603,
+            "end_line": 603
+          },
+          "fragment_digest": "aa87ed4a922b3f7b7cbb1e1146978836c25c477fa2d6df9d3b7031c29872aa70",
+          "claim_path": "/expected_response"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 595,
+            "end_line": 595
+          },
+          "fragment_digest": "4a8b6fa6929c589b65f8bf06245d443d9a61202c488a3496ad0fa6223427dac8",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 601,
+            "end_line": 601
+          },
+          "fragment_digest": "6a28ceb33c4252d573e49bfb86e3064e46723a594cfaf85599fe98e66979d2b9",
+          "claim_path": "/verification"
+        }
+      ]
     }
   ],
   "field_conditions": [
@@ -82,7 +218,31 @@
       "then_required": [
         "CreditInstallment"
       ],
-      "source": "gw_p110.pdf p.15 §4 CreditInstallment 說明"
+      "source": "gw_p110.pdf p.15 §4 CreditInstallment 說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 519,
+            "end_line": 519
+          },
+          "fragment_digest": "575ff8bc264eacc2996b2160401e1c0e6ffad03ea7e0ce9d42f07b018e5caecd",
+          "claim_path": "/steps/提供刷卡分期期數"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 519,
+            "end_line": 519
+          },
+          "fragment_digest": "575ff8bc264eacc2996b2160401e1c0e6ffad03ea7e0ce9d42f07b018e5caecd",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "scope": "AioCheckOutRequest",
@@ -91,14 +251,62 @@
       "then_required": [
         "MerchantMemberID"
       ],
-      "source": "gw_p110.pdf p.14 §4 BindingCard/MerchantMemberID 說明"
+      "source": "gw_p110.pdf p.14 §4 BindingCard/MerchantMemberID 說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 465,
+            "end_line": 465
+          },
+          "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+          "claim_path": "/steps/使用記憶信用卡 使用：請傳1"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 465,
+            "end_line": 465
+          },
+          "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "scope": "AioCheckOutRequest",
       "rule": "OrderResultURL 不支援銀聯卡及非即時交易 (ATM/CVS/BARCODE)",
       "when": "銀聯卡及非即時交易(ATM、CVS、 BARCODE)",
       "then_required": [],
-      "source": "gw_p110.pdf p.13 §4 OrderResultURL 說明"
+      "source": "gw_p110.pdf p.13 §4 OrderResultURL 說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 429,
+            "end_line": 429
+          },
+          "fragment_digest": "fb8ba6a7cd58cffdf7017ae60ef6bb6294db3e9b3a40b2bc0052f29d000ac83c",
+          "claim_path": "/steps/銀聯卡及非即時交易(ATM、CVS、 BARCODE)"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 429,
+            "end_line": 429
+          },
+          "fragment_digest": "fb8ba6a7cd58cffdf7017ae60ef6bb6294db3e9b3a40b2bc0052f29d000ac83c",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "scope": "CreditDetailQueryTradeRequest",
@@ -107,7 +315,31 @@
       "then_required": [
         "NeedExtraPaidInfo"
       ],
-      "source": "gw_p110.pdf p.25 §7 CreditRefundId 說明"
+      "source": "gw_p110.pdf p.25 §7 CreditRefundId 說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 923,
+            "end_line": 923
+          },
+          "fragment_digest": "c8e043b5211a9948d8a674ba3a67c8d03c1211e0d9af94031af89803d4ff5ec4",
+          "claim_path": "/steps/提供查詢訂單信用卡單筆明細記錄"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 923,
+            "end_line": 923
+          },
+          "fragment_digest": "c8e043b5211a9948d8a674ba3a67c8d03c1211e0d9af94031af89803d4ff5ec4",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "test_cases": [
@@ -127,7 +359,31 @@
         "付款結果通知 RtnCode": "1 (成功)",
         "SimulatePaid": "0 表非模擬"
       },
-      "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊 / 測試卡號"
+      "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊 / 測試卡號",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 277,
+            "end_line": 277
+          },
+          "fragment_digest": "d35337b82d22fbbfaea9f54288ef997985d3564ebdd0f7f38e90a5714327ce72",
+          "claim_path": "/name"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 277,
+            "end_line": 277
+          },
+          "fragment_digest": "d35337b82d22fbbfaea9f54288ef997985d3564ebdd0f7f38e90a5714327ce72",
+          "claim_path": "/operation_refs/paths.~1Cashier~1AioCheckOut~1V5.post"
+        }
+      ]
     }
   ],
   "missing": [

@@ -75,5 +75,227 @@
   "examples": [],
   "missing": [
     "測試環境因無法提供實際授權故無法使用此 API"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1193,
+        "end_line": 1193
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1200,
+        "end_line": 1200
+      },
+      "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+      "claim_path": "/parameters/body/Action/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1200,
+        "end_line": 1200
+      },
+      "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+      "claim_path": "/parameters/body/Action/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1202,
+        "end_line": 1202
+      },
+      "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+      "claim_path": "/parameters/body/CheckMacValue/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1202,
+        "end_line": 1202
+      },
+      "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+      "claim_path": "/parameters/body/CheckMacValue/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1197,
+        "end_line": 1197
+      },
+      "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+      "claim_path": "/parameters/body/MerchantID/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1197,
+        "end_line": 1197
+      },
+      "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+      "claim_path": "/parameters/body/MerchantID/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1198,
+        "end_line": 1198
+      },
+      "fragment_digest": "6fb784e7dde77f31f1271176547d0c41b8c15c039e1553eb6d2249778b61f23a",
+      "claim_path": "/parameters/body/MerchantTradeNo/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1198,
+        "end_line": 1198
+      },
+      "fragment_digest": "6fb784e7dde77f31f1271176547d0c41b8c15c039e1553eb6d2249778b61f23a",
+      "claim_path": "/parameters/body/MerchantTradeNo/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1203,
+        "end_line": 1203
+      },
+      "fragment_digest": "37a81d700d13fdecf45816ec7bf924b675df4fee0bff503cca83b1fb8388e0ec",
+      "claim_path": "/parameters/body/PlatformID/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1203,
+        "end_line": 1203
+      },
+      "fragment_digest": "37a81d700d13fdecf45816ec7bf924b675df4fee0bff503cca83b1fb8388e0ec",
+      "claim_path": "/parameters/body/PlatformID/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1201,
+        "end_line": 1201
+      },
+      "fragment_digest": "93538e7f0a914bea100d7d8cd517f77a0646079507a98b6aef1b79cbcac7fd0b",
+      "claim_path": "/parameters/body/TotalAmount/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1201,
+        "end_line": 1201
+      },
+      "fragment_digest": "93538e7f0a914bea100d7d8cd517f77a0646079507a98b6aef1b79cbcac7fd0b",
+      "claim_path": "/parameters/body/TotalAmount/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1199,
+        "end_line": 1199
+      },
+      "fragment_digest": "7d5b9a69e6b956383319fd20f1086947dec47b402c88c9cc6143da52d4c1fe76",
+      "claim_path": "/parameters/body/TradeNo/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1199,
+        "end_line": 1199
+      },
+      "fragment_digest": "7d5b9a69e6b956383319fd20f1086947dec47b402c88c9cc6143da52d4c1fe76",
+      "claim_path": "/parameters/body/TradeNo/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1185,
+        "end_line": 1185
+      },
+      "fragment_digest": "23ae77d1f26694d66b313f0479bfa7d7471a095e17fbe5bccdb4ea83b670b4a5",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1220,
+        "end_line": 1220
+      },
+      "fragment_digest": "b9ea96c04855e62ee258c440d925eddfcaa99976df5aed8341ea667914284b4b",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1197,
+        "end_line": 1197
+      },
+      "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1110,
+        "end_line": 1110
+      },
+      "fragment_digest": "982dd5e585484d9e9537970a7720ca272300da5c52b001c6f854d0ef79df3ad1",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 1193,
+        "end_line": 1193
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/responses/200/schema_ref"
+    }
   ]
 }

@@ -59,5 +59,183 @@
   ],
   "security": [],
   "examples": [],
-  "missing": []
+  "missing": [],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 857,
+        "end_line": 857
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 865,
+        "end_line": 865
+      },
+      "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+      "claim_path": "/parameters/body/CheckMacValue/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 865,
+        "end_line": 865
+      },
+      "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+      "claim_path": "/parameters/body/CheckMacValue/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 861,
+        "end_line": 861
+      },
+      "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+      "claim_path": "/parameters/body/MerchantID/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 861,
+        "end_line": 861
+      },
+      "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+      "claim_path": "/parameters/body/MerchantID/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 862,
+        "end_line": 862
+      },
+      "fragment_digest": "3c2fee5e0fc0930f600c3216c0a5c3faaa4a0da6dcb71eeae4b467f74e292077",
+      "claim_path": "/parameters/body/MerchantTradeNo/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 862,
+        "end_line": 862
+      },
+      "fragment_digest": "3c2fee5e0fc0930f600c3216c0a5c3faaa4a0da6dcb71eeae4b467f74e292077",
+      "claim_path": "/parameters/body/MerchantTradeNo/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 864,
+        "end_line": 864
+      },
+      "fragment_digest": "00a4c223b419a3b26e1d78c78afd4e200d61729b12808d6552096efb58e27f8e",
+      "claim_path": "/parameters/body/PlatformID/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 864,
+        "end_line": 864
+      },
+      "fragment_digest": "00a4c223b419a3b26e1d78c78afd4e200d61729b12808d6552096efb58e27f8e",
+      "claim_path": "/parameters/body/PlatformID/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 863,
+        "end_line": 863
+      },
+      "fragment_digest": "1f42724d722af300e099a88843160bf427775048afc0b1d79b26c953a09d04e0",
+      "claim_path": "/parameters/body/TimeStamp/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 863,
+        "end_line": 863
+      },
+      "fragment_digest": "1f42724d722af300e099a88843160bf427775048afc0b1d79b26c953a09d04e0",
+      "claim_path": "/parameters/body/TimeStamp/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 849,
+        "end_line": 849
+      },
+      "fragment_digest": "e2eb1e056232b2be919d5620c46cd3f3780ac7bfdeb938227364bd2b87dab719",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 882,
+        "end_line": 882
+      },
+      "fragment_digest": "793be97bf8e0656708530ea93dad1168b586ea1f8bc817ca09c0639d16b47296",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 861,
+        "end_line": 861
+      },
+      "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 839,
+        "end_line": 839
+      },
+      "fragment_digest": "bc11fcbbf992052aee480f1dd0800d98bd3b5593f464aea206728893a353f573",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 857,
+        "end_line": 857
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/responses/200/schema_ref"
+    }
+  ]
 }

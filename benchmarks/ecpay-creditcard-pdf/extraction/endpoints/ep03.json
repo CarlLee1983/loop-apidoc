@@ -61,5 +61,183 @@
   "examples": [],
   "missing": [
     "測試環境因無法提供實際授權故無法使用此 API"
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 935,
+        "end_line": 935
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/method"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 943,
+        "end_line": 943
+      },
+      "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+      "claim_path": "/parameters/body/CheckMacValue/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 943,
+        "end_line": 943
+      },
+      "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+      "claim_path": "/parameters/body/CheckMacValue/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 941,
+        "end_line": 941
+      },
+      "fragment_digest": "96e2a74138387af75cb17617e3ab41299d9ee872d23fab83a287651ec243156e",
+      "claim_path": "/parameters/body/CreditAmount/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 941,
+        "end_line": 941
+      },
+      "fragment_digest": "96e2a74138387af75cb17617e3ab41299d9ee872d23fab83a287651ec243156e",
+      "claim_path": "/parameters/body/CreditAmount/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 942,
+        "end_line": 942
+      },
+      "fragment_digest": "28e2a920f0796ce9c88660849ad73e48a58557b09dd3c2c86e498d3e21676554",
+      "claim_path": "/parameters/body/CreditCheckCode/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 942,
+        "end_line": 942
+      },
+      "fragment_digest": "28e2a920f0796ce9c88660849ad73e48a58557b09dd3c2c86e498d3e21676554",
+      "claim_path": "/parameters/body/CreditCheckCode/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 940,
+        "end_line": 940
+      },
+      "fragment_digest": "be941dbf98ced766de7890ea148b27c291ce00172b32e12091e38aa67a528082",
+      "claim_path": "/parameters/body/CreditRefundId/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 940,
+        "end_line": 940
+      },
+      "fragment_digest": "be941dbf98ced766de7890ea148b27c291ce00172b32e12091e38aa67a528082",
+      "claim_path": "/parameters/body/CreditRefundId/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 939,
+        "end_line": 939
+      },
+      "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+      "claim_path": "/parameters/body/MerchantID/name"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 939,
+        "end_line": 939
+      },
+      "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+      "claim_path": "/parameters/body/MerchantID/required"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 927,
+        "end_line": 927
+      },
+      "fragment_digest": "4c6661a2465348cc7c206c91da46f974eac3bde8fe5ca3ac453a6c63f7150d97",
+      "claim_path": "/path"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 947,
+        "end_line": 947
+      },
+      "fragment_digest": "fea82f58a52f52c8187a8f4e1e9a4adf265f86920fc2e6e6d2a8fc054b82ae20",
+      "claim_path": "/responses/200/description"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 939,
+        "end_line": 939
+      },
+      "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+      "claim_path": "/responses/200/status_code"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 923,
+        "end_line": 923
+      },
+      "fragment_digest": "c8e043b5211a9948d8a674ba3a67c8d03c1211e0d9af94031af89803d4ff5ec4",
+      "claim_path": "/summary"
+    },
+    {
+      "version": 1,
+      "source": "gw_p110.pdf.md",
+      "locator": {
+        "kind": "line_range",
+        "start_line": 935,
+        "end_line": 935
+      },
+      "fragment_digest": "fbbf97bd67f0e19015a6f844f28f2b0cf227cfd36f12e722976685cacc359b5f",
+      "claim_path": "/responses/200/schema_ref"
+    }
   ]
 }

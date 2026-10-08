@@ -7,13 +7,61 @@
       "name": "production",
       "base_url": "https://payment.ecpay.com.tw",
       "version": null,
-      "source": "gw_p110.pdf p.10/p.23/p.25/p.30 介接路徑"
+      "source": "gw_p110.pdf p.10/p.23/p.25/p.30 介接路徑",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 365,
+            "end_line": 365
+          },
+          "fragment_digest": "304db2ffcf673b25e09715fec901d6f0f1d74da6085bde45f3e246a770d6a134",
+          "claim_path": "/servers/https:~1~1payment.ecpay.com.tw"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 365,
+            "end_line": 365
+          },
+          "fragment_digest": "304db2ffcf673b25e09715fec901d6f0f1d74da6085bde45f3e246a770d6a134",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "staging",
       "base_url": "https://payment-stage.ecpay.com.tw",
       "version": null,
-      "source": "gw_p110.pdf p.10/p.23 介接路徑 (測試環境)。注意：查詢信用卡單筆明細 (/CreditDetail/QueryTrade/V2) 與信用卡請退款 (/CreditDetail/DoAction) 測試環境因無法提供實際授權故無法使用"
+      "source": "gw_p110.pdf p.10/p.23 介接路徑 (測試環境)。注意：查詢信用卡單筆明細 (/CreditDetail/QueryTrade/V2) 與信用卡請退款 (/CreditDetail/DoAction) 測試環境因無法提供實際授權故無法使用",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 367,
+            "end_line": 367
+          },
+          "fragment_digest": "4f80e05e9b076015d51ab130b2b7d3d31313564631235ce7a4ab62b4120ac58b",
+          "claim_path": "/servers/https:~1~1payment-stage.ecpay.com.tw"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 367,
+            "end_line": 367
+          },
+          "fragment_digest": "4f80e05e9b076015d51ab130b2b7d3d31313564631235ce7a4ab62b4120ac58b",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "security_schemes": [],
@@ -57,222 +105,1440 @@
           "name": "MerchantID",
           "type": "String(10)",
           "required": true,
-          "description": "合作特店編號，由 ECPAY 提供。範例 2000132"
+          "description": "合作特店編號，由 ECPAY 提供。範例 2000132",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 377,
+                "end_line": 377
+              },
+              "fragment_digest": "05df3d18b82fb160f33e677a9354073cd8f311dd5ed68a8fa75d4110b9ebc371",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 377,
+                "end_line": 377
+              },
+              "fragment_digest": "05df3d18b82fb160f33e677a9354073cd8f311dd5ed68a8fa75d4110b9ebc371",
+              "claim_path": "/fields/MerchantID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 377,
+                "end_line": 377
+              },
+              "fragment_digest": "05df3d18b82fb160f33e677a9354073cd8f311dd5ed68a8fa75d4110b9ebc371",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
           "type": "String(20)",
           "required": true,
-          "description": "特店交易編號，為唯一值，不可重複使用。英數字大小寫混合"
+          "description": "特店交易編號，為唯一值，不可重複使用。英數字大小寫混合",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 378,
+                "end_line": 378
+              },
+              "fragment_digest": "48ed7200a9b4aabd22270cfb3dd1e5b1f58edc2722d81b68a501d0382c646447",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 378,
+                "end_line": 378
+              },
+              "fragment_digest": "48ed7200a9b4aabd22270cfb3dd1e5b1f58edc2722d81b68a501d0382c646447",
+              "claim_path": "/fields/MerchantTradeNo/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 378,
+                "end_line": 378
+              },
+              "fragment_digest": "48ed7200a9b4aabd22270cfb3dd1e5b1f58edc2722d81b68a501d0382c646447",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "StoreID",
           "type": "String(20)",
           "required": false,
-          "description": "特店旗下店舖代號，僅可用英數字大小寫混合"
+          "description": "特店旗下店舖代號，僅可用英數字大小寫混合",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 379,
+                "end_line": 379
+              },
+              "fragment_digest": "df0b8aada1d4a8eb6de31fec560a7837131b42860070a026d6fbdd1cea85016f",
+              "claim_path": "/fields/StoreID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 379,
+                "end_line": 379
+              },
+              "fragment_digest": "df0b8aada1d4a8eb6de31fec560a7837131b42860070a026d6fbdd1cea85016f",
+              "claim_path": "/fields/StoreID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 379,
+                "end_line": 379
+              },
+              "fragment_digest": "df0b8aada1d4a8eb6de31fec560a7837131b42860070a026d6fbdd1cea85016f",
+              "claim_path": "/fields/StoreID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeDate",
           "type": "String(20)",
           "required": true,
-          "description": "交易時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "交易時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 380,
+                "end_line": 380
+              },
+              "fragment_digest": "086a84e98b7ee012fb5fbec36b38534d8036c8fc5e32f159dda93b23cd4afca9",
+              "claim_path": "/fields/MerchantTradeDate/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 380,
+                "end_line": 380
+              },
+              "fragment_digest": "086a84e98b7ee012fb5fbec36b38534d8036c8fc5e32f159dda93b23cd4afca9",
+              "claim_path": "/fields/MerchantTradeDate/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 380,
+                "end_line": 380
+              },
+              "fragment_digest": "086a84e98b7ee012fb5fbec36b38534d8036c8fc5e32f159dda93b23cd4afca9",
+              "claim_path": "/fields/MerchantTradeDate/type"
+            }
+          ]
         },
         {
           "name": "PaymentType",
           "type": "String(20)",
           "required": true,
-          "description": "交易類型，請固定填入 aio"
+          "description": "交易類型，請固定填入 aio",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 381,
+                "end_line": 381
+              },
+              "fragment_digest": "9a002fbc7d83f40444338b2c48ae76a2fdcc6e61a7eaa9c716dd1a2116a8120d",
+              "claim_path": "/fields/PaymentType/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 381,
+                "end_line": 381
+              },
+              "fragment_digest": "9a002fbc7d83f40444338b2c48ae76a2fdcc6e61a7eaa9c716dd1a2116a8120d",
+              "claim_path": "/fields/PaymentType/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 381,
+                "end_line": 381
+              },
+              "fragment_digest": "9a002fbc7d83f40444338b2c48ae76a2fdcc6e61a7eaa9c716dd1a2116a8120d",
+              "claim_path": "/fields/PaymentType/type"
+            }
+          ]
         },
         {
           "name": "TotalAmount",
           "type": "Int",
           "required": true,
-          "description": "交易金額，請帶整數不可有小數點，僅限新台幣"
+          "description": "交易金額，請帶整數不可有小數點，僅限新台幣",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 382,
+                "end_line": 382
+              },
+              "fragment_digest": "fb215906dd62340cdeefcdac7911861b3e1aaba8692571e9d336c7e84612831c",
+              "claim_path": "/fields/TotalAmount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 382,
+                "end_line": 382
+              },
+              "fragment_digest": "fb215906dd62340cdeefcdac7911861b3e1aaba8692571e9d336c7e84612831c",
+              "claim_path": "/fields/TotalAmount/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 382,
+                "end_line": 382
+              },
+              "fragment_digest": "fb215906dd62340cdeefcdac7911861b3e1aaba8692571e9d336c7e84612831c",
+              "claim_path": "/fields/TotalAmount/type"
+            }
+          ]
         },
         {
           "name": "TradeDesc",
           "type": "String(200)",
           "required": true,
-          "description": "交易描述，請勿帶入特殊字元"
+          "description": "交易描述，請勿帶入特殊字元",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 383,
+                "end_line": 383
+              },
+              "fragment_digest": "4d4cf527645968707e7bea34cbe73bb4ff3aca0c76d6c72f03fcc3b5b28c4619",
+              "claim_path": "/fields/TradeDesc/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 383,
+                "end_line": 383
+              },
+              "fragment_digest": "4d4cf527645968707e7bea34cbe73bb4ff3aca0c76d6c72f03fcc3b5b28c4619",
+              "claim_path": "/fields/TradeDesc/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 383,
+                "end_line": 383
+              },
+              "fragment_digest": "4d4cf527645968707e7bea34cbe73bb4ff3aca0c76d6c72f03fcc3b5b28c4619",
+              "claim_path": "/fields/TradeDesc/type"
+            }
+          ]
         },
         {
           "name": "ItemName",
           "type": "String(400)",
           "required": true,
-          "description": "商品名稱，多筆以符號 # 分隔，字數限制中英數 400 字，超過自動截斷"
+          "description": "商品名稱，多筆以符號 # 分隔，字數限制中英數 400 字，超過自動截斷",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 384,
+                "end_line": 384
+              },
+              "fragment_digest": "2a8ffef95963dd2fc1fe49ab47c925b4f3b1706800b599fbca21120a4a0dcc38",
+              "claim_path": "/fields/ItemName/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 384,
+                "end_line": 384
+              },
+              "fragment_digest": "2a8ffef95963dd2fc1fe49ab47c925b4f3b1706800b599fbca21120a4a0dcc38",
+              "claim_path": "/fields/ItemName/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 384,
+                "end_line": 384
+              },
+              "fragment_digest": "2a8ffef95963dd2fc1fe49ab47c925b4f3b1706800b599fbca21120a4a0dcc38",
+              "claim_path": "/fields/ItemName/type"
+            }
+          ]
         },
         {
           "name": "ReturnURL",
           "type": "String(200)",
           "required": true,
-          "description": "付款完成通知回傳網址。付款完成後綠界以背景回傳付款結果參數。收到後須正確回應 1|OK。請勿與 OrderResultURL 設定相同位置"
+          "description": "付款完成通知回傳網址。付款完成後綠界以背景回傳付款結果參數。收到後須正確回應 1|OK。請勿與 OrderResultURL 設定相同位置",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 404,
+                "end_line": 404
+              },
+              "fragment_digest": "22b6676ed7d046c4dcd834bb7eee6938be6806f45db2b00a5671fc0f03a27bba",
+              "claim_path": "/fields/ReturnURL/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 404,
+                "end_line": 404
+              },
+              "fragment_digest": "22b6676ed7d046c4dcd834bb7eee6938be6806f45db2b00a5671fc0f03a27bba",
+              "claim_path": "/fields/ReturnURL/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 404,
+                "end_line": 404
+              },
+              "fragment_digest": "22b6676ed7d046c4dcd834bb7eee6938be6806f45db2b00a5671fc0f03a27bba",
+              "claim_path": "/fields/ReturnURL/type"
+            }
+          ]
         },
         {
           "name": "ChoosePayment",
           "type": "String(20)",
           "required": true,
-          "description": "選擇預設付款方式。Credit:信用卡或銀聯卡(需申請開通)；ApplePay:Apple 手機支付。瀏覽器非 Safari 時不顯示 ApplePay"
+          "description": "選擇預設付款方式。Credit:信用卡或銀聯卡(需申請開通)；ApplePay:Apple 手機支付。瀏覽器非 Safari 時不顯示 ApplePay",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 405,
+                "end_line": 405
+              },
+              "fragment_digest": "a871bf6252a4c9ba3c19a33c137f8c8eb4e7fe1e643717419adf52de585e6805",
+              "claim_path": "/fields/ChoosePayment/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 405,
+                "end_line": 405
+              },
+              "fragment_digest": "a871bf6252a4c9ba3c19a33c137f8c8eb4e7fe1e643717419adf52de585e6805",
+              "claim_path": "/fields/ChoosePayment/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 405,
+                "end_line": 405
+              },
+              "fragment_digest": "a871bf6252a4c9ba3c19a33c137f8c8eb4e7fe1e643717419adf52de585e6805",
+              "claim_path": "/fields/ChoosePayment/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": true,
-          "description": "檢查碼，請參考附錄檢查碼機制"
+          "description": "檢查碼，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 406,
+                "end_line": 406
+              },
+              "fragment_digest": "5c5cdef81d5f8acb7d1ccecb93ec393dc9ba7f38953d79c3c62fdb4596b31a82",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 406,
+                "end_line": 406
+              },
+              "fragment_digest": "5c5cdef81d5f8acb7d1ccecb93ec393dc9ba7f38953d79c3c62fdb4596b31a82",
+              "claim_path": "/fields/CheckMacValue/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 406,
+                "end_line": 406
+              },
+              "fragment_digest": "5c5cdef81d5f8acb7d1ccecb93ec393dc9ba7f38953d79c3c62fdb4596b31a82",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         },
         {
           "name": "EncryptType",
           "type": "Int",
           "required": true,
-          "description": "CheckMacValue 加密類型，請固定填入 1，使用 SHA256 加密"
+          "description": "CheckMacValue 加密類型，請固定填入 1，使用 SHA256 加密",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 457,
+                "end_line": 457
+              },
+              "fragment_digest": "bb96bfbf74bed66e6d42026662f77ad04d28f5b954cfa187dfc683fb9769384f",
+              "claim_path": "/fields/EncryptType/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 457,
+                "end_line": 457
+              },
+              "fragment_digest": "bb96bfbf74bed66e6d42026662f77ad04d28f5b954cfa187dfc683fb9769384f",
+              "claim_path": "/fields/EncryptType/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 457,
+                "end_line": 457
+              },
+              "fragment_digest": "bb96bfbf74bed66e6d42026662f77ad04d28f5b954cfa187dfc683fb9769384f",
+              "claim_path": "/fields/EncryptType/type"
+            }
+          ]
         },
         {
           "name": "ClientBackURL",
           "type": "String(200)",
           "required": false,
-          "description": "Client 端返回特店的按鈕連結。導回時不會帶付款結果。設定後會顯示[返回商店]按鈕"
+          "description": "Client 端返回特店的按鈕連結。導回時不會帶付款結果。設定後會顯示[返回商店]按鈕",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 407,
+                "end_line": 407
+              },
+              "fragment_digest": "3af1690d51a40062f77856aa090adc8fa239adf150ef0b9082f98442aefa6851",
+              "claim_path": "/fields/ClientBackURL/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 407,
+                "end_line": 407
+              },
+              "fragment_digest": "3af1690d51a40062f77856aa090adc8fa239adf150ef0b9082f98442aefa6851",
+              "claim_path": "/fields/ClientBackURL/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 407,
+                "end_line": 407
+              },
+              "fragment_digest": "3af1690d51a40062f77856aa090adc8fa239adf150ef0b9082f98442aefa6851",
+              "claim_path": "/fields/ClientBackURL/type"
+            }
+          ]
         },
         {
           "name": "ItemURL",
           "type": "String(200)",
           "required": false,
-          "description": "商品銷售網址"
+          "description": "商品銷售網址",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 408,
+                "end_line": 408
+              },
+              "fragment_digest": "8b47be80bc30f74096433ff906a7549949809e3fe4fa3d90d770eb83a15839a6",
+              "claim_path": "/fields/ItemURL/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 408,
+                "end_line": 408
+              },
+              "fragment_digest": "8b47be80bc30f74096433ff906a7549949809e3fe4fa3d90d770eb83a15839a6",
+              "claim_path": "/fields/ItemURL/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 408,
+                "end_line": 408
+              },
+              "fragment_digest": "8b47be80bc30f74096433ff906a7549949809e3fe4fa3d90d770eb83a15839a6",
+              "claim_path": "/fields/ItemURL/type"
+            }
+          ]
         },
         {
           "name": "Remark",
           "type": "String(100)",
           "required": false,
-          "description": "備註欄位"
+          "description": "備註欄位",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 409,
+                "end_line": 409
+              },
+              "fragment_digest": "94d29b45a65b3dccffc4d8b63f586bb56a3d27a827fbad2e6dfc3b707e191ca7",
+              "claim_path": "/fields/Remark/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 409,
+                "end_line": 409
+              },
+              "fragment_digest": "94d29b45a65b3dccffc4d8b63f586bb56a3d27a827fbad2e6dfc3b707e191ca7",
+              "claim_path": "/fields/Remark/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 409,
+                "end_line": 409
+              },
+              "fragment_digest": "94d29b45a65b3dccffc4d8b63f586bb56a3d27a827fbad2e6dfc3b707e191ca7",
+              "claim_path": "/fields/Remark/type"
+            }
+          ]
         },
         {
           "name": "ChooseSubPayment",
-          "type": "String(20)",
+          "type": "String (20)",
           "required": false,
-          "description": "付款子項目。設定後轉導至綠界訂單成立頁，依設定付款方式及子項目帶入，無法選擇其他子項目。請參考付款方式一覽表"
+          "description": "付款子項目。設定後轉導至綠界訂單成立頁，依設定付款方式及子項目帶入，無法選擇其他子項目。請參考付款方式一覽表",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 428,
+                "end_line": 428
+              },
+              "fragment_digest": "d10ce1b11eba25e9f1f0f6f2e07f8e0a248eb493c9a58289ec33e712e5ded9a2",
+              "claim_path": "/fields/ChooseSubPayment/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 428,
+                "end_line": 428
+              },
+              "fragment_digest": "d10ce1b11eba25e9f1f0f6f2e07f8e0a248eb493c9a58289ec33e712e5ded9a2",
+              "claim_path": "/fields/ChooseSubPayment/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 428,
+                "end_line": 428
+              },
+              "fragment_digest": "d10ce1b11eba25e9f1f0f6f2e07f8e0a248eb493c9a58289ec33e712e5ded9a2",
+              "claim_path": "/fields/ChooseSubPayment/type"
+            }
+          ]
         },
         {
           "name": "OrderResultURL",
           "type": "String(200)",
           "required": false,
-          "description": "Client 端回傳付款結果網址。消費者付款完成後綠界以幕前回傳付款結果。與 ClientBackURL 同時設定時以此為主。銀聯卡及非即時交易(ATM、CVS、BARCODE)不支援"
+          "description": "Client 端回傳付款結果網址。消費者付款完成後綠界以幕前回傳付款結果。與 ClientBackURL 同時設定時以此為主。銀聯卡及非即時交易(ATM、CVS、BARCODE)不支援",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 429,
+                "end_line": 429
+              },
+              "fragment_digest": "fb8ba6a7cd58cffdf7017ae60ef6bb6294db3e9b3a40b2bc0052f29d000ac83c",
+              "claim_path": "/fields/OrderResultURL/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 429,
+                "end_line": 429
+              },
+              "fragment_digest": "fb8ba6a7cd58cffdf7017ae60ef6bb6294db3e9b3a40b2bc0052f29d000ac83c",
+              "claim_path": "/fields/OrderResultURL/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 429,
+                "end_line": 429
+              },
+              "fragment_digest": "fb8ba6a7cd58cffdf7017ae60ef6bb6294db3e9b3a40b2bc0052f29d000ac83c",
+              "claim_path": "/fields/OrderResultURL/type"
+            }
+          ]
         },
         {
           "name": "NeedExtraPaidInfo",
           "type": "String(1)",
           "required": false,
-          "description": "是否需要額外的付款資訊。預設值 N。傳 Y 時付款完成後綠界以背景回傳額外付款資訊。參考額外回傳的參數"
+          "description": "是否需要額外的付款資訊。預設值 N。傳 Y 時付款完成後綠界以背景回傳額外付款資訊。參考額外回傳的參數",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 430,
+                "end_line": 430
+              },
+              "fragment_digest": "c88cfa312d67c0f3d9eca3d01384be56d63bf80935a9698162490e34103500e4",
+              "claim_path": "/fields/NeedExtraPaidInfo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 430,
+                "end_line": 430
+              },
+              "fragment_digest": "c88cfa312d67c0f3d9eca3d01384be56d63bf80935a9698162490e34103500e4",
+              "claim_path": "/fields/NeedExtraPaidInfo/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 430,
+                "end_line": 430
+              },
+              "fragment_digest": "c88cfa312d67c0f3d9eca3d01384be56d63bf80935a9698162490e34103500e4",
+              "claim_path": "/fields/NeedExtraPaidInfo/type"
+            }
+          ]
         },
         {
           "name": "DeviceSource",
           "type": "String(10)",
           "required": false,
-          "description": "裝置來源，請帶空值，由系統自動判定"
+          "description": "裝置來源，請帶空值，由系統自動判定",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 431,
+                "end_line": 431
+              },
+              "fragment_digest": "2a4dfa0f7d92d35bf01e3bdfffda0b39c162519ebe6f346a96873f8a8b6c793b",
+              "claim_path": "/fields/DeviceSource/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 431,
+                "end_line": 431
+              },
+              "fragment_digest": "2a4dfa0f7d92d35bf01e3bdfffda0b39c162519ebe6f346a96873f8a8b6c793b",
+              "claim_path": "/fields/DeviceSource/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 431,
+                "end_line": 431
+              },
+              "fragment_digest": "2a4dfa0f7d92d35bf01e3bdfffda0b39c162519ebe6f346a96873f8a8b6c793b",
+              "claim_path": "/fields/DeviceSource/type"
+            }
+          ]
         },
         {
           "name": "IgnorePayment",
           "type": "String(100)",
           "required": false,
-          "description": "隱藏付款方式。當 ChoosePayment 為 ALL 時可隱藏不需要的付款方式，多筆以 # 分隔。可用值 Credit、ApplePay"
+          "description": "隱藏付款方式。當 ChoosePayment 為 ALL 時可隱藏不需要的付款方式，多筆以 # 分隔。可用值 Credit、ApplePay",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 432,
+                "end_line": 432
+              },
+              "fragment_digest": "9aca4a5378d71a89708fa85cc55af020878357353e4a03e71872e4d8e0ce0b61",
+              "claim_path": "/fields/IgnorePayment/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 432,
+                "end_line": 432
+              },
+              "fragment_digest": "9aca4a5378d71a89708fa85cc55af020878357353e4a03e71872e4d8e0ce0b61",
+              "claim_path": "/fields/IgnorePayment/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 432,
+                "end_line": 432
+              },
+              "fragment_digest": "9aca4a5378d71a89708fa85cc55af020878357353e4a03e71872e4d8e0ce0b61",
+              "claim_path": "/fields/IgnorePayment/type"
+            }
+          ]
         },
         {
           "name": "PlatformID",
           "type": "String(10)",
           "required": false,
-          "description": "平台商代號。一般特店或平台商本身介接請帶空值；專案平台商特店使用時請帶平台商所綁的特店編號 MerchantID"
+          "description": "平台商代號。一般特店或平台商本身介接請帶空值；專案平台商特店使用時請帶平台商所綁的特店編號 MerchantID",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 433,
+                "end_line": 433
+              },
+              "fragment_digest": "7d7a51fb958ee0b289e2ac22684f3f32b6c841eb30a2a2f0b035d9b4a1b7ccca",
+              "claim_path": "/fields/PlatformID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 433,
+                "end_line": 433
+              },
+              "fragment_digest": "7d7a51fb958ee0b289e2ac22684f3f32b6c841eb30a2a2f0b035d9b4a1b7ccca",
+              "claim_path": "/fields/PlatformID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 433,
+                "end_line": 433
+              },
+              "fragment_digest": "7d7a51fb958ee0b289e2ac22684f3f32b6c841eb30a2a2f0b035d9b4a1b7ccca",
+              "claim_path": "/fields/PlatformID/type"
+            }
+          ]
         },
         {
           "name": "CustomField1",
           "type": "String(50)",
           "required": false,
-          "description": "自訂名稱欄位1。特殊符號只支援 ,.#()$[];%{}:/?&@<>!"
+          "description": "自訂名稱欄位1。特殊符號只支援 ,.#()$[];%{}:/?&@<>!",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 434,
+                "end_line": 434
+              },
+              "fragment_digest": "7ad887178006c92fdbb52e0834a0bd68c4388bf5ee707a11f4be3e0fbd6cc55b",
+              "claim_path": "/fields/CustomField1/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 434,
+                "end_line": 434
+              },
+              "fragment_digest": "7ad887178006c92fdbb52e0834a0bd68c4388bf5ee707a11f4be3e0fbd6cc55b",
+              "claim_path": "/fields/CustomField1/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 434,
+                "end_line": 434
+              },
+              "fragment_digest": "7ad887178006c92fdbb52e0834a0bd68c4388bf5ee707a11f4be3e0fbd6cc55b",
+              "claim_path": "/fields/CustomField1/type"
+            }
+          ]
         },
         {
           "name": "CustomField2",
           "type": "String(50)",
           "required": false,
-          "description": "自訂名稱欄位2"
+          "description": "自訂名稱欄位2",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 435,
+                "end_line": 435
+              },
+              "fragment_digest": "52258fbd3f9178086c55bafbb38b0e26a89fdefa217b973057b839203d4ee755",
+              "claim_path": "/fields/CustomField2/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 435,
+                "end_line": 435
+              },
+              "fragment_digest": "52258fbd3f9178086c55bafbb38b0e26a89fdefa217b973057b839203d4ee755",
+              "claim_path": "/fields/CustomField2/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 435,
+                "end_line": 435
+              },
+              "fragment_digest": "52258fbd3f9178086c55bafbb38b0e26a89fdefa217b973057b839203d4ee755",
+              "claim_path": "/fields/CustomField2/type"
+            }
+          ]
         },
         {
           "name": "CustomField3",
           "type": "String(50)",
           "required": false,
-          "description": "自訂名稱欄位3"
+          "description": "自訂名稱欄位3",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 455,
+                "end_line": 455
+              },
+              "fragment_digest": "1b40f7258ad1f873ccb7a205ca1592ea52ebc508b13130e91ae4b107d035b734",
+              "claim_path": "/fields/CustomField3/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 455,
+                "end_line": 455
+              },
+              "fragment_digest": "1b40f7258ad1f873ccb7a205ca1592ea52ebc508b13130e91ae4b107d035b734",
+              "claim_path": "/fields/CustomField3/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 455,
+                "end_line": 455
+              },
+              "fragment_digest": "1b40f7258ad1f873ccb7a205ca1592ea52ebc508b13130e91ae4b107d035b734",
+              "claim_path": "/fields/CustomField3/type"
+            }
+          ]
         },
         {
           "name": "CustomField4",
           "type": "String(50)",
           "required": false,
-          "description": "自訂名稱欄位4"
+          "description": "自訂名稱欄位4",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 456,
+                "end_line": 456
+              },
+              "fragment_digest": "22a935bbe75d15893ffd599a9087515972f485468f4b365030db3ca7172b3bd4",
+              "claim_path": "/fields/CustomField4/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 456,
+                "end_line": 456
+              },
+              "fragment_digest": "22a935bbe75d15893ffd599a9087515972f485468f4b365030db3ca7172b3bd4",
+              "claim_path": "/fields/CustomField4/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 456,
+                "end_line": 456
+              },
+              "fragment_digest": "22a935bbe75d15893ffd599a9087515972f485468f4b365030db3ca7172b3bd4",
+              "claim_path": "/fields/CustomField4/type"
+            }
+          ]
         },
         {
           "name": "BindingCard",
           "type": "int",
           "required": false,
-          "description": "記憶卡號 (ChoosePayment 為 ALL 或 Credit 時)。使用:1，不使用:0。僅支援 Visa/MasterCard/JCB，不支援銀聯卡；特店須有會員系統"
+          "description": "記憶卡號 (ChoosePayment 為 ALL 或 Credit 時)。使用:1，不使用:0。僅支援 Visa/MasterCard/JCB，不支援銀聯卡；特店須有會員系統",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 465,
+                "end_line": 465
+              },
+              "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+              "claim_path": "/fields/BindingCard/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 465,
+                "end_line": 465
+              },
+              "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+              "claim_path": "/fields/BindingCard/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 465,
+                "end_line": 465
+              },
+              "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+              "claim_path": "/fields/BindingCard/type"
+            }
+          ]
         },
         {
           "name": "MerchantMemberID",
           "type": "String(30)",
           "required": false,
-          "description": "記憶卡號識別碼 (特店代號 MerchantID + 廠商會員編號)。ChoosePayment 為 ALL 或 Credit 時"
+          "description": "記憶卡號識別碼 (特店代號 MerchantID + 廠商會員編號)。ChoosePayment 為 ALL 或 Credit 時",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 466,
+                "end_line": 466
+              },
+              "fragment_digest": "74fc9a060439bcb4d90f55ea9db1cb8d1c2cd548300c4b7b7751d4f4f4c82c09",
+              "claim_path": "/fields/MerchantMemberID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 466,
+                "end_line": 466
+              },
+              "fragment_digest": "74fc9a060439bcb4d90f55ea9db1cb8d1c2cd548300c4b7b7751d4f4f4c82c09",
+              "claim_path": "/fields/MerchantMemberID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 466,
+                "end_line": 466
+              },
+              "fragment_digest": "74fc9a060439bcb4d90f55ea9db1cb8d1c2cd548300c4b7b7751d4f4f4c82c09",
+              "claim_path": "/fields/MerchantMemberID/type"
+            }
+          ]
         },
         {
           "name": "Language",
           "type": "String(3)",
           "required": false,
-          "description": "語系設定 (ChoosePayment 為 Credit 時)。預設中文。ENG 英語/KOR 韓語/JPN 日語/CHI 簡體中文。使用語系時不支援記憶卡號功能且不支援手機版"
+          "description": "語系設定 (ChoosePayment 為 Credit 時)。預設中文。ENG 英語/KOR 韓語/JPN 日語/CHI 簡體中文。使用語系時不支援記憶卡號功能且不支援手機版",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 486,
+                "end_line": 486
+              },
+              "fragment_digest": "57c7dfce275605f5f6aa0255a5def7240992321d5125d00ca27f756b71e9e73d",
+              "claim_path": "/fields/Language/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 486,
+                "end_line": 486
+              },
+              "fragment_digest": "57c7dfce275605f5f6aa0255a5def7240992321d5125d00ca27f756b71e9e73d",
+              "claim_path": "/fields/Language/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 486,
+                "end_line": 486
+              },
+              "fragment_digest": "57c7dfce275605f5f6aa0255a5def7240992321d5125d00ca27f756b71e9e73d",
+              "claim_path": "/fields/Language/type"
+            }
+          ]
         },
         {
           "name": "Redeem",
           "type": "String(1)",
           "required": false,
-          "description": "是否使用紅利折抵 (ChoosePayment 為 ALL 或 Credit 一次付清時)。設 Y 時進入紅利折抵交易流程"
+          "description": "是否使用紅利折抵 (ChoosePayment 為 ALL 或 Credit 一次付清時)。設 Y 時進入紅利折抵交易流程",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 496,
+                "end_line": 496
+              },
+              "fragment_digest": "93d75fb3c7bea2de650da3deee787668af49ea7d584e1149ef06bf6e145433db",
+              "claim_path": "/fields/Redeem/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 496,
+                "end_line": 496
+              },
+              "fragment_digest": "93d75fb3c7bea2de650da3deee787668af49ea7d584e1149ef06bf6e145433db",
+              "claim_path": "/fields/Redeem/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 496,
+                "end_line": 496
+              },
+              "fragment_digest": "93d75fb3c7bea2de650da3deee787668af49ea7d584e1149ef06bf6e145433db",
+              "claim_path": "/fields/Redeem/type"
+            }
+          ]
         },
         {
           "name": "UnionPay",
           "type": "Int",
           "required": false,
-          "description": "銀聯卡交易選項 (ChoosePayment 為 ALL 或 Credit 時)，預設值 0。0:可選是否使用銀聯；1:只使用銀聯卡並直接導到銀聯網站；2:不可使用銀聯卡並隱藏銀聯選項。需申請方可使用"
+          "description": "銀聯卡交易選項 (ChoosePayment 為 ALL 或 Credit 時)，預設值 0。0:可選是否使用銀聯；1:只使用銀聯卡並直接導到銀聯網站；2:不可使用銀聯卡並隱藏銀聯選項。需申請方可使用",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 497,
+                "end_line": 497
+              },
+              "fragment_digest": "d342b0ccf84563cf74a8ed0029757303afdbac08cdcba3d3eb0326f7c8a86d96",
+              "claim_path": "/fields/UnionPay/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 497,
+                "end_line": 497
+              },
+              "fragment_digest": "d342b0ccf84563cf74a8ed0029757303afdbac08cdcba3d3eb0326f7c8a86d96",
+              "claim_path": "/fields/UnionPay/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 497,
+                "end_line": 497
+              },
+              "fragment_digest": "d342b0ccf84563cf74a8ed0029757303afdbac08cdcba3d3eb0326f7c8a86d96",
+              "claim_path": "/fields/UnionPay/type"
+            }
+          ]
         },
         {
           "name": "CreditInstallment",
           "type": "String(20)",
           "required": null,
-          "description": "刷卡分期期數 (分期付款時必填)。一般分期可用 3,6,12,18,24；圓夢彈性分期可用 30N。不可與定期定額、紅利折抵一起設定。銀聯卡不支援分期"
+          "description": "刷卡分期期數 (分期付款時必填)。一般分期可用 3,6,12,18,24；圓夢彈性分期可用 30N。不可與定期定額、紅利折抵一起設定。銀聯卡不支援分期",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 519,
+                "end_line": 519
+              },
+              "fragment_digest": "575ff8bc264eacc2996b2160401e1c0e6ffad03ea7e0ce9d42f07b018e5caecd",
+              "claim_path": "/fields/CreditInstallment/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 519,
+                "end_line": 519
+              },
+              "fragment_digest": "575ff8bc264eacc2996b2160401e1c0e6ffad03ea7e0ce9d42f07b018e5caecd",
+              "claim_path": "/fields/CreditInstallment/type"
+            }
+          ]
         },
         {
           "name": "PeriodAmount",
           "type": "Int",
           "required": null,
-          "description": "每次授權金額 (定期定額時必填)。TotalAmount 必須與 PeriodAmount 相同。請帶整數僅限新台幣。(定期定額功能，本擷取為信用卡收款範圍，列此供 AioCheckOut 完整性)"
+          "description": "每次授權金額 (定期定額時必填)。TotalAmount 必須與 PeriodAmount 相同。請帶整數僅限新台幣。(定期定額功能，本擷取為信用卡收款範圍，列此供 AioCheckOut 完整性)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 532,
+                "end_line": 532
+              },
+              "fragment_digest": "edcedb402d163be00e3b5ecd7faaa2e26f7bce664393b220a1da38acfe0f80d7",
+              "claim_path": "/fields/PeriodAmount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 532,
+                "end_line": 532
+              },
+              "fragment_digest": "edcedb402d163be00e3b5ecd7faaa2e26f7bce664393b220a1da38acfe0f80d7",
+              "claim_path": "/fields/PeriodAmount/type"
+            }
+          ]
         },
         {
           "name": "PeriodType",
-          "type": "String(1)",
+          "type": "String (1)",
           "required": null,
-          "description": "週期種類 (定期定額時必填)。D:以天為週期；M:以月為週期；Y:以年為週期"
+          "description": "週期種類 (定期定額時必填)。D:以天為週期；M:以月為週期；Y:以年為週期",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 533,
+                "end_line": 533
+              },
+              "fragment_digest": "e9659a8ddeaa326604a678c3e665242a7864bdcd67fa0555791fe5b1a4cc5493",
+              "claim_path": "/fields/PeriodType/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 533,
+                "end_line": 533
+              },
+              "fragment_digest": "e9659a8ddeaa326604a678c3e665242a7864bdcd67fa0555791fe5b1a4cc5493",
+              "claim_path": "/fields/PeriodType/type"
+            }
+          ]
         },
         {
           "name": "Frequency",
           "type": "Int",
           "required": null,
-          "description": "執行頻率 (定期定額時必填)。PeriodType=D 時 1~365；M 時 1~12；Y 時只可設 1"
+          "description": "執行頻率 (定期定額時必填)。PeriodType=D 時 1~365；M 時 1~12；Y 時只可設 1",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 552,
+                "end_line": 552
+              },
+              "fragment_digest": "f4e37c5ce4dd405d870ea031b57f2eecf743df0051fe758cd319cac8f6ff3232",
+              "claim_path": "/fields/Frequency/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 552,
+                "end_line": 552
+              },
+              "fragment_digest": "f4e37c5ce4dd405d870ea031b57f2eecf743df0051fe758cd319cac8f6ff3232",
+              "claim_path": "/fields/Frequency/type"
+            }
+          ]
         },
         {
           "name": "ExecTimes",
           "type": "Int",
           "required": null,
-          "description": "執行次數 (定期定額時必填)。至少大於 1；D 時最多 999；M 時最多 99；Y 時最多 9"
+          "description": "執行次數 (定期定額時必填)。至少大於 1；D 時最多 999；M 時最多 99；Y 時最多 9",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 553,
+                "end_line": 553
+              },
+              "fragment_digest": "0548970fd3bdf0d1cff008c21e1648ffe86a0cda572451107809c89459c4273b",
+              "claim_path": "/fields/ExecTimes/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 553,
+                "end_line": 553
+              },
+              "fragment_digest": "0548970fd3bdf0d1cff008c21e1648ffe86a0cda572451107809c89459c4273b",
+              "claim_path": "/fields/ExecTimes/type"
+            }
+          ]
         },
         {
           "name": "PeriodReturnURL",
           "type": "String(200)",
           "required": false,
-          "description": "定期定額的執行結果回應 URL。每次執行授權完會將授權結果回傳到此 URL"
+          "description": "定期定額的執行結果回應 URL。每次執行授權完會將授權結果回傳到此 URL",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 554,
+                "end_line": 554
+              },
+              "fragment_digest": "287e61bb3364f34e7ea383fe8e8326cf3045bd15780e4ade46679e8d982977ef",
+              "claim_path": "/fields/PeriodReturnURL/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 554,
+                "end_line": 554
+              },
+              "fragment_digest": "287e61bb3364f34e7ea383fe8e8326cf3045bd15780e4ade46679e8d982977ef",
+              "claim_path": "/fields/PeriodReturnURL/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 554,
+                "end_line": 554
+              },
+              "fragment_digest": "287e61bb3364f34e7ea383fe8e8326cf3045bd15780e4ade46679e8d982977ef",
+              "claim_path": "/fields/PeriodReturnURL/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前紅色星號(*)為必填欄位。傳輸參數不支援特殊符號與 html tag。所有參數皆需加入 CheckMacValue 計算",
-      "source": "gw_p110.pdf p.10-p.17 §4 產生訂單 傳入參數說明"
+      "source": "gw_p110.pdf p.10-p.17 §4 產生訂單 傳入參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 465,
+            "end_line": 465
+          },
+          "fragment_digest": "8857c71ef5e58eefdebb9bceb1910201a9dd3ed3a2f831f04fdde16ca3bbd4db",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentResultNotification",
@@ -281,108 +1547,529 @@
           "name": "MerchantID",
           "type": "String(10)",
           "required": null,
-          "description": "特店編號。範例 2000132"
+          "description": "特店編號。範例 2000132",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 647,
+                "end_line": 647
+              },
+              "fragment_digest": "6033b0ab148e2beaf23666a27a4eb9f027f306404f673f1a5713be973d8dfdf4",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 647,
+                "end_line": 647
+              },
+              "fragment_digest": "6033b0ab148e2beaf23666a27a4eb9f027f306404f673f1a5713be973d8dfdf4",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
-          "type": "String(20)",
+          "type": "String (20)",
           "required": null,
-          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號。英數字大小寫混合"
+          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號。英數字大小寫混合",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 648,
+                "end_line": 648
+              },
+              "fragment_digest": "ed099f0db17c5a0f9f6220bbcecf186bb6dbf48aaa675b3c8aa1c34954947ef5",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 648,
+                "end_line": 648
+              },
+              "fragment_digest": "ed099f0db17c5a0f9f6220bbcecf186bb6dbf48aaa675b3c8aa1c34954947ef5",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "StoreID",
           "type": "String(20)",
           "required": null,
-          "description": "特店旗下店舖代號"
+          "description": "特店旗下店舖代號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 665,
+                "end_line": 665
+              },
+              "fragment_digest": "c1b8848c990baebca1742ed6efb9a039691a1bd48d18447b100225b3dbbe4d93",
+              "claim_path": "/fields/StoreID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 665,
+                "end_line": 665
+              },
+              "fragment_digest": "c1b8848c990baebca1742ed6efb9a039691a1bd48d18447b100225b3dbbe4d93",
+              "claim_path": "/fields/StoreID/type"
+            }
+          ]
         },
         {
           "name": "RtnCode",
           "type": "Int",
           "required": null,
-          "description": "交易狀態。回傳值為 1 時為付款成功，其餘代碼皆為交易異常"
+          "description": "交易狀態。回傳值為 1 時為付款成功，其餘代碼皆為交易異常",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 667,
+                "end_line": 667
+              },
+              "fragment_digest": "4f44c8fc4f6fad0156e5c3cb45c33d46f0f57b209e26e012435cb1e1f7f7bd32",
+              "claim_path": "/fields/RtnCode/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 667,
+                "end_line": 667
+              },
+              "fragment_digest": "4f44c8fc4f6fad0156e5c3cb45c33d46f0f57b209e26e012435cb1e1f7f7bd32",
+              "claim_path": "/fields/RtnCode/type"
+            }
+          ]
         },
         {
           "name": "RtnMsg",
           "type": "String(200)",
           "required": null,
-          "description": "交易訊息。背景成功回傳:交易成功；背景補送通知回傳:paid；幕前成功回傳:Succeeded"
+          "description": "交易訊息。背景成功回傳:交易成功；背景補送通知回傳:paid；幕前成功回傳:Succeeded",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 668,
+                "end_line": 668
+              },
+              "fragment_digest": "3bc5809bf646970d32c251532b8cc54ecfd6ba154408d9bf8835a1a72c37c3d9",
+              "claim_path": "/fields/RtnMsg/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 668,
+                "end_line": 668
+              },
+              "fragment_digest": "3bc5809bf646970d32c251532b8cc54ecfd6ba154408d9bf8835a1a72c37c3d9",
+              "claim_path": "/fields/RtnMsg/type"
+            }
+          ]
         },
         {
           "name": "TradeNo",
           "type": "String(20)",
           "required": null,
-          "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"
+          "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 669,
+                "end_line": 669
+              },
+              "fragment_digest": "2c85a79afd93707f7c5e542e7429405d8602315bb6f9586eaa768be6c495d6e6",
+              "claim_path": "/fields/TradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 669,
+                "end_line": 669
+              },
+              "fragment_digest": "2c85a79afd93707f7c5e542e7429405d8602315bb6f9586eaa768be6c495d6e6",
+              "claim_path": "/fields/TradeNo/type"
+            }
+          ]
         },
         {
           "name": "TradeAmt",
           "type": "Int",
           "required": null,
-          "description": "交易金額"
+          "description": "交易金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 670,
+                "end_line": 670
+              },
+              "fragment_digest": "69ba6e6a4f984896b4d35053c7063352578ece9257d0bae534c6be7230f493e8",
+              "claim_path": "/fields/TradeAmt/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 670,
+                "end_line": 670
+              },
+              "fragment_digest": "69ba6e6a4f984896b4d35053c7063352578ece9257d0bae534c6be7230f493e8",
+              "claim_path": "/fields/TradeAmt/type"
+            }
+          ]
         },
         {
           "name": "PaymentDate",
           "type": "String(20)",
           "required": null,
-          "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 671,
+                "end_line": 671
+              },
+              "fragment_digest": "5d521c0db4c57ec2a82b242b76f44b1467051fba1c9b580b687bfd74418364cf",
+              "claim_path": "/fields/PaymentDate/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 671,
+                "end_line": 671
+              },
+              "fragment_digest": "5d521c0db4c57ec2a82b242b76f44b1467051fba1c9b580b687bfd74418364cf",
+              "claim_path": "/fields/PaymentDate/type"
+            }
+          ]
         },
         {
           "name": "PaymentType",
           "type": "String(20)",
           "required": null,
-          "description": "特店選擇的付款方式。請參考回覆付款方式一覽表 (例 Credit_CreditCard)"
+          "description": "特店選擇的付款方式。請參考回覆付款方式一覽表 (例 Credit_CreditCard)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 672,
+                "end_line": 672
+              },
+              "fragment_digest": "b7b16417702d6ff82a3706c1398bfe0e1bee95248f14a789f76f9e8af12777b5",
+              "claim_path": "/fields/PaymentType/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 672,
+                "end_line": 672
+              },
+              "fragment_digest": "b7b16417702d6ff82a3706c1398bfe0e1bee95248f14a789f76f9e8af12777b5",
+              "claim_path": "/fields/PaymentType/type"
+            }
+          ]
         },
         {
           "name": "PaymentTypeChargeFee",
           "type": "Int",
           "required": null,
-          "description": "交易手續費"
+          "description": "交易手續費",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 673,
+                "end_line": 673
+              },
+              "fragment_digest": "0376143a7ca1cf512c1f358d4394c7d463a6012040a3c8c7818acd40bcda60c9",
+              "claim_path": "/fields/PaymentTypeChargeFee/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 673,
+                "end_line": 673
+              },
+              "fragment_digest": "0376143a7ca1cf512c1f358d4394c7d463a6012040a3c8c7818acd40bcda60c9",
+              "claim_path": "/fields/PaymentTypeChargeFee/type"
+            }
+          ]
         },
         {
           "name": "TradeDate",
           "type": "String(20)",
           "required": null,
-          "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 674,
+                "end_line": 674
+              },
+              "fragment_digest": "9c2c169288a44359be492d117a937c9b2ba749ef0322ac6a5607af6eb95da202",
+              "claim_path": "/fields/TradeDate/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 674,
+                "end_line": 674
+              },
+              "fragment_digest": "9c2c169288a44359be492d117a937c9b2ba749ef0322ac6a5607af6eb95da202",
+              "claim_path": "/fields/TradeDate/type"
+            }
+          ]
         },
         {
           "name": "SimulatePaid",
           "type": "Int",
           "required": null,
-          "description": "是否為模擬付款。0:非模擬付款；1:為模擬付款(RtnCode 也為 1)，綠界不會撥款，請勿出貨"
+          "description": "是否為模擬付款。0:非模擬付款；1:為模擬付款(RtnCode 也為 1)，綠界不會撥款，請勿出貨",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 675,
+                "end_line": 675
+              },
+              "fragment_digest": "907cdce691e28b2f73433a8006dff27264a92443ecdae457427e10367afd3a18",
+              "claim_path": "/fields/SimulatePaid/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 675,
+                "end_line": 675
+              },
+              "fragment_digest": "907cdce691e28b2f73433a8006dff27264a92443ecdae457427e10367afd3a18",
+              "claim_path": "/fields/SimulatePaid/type"
+            }
+          ]
         },
         {
           "name": "CustomField1",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位1"
+          "description": "自訂名稱欄位1",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 676,
+                "end_line": 676
+              },
+              "fragment_digest": "7eab0d68f1e28bd071f3aa89017135b7a194b5ef20fc40d54bff776877333b69",
+              "claim_path": "/fields/CustomField1/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 676,
+                "end_line": 676
+              },
+              "fragment_digest": "7eab0d68f1e28bd071f3aa89017135b7a194b5ef20fc40d54bff776877333b69",
+              "claim_path": "/fields/CustomField1/type"
+            }
+          ]
         },
         {
           "name": "CustomField2",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位2"
+          "description": "自訂名稱欄位2",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 693,
+                "end_line": 693
+              },
+              "fragment_digest": "e54fd156ae20d7767a8c5abf6f7b273e97eecb6310a997888e370649d2ddc22c",
+              "claim_path": "/fields/CustomField2/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 693,
+                "end_line": 693
+              },
+              "fragment_digest": "e54fd156ae20d7767a8c5abf6f7b273e97eecb6310a997888e370649d2ddc22c",
+              "claim_path": "/fields/CustomField2/type"
+            }
+          ]
         },
         {
           "name": "CustomField3",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位3"
+          "description": "自訂名稱欄位3",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 695,
+                "end_line": 695
+              },
+              "fragment_digest": "49a5a5dc4d0c086d552cf6f940ee8bdb62e69a895f9e9980cb71d05c8908096b",
+              "claim_path": "/fields/CustomField3/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 695,
+                "end_line": 695
+              },
+              "fragment_digest": "49a5a5dc4d0c086d552cf6f940ee8bdb62e69a895f9e9980cb71d05c8908096b",
+              "claim_path": "/fields/CustomField3/type"
+            }
+          ]
         },
         {
           "name": "CustomField4",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位4"
+          "description": "自訂名稱欄位4",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 696,
+                "end_line": 696
+              },
+              "fragment_digest": "1fc4b2f7acdb56f732ccaea2b104a775a8079e2fe4857d0eafad33e28ec279f5",
+              "claim_path": "/fields/CustomField4/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 696,
+                "end_line": 696
+              },
+              "fragment_digest": "1fc4b2f7acdb56f732ccaea2b104a775a8079e2fe4857d0eafad33e28ec279f5",
+              "claim_path": "/fields/CustomField4/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": null,
-          "description": "檢查碼。必須檢查以驗證，請參考附錄檢查碼機制"
+          "description": "檢查碼。必須檢查以驗證，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 697,
+                "end_line": 697
+              },
+              "fragment_digest": "0b956b469e94923ad594bafba3c871177b6188264fc190195d8499c9698bf2b6",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 697,
+                "end_line": 697
+              },
+              "fragment_digest": "0b956b469e94923ad594bafba3c871177b6188264fc190195d8499c9698bf2b6",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "回傳 (應用場景Ⅰ)：Accept: text/html；Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。以 form-data 格式「參數=值」回傳，參數間以 & 隔開。特店須驗證 CheckMacValue 並回應純字串 1|OK；未正確回應時系統每 5~15 分鐘重發，當天重複發送四次",
-      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知 回傳參數說明Ⅰ"
+      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知 回傳參數說明Ⅰ",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 697,
+            "end_line": 697
+          },
+          "fragment_digest": "0b956b469e94923ad594bafba3c871177b6188264fc190195d8499c9698bf2b6",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "PaymentResultResponse",
@@ -391,12 +2078,49 @@
           "name": "response",
           "type": "String",
           "required": null,
-          "description": "回傳值為純字串並無參數名稱。第一碼為 1 時成功 (1|OK)；第一碼為 0 時失敗，格式 0|ErrorMessage (錯誤代碼－錯誤訊息)。此訊息僅代表特店是否收到通知，不影響訂單狀態"
+          "description": "回傳值為純字串並無參數名稱。第一碼為 1 時成功 (1|OK)；第一碼為 0 時失敗，格式 0|ErrorMessage (錯誤代碼－錯誤訊息)。此訊息僅代表特店是否收到通知，不影響訂單狀態",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 705,
+                "end_line": 705
+              },
+              "fragment_digest": "e7d26ace46ae728b239558067d734f1e78e27425618b207d82db849a3730993c",
+              "claim_path": "/fields/response/type"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 705,
+                "end_line": 705
+              },
+              "fragment_digest": "e7d26ace46ae728b239558067d734f1e78e27425618b207d82db849a3730993c",
+              "claim_path": "/fields/response/name"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "特店回應綠界付款通知的內容 (純字串)。常見錯誤回應值：1|ok、_OK、1\\OK、空白 等皆屬未正確回應",
-      "source": "gw_p110.pdf p.20 §5 回覆參數說明"
+      "source": "gw_p110.pdf p.20 §5 回覆參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 705,
+            "end_line": 705
+          },
+          "fragment_digest": "e7d26ace46ae728b239558067d734f1e78e27425618b207d82db849a3730993c",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "QueryTradeInfoRequest",
@@ -405,146 +2129,755 @@
           "name": "MerchantID",
           "type": "String(10)",
           "required": true,
-          "description": "特店編號。範例 2000132"
+          "description": "特店編號。範例 2000132",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 861,
+                "end_line": 861
+              },
+              "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 861,
+                "end_line": 861
+              },
+              "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+              "claim_path": "/fields/MerchantID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 861,
+                "end_line": 861
+              },
+              "fragment_digest": "1e8c5c81c971ed49fdea1a186ce4325d905bc8fe1f67c741e7be99515db9addf",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
           "type": "String(20)",
           "required": true,
-          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"
+          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 862,
+                "end_line": 862
+              },
+              "fragment_digest": "3c2fee5e0fc0930f600c3216c0a5c3faaa4a0da6dcb71eeae4b467f74e292077",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 862,
+                "end_line": 862
+              },
+              "fragment_digest": "3c2fee5e0fc0930f600c3216c0a5c3faaa4a0da6dcb71eeae4b467f74e292077",
+              "claim_path": "/fields/MerchantTradeNo/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 862,
+                "end_line": 862
+              },
+              "fragment_digest": "3c2fee5e0fc0930f600c3216c0a5c3faaa4a0da6dcb71eeae4b467f74e292077",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "TimeStamp",
           "type": "Int",
           "required": true,
-          "description": "驗證時間。將當下時間轉為 UnixTimeStamp 用於驗證介接時間區間，暫訂 3 分鐘內有效，超過則無效"
+          "description": "驗證時間。將當下時間轉為 UnixTimeStamp 用於驗證介接時間區間，暫訂 3 分鐘內有效，超過則無效",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 863,
+                "end_line": 863
+              },
+              "fragment_digest": "1f42724d722af300e099a88843160bf427775048afc0b1d79b26c953a09d04e0",
+              "claim_path": "/fields/TimeStamp/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 863,
+                "end_line": 863
+              },
+              "fragment_digest": "1f42724d722af300e099a88843160bf427775048afc0b1d79b26c953a09d04e0",
+              "claim_path": "/fields/TimeStamp/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 863,
+                "end_line": 863
+              },
+              "fragment_digest": "1f42724d722af300e099a88843160bf427775048afc0b1d79b26c953a09d04e0",
+              "claim_path": "/fields/TimeStamp/type"
+            }
+          ]
         },
         {
           "name": "PlatformID",
           "type": "String(10)",
           "required": false,
-          "description": "平台商代號。一般特店或平台商本身介接請帶空值"
+          "description": "平台商代號。一般特店或平台商本身介接請帶空值",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 864,
+                "end_line": 864
+              },
+              "fragment_digest": "00a4c223b419a3b26e1d78c78afd4e200d61729b12808d6552096efb58e27f8e",
+              "claim_path": "/fields/PlatformID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 864,
+                "end_line": 864
+              },
+              "fragment_digest": "00a4c223b419a3b26e1d78c78afd4e200d61729b12808d6552096efb58e27f8e",
+              "claim_path": "/fields/PlatformID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 864,
+                "end_line": 864
+              },
+              "fragment_digest": "00a4c223b419a3b26e1d78c78afd4e200d61729b12808d6552096efb58e27f8e",
+              "claim_path": "/fields/PlatformID/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": true,
-          "description": "檢查碼，請參考附錄檢查碼機制"
+          "description": "檢查碼，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 865,
+                "end_line": 865
+              },
+              "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 865,
+                "end_line": 865
+              },
+              "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+              "claim_path": "/fields/CheckMacValue/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 865,
+                "end_line": 865
+              },
+              "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填",
-      "source": "gw_p110.pdf p.23 §6 查詢訂單 傳入參數說明"
+      "source": "gw_p110.pdf p.23 §6 查詢訂單 傳入參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 865,
+            "end_line": 865
+          },
+          "fragment_digest": "ba699df7f409c54fa9881f7c75ff5edd56aa1b63015d3c82119aecbe35f91e2c",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "QueryTradeInfoResponse",
       "fields": [
         {
           "name": "MerchantID",
-          "type": "String(9)",
+          "type": "String (9)",
           "required": null,
-          "description": "特店編號"
+          "description": "特店編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 886,
+                "end_line": 886
+              },
+              "fragment_digest": "4aa3c495f061b762158805a4fdb48c2b27a88a917d6c845f974920f38709c463",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 886,
+                "end_line": 886
+              },
+              "fragment_digest": "4aa3c495f061b762158805a4fdb48c2b27a88a917d6c845f974920f38709c463",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
-          "type": "String(20)",
+          "type": "String (20)",
           "required": null,
-          "description": "特店交易編號"
+          "description": "特店交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 887,
+                "end_line": 887
+              },
+              "fragment_digest": "51f9b136cbe24cae215a5b9e1b180b30bae70ace03f2766528eb9bca2dbc0bbf",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 887,
+                "end_line": 887
+              },
+              "fragment_digest": "51f9b136cbe24cae215a5b9e1b180b30bae70ace03f2766528eb9bca2dbc0bbf",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "StoreID",
           "type": "String(20)",
           "required": null,
-          "description": "特店旗下店舖代號"
+          "description": "特店旗下店舖代號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 888,
+                "end_line": 888
+              },
+              "fragment_digest": "72cf243838f5005cd015cac3c5161656af7dfc8c34e5a8eb2c324b3844f3416f",
+              "claim_path": "/fields/StoreID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 888,
+                "end_line": 888
+              },
+              "fragment_digest": "72cf243838f5005cd015cac3c5161656af7dfc8c34e5a8eb2c324b3844f3416f",
+              "claim_path": "/fields/StoreID/type"
+            }
+          ]
         },
         {
           "name": "TradeNo",
           "type": "String(20)",
           "required": null,
-          "description": "綠界交易編號"
+          "description": "綠界交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 889,
+                "end_line": 889
+              },
+              "fragment_digest": "dbda78c9bccfd14ab749a84fb266939d128967ecdb99ad600b3d5ba0e0e4d7f7",
+              "claim_path": "/fields/TradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 889,
+                "end_line": 889
+              },
+              "fragment_digest": "dbda78c9bccfd14ab749a84fb266939d128967ecdb99ad600b3d5ba0e0e4d7f7",
+              "claim_path": "/fields/TradeNo/type"
+            }
+          ]
         },
         {
           "name": "TradeAmt",
           "type": "Int",
           "required": null,
-          "description": "交易金額"
+          "description": "交易金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 890,
+                "end_line": 890
+              },
+              "fragment_digest": "69ba6e6a4f984896b4d35053c7063352578ece9257d0bae534c6be7230f493e8",
+              "claim_path": "/fields/TradeAmt/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 890,
+                "end_line": 890
+              },
+              "fragment_digest": "69ba6e6a4f984896b4d35053c7063352578ece9257d0bae534c6be7230f493e8",
+              "claim_path": "/fields/TradeAmt/type"
+            }
+          ]
         },
         {
           "name": "PaymentDate",
           "type": "String(20)",
           "required": null,
-          "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "付款時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 891,
+                "end_line": 891
+              },
+              "fragment_digest": "5d521c0db4c57ec2a82b242b76f44b1467051fba1c9b580b687bfd74418364cf",
+              "claim_path": "/fields/PaymentDate/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 891,
+                "end_line": 891
+              },
+              "fragment_digest": "5d521c0db4c57ec2a82b242b76f44b1467051fba1c9b580b687bfd74418364cf",
+              "claim_path": "/fields/PaymentDate/type"
+            }
+          ]
         },
         {
           "name": "PaymentType",
           "type": "String(20)",
           "required": null,
-          "description": "特店選擇的付款方式 (例 Credit)"
+          "description": "特店選擇的付款方式 (例 Credit)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 892,
+                "end_line": 892
+              },
+              "fragment_digest": "64e94a544140a36e794557467b31eafd3633533c4b08c65b394f414e3f77773b",
+              "claim_path": "/fields/PaymentType/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 892,
+                "end_line": 892
+              },
+              "fragment_digest": "64e94a544140a36e794557467b31eafd3633533c4b08c65b394f414e3f77773b",
+              "claim_path": "/fields/PaymentType/type"
+            }
+          ]
         },
         {
           "name": "HandlingCharge",
           "type": "Int",
           "required": null,
-          "description": "手續費合計。履約結束後才計算，未計算前為 0"
+          "description": "手續費合計。履約結束後才計算，未計算前為 0",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 893,
+                "end_line": 893
+              },
+              "fragment_digest": "0a872f0ecbea0c2567c7ec35b20ffba920e1ade4b5c155ab99c9fe6643a7362e",
+              "claim_path": "/fields/HandlingCharge/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 893,
+                "end_line": 893
+              },
+              "fragment_digest": "0a872f0ecbea0c2567c7ec35b20ffba920e1ade4b5c155ab99c9fe6643a7362e",
+              "claim_path": "/fields/HandlingCharge/type"
+            }
+          ]
         },
         {
           "name": "PaymentTypeChargeFee",
           "type": "Int",
           "required": null,
-          "description": "交易手續費"
+          "description": "交易手續費",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 894,
+                "end_line": 894
+              },
+              "fragment_digest": "0376143a7ca1cf512c1f358d4394c7d463a6012040a3c8c7818acd40bcda60c9",
+              "claim_path": "/fields/PaymentTypeChargeFee/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 894,
+                "end_line": 894
+              },
+              "fragment_digest": "0376143a7ca1cf512c1f358d4394c7d463a6012040a3c8c7818acd40bcda60c9",
+              "claim_path": "/fields/PaymentTypeChargeFee/type"
+            }
+          ]
         },
         {
           "name": "TradeDate",
           "type": "String(20)",
           "required": null,
-          "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "訂單成立時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 895,
+                "end_line": 895
+              },
+              "fragment_digest": "7829cb5ea5e1cafaa30a095d1a300f85910107934ba6ff34cc162670758ddc4e",
+              "claim_path": "/fields/TradeDate/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 895,
+                "end_line": 895
+              },
+              "fragment_digest": "7829cb5ea5e1cafaa30a095d1a300f85910107934ba6ff34cc162670758ddc4e",
+              "claim_path": "/fields/TradeDate/type"
+            }
+          ]
         },
         {
           "name": "TradeStatus",
           "type": "String(8)",
           "required": null,
-          "description": "交易狀態。0:交易訂單成立未付款；1:交易訂單成立已付款；10200095:交易訂單未成立，消費者未完成付款作業，交易失敗"
+          "description": "交易狀態。0:交易訂單成立未付款；1:交易訂單成立已付款；10200095:交易訂單未成立，消費者未完成付款作業，交易失敗",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 896,
+                "end_line": 896
+              },
+              "fragment_digest": "bf110ebfa6427925717a0f49e74c8fc7969faa1a82cc278ac6ca83c272a42667",
+              "claim_path": "/fields/TradeStatus/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 896,
+                "end_line": 896
+              },
+              "fragment_digest": "bf110ebfa6427925717a0f49e74c8fc7969faa1a82cc278ac6ca83c272a42667",
+              "claim_path": "/fields/TradeStatus/type"
+            }
+          ]
         },
         {
           "name": "ItemName",
           "type": "String(400)",
           "required": null,
-          "description": "商品名稱"
+          "description": "商品名稱",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 897,
+                "end_line": 897
+              },
+              "fragment_digest": "e284e4c9d7f8a5c791936896bb58b187ab2648fcd195329737e72ecc3fb6edd6",
+              "claim_path": "/fields/ItemName/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 897,
+                "end_line": 897
+              },
+              "fragment_digest": "e284e4c9d7f8a5c791936896bb58b187ab2648fcd195329737e72ecc3fb6edd6",
+              "claim_path": "/fields/ItemName/type"
+            }
+          ]
         },
         {
           "name": "CustomField1",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位1"
+          "description": "自訂名稱欄位1",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 898,
+                "end_line": 898
+              },
+              "fragment_digest": "d3f0493c63588f9bce1bba16a145b70017c6fa14b59022caee899a4bb9888460",
+              "claim_path": "/fields/CustomField1/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 898,
+                "end_line": 898
+              },
+              "fragment_digest": "d3f0493c63588f9bce1bba16a145b70017c6fa14b59022caee899a4bb9888460",
+              "claim_path": "/fields/CustomField1/type"
+            }
+          ]
         },
         {
           "name": "CustomField2",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位2"
+          "description": "自訂名稱欄位2",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 899,
+                "end_line": 899
+              },
+              "fragment_digest": "f932aaa88a855a0e682aa6202bdc2d73769c8dc771e09d369813d8c604c7adf5",
+              "claim_path": "/fields/CustomField2/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 899,
+                "end_line": 899
+              },
+              "fragment_digest": "f932aaa88a855a0e682aa6202bdc2d73769c8dc771e09d369813d8c604c7adf5",
+              "claim_path": "/fields/CustomField2/type"
+            }
+          ]
         },
         {
           "name": "CustomField3",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位3"
+          "description": "自訂名稱欄位3",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 900,
+                "end_line": 900
+              },
+              "fragment_digest": "b3b282533460369abd7f2a328a8f3743b197e1e97fa097e5bb4e581b1218d503",
+              "claim_path": "/fields/CustomField3/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 900,
+                "end_line": 900
+              },
+              "fragment_digest": "b3b282533460369abd7f2a328a8f3743b197e1e97fa097e5bb4e581b1218d503",
+              "claim_path": "/fields/CustomField3/type"
+            }
+          ]
         },
         {
           "name": "CustomField4",
           "type": "String(50)",
           "required": null,
-          "description": "自訂名稱欄位4"
+          "description": "自訂名稱欄位4",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 901,
+                "end_line": 901
+              },
+              "fragment_digest": "572e70e08430e9533fe4fbe96dab9ca6c4dab87c233712c89f839ca14606a50f",
+              "claim_path": "/fields/CustomField4/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 901,
+                "end_line": 901
+              },
+              "fragment_digest": "572e70e08430e9533fe4fbe96dab9ca6c4dab87c233712c89f839ca14606a50f",
+              "claim_path": "/fields/CustomField4/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": null,
-          "description": "檢查碼，必須驗證，請參考附錄檢查碼機制"
+          "description": "檢查碼，必須驗證，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 902,
+                "end_line": 902
+              },
+              "fragment_digest": "8dd57ad7837fd4e58ed5cd24b99ac583e390f8a7acb42f7b0478fb0539d2ecf0",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 902,
+                "end_line": 902
+              },
+              "fragment_digest": "8dd57ad7837fd4e58ed5cd24b99ac583e390f8a7acb42f7b0478fb0539d2ecf0",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "以 form-data 格式「參數=值」直接回傳至頁面，參數間以 & 隔開",
-      "source": "gw_p110.pdf p.24 §6 查詢訂單 回傳參數說明"
+      "source": "gw_p110.pdf p.24 §6 查詢訂單 回傳參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 902,
+            "end_line": 902
+          },
+          "fragment_digest": "8dd57ad7837fd4e58ed5cd24b99ac583e390f8a7acb42f7b0478fb0539d2ecf0",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "CreditDetailQueryTradeRequest",
@@ -553,36 +2886,224 @@
           "name": "MerchantID",
           "type": "String(10)",
           "required": true,
-          "description": "特店編號 (由 ecPay 提供)"
+          "description": "特店編號 (由 ecPay 提供)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 939,
+                "end_line": 939
+              },
+              "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 939,
+                "end_line": 939
+              },
+              "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+              "claim_path": "/fields/MerchantID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 939,
+                "end_line": 939
+              },
+              "fragment_digest": "39e9051182ab8eefb56a6c2da074121bcb2938f77a3c792651941394733efa27",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "CreditRefundId",
           "type": "Int",
           "required": true,
-          "description": "信用卡授權單號。建立訂單時將 NeedExtraPaidInfo 設為 Y，即可透過付款結果通知取得此參數 (CreditRefundId = gwsr)"
+          "description": "信用卡授權單號。建立訂單時將 NeedExtraPaidInfo 設為 Y，即可透過付款結果通知取得此參數 (CreditRefundId = gwsr)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 940,
+                "end_line": 940
+              },
+              "fragment_digest": "be941dbf98ced766de7890ea148b27c291ce00172b32e12091e38aa67a528082",
+              "claim_path": "/fields/CreditRefundId/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 940,
+                "end_line": 940
+              },
+              "fragment_digest": "be941dbf98ced766de7890ea148b27c291ce00172b32e12091e38aa67a528082",
+              "claim_path": "/fields/CreditRefundId/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 940,
+                "end_line": 940
+              },
+              "fragment_digest": "be941dbf98ced766de7890ea148b27c291ce00172b32e12091e38aa67a528082",
+              "claim_path": "/fields/CreditRefundId/type"
+            }
+          ]
         },
         {
           "name": "CreditAmount",
           "type": "Int",
           "required": true,
-          "description": "金額"
+          "description": "金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 941,
+                "end_line": 941
+              },
+              "fragment_digest": "96e2a74138387af75cb17617e3ab41299d9ee872d23fab83a287651ec243156e",
+              "claim_path": "/fields/CreditAmount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 941,
+                "end_line": 941
+              },
+              "fragment_digest": "96e2a74138387af75cb17617e3ab41299d9ee872d23fab83a287651ec243156e",
+              "claim_path": "/fields/CreditAmount/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 941,
+                "end_line": 941
+              },
+              "fragment_digest": "96e2a74138387af75cb17617e3ab41299d9ee872d23fab83a287651ec243156e",
+              "claim_path": "/fields/CreditAmount/type"
+            }
+          ]
         },
         {
           "name": "CreditCheckCode",
           "type": "Int",
           "required": true,
-          "description": "商家檢查碼。廠商後台->信用卡收單->信用卡授權資訊中可查到"
+          "description": "商家檢查碼。廠商後台->信用卡收單->信用卡授權資訊中可查到",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 942,
+                "end_line": 942
+              },
+              "fragment_digest": "28e2a920f0796ce9c88660849ad73e48a58557b09dd3c2c86e498d3e21676554",
+              "claim_path": "/fields/CreditCheckCode/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 942,
+                "end_line": 942
+              },
+              "fragment_digest": "28e2a920f0796ce9c88660849ad73e48a58557b09dd3c2c86e498d3e21676554",
+              "claim_path": "/fields/CreditCheckCode/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 942,
+                "end_line": 942
+              },
+              "fragment_digest": "28e2a920f0796ce9c88660849ad73e48a58557b09dd3c2c86e498d3e21676554",
+              "claim_path": "/fields/CreditCheckCode/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": true,
-          "description": "檢查碼，請參考附錄檢查碼機制"
+          "description": "檢查碼，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 943,
+                "end_line": 943
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 943,
+                "end_line": 943
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 943,
+                "end_line": 943
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填。測試環境因無法提供實際授權故無法使用此 API",
-      "source": "gw_p110.pdf p.25 §7 查詢信用卡單筆明細記錄 傳入參數說明"
+      "source": "gw_p110.pdf p.25 §7 查詢信用卡單筆明細記錄 傳入參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 943,
+            "end_line": 943
+          },
+          "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "CreditDetailQueryTradeResponse",
@@ -591,72 +3112,349 @@
           "name": "RtnMsg",
           "type": "String(200)",
           "required": null,
-          "description": "回應訊息。成功時回傳空值，其餘為失敗。查無商家或商家已到期:error_Stop；查無該筆交易授權單號:error_nopay；發生錯誤或資料檢核失敗:error"
+          "description": "回應訊息。成功時回傳空值，其餘為失敗。查無商家或商家已到期:error_Stop；查無該筆交易授權單號:error_nopay；發生錯誤或資料檢核失敗:error",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1016,
+                "end_line": 1016
+              },
+              "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+              "claim_path": "/fields/RtnMsg/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1016,
+                "end_line": 1016
+              },
+              "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+              "claim_path": "/fields/RtnMsg/type"
+            }
+          ]
         },
         {
           "name": "RtnValue",
           "type": "String",
           "required": null,
-          "description": "回應內容，Json 字串。若回傳空值則為查詢失敗"
+          "description": "回應內容，Json 字串。若回傳空值則為查詢失敗",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1017,
+                "end_line": 1017
+              },
+              "fragment_digest": "7b2ce690fda984644facb662a47fd53cf271db5d95b66182485a56709d3d9fd8",
+              "claim_path": "/fields/RtnValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1017,
+                "end_line": 1017
+              },
+              "fragment_digest": "7b2ce690fda984644facb662a47fd53cf271db5d95b66182485a56709d3d9fd8",
+              "claim_path": "/fields/RtnValue/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.TradeID",
           "type": "Int",
           "required": null,
-          "description": "授權單號"
+          "description": "授權單號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1018,
+                "end_line": 1018
+              },
+              "fragment_digest": "55cb182016f7d94caff3c5e88f7c90d844113039523cd71cd84a857cba7d0967",
+              "claim_path": "/fields/RtnValue.TradeID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1018,
+                "end_line": 1018
+              },
+              "fragment_digest": "55cb182016f7d94caff3c5e88f7c90d844113039523cd71cd84a857cba7d0967",
+              "claim_path": "/fields/RtnValue.TradeID/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.amount",
           "type": "Int",
           "required": null,
-          "description": "交易金額"
+          "description": "交易金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1019,
+                "end_line": 1019
+              },
+              "fragment_digest": "68f61a243a8662c38a2799530943429e83c0cc594ffce87f8f66a699bb9e869a",
+              "claim_path": "/fields/RtnValue.amount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1019,
+                "end_line": 1019
+              },
+              "fragment_digest": "68f61a243a8662c38a2799530943429e83c0cc594ffce87f8f66a699bb9e869a",
+              "claim_path": "/fields/RtnValue.amount/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.clsamt",
           "type": "Int",
           "required": null,
-          "description": "已關帳金額"
+          "description": "已關帳金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1020,
+                "end_line": 1020
+              },
+              "fragment_digest": "625563c38ca99c0982d185eb5bdb57dd12fd689bc84794ba7d7daf4fa4ca69e2",
+              "claim_path": "/fields/RtnValue.clsamt/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1020,
+                "end_line": 1020
+              },
+              "fragment_digest": "625563c38ca99c0982d185eb5bdb57dd12fd689bc84794ba7d7daf4fa4ca69e2",
+              "claim_path": "/fields/RtnValue.clsamt/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.authtime",
           "type": "String(24)",
           "required": null,
-          "description": "訂單成立時間 (例 2016/5/12 下午 07:09:17)"
+          "description": "訂單成立時間 (例 2016/5/12 下午 07:09:17)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1021,
+                "end_line": 1021
+              },
+              "fragment_digest": "ed18cca63fea672fb27a8bda35b0f81c4d61e1df591be6133cac1f4fdfeeeab9",
+              "claim_path": "/fields/RtnValue.authtime/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1021,
+                "end_line": 1021
+              },
+              "fragment_digest": "ed18cca63fea672fb27a8bda35b0f81c4d61e1df591be6133cac1f4fdfeeeab9",
+              "claim_path": "/fields/RtnValue.authtime/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.status",
           "type": "String(30)",
           "required": null,
-          "description": "交易狀態。無關帳明細時:已取消/未授權/已授權。已有關帳明細時:銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/銀行追回中/銀行已追回/批次失敗/不明/操作取消"
+          "description": "交易狀態。無關帳明細時:已取消/未授權/已授權。已有關帳明細時:銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/銀行追回中/銀行已追回/批次失敗/不明/操作取消",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1038,
+                "end_line": 1038
+              },
+              "fragment_digest": "7847dce813dae1185efd1e4cbf200d437c599eb78f1393105ad9e4bee39a35a0",
+              "claim_path": "/fields/RtnValue.status/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1038,
+                "end_line": 1038
+              },
+              "fragment_digest": "7847dce813dae1185efd1e4cbf200d437c599eb78f1393105ad9e4bee39a35a0",
+              "claim_path": "/fields/RtnValue.status/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.close_data[].status",
           "type": "String(30)",
           "required": null,
-          "description": "明細狀態。銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/已取消/銀行追回中/銀行已追回/批次失敗/不明/操作取消"
+          "description": "明細狀態。銀行拒絕/要關帳/關帳中/已關帳/要取消/取消中/已取消/銀行追回中/銀行已追回/批次失敗/不明/操作取消",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1038,
+                "end_line": 1038
+              },
+              "fragment_digest": "7847dce813dae1185efd1e4cbf200d437c599eb78f1393105ad9e4bee39a35a0",
+              "claim_path": "/fields/RtnValue.close_data[].status/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1038,
+                "end_line": 1038
+              },
+              "fragment_digest": "7847dce813dae1185efd1e4cbf200d437c599eb78f1393105ad9e4bee39a35a0",
+              "claim_path": "/fields/RtnValue.close_data[].status/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.close_data[].amount",
           "type": "Int",
           "required": null,
-          "description": "明細交易金額"
+          "description": "明細交易金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1019,
+                "end_line": 1019
+              },
+              "fragment_digest": "68f61a243a8662c38a2799530943429e83c0cc594ffce87f8f66a699bb9e869a",
+              "claim_path": "/fields/RtnValue.close_data[].amount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1019,
+                "end_line": 1019
+              },
+              "fragment_digest": "68f61a243a8662c38a2799530943429e83c0cc594ffce87f8f66a699bb9e869a",
+              "claim_path": "/fields/RtnValue.close_data[].amount/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.close_data[].sno",
           "type": "String(30)",
           "required": null,
-          "description": "關帳序號"
+          "description": "關帳序號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1088,
+                "end_line": 1088
+              },
+              "fragment_digest": "326c8e40cab5ecb47b9805cd0f6d556323c319138a4d6c9c5e043fdf98aa17cd",
+              "claim_path": "/fields/RtnValue.close_data[].sno/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1088,
+                "end_line": 1088
+              },
+              "fragment_digest": "326c8e40cab5ecb47b9805cd0f6d556323c319138a4d6c9c5e043fdf98aa17cd",
+              "claim_path": "/fields/RtnValue.close_data[].sno/type"
+            }
+          ]
         },
         {
           "name": "RtnValue.close_data[].datetime",
           "type": "String(24)",
           "required": null,
-          "description": "關帳時間 (例 2016/5/12 下午 08:00:00)"
+          "description": "關帳時間 (例 2016/5/12 下午 08:00:00)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1089,
+                "end_line": 1089
+              },
+              "fragment_digest": "bd8ac74fba66a0e9b2daa0348db4429771dff1bd56198f64cd734fedb9facbb2",
+              "claim_path": "/fields/RtnValue.close_data[].datetime/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1089,
+                "end_line": 1089
+              },
+              "fragment_digest": "bd8ac74fba66a0e9b2daa0348db4429771dff1bd56198f64cd734fedb9facbb2",
+              "claim_path": "/fields/RtnValue.close_data[].datetime/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "查詢結果直接回傳至頁面，以 JSON 格式表示。分為主要授權資訊與明細資訊 (close_data 陣列) 兩部分",
-      "source": "gw_p110.pdf p.25-p.28 §7 查詢信用卡單筆明細記錄 回傳參數說明"
+      "source": "gw_p110.pdf p.25-p.28 §7 查詢信用卡單筆明細記錄 回傳參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "DoActionRequest",
@@ -665,43 +3463,288 @@
           "name": "MerchantID",
           "type": "String(10)",
           "required": true,
-          "description": "特店編號 (由 ECPAY 提供)"
+          "description": "特店編號 (由 ECPAY 提供)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1197,
+                "end_line": 1197
+              },
+              "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1197,
+                "end_line": 1197
+              },
+              "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+              "claim_path": "/fields/MerchantID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1197,
+                "end_line": 1197
+              },
+              "fragment_digest": "2577bd25ef8cddf7a0ca5bd65e11a7459d721bf01580a8b944c6243ffb2178b1",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
           "type": "String(20)",
           "required": true,
-          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號"
+          "description": "特店交易編號，訂單產生時傳送給綠界的交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1198,
+                "end_line": 1198
+              },
+              "fragment_digest": "6fb784e7dde77f31f1271176547d0c41b8c15c039e1553eb6d2249778b61f23a",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1198,
+                "end_line": 1198
+              },
+              "fragment_digest": "6fb784e7dde77f31f1271176547d0c41b8c15c039e1553eb6d2249778b61f23a",
+              "claim_path": "/fields/MerchantTradeNo/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1198,
+                "end_line": 1198
+              },
+              "fragment_digest": "6fb784e7dde77f31f1271176547d0c41b8c15c039e1553eb6d2249778b61f23a",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "TradeNo",
           "type": "String(20)",
           "required": true,
-          "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連"
+          "description": "綠界交易編號。請保存與特店交易編號 MerchantTradeNo 的關連",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1199,
+                "end_line": 1199
+              },
+              "fragment_digest": "7d5b9a69e6b956383319fd20f1086947dec47b402c88c9cc6143da52d4c1fe76",
+              "claim_path": "/fields/TradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1199,
+                "end_line": 1199
+              },
+              "fragment_digest": "7d5b9a69e6b956383319fd20f1086947dec47b402c88c9cc6143da52d4c1fe76",
+              "claim_path": "/fields/TradeNo/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1199,
+                "end_line": 1199
+              },
+              "fragment_digest": "7d5b9a69e6b956383319fd20f1086947dec47b402c88c9cc6143da52d4c1fe76",
+              "claim_path": "/fields/TradeNo/type"
+            }
+          ]
         },
         {
           "name": "Action",
           "type": "String(1)",
           "required": true,
-          "description": "執行動作。C:關帳；R:退刷；E:取消；N:放棄"
+          "description": "執行動作。C:關帳；R:退刷；E:取消；N:放棄",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1200,
+                "end_line": 1200
+              },
+              "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+              "claim_path": "/fields/Action/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1200,
+                "end_line": 1200
+              },
+              "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+              "claim_path": "/fields/Action/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1200,
+                "end_line": 1200
+              },
+              "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+              "claim_path": "/fields/Action/type"
+            }
+          ]
         },
         {
           "name": "TotalAmount",
           "type": "Int",
           "required": true,
-          "description": "金額"
+          "description": "金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1201,
+                "end_line": 1201
+              },
+              "fragment_digest": "93538e7f0a914bea100d7d8cd517f77a0646079507a98b6aef1b79cbcac7fd0b",
+              "claim_path": "/fields/TotalAmount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1201,
+                "end_line": 1201
+              },
+              "fragment_digest": "93538e7f0a914bea100d7d8cd517f77a0646079507a98b6aef1b79cbcac7fd0b",
+              "claim_path": "/fields/TotalAmount/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1201,
+                "end_line": 1201
+              },
+              "fragment_digest": "93538e7f0a914bea100d7d8cd517f77a0646079507a98b6aef1b79cbcac7fd0b",
+              "claim_path": "/fields/TotalAmount/type"
+            }
+          ]
         },
         {
           "name": "CheckMacValue",
           "type": "String",
           "required": true,
-          "description": "檢查碼，請參考附錄檢查碼機制"
+          "description": "檢查碼，請參考附錄檢查碼機制",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1202,
+                "end_line": 1202
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1202,
+                "end_line": 1202
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1202,
+                "end_line": 1202
+              },
+              "fragment_digest": "e0c8f6415c8b952591ac73cc19e0709dc7a8bcfa9a30a1e6b4873d166a669006",
+              "claim_path": "/fields/CheckMacValue/type"
+            }
+          ]
         },
         {
           "name": "PlatformID",
           "type": "String(10)",
           "required": false,
-          "description": "平台商代號。一般特店或平台商本身介接請帶空值"
+          "description": "平台商代號。一般特店或平台商本身介接請帶空值",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1203,
+                "end_line": 1203
+              },
+              "fragment_digest": "37a81d700d13fdecf45816ec7bf924b675df4fee0bff503cca83b1fb8388e0ec",
+              "claim_path": "/fields/PlatformID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1203,
+                "end_line": 1203
+              },
+              "fragment_digest": "37a81d700d13fdecf45816ec7bf924b675df4fee0bff503cca83b1fb8388e0ec",
+              "claim_path": "/fields/PlatformID/required"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1203,
+                "end_line": 1203
+              },
+              "fragment_digest": "37a81d700d13fdecf45816ec7bf924b675df4fee0bff503cca83b1fb8388e0ec",
+              "claim_path": "/fields/PlatformID/type"
+            }
+          ]
         }
       ],
       "enums": [
@@ -711,51 +3754,221 @@
         "N"
       ],
       "constraints": "Content-Type: application/x-www-form-urlencoded；HTTP Method: POST。名稱前 * 為必填。測試環境因無法提供實際授權故無法使用此 API。若「每日自動關帳」開啟時，每天 20:15~20:30 請勿執行此 API",
-      "source": "gw_p110.pdf p.30 §8 信用卡請退款功能 傳入參數說明"
+      "source": "gw_p110.pdf p.30 §8 信用卡請退款功能 傳入參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1200,
+            "end_line": 1200
+          },
+          "fragment_digest": "1fa6f20f82af1b0979a79fba26cf9c7dff69e0b638731afbd9ebf4181b8d8421",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "DoActionResponse",
       "fields": [
         {
           "name": "MerchantID",
-          "type": "String(9)",
+          "type": "String (9)",
           "required": null,
-          "description": "特店編號"
+          "description": "特店編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1224,
+                "end_line": 1224
+              },
+              "fragment_digest": "4aa3c495f061b762158805a4fdb48c2b27a88a917d6c845f974920f38709c463",
+              "claim_path": "/fields/MerchantID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1224,
+                "end_line": 1224
+              },
+              "fragment_digest": "4aa3c495f061b762158805a4fdb48c2b27a88a917d6c845f974920f38709c463",
+              "claim_path": "/fields/MerchantID/type"
+            }
+          ]
         },
         {
           "name": "PlatformID",
           "type": "String(10)",
           "required": null,
-          "description": "平台商代號。專案合作的平台商代號"
+          "description": "平台商代號。專案合作的平台商代號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1225,
+                "end_line": 1225
+              },
+              "fragment_digest": "34a07a9c4f6156c22cd25b4924d38541a352ffb73d15d07dd943e64b37049c83",
+              "claim_path": "/fields/PlatformID/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1225,
+                "end_line": 1225
+              },
+              "fragment_digest": "34a07a9c4f6156c22cd25b4924d38541a352ffb73d15d07dd943e64b37049c83",
+              "claim_path": "/fields/PlatformID/type"
+            }
+          ]
         },
         {
           "name": "MerchantTradeNo",
-          "type": "String(20)",
+          "type": "String (20)",
           "required": null,
-          "description": "特店交易編號"
+          "description": "特店交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1226,
+                "end_line": 1226
+              },
+              "fragment_digest": "1bc271aa715d270f0ab85aa5eced6f738f5b66a5866d7fefdad152209573735e",
+              "claim_path": "/fields/MerchantTradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1226,
+                "end_line": 1226
+              },
+              "fragment_digest": "1bc271aa715d270f0ab85aa5eced6f738f5b66a5866d7fefdad152209573735e",
+              "claim_path": "/fields/MerchantTradeNo/type"
+            }
+          ]
         },
         {
           "name": "TradeNo",
           "type": "String(20)",
           "required": null,
-          "description": "綠界交易編號"
+          "description": "綠界交易編號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1227,
+                "end_line": 1227
+              },
+              "fragment_digest": "589db90b3cc04ba9b109ac106bd80f7e6efe42ebacd03005ffbf8de898d0f4d6",
+              "claim_path": "/fields/TradeNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1227,
+                "end_line": 1227
+              },
+              "fragment_digest": "589db90b3cc04ba9b109ac106bd80f7e6efe42ebacd03005ffbf8de898d0f4d6",
+              "claim_path": "/fields/TradeNo/type"
+            }
+          ]
         },
         {
           "name": "RtnCode",
           "type": "Int",
           "required": null,
-          "description": "交易狀態。1 代表成功，其餘為失敗"
+          "description": "交易狀態。1 代表成功，其餘為失敗",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1228,
+                "end_line": 1228
+              },
+              "fragment_digest": "3fb382f45388524bdf76f99d3c923b8832cf03b45007908708501f3700eebfb0",
+              "claim_path": "/fields/RtnCode/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1228,
+                "end_line": 1228
+              },
+              "fragment_digest": "3fb382f45388524bdf76f99d3c923b8832cf03b45007908708501f3700eebfb0",
+              "claim_path": "/fields/RtnCode/type"
+            }
+          ]
         },
         {
           "name": "RtnMsg",
           "type": "String(200)",
           "required": null,
-          "description": "交易訊息"
+          "description": "交易訊息",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1229,
+                "end_line": 1229
+              },
+              "fragment_digest": "b4bd83704d13c8a9a29cb2f01af831b7f0f51796ec348f5a3754e3c0cfa07050",
+              "claim_path": "/fields/RtnMsg/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1229,
+                "end_line": 1229
+              },
+              "fragment_digest": "b4bd83704d13c8a9a29cb2f01af831b7f0f51796ec348f5a3754e3c0cfa07050",
+              "claim_path": "/fields/RtnMsg/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "結果直接回傳至頁面，以「參數=值」表示，參數間以 & 隔開",
-      "source": "gw_p110.pdf p.31 §8 信用卡請退款功能 回傳參數說明"
+      "source": "gw_p110.pdf p.31 §8 信用卡請退款功能 回傳參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1224,
+            "end_line": 1224
+          },
+          "fragment_digest": "4aa3c495f061b762158805a4fdb48c2b27a88a917d6c845f974920f38709c463",
+          "claim_path": "/name"
+        }
+      ]
     },
     {
       "name": "ExtraPaidInfo",
@@ -764,132 +3977,649 @@
           "name": "WebATMAccBank",
           "type": "String(3)",
           "required": null,
-          "description": "付款人銀行代碼，未提供則回傳空白"
+          "description": "付款人銀行代碼，未提供則回傳空白",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1306,
+                "end_line": 1306
+              },
+              "fragment_digest": "4353ee9d068b62105b28a7a35d05dfcfe688eabf68feaec00f3c9bd053be5677",
+              "claim_path": "/fields/WebATMAccBank/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1306,
+                "end_line": 1306
+              },
+              "fragment_digest": "4353ee9d068b62105b28a7a35d05dfcfe688eabf68feaec00f3c9bd053be5677",
+              "claim_path": "/fields/WebATMAccBank/type"
+            }
+          ]
         },
         {
           "name": "WebATMAccNo",
           "type": "String(5)",
           "required": null,
-          "description": "付款人銀行帳號後五碼"
+          "description": "付款人銀行帳號後五碼",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1307,
+                "end_line": 1307
+              },
+              "fragment_digest": "58b85765841086a0f25a50111b98ad8a6ceb09f803c334da5dac95df7fbde86f",
+              "claim_path": "/fields/WebATMAccNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1307,
+                "end_line": 1307
+              },
+              "fragment_digest": "58b85765841086a0f25a50111b98ad8a6ceb09f803c334da5dac95df7fbde86f",
+              "claim_path": "/fields/WebATMAccNo/type"
+            }
+          ]
         },
         {
           "name": "WebATMBankName",
           "type": "String(10)",
           "required": null,
-          "description": "銀行名稱，請參考付款方式一覽表"
+          "description": "銀行名稱，請參考付款方式一覽表",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1308,
+                "end_line": 1308
+              },
+              "fragment_digest": "ba66887d6f7fe05f873ebc5c2a026e6853a4a16b6531d7f0cb37227170848d89",
+              "claim_path": "/fields/WebATMBankName/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1308,
+                "end_line": 1308
+              },
+              "fragment_digest": "ba66887d6f7fe05f873ebc5c2a026e6853a4a16b6531d7f0cb37227170848d89",
+              "claim_path": "/fields/WebATMBankName/type"
+            }
+          ]
         },
         {
           "name": "ATMAccBank",
           "type": "String(3)",
           "required": null,
-          "description": "付款人銀行代碼"
+          "description": "付款人銀行代碼",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1309,
+                "end_line": 1309
+              },
+              "fragment_digest": "aef4faa1b727197b492a7e2ee49dd3d4db57f89c31090153a9557bd207847593",
+              "claim_path": "/fields/ATMAccBank/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1309,
+                "end_line": 1309
+              },
+              "fragment_digest": "aef4faa1b727197b492a7e2ee49dd3d4db57f89c31090153a9557bd207847593",
+              "claim_path": "/fields/ATMAccBank/type"
+            }
+          ]
         },
         {
           "name": "ATMAccNo",
           "type": "String(5)",
           "required": null,
-          "description": "付款人銀行帳號後五碼"
+          "description": "付款人銀行帳號後五碼",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1310,
+                "end_line": 1310
+              },
+              "fragment_digest": "b7636036dc7009678c5d4c62dff9f333975efadc95408cb192031e56efb21292",
+              "claim_path": "/fields/ATMAccNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1310,
+                "end_line": 1310
+              },
+              "fragment_digest": "b7636036dc7009678c5d4c62dff9f333975efadc95408cb192031e56efb21292",
+              "claim_path": "/fields/ATMAccNo/type"
+            }
+          ]
         },
         {
           "name": "PaymentNo",
           "type": "String(14)",
           "required": null,
-          "description": "繳費代碼，BARCODE 則回傳空白"
+          "description": "繳費代碼，BARCODE 則回傳空白",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1311,
+                "end_line": 1311
+              },
+              "fragment_digest": "e819e7b3e7155d9b8c2cbe935844f1ec6c6d80eda2144a872130b2b888a3df0f",
+              "claim_path": "/fields/PaymentNo/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1311,
+                "end_line": 1311
+              },
+              "fragment_digest": "e819e7b3e7155d9b8c2cbe935844f1ec6c6d80eda2144a872130b2b888a3df0f",
+              "claim_path": "/fields/PaymentNo/type"
+            }
+          ]
         },
         {
           "name": "PayFrom",
           "type": "String(10)",
           "required": null,
-          "description": "繳費超商。family:全家；hilife:萊爾富；okmart:OK超商；ibon:7-11"
+          "description": "繳費超商。family:全家；hilife:萊爾富；okmart:OK超商；ibon:7-11",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1312,
+                "end_line": 1312
+              },
+              "fragment_digest": "b661d3fe05051e3220541cf34dac40bc9e7abe86b6a95c07d94b1c641a69de67",
+              "claim_path": "/fields/PayFrom/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1312,
+                "end_line": 1312
+              },
+              "fragment_digest": "b661d3fe05051e3220541cf34dac40bc9e7abe86b6a95c07d94b1c641a69de67",
+              "claim_path": "/fields/PayFrom/type"
+            }
+          ]
         },
         {
           "name": "gwsr",
           "type": "Int",
           "required": null,
-          "description": "授權交易單號"
+          "description": "授權交易單號",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1313,
+                "end_line": 1313
+              },
+              "fragment_digest": "f686712b8858555d0c5e213ca6a15bc961cdee3cd13f374d5eb2ff594a5ce2d2",
+              "claim_path": "/fields/gwsr/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1313,
+                "end_line": 1313
+              },
+              "fragment_digest": "f686712b8858555d0c5e213ca6a15bc961cdee3cd13f374d5eb2ff594a5ce2d2",
+              "claim_path": "/fields/gwsr/type"
+            }
+          ]
         },
         {
           "name": "process_date",
           "type": "String(20)",
           "required": null,
-          "description": "處理時間，格式 yyyy/MM/dd HH:mm:ss"
+          "description": "處理時間，格式 yyyy/MM/dd HH:mm:ss",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1314,
+                "end_line": 1314
+              },
+              "fragment_digest": "e14d387571db0bb9bed1e8570660700caf2b68e0538fbbe06c431f4763f197b4",
+              "claim_path": "/fields/process_date/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1314,
+                "end_line": 1314
+              },
+              "fragment_digest": "e14d387571db0bb9bed1e8570660700caf2b68e0538fbbe06c431f4763f197b4",
+              "claim_path": "/fields/process_date/type"
+            }
+          ]
         },
         {
           "name": "auth_code",
           "type": "String(6)",
           "required": null,
-          "description": "授權碼"
+          "description": "授權碼",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1315,
+                "end_line": 1315
+              },
+              "fragment_digest": "a676e2e78371b6f66fe4e9dede91b2883cbf9a91f16dfbed0cb6d92b737789b0",
+              "claim_path": "/fields/auth_code/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1315,
+                "end_line": 1315
+              },
+              "fragment_digest": "a676e2e78371b6f66fe4e9dede91b2883cbf9a91f16dfbed0cb6d92b737789b0",
+              "claim_path": "/fields/auth_code/type"
+            }
+          ]
         },
         {
           "name": "amount",
           "type": "Int",
           "required": null,
-          "description": "金額"
+          "description": "金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1316,
+                "end_line": 1316
+              },
+              "fragment_digest": "b8fd116b4c79281bb5266ab7ca019f2cdf690122f7156729b4a0ad617a9c7c13",
+              "claim_path": "/fields/amount/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1316,
+                "end_line": 1316
+              },
+              "fragment_digest": "b8fd116b4c79281bb5266ab7ca019f2cdf690122f7156729b4a0ad617a9c7c13",
+              "claim_path": "/fields/amount/type"
+            }
+          ]
         },
         {
           "name": "stage",
           "type": "Int",
           "required": null,
-          "description": "分期期數"
+          "description": "分期期數",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1317,
+                "end_line": 1317
+              },
+              "fragment_digest": "0e1828e8dfee412176a834a33b61a24565cf51ebedb21b5d1eebbb3c1fe1baf0",
+              "claim_path": "/fields/stage/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1317,
+                "end_line": 1317
+              },
+              "fragment_digest": "0e1828e8dfee412176a834a33b61a24565cf51ebedb21b5d1eebbb3c1fe1baf0",
+              "claim_path": "/fields/stage/type"
+            }
+          ]
         },
         {
           "name": "stast",
           "type": "Int",
           "required": null,
-          "description": "頭期金額 (圓夢彈性分期:第一階段各期金額)"
+          "description": "頭期金額 (圓夢彈性分期:第一階段各期金額)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1318,
+                "end_line": 1318
+              },
+              "fragment_digest": "8c164c809f609553f230c4ba61adbf12de0bfe6190b11aea5147d54575e96371",
+              "claim_path": "/fields/stast/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1318,
+                "end_line": 1318
+              },
+              "fragment_digest": "8c164c809f609553f230c4ba61adbf12de0bfe6190b11aea5147d54575e96371",
+              "claim_path": "/fields/stast/type"
+            }
+          ]
         },
         {
           "name": "staed",
           "type": "Int",
           "required": null,
-          "description": "各期金額 (圓夢彈性分期:第二階段各期金額)"
+          "description": "各期金額 (圓夢彈性分期:第二階段各期金額)",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1338,
+                "end_line": 1338
+              },
+              "fragment_digest": "3de017bc96907a5bd8f5271b93a7b090681b1fa5e3593b40ead44ac8fb152c9f",
+              "claim_path": "/fields/staed/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1338,
+                "end_line": 1338
+              },
+              "fragment_digest": "3de017bc96907a5bd8f5271b93a7b090681b1fa5e3593b40ead44ac8fb152c9f",
+              "claim_path": "/fields/staed/type"
+            }
+          ]
         },
         {
           "name": "eci",
           "type": "Int",
           "required": null,
-          "description": "3D(VBV)。eci=5,6,2,1 代表該筆交易為 3D 交易"
+          "description": "3D(VBV)。eci=5,6,2,1 代表該筆交易為 3D 交易",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1339,
+                "end_line": 1339
+              },
+              "fragment_digest": "b40486efe09b9b03d09232ca694905e6a859040b09cfb9e7d9c1cb28a6624ab8",
+              "claim_path": "/fields/eci/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1339,
+                "end_line": 1339
+              },
+              "fragment_digest": "b40486efe09b9b03d09232ca694905e6a859040b09cfb9e7d9c1cb28a6624ab8",
+              "claim_path": "/fields/eci/type"
+            }
+          ]
         },
         {
           "name": "card4no",
           "type": "String(4)",
           "required": null,
-          "description": "卡片的末 4 碼。銀聯卡交易不會回傳卡號資料"
+          "description": "卡片的末 4 碼。銀聯卡交易不會回傳卡號資料",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1340,
+                "end_line": 1340
+              },
+              "fragment_digest": "90e901ff498c47a2784359f85e6776615e7504a78f20246f2a0abd331f2bfc4e",
+              "claim_path": "/fields/card4no/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1340,
+                "end_line": 1340
+              },
+              "fragment_digest": "90e901ff498c47a2784359f85e6776615e7504a78f20246f2a0abd331f2bfc4e",
+              "claim_path": "/fields/card4no/type"
+            }
+          ]
         },
         {
           "name": "card6no",
           "type": "String(6)",
           "required": null,
-          "description": "卡片的前 6 碼。銀聯卡交易不會回傳卡號資料"
+          "description": "卡片的前 6 碼。銀聯卡交易不會回傳卡號資料",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1341,
+                "end_line": 1341
+              },
+              "fragment_digest": "b8777cf3a045e12afd58f72ee72a2f144736b0fcacf7da8e78b48cbda9cd5de0",
+              "claim_path": "/fields/card6no/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1341,
+                "end_line": 1341
+              },
+              "fragment_digest": "b8777cf3a045e12afd58f72ee72a2f144736b0fcacf7da8e78b48cbda9cd5de0",
+              "claim_path": "/fields/card6no/type"
+            }
+          ]
         },
         {
           "name": "red_dan",
           "type": "Int",
           "required": null,
-          "description": "紅利扣點"
+          "description": "紅利扣點",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1342,
+                "end_line": 1342
+              },
+              "fragment_digest": "470de085adbc28f1a68c163edfe142483a424402181e264bc1842bb6e113ec4a",
+              "claim_path": "/fields/red_dan/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1342,
+                "end_line": 1342
+              },
+              "fragment_digest": "470de085adbc28f1a68c163edfe142483a424402181e264bc1842bb6e113ec4a",
+              "claim_path": "/fields/red_dan/type"
+            }
+          ]
         },
         {
           "name": "red_de_amt",
           "type": "Int",
           "required": null,
-          "description": "紅利折抵金額"
+          "description": "紅利折抵金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1343,
+                "end_line": 1343
+              },
+              "fragment_digest": "23fedeb46a81e4c3befd9dba0bcf04f672fd97c2830f6d418dcdc3dea7e74587",
+              "claim_path": "/fields/red_de_amt/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1343,
+                "end_line": 1343
+              },
+              "fragment_digest": "23fedeb46a81e4c3befd9dba0bcf04f672fd97c2830f6d418dcdc3dea7e74587",
+              "claim_path": "/fields/red_de_amt/type"
+            }
+          ]
         },
         {
           "name": "red_ok_amt",
           "type": "Int",
           "required": null,
-          "description": "實際扣款金額"
+          "description": "實際扣款金額",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1344,
+                "end_line": 1344
+              },
+              "fragment_digest": "d4c4041d8afbc5fc7f37c10b527a6dcb7d4305a7d0ca0003f1dd03a8a2324bb2",
+              "claim_path": "/fields/red_ok_amt/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1344,
+                "end_line": 1344
+              },
+              "fragment_digest": "d4c4041d8afbc5fc7f37c10b527a6dcb7d4305a7d0ca0003f1dd03a8a2324bb2",
+              "claim_path": "/fields/red_ok_amt/type"
+            }
+          ]
         },
         {
           "name": "red_yet",
           "type": "Int",
           "required": null,
-          "description": "紅利剩餘點數"
+          "description": "紅利剩餘點數",
+          "evidence": [
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1345,
+                "end_line": 1345
+              },
+              "fragment_digest": "2d395594dd3ad5a54e724f2467d62f2fee15b6bf1ffbb47521a8da05e40f9978",
+              "claim_path": "/fields/red_yet/name"
+            },
+            {
+              "version": 1,
+              "source": "gw_p110.pdf.md",
+              "locator": {
+                "kind": "line_range",
+                "start_line": 1345,
+                "end_line": 1345
+              },
+              "fragment_digest": "2d395594dd3ad5a54e724f2467d62f2fee15b6bf1ffbb47521a8da05e40f9978",
+              "claim_path": "/fields/red_yet/type"
+            }
+          ]
         }
       ],
       "enums": [],
       "constraints": "產生訂單時 NeedExtraPaidInfo 設為 Y 時，付款結果通知與查詢訂單會額外回傳這些參數。額外回傳的參數全部都需要加入檢查碼計算。(已無提供的 AlipayID/AlipayTradeNo/TenpayTradeNo 及定期定額相關額外欄位未納入信用卡收款範圍)",
-      "source": "gw_p110.pdf p.33-p.34 §9 額外回傳的參數 回傳參數說明"
+      "source": "gw_p110.pdf p.33-p.34 §9 額外回傳的參數 回傳參數說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1309,
+            "end_line": 1309
+          },
+          "fragment_digest": "aef4faa1b727197b492a7e2ee49dd3d4db57f89c31090153a9557bd207847593",
+          "claim_path": "/name"
+        }
+      ]
     }
   ],
   "errors": [
@@ -897,80 +4627,416 @@
       "code": "1",
       "meaning": "若回傳值為1時，為付款成功",
       "http_status": null,
-      "source": "gw_p110.pdf p.19/p.24 RtnCode / TradeStatus 說明"
+      "source": "gw_p110.pdf p.19/p.24 RtnCode / TradeStatus 說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 3,
+            "end_line": 3
+          },
+          "fragment_digest": "f4aaa0b27c8b3d870d621a16ffa58a67e64d9287daa732cca713c094212f7b28",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 667,
+            "end_line": 667
+          },
+          "fragment_digest": "4f44c8fc4f6fad0156e5c3cb45c33d46f0f57b209e26e012435cb1e1f7f7bd32",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "0",
       "meaning": "若為0時，代表交易訂單成立未付款",
       "http_status": null,
-      "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus"
+      "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 10,
+            "end_line": 10
+          },
+          "fragment_digest": "e80a45c31ed9e67825a6a49807e6d8c7ca554b54bf8e6e3d82c9c55bb9198843",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 896,
+            "end_line": 896
+          },
+          "fragment_digest": "bf110ebfa6427925717a0f49e74c8fc7969faa1a82cc278ac6ca83c272a42667",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "10200095",
       "meaning": "若為10200095時，代表交易訂單未成立，消 費者未完成付款作業，故交易失敗。",
       "http_status": null,
-      "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus"
+      "source": "gw_p110.pdf p.24 §6 查詢訂單 TradeStatus",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 63,
+            "end_line": 63
+          },
+          "fragment_digest": "fbcd345e86771c701d46d2f3b732fd0f9d83a148fa1179435a5abdfecdffd05e",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 896,
+            "end_line": 896
+          },
+          "fragment_digest": "bf110ebfa6427925717a0f49e74c8fc7969faa1a82cc278ac6ca83c272a42667",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "error_Stop",
       "meaning": "若查無商家或商家己到期",
       "http_status": null,
-      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"
+      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "error_nopay",
       "meaning": "若查無該筆交易授權單號時",
       "http_status": null,
-      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"
+      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "error",
       "meaning": "若發生錯誤或資料檢核失敗",
       "http_status": null,
-      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg"
+      "source": "gw_p110.pdf p.26 §7 查詢信用卡單筆明細記錄 RtnMsg",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1016,
+            "end_line": 1016
+          },
+          "fragment_digest": "45ac9d0cf462ad54e58c7dab0fe3a3f1c808b042aa92ec2b962a2e63856cee55",
+          "claim_path": "/description"
+        }
+      ]
     },
     {
       "code": "error_overDAY",
       "meaning": "超過 90 天系統會將未關帳訂單進行放棄作業，不作請款。產生錯誤訊息「error_overDAY」須通知客服協助關帳。",
       "http_status": null,
-      "source": "gw_p110.pdf p.29 §8 信用卡請退款功能 關帳注意事項"
+      "source": "gw_p110.pdf p.29 §8 信用卡請退款功能 關帳注意事項",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1144,
+            "end_line": 1144
+          },
+          "fragment_digest": "12bc633679056123f3151a4f7310006cff5b62c9516c5ad6cc71b0cdb6b4eb09",
+          "claim_path": "/code"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1144,
+            "end_line": 1144
+          },
+          "fragment_digest": "12bc633679056123f3151a4f7310006cff5b62c9516c5ad6cc71b0cdb6b4eb09",
+          "claim_path": "/description"
+        }
+      ]
     }
   ],
   "operational": [
     {
       "topic": "檢查碼機制",
       "detail": "在與綠界進行資料傳遞時，除了檢查碼[CheckMacValue]及其餘所有傳遞給綠界科技的參數皆需 要加入檢查碼計算",
-      "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制"
+      "source": "gw_p110.pdf p.42-p.43 §12 檢查碼機制",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1638,
+            "end_line": 1638
+          },
+          "fragment_digest": "3444f74ce596c062e382abcf1e435a2443da6674a7832361f4cbeb7e2fa66e9f",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 30,
+            "end_line": 30
+          },
+          "fragment_digest": "1d35fcbd141d9a29a9b1bfdd3b1c864d4e33a13eb8cdaa6cc9e0615d4efbfa25",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "系統介接測試環境相關資訊",
       "detail": "特店編號(MerchantID) 2000132 2000214(非OTP) 平台商編號 (PlatformID) 3002599 特店管理後台 登入帳號/密碼 stagetest1234/test1234 Stage2000214/test1234 stagetest2/test1234 身分證件末四碼/統一編 號 53538851 3609 特店管理後台 測試環境 https://vendor-stage.ecpay.com.tw 此網站可提供：1.查詢ecpay訂單，2.模擬付款並通知特店 若執行模擬付款功能，無法收到付款通知時，請留意此表後注意事項。 ALL IN ONE 介接HashKey 5294y06JbISpM5x9 spPjZn66i0OhqJsQ ALL IN ONE 介接HashIV v77hoKGq4kWxNNIS hT5OJckN45isQTTs",
-      "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊"
+      "source": "gw_p110.pdf p.8 §3 前置準備事項 測試環境資訊",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 270,
+            "end_line": 276
+          },
+          "fragment_digest": "16d2324a6b0b76c43550740170ef827e0b40f1743b7f06f6dbbed9958f3ece2a",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 266,
+            "end_line": 266
+          },
+          "fragment_digest": "7e5dc3527d542dad364f3786d155fa389556f170f1a458a5587c678899240beb",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "前置準備事項",
       "detail": "(3) 呼叫綠界 API 連接只提供 https (443 port)連線方式，並請使用 (Domain Name System)進行介接。 - (4) 請確認各項交易參數傳送時是使用 Http POST 方式傳送至綠界 API。",
-      "source": "gw_p110.pdf p.8-p.9 §3 前置準備事項 注意事項"
+      "source": "gw_p110.pdf p.8-p.9 §3 前置準備事項 注意事項",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 289,
+            "end_line": 291
+          },
+          "fragment_digest": "b77d4ba6e296976ad15ccb41a76c2d2da083535ac8e2e257e3cb20706f7e91e6",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 21,
+            "end_line": 21
+          },
+          "fragment_digest": "61a324dceb3bffa874d59d1295b331ce97c583cd5d032a318a2a39d401e3db13",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "付款結果通知",
       "detail": "(2) 若未正確回應 1|OK，系統會隔 5~15 分鐘後重發訊息給特店，當天重複發送四次。",
-      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知"
+      "source": "gw_p110.pdf p.18-p.20 §5 付款結果通知",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 713,
+            "end_line": 713
+          },
+          "fragment_digest": "602297cd82d8168de589a7dca38afb99e15cfaa1698272350705af12f3539b14",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 23,
+            "end_line": 23
+          },
+          "fragment_digest": "226a47491744e48b6ac1ee319dfac3f6e66b29b149fcdb8d0d4e8196b09a1710",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "請款使用說明",
       "detail": "1. 信用卡付款成功，查詢訂單會顯示[已授權] (此時僅會占用信用卡額度)，如果此筆訂單要送至銀行 請款，須執行[關帳](Action=C)。 2. 執行[關帳]後，查詢訂單會顯示[要關帳]，表示綠界將要向銀行進行請款作業。 3. 當綠界已向銀行完成[請款]作業，查詢訂單會顯示[已關帳]。",
-      "source": "gw_p110.pdf p.29-p.30 §8 信用卡請退款功能 使用說明"
+      "source": "gw_p110.pdf p.29-p.30 §8 信用卡請退款功能 使用說明",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1114,
+            "end_line": 1118
+          },
+          "fragment_digest": "b615a7d07ee23898f4643c27d0a67b37d94d634e902d4087e3a602938d7d871a",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 1112,
+            "end_line": 1112
+          },
+          "fragment_digest": "fdf6693c9a4530b230fad6ea6f0e05c1e99c6eed81deba1f814293414b8c869c",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "查詢訂單",
       "detail": "若產生訂單後 40 分鐘後未收到綠界通知付款結果通知時，可用 API 進行查詢付款結果。",
-      "source": "gw_p110.pdf p.23 §6 查詢訂單"
+      "source": "gw_p110.pdf p.23 §6 查詢訂單",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 845,
+            "end_line": 845
+          },
+          "fragment_digest": "cc236ab68a3ee2f48142a78ae3082bc2cfd318a950258c56f58fef38968be31d",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 24,
+            "end_line": 24
+          },
+          "fragment_digest": "b70f8be29179dbee559ee8148b1c2e86dae0fcb804bcec33fbc60917dd7e4d28",
+          "claim_path": "/topic"
+        }
+      ]
     },
     {
       "topic": "付款方式一覽表",
       "detail": "Credit 信用卡_MasterCard_JCB_VISA ApplePay Apple手機支付",
-      "source": "gw_p110.pdf p.53-p.54 附錄3/附錄4"
+      "source": "gw_p110.pdf p.53-p.54 附錄3/附錄4",
+      "evidence": [
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 2045,
+            "end_line": 2046
+          },
+          "fragment_digest": "e521faf30c07e78034e611d7d8e4e04ca60e08c77524d83e754252495b54b98e",
+          "claim_path": "/detail"
+        },
+        {
+          "version": 1,
+          "source": "gw_p110.pdf.md",
+          "locator": {
+            "kind": "line_range",
+            "start_line": 35,
+            "end_line": 35
+          },
+          "fragment_digest": "e60e28bcfa5e53fc7607524334581228acf7e520e7af2ce347087086bafc3d2f",
+          "claim_path": "/topic"
+        }
+      ]
     }
   ],
   "missing": [
