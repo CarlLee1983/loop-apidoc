@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from loop_apidoc.core.openapi_pointers import (
+    _decode_json_pointer_segment,
     _openapi_inline_request_body_property_from_pointer,
     _openapi_inline_request_body_property_required_from_schema_pointer,
     _openapi_operation_from_pointer,
@@ -24,7 +25,6 @@ from loop_apidoc.core.openapi_pointers import (
     _openapi_schema_ref_property_required_from_fragments,
     _openapi_schema_two_hop_ref_property_from_fragments,
     _openapi_security_scheme_name_from_pointer,
-    _decode_json_pointer_segment,
     _schema_name_from_claim_identity,
 )
 from loop_apidoc.domain.claim_paths import escape_segment
@@ -422,7 +422,10 @@ def _openapi_pointer_derivation(
 
 
 def _operation_identity_from_request_example_pointer(pointer: str) -> str | None:
-    """Return the operation identity of a request-body example entry pointer."""
+    """Return the operation identity of a request-body example entry pointer.
+
+    Lives here because ``openapi_pointers.py`` is at its 800-line cap.
+    """
     segments = pointer.split("/")
     if (
         len(segments) != 9
@@ -438,6 +441,8 @@ def _operation_identity_from_request_example_pointer(pointer: str) -> str | None
     if operation is None:
         return None
     path, method = operation
+    if path != path.strip():
+        return None
     return canonical_operation_identity(method, path)
 
 

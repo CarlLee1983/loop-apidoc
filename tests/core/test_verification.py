@@ -2439,19 +2439,20 @@ EXAMPLE_POINTER = (
 )
 EXAMPLE_OBJECT = {"$ref": "#/components/examples/post-payments-card-direct"}
 PAYMENTS_OPERATION = "operation:POST:/payments"
+_DEFAULT_SOURCE = object()
 
 
 def _verify_example_operation(
     pointer: str = EXAMPLE_POINTER,
     *,
-    source_value: object = None,
+    source_value: object = _DEFAULT_SOURCE,
     claim_kind: str = "integration_mechanic",
     claim_path: str = "/operation_refs/operation:POST:~1payments",
     derived: str = PAYMENTS_OPERATION,
 ):
     return _verify_security(
         EXAMPLE_OPERATION_DERIVATION,
-        (pointer, EXAMPLE_OBJECT if source_value is None else source_value),
+        (pointer, EXAMPLE_OBJECT if source_value is _DEFAULT_SOURCE else source_value),
         claim_kind=claim_kind,
         claim_value={
             "name": "card-direct",
@@ -2508,7 +2509,9 @@ def test_request_example_refuses_a_different_operation():
 
 
 @pytest.mark.parametrize(
-    "source_value", ["card-direct", ["a"], 0], ids=["str", "list", "int"]
+    "source_value",
+    ["card-direct", ["a"], 0, None],
+    ids=["str", "list", "int", "null"],
 )
 def test_request_example_refuses_a_non_object_fragment_value(source_value):
     _assert_refused(
@@ -2520,5 +2523,15 @@ def test_request_example_refuses_a_non_object_fragment_value(source_value):
 def test_request_example_refuses_a_non_integration_mechanic_claim_kind():
     _assert_refused(
         _verify_example_operation(claim_kind="transport_policy"),
+        "DERIVATION_INAPPLICABLE",
+    )
+
+
+def test_request_example_refuses_a_path_key_with_surrounding_whitespace():
+    _assert_refused(
+        _verify_example_operation(
+            "/paths/~1payments /post/requestBody/content/application~1json"
+            "/examples/card-direct"
+        ),
         "DERIVATION_INAPPLICABLE",
     )

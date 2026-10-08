@@ -833,7 +833,15 @@ _OPERATION_REF_PATH = "/operation_refs/operation:POST:~1payments"
             _REQUEST_EXAMPLE_POINTER + "/value",
             None,
         ),
+        (
+            "integration_mechanic",
+            _OPERATION_REF_PATH,
+            "/paths/~1payments/post/requestBody/content/application~1json/example",
+            None,
+        ),
         ("integration_mechanic", "/name", _REQUEST_EXAMPLE_POINTER, None),
+        ("idempotency_rule", _OPERATION_REF_PATH, _REQUEST_EXAMPLE_POINTER, None),
+        ("line_currency_policy", _OPERATION_REF_PATH, _REQUEST_EXAMPLE_POINTER, None),
         ("transport_policy", _OPERATION_REF_PATH, _REQUEST_EXAMPLE_POINTER, None),
     ],
 )
