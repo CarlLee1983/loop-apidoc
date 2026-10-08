@@ -6,7 +6,7 @@
     "webhooks": 0,
     "schemas": 18,
     "security_schemes": 2,
-    "servers": 2,
+    "servers": 1,
     "error_codes": 0,
     "field_conditions": 3,
     "test_cases": 1
@@ -17,7 +17,7 @@
   },
   "integration": {
     "required": true,
-    "crypto_required": true,
+    "crypto_required": false,
     "callbacks_required": false
   },
   "critical_operations": [

@@ -8,8 +8,8 @@
     "integration_contract_present": true,
     "examples_present": true
   },
-  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5, "SOURCE_FACTS_UNSCANNED.warning": 24 },
-  "acceptable_warnings": "5 endpoints 各一筆『endpoint 缺少 request/response 範例』:來源 SDK docs 未附逐端點範例(僅 create_payment 有官方 sample,放在 integration.test_cases),降為 WARNING。",
+  "current_issue_classes": { "REQUIRED_INFO_MISSING.warning": 5, "SOURCE_FACTS_UNSCANNED.warning": 25 },
+  "acceptable_warnings": "5 endpoints 各一筆『endpoint 缺少 request/response 範例』:來源 SDK docs 未附逐端點範例(僅 create_payment 有官方 sample,放在 integration.test_cases),降為 WARNING。SOURCE_FACTS_UNSCANNED 由 24 筆增為 25 筆:新增的一筆是 client-README.md。SDK README 原名 README.md,被 manifest 掃描器的 README* 規則忽略;改名為 client-README.md 後成為來源,和其他 24 份 SDK Markdown 一樣掃不出 method+path 同行的端點事實。",
   "resolved_issue_was": {
     "kind": "authoring-fail-closed",
     "code": "SOURCE_UNVERIFIED",
