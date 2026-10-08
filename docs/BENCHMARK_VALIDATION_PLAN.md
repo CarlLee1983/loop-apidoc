@@ -55,7 +55,7 @@ browser-flattened one-line rendition may preserve readable content but cannot
 be assigned invented claim locators; retain it as an observed legacy replay and
 obtain the original structured snapshot before declaring exact-evidence parity.
 The retained FunkyGames Swagger, RSG Markdown, Stripe OpenAPI, APIs.guru OpenAPI,
-ECPay PDF-derived Markdown, and CyberSource SDK Markdown cases are the six current
+ECPay PDF-derived Markdown, CyberSource SDK Markdown, and Adyen OpenAPI cases are the seven current
 executable full-parity replays; each other restored source snapshot must meet this same contract
 rather than a lower, source-availability-dependent bar.
 

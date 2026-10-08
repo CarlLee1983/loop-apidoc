@@ -1,8 +1,7 @@
 # Product Extension Roadmap
 
-**Status:** In progress — exact-evidence parity is complete for 6 of 7 restored
-source-backed benchmarks; 1 restored case still needs claim-complete parity and 6
-historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
+**Status:** In progress — exact-evidence parity is complete for 7 of 7 restored
+source-backed benchmarks; 6 historical snapshots remain unavailable. Releases 0.26–0.28 delivered bounded work
 outside priority 1 while that cutover path was blocked; Core remains legacy/shadow.
 **Updated:** 2026-10-08
 
@@ -164,9 +163,8 @@ they did not advance Core production graduation:
   `required_source_refs` capture guidance for sources that direct HTTP cannot obtain.
 
 The maintained priority-1 count is therefore 13 committed benchmark cases: 7 currently
-have local historical sources, of which FunkyGames, RSG, Stripe, APIs.guru, ECPay, and CyberSource have
-claim-complete exact evidence; the other restored case still requires parity work, and 6 historical
-snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
+have local historical sources, and all 7 (FunkyGames, RSG, Stripe, APIs.guru, ECPay, CyberSource, and Adyen) have
+claim-complete exact evidence; 6 historical snapshots are unavailable. Sanitized fixtures may add a distinct CI-verifiable lane for
 eligible restored sources, but cannot turn an unavailable original snapshot into a
 strict-local pass.
 
@@ -317,7 +315,21 @@ test-case name, and the security types (`HTTP_Signature`, `JWT`). The production
 server moved to `missing`, since the source gives only the host. The three crypto
 entries were removed: the source names JWT, HTTP Signature, and MLE but states no
 signing or encryption steps, which Core rejects as `CRYPTOGRAPHIC_CHAIN_INCOMPLETE`.
-Exact-evidence parity covers 6 of 7 restored cases.
+CyberSource became the sixth parity case.
+
+**Adyen source-backed parity (2026-10-08):** the case cites the restored Checkout v71
+OpenAPI document (`CheckoutService-v71.json`, SHA-256 `9e426ae2…`). Every material claim
+is bound to an exact JSON Pointer, which Core compares by value or recomputes through an
+allowed Structural Derivation. Two derivations were added for it: an error code from
+its response key (#189), and a test case's operation reference from where its request
+example sits (#190). The replay is legacy `passed` / Core `accept` with 23/23 Core claims
+supported. Values the source does not state were corrected rather than bound: response,
+error, and test-case text now copies the source; the environment name was removed; the
+four field conditions inferred from the `paymentMethod` `oneOf` and the two explanatory
+`operational` notes were removed; four array fields gained `[]`; five fields whose
+source property is only a `$ref` or `oneOf` lost an inferred `object` type; each request
+gained `schema_ref`; and a response `schema_ref` naming the wrong schema became `null`.
+Exact-evidence parity covers 7 of 7 restored cases.
 
 ### 2. Continuous source and contract governance
 
@@ -552,8 +564,8 @@ implementation-backed benchmark 與 source-backed strict-local 分開計算；�
 
 0.26–0.28 在 P1 benchmark gate 受阻期間交付了 protocol seam、typed integration／雙向
 coverage 與 browser-rendered URL import；這些是守住 source-grounded 原則的繞道交付，不算
-Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru／ECPay／CyberSource 已完成
-claim-complete exact evidence，另 1 份待補，6 份歷史快照不可得。
+Core 畢業進度。目前 13 個 benchmark 中有 7 份歷史來源可用，FunkyGames／RSG／Stripe／APIs.guru／ECPay／CyberSource／Adyen
+全部完成 claim-complete exact evidence，6 份歷史快照不可得。
 
 GraphQL／AsyncAPI 的 protocol seam 與獨立 compiler 已保留；先完成產品邊界、策略文件 gate
 與 benchmark CI 問題，再依既有 staged artifact／validation contract 接入 CLI 與主流程。
