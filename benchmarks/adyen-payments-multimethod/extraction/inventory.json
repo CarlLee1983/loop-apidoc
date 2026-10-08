@@ -4,7 +4,6 @@
   "overview": "Adyen Checkout API v71. A single multi-method payment entry point: POST /payments starts a transaction for any of 40+ payment methods, distinguished by the paymentMethod.type discriminator (a oneOf union over per-method detail objects). POST /payments/details continues redirect/3DS flows; POST /paymentMethods lists the methods available to a shopper. The same path therefore serves many payment products.",
   "environments": [
     {
-      "name": "test",
       "base_url": "https://checkout-test.adyen.com/v71",
       "version": "v71",
       "source": "CheckoutService-v71.json servers[0].url"
@@ -72,7 +71,6 @@
       "fields": [
         {
           "name": "amount",
-          "type": "object",
           "required": true,
           "description": "The amount information for the transaction (Amount object)."
         },
@@ -96,12 +94,19 @@
         },
         {
           "name": "paymentMethod",
-          "type": "object",
           "required": true,
-          "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+          "one_of": [
+            "CardDetails",
+            "IdealDetails",
+            "ApplePayDetails"
+          ],
           "discriminator": {
             "property_name": "type",
-            "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+            "mapping": {
+              "scheme": "CardDetails",
+              "ideal": "IdealDetails",
+              "applepay": "ApplePayDetails"
+            }
           },
           "description": "The type and required details of a payment method, selected by the `type` discriminator (scheme→CardDetails, ideal→IdealDetails, applepay→ApplePayDetails, ...). The full spec lists 40+ members; three representative ones are captured here as named schemas."
         },
@@ -288,7 +293,6 @@
         },
         {
           "name": "action",
-          "type": null,
           "required": null,
           "description": "Action to be taken for completing the payment."
         },
@@ -312,7 +316,6 @@
         },
         {
           "name": "amount",
-          "type": "object",
           "required": null,
           "description": "Authorised amount in the transaction."
         }
@@ -341,7 +344,6 @@
       "fields": [
         {
           "name": "details",
-          "type": "object",
           "required": true,
           "description": "Use this collection to submit the details that were returned as a result of the `/payments` call."
         },
@@ -373,7 +375,6 @@
         },
         {
           "name": "amount",
-          "type": "object",
           "required": false,
           "description": "The amount information for the transaction (in [minor units](https://docs.adyen.com/development-resources/currency-codes)). For [BIN or card verification](https://docs.adyen.com/payment-methods/cards/bin-data-and-card-verification) reque..."
         },
@@ -396,13 +397,13 @@
           "description": "Required for recurring payments. Your reference to uniquely identify this shopper, for example user ID or account ID. The value is case-sensitive and must be at least three characters. > Your reference must not include personally identif..."
         },
         {
-          "name": "allowedPaymentMethods",
+          "name": "allowedPaymentMethods[]",
           "type": "array",
           "required": false,
           "description": "List of payment methods to be presented to the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"allowedPaymentMethods\":[\"ideal\",\"applepay\"]`"
         },
         {
-          "name": "blockedPaymentMethods",
+          "name": "blockedPaymentMethods[]",
           "type": "array",
           "required": false,
           "description": "List of payment methods to be hidden from the shopper. To refer to payment methods, use their [payment method type](https://docs.adyen.com/payment-methods/payment-method-types). Example: `\"blockedPaymentMethods\":[\"ideal\",\"applepay\"]`"
@@ -416,13 +417,13 @@
       "name": "PaymentMethodsResponse",
       "fields": [
         {
-          "name": "paymentMethods",
+          "name": "paymentMethods[]",
           "type": "array",
           "required": null,
           "description": "Detailed list of payment methods required to generate payment forms."
         },
         {
-          "name": "storedPaymentMethods",
+          "name": "storedPaymentMethods[]",
           "type": "array",
           "required": null,
           "description": "List of all stored payment methods."
@@ -474,47 +475,36 @@
   "errors": [
     {
       "code": "400",
-      "meaning": "Bad request (ServiceError).",
+      "meaning": "Bad Request - a problem reading or understanding the request.",
       "http_status": "400",
       "source": "CheckoutService-v71.json paths./payments.post.responses.400"
     },
     {
       "code": "401",
-      "meaning": "Unauthorized (ServiceError).",
+      "meaning": "Unauthorized - authentication required.",
       "http_status": "401",
       "source": "CheckoutService-v71.json paths./payments.post.responses.401"
     },
     {
       "code": "403",
-      "meaning": "Forbidden (ServiceError).",
+      "meaning": "Forbidden - insufficient permissions to process the request.",
       "http_status": "403",
       "source": "CheckoutService-v71.json paths./payments.post.responses.403"
     },
     {
       "code": "422",
-      "meaning": "Unprocessable entity (ServiceError).",
+      "meaning": "Unprocessable Entity - a request validation error.",
       "http_status": "422",
       "source": "CheckoutService-v71.json paths./payments.post.responses.422"
     },
     {
       "code": "500",
-      "meaning": "Internal server error (ServiceError).",
+      "meaning": "Internal Server Error - the server could not process the request.",
       "http_status": "500",
       "source": "CheckoutService-v71.json paths./payments.post.responses.500"
     }
   ],
-  "operational": [
-    {
-      "topic": "multi-method entry point",
-      "detail": "POST /payments serves all payment methods; the paymentMethod.type discriminator selects which detail object (and therefore which required fields) apply.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentRequest.properties.paymentMethod"
-    },
-    {
-      "topic": "redirect / 3DS continuation",
-      "detail": "When resultCode is RedirectShopper/ChallengeShopper, the client follows 'action' then calls POST /payments/details with the returned details.",
-      "source": "CheckoutService-v71.json components.schemas.PaymentResponse.properties.resultCode"
-    }
-  ],
+  "operational": [],
   "missing": [
     "Client-side encryption (CSE) algorithm for the encrypted* card fields is not stated in this spec.",
     "Webhook/notification payloads and HMAC signing live in a separate Adyen Notification API, not in the Checkout spec — no callbacks captured here."

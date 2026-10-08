@@ -22,42 +22,43 @@
     "content_type": "application/json",
     "schema": "PaymentDetailsRequest",
     "required": true,
-    "description": "PaymentDetailsRequest: submit the details collected after a redirect/3DS action."
+    "description": "PaymentDetailsRequest: submit the details collected after a redirect/3DS action.",
+    "schema_ref": "PaymentDetailsRequest"
   },
   "responses": [
     {
       "status": "200",
-      "description": "Payment result after submitting details.",
+      "description": "OK - the request has succeeded.",
       "schema": null,
-      "schema_ref": "PaymentResponse"
+      "schema_ref": null
     },
     {
       "status": "400",
-      "description": "Bad request.",
+      "description": "Bad Request - a problem reading or understanding the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "401",
-      "description": "Unauthorized.",
+      "description": "Unauthorized - authentication required.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "403",
-      "description": "Forbidden.",
+      "description": "Forbidden - insufficient permissions to process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "422",
-      "description": "Unprocessable entity.",
+      "description": "Unprocessable Entity - a request validation error.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "500",
-      "description": "Internal server error.",
+      "description": "Internal Server Error - the server could not process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     }

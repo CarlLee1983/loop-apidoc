@@ -36,10 +36,18 @@
       "in": "body",
       "type": "object",
       "required": true,
-      "one_of": ["CardDetails", "IdealDetails", "ApplePayDetails"],
+      "one_of": [
+        "CardDetails",
+        "IdealDetails",
+        "ApplePayDetails"
+      ],
       "discriminator": {
         "property_name": "type",
-        "mapping": {"scheme": "CardDetails", "ideal": "IdealDetails", "applepay": "ApplePayDetails"}
+        "mapping": {
+          "scheme": "CardDetails",
+          "ideal": "IdealDetails",
+          "applepay": "ApplePayDetails"
+        }
       },
       "description": "The type and required details of a payment method to use, selected by the `type` discriminator. The full spec lists 40+ members; this benchmark captures three representative ones (CardDetails / IdealDetails / ApplePayDetails)."
     }
@@ -48,42 +56,43 @@
     "content_type": "application/json",
     "schema": "PaymentRequest",
     "required": true,
-    "description": "PaymentRequest: amount + merchantAccount + reference + returnUrl + paymentMethod (oneOf union, see CardDetails/IdealDetails/ApplePayDetails)."
+    "description": "PaymentRequest: amount + merchantAccount + reference + returnUrl + paymentMethod (oneOf union, see CardDetails/IdealDetails/ApplePayDetails).",
+    "schema_ref": "PaymentRequest"
   },
   "responses": [
     {
       "status": "200",
-      "description": "Payment result.",
+      "description": "OK - the request has succeeded.",
       "schema": null,
       "schema_ref": "PaymentResponse"
     },
     {
       "status": "400",
-      "description": "Bad request.",
+      "description": "Bad Request - a problem reading or understanding the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "401",
-      "description": "Unauthorized.",
+      "description": "Unauthorized - authentication required.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "403",
-      "description": "Forbidden.",
+      "description": "Forbidden - insufficient permissions to process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "422",
-      "description": "Unprocessable entity.",
+      "description": "Unprocessable Entity - a request validation error.",
       "schema": null,
       "schema_ref": "ServiceError"
     },
     {
       "status": "500",
-      "description": "Internal server error.",
+      "description": "Internal Server Error - the server could not process the request.",
       "schema": null,
       "schema_ref": "ServiceError"
     }
